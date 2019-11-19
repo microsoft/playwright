@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const playwright = require('../..');
+const playwright = require('../../chromium');
 const path = require('path');
 const Source = require('./Source');
 
@@ -38,10 +38,8 @@ async function run() {
   // Documentation checks.
   {
     const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
-    const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
     const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-    const troubleshooting = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'troubleshooting.md'));
-    const mdSources = [readme, api, troubleshooting, contributing];
+    const mdSources = [readme, api];
 
     const preprocessor = require('./preprocessor');
     messages.push(...await preprocessor.runCommands(mdSources, VERSION));
