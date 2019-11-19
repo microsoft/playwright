@@ -70,6 +70,8 @@ module.exports.runCommands = function(sources, version) {
       newText = isReleaseVersion ? '' : command.originalText;
     else if (command.name === 'toc')
       newText = generateTableOfContents(command.source.text().substring(command.to));
+    else if (command.name === 'test-stats')
+      newText = generateTestStats();
     if (newText === null)
       messages.push(Message.error(`Unknown command 'gen:${command.name}'`));
     else if (applyCommand(command, newText))
@@ -89,6 +91,19 @@ function applyCommand(command, editText) {
   const text = command.source.text();
   const newText = text.substring(0, command.from) + editText + text.substring(command.to);
   return command.source.setText(newText);
+}
+
+function generateTestStats() {
+  const stats = require('../../../test/stats');
+  return `
+|Firefox|Chromium|WebKit|all|
+|---|---|---|---|
+|${s('firefox')}|${s('chromium')}|${s('webkit')}|${s('all')}|
+`;
+  function s(product) {
+    const {total, skipped} = stats[product];
+    return `${total-skipped}/${total}`;
+  }
 }
 
 function generateTableOfContents(mdText) {

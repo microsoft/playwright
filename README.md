@@ -1,3 +1,9 @@
+# Browser Test Stats
+<!-- GEN:test-stats -->
+|Firefox|Chromium|WebKit|all|
+|---|---|---|---|
+|511/650|698/705|325/653|309/650|
+<!-- GEN:stop -->
 
 # Contributing
 
