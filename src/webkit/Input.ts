@@ -68,7 +68,6 @@ export class Keyboard {
     const ControlKey  = 1 << 1;
     const AltKey      = 1 << 2;
     const MetaKey     = 1 << 3;
-    const CapsLockKey = 1 << 4;
     if (key === 'Alt')
       return AltKey;
     if (key === 'Control')

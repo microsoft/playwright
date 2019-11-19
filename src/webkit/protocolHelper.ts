@@ -14,14 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as fs from 'fs';
-import {helper, assert, debugError} from '../helper';
+
+import { assert, debugError } from '../helper';
 import { TargetSession } from './Connection';
 import { Protocol } from './protocol';
-
-const openAsync = helper.promisify(fs.open);
-const writeAsync = helper.promisify(fs.write);
-const closeAsync = helper.promisify(fs.close);
 
 export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObject): any {
   assert(!remoteObject.objectId, 'Cannot extract value when objectId is given');

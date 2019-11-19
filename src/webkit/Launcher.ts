@@ -15,14 +15,12 @@
  * limitations under the License.
  */
 import * as childProcess from 'child_process';
-import * as path from 'path';
+import { debugError, helper } from '../helper';
 import { Browser } from './Browser';
 import { BrowserFetcher } from './BrowserFetcher';
 import { Connection } from './Connection';
-import { debugError, helper } from '../helper';
 import { Viewport } from './Page';
 import { PipeTransport } from './PipeTransport';
-import * as os from 'os';
 
 
 export class Launcher {
@@ -43,7 +41,6 @@ export class Launcher {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      headless = true,
       defaultViewport = {width: 800, height: 600},
       slowMo = 0
     } = options;
@@ -56,7 +53,7 @@ export class Launcher {
         throw new Error(missingText);
       webkitExecutable = executablePath;
     }
-    
+
     let stdio: ('ignore' | 'pipe')[] = ['pipe', 'pipe', 'pipe'];
     if (dumpio)
       stdio = ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'];
@@ -100,8 +97,7 @@ export class Launcher {
     try {
       const transport = new PipeTransport(webkitProcess.stdio[3] as NodeJS.WritableStream, webkitProcess.stdio[4] as NodeJS.ReadableStream);
       connection = new Connection('', transport, slowMo);
-      const browser = new Browser(connection, defaultViewport, webkitProcess
-        , gracefullyCloseWebkit);
+      const browser = new Browser(connection, defaultViewport, webkitProcess, gracefullyCloseWebkit);
       return browser;
     } catch (e) {
       killWebKit();

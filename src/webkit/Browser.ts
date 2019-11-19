@@ -17,13 +17,12 @@
 
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
-import { Connection, ConnectionEvents } from './Connection';
+import { Connection } from './Connection';
 import { Events } from '../Events';
 import { RegisteredListener, assert, helper } from '../helper';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
-import { Protocol } from './protocol';
 
 export class Browser extends EventEmitter {
   _defaultViewport: Viewport;
@@ -101,7 +100,7 @@ export class Browser extends EventEmitter {
     return this._createPageInContext(this._defaultContext._id);
   }
 
-  async _createPageInContext(browserContextId?: string ): Promise<Page> {
+  async _createPageInContext(browserContextId?: string): Promise<Page> {
     const {targetId} = await this._connection.send('Browser.createPage', {browserContextId});
     const target = this._targets.get(targetId);
     return await target.page();
@@ -146,11 +145,11 @@ export class Browser extends EventEmitter {
   async _onTargetCreated({targetInfo}) {
     let context = null;
     if (targetInfo.browserContextId) {
-      context = this._contexts.get(targetInfo.browserContextId);
       // FIXME: we don't know about the default context id, so assume that all targets from
       // unknown contexts are created in the 'default' context which can in practice be represented
       // by multiple actual contexts in WebKit. Solving this properly will require adding context
       // lifecycle events.
+      context = this._contexts.get(targetInfo.browserContextId);
       // if (!context)
       //   throw new Error(`Target ${targetId} created in unknown browser context ${browserContextId}.`);
     }
@@ -177,8 +176,7 @@ export class Browser extends EventEmitter {
     target.browserContext().emit(Events.BrowserContext.TargetDestroyed, target);
   }
 
-  async _onProvisionalTargetCommitted({oldTargetId, newTargetId})
-  {
+  async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {
     const oldTarget = this._targets.get(oldTargetId);
     if (!oldTarget._pagePromise)
       return;

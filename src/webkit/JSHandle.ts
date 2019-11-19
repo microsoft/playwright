@@ -14,16 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as path from 'path';
 import * as fs from 'fs';
+import { assert, debugError, helper } from '../helper';
 import { TargetSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
-import { Frame, FrameManager } from './FrameManager';
-import { assert, debugError, helper } from '../helper';
-import { valueFromRemoteObject, releaseObject } from './protocolHelper';
+import { FrameManager } from './FrameManager';
+import { Button } from './Input';
 import { Page } from './Page';
-import { Modifier, Button } from './Input';
 import { Protocol } from './protocol';
+import { releaseObject, valueFromRemoteObject } from './protocolHelper';
 const writeFileAsync = helper.promisify(fs.writeFile);
 
 export type ClickOptions = {
@@ -173,7 +172,7 @@ export class ElementHandle extends JSHandle {
       this._client.send('DOM.getContentQuads', {
         objectId: this._remoteObject.objectId
       }).catch(debugError),
-      this._page.evaluate(() => { return { clientWidth: innerWidth, clientHeight: innerHeight} }),
+      this._page.evaluate(() => ({ clientWidth: innerWidth, clientHeight: innerHeight })),
     ]);
     if (!result || !result.quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
