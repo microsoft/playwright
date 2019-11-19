@@ -31,7 +31,6 @@ const readFileAsync = helper.promisify(fs.readFile);
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
   TargetSwappedOnNavigation: Symbol('TargetSwappedOnNavigation'),
-  LifecycleEvent: Symbol('LifecycleEvent'),
   FrameAttached: Symbol('FrameAttached'),
   FrameDetached: Symbol('FrameDetached'),
   FrameNavigated: Symbol('FrameNavigated'),
@@ -108,7 +107,6 @@ export class FrameManager extends EventEmitter {
     if (!frame)
       return;
     frame._onLoadingStopped();
-    this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {

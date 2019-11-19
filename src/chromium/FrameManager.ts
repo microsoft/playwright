@@ -34,8 +34,6 @@ export const FrameManagerEvents = {
   FrameDetached: Symbol('Events.FrameManager.FrameDetached'),
   LifecycleEvent: Symbol('Events.FrameManager.LifecycleEvent'),
   FrameNavigatedWithinDocument: Symbol('Events.FrameManager.FrameNavigatedWithinDocument'),
-  ExecutionContextCreated: Symbol('Events.FrameManager.ExecutionContextCreated'),
-  ExecutionContextDestroyed: Symbol('Events.FrameManager.ExecutionContextDestroyed'),
 };
 
 export class FrameManager extends EventEmitter {
