@@ -43,10 +43,10 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
           page.goto(httpsServer.EMPTY_PAGE)
         ]);
         const securityDetails = response.securityDetails();
-        expect(securityDetails.issuer()).toBe('playwright-tests');
+        expect(securityDetails.issuer()).toBe('puppeteer-tests');
         const protocol = serverRequest.socket.getProtocol().replace('v', ' ');
         expect(securityDetails.protocol()).toBe(protocol);
-        expect(securityDetails.subjectName()).toBe('playwright-tests');
+        expect(securityDetails.subjectName()).toBe('puppeteer-tests');
         expect(securityDetails.validFrom()).toBe(1550084863);
         expect(securityDetails.validTo()).toBe(33086084863);
       });

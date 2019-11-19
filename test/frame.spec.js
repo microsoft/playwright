@@ -72,10 +72,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.PREFIX + '/frames/nested-frames.html');
       expect(utils.dumpFrames(page.mainFrame())).toEqual([
         'http://localhost:<PORT>/frames/nested-frames.html',
+        '    http://localhost:<PORT>/frames/frame.html (aframe)',
         '    http://localhost:<PORT>/frames/two-frames.html (2frames)',
-        '        http://localhost:<PORT>/frames/frame.html (uno)',
         '        http://localhost:<PORT>/frames/frame.html (dos)',
-        '    http://localhost:<PORT>/frames/frame.html (aframe)'
+        '        http://localhost:<PORT>/frames/frame.html (uno)',
       ]);
     });
     it('should send events when frames are manipulated dynamically', async({page, server}) => {
