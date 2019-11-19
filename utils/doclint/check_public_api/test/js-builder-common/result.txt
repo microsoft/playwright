@@ -1,0 +1,50 @@
+{
+  "classes": [
+    {
+      "name": "A",
+      "members": [
+        {
+          "name": "anevent",
+          "kind": "event"
+        },
+        {
+          "name": "property1",
+          "type": {
+            "name": "number"
+          },
+          "kind": "property"
+        },
+        {
+          "name": "getter",
+          "type": {
+            "name": "Object"
+          },
+          "kind": "property"
+        },
+        {
+          "name": "method",
+          "type": {
+            "name": "Promise"
+          },
+          "kind": "method",
+          "args": [
+            {
+              "name": "foo",
+              "type": {
+                "name": "Object"
+              },
+              "kind": "property"
+            },
+            {
+              "name": "bar",
+              "type": {
+                "name": "Object"
+              },
+              "kind": "property"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

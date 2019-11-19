@@ -1,0 +1,36 @@
+<style>
+  button {
+    position: absolute;
+    width: 100px;
+    height: 20px;
+  }
+
+  #btn0 { right: 0px; top: 0; }
+  #btn1 { right: -10px; top: 25px; }
+  #btn2 { right: -20px; top: 50px; }
+  #btn3 { right: -30px; top: 75px; }
+  #btn4 { right: -40px; top: 100px; }
+  #btn5 { right: -50px; top: 125px; }
+  #btn6 { right: -60px; top: 150px; }
+  #btn7 { right: -70px; top: 175px; }
+  #btn8 { right: -80px; top: 200px; }
+  #btn9 { right: -90px; top: 225px; }
+  #btn10 { right: -100px; top: 250px; }
+</style>
+<button id=btn0>0</button>
+<button id=btn1>1</button>
+<button id=btn2>2</button>
+<button id=btn3>3</button>
+<button id=btn4>4</button>
+<button id=btn5>5</button>
+<button id=btn6>6</button>
+<button id=btn7>7</button>
+<button id=btn8>8</button>
+<button id=btn9>9</button>
+<button id=btn10>10</button>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  for (const button of Array.from(document.querySelectorAll('button')))
+    button.addEventListener('click', () => console.log('button #' + button.textContent + ' clicked'), false);
+}, false);
+</script>

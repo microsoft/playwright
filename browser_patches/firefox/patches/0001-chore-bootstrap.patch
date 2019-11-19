@@ -1,0 +1,4895 @@
+From db891a78ac18605d1fb4c6c4a260c1e16340789c Mon Sep 17 00:00:00 2001
+From: Andrey Lushnikov <lushnikov@chromium.org>
+Date: Fri, 15 Nov 2019 18:10:56 -0800
+Subject: [PATCH] chore: bootstrap
+
+---
+ browser/installer/allowed-dupes.mn            |   5 +
+ browser/installer/package-manifest.in         |   5 +
+ docshell/base/nsDocShell.cpp                  |   1 +
+ dom/ipc/BrowserChild.cpp                      |   7 +
+ .../permissions/nsPermissionManager.cpp       |   8 +-
+ .../manager/ssl/nsCertOverrideService.cpp     |   2 +-
+ testing/juggler/BrowserContextManager.js      | 194 +++++
+ testing/juggler/Helper.js                     | 101 +++
+ testing/juggler/NetworkObserver.js            | 450 ++++++++++++
+ testing/juggler/TargetRegistry.js             | 187 +++++
+ testing/juggler/components/juggler.js         | 112 +++
+ testing/juggler/components/juggler.manifest   |   3 +
+ testing/juggler/components/moz.build          |   9 +
+ testing/juggler/content/ContentSession.js     |  63 ++
+ testing/juggler/content/FrameTree.js          | 232 ++++++
+ testing/juggler/content/NetworkMonitor.js     |  62 ++
+ testing/juggler/content/PageAgent.js          | 621 ++++++++++++++++
+ testing/juggler/content/RuntimeAgent.js       | 460 ++++++++++++
+ testing/juggler/content/ScrollbarManager.js   |  85 +++
+ .../juggler/content/floating-scrollbars.css   |  47 ++
+ testing/juggler/content/hidden-scrollbars.css |  13 +
+ testing/juggler/content/main.js               |  39 ++
+ testing/juggler/jar.mn                        |  29 +
+ testing/juggler/moz.build                     |  15 +
+ .../juggler/protocol/AccessibilityHandler.js  |  15 +
+ testing/juggler/protocol/BrowserHandler.js    |  66 ++
+ testing/juggler/protocol/Dispatcher.js        | 255 +++++++
+ testing/juggler/protocol/NetworkHandler.js    | 154 ++++
+ testing/juggler/protocol/PageHandler.js       | 269 +++++++
+ testing/juggler/protocol/PrimitiveTypes.js    | 143 ++++
+ testing/juggler/protocol/Protocol.js          | 660 ++++++++++++++++++
+ testing/juggler/protocol/RuntimeHandler.js    |  41 ++
+ testing/juggler/protocol/TargetHandler.js     |  75 ++
+ .../statusfilter/nsBrowserStatusFilter.cpp    |  12 +-
+ toolkit/toolkit.mozbuild                      |   1 +
+ uriloader/base/nsDocLoader.cpp                |  18 +
+ uriloader/base/nsDocLoader.h                  |   5 +
+ uriloader/base/nsIWebProgress.idl             |   7 +-
+ uriloader/base/nsIWebProgressListener2.idl    |  23 +
+ 39 files changed, 4487 insertions(+), 7 deletions(-)
+ create mode 100644 testing/juggler/BrowserContextManager.js
+ create mode 100644 testing/juggler/Helper.js
+ create mode 100644 testing/juggler/NetworkObserver.js
+ create mode 100644 testing/juggler/TargetRegistry.js
+ create mode 100644 testing/juggler/components/juggler.js
+ create mode 100644 testing/juggler/components/juggler.manifest
+ create mode 100644 testing/juggler/components/moz.build
+ create mode 100644 testing/juggler/content/ContentSession.js
+ create mode 100644 testing/juggler/content/FrameTree.js
+ create mode 100644 testing/juggler/content/NetworkMonitor.js
+ create mode 100644 testing/juggler/content/PageAgent.js
+ create mode 100644 testing/juggler/content/RuntimeAgent.js
+ create mode 100644 testing/juggler/content/ScrollbarManager.js
+ create mode 100644 testing/juggler/content/floating-scrollbars.css
+ create mode 100644 testing/juggler/content/hidden-scrollbars.css
+ create mode 100644 testing/juggler/content/main.js
+ create mode 100644 testing/juggler/jar.mn
+ create mode 100644 testing/juggler/moz.build
+ create mode 100644 testing/juggler/protocol/AccessibilityHandler.js
+ create mode 100644 testing/juggler/protocol/BrowserHandler.js
+ create mode 100644 testing/juggler/protocol/Dispatcher.js
+ create mode 100644 testing/juggler/protocol/NetworkHandler.js
+ create mode 100644 testing/juggler/protocol/PageHandler.js
+ create mode 100644 testing/juggler/protocol/PrimitiveTypes.js
+ create mode 100644 testing/juggler/protocol/Protocol.js
+ create mode 100644 testing/juggler/protocol/RuntimeHandler.js
+ create mode 100644 testing/juggler/protocol/TargetHandler.js
+
+diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
+index 1ffaa0997927..c1bb33c8e63c 100644
+--- a/browser/installer/allowed-dupes.mn
++++ b/browser/installer/allowed-dupes.mn
+@@ -141,6 +141,11 @@ browser/chrome/browser/res/payments/formautofill/autofillEditForms.js
+ # Bug 1451050 - Remote settings empty dumps (will be populated with data eventually)
+ browser/defaults/settings/pinning/pins.json
+ browser/defaults/settings/main/example.json
++# Juggler/marionette files
++chrome/juggler/content/content/floating-scrollbars.css
++browser/chrome/devtools/skin/floating-scrollbars-responsive-design.css
++chrome/juggler/content/server/stream-utils.js
++chrome/marionette/content/stream-utils.js
+ #ifdef MOZ_EME_WIN32_ARTIFACT
+ gmp-clearkey/0.1/manifest.json
+ i686/gmp-clearkey/0.1/manifest.json
+diff --git a/browser/installer/package-manifest.in b/browser/installer/package-manifest.in
+index 0efb8c4210bf..6695fa1deb70 100644
+--- a/browser/installer/package-manifest.in
++++ b/browser/installer/package-manifest.in
+@@ -208,6 +208,11 @@
+ @RESPATH@/components/marionette.js
+ #endif
+ 
++@RESPATH@/chrome/juggler@JAREXT@
++@RESPATH@/chrome/juggler.manifest
++@RESPATH@/components/juggler.manifest
++@RESPATH@/components/juggler.js
++
+ #if defined(ENABLE_TESTS) && defined(MOZ_DEBUG)
+ @RESPATH@/components/TestInterfaceJS.js
+ @RESPATH@/components/TestInterfaceJS.manifest
+diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
+index b56ce1764dbb..1f4e7cb24d6f 100644
+--- a/docshell/base/nsDocShell.cpp
++++ b/docshell/base/nsDocShell.cpp
+@@ -1241,6 +1241,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+     isSubFrame = mLSHE->GetIsSubFrame();
+   }
+ 
++  FireOnFrameLocationChange(this, aRequest, aURI, aLocationFlags);
+   if (!isSubFrame && !isRoot) {
+     /*
+      * We don't want to send OnLocationChange notifications when
+diff --git a/dom/ipc/BrowserChild.cpp b/dom/ipc/BrowserChild.cpp
+index d033474bec84..e97ab5373f13 100644
+--- a/dom/ipc/BrowserChild.cpp
++++ b/dom/ipc/BrowserChild.cpp
+@@ -3576,6 +3576,13 @@ NS_IMETHODIMP BrowserChild::OnStateChange(nsIWebProgress* aWebProgress,
+   return NS_OK;
+ }
+ 
++NS_IMETHODIMP BrowserChild::OnFrameLocationChange(nsIWebProgress *aWebProgress,
++                                             nsIRequest *aRequest,
++                                             nsIURI *aLocation,
++                                             uint32_t aFlags) {
++  return NS_OK;
++}
++
+ NS_IMETHODIMP BrowserChild::OnProgressChange(nsIWebProgress* aWebProgress,
+                                              nsIRequest* aRequest,
+                                              int32_t aCurSelfProgress,
+diff --git a/extensions/permissions/nsPermissionManager.cpp b/extensions/permissions/nsPermissionManager.cpp
+index ce3d5e64bb4e..64b86791e582 100644
+--- a/extensions/permissions/nsPermissionManager.cpp
++++ b/extensions/permissions/nsPermissionManager.cpp
+@@ -189,6 +189,8 @@ nsresult GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin) {
+ 
+   OriginAppendOASuffix(attrs, aOrigin);
+ 
++  // Disable userContext for permissions.
++  // attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
+   return NS_OK;
+ }
+ 
+@@ -220,7 +222,7 @@ nsresult GetPrincipalFromOrigin(const nsACString& aOrigin,
+   attrs.mPrivateBrowsingId = 0;
+ 
+   // Disable userContext for permissions.
+-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
++  // attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
+ 
+   nsCOMPtr<nsIURI> uri;
+   nsresult rv = NS_NewURI(getter_AddRefs(uri), originNoSuffix);
+@@ -312,7 +314,7 @@ already_AddRefed<nsIPrincipal> GetNextSubDomainPrincipal(
+   mozilla::OriginAttributes attrs = aPrincipal->OriginAttributesRef();
+ 
+   // Disable userContext for permissions.
+-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
++  // attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
+ 
+   nsCOMPtr<nsIPrincipal> principal =
+       mozilla::BasePrincipal::CreateContentPrincipal(newURI, attrs);
+@@ -3220,7 +3222,7 @@ void nsPermissionManager::GetKeyForOrigin(const nsACString& aOrigin,
+   attrs.mPrivateBrowsingId = 0;
+ 
+   // Disable userContext for permissions.
+-  attrs.StripAttributes(OriginAttributes::STRIP_USER_CONTEXT_ID);
++  // attrs.StripAttributes(OriginAttributes::STRIP_USER_CONTEXT_ID);
+ 
+ #ifdef DEBUG
+   // Parse the origin string into a principal, and extract some useful
+diff --git a/security/manager/ssl/nsCertOverrideService.cpp b/security/manager/ssl/nsCertOverrideService.cpp
+index 31737688948a..255e5ae967b4 100644
+--- a/security/manager/ssl/nsCertOverrideService.cpp
++++ b/security/manager/ssl/nsCertOverrideService.cpp
+@@ -611,7 +611,7 @@ nsCertOverrideService::IsCertUsedForOverrides(nsIX509Cert* aCert,
+ NS_IMETHODIMP
+ nsCertOverrideService::
+     SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(bool aDisable) {
+-  if (!(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") ||
++  if (false /* juggler hacks */ && !(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") ||
+         PR_GetEnv("MOZ_MARIONETTE"))) {
+     return NS_ERROR_NOT_AVAILABLE;
+   }
+diff --git a/testing/juggler/BrowserContextManager.js b/testing/juggler/BrowserContextManager.js
+new file mode 100644
+index 000000000000..751fac95177c
+--- /dev/null
++++ b/testing/juggler/BrowserContextManager.js
+@@ -0,0 +1,194 @@
++"use strict";
++
++const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
++
++const IDENTITY_NAME = 'JUGGLER ';
++const HUNDRED_YEARS = 60 * 60 * 24 * 365 * 100;
++
++const ALL_PERMISSIONS = [
++  'geo',
++  'microphone',
++  'camera',
++  'desktop-notifications',
++];
++
++class BrowserContextManager {
++  static instance() {
++    return BrowserContextManager._instance || null;
++  }
++
++  static initialize() {
++    if (BrowserContextManager._instance)
++      return;
++    BrowserContextManager._instance = new BrowserContextManager();
++  }
++
++  constructor() {
++    this._id = 0;
++    this._browserContextIdToUserContextId = new Map();
++    this._userContextIdToBrowserContextId = new Map();
++    this._principalsForBrowserContextId = new Map();
++
++    // Cleanup containers from previous runs (if any)
++    for (const identity of ContextualIdentityService.getPublicIdentities()) {
++      if (identity.name && identity.name.startsWith(IDENTITY_NAME)) {
++        ContextualIdentityService.remove(identity.userContextId);
++        ContextualIdentityService.closeContainerTabs(identity.userContextId);
++      }
++    }
++  }
++
++  grantPermissions(browserContextId, origin, permissions) {
++    const attrs = browserContextId ? {userContextId: this.userContextId(browserContextId)} : {};
++    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(origin), attrs);
++    if (!this._principalsForBrowserContextId.has(browserContextId))
++      this._principalsForBrowserContextId.set(browserContextId, []);
++    this._principalsForBrowserContextId.get(browserContextId).push(principal);
++    for (const permission of ALL_PERMISSIONS) {
++      const action = permissions.includes(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
++      Services.perms.addFromPrincipal(principal, permission, action);
++    }
++  }
++
++  resetPermissions(browserContextId) {
++    if (!this._principalsForBrowserContextId.has(browserContextId))
++      return;
++    const principals = this._principalsForBrowserContextId.get(browserContextId);
++    for (const principal of principals) {
++      for (const permission of ALL_PERMISSIONS)
++        Services.perms.removeFromPrincipal(principal, permission);
++    }
++    this._principalsForBrowserContextId.delete(browserContextId);
++  }
++
++  createBrowserContext() {
++    const browserContextId = (++this._id) + '';
++    const identity = ContextualIdentityService.create(IDENTITY_NAME + browserContextId);
++    this._browserContextIdToUserContextId.set(browserContextId, identity.userContextId);
++    this._userContextIdToBrowserContextId.set(identity.userContextId, browserContextId);
++    return browserContextId;
++  }
++
++  browserContextId(userContextId) {
++    return this._userContextIdToBrowserContextId.get(userContextId);
++  }
++
++  userContextId(browserContextId) {
++    return this._browserContextIdToUserContextId.get(browserContextId);
++  }
++
++  removeBrowserContext(browserContextId) {
++    const userContextId = this._browserContextIdToUserContextId.get(browserContextId);
++    ContextualIdentityService.remove(userContextId);
++    ContextualIdentityService.closeContainerTabs(userContextId);
++    this._browserContextIdToUserContextId.delete(browserContextId);
++    this._userContextIdToBrowserContextId.delete(userContextId);
++  }
++
++  getBrowserContexts() {
++    return Array.from(this._browserContextIdToUserContextId.keys());
++  }
++
++  setCookies(browserContextId, cookies) {
++    const protocolToSameSite = {
++      [undefined]: Ci.nsICookie.SAMESITE_NONE,
++      'Lax': Ci.nsICookie.SAMESITE_LAX,
++      'Strict': Ci.nsICookie.SAMESITE_STRICT,
++    };
++    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : undefined;
++    for (const cookie of cookies) {
++      const uri = cookie.url ? NetUtil.newURI(cookie.url) : null;
++      let domain = cookie.domain;
++      if (!domain) {
++        if (!uri)
++          throw new Error('At least one of the url and domain needs to be specified');
++        domain = uri.host;
++      }
++      let path = cookie.path;
++      if (!path)
++        path = uri ? dirPath(uri.filePath) : '/';
++      let secure = false;
++      if (cookie.secure !== undefined)
++        secure = cookie.secure;
++      else if (uri.scheme === 'https')
++        secure = true;
++      Services.cookies.add(
++        domain,
++        path,
++        cookie.name,
++        cookie.value,
++        secure,
++        cookie.httpOnly || false,
++        cookie.expires === undefined || cookie.expires === -1 /* isSession */,
++        cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires,
++        { userContextId } /* originAttributes */,
++        protocolToSameSite[cookie.sameSite],
++      );
++    }
++  }
++
++  deleteCookies(browserContextId, cookies) {
++    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : undefined;
++    for (const cookie of cookies) {
++      let defaultDomain = '';
++      let defaultPath = '/';
++      if (cookie.url) {
++        const uri = NetUtil.newURI(cookie.url);
++        defaultDomain = uri.host;
++        defaultPath = dirPath(uri.filePath);
++      }
++      Services.cookies.remove(
++        cookie.domain || defaultDomain,
++        cookie.name,
++        cookie.path || defaultPath,
++        { userContextId } /* originAttributes */,
++      );
++    }
++  }
++
++  getCookies(browserContextId, urls) {
++    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : 0;
++    const result = [];
++    const sameSiteToProtocol = {
++      [Ci.nsICookie.SAMESITE_NONE]: undefined,
++      [Ci.nsICookie.SAMESITE_LAX]: 'Lax',
++      [Ci.nsICookie.SAMESITE_STRICT]: 'Strict',
++    };
++    const uris = urls.map(url => NetUtil.newURI(url));
++    for (let cookie of Services.cookies.enumerator) {
++      if (cookie.originAttributes.userContextId !== userContextId)
++        continue;
++      if (!uris.some(uri => cookieMatchesURI(cookie, uri)))
++        continue;
++      result.push({
++        name: cookie.name,
++        value: cookie.value,
++        domain: cookie.host,
++        path: cookie.path,
++        expires: cookie.isSession ? -1 : cookie.expiry,
++        size: cookie.name.length + cookie.value.length,
++        httpOnly: cookie.isHttpOnly,
++        secure: cookie.isSecure,
++        session: cookie.isSession,
++        sameSite: sameSiteToProtocol[cookie.sameSite],
++      });
++    }
++    return result;
++  }
++}
++
++function cookieMatchesURI(cookie, uri) {
++  const hostMatches = cookie.host === uri.host || cookie.host === '.' + uri.host;
++  const pathMatches = uri.filePath.startsWith(cookie.path);
++  return hostMatches && pathMatches;
++}
++
++function dirPath(path) {
++  return path.substring(0, path.lastIndexOf('/') + 1);
++}
++
++var EXPORTED_SYMBOLS = ['BrowserContextManager'];
++this.BrowserContextManager = BrowserContextManager;
++
+diff --git a/testing/juggler/Helper.js b/testing/juggler/Helper.js
+new file mode 100644
+index 000000000000..673e93b0278a
+--- /dev/null
++++ b/testing/juggler/Helper.js
+@@ -0,0 +1,101 @@
++const uuidGen = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++
++class Helper {
++  addObserver(handler, topic) {
++    Services.obs.addObserver(handler, topic);
++    return () => Services.obs.removeObserver(handler, topic);
++  }
++
++  addMessageListener(receiver, eventName, handler) {
++    receiver.addMessageListener(eventName, handler);
++    return () => receiver.removeMessageListener(eventName, handler);
++  }
++
++  addEventListener(receiver, eventName, handler) {
++    receiver.addEventListener(eventName, handler);
++    return () => receiver.removeEventListener(eventName, handler);
++  }
++
++  on(receiver, eventName, handler) {
++    // The toolkit/modules/EventEmitter.jsm dispatches event name as a first argument.
++    // Fire event listeners without it for convenience.
++    const handlerWrapper = (_, ...args) => handler(...args);
++    receiver.on(eventName, handlerWrapper);
++    return () => receiver.off(eventName, handlerWrapper);
++  }
++
++  addProgressListener(progress, listener, flags) {
++    progress.addProgressListener(listener, flags);
++    return () => progress.removeProgressListener(listener);
++  }
++
++  removeListeners(listeners) {
++    for (const tearDown of listeners)
++      tearDown.call(null);
++    listeners.splice(0, listeners.length);
++  }
++
++  generateId() {
++    return uuidGen.generateUUID().toString();
++  }
++
++  getNetworkErrorStatusText(status) {
++    if (!status)
++      return null;
++    for (const key of Object.keys(Cr)) {
++      if (Cr[key] === status)
++        return key;
++    }
++    // Security module. The following is taken from
++    // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/How_to_check_the_secruity_state_of_an_XMLHTTPRequest_over_SSL
++    if ((status & 0xff0000) === 0x5a0000) {
++      // NSS_SEC errors (happen below the base value because of negative vals)
++      if ((status & 0xffff) < Math.abs(Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE)) {
++        // The bases are actually negative, so in our positive numeric space, we
++        // need to subtract the base off our value.
++        const nssErr = Math.abs(Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE) - (status & 0xffff);
++        switch (nssErr) {
++          case 11:
++            return 'SEC_ERROR_EXPIRED_CERTIFICATE';
++          case 12:
++            return 'SEC_ERROR_REVOKED_CERTIFICATE';
++          case 13:
++            return 'SEC_ERROR_UNKNOWN_ISSUER';
++          case 20:
++            return 'SEC_ERROR_UNTRUSTED_ISSUER';
++          case 21:
++            return 'SEC_ERROR_UNTRUSTED_CERT';
++          case 36:
++            return 'SEC_ERROR_CA_CERT_INVALID';
++          case 90:
++            return 'SEC_ERROR_INADEQUATE_KEY_USAGE';
++          case 176:
++            return 'SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED';
++          default:
++            return 'SEC_ERROR_UNKNOWN';
++        }
++      }
++      const sslErr = Math.abs(Ci.nsINSSErrorsService.NSS_SSL_ERROR_BASE) - (status & 0xffff);
++      switch (sslErr) {
++        case 3:
++          return 'SSL_ERROR_NO_CERTIFICATE';
++        case 4:
++          return 'SSL_ERROR_BAD_CERTIFICATE';
++        case 8:
++          return 'SSL_ERROR_UNSUPPORTED_CERTIFICATE_TYPE';
++        case 9:
++          return 'SSL_ERROR_UNSUPPORTED_VERSION';
++        case 12:
++          return 'SSL_ERROR_BAD_CERT_DOMAIN';
++        default:
++          return 'SSL_ERROR_UNKNOWN';
++      }
++    }
++    return '<unknown error>';
++  }
++}
++
++var EXPORTED_SYMBOLS = [ "Helper" ];
++this.Helper = Helper;
++
+diff --git a/testing/juggler/NetworkObserver.js b/testing/juggler/NetworkObserver.js
+new file mode 100644
+index 000000000000..cc8cb8fe9d83
+--- /dev/null
++++ b/testing/juggler/NetworkObserver.js
+@@ -0,0 +1,450 @@
++"use strict";
++
++const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
++const {CommonUtils} = ChromeUtils.import("resource://services-common/utils.js");
++
++
++const Cc = Components.classes;
++const Ci = Components.interfaces;
++const Cu = Components.utils;
++const Cr = Components.results;
++const Cm = Components.manager;
++const CC = Components.Constructor;
++const helper = new Helper();
++
++const BinaryInputStream = CC('@mozilla.org/binaryinputstream;1', 'nsIBinaryInputStream', 'setInputStream');
++const BinaryOutputStream = CC('@mozilla.org/binaryoutputstream;1', 'nsIBinaryOutputStream', 'setOutputStream');
++const StorageStream = CC('@mozilla.org/storagestream;1', 'nsIStorageStream', 'init');
++
++// Cap response storage with 100Mb per tracked tab.
++const MAX_RESPONSE_STORAGE_SIZE = 100 * 1024 * 1024;
++
++/**
++ * This is a nsIChannelEventSink implementation that monitors channel redirects.
++ */
++const SINK_CLASS_DESCRIPTION = "Juggler NetworkMonitor Channel Event Sink";
++const SINK_CLASS_ID = Components.ID("{c2b4c83e-607a-405a-beab-0ef5dbfb7617}");
++const SINK_CONTRACT_ID = "@mozilla.org/network/monitor/channeleventsink;1";
++const SINK_CATEGORY_NAME = "net-channel-event-sinks";
++
++class NetworkObserver {
++  static instance() {
++    return NetworkObserver._instance || null;
++  }
++
++  static initialize() {
++    if (NetworkObserver._instance)
++      return;
++    NetworkObserver._instance = new NetworkObserver();
++  }
++
++  constructor() {
++    EventEmitter.decorate(this);
++    this._browserSessionCount = new Map();
++    this._activityDistributor = Cc["@mozilla.org/network/http-activity-distributor;1"].getService(Ci.nsIHttpActivityDistributor);
++    this._activityDistributor.addObserver(this);
++
++    this._redirectMap = new Map();
++    this._channelSink = {
++      QueryInterface: ChromeUtils.generateQI([Ci.nsIChannelEventSink]),
++      asyncOnChannelRedirect: (oldChannel, newChannel, flags, callback) => {
++        this._onRedirect(oldChannel, newChannel);
++        callback.onRedirectVerifyCallback(Cr.NS_OK);
++      },
++    };
++    this._channelSinkFactory = {
++      QueryInterface: ChromeUtils.generateQI([Ci.nsIFactory]),
++      createInstance: (aOuter, aIID) => this._channelSink.QueryInterface(aIID),
++    };
++    // Register self as ChannelEventSink to track redirects.
++    const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
++    registrar.registerFactory(SINK_CLASS_ID, SINK_CLASS_DESCRIPTION, SINK_CONTRACT_ID, this._channelSinkFactory);
++    Services.catMan.addCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID, SINK_CONTRACT_ID, false, true);
++
++    // Request interception state.
++    this._browserSuspendedChannels = new Map();
++    this._extraHTTPHeaders = new Map();
++    this._browserResponseStorages = new Map();
++
++    this._eventListeners = [
++      helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request'),
++      helper.addObserver(this._onResponse.bind(this, false /* fromCache */), 'http-on-examine-response'),
++      helper.addObserver(this._onResponse.bind(this, true /* fromCache */), 'http-on-examine-cached-response'),
++      helper.addObserver(this._onResponse.bind(this, true /* fromCache */), 'http-on-examine-merged-response'),
++    ];
++  }
++
++  setExtraHTTPHeaders(browser, headers) {
++    if (!headers)
++      this._extraHTTPHeaders.delete(browser);
++    else
++      this._extraHTTPHeaders.set(browser, headers);
++  }
++
++  enableRequestInterception(browser) {
++    if (!this._browserSuspendedChannels.has(browser))
++      this._browserSuspendedChannels.set(browser, new Map());
++  }
++
++  disableRequestInterception(browser) {
++    const suspendedChannels = this._browserSuspendedChannels.get(browser);
++    if (!suspendedChannels)
++      return;
++    this._browserSuspendedChannels.delete(browser);
++    for (const channel of suspendedChannels.values())
++      channel.resume();
++  }
++
++  resumeSuspendedRequest(browser, requestId, headers) {
++    const suspendedChannels = this._browserSuspendedChannels.get(browser);
++    if (!suspendedChannels)
++      throw new Error(`Request interception is not enabled`);
++    const httpChannel = suspendedChannels.get(requestId);
++    if (!httpChannel)
++      throw new Error(`Cannot find request "${requestId}"`);
++    if (headers) {
++      // 1. Clear all previous headers.
++      for (const header of requestHeaders(httpChannel))
++        httpChannel.setRequestHeader(header.name, '', false /* merge */);
++      // 2. Set new headers.
++      for (const header of headers)
++        httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
++    }
++    suspendedChannels.delete(requestId);
++    httpChannel.resume();
++  }
++
++  getResponseBody(browser, requestId) {
++    const responseStorage = this._browserResponseStorages.get(browser);
++    if (!responseStorage)
++      throw new Error('Responses are not tracked for the given browser');
++    return responseStorage.getBase64EncodedResponse(requestId);
++  }
++
++  abortSuspendedRequest(browser, aRequestId) {
++    const suspendedChannels = this._browserSuspendedChannels.get(browser);
++    if (!suspendedChannels)
++      throw new Error(`Request interception is not enabled`);
++    const httpChannel = suspendedChannels.get(aRequestId);
++    if (!httpChannel)
++      throw new Error(`Cannot find request "${aRequestId}"`);
++    suspendedChannels.delete(aRequestId);
++    httpChannel.cancel(Cr.NS_ERROR_FAILURE);
++    httpChannel.resume();
++    this.emit('requestfailed', httpChannel, {
++      requestId: requestId(httpChannel),
++      errorCode: helper.getNetworkErrorStatusText(httpChannel.status),
++    });
++  }
++
++  _onRedirect(oldChannel, newChannel) {
++    if (!(oldChannel instanceof Ci.nsIHttpChannel))
++      return;
++    const httpChannel = oldChannel.QueryInterface(Ci.nsIHttpChannel);
++    const loadContext = getLoadContext(httpChannel);
++    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++      return;
++    this._redirectMap.set(newChannel, oldChannel);
++  }
++
++  observeActivity(channel, activityType, activitySubtype, timestamp, extraSizeData, extraStringData) {
++    if (activityType !== Ci.nsIHttpActivityObserver.ACTIVITY_TYPE_HTTP_TRANSACTION)
++      return;
++    if (!(channel instanceof Ci.nsIHttpChannel))
++      return;
++    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
++    const loadContext = getLoadContext(httpChannel);
++    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++      return;
++    if (activitySubtype !== Ci.nsIHttpActivityObserver.ACTIVITY_SUBTYPE_TRANSACTION_CLOSE)
++      return;
++    this.emit('requestfinished', httpChannel, {
++      requestId: requestId(httpChannel),
++    });
++  }
++
++  _onRequest(channel, topic) {
++    if (!(channel instanceof Ci.nsIHttpChannel))
++      return;
++    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
++    const loadContext = getLoadContext(httpChannel);
++    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++      return;
++    const extraHeaders = this._extraHTTPHeaders.get(loadContext.topFrameElement);
++    if (extraHeaders) {
++      for (const header of extraHeaders)
++        httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
++    }
++    const causeType = httpChannel.loadInfo ? httpChannel.loadInfo.externalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
++    const suspendedChannels = this._browserSuspendedChannels.get(loadContext.topFrameElement);
++    if (suspendedChannels) {
++      httpChannel.suspend();
++      suspendedChannels.set(requestId(httpChannel), httpChannel);
++    }
++    const oldChannel = this._redirectMap.get(httpChannel);
++    this._redirectMap.delete(httpChannel);
++
++    // Install response body hooks.
++    new ResponseBodyListener(this, loadContext.topFrameElement, httpChannel);
++
++    this.emit('request', httpChannel, {
++      url: httpChannel.URI.spec,
++      suspended: suspendedChannels ? true : undefined,
++      requestId: requestId(httpChannel),
++      redirectedFrom: oldChannel ? requestId(oldChannel) : undefined,
++      postData: readRequestPostData(httpChannel),
++      headers: requestHeaders(httpChannel),
++      method: httpChannel.requestMethod,
++      isNavigationRequest: httpChannel.isMainDocumentChannel,
++      cause: causeTypeToString(causeType),
++    });
++  }
++
++  _onResponse(fromCache, httpChannel, topic) {
++    const loadContext = getLoadContext(httpChannel);
++    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++      return;
++    httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
++    const headers = [];
++    httpChannel.visitResponseHeaders({
++      visitHeader: (name, value) => headers.push({name, value}),
++    });
++
++    let remoteIPAddress = undefined;
++    let remotePort = undefined;
++    try {
++      remoteIPAddress = httpChannel.remoteAddress;
++      remotePort = httpChannel.remotePort;
++    } catch (e) {
++      // remoteAddress is not defined for cached requests.
++    }
++    this.emit('response', httpChannel, {
++      requestId: requestId(httpChannel),
++      securityDetails: getSecurityDetails(httpChannel),
++      fromCache,
++      headers,
++      remoteIPAddress,
++      remotePort,
++      status: httpChannel.responseStatus,
++      statusText: httpChannel.responseStatusText,
++    });
++  }
++
++  _onResponseFinished(browser, httpChannel, body) {
++    const responseStorage = this._browserResponseStorages.get(browser);
++    if (!responseStorage)
++      return;
++    responseStorage.addResponseBody(httpChannel, body);
++    this.emit('requestfinished', httpChannel, {
++      requestId: requestId(httpChannel),
++    });
++  }
++
++  startTrackingBrowserNetwork(browser) {
++    const value = this._browserSessionCount.get(browser) || 0;
++    this._browserSessionCount.set(browser, value + 1);
++    if (value === 0)
++      this._browserResponseStorages.set(browser, new ResponseStorage(MAX_RESPONSE_STORAGE_SIZE, MAX_RESPONSE_STORAGE_SIZE / 10));
++    return () => this.stopTrackingBrowserNetwork(browser);
++  }
++
++  stopTrackingBrowserNetwork(browser) {
++    const value = this._browserSessionCount.get(browser);
++    if (value) {
++      this._browserSessionCount.set(browser, value - 1);
++    } else {
++      this._browserSessionCount.delete(browser);
++      this._browserResponseStorages.delete(browser);
++    }
++  }
++
++  dispose() {
++    this._activityDistributor.removeObserver(this);
++    const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
++    registrar.unregisterFactory(SINK_CLASS_ID, this._channelSinkFactory);
++    Services.catMan.deleteCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID, false);
++    helper.removeListeners(this._eventListeners);
++  }
++}
++
++const protocolVersionNames = {
++  [Ci.nsITransportSecurityInfo.TLS_VERSION_1]: 'TLS 1',
++  [Ci.nsITransportSecurityInfo.TLS_VERSION_1_1]: 'TLS 1.1',
++  [Ci.nsITransportSecurityInfo.TLS_VERSION_1_2]: 'TLS 1.2',
++  [Ci.nsITransportSecurityInfo.TLS_VERSION_1_3]: 'TLS 1.3',
++};
++
++function getSecurityDetails(httpChannel) {
++  const securityInfo = httpChannel.securityInfo;
++  if (!securityInfo)
++    return null;
++  securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
++  if (!securityInfo.serverCert)
++    return null;
++  return {
++    protocol: protocolVersionNames[securityInfo.protocolVersion] || '<unknown>',
++    subjectName: securityInfo.serverCert.commonName,
++    issuer: securityInfo.serverCert.issuerCommonName,
++    // Convert to seconds.
++    validFrom: securityInfo.serverCert.validity.notBefore / 1000 / 1000,
++    validTo: securityInfo.serverCert.validity.notAfter / 1000 / 1000,
++  };
++}
++
++function readRequestPostData(httpChannel) {
++  if (!(httpChannel instanceof Ci.nsIUploadChannel))
++    return undefined;
++  const iStream = httpChannel.uploadStream;
++  if (!iStream)
++    return undefined;
++  const isSeekableStream = iStream instanceof Ci.nsISeekableStream;
++
++  let prevOffset;
++  if (isSeekableStream) {
++    prevOffset = iStream.tell();
++    iStream.seek(Ci.nsISeekableStream.NS_SEEK_SET, 0);
++  }
++
++  // Read data from the stream.
++  let text = undefined;
++  try {
++    text = NetUtil.readInputStreamToString(iStream, iStream.available());
++    const converter = Cc['@mozilla.org/intl/scriptableunicodeconverter']
++        .createInstance(Ci.nsIScriptableUnicodeConverter);
++    converter.charset = 'UTF-8';
++    text = converter.ConvertToUnicode(text);
++  } catch (err) {
++    text = undefined;
++  }
++
++  // Seek locks the file, so seek to the beginning only if necko hasn't
++  // read it yet, since necko doesn't seek to 0 before reading (at lest
++  // not till 459384 is fixed).
++  if (isSeekableStream && prevOffset == 0)
++    iStream.seek(Ci.nsISeekableStream.NS_SEEK_SET, 0);
++  return text;
++}
++
++function getLoadContext(httpChannel) {
++  let loadContext = null;
++  try {
++    if (httpChannel.notificationCallbacks)
++      loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
++  } catch (e) {}
++  try {
++    if (!loadContext && httpChannel.loadGroup)
++      loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
++  } catch (e) { }
++  return loadContext;
++}
++
++function requestId(httpChannel) {
++  return httpChannel.channelId + '';
++}
++
++function requestHeaders(httpChannel) {
++  const headers = [];
++  httpChannel.visitRequestHeaders({
++    visitHeader: (name, value) => headers.push({name, value}),
++  });
++  return headers;
++}
++
++function causeTypeToString(causeType) {
++  for (let key in Ci.nsIContentPolicy) {
++    if (Ci.nsIContentPolicy[key] === causeType)
++      return key;
++  }
++  return 'TYPE_OTHER';
++}
++
++class ResponseStorage {
++  constructor(maxTotalSize, maxResponseSize) {
++    this._totalSize = 0;
++    this._maxResponseSize = maxResponseSize;
++    this._maxTotalSize = maxTotalSize;
++    this._responses = new Map();
++  }
++
++  addResponseBody(httpChannel, body) {
++    if (body.length > this._maxResponseSize) {
++      this._responses.set(requestId, {
++        evicted: true,
++        body: '',
++      });
++      return;
++    }
++    let encodings = [];
++    if ((httpChannel instanceof Ci.nsIEncodedChannel) && httpChannel.contentEncodings && !httpChannel.applyConversion) {
++      const encodingHeader = httpChannel.getResponseHeader("Content-Encoding");
++      encodings = encodingHeader.split(/\s*\t*,\s*\t*/);
++    }
++    this._responses.set(requestId(httpChannel), {body, encodings});
++    this._totalSize += body.length;
++    if (this._totalSize > this._maxTotalSize) {
++      for (let [requestId, response] of this._responses) {
++        this._totalSize -= response.body.length;
++        response.body = '';
++        response.evicted = true;
++        if (this._totalSize < this._maxTotalSize)
++          break;
++      }
++    }
++  }
++
++  getBase64EncodedResponse(requestId) {
++    const response = this._responses.get(requestId);
++    if (!response)
++      throw new Error(`Request "${requestId}" is not found`);
++    if (response.evicted)
++      return {base64body: '', evicted: true};
++    let result = response.body;
++    if (response.encodings && response.encodings.length) {
++      for (const encoding of response.encodings)
++        result = CommonUtils.convertString(result, encoding, 'uncompressed');
++    }
++    return {base64body: btoa(result)};
++  }
++}
++
++class ResponseBodyListener {
++  constructor(networkObserver, browser, httpChannel) {
++    this._networkObserver = networkObserver;
++    this._browser = browser;
++    this._httpChannel = httpChannel;
++    this._chunks = [];
++    this.QueryInterface = ChromeUtils.generateQI([Ci.nsIStreamListener]);
++    httpChannel.QueryInterface(Ci.nsITraceableChannel);
++    this.originalListener = httpChannel.setNewListener(this);
++  }
++
++  onDataAvailable(aRequest, aInputStream, aOffset, aCount) {
++    const iStream = new BinaryInputStream(aInputStream);
++    const sStream = new StorageStream(8192, aCount, null);
++    const oStream = new BinaryOutputStream(sStream.getOutputStream(0));
++
++    // Copy received data as they come.
++    const data = iStream.readBytes(aCount);
++    this._chunks.push(data);
++
++    oStream.writeBytes(data, aCount);
++    this.originalListener.onDataAvailable(aRequest, sStream.newInputStream(0), aOffset, aCount);
++  }
++
++  onStartRequest(aRequest) {
++    this.originalListener.onStartRequest(aRequest);
++  }
++
++  onStopRequest(aRequest, aStatusCode) {
++    this.originalListener.onStopRequest(aRequest, aStatusCode);
++    const body = this._chunks.join('');
++    delete this._chunks;
++    this._networkObserver._onResponseFinished(this._browser, this._httpChannel, body);
++  }
++}
++
++var EXPORTED_SYMBOLS = ['NetworkObserver'];
++this.NetworkObserver = NetworkObserver;
+diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
+new file mode 100644
+index 000000000000..da5e4ee371d0
+--- /dev/null
++++ b/testing/juggler/TargetRegistry.js
+@@ -0,0 +1,187 @@
++const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++
++const Cc = Components.classes;
++const Ci = Components.interfaces;
++const Cu = Components.utils;
++
++const helper = new Helper();
++
++class TargetRegistry {
++  static instance() {
++    return TargetRegistry._instance || null;
++  }
++
++  static initialize(mainWindow, contextManager) {
++    if (TargetRegistry._instance)
++      return;
++    TargetRegistry._instance = new TargetRegistry(mainWindow, contextManager);
++  }
++
++  constructor(mainWindow, contextManager) {
++    EventEmitter.decorate(this);
++
++    this._mainWindow = mainWindow;
++    this._contextManager = contextManager;
++    this._targets = new Map();
++
++    this._browserTarget = new BrowserTarget();
++    this._targets.set(this._browserTarget.id(), this._browserTarget);
++    this._tabToTarget = new Map();
++
++    for (const tab of this._mainWindow.gBrowser.tabs)
++      this._ensureTargetForTab(tab);
++    this._mainWindow.gBrowser.tabContainer.addEventListener('TabOpen', event => {
++      this._ensureTargetForTab(event.target);
++    });
++    this._mainWindow.gBrowser.tabContainer.addEventListener('TabClose', event => {
++      const tab = event.target;
++      const target = this._tabToTarget.get(tab);
++      if (!target)
++        return;
++      this._targets.delete(target.id());
++      this._tabToTarget.delete(tab);
++      target.dispose();
++      this.emit(TargetRegistry.Events.TargetDestroyed, target.info());
++    });
++  }
++
++  async newPage({browserContextId}) {
++    const tab = this._mainWindow.gBrowser.addTab('about:blank', {
++      userContextId: this._contextManager.userContextId(browserContextId),
++      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
++    });
++    this._mainWindow.gBrowser.selectedTab = tab;
++    // Await navigation to about:blank
++    await new Promise(resolve => {
++      const wpl = {
++        onLocationChange: function(aWebProgress, aRequest, aLocation) {
++          tab.linkedBrowser.removeProgressListener(wpl);
++          resolve();
++        },
++        QueryInterface: ChromeUtils.generateQI([
++          Ci.nsIWebProgressListener,
++          Ci.nsISupportsWeakReference,
++        ]),
++      };
++      tab.linkedBrowser.addProgressListener(wpl);
++    });
++    const target = this._ensureTargetForTab(tab);
++    return target.id();
++  }
++
++  async closePage(targetId, runBeforeUnload = false) {
++    const tab = this.tabForTarget(targetId);
++    await this._mainWindow.gBrowser.removeTab(tab, {
++      skipPermitUnload: !runBeforeUnload,
++    });
++  }
++
++  targetInfos() {
++    return Array.from(this._targets.values()).map(target => target.info());
++  }
++
++  targetInfo(targetId) {
++    const target = this._targets.get(targetId);
++    return target ? target.info() : null;
++  }
++
++  browserTargetInfo() {
++    return this._browserTarget.info();
++  }
++
++  tabForTarget(targetId) {
++    const target = this._targets.get(targetId);
++    if (!target)
++      throw new Error(`Target "${targetId}" does not exist!`);
++    if (!(target instanceof PageTarget))
++      throw new Error(`Target "${targetId}" is not a page!`);
++    return target._tab;
++  }
++
++  _ensureTargetForTab(tab) {
++    if (this._tabToTarget.has(tab))
++      return this._tabToTarget.get(tab);
++    const openerTarget = tab.openerTab ? this._ensureTargetForTab(tab.openerTab) : null;
++    const target = new PageTarget(this, tab, this._contextManager.browserContextId(tab.userContextId), openerTarget);
++
++    this._targets.set(target.id(), target);
++    this._tabToTarget.set(tab, target);
++    this.emit(TargetRegistry.Events.TargetCreated, target.info());
++  }
++}
++
++let lastTabTargetId = 0;
++
++class PageTarget {
++  constructor(registry, tab, browserContextId, opener) {
++    this._targetId = 'target-page-' + (++lastTabTargetId);
++    this._registry = registry;
++    this._tab = tab;
++    this._browserContextId = browserContextId;
++    this._openerId = opener ? opener.id() : undefined;
++    this._url = tab.linkedBrowser.currentURI.spec;
++
++    // First navigation always happens to about:blank - do not report it.
++    this._skipNextNavigation = true;
++
++    const navigationListener = {
++      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
++      onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
++    };
++    this._eventListeners = [
++      helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
++    ];
++  }
++
++  id() {
++    return this._targetId;
++  }
++
++  info() {
++    return {
++      targetId: this.id(),
++      type: 'page',
++      url: this._url,
++      browserContextId: this._browserContextId,
++      openerId: this._openerId,
++    };
++  }
++
++  _onNavigated(aLocation) {
++    if (this._skipNextNavigation) {
++      this._skipNextNavigation = false;
++      return;
++    }
++    this._url = aLocation.spec;
++    this._registry.emit(TargetRegistry.Events.TargetChanged, this.info());
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
++}
++
++class BrowserTarget {
++  id() {
++    return 'target-browser';
++  }
++
++  info() {
++    return {
++      targetId: this.id(),
++      type: 'browser',
++      url: '',
++    }
++  }
++}
++
++TargetRegistry.Events = {
++  TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
++  TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
++  TargetChanged: Symbol('TargetRegistry.Events.TargetChanged'),
++};
++
++var EXPORTED_SYMBOLS = ['TargetRegistry'];
++this.TargetRegistry = TargetRegistry;
+diff --git a/testing/juggler/components/juggler.js b/testing/juggler/components/juggler.js
+new file mode 100644
+index 000000000000..9654aeeb257d
+--- /dev/null
++++ b/testing/juggler/components/juggler.js
+@@ -0,0 +1,112 @@
++const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {Dispatcher} = ChromeUtils.import("chrome://juggler/content/protocol/Dispatcher.js");
++const {BrowserContextManager} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
++const {NetworkObserver} = ChromeUtils.import("chrome://juggler/content/NetworkObserver.js");
++const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
++
++const Cc = Components.classes;
++const Ci = Components.interfaces;
++const Cu = Components.utils;
++
++const FRAME_SCRIPT = "chrome://juggler/content/content/main.js";
++
++// Command Line Handler
++function CommandLineHandler() {
++  this._port = -1;
++};
++
++CommandLineHandler.prototype = {
++  classDescription: "Sample command-line handler",
++  classID: Components.ID('{f7a74a33-e2ab-422d-b022-4fb213dd2639}'),
++  contractID: "@mozilla.org/remote/juggler;1",
++  _xpcom_categories: [{
++    category: "command-line-handler",
++    entry: "m-juggler"
++  }],
++
++  /* nsICommandLineHandler */
++  handle: async function(cmdLine) {
++    const jugglerFlag = cmdLine.handleFlagWithParam("juggler", false);
++    if (!jugglerFlag || isNaN(jugglerFlag))
++      return;
++    this._port = parseInt(jugglerFlag, 10);
++    Services.obs.addObserver(this, 'sessionstore-windows-restored');
++  },
++
++  observe: async function(subject, topic) {
++    Services.obs.removeObserver(this, 'sessionstore-windows-restored');
++
++    const win = await waitForBrowserWindow();
++    BrowserContextManager.initialize();
++    NetworkObserver.initialize();
++    TargetRegistry.initialize(win, BrowserContextManager.instance());
++
++    const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
++    const WebSocketServer = require('devtools/server/socket/websocket-server');
++    this._server = Cc["@mozilla.org/network/server-socket;1"].createInstance(Ci.nsIServerSocket);
++    this._server.initSpecialConnection(this._port, Ci.nsIServerSocket.KeepWhenOffline | Ci.nsIServerSocket.LoopbackOnly, 4);
++    this._server.asyncListen({
++      onSocketAccepted: async(socket, transport) => {
++        const input = transport.openInputStream(0, 0, 0);
++        const output = transport.openOutputStream(0, 0, 0);
++        const webSocket = await WebSocketServer.accept(transport, input, output);
++        new Dispatcher(webSocket);
++      }
++    });
++
++    Services.mm.loadFrameScript(FRAME_SCRIPT, true /* aAllowDelayedLoad */);
++    dump(`Juggler listening on ws://127.0.0.1:${this._server.port}\n`);
++  },
++
++  QueryInterface: ChromeUtils.generateQI([ Ci.nsICommandLineHandler ]),
++
++  // CHANGEME: change the help info as appropriate, but
++  // follow the guidelines in nsICommandLineHandler.idl
++  // specifically, flag descriptions should start at
++  // character 24, and lines should be wrapped at
++  // 72 characters with embedded newlines,
++  // and finally, the string should end with a newline
++  helpInfo : "  --juggler            Enable Juggler automation\n"
++};
++
++var NSGetFactory = XPCOMUtils.generateNSGetFactory([CommandLineHandler]);
++
++/**
++ * @return {!Promise<Ci.nsIDOMChromeWindow>}
++ */
++async function waitForBrowserWindow() {
++  const windowsIt = Services.wm.getEnumerator('navigator:browser');
++  if (windowsIt.hasMoreElements())
++    return waitForWindowLoaded(windowsIt.getNext());
++
++  let fulfill;
++  let promise = new Promise(x => fulfill = x);
++
++  const listener = {
++    onOpenWindow: window => {
++      if (window instanceof Ci.nsIDOMChromeWindow) {
++        Services.wm.removeListener(listener);
++        fulfill(waitForWindowLoaded(window));
++      }
++    },
++    onCloseWindow: () => {}
++  };
++  Services.wm.addListener(listener);
++  return promise;
++
++  /**
++   * @param {!Ci.nsIDOMChromeWindow} window
++   * @return {!Promise<Ci.nsIDOMChromeWindow>}
++   */
++  function waitForWindowLoaded(window) {
++    if (window.document.readyState === 'complete')
++      return window;
++    return new Promise(fulfill => {
++      window.addEventListener('load', function listener() {
++        window.removeEventListener('load', listener);
++        fulfill(window);
++      });
++    });
++  }
++}
+diff --git a/testing/juggler/components/juggler.manifest b/testing/juggler/components/juggler.manifest
+new file mode 100644
+index 000000000000..50f893020756
+--- /dev/null
++++ b/testing/juggler/components/juggler.manifest
+@@ -0,0 +1,3 @@
++component {f7a74a33-e2ab-422d-b022-4fb213dd2639} juggler.js
++contract @mozilla.org/remote/juggler;1 {f7a74a33-e2ab-422d-b022-4fb213dd2639}
++category command-line-handler m-juggler @mozilla.org/remote/juggler;1
+diff --git a/testing/juggler/components/moz.build b/testing/juggler/components/moz.build
+new file mode 100644
+index 000000000000..268fbc361d80
+--- /dev/null
++++ b/testing/juggler/components/moz.build
+@@ -0,0 +1,9 @@
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++EXTRA_COMPONENTS += [
++    "juggler.js",
++    "juggler.manifest",
++]
++
+diff --git a/testing/juggler/content/ContentSession.js b/testing/juggler/content/ContentSession.js
+new file mode 100644
+index 000000000000..f68780d529e7
+--- /dev/null
++++ b/testing/juggler/content/ContentSession.js
+@@ -0,0 +1,63 @@
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {RuntimeAgent} = ChromeUtils.import('chrome://juggler/content/content/RuntimeAgent.js');
++const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
++
++const helper = new Helper();
++
++class ContentSession {
++  /**
++   * @param {string} sessionId
++   * @param {!ContentFrameMessageManager} messageManager
++   * @param {!FrameTree} frameTree
++   * @param {!ScrollbarManager} scrollbarManager
++   * @param {!NetworkMonitor} networkMonitor
++   */
++  constructor(sessionId, messageManager, frameTree, scrollbarManager, networkMonitor) {
++    this._sessionId = sessionId;
++    this._messageManager = messageManager;
++    const runtimeAgent = new RuntimeAgent(this);
++    const pageAgent = new PageAgent(this, runtimeAgent, frameTree, scrollbarManager, networkMonitor);
++    this._agents = {
++      Page: pageAgent,
++      Runtime: runtimeAgent,
++    };
++    this._eventListeners = [
++      helper.addMessageListener(messageManager, this._sessionId, this._onMessage.bind(this)),
++    ];
++  }
++
++  emitEvent(eventName, params) {
++    this._messageManager.sendAsyncMessage(this._sessionId, {eventName, params});
++  }
++
++  mm() {
++    return this._messageManager;
++  }
++
++  async _onMessage(msg) {
++    const id = msg.data.id;
++    try {
++      const [domainName, methodName] = msg.data.methodName.split('.');
++      const agent = this._agents[domainName];
++      if (!agent)
++        throw new Error(`unknown domain: ${domainName}`);
++      const handler = agent[methodName];
++      if (!handler)
++        throw new Error(`unknown method: ${domainName}.${methodName}`);
++      const result = await handler.call(agent, msg.data.params);
++      this._messageManager.sendAsyncMessage(this._sessionId, {id, result});
++    } catch (e) {
++      this._messageManager.sendAsyncMessage(this._sessionId, {id, error: e.message + '\n' + e.stack});
++    }
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++    for (const agent of Object.values(this._agents))
++      agent.dispose();
++  }
++}
++
++var EXPORTED_SYMBOLS = ['ContentSession'];
++this.ContentSession = ContentSession;
++
+diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
+new file mode 100644
+index 000000000000..2931c75e60d2
+--- /dev/null
++++ b/testing/juggler/content/FrameTree.js
+@@ -0,0 +1,232 @@
++"use strict";
++const Ci = Components.interfaces;
++const Cr = Components.results;
++const Cu = Components.utils;
++
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
++
++const helper = new Helper();
++
++class FrameTree {
++  constructor(rootDocShell) {
++    EventEmitter.decorate(this);
++    this._docShellToFrame = new Map();
++    this._frameIdToFrame = new Map();
++    this._mainFrame = this._createFrame(rootDocShell);
++    const webProgress = rootDocShell.QueryInterface(Ci.nsIInterfaceRequestor)
++                                .getInterface(Ci.nsIWebProgress);
++    this.QueryInterface = ChromeUtils.generateQI([
++      Ci.nsIWebProgressListener,
++      Ci.nsIWebProgressListener2,
++      Ci.nsISupportsWeakReference,
++    ]);
++
++    const flags = Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT |
++                  Ci.nsIWebProgress.NOTIFY_FRAME_LOCATION;
++    this._eventListeners = [
++      helper.addObserver(subject => this._onDocShellCreated(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-create'),
++      helper.addObserver(subject => this._onDocShellDestroyed(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-destroy'),
++      helper.addProgressListener(webProgress, this, flags),
++    ];
++  }
++
++  frameForDocShell(docShell) {
++    return this._docShellToFrame.get(docShell) || null;
++  }
++
++  frame(frameId) {
++    return this._frameIdToFrame.get(frameId) || null;
++  }
++
++  frames() {
++    let result = [];
++    collect(this._mainFrame);
++    return result;
++
++    function collect(frame) {
++      result.push(frame);
++      for (const subframe of frame._children)
++        collect(subframe);
++    }
++  }
++
++  mainFrame() {
++    return this._mainFrame;
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
++
++  onStateChange(progress, request, flag, status) {
++    if (!(request instanceof Ci.nsIChannel))
++      return;
++    const channel = request.QueryInterface(Ci.nsIChannel);
++    const docShell = progress.DOMWindow.docShell;
++    const frame = this._docShellToFrame.get(docShell);
++    if (!frame) {
++      dump(`ERROR: got a state changed event for un-tracked docshell!\n`);
++      return;
++    }
++
++    const isStart = flag & Ci.nsIWebProgressListener.STATE_START;
++    const isTransferring = flag & Ci.nsIWebProgressListener.STATE_TRANSFERRING;
++    const isStop = flag & Ci.nsIWebProgressListener.STATE_STOP;
++
++    if (isStart) {
++      // Starting a new navigation.
++      frame._pendingNavigationId = helper.generateId();
++      frame._pendingNavigationURL = channel.URI.spec;
++      this.emit(FrameTree.Events.NavigationStarted, frame);
++    } else if (isTransferring || (isStop && frame._pendingNavigationId && !status)) {
++      // Navigation is committed.
++      for (const subframe of frame._children)
++        this._detachFrame(subframe);
++      const navigationId = frame._pendingNavigationId;
++      frame._pendingNavigationId = null;
++      frame._pendingNavigationURL = null;
++      frame._lastCommittedNavigationId = navigationId;
++      frame._url = channel.URI.spec;
++      this.emit(FrameTree.Events.NavigationCommitted, frame);
++    } else if (isStop && frame._pendingNavigationId && status) {
++      // Navigation is aborted.
++      const navigationId = frame._pendingNavigationId;
++      frame._pendingNavigationId = null;
++      frame._pendingNavigationURL = null;
++      this.emit(FrameTree.Events.NavigationAborted, frame, navigationId, helper.getNetworkErrorStatusText(status));
++    }
++  }
++
++  onFrameLocationChange(progress, request, location, flags) {
++    const docShell = progress.DOMWindow.docShell;
++    const frame = this._docShellToFrame.get(docShell);
++    const sameDocumentNavigation = !!(flags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT);
++    if (frame && sameDocumentNavigation) {
++      frame._url = location.spec;
++      this.emit(FrameTree.Events.SameDocumentNavigation, frame);
++    }
++  }
++
++  _onDocShellCreated(docShell) {
++    // Bug 1142752: sometimes, the docshell appears to be immediately
++    // destroyed, bailout early to prevent random exceptions.
++    if (docShell.isBeingDestroyed())
++      return;
++    // If this docShell doesn't belong to our frame tree - do nothing.
++    let root = docShell;
++    while (root.parent)
++      root = root.parent;
++    if (root === this._mainFrame._docShell)
++      this._createFrame(docShell);
++  }
++
++  _createFrame(docShell) {
++    const parentFrame = this._docShellToFrame.get(docShell.parent) || null;
++    const frame = new Frame(this, docShell, parentFrame);
++    this._docShellToFrame.set(docShell, frame);
++    this._frameIdToFrame.set(frame.id(), frame);
++    this.emit(FrameTree.Events.FrameAttached, frame);
++    return frame;
++  }
++
++  _onDocShellDestroyed(docShell) {
++    const frame = this._docShellToFrame.get(docShell);
++    if (frame)
++      this._detachFrame(frame);
++  }
++
++  _detachFrame(frame) {
++    // Detach all children first
++    for (const subframe of frame._children)
++      this._detachFrame(subframe);
++    this._docShellToFrame.delete(frame._docShell);
++    this._frameIdToFrame.delete(frame.id());
++    if (frame._parentFrame)
++      frame._parentFrame._children.delete(frame);
++    frame._parentFrame = null;
++    this.emit(FrameTree.Events.FrameDetached, frame);
++  }
++}
++
++FrameTree.Events = {
++  FrameAttached: 'frameattached',
++  FrameDetached: 'framedetached',
++  NavigationStarted: 'navigationstarted',
++  NavigationCommitted: 'navigationcommitted',
++  NavigationAborted: 'navigationaborted',
++  SameDocumentNavigation: 'samedocumentnavigation',
++};
++
++class Frame {
++  constructor(frameTree, docShell, parentFrame) {
++    this._frameTree = frameTree;
++    this._docShell = docShell;
++    this._children = new Set();
++    this._frameId = helper.generateId();
++    this._parentFrame = null;
++    this._url = '';
++    if (parentFrame) {
++      this._parentFrame = parentFrame;
++      parentFrame._children.add(this);
++    }
++
++    this._lastCommittedNavigationId = null;
++    this._pendingNavigationId = null;
++    this._pendingNavigationURL = null;
++
++    this._textInputProcessor = null;
++  }
++
++  textInputProcessor() {
++    if (!this._textInputProcessor) {
++      this._textInputProcessor = Cc["@mozilla.org/text-input-processor;1"].createInstance(Ci.nsITextInputProcessor);
++      this._textInputProcessor.beginInputTransactionForTests(this._docShell.DOMWindow);
++    }
++    return this._textInputProcessor;
++  }
++
++  pendingNavigationId() {
++    return this._pendingNavigationId;
++  }
++
++  pendingNavigationURL() {
++    return this._pendingNavigationURL;
++  }
++
++  lastCommittedNavigationId() {
++    return this._lastCommittedNavigationId;
++  }
++
++  docShell() {
++    return this._docShell;
++  }
++
++  domWindow() {
++    return this._docShell.domWindow;
++  }
++
++  name() {
++    const frameElement = this._docShell.domWindow.frameElement;
++    let name = '';
++    if (frameElement)
++      name = frameElement.getAttribute('name') || frameElement.getAttribute('id') || '';
++    return name;
++  }
++
++  parentFrame() {
++    return this._parentFrame;
++  }
++
++  id() {
++    return this._frameId;
++  }
++
++  url() {
++    return this._url;
++  }
++}
++
++var EXPORTED_SYMBOLS = ['FrameTree'];
++this.FrameTree = FrameTree;
++
+diff --git a/testing/juggler/content/NetworkMonitor.js b/testing/juggler/content/NetworkMonitor.js
+new file mode 100644
+index 000000000000..2508cce41565
+--- /dev/null
++++ b/testing/juggler/content/NetworkMonitor.js
+@@ -0,0 +1,62 @@
++"use strict";
++const Ci = Components.interfaces;
++const Cr = Components.results;
++const Cu = Components.utils;
++
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++
++const helper = new Helper();
++
++class NetworkMonitor {
++  constructor(rootDocShell, frameTree) {
++    this._frameTree = frameTree;
++    this._requestDetails = new Map();
++
++    this._eventListeners = [
++      helper.addObserver(this._onRequest.bind(this), 'http-on-opening-request'),
++    ];
++  }
++
++  _onRequest(channel) {
++    if (!(channel instanceof Ci.nsIHttpChannel))
++      return;
++    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
++    const loadContext = getLoadContext(httpChannel);
++    if (!loadContext)
++      return;
++    const window = loadContext.associatedWindow;
++    const frame = this._frameTree.frameForDocShell(window.docShell)
++    if (!frame)
++      return;
++    this._requestDetails.set(httpChannel.channelId, {
++      frameId: frame.id(),
++    });
++  }
++
++  requestDetails(channelId) {
++    return this._requestDetails.get(channelId) || null;
++  }
++
++  dispose() {
++    this._requestDetails.clear();
++    helper.removeListeners(this._eventListeners);
++  }
++}
++
++function getLoadContext(httpChannel) {
++  let loadContext = null;
++  try {
++    if (httpChannel.notificationCallbacks)
++      loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
++  } catch (e) {}
++  try {
++    if (!loadContext && httpChannel.loadGroup)
++      loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
++  } catch (e) { }
++  return loadContext;
++}
++
++
++var EXPORTED_SYMBOLS = ['NetworkMonitor'];
++this.NetworkMonitor = NetworkMonitor;
++
+diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
+new file mode 100644
+index 000000000000..e8db4031620e
+--- /dev/null
++++ b/testing/juggler/content/PageAgent.js
+@@ -0,0 +1,621 @@
++"use strict";
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const Ci = Components.interfaces;
++const Cr = Components.results;
++const Cu = Components.utils;
++
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
++
++const helper = new Helper();
++
++class PageAgent {
++  constructor(session, runtimeAgent, frameTree, scrollbarManager, networkMonitor) {
++    this._session = session;
++    this._runtime = runtimeAgent;
++    this._frameTree = frameTree;
++    this._networkMonitor = networkMonitor;
++    this._scrollbarManager = scrollbarManager;
++
++    this._frameToExecutionContext = new Map();
++    this._scriptsToEvaluateOnNewDocument = new Map();
++    this._bindingsToAdd = new Set();
++
++    this._eventListeners = [];
++    this._enabled = false;
++
++    const docShell = frameTree.mainFrame().docShell();
++    this._initialDPPX = docShell.contentViewer.overrideDPPX;
++    this._customScrollbars = null;
++  }
++
++  async awaitViewportDimensions({width, height}) {
++    const win = this._frameTree.mainFrame().domWindow();
++    if (win.innerWidth === width && win.innerHeight === height)
++      return;
++    await new Promise(resolve => {
++      const listener = helper.addEventListener(win, 'resize', () => {
++        if (win.innerWidth === width && win.innerHeight === height) {
++          helper.removeListeners([listener]);
++          resolve();
++        }
++      });
++    });
++  }
++
++  requestDetails({channelId}) {
++    return this._networkMonitor.requestDetails(channelId);
++  }
++
++  async setViewport({deviceScaleFactor, isMobile, hasTouch}) {
++    const docShell = this._frameTree.mainFrame().docShell();
++    docShell.contentViewer.overrideDPPX = deviceScaleFactor || this._initialDPPX;
++    docShell.deviceSizeIsPageSize = isMobile;
++    docShell.touchEventsOverride = hasTouch ? Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED : Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_NONE;
++    this._scrollbarManager.setFloatingScrollbars(isMobile);
++  }
++
++  async setEmulatedMedia({media}) {
++    const docShell = this._frameTree.mainFrame().docShell();
++    if (media)
++      docShell.contentViewer.emulateMedium(media);
++    else
++      docShell.contentViewer.stopEmulatingMedium();
++  }
++
++  async setUserAgent({userAgent}) {
++    const docShell = this._frameTree.mainFrame().docShell();
++    docShell.customUserAgent = userAgent;
++  }
++
++  addScriptToEvaluateOnNewDocument({script}) {
++    const scriptId = helper.generateId();
++    this._scriptsToEvaluateOnNewDocument.set(scriptId, script);
++    return {scriptId};
++  }
++
++  removeScriptToEvaluateOnNewDocument({scriptId}) {
++    this._scriptsToEvaluateOnNewDocument.delete(scriptId);
++  }
++
++  setCacheDisabled({cacheDisabled}) {
++    const enable = Ci.nsIRequest.LOAD_NORMAL;
++    const disable = Ci.nsIRequest.LOAD_BYPASS_CACHE |
++                  Ci.nsIRequest.INHIBIT_CACHING;
++
++    const docShell = this._frameTree.mainFrame().docShell();
++    docShell.defaultLoadFlags = cacheDisabled ? disable : enable;
++  }
++
++  setJavascriptEnabled({enabled}) {
++    const docShell = this._frameTree.mainFrame().docShell();
++    docShell.allowJavascript = enabled;
++  }
++
++  enable() {
++    if (this._enabled)
++      return;
++
++    this._enabled = true;
++    // Dispatch frameAttached events for all initial frames
++    for (const frame of this._frameTree.frames()) {
++      this._onFrameAttached(frame);
++      if (frame.url())
++        this._onNavigationCommitted(frame);
++      if (frame.pendingNavigationId())
++        this._onNavigationStarted(frame);
++    }
++    this._eventListeners = [
++      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
++      helper.addEventListener(this._session.mm(), 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
++      helper.addEventListener(this._session.mm(), 'pageshow', this._onLoad.bind(this)),
++      helper.addEventListener(this._session.mm(), 'error', this._onError.bind(this)),
++      helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
++      helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
++      helper.on(this._frameTree, 'navigationstarted', this._onNavigationStarted.bind(this)),
++      helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
++      helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
++      helper.on(this._frameTree, 'samedocumentnavigation', this._onSameDocumentNavigation.bind(this)),
++    ];
++  }
++
++  _onDOMContentLoaded(event) {
++    const docShell = event.target.ownerGlobal.docShell;
++    const frame = this._frameTree.frameForDocShell(docShell);
++    if (!frame)
++      return;
++    this._session.emitEvent('Page.eventFired', {
++      frameId: frame.id(),
++      name: 'DOMContentLoaded',
++    });
++  }
++
++  _onError(errorEvent) {
++    const docShell = errorEvent.target.ownerGlobal.docShell;
++    const frame = this._frameTree.frameForDocShell(docShell);
++    if (!frame)
++      return;
++    this._session.emitEvent('Page.uncaughtError', {
++      frameId: frame.id(),
++      message: errorEvent.message,
++      stack: errorEvent.error.stack
++    });
++  }
++
++  _onLoad(event) {
++    const docShell = event.target.ownerGlobal.docShell;
++    const frame = this._frameTree.frameForDocShell(docShell);
++    if (!frame)
++      return;
++    this._session.emitEvent('Page.eventFired', {
++      frameId: frame.id(),
++      name: 'load'
++    });
++  }
++
++  _onNavigationStarted(frame) {
++    this._session.emitEvent('Page.navigationStarted', {
++      frameId: frame.id(),
++      navigationId: frame.pendingNavigationId(),
++      url: frame.pendingNavigationURL(),
++    });
++  }
++
++  _onNavigationAborted(frame, navigationId, errorText) {
++    this._session.emitEvent('Page.navigationAborted', {
++      frameId: frame.id(),
++      navigationId,
++      errorText,
++    });
++  }
++
++  _onSameDocumentNavigation(frame) {
++    this._session.emitEvent('Page.sameDocumentNavigation', {
++      frameId: frame.id(),
++      url: frame.url(),
++    });
++  }
++
++  _onNavigationCommitted(frame) {
++    this._session.emitEvent('Page.navigationCommitted', {
++      frameId: frame.id(),
++      navigationId: frame.lastCommittedNavigationId(),
++      url: frame.url(),
++      name: frame.name(),
++    });
++  }
++
++  _onDOMWindowCreated(window) {
++    const docShell = window.docShell;
++    const frame = this._frameTree.frameForDocShell(docShell);
++    if (!frame)
++      return;
++
++    if (this._frameToExecutionContext.has(frame)) {
++      this._runtime.destroyExecutionContext(this._frameToExecutionContext.get(frame));
++      this._frameToExecutionContext.delete(frame);
++    }
++    const executionContext = this._ensureExecutionContext(frame);
++
++    if (!this._scriptsToEvaluateOnNewDocument.size && !this._bindingsToAdd.size)
++      return;
++    for (const bindingName of this._bindingsToAdd.values())
++      this._exposeFunction(frame, bindingName);
++    for (const script of this._scriptsToEvaluateOnNewDocument.values()) {
++      try {
++        let result = executionContext.evaluateScript(script);
++        if (result && result.objectId)
++          executionContext.disposeObject(result.objectId);
++      } catch (e) {
++      }
++    }
++  }
++
++  _onFrameAttached(frame) {
++    this._session.emitEvent('Page.frameAttached', {
++      frameId: frame.id(),
++      parentFrameId: frame.parentFrame() ? frame.parentFrame().id() : undefined,
++    });
++    this._ensureExecutionContext(frame);
++  }
++
++  _onFrameDetached(frame) {
++    this._session.emitEvent('Page.frameDetached', {
++      frameId: frame.id(),
++    });
++  }
++
++  _ensureExecutionContext(frame) {
++    let executionContext = this._frameToExecutionContext.get(frame);
++    if (!executionContext) {
++      executionContext = this._runtime.createExecutionContext(frame.domWindow(), {
++        frameId: frame.id(),
++      });
++      this._frameToExecutionContext.set(frame, executionContext);
++    }
++    return executionContext;
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
++
++  async navigate({frameId, url, referer}) {
++    try {
++      const uri = NetUtil.newURI(url);
++    } catch (e) {
++      throw new Error(`Invalid url: "${url}"`);
++    }
++    let referrerURI = null;
++    let referrerInfo = null;
++    if (referer) {
++      try {
++        referrerURI = NetUtil.newURI(referer);
++        const ReferrerInfo = Components.Constructor(
++          '@mozilla.org/referrer-info;1',
++          'nsIReferrerInfo',
++          'init'
++        );
++        referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, referrerURI);
++      } catch (e) {
++        throw new Error(`Invalid referer: "${referer}"`);
++      }
++    }
++    const frame = this._frameTree.frame(frameId);
++    const docShell = frame.docShell().QueryInterface(Ci.nsIWebNavigation);
++    docShell.loadURI(url, {
++      flags: Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
++      referrerInfo,
++      postData: null,
++      headers: null,
++    });
++    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
++  }
++
++  async reload({frameId, url}) {
++    const frame = this._frameTree.frame(frameId);
++    const docShell = frame.docShell().QueryInterface(Ci.nsIWebNavigation);
++    docShell.reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
++    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
++  }
++
++  async goBack({frameId, url}) {
++    const frame = this._frameTree.frame(frameId);
++    const docShell = frame.docShell();
++    if (!docShell.canGoBack)
++      return {navigationId: null, navigationURL: null};
++    docShell.goBack();
++    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
++  }
++
++  async goForward({frameId, url}) {
++    const frame = this._frameTree.frame(frameId);
++    const docShell = frame.docShell();
++    if (!docShell.canGoForward)
++      return {navigationId: null, navigationURL: null};
++    docShell.goForward();
++    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
++  }
++
++  addBinding({name}) {
++    if (this._bindingsToAdd.has(name))
++      throw new Error(`Binding with name ${name} already exists`);
++    this._bindingsToAdd.add(name);
++    for (const frame of this._frameTree.frames())
++      this._exposeFunction(frame, name);
++  }
++
++  _exposeFunction(frame, name) {
++    Cu.exportFunction((...args) => {
++      const executionContext = this._ensureExecutionContext(frame);
++      this._session.emitEvent('Page.bindingCalled', {
++        executionContextId: executionContext.id(),
++        name,
++        payload: args[0]
++      });
++    }, frame.domWindow(), {
++      defineAs: name,
++    });
++  }
++
++  async setFileInputFiles({objectId, frameId, files}) {
++    const frame = this._frameTree.frame(frameId);
++    if (!frame)
++      throw new Error('Failed to find frame with id = ' + frameId);
++    const executionContext = this._ensureExecutionContext(frame);
++    const unsafeObject = executionContext.unsafeObject(objectId);
++    if (!unsafeObject)
++      throw new Error('Object is not input!');
++    const nsFiles = await Promise.all(files.map(filePath => File.createFromFileName(filePath)));
++    unsafeObject.mozSetFileArray(nsFiles);
++  }
++
++  getContentQuads({objectId, frameId}) {
++    const frame = this._frameTree.frame(frameId);
++    if (!frame)
++      throw new Error('Failed to find frame with id = ' + frameId);
++    const executionContext = this._ensureExecutionContext(frame);
++    const unsafeObject = executionContext.unsafeObject(objectId);
++    if (!unsafeObject.getBoxQuads)
++      throw new Error('RemoteObject is not a node');
++    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document}).map(quad => {
++      return {
++        p1: {x: quad.p1.x, y: quad.p1.y},
++        p2: {x: quad.p2.x, y: quad.p2.y},
++        p3: {x: quad.p3.x, y: quad.p3.y},
++        p4: {x: quad.p4.x, y: quad.p4.y},
++      };
++    });
++    return {quads};
++  }
++
++  contentFrame({objectId, frameId}) {
++    const frame = this._frameTree.frame(frameId);
++    if (!frame)
++      throw new Error('Failed to find frame with id = ' + frameId);
++    const executionContext = this._ensureExecutionContext(frame);
++    const unsafeObject = executionContext.unsafeObject(objectId);
++    if (!unsafeObject.contentWindow)
++      return null;
++    const contentFrame = this._frameTree.frameForDocShell(unsafeObject.contentWindow.docShell);
++    return {frameId: contentFrame.id()};
++  }
++
++  async getBoundingBox({frameId, objectId}) {
++    const frame = this._frameTree.frame(frameId);
++    if (!frame)
++      throw new Error('Failed to find frame with id = ' + frameId);
++    const executionContext = this._ensureExecutionContext(frame);
++    const unsafeObject = executionContext.unsafeObject(objectId);
++    if (!unsafeObject.getBoxQuads)
++      throw new Error('RemoteObject is not a node');
++    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document});
++    if (!quads.length)
++      return null;
++    let x1 = Infinity;
++    let y1 = Infinity;
++    let x2 = -Infinity;
++    let y2 = -Infinity;
++    for (const quad of quads) {
++      const boundingBox = quad.getBounds();
++      x1 = Math.min(boundingBox.x, x1);
++      y1 = Math.min(boundingBox.y, y1);
++      x2 = Math.max(boundingBox.x + boundingBox.width, x2);
++      y2 = Math.max(boundingBox.y + boundingBox.height, y2);
++    }
++    return {x: x1 + frame.domWindow().scrollX, y: y1 + frame.domWindow().scrollY, width: x2 - x1, height: y2 - y1};
++  }
++
++  async screenshot({mimeType, fullPage, clip}) {
++    const content = this._session.mm().content;
++    if (clip) {
++      const data = takeScreenshot(content, clip.x, clip.y, clip.width, clip.height, mimeType);
++      return {data};
++    }
++    if (fullPage) {
++      const rect = content.document.documentElement.getBoundingClientRect();
++      const width = content.innerWidth + content.scrollMaxX - content.scrollMinX;
++      const height = content.innerHeight + content.scrollMaxY - content.scrollMinY;
++      const data = takeScreenshot(content, 0, 0, width, height, mimeType);
++      return {data};
++    }
++    const data = takeScreenshot(content, content.scrollX, content.scrollY, content.innerWidth, content.innerHeight, mimeType);
++    return {data};
++  }
++
++  async dispatchKeyEvent({type, keyCode, code, key, repeat, location}) {
++    const frame = this._frameTree.mainFrame();
++    const tip = frame.textInputProcessor();
++    if (key === 'Meta' && Services.appinfo.OS !== 'Darwin')
++      key = 'OS';
++    else if (key === 'OS' && Services.appinfo.OS === 'Darwin')
++      key = 'Meta';
++    let keyEvent = new (frame.domWindow().KeyboardEvent)("", {
++      key,
++      code,
++      location,
++      repeat,
++      keyCode
++    });
++    const flags = 0;
++    if (type === 'keydown')
++      tip.keydown(keyEvent, flags);
++    else if (type === 'keyup')
++      tip.keyup(keyEvent, flags);
++    else
++      throw new Error(`Unknown type ${type}`);
++  }
++
++  async dispatchTouchEvent({type, touchPoints, modifiers}) {
++    const frame = this._frameTree.mainFrame();
++    const defaultPrevented = frame.domWindow().windowUtils.sendTouchEvent(
++      type.toLowerCase(),
++      touchPoints.map((point, id) => id),
++      touchPoints.map(point => point.x),
++      touchPoints.map(point => point.y),
++      touchPoints.map(point => point.radiusX === undefined ? 1.0 : point.radiusX),
++      touchPoints.map(point => point.radiusY === undefined ? 1.0 : point.radiusY),
++      touchPoints.map(point => point.rotationAngle === undefined ? 0.0 : point.rotationAngle),
++      touchPoints.map(point => point.force === undefined ? 1.0 : point.force),
++      touchPoints.length,
++      modifiers);
++    return {defaultPrevented};
++  }
++
++  async dispatchMouseEvent({type, x, y, button, clickCount, modifiers, buttons}) {
++    const frame = this._frameTree.mainFrame();
++    frame.domWindow().windowUtils.sendMouseEvent(
++      type,
++      x,
++      y,
++      button,
++      clickCount,
++      modifiers,
++      false /*aIgnoreRootScrollFrame*/,
++      undefined /*pressure*/,
++      undefined /*inputSource*/,
++      undefined /*isDOMEventSynthesized*/,
++      undefined /*isWidgetEventSynthesized*/,
++      buttons);
++    if (type === 'mousedown' && button === 2) {
++      frame.domWindow().windowUtils.sendMouseEvent(
++        'contextmenu',
++        x,
++        y,
++        button,
++        clickCount,
++        modifiers,
++        false /*aIgnoreRootScrollFrame*/,
++        undefined /*pressure*/,
++        undefined /*inputSource*/,
++        undefined /*isDOMEventSynthesized*/,
++        undefined /*isWidgetEventSynthesized*/,
++        buttons);
++    }
++  }
++
++  async insertText({text}) {
++    const frame = this._frameTree.mainFrame();
++    frame.textInputProcessor().commitCompositionWith(text);
++  }
++
++  async getFullAXTree() {
++    const service = Cc["@mozilla.org/accessibilityService;1"]
++      .getService(Ci.nsIAccessibilityService);
++    const document = this._frameTree.mainFrame().domWindow().document;
++    const docAcc = service.getAccessibleFor(document);
++
++    async function waitForQuiet() {
++      let state = {};
++      docAcc.getState(state, {});
++      if ((state.value & Ci.nsIAccessibleStates.STATE_BUSY) == 0)
++        return;
++      let resolve, reject;
++      const promise = new Promise((x, y) => {resolve = x, reject = y});
++      let eventObserver = {
++        observe(subject, topic) {
++          if (topic !== "accessible-event") {
++            return;
++          }
++
++          // If event type does not match expected type, skip the event.
++          let event = subject.QueryInterface(Ci.nsIAccessibleEvent);
++          if (event.eventType !== Ci.nsIAccessibleEvent.EVENT_STATE_CHANGE) {
++            return;
++          }
++
++          // If event's accessible does not match expected accessible,
++          // skip the event.
++          if (event.accessible !== docAcc) {
++            return;
++          }
++
++          Services.obs.removeObserver(this, "accessible-event");
++          resolve();
++        },
++      };
++      Services.obs.addObserver(eventObserver, "accessible-event");
++      return promise;
++    }
++    function buildNode(accElement) {
++      let a = {}, b = {};
++      accElement.getState(a, b);
++      const tree = {
++        role: service.getStringRole(accElement.role),
++        name: accElement.name || '',
++      };
++      for (const userStringProperty of [
++        'value',
++        'description'
++      ]) {
++        tree[userStringProperty] = accElement[userStringProperty] || undefined;
++      }
++
++      const states = {};
++      for (const name of service.getStringStates(a.value, b.value))
++        states[name] = true;
++      for (const name of ['selected',
++        'focused',
++        'pressed',
++        'focusable',
++        'haspopup',
++        'required',
++        'invalid',
++        'modal',
++        'editable',
++        'busy',
++        'checked',
++        'multiselectable']) {
++        if (states[name])
++          tree[name] = true;
++      }
++
++      if (states['multi line'])
++        tree['multiline'] = true;
++      if (states['editable'] && states['readonly'])
++        tree['readonly'] = true;
++      if (states['checked'])
++        tree['checked'] = true;
++      if (states['mixed'])
++        tree['checked'] = 'mixed';
++      if (states['expanded'])
++        tree['expanded'] = true;
++      else if (states['collapsed'])
++        tree['expanded'] = false
++      if (!states['enabled'])
++        tree['disabled'] = true;
++
++      const attributes = {};
++      if (accElement.attributes) {
++        for (const { key, value } of accElement.attributes.enumerate()) {
++          attributes[key] = value;
++        }
++      }
++      for (const numericalProperty of ['level']) {
++        if (numericalProperty in attributes)
++          tree[numericalProperty] = parseFloat(attributes[numericalProperty]);
++      }
++      for (const stringProperty of ['tag', 'roledescription', 'valuetext', 'orientation', 'autocomplete', 'keyshortcuts']) {
++        if (stringProperty in attributes)
++          tree[stringProperty] = attributes[stringProperty];
++      }
++      const children = [];
++
++      for (let child = accElement.firstChild; child; child = child.nextSibling) {
++        children.push(buildNode(child));
++      }
++      if (children.length)
++        tree.children = children;
++      return tree;
++    }
++    await waitForQuiet();
++    return {
++      tree: buildNode(docAcc)
++    };
++  }
++}
++
++function takeScreenshot(win, left, top, width, height, mimeType) {
++  const MAX_SKIA_DIMENSIONS = 32767;
++
++  const scale = win.devicePixelRatio;
++  const canvasWidth = width * scale;
++  const canvasHeight = height * scale;
++
++  if (canvasWidth > MAX_SKIA_DIMENSIONS || canvasHeight > MAX_SKIA_DIMENSIONS)
++    throw new Error('Cannot take screenshot larger than ' + MAX_SKIA_DIMENSIONS);
++
++  const canvas = win.document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
++  canvas.width = canvasWidth;
++  canvas.height = canvasHeight;
++
++  let ctx = canvas.getContext('2d');
++  ctx.scale(scale, scale);
++  ctx.drawWindow(win, left, top, width, height, 'rgb(255,255,255)', ctx.DRAWWINDOW_DRAW_CARET);
++  const dataURL = canvas.toDataURL(mimeType);
++  return dataURL.substring(dataURL.indexOf(',') + 1);
++};
++
++var EXPORTED_SYMBOLS = ['PageAgent'];
++this.PageAgent = PageAgent;
++
+diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
+new file mode 100644
+index 000000000000..2c474230071b
+--- /dev/null
++++ b/testing/juggler/content/RuntimeAgent.js
+@@ -0,0 +1,460 @@
++"use strict";
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {addDebuggerToGlobal} = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm", {});
++
++const Ci = Components.interfaces;
++const Cr = Components.results;
++const Cu = Components.utils;
++addDebuggerToGlobal(Cu.getGlobalForObject(this));
++const helper = new Helper();
++
++const consoleLevelToProtocolType = {
++  'dir': 'dir',
++  'log': 'log',
++  'debug': 'debug',
++  'info': 'info',
++  'error': 'error',
++  'warn': 'warning',
++  'dirxml': 'dirxml',
++  'table': 'table',
++  'trace': 'trace',
++  'clear': 'clear',
++  'group': 'startGroup',
++  'groupCollapsed': 'startGroupCollapsed',
++  'groupEnd': 'endGroup',
++  'assert': 'assert',
++  'profile': 'profile',
++  'profileEnd': 'profileEnd',
++  'count': 'count',
++  'countReset': 'countReset',
++  'time': null,
++  'timeLog': 'timeLog',
++  'timeEnd': 'timeEnd',
++  'timeStamp': 'timeStamp',
++};
++
++const disallowedMessageCategories = new Set([
++  'XPConnect JavaScript',
++  'component javascript',
++  'chrome javascript',
++  'chrome registration',
++  'XBL',
++  'XBL Prototype Handler',
++  'XBL Content Sink',
++  'xbl javascript',
++]);
++
++class RuntimeAgent {
++  constructor(session) {
++    this._debugger = new Debugger();
++    this._pendingPromises = new Map();
++    this._session = session;
++    this._executionContexts = new Map();
++    this._windowToExecutionContext = new Map();
++    this._consoleServiceListener = {
++      QueryInterface: ChromeUtils.generateQI([Ci.nsIConsoleListener]),
++
++      observe: message => {
++        if (!(message instanceof Ci.nsIScriptError) || !message.outerWindowID ||
++            !message.category || disallowedMessageCategories.has(message.category)) {
++          return;
++        }
++        const errorWindow = Services.wm.getOuterWindowWithId(message.outerWindowID);
++        const executionContext = this._windowToExecutionContext.get(errorWindow);
++        if (!executionContext)
++          return;
++        const typeNames = {
++          [Ci.nsIConsoleMessage.debug]: 'debug',
++          [Ci.nsIConsoleMessage.info]: 'info',
++          [Ci.nsIConsoleMessage.warn]: 'warn',
++          [Ci.nsIConsoleMessage.error]: 'error',
++        };
++        this._session.emitEvent('Runtime.console', {
++          args: [{
++            value: message.message,
++          }],
++          type: typeNames[message.logLevel],
++          executionContextId: executionContext.id(),
++          location: {
++            lineNumber: message.lineNumber,
++            columnNumber: message.columnNumber,
++            url: message.sourceName,
++          },
++        });
++      },
++    };
++
++    this._eventListeners = [];
++    this._enabled = false;
++  }
++
++  _consoleAPICalled({wrappedJSObject}, topic, data) {
++    const type = consoleLevelToProtocolType[wrappedJSObject.level];
++    if (!type)
++      return;
++    const executionContext = Array.from(this._executionContexts.values()).find(context => {
++      const domWindow = context._domWindow;
++      return domWindow && domWindow.windowUtils.currentInnerWindowID === wrappedJSObject.innerID;
++    });
++    if (!executionContext)
++      return;
++    const args = wrappedJSObject.arguments.map(arg => executionContext.rawValueToRemoteObject(arg));
++    this._session.emitEvent('Runtime.console', {
++      args,
++      type,
++      executionContextId: executionContext.id(),
++      location: {
++        lineNumber: wrappedJSObject.lineNumber - 1,
++        columnNumber: wrappedJSObject.columnNumber - 1,
++        url: wrappedJSObject.filename,
++      },
++    });
++  }
++
++  enable() {
++    if (this._enabled)
++      return;
++    this._enabled = true;
++    for (const executionContext of this._executionContexts.values())
++      this._notifyExecutionContextCreated(executionContext);
++    Services.console.registerListener(this._consoleServiceListener);
++    this._eventListeners = [
++      () => Services.console.unregisterListener(this._consoleServiceListener),
++      helper.addObserver(this._consoleAPICalled.bind(this), "console-api-log-event"),
++    ];
++  }
++
++  _notifyExecutionContextCreated(executionContext) {
++    if (!this._enabled)
++      return;
++    this._session.emitEvent('Runtime.executionContextCreated', {
++      executionContextId: executionContext._id,
++      auxData: executionContext._auxData,
++    });
++  }
++
++  _notifyExecutionContextDestroyed(executionContext) {
++    if (!this._enabled)
++      return;
++    this._session.emitEvent('Runtime.executionContextDestroyed', {
++      executionContextId: executionContext._id,
++    });
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
++
++  async _awaitPromise(executionContext, obj, exceptionDetails = {}) {
++    if (obj.promiseState === 'fulfilled')
++      return {success: true, obj: obj.promiseValue};
++    if (obj.promiseState === 'rejected') {
++      const global = executionContext._global;
++      exceptionDetails.text = global.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}).return;
++      exceptionDetails.stack = global.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}).return;
++      return {success: false, obj: null};
++    }
++    let resolve, reject;
++    const promise = new Promise((a, b) => {
++      resolve = a;
++      reject = b;
++    });
++    this._pendingPromises.set(obj.promiseID, {resolve, reject, executionContext, exceptionDetails});
++    if (this._pendingPromises.size === 1)
++      this._debugger.onPromiseSettled = this._onPromiseSettled.bind(this);
++    return await promise;
++  }
++
++  _onPromiseSettled(obj) {
++    const pendingPromise = this._pendingPromises.get(obj.promiseID);
++    if (!pendingPromise)
++      return;
++    this._pendingPromises.delete(obj.promiseID);
++    if (!this._pendingPromises.size)
++      this._debugger.onPromiseSettled = undefined;
++
++    if (obj.promiseState === 'fulfilled') {
++      pendingPromise.resolve({success: true, obj: obj.promiseValue});
++      return;
++    };
++    const global = pendingPromise.executionContext._global;
++    pendingPromise.exceptionDetails.text = global.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}).return;
++    pendingPromise.exceptionDetails.stack = global.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}).return;
++    pendingPromise.resolve({success: false, obj: null});
++  }
++
++  createExecutionContext(domWindow, auxData) {
++    const context = new ExecutionContext(this, domWindow, this._debugger.addDebuggee(domWindow), auxData);
++    this._executionContexts.set(context._id, context);
++    this._windowToExecutionContext.set(domWindow, context);
++    this._notifyExecutionContextCreated(context);
++    return context;
++  }
++
++  destroyExecutionContext(destroyedContext) {
++    for (const [promiseID, {reject, executionContext}] of this._pendingPromises) {
++      if (executionContext === destroyedContext) {
++        reject(new Error('Execution context was destroyed!'));
++        this._pendingPromises.delete(promiseID);
++      }
++    }
++    if (!this._pendingPromises.size)
++      this._debugger.onPromiseSettled = undefined;
++    this._debugger.removeDebuggee(destroyedContext._domWindow);
++    this._executionContexts.delete(destroyedContext._id);
++    this._windowToExecutionContext.delete(destroyedContext._domWindow);
++    this._notifyExecutionContextDestroyed(destroyedContext);
++  }
++
++  async evaluate({executionContextId, expression, returnByValue}) {
++    const executionContext = this._executionContexts.get(executionContextId);
++    if (!executionContext)
++      throw new Error('Failed to find execution context with id = ' + executionContextId);
++    const exceptionDetails = {};
++    let result = await executionContext.evaluateScript(expression, exceptionDetails);
++    if (!result)
++      return {exceptionDetails};
++    let isNode = undefined;
++    if (returnByValue)
++      result = executionContext.ensureSerializedToValue(result);
++    return {result};
++  }
++
++  async callFunction({executionContextId, functionDeclaration, args, returnByValue}) {
++    const executionContext = this._executionContexts.get(executionContextId);
++    if (!executionContext)
++      throw new Error('Failed to find execution context with id = ' + executionContextId);
++    const exceptionDetails = {};
++    let result = await executionContext.evaluateFunction(functionDeclaration, args, exceptionDetails);
++    if (!result)
++      return {exceptionDetails};
++    let isNode = undefined;
++    if (returnByValue)
++      result = executionContext.ensureSerializedToValue(result);
++    return {result};
++  }
++
++  async getObjectProperties({executionContextId, objectId}) {
++    const executionContext = this._executionContexts.get(executionContextId);
++    if (!executionContext)
++      throw new Error('Failed to find execution context with id = ' + executionContextId);
++    return {properties: executionContext.getObjectProperties(objectId)};
++  }
++
++  async disposeObject({executionContextId, objectId}) {
++    const executionContext = this._executionContexts.get(executionContextId);
++    if (!executionContext)
++      throw new Error('Failed to find execution context with id = ' + executionContextId);
++    return executionContext.disposeObject(objectId);
++  }
++}
++
++class ExecutionContext {
++  constructor(runtime, domWindow, global, auxData) {
++    this._runtime = runtime;
++    this._domWindow = domWindow;
++    this._global = global;
++    this._remoteObjects = new Map();
++    this._id = helper.generateId();
++    this._auxData = auxData;
++  }
++
++  id() {
++    return this._id;
++  }
++
++  async evaluateScript(script, exceptionDetails = {}) {
++    const userInputHelper = this._domWindow.windowUtils.setHandlingUserInput(true);
++    let {success, obj} = this._getResult(this._global.executeInGlobal(script), exceptionDetails);
++    userInputHelper.destruct();
++    if (!success)
++      return null;
++    if (obj && obj.isPromise) {
++      const awaitResult = await this._runtime._awaitPromise(this, obj, exceptionDetails);
++      if (!awaitResult.success)
++        return null;
++      obj = awaitResult.obj;
++    }
++    return this._createRemoteObject(obj);
++  }
++
++  async evaluateFunction(functionText, args, exceptionDetails = {}) {
++    const funEvaluation = this._getResult(this._global.executeInGlobal('(' + functionText + ')'), exceptionDetails);
++    if (!funEvaluation.success)
++      return null;
++    if (!funEvaluation.obj.callable)
++      throw new Error('functionText does not evaluate to a function!');
++    args = args.map(arg => {
++      if (arg.objectId) {
++        if (!this._remoteObjects.has(arg.objectId))
++          throw new Error('Cannot find object with id = ' + arg.objectId);
++        return this._remoteObjects.get(arg.objectId);
++      }
++      switch (arg.unserializableValue) {
++        case 'Infinity': return Infinity;
++        case '-Infinity': return -Infinity;
++        case '-0': return -0;
++        case 'NaN': return NaN;
++        default: return this._toDebugger(arg.value);
++      }
++    });
++    const userInputHelper = this._domWindow.windowUtils.setHandlingUserInput(true);
++    let {success, obj} = this._getResult(funEvaluation.obj.apply(null, args), exceptionDetails);
++    userInputHelper.destruct();
++    if (!success)
++      return null;
++    if (obj && obj.isPromise) {
++      const awaitResult = await this._runtime._awaitPromise(this, obj, exceptionDetails);
++      if (!awaitResult.success)
++        return null;
++      obj = awaitResult.obj;
++    }
++    return this._createRemoteObject(obj);
++  }
++
++  unsafeObject(objectId) {
++    if (!this._remoteObjects.has(objectId))
++      throw new Error('Cannot find object with id = ' + objectId);
++    return this._remoteObjects.get(objectId).unsafeDereference();
++  }
++
++  rawValueToRemoteObject(rawValue) {
++    const debuggerObj = this._global.makeDebuggeeValue(rawValue);
++    return this._createRemoteObject(debuggerObj);
++  }
++
++  _createRemoteObject(debuggerObj) {
++    if (debuggerObj instanceof Debugger.Object) {
++      const objectId = helper.generateId();
++      this._remoteObjects.set(objectId, debuggerObj);
++      const rawObj = debuggerObj.unsafeDereference();
++      const type = typeof rawObj;
++      let subtype = undefined;
++      if (debuggerObj.isProxy)
++        subtype = 'proxy';
++      else if (Array.isArray(rawObj))
++        subtype = 'array';
++      else if (Object.is(rawObj, null))
++        subtype = 'null';
++      else if (rawObj instanceof this._domWindow.Node)
++        subtype = 'node';
++      else if (rawObj instanceof this._domWindow.RegExp)
++        subtype = 'regexp';
++      else if (rawObj instanceof this._domWindow.Date)
++        subtype = 'date';
++      else if (rawObj instanceof this._domWindow.Map)
++        subtype = 'map';
++      else if (rawObj instanceof this._domWindow.Set)
++        subtype = 'set';
++      else if (rawObj instanceof this._domWindow.WeakMap)
++        subtype = 'weakmap';
++      else if (rawObj instanceof this._domWindow.WeakSet)
++        subtype = 'weakset';
++      else if (rawObj instanceof this._domWindow.Error)
++        subtype = 'error';
++      else if (rawObj instanceof this._domWindow.Promise)
++        subtype = 'promise';
++      else if ((rawObj instanceof this._domWindow.Int8Array) || (rawObj instanceof this._domWindow.Uint8Array) ||
++               (rawObj instanceof this._domWindow.Uint8ClampedArray) || (rawObj instanceof this._domWindow.Int16Array) ||
++               (rawObj instanceof this._domWindow.Uint16Array) || (rawObj instanceof this._domWindow.Int32Array) ||
++               (rawObj instanceof this._domWindow.Uint32Array) || (rawObj instanceof this._domWindow.Float32Array) ||
++               (rawObj instanceof this._domWindow.Float64Array)) {
++        subtype = 'typedarray';
++      }
++      const isNode = debuggerObj.unsafeDereference() instanceof this._domWindow.Node;
++      return {objectId, type, subtype};
++    }
++    if (typeof debuggerObj === 'symbol') {
++      const objectId = helper.generateId();
++      this._remoteObjects.set(objectId, debuggerObj);
++      return {objectId, type: 'symbol'};
++    }
++
++    let unserializableValue = undefined;
++    if (Object.is(debuggerObj, NaN))
++      unserializableValue = 'NaN';
++    else if (Object.is(debuggerObj, -0))
++      unserializableValue = '-0';
++    else if (Object.is(debuggerObj, Infinity))
++      unserializableValue = 'Infinity';
++    else if (Object.is(debuggerObj, -Infinity))
++      unserializableValue = '-Infinity';
++    return unserializableValue ? {unserializableValue} : {value: debuggerObj};
++  }
++
++  ensureSerializedToValue(protocolObject) {
++    if (!protocolObject.objectId)
++      return protocolObject;
++    const obj = this._remoteObjects.get(protocolObject.objectId);
++    this._remoteObjects.delete(protocolObject.objectId);
++    return {value: this._serialize(obj)};
++  }
++
++  _toDebugger(obj) {
++    if (typeof obj !== 'object')
++      return obj;
++    const properties = {};
++    for (let [key, value] of Object.entries(obj)) {
++      properties[key] = {
++        writable: true,
++        enumerable: true,
++        value: this._toDebugger(value),
++      };
++    }
++    const baseObject = Array.isArray(obj) ? '([])' : '({})';
++    const debuggerObj = this._global.executeInGlobal(baseObject).return;
++    debuggerObj.defineProperties(properties);
++    return debuggerObj;
++  }
++
++  _serialize(obj) {
++    const result = this._global.executeInGlobalWithBindings('JSON.stringify(e)', {e: obj});
++    if (result.throw)
++      throw new Error('Object is not serializable');
++    return JSON.parse(result.return);
++  }
++
++  disposeObject(objectId) {
++    this._remoteObjects.delete(objectId);
++  }
++
++  getObjectProperties(objectId) {
++    if (!this._remoteObjects.has(objectId))
++      throw new Error('Cannot find object with id = ' + arg.objectId);
++    const result = [];
++    for (let obj = this._remoteObjects.get(objectId); obj; obj = obj.proto) {
++      for (const propertyName of obj.getOwnPropertyNames()) {
++        const descriptor = obj.getOwnPropertyDescriptor(propertyName);
++        if (!descriptor.enumerable)
++          continue;
++        result.push({
++          name: propertyName,
++          value: this._createRemoteObject(descriptor.value),
++        });
++      }
++    }
++    return result;
++  }
++
++  _getResult(completionValue, exceptionDetails = {}) {
++    if (!completionValue) {
++      exceptionDetails.text = 'Evaluation terminated!';
++      exceptionDetails.stack = '';
++      return {success: false, obj: null};
++    }
++    if (completionValue.throw) {
++      if (this._global.executeInGlobalWithBindings('e instanceof Error', {e: completionValue.throw}).return) {
++        exceptionDetails.text = this._global.executeInGlobalWithBindings('e.message', {e: completionValue.throw}).return;
++        exceptionDetails.stack = this._global.executeInGlobalWithBindings('e.stack', {e: completionValue.throw}).return;
++      } else {
++        exceptionDetails.value = this._serialize(completionValue.throw);
++      }
++      return {success: false, obj: null};
++    }
++    return {success: true, obj: completionValue.return};
++  }
++}
++
++var EXPORTED_SYMBOLS = ['RuntimeAgent'];
++this.RuntimeAgent = RuntimeAgent;
+diff --git a/testing/juggler/content/ScrollbarManager.js b/testing/juggler/content/ScrollbarManager.js
+new file mode 100644
+index 000000000000..caee4df323d0
+--- /dev/null
++++ b/testing/juggler/content/ScrollbarManager.js
+@@ -0,0 +1,85 @@
++const Ci = Components.interfaces;
++const Cr = Components.results;
++const Cu = Components.utils;
++const Cc = Components.classes;
++
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++
++const HIDDEN_SCROLLBARS = Services.io.newURI('chrome://juggler/content/content/hidden-scrollbars.css');
++const FLOATING_SCROLLBARS = Services.io.newURI('chrome://juggler/content/content/floating-scrollbars.css');
++
++const isHeadless = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo).isHeadless;
++const helper = new Helper();
++
++class ScrollbarManager {
++  constructor(docShell) {
++    this._docShell = docShell;
++    this._customScrollbars = null;
++    this._contentViewerScrollBars = new Map();
++
++    if (isHeadless)
++      this._setCustomScrollbars(HIDDEN_SCROLLBARS);
++
++    const webProgress = this._docShell.QueryInterface(Ci.nsIInterfaceRequestor)
++                                .getInterface(Ci.nsIWebProgress);
++
++    this.QueryInterface = ChromeUtils.generateQI(['nsIWebProgressListener', 'nsISupportsWeakReference']);
++    this._eventListeners = [
++      helper.addProgressListener(webProgress, this, Ci.nsIWebProgress.NOTIFY_ALL),
++    ];
++  }
++
++  onLocationChange(webProgress, request, URI, flags) {
++    if (flags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT)
++      return;
++    this._updateAllDocShells();
++  }
++
++  setFloatingScrollbars(enabled) {
++    if (this._customScrollbars === HIDDEN_SCROLLBARS)
++      return;
++    this._setCustomScrollbars(enabled ? FLOATING_SCROLLBARS : null);
++  }
++
++  _setCustomScrollbars(customScrollbars) {
++    if (this._customScrollbars === customScrollbars)
++      return;
++    this._customScrollbars = customScrollbars;
++    this._updateAllDocShells();
++  }
++
++  _updateAllDocShells() {
++    const allDocShells = [this._docShell];
++    for (let i = 0; i < this._docShell.childCount; i++)
++      allDocShells.push(this._docShell.getChildAt(i).QueryInterface(Ci.nsIDocShell));
++    // At this point, a content viewer might not be loaded for certain docShells.
++    // Scrollbars will be updated in onLocationChange.
++    const contentViewers = allDocShells.map(docShell => docShell.contentViewer).filter(contentViewer => !!contentViewer);
++
++    // Update scrollbar stylesheets.
++    for (const contentViewer of contentViewers) {
++      const oldScrollbars = this._contentViewerScrollBars.get(contentViewer);
++      if (oldScrollbars === this._customScrollbars)
++        continue;
++      const winUtils = contentViewer.DOMDocument.defaultView.windowUtils;
++      if (oldScrollbars)
++        winUtils.removeSheet(oldScrollbars, winUtils.AGENT_SHEET);
++      if (this._customScrollbars)
++        winUtils.loadSheet(this._customScrollbars, winUtils.AGENT_SHEET);
++    }
++    // Update state for all *existing* docShells.
++    this._contentViewerScrollBars.clear();
++    for (const contentViewer of contentViewers)
++      this._contentViewerScrollBars.set(contentViewer, this._customScrollbars);
++  }
++
++  dispose() {
++    this._setCustomScrollbars(null);
++    helper.removeListeners(this._eventListeners);
++  }
++}
++
++var EXPORTED_SYMBOLS = ['ScrollbarManager'];
++this.ScrollbarManager = ScrollbarManager;
++
+diff --git a/testing/juggler/content/floating-scrollbars.css b/testing/juggler/content/floating-scrollbars.css
+new file mode 100644
+index 000000000000..7709bdd34c65
+--- /dev/null
++++ b/testing/juggler/content/floating-scrollbars.css
+@@ -0,0 +1,47 @@
++@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
++@namespace html url("http://www.w3.org/1999/xhtml");
++
++/* Restrict all styles to `*|*:not(html|select) > scrollbar` so that scrollbars
++   inside a <select> are excluded (including them hides the select arrow on
++   Windows).  We want to include both the root scrollbars for the document as
++   well as any overflow: scroll elements within the page, while excluding
++   <select>. */
++*|*:not(html|select) > scrollbar {
++  -moz-appearance: none !important;
++  position: relative;
++  background-color: transparent;
++  background-image: none;
++  z-index: 2147483647;
++  padding: 2px;
++  border: none;
++}
++
++/* Scrollbar code will reset the margin to the correct side depending on
++   where layout actually puts the scrollbar */
++*|*:not(html|select) > scrollbar[orient="vertical"] {
++  margin-left: -10px;
++  min-width: 10px;
++  max-width: 10px;
++}
++
++*|*:not(html|select) > scrollbar[orient="horizontal"] {
++  margin-top: -10px;
++  min-height: 10px;
++  max-height: 10px;
++}
++
++*|*:not(html|select) > scrollbar slider {
++  -moz-appearance: none !important;
++}
++
++*|*:not(html|select) > scrollbar thumb {
++  -moz-appearance: none !important;
++  background-color: rgba(0,0,0,0.2);
++  border-width: 0px !important;
++  border-radius: 3px !important;
++}
++
++*|*:not(html|select) > scrollbar scrollbarbutton,
++*|*:not(html|select) > scrollbar gripper {
++  display: none;
++}
+diff --git a/testing/juggler/content/hidden-scrollbars.css b/testing/juggler/content/hidden-scrollbars.css
+new file mode 100644
+index 000000000000..3a386425d379
+--- /dev/null
++++ b/testing/juggler/content/hidden-scrollbars.css
+@@ -0,0 +1,13 @@
++@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
++@namespace html url("http://www.w3.org/1999/xhtml");
++
++/* Restrict all styles to `*|*:not(html|select) > scrollbar` so that scrollbars
++   inside a <select> are excluded (including them hides the select arrow on
++   Windows).  We want to include both the root scrollbars for the document as
++   well as any overflow: scroll elements within the page, while excluding
++   <select>. */
++*|*:not(html|select) > scrollbar {
++  -moz-appearance: none !important;
++  display: none;
++}
++
+diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
+new file mode 100644
+index 000000000000..8585092e04e7
+--- /dev/null
++++ b/testing/juggler/content/main.js
+@@ -0,0 +1,39 @@
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {ContentSession} = ChromeUtils.import('chrome://juggler/content/content/ContentSession.js');
++const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
++const {NetworkMonitor} = ChromeUtils.import('chrome://juggler/content/content/NetworkMonitor.js');
++const {ScrollbarManager} = ChromeUtils.import('chrome://juggler/content/content/ScrollbarManager.js');
++
++const sessions = new Map();
++const frameTree = new FrameTree(docShell);
++const networkMonitor = new NetworkMonitor(docShell, frameTree);
++const scrollbarManager = new ScrollbarManager(docShell);
++
++const helper = new Helper();
++
++const gListeners = [
++  helper.addMessageListener(this, 'juggler:create-content-session', msg => {
++    const sessionId = msg.data;
++    sessions.set(sessionId, new ContentSession(sessionId, this, frameTree, scrollbarManager, networkMonitor));
++  }),
++
++  helper.addMessageListener(this, 'juggler:dispose-content-session', msg => {
++    const sessionId = msg.data;
++    const session = sessions.get(sessionId);
++    if (!session)
++      return;
++    sessions.delete(sessionId);
++    session.dispose();
++  }),
++
++  helper.addEventListener(this, 'unload', msg => {
++    helper.removeListeners(gListeners);
++    for (const session of sessions.values())
++      session.dispose();
++    sessions.clear();
++    scrollbarManager.dispose();
++    networkMonitor.dispose();
++    frameTree.dispose();
++  }),
++];
++
+diff --git a/testing/juggler/jar.mn b/testing/juggler/jar.mn
+new file mode 100644
+index 000000000000..27f5a15fd7f1
+--- /dev/null
++++ b/testing/juggler/jar.mn
+@@ -0,0 +1,29 @@
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++juggler.jar:
++% content juggler %content/
++  content/Helper.js (Helper.js)
++  content/NetworkObserver.js (NetworkObserver.js)
++  content/BrowserContextManager.js (BrowserContextManager.js)
++  content/TargetRegistry.js (TargetRegistry.js)
++  content/protocol/PrimitiveTypes.js (protocol/PrimitiveTypes.js)
++  content/protocol/Protocol.js (protocol/Protocol.js)
++  content/protocol/Dispatcher.js (protocol/Dispatcher.js)
++  content/protocol/PageHandler.js (protocol/PageHandler.js)
++  content/protocol/RuntimeHandler.js (protocol/RuntimeHandler.js)
++  content/protocol/NetworkHandler.js (protocol/NetworkHandler.js)
++  content/protocol/BrowserHandler.js (protocol/BrowserHandler.js)
++  content/protocol/TargetHandler.js (protocol/TargetHandler.js)
++  content/protocol/AccessibilityHandler.js (protocol/AccessibilityHandler.js)
++  content/content/main.js (content/main.js)
++  content/content/ContentSession.js (content/ContentSession.js)
++  content/content/FrameTree.js (content/FrameTree.js)
++  content/content/NetworkMonitor.js (content/NetworkMonitor.js)
++  content/content/PageAgent.js (content/PageAgent.js)
++  content/content/RuntimeAgent.js (content/RuntimeAgent.js)
++  content/content/ScrollbarManager.js (content/ScrollbarManager.js)
++  content/content/floating-scrollbars.css (content/floating-scrollbars.css)
++  content/content/hidden-scrollbars.css (content/hidden-scrollbars.css)
++
+diff --git a/testing/juggler/moz.build b/testing/juggler/moz.build
+new file mode 100644
+index 000000000000..1a0a3130bf95
+--- /dev/null
++++ b/testing/juggler/moz.build
+@@ -0,0 +1,15 @@
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++DIRS += ["components"]
++
++JAR_MANIFESTS += ["jar.mn"]
++#JS_PREFERENCE_FILES += ["prefs/marionette.js"]
++
++#MARIONETTE_UNIT_MANIFESTS += ["harness/marionette_harness/tests/unit/unit-tests.ini"]
++#XPCSHELL_TESTS_MANIFESTS += ["test/unit/xpcshell.ini"]
++
++with Files("**"):
++    BUG_COMPONENT = ("Testing", "Juggler")
++
+diff --git a/testing/juggler/protocol/AccessibilityHandler.js b/testing/juggler/protocol/AccessibilityHandler.js
+new file mode 100644
+index 000000000000..fc8a7397e50a
+--- /dev/null
++++ b/testing/juggler/protocol/AccessibilityHandler.js
+@@ -0,0 +1,15 @@
++class AccessibilityHandler {
++  constructor(chromeSession, contentSession) {
++    this._chromeSession = chromeSession;
++    this._contentSession = contentSession;
++  }
++
++  async getFullAXTree() {
++    return await this._contentSession.send('Page.getFullAXTree');
++  }
++
++  dispose() { }
++}
++
++var EXPORTED_SYMBOLS = ['AccessibilityHandler'];
++this.AccessibilityHandler = AccessibilityHandler;
+diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
+new file mode 100644
+index 000000000000..e16d1c5c5798
+--- /dev/null
++++ b/testing/juggler/protocol/BrowserHandler.js
+@@ -0,0 +1,66 @@
++"use strict";
++
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const { allowAllCerts } = ChromeUtils.import(
++  "chrome://marionette/content/cert.js"
++);
++const {BrowserContextManager} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
++
++class BrowserHandler {
++  /**
++   * @param {ChromeSession} session
++   */
++  constructor() {
++    this._sweepingOverride = null;
++    this._contextManager = BrowserContextManager.instance();
++  }
++
++  async close() {
++    Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
++  }
++
++  async setIgnoreHTTPSErrors({enabled}) {
++    if (!enabled) {
++      allowAllCerts.disable() 
++      Services.prefs.setBoolPref('security.mixed_content.block_active_content', true);
++    } else {
++      allowAllCerts.enable()
++      Services.prefs.setBoolPref('security.mixed_content.block_active_content', false);
++    }
++  }
++
++  grantPermissions({browserContextId, origin, permissions}) {
++    this._contextManager.grantPermissions(browserContextId, origin, permissions);
++  }
++
++  resetPermissions({browserContextId}) {
++    this._contextManager.resetPermissions(browserContextId);
++  }
++
++  setCookies({browserContextId, cookies}) {
++    this._contextManager.setCookies(browserContextId, cookies);
++  }
++
++  deleteCookies({browserContextId, cookies}) {
++    this._contextManager.deleteCookies(browserContextId, cookies);
++  }
++
++  getCookies({browserContextId, urls}) {
++    return {cookies: this._contextManager.getCookies(browserContextId, urls)};
++  }
++
++  async getInfo() {
++    const version = Components.classes["@mozilla.org/xre/app-info;1"]
++                              .getService(Components.interfaces.nsIXULAppInfo)
++                              .version;
++    const userAgent = Components.classes["@mozilla.org/network/protocol;1?name=http"]
++                                .getService(Components.interfaces.nsIHttpProtocolHandler)
++                                .userAgent;
++    return {version: 'Firefox/' + version, userAgent};
++  }
++
++  dispose() { }
++}
++
++var EXPORTED_SYMBOLS = ['BrowserHandler'];
++this.BrowserHandler = BrowserHandler;
+diff --git a/testing/juggler/protocol/Dispatcher.js b/testing/juggler/protocol/Dispatcher.js
+new file mode 100644
+index 000000000000..7b3a6fa4fe7a
+--- /dev/null
++++ b/testing/juggler/protocol/Dispatcher.js
+@@ -0,0 +1,255 @@
++const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
++const {protocol, checkScheme} = ChromeUtils.import("chrome://juggler/content/protocol/Protocol.js");
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const helper = new Helper();
++
++const PROTOCOL_HANDLERS = {
++  Page: ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js").PageHandler,
++  Network: ChromeUtils.import("chrome://juggler/content/protocol/NetworkHandler.js").NetworkHandler,
++  Browser: ChromeUtils.import("chrome://juggler/content/protocol/BrowserHandler.js").BrowserHandler,
++  Target: ChromeUtils.import("chrome://juggler/content/protocol/TargetHandler.js").TargetHandler,
++  Runtime: ChromeUtils.import("chrome://juggler/content/protocol/RuntimeHandler.js").RuntimeHandler,
++  Accessibility: ChromeUtils.import("chrome://juggler/content/protocol/AccessibilityHandler.js").AccessibilityHandler,
++};
++
++class Dispatcher {
++  /**
++   * @param {Connection} connection
++   */
++  constructor(connection) {
++    this._connection = connection;
++    this._connection.onmessage = this._dispatch.bind(this);
++    this._connection.onclose = this._dispose.bind(this);
++
++    this._targetSessions = new Map();
++    this._sessions = new Map();
++    this._rootSession = new ChromeSession(this, undefined, null /* contentSession */, TargetRegistry.instance().browserTargetInfo());
++
++    this._eventListeners = [
++      helper.on(TargetRegistry.instance(), TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
++    ];
++  }
++
++  async createSession(targetId) {
++    const targetInfo = TargetRegistry.instance().targetInfo(targetId);
++    if (!targetInfo)
++      throw new Error(`Target "${targetId}" is not found`);
++    let targetSessions = this._targetSessions.get(targetId);
++    if (!targetSessions) {
++      targetSessions = new Map();
++      this._targetSessions.set(targetId, targetSessions);
++    }
++
++    const sessionId = helper.generateId();
++    const contentSession = targetInfo.type === 'page' ? new ContentSession(this, sessionId, targetInfo) : null;
++    const chromeSession = new ChromeSession(this, sessionId, contentSession, targetInfo);
++    targetSessions.set(sessionId, chromeSession);
++    this._sessions.set(sessionId, chromeSession);
++    this._emitEvent(this._rootSession._sessionId, 'Target.attachedToTarget', {
++      sessionId: sessionId,
++      targetInfo
++    });
++    return sessionId;
++  }
++
++  _dispose() {
++    helper.removeListeners(this._eventListeners);
++    this._connection.onmessage = null;
++    this._connection.onclose = null;
++    this._rootSession.dispose();
++    this._rootSession = null;
++    for (const session of this._sessions.values())
++      session.dispose();
++    this._sessions.clear();
++    this._targetSessions.clear();
++  }
++
++  _onTargetDestroyed({targetId}) {
++    const sessions = this._targetSessions.get(targetId);
++    if (!sessions)
++      return;
++    this._targetSessions.delete(targetId);
++    for (const [sessionId, session] of sessions) {
++      session.dispose();
++      this._sessions.delete(sessionId);
++    }
++  }
++
++  async _dispatch(event) {
++    const data = JSON.parse(event.data);
++    const id = data.id;
++    const sessionId = data.sessionId;
++    delete data.sessionId;
++    try {
++      const session = sessionId ? this._sessions.get(sessionId) : this._rootSession;
++      if (!session)
++        throw new Error(`ERROR: cannot find session with id "${sessionId}"`);
++      const method = data.method;
++      const params = data.params || {};
++      if (!id)
++        throw new Error(`ERROR: every message must have an 'id' parameter`);
++      if (!method)
++        throw new Error(`ERROR: every message must have a 'method' parameter`);
++
++      const [domain, methodName] = method.split('.');
++      const descriptor = protocol.domains[domain] ? protocol.domains[domain].methods[methodName] : null;
++      if (!descriptor)
++        throw new Error(`ERROR: method '${method}' is not supported`);
++      let details = {};
++      if (!checkScheme(descriptor.params || {}, params, details))
++        throw new Error(`ERROR: failed to call method '${method}' with parameters ${JSON.stringify(params, null, 2)}\n${details.error}`);
++
++      const result = await session.dispatch(method, params);
++
++      details = {};
++      if ((descriptor.returns || result) && !checkScheme(descriptor.returns, result, details))
++        throw new Error(`ERROR: failed to dispatch method '${method}' result ${JSON.stringify(result, null, 2)}\n${details.error}`);
++
++      this._connection.send(JSON.stringify({id, sessionId, result}));
++    } catch (e) {
++      this._connection.send(JSON.stringify({id, sessionId, error: {
++        message: e.message,
++        data: e.stack
++      }}));
++    }
++  }
++
++  _emitEvent(sessionId, eventName, params) {
++    const [domain, eName] = eventName.split('.');
++    const scheme = protocol.domains[domain] ? protocol.domains[domain].events[eName] : null;
++    if (!scheme)
++      throw new Error(`ERROR: event '${eventName}' is not supported`);
++    const details = {};
++    if (!checkScheme(scheme, params || {}, details))
++      throw new Error(`ERROR: failed to emit event '${eventName}' ${JSON.stringify(params, null, 2)}\n${details.error}`);
++    this._connection.send(JSON.stringify({method: eventName, params, sessionId}));
++  }
++}
++
++class ChromeSession {
++  /**
++   * @param {Connection} connection
++   */
++  constructor(dispatcher, sessionId, contentSession, targetInfo) {
++    this._dispatcher = dispatcher;
++    this._sessionId = sessionId;
++    this._contentSession = contentSession;
++    this._targetInfo = targetInfo;
++
++    this._handlers = {};
++    for (const [domainName, handlerFactory] of Object.entries(PROTOCOL_HANDLERS)) {
++      if (protocol.domains[domainName].targets.includes(targetInfo.type))
++        this._handlers[domainName] = new handlerFactory(this, contentSession);
++    }
++  }
++
++  dispatcher() {
++    return this._dispatcher;
++  }
++
++  targetId() {
++    return this._targetInfo.targetId;
++  }
++
++  dispose() {
++    if (this._contentSession)
++      this._contentSession.dispose();
++    this._contentSession = null;
++    for (const [domainName, handler] of Object.entries(this._handlers)) {
++      if (!handler.dispose)
++        throw new Error(`Handler for "${domainName}" domain does not define |dispose| method!`);
++      handler.dispose();
++      delete this._handlers[domainName];
++    }
++    // Root session don't have sessionId and don't emit detachedFromTarget.
++    if (this._sessionId) {
++      this._dispatcher._emitEvent(this._sessionId, 'Target.detachedFromTarget', {
++        sessionId: this._sessionId,
++      });
++    }
++  }
++
++  emitEvent(eventName, params) {
++    this._dispatcher._emitEvent(this._sessionId, eventName, params);
++  }
++
++  async dispatch(method, params) {
++    const [domainName, methodName] = method.split('.');
++    if (!this._handlers[domainName])
++      throw new Error(`Domain "${domainName}" does not exist`);
++    if (!this._handlers[domainName][methodName])
++      throw new Error(`Handler for domain "${domainName}" does not implement method "${methodName}"`);
++    return await this._handlers[domainName][methodName](params);
++  }
++}
++
++class ContentSession {
++  constructor(dispatcher, sessionId, targetInfo) {
++    this._dispatcher = dispatcher;
++    const tab = TargetRegistry.instance().tabForTarget(targetInfo.targetId);
++    this._browser = tab.linkedBrowser;
++    this._messageId = 0;
++    this._pendingMessages = new Map();
++    this._sessionId = sessionId;
++    this._browser.messageManager.sendAsyncMessage('juggler:create-content-session', this._sessionId);
++    this._disposed = false;
++    this._eventListeners = [
++      helper.addMessageListener(this._browser.messageManager, this._sessionId, {
++        receiveMessage: message => this._onMessage(message)
++      }),
++    ];
++  }
++
++  isDisposed() {
++    return this._disposed;
++  }
++
++  dispose() {
++    if (this._disposed)
++      return;
++    this._disposed = true;
++    helper.removeListeners(this._eventListeners);
++    for (const {resolve, reject, methodName} of this._pendingMessages.values())
++      reject(new Error(`Failed "${methodName}": Page closed.`));
++    this._pendingMessages.clear();
++    if (this._browser.messageManager)
++      this._browser.messageManager.sendAsyncMessage('juggler:dispose-content-session', this._sessionId);
++  }
++
++  /**
++   * @param {string} methodName
++   * @param {*} params
++   * @return {!Promise<*>}
++   */
++  send(methodName, params) {
++    const id = ++this._messageId;
++    const promise = new Promise((resolve, reject) => {
++      this._pendingMessages.set(id, {resolve, reject, methodName});
++    });
++    this._browser.messageManager.sendAsyncMessage(this._sessionId, {id, methodName, params});
++    return promise;
++  }
++
++  _onMessage({data}) {
++    if (data.id) {
++      let id = data.id;
++      const {resolve, reject} = this._pendingMessages.get(data.id);
++      this._pendingMessages.delete(data.id);
++      if (data.error)
++        reject(new Error(data.error));
++      else
++        resolve(data.result);
++    } else {
++      const {
++        eventName,
++        params = {}
++      } = data;
++      this._dispatcher._emitEvent(this._sessionId, eventName, params);
++    }
++  }
++}
++
++
++this.EXPORTED_SYMBOLS = ['Dispatcher'];
++this.Dispatcher = Dispatcher;
++
+diff --git a/testing/juggler/protocol/NetworkHandler.js b/testing/juggler/protocol/NetworkHandler.js
+new file mode 100644
+index 000000000000..f5e7e919594b
+--- /dev/null
++++ b/testing/juggler/protocol/NetworkHandler.js
+@@ -0,0 +1,154 @@
++"use strict";
++
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {NetworkObserver} = ChromeUtils.import('chrome://juggler/content/NetworkObserver.js');
++const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
++
++const Cc = Components.classes;
++const Ci = Components.interfaces;
++const Cu = Components.utils;
++const XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
++const FRAME_SCRIPT = "chrome://juggler/content/content/ContentSession.js";
++const helper = new Helper();
++
++class NetworkHandler {
++  constructor(chromeSession, contentSession) {
++    this._chromeSession = chromeSession;
++    this._contentSession = contentSession;
++    this._networkObserver = NetworkObserver.instance();
++    this._httpActivity = new Map();
++    this._enabled = false;
++    this._browser = TargetRegistry.instance().tabForTarget(this._chromeSession.targetId()).linkedBrowser;
++    this._requestInterception = false;
++    this._eventListeners = [];
++    this._pendingRequstWillBeSentEvents = new Set();
++  }
++
++  async enable() {
++    if (this._enabled)
++      return;
++    this._enabled = true;
++    this._eventListeners = [
++      helper.on(this._networkObserver, 'request', this._onRequest.bind(this)),
++      helper.on(this._networkObserver, 'response', this._onResponse.bind(this)),
++      helper.on(this._networkObserver, 'requestfinished', this._onRequestFinished.bind(this)),
++      helper.on(this._networkObserver, 'requestfailed', this._onRequestFailed.bind(this)),
++      this._networkObserver.startTrackingBrowserNetwork(this._browser),
++    ];
++  }
++
++  async getResponseBody({requestId}) {
++    return this._networkObserver.getResponseBody(this._browser, requestId);
++  }
++
++  async setExtraHTTPHeaders({headers}) {
++    this._networkObserver.setExtraHTTPHeaders(this._browser, headers);
++  }
++
++  async setRequestInterception({enabled}) {
++    if (enabled)
++      this._networkObserver.enableRequestInterception(this._browser);
++    else
++      this._networkObserver.disableRequestInterception(this._browser);
++    // Right after we enable/disable request interception we need to await all pending
++    // requestWillBeSent events before successfully returning from the method.
++    await Promise.all(Array.from(this._pendingRequstWillBeSentEvents));
++  }
++
++  async resumeSuspendedRequest({requestId, headers}) {
++    this._networkObserver.resumeSuspendedRequest(this._browser, requestId, headers);
++  }
++
++  async abortSuspendedRequest({requestId}) {
++    this._networkObserver.abortSuspendedRequest(this._browser, requestId);
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
++
++  _ensureHTTPActivity(requestId) {
++    let activity = this._httpActivity.get(requestId);
++    if (!activity) {
++      activity = {
++        _id: requestId,
++        _lastSentEvent: null,
++        request: null,
++        response: null,
++        complete: null,
++        failed: null,
++      };
++      this._httpActivity.set(requestId, activity);
++    }
++    return activity;
++  }
++
++  _reportHTTPAcitivityEvents(activity) {
++    // State machine - sending network events.
++    if (!activity._lastSentEvent && activity.request) {
++      this._chromeSession.emitEvent('Network.requestWillBeSent', activity.request);
++      activity._lastSentEvent = 'requestWillBeSent';
++    }
++    if (activity._lastSentEvent === 'requestWillBeSent' && activity.response) {
++      this._chromeSession.emitEvent('Network.responseReceived', activity.response);
++      activity._lastSentEvent = 'responseReceived';
++    }
++    if (activity._lastSentEvent === 'responseReceived' && activity.complete) {
++      this._chromeSession.emitEvent('Network.requestFinished', activity.complete);
++      activity._lastSentEvent = 'requestFinished';
++    }
++    if (activity._lastSentEvent && activity.failed) {
++      this._chromeSession.emitEvent('Network.requestFailed', activity.failed);
++      activity._lastSentEvent = 'requestFailed';
++    }
++
++    // Clean up if request lifecycle is over.
++    if (activity._lastSentEvent === 'requestFinished' || activity._lastSentEvent === 'requestFailed')
++      this._httpActivity.delete(activity._id);
++  }
++
++  async _onRequest(httpChannel, eventDetails) {
++    let pendingRequestCallback;
++    let pendingRequestPromise = new Promise(x => pendingRequestCallback = x);
++    this._pendingRequstWillBeSentEvents.add(pendingRequestPromise);
++    let details = null;
++    try {
++      details = await this._contentSession.send('Page.requestDetails', {channelId: httpChannel.channelId});
++    } catch (e) {
++      if (this._contentSession.isDisposed()) {
++        pendingRequestCallback();
++        this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
++        return;
++      }
++    }
++    const activity = this._ensureHTTPActivity(eventDetails.requestId);
++    activity.request = {
++      frameId: details ? details.frameId : undefined,
++      ...eventDetails,
++    };
++    this._reportHTTPAcitivityEvents(activity);
++    pendingRequestCallback();
++    this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
++  }
++
++  async _onResponse(httpChannel, eventDetails) {
++    const activity = this._ensureHTTPActivity(eventDetails.requestId);
++    activity.response = eventDetails;
++    this._reportHTTPAcitivityEvents(activity);
++  }
++
++  async _onRequestFinished(httpChannel, eventDetails) {
++    const activity = this._ensureHTTPActivity(eventDetails.requestId);
++    activity.complete = eventDetails;
++    this._reportHTTPAcitivityEvents(activity);
++  }
++
++  async _onRequestFailed(httpChannel, eventDetails) {
++    const activity = this._ensureHTTPActivity(eventDetails.requestId);
++    activity.failed = eventDetails;
++    this._reportHTTPAcitivityEvents(activity);
++  }
++}
++
++var EXPORTED_SYMBOLS = ['NetworkHandler'];
++this.NetworkHandler = NetworkHandler;
+diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
+new file mode 100644
+index 000000000000..32fb7e9d928a
+--- /dev/null
++++ b/testing/juggler/protocol/PageHandler.js
+@@ -0,0 +1,269 @@
++"use strict";
++
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++
++const Cc = Components.classes;
++const Ci = Components.interfaces;
++const Cu = Components.utils;
++const XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
++const FRAME_SCRIPT = "chrome://juggler/content/content/ContentSession.js";
++const helper = new Helper();
++
++class PageHandler {
++  constructor(chromeSession, contentSession) {
++    this._chromeSession = chromeSession;
++    this._contentSession = contentSession;
++    this._browser = TargetRegistry.instance().tabForTarget(chromeSession.targetId()).linkedBrowser;
++    this._dialogs = new Map();
++
++    this._eventListeners = [];
++    this._enabled = false;
++  }
++
++  async close({runBeforeUnload}) {
++    // Postpone target close to deliver response in session.
++    Services.tm.dispatchToMainThread(() => {
++      TargetRegistry.instance().closePage(this._chromeSession.targetId(), runBeforeUnload);
++    });
++  }
++
++  async enable() {
++    if (this._enabled)
++      return;
++    this._enabled = true;
++    this._updateModalDialogs();
++
++    this._eventListeners = [
++      helper.addEventListener(this._browser, 'DOMWillOpenModalDialog', async (event) => {
++        // wait for the dialog to be actually added to DOM.
++        await Promise.resolve();
++        this._updateModalDialogs();
++      }),
++      helper.addEventListener(this._browser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
++    ];
++    await this._contentSession.send('Page.enable');
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
++
++  async setViewport({viewport}) {
++    if (viewport) {
++      const {width, height} = viewport;
++      this._browser.style.setProperty('min-width', width + 'px');
++      this._browser.style.setProperty('min-height', height + 'px');
++      this._browser.style.setProperty('max-width', width + 'px');
++      this._browser.style.setProperty('max-height', height + 'px');
++    } else {
++      this._browser.style.removeProperty('min-width');
++      this._browser.style.removeProperty('min-height');
++      this._browser.style.removeProperty('max-width');
++      this._browser.style.removeProperty('max-height');
++    }
++    const dimensions = this._browser.getBoundingClientRect();
++    await Promise.all([
++      this._contentSession.send('Page.setViewport', {
++        deviceScaleFactor: viewport ? viewport.deviceScaleFactor : 0,
++        isMobile: viewport && viewport.isMobile,
++        hasTouch: viewport && viewport.hasTouch,
++      }),
++      this._contentSession.send('Page.awaitViewportDimensions', {
++        width: dimensions.width,
++        height: dimensions.height
++      }),
++    ]);
++  }
++
++  _updateModalDialogs() {
++    const prompts = new Set(this._browser.tabModalPromptBox ? this._browser.tabModalPromptBox.listPrompts() : []);
++    for (const dialog of this._dialogs.values()) {
++      if (!prompts.has(dialog.prompt())) {
++        this._dialogs.delete(dialog.id());
++        this._chromeSession.emitEvent('Page.dialogClosed', {
++          dialogId: dialog.id(),
++        });
++      } else {
++        prompts.delete(dialog.prompt());
++      }
++    }
++    for (const prompt of prompts) {
++      const dialog = Dialog.createIfSupported(prompt);
++      if (!dialog)
++        continue;
++      this._dialogs.set(dialog.id(), dialog);
++      this._chromeSession.emitEvent('Page.dialogOpened', {
++        dialogId: dialog.id(),
++        type: dialog.type(),
++        message: dialog.message(),
++        defaultValue: dialog.defaultValue(),
++      });
++    }
++  }
++
++  async setUserAgent(options) {
++    return await this._contentSession.send('Page.setUserAgent', options);
++  }
++
++  async setFileInputFiles(options) {
++    return await this._contentSession.send('Page.setFileInputFiles', options);
++  }
++
++  async setEmulatedMedia(options) {
++    return await this._contentSession.send('Page.setEmulatedMedia', options);
++  }
++
++  async setJavascriptEnabled(options) {
++    return await this._contentSession.send('Page.setJavascriptEnabled', options);
++  }
++
++  async setCacheDisabled(options) {
++    return await this._contentSession.send('Page.setCacheDisabled', options);
++  }
++
++  async addBinding(options) {
++    return await this._contentSession.send('Page.addBinding', options);
++  }
++
++  async screenshot(options) {
++    return await this._contentSession.send('Page.screenshot', options);
++  }
++
++  async getBoundingBox(options) {
++    return await this._contentSession.send('Page.getBoundingBox', options);
++  }
++
++  async getContentQuads(options) {
++    return await this._contentSession.send('Page.getContentQuads', options);
++  }
++
++  /**
++   * @param {{frameId: string, url: string}} options
++   */
++  async navigate(options) {
++    return await this._contentSession.send('Page.navigate', options);
++  }
++
++  /**
++   * @param {{frameId: string, url: string}} options
++   */
++  async goBack(options) {
++    return await this._contentSession.send('Page.goBack', options);
++  }
++
++  /**
++   * @param {{frameId: string, url: string}} options
++   */
++  async goForward(options) {
++    return await this._contentSession.send('Page.goForward', options);
++  }
++
++  /**
++   * @param {{frameId: string, url: string}} options
++   */
++  async reload(options) {
++    return await this._contentSession.send('Page.reload', options);
++  }
++
++  /**
++   * @param {{frameId: String, objectId: String}} options
++   * @return {!Promise<*>}
++   */
++  async contentFrame(options) {
++    return await this._contentSession.send('Page.contentFrame', options);
++  }
++
++  async addScriptToEvaluateOnNewDocument(options) {
++    return await this._contentSession.send('Page.addScriptToEvaluateOnNewDocument', options);
++  }
++
++  async removeScriptToEvaluateOnNewDocument(options) {
++    return await this._contentSession.send('Page.removeScriptToEvaluateOnNewDocument', options);
++  }
++
++  async dispatchKeyEvent(options) {
++    return await this._contentSession.send('Page.dispatchKeyEvent', options);
++  }
++
++  async dispatchTouchEvent(options) {
++    return await this._contentSession.send('Page.dispatchTouchEvent', options);
++  }
++
++  async dispatchMouseEvent(options) {
++    return await this._contentSession.send('Page.dispatchMouseEvent', options);
++  }
++
++  async insertText(options) {
++    return await this._contentSession.send('Page.insertText', options);
++  }
++
++  async handleDialog({dialogId, accept, promptText}) {
++    const dialog = this._dialogs.get(dialogId);
++    if (!dialog)
++      throw new Error('Failed to find dialog with id = ' + dialogId);
++    if (accept)
++      dialog.accept(promptText);
++    else
++      dialog.dismiss();
++  }
++}
++
++class Dialog {
++  static createIfSupported(prompt) {
++    const type = prompt.args.promptType;
++    switch (type) {
++      case 'alert':
++      case 'prompt':
++      case 'confirm':
++        return new Dialog(prompt, type);
++      case 'confirmEx':
++        return new Dialog(prompt, 'beforeunload');
++      default:
++        return null;
++    };
++  }
++
++  constructor(prompt, type) {
++    this._id = helper.generateId();
++    this._type = type;
++    this._prompt = prompt;
++  }
++
++  id() {
++    return this._id;
++  }
++
++  message() {
++    return this._prompt.ui.infoBody.textContent;
++  }
++
++  type() {
++    return this._type;
++  }
++
++  prompt() {
++    return this._prompt;
++  }
++
++  dismiss() {
++    if (this._prompt.ui.button1)
++      this._prompt.ui.button1.click();
++    else
++      this._prompt.ui.button0.click();
++  }
++
++  defaultValue() {
++    return this._prompt.ui.loginTextbox.value;
++  }
++
++  accept(promptValue) {
++    if (typeof promptValue === 'string' && this._type === 'prompt')
++      this._prompt.ui.loginTextbox.value = promptValue;
++    this._prompt.ui.button0.click();
++  }
++}
++
++var EXPORTED_SYMBOLS = ['PageHandler'];
++this.PageHandler = PageHandler;
+diff --git a/testing/juggler/protocol/PrimitiveTypes.js b/testing/juggler/protocol/PrimitiveTypes.js
+new file mode 100644
+index 000000000000..78b6601b91d0
+--- /dev/null
++++ b/testing/juggler/protocol/PrimitiveTypes.js
+@@ -0,0 +1,143 @@
++const t = {};
++
++t.String = function(x, details = {}, path = ['<root>']) {
++  if (typeof x === 'string' || typeof x === 'String')
++    return true;
++  details.error = `Expected "${path.join('.')}" to be |string|; found |${typeof x}| \`${JSON.stringify(x)}\` instead.`;
++  return false;
++}
++
++t.Number = function(x, details = {}, path = ['<root>']) {
++  if (typeof x === 'number')
++    return true;
++  details.error = `Expected "${path.join('.')}" to be |number|; found |${typeof x}| \`${JSON.stringify(x)}\` instead.`;
++  return false;
++}
++
++t.Boolean = function(x, details = {}, path = ['<root>']) {
++  if (typeof x === 'boolean')
++    return true;
++  details.error = `Expected "${path.join('.')}" to be |boolean|; found |${typeof x}| \`${JSON.stringify(x)}\` instead.`;
++  return false;
++}
++
++t.Null = function(x, details = {}, path = ['<root>']) {
++  if (Object.is(x, null))
++    return true;
++  details.error = `Expected "${path.join('.')}" to be \`null\`; found \`${JSON.stringify(x)}\` instead.`;
++  return false;
++}
++
++t.Undefined = function(x, details = {}, path = ['<root>']) {
++  if (Object.is(x, undefined))
++    return true;
++  details.error = `Expected "${path.join('.')}" to be \`undefined\`; found \`${JSON.stringify(x)}\` instead.`;
++  return false;
++}
++
++t.Any = x => true,
++
++t.Enum = function(values) {
++  return function(x, details = {}, path = ['<root>']) {
++    if (values.indexOf(x) !== -1)
++      return true;
++    details.error = `Expected "${path.join('.')}" to be one of [${values.join(', ')}]; found \`${JSON.stringify(x)}\` (${typeof x}) instead.`;
++    return false;
++  }
++}
++
++t.Nullable = function(scheme) {
++  return function(x, details = {}, path = ['<root>']) {
++    if (Object.is(x, null))
++      return true;
++    return checkScheme(scheme, x, details, path);
++  }
++}
++
++t.Optional = function(scheme) {
++  return function(x, details = {}, path = ['<root>']) {
++    if (Object.is(x, undefined))
++      return true;
++    return checkScheme(scheme, x, details, path);
++  }
++}
++
++t.Array = function(scheme) {
++  return function(x, details = {}, path = ['<root>']) {
++    if (!Array.isArray(x)) {
++      details.error = `Expected "${path.join('.')}" to be an array; found \`${JSON.stringify(x)}\` (${typeof x}) instead.`;
++      return false;
++    }
++    const lastPathElement = path[path.length - 1];
++    for (let i = 0; i < x.length; ++i) {
++      path[path.length - 1] = lastPathElement + `[${i}]`;
++      if (!checkScheme(scheme, x[i], details, path))
++        return false;
++    }
++    path[path.length - 1] = lastPathElement;
++    return true;
++  }
++}
++
++t.Recursive = function(types, schemeName) {
++  return function(x, details = {}, path = ['<root>']) {
++    const scheme = types[schemeName];
++    return checkScheme(scheme, x, details, path);
++  }
++}
++
++function beauty(path, obj) {
++  if (path.length === 1)
++    return `object ${JSON.stringify(obj, null, 2)}`;
++  return `property "${path.join('.')}" - ${JSON.stringify(obj, null, 2)}`;
++}
++
++function checkScheme(scheme, x, details = {}, path = ['<root>']) {
++  if (!scheme)
++    throw new Error(`ILLDEFINED SCHEME: ${path.join('.')}`);
++  if (typeof scheme === 'object') {
++    if (!x) {
++      details.error = `Object "${path.join('.')}" is undefined, but has some scheme`;
++      return false;
++    }
++    for (const [propertyName, aScheme] of Object.entries(scheme)) {
++      path.push(propertyName);
++      const result = checkScheme(aScheme, x[propertyName], details, path);
++      path.pop();
++      if (!result)
++        return false;
++    }
++    for (const propertyName of Object.keys(x)) {
++      if (!scheme[propertyName]) {
++        path.push(propertyName);
++        details.error = `Found ${beauty(path, x[propertyName])} which is not described in this scheme`;
++        return false;
++      }
++    }
++    return true;
++  }
++  return scheme(x, details, path);
++}
++
++/*
++
++function test(scheme, obj) {
++  const details = {};
++  if (!checkScheme(scheme, obj, details)) {
++    dump(`FAILED: ${JSON.stringify(obj)}
++      details.error: ${details.error}
++    `);
++  } else {
++    dump(`SUCCESS: ${JSON.stringify(obj)}
++`);
++  }
++}
++
++test(t.Array(t.String), ['a', 'b', 2, 'c']);
++test(t.Either(t.String, t.Number), {});
++
++*/
++
++this.t = t;
++this.checkScheme = checkScheme;
++this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
+diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
+new file mode 100644
+index 000000000000..63186502775d
+--- /dev/null
++++ b/testing/juggler/protocol/Protocol.js
+@@ -0,0 +1,660 @@
++const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
++
++// Protocol-specific types.
++const types = {};
++
++types.TargetInfo = {
++  type: t.Enum(['page', 'browser']),
++  targetId: t.String,
++  browserContextId: t.Optional(t.String),
++  url: t.String,
++  // PageId of parent tab, if any.
++  openerId: t.Optional(t.String),
++};
++
++types.DOMPoint = {
++  x: t.Number,
++  y: t.Number,
++};
++
++types.DOMQuad = {
++  p1: types.DOMPoint,
++  p2: types.DOMPoint,
++  p3: types.DOMPoint,
++  p4: types.DOMPoint,
++};
++
++types.TouchPoint = {
++  x: t.Number,
++  y: t.Number,
++  radiusX: t.Optional(t.Number),
++  radiusY: t.Optional(t.Number),
++  rotationAngle: t.Optional(t.Number),
++  force: t.Optional(t.Number),
++};
++
++types.RemoteObject = {
++  type: t.Optional(t.Enum(['object', 'function', 'undefined', 'string', 'number', 'boolean', 'symbol', 'bigint'])),
++  subtype: t.Optional(t.Enum(['array', 'null', 'node', 'regexp', 'date', 'map', 'set', 'weakmap', 'weakset', 'error', 'proxy', 'promise', 'typedarray'])),
++  objectId: t.Optional(t.String),
++  unserializableValue: t.Optional(t.Enum(['Infinity', '-Infinity', '-0', 'NaN'])),
++  value: t.Any
++};
++
++types.AXTree = {
++  role: t.String,
++  name: t.String,
++  children: t.Optional(t.Array(t.Recursive(types, 'AXTree'))),
++
++  selected: t.Optional(t.Boolean),
++  focused: t.Optional(t.Boolean),
++  pressed: t.Optional(t.Boolean),
++  focusable: t.Optional(t.Boolean),
++  haspopup: t.Optional(t.Boolean),
++  required: t.Optional(t.Boolean),
++  invalid: t.Optional(t.Boolean),
++  modal: t.Optional(t.Boolean),
++  editable: t.Optional(t.Boolean),
++  busy: t.Optional(t.Boolean),
++  multiline: t.Optional(t.Boolean),
++  readonly: t.Optional(t.Boolean),
++  checked: t.Optional(t.Enum(['mixed', true])),
++  expanded: t.Optional(t.Boolean),
++  disabled: t.Optional(t.Boolean),
++  multiselectable: t.Optional(t.Boolean),
++
++  value: t.Optional(t.String),
++  description: t.Optional(t.String),
++
++  value: t.Optional(t.String),
++  roledescription: t.Optional(t.String),
++  valuetext: t.Optional(t.String),
++  orientation: t.Optional(t.String),
++  autocomplete: t.Optional(t.String),
++  keyshortcuts: t.Optional(t.String),
++
++  level: t.Optional(t.Number),
++
++  tag: t.Optional(t.String),
++}
++
++const Browser = {
++  targets: ['browser'],
++
++  events: {},
++
++  methods: {
++    'close': {},
++    'getInfo': {
++      returns: {
++        userAgent: t.String,
++        version: t.String,
++      },
++    },
++    'setIgnoreHTTPSErrors': {
++      params: {
++        enabled: t.Boolean,
++      },
++    },
++    'grantPermissions': {
++      params: {
++        origin: t.String,
++        browserContextId: t.Optional(t.String),
++        permissions: t.Array(t.Enum([
++          'geo', 'microphone', 'camera', 'desktop-notifications'
++        ])),
++      },
++    },
++    'resetPermissions': {
++      params: {
++        browserContextId: t.Optional(t.String),
++      }
++    },
++    'setCookies': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        cookies: t.Array({
++          name: t.String,
++          value: t.String,
++          url: t.Optional(t.String),
++          domain: t.Optional(t.String),
++          path: t.Optional(t.String),
++          secure: t.Optional(t.Boolean),
++          httpOnly: t.Optional(t.Boolean),
++          sameSite: t.Optional(t.Enum(['Strict', 'Lax'])),
++          expires: t.Optional(t.Number),
++        }),
++      }
++    },
++    'deleteCookies': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        cookies: t.Array({
++          name: t.String,
++          domain: t.Optional(t.String),
++          path: t.Optional(t.String),
++          url: t.Optional(t.String),
++        }),
++      }
++    },
++    'getCookies': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        urls: t.Array(t.String),
++      },
++      returns: {
++        cookies: t.Array({
++          name: t.String,
++          domain: t.String,
++          path: t.String,
++          value: t.String,
++          expires: t.Number,
++          size: t.Number,
++          httpOnly: t.Boolean,
++          secure: t.Boolean,
++          session: t.Boolean,
++          sameSite: t.Optional(t.Enum(['Strict', 'Lax'])),
++        }),
++      },
++    },
++  },
++};
++
++const Target = {
++  targets: ['browser'],
++
++  events: {
++    'attachedToTarget': {
++      sessionId: t.String,
++      targetInfo: types.TargetInfo,
++    },
++    'detachedFromTarget': {
++      sessionId: t.String,
++    },
++    'targetCreated': types.TargetInfo,
++    'targetDestroyed': types.TargetInfo,
++    'targetInfoChanged': types.TargetInfo,
++  },
++
++  methods: {
++    // Start emitting tagOpened/tabClosed events
++    'enable': {},
++    'attachToTarget': {
++      params: {
++        targetId: t.String,
++      },
++      returns: {
++        sessionId: t.String,
++      },
++    },
++    'newPage': {
++      params: {
++        browserContextId: t.Optional(t.String),
++      },
++      returns: {
++        targetId: t.String,
++      }
++    },
++    'createBrowserContext': {
++      returns: {
++        browserContextId: t.String,
++      },
++    },
++    'removeBrowserContext': {
++      params: {
++        browserContextId: t.String,
++      },
++    },
++    'getBrowserContexts': {
++      returns: {
++        browserContextIds: t.Array(t.String),
++      },
++    },
++  },
++};
++
++const Network = {
++  targets: ['page'],
++  events: {
++    'requestWillBeSent': {
++      // frameId may be absent for redirected requests.
++      frameId: t.Optional(t.String),
++      requestId: t.String,
++      // RequestID of redirected request.
++      redirectedFrom: t.Optional(t.String),
++      postData: t.Optional(t.String),
++      headers: t.Array({
++        name: t.String,
++        value: t.String,
++      }),
++      suspended: t.Optional(t.Boolean),
++      url: t.String,
++      method: t.String,
++      isNavigationRequest: t.Boolean,
++      cause: t.String,
++    },
++    'responseReceived': {
++      securityDetails: t.Nullable({
++        protocol: t.String,
++        subjectName: t.String,
++        issuer: t.String,
++        validFrom: t.Number,
++        validTo: t.Number,
++      }),
++      requestId: t.String,
++      fromCache: t.Boolean,
++      remoteIPAddress: t.Optional(t.String),
++      remotePort: t.Optional(t.Number),
++      status: t.Number,
++      statusText: t.String,
++      headers: t.Array({
++        name: t.String,
++        value: t.String,
++      }),
++    },
++    'requestFinished': {
++      requestId: t.String,
++    },
++    'requestFailed': {
++      requestId: t.String,
++      errorCode: t.String,
++    },
++  },
++  methods: {
++    'enable': {},
++    'setRequestInterception': {
++      params: {
++        enabled: t.Boolean,
++      },
++    },
++    'setExtraHTTPHeaders': {
++      params: {
++        headers: t.Array({
++          name: t.String,
++          value: t.String,
++        }),
++      },
++    },
++    'abortSuspendedRequest': {
++      params: {
++        requestId: t.String,
++      },
++    },
++    'resumeSuspendedRequest': {
++      params: {
++        requestId: t.String,
++        headers: t.Optional(t.Array({
++          name: t.String,
++          value: t.String,
++        })),
++      },
++    },
++    'getResponseBody': {
++      params: {
++        requestId: t.String,
++      },
++      returns: {
++        base64body: t.String,
++        evicted: t.Optional(t.Boolean),
++      },
++    },
++  },
++};
++
++const Runtime = {
++  targets: ['page'],
++  events: {
++    'executionContextCreated': {
++      executionContextId: t.String,
++      auxData: t.Any,
++    },
++    'executionContextDestroyed': {
++      executionContextId: t.String,
++    },
++    'console': {
++      executionContextId: t.String,
++      args: t.Array(types.RemoteObject),
++      type: t.String,
++      location: {
++        columnNumber: t.Number,
++        lineNumber: t.Number,
++        url: t.String,
++      },
++    },
++  },
++  methods: {
++    'enable': {
++      params: {},
++    },
++    'evaluate': {
++      params: {
++        // Pass frameId here.
++        executionContextId: t.String,
++        expression: t.String,
++        returnByValue: t.Optional(t.Boolean),
++      },
++
++      returns: {
++        result: t.Optional(types.RemoteObject),
++        exceptionDetails: t.Optional({
++          text: t.Optional(t.String),
++          stack: t.Optional(t.String),
++          value: t.Optional(t.Any),
++        }),
++      }
++    },
++    'callFunction': {
++      params: {
++        // Pass frameId here.
++        executionContextId: t.String,
++        functionDeclaration: t.String,
++        returnByValue: t.Optional(t.Boolean),
++        args: t.Array({
++          objectId: t.Optional(t.String),
++          unserializableValue: t.Optional(t.Enum(['Infinity', '-Infinity', '-0', 'NaN'])),
++          value: t.Any,
++        }),
++      },
++
++      returns: {
++        result: t.Optional(types.RemoteObject),
++        exceptionDetails: t.Optional({
++          text: t.Optional(t.String),
++          stack: t.Optional(t.String),
++          value: t.Optional(t.Any),
++        }),
++      }
++    },
++    'disposeObject': {
++      params: {
++        executionContextId: t.String,
++        objectId: t.String,
++      },
++    },
++
++    'getObjectProperties': {
++      params: {
++        executionContextId: t.String,
++        objectId: t.String,
++      },
++
++      returns: {
++        properties: t.Array({
++          name: t.String,
++          value: types.RemoteObject,
++        }),
++      }
++    },
++  },
++};
++
++const Page = {
++  targets: ['page'],
++  events: {
++    'eventFired': {
++      frameId: t.String,
++      name: t.Enum(['load', 'DOMContentLoaded']),
++    },
++    'uncaughtError': {
++      frameId: t.String,
++      message: t.String,
++      stack: t.String,
++    },
++    'frameAttached': {
++      frameId: t.String,
++      parentFrameId: t.Optional(t.String),
++    },
++    'frameDetached': {
++      frameId: t.String,
++    },
++    'navigationStarted': {
++      frameId: t.String,
++      navigationId: t.String,
++      url: t.String,
++    },
++    'navigationCommitted': {
++      frameId: t.String,
++      navigationId: t.String,
++      url: t.String,
++      // frame.id or frame.name
++      name: t.String,
++    },
++    'navigationAborted': {
++      frameId: t.String,
++      navigationId: t.String,
++      errorText: t.String,
++    },
++    'sameDocumentNavigation': {
++      frameId: t.String,
++      url: t.String,
++    },
++    'dialogOpened': {
++      dialogId: t.String,
++      type: t.Enum(['prompt', 'alert', 'confirm', 'beforeunload']),
++      message: t.String,
++      defaultValue: t.Optional(t.String),
++    },
++    'dialogClosed': {
++      dialogId: t.String,
++    },
++    'bindingCalled': {
++      executionContextId: t.String,
++      name: t.String,
++      payload: t.Any,
++    },
++  },
++
++  methods: {
++    'enable': {
++      params: {},
++    },
++    'close': {
++      params: {
++        runBeforeUnload: t.Optional(t.Boolean),
++      },
++    },
++    'setFileInputFiles': {
++      params: {
++        frameId: t.String,
++        objectId: t.String,
++        files: t.Array(t.String),
++      },
++    },
++    'addBinding': {
++      params: {
++        name: t.String,
++      },
++    },
++    'setViewport': {
++      params: {
++        viewport: t.Nullable({
++          width: t.Number,
++          height: t.Number,
++          deviceScaleFactor: t.Number,
++          isMobile: t.Boolean,
++          hasTouch: t.Boolean,
++          isLandscape: t.Boolean,
++        }),
++      },
++    },
++    'setUserAgent': {
++      params: {
++        userAgent: t.Nullable(t.String),
++      },
++    },
++    'setEmulatedMedia': {
++      params: {
++        media: t.Enum(['screen', 'print', '']),
++      },
++    },
++    'setCacheDisabled': {
++      params: {
++        cacheDisabled: t.Boolean,
++      },
++    },
++    'setJavascriptEnabled': {
++      params: {
++        enabled: t.Boolean,
++      },
++    },
++    'contentFrame': {
++      params: {
++        frameId: t.String,
++        objectId: t.String,
++      },
++      returns: {
++        frameId: t.Nullable(t.String),
++      },
++    },
++    'addScriptToEvaluateOnNewDocument': {
++      params: {
++        script: t.String,
++      },
++      returns: {
++        scriptId: t.String,
++      }
++    },
++    'removeScriptToEvaluateOnNewDocument': {
++      params: {
++        scriptId: t.String,
++      },
++    },
++    'navigate': {
++      params: {
++        frameId: t.String,
++        url: t.String,
++        referer: t.Optional(t.String),
++      },
++      returns: {
++        navigationId: t.Nullable(t.String),
++        navigationURL: t.Nullable(t.String),
++      }
++    },
++    'goBack': {
++      params: {
++        frameId: t.String,
++      },
++      returns: {
++        navigationId: t.Nullable(t.String),
++        navigationURL: t.Nullable(t.String),
++      }
++    },
++    'goForward': {
++      params: {
++        frameId: t.String,
++      },
++      returns: {
++        navigationId: t.Nullable(t.String),
++        navigationURL: t.Nullable(t.String),
++      }
++    },
++    'reload': {
++      params: {
++        frameId: t.String,
++      },
++      returns: {
++        navigationId: t.String,
++        navigationURL: t.String,
++      }
++    },
++    'getBoundingBox': {
++      params: {
++        frameId: t.String,
++        objectId: t.String,
++      },
++      returns: t.Nullable({
++        x: t.Number,
++        y: t.Number,
++        width: t.Number,
++        height: t.Number,
++      }),
++    },
++    'screenshot': {
++      params: {
++        mimeType: t.Enum(['image/png', 'image/jpeg']),
++        fullPage: t.Optional(t.Boolean),
++        clip: t.Optional({
++          x: t.Number,
++          y: t.Number,
++          width: t.Number,
++          height: t.Number,
++        })
++      },
++      returns: {
++        data: t.String,
++      }
++    },
++    'getContentQuads': {
++      params: {
++        frameId: t.String,
++        objectId: t.String,
++      },
++      returns: {
++        quads: t.Array(types.DOMQuad),
++      },
++    },
++    'dispatchKeyEvent': {
++      params: {
++        type: t.String,
++        key: t.String,
++        keyCode: t.Number,
++        location: t.Number,
++        code: t.String,
++        repeat: t.Boolean,
++      }
++    },
++    'dispatchTouchEvent': {
++      params: {
++        type: t.Enum(['touchStart', 'touchEnd', 'touchMove', 'touchCancel']),
++        touchPoints: t.Array(types.TouchPoint),
++        modifiers: t.Number,
++      },
++      returns: {
++        defaultPrevented: t.Boolean,
++      }
++    },
++    'dispatchMouseEvent': {
++      params: {
++        type: t.String,
++        button: t.Number,
++        x: t.Number,
++        y: t.Number,
++        modifiers: t.Number,
++        clickCount: t.Optional(t.Number),
++        buttons: t.Number,
++      }
++    },
++    'insertText': {
++      params: {
++        text: t.String,
++      }
++    },
++    'handleDialog': {
++      params: {
++        dialogId: t.String,
++        accept: t.Boolean,
++        promptText: t.Optional(t.String),
++      },
++    },
++  },
++};
++
++
++const Accessibility = {
++  targets: ['page'],
++  events: {},
++  methods: {
++    'getFullAXTree': {
++      params: {},
++      returns: {
++        tree:types.AXTree
++      },
++    }
++  }
++}
++
++this.protocol = {
++  domains: {Browser, Target, Page, Runtime, Network, Accessibility},
++};
++this.checkScheme = checkScheme;
++this.EXPORTED_SYMBOLS = ['protocol', 'checkScheme'];
+diff --git a/testing/juggler/protocol/RuntimeHandler.js b/testing/juggler/protocol/RuntimeHandler.js
+new file mode 100644
+index 000000000000..0026e8ff58ef
+--- /dev/null
++++ b/testing/juggler/protocol/RuntimeHandler.js
+@@ -0,0 +1,41 @@
++"use strict";
++
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++
++const Cc = Components.classes;
++const Ci = Components.interfaces;
++const Cu = Components.utils;
++const helper = new Helper();
++
++class RuntimeHandler {
++  constructor(chromeSession, contentSession) {
++    this._chromeSession = chromeSession;
++    this._contentSession = contentSession;
++  }
++
++  async enable(options) {
++    return await this._contentSession.send('Runtime.enable', options);
++  }
++
++  async evaluate(options) {
++    return await this._contentSession.send('Runtime.evaluate', options);
++  }
++
++  async callFunction(options) {
++    return await this._contentSession.send('Runtime.callFunction', options);
++  }
++
++  async getObjectProperties(options) {
++    return await this._contentSession.send('Runtime.getObjectProperties', options);
++  }
++
++  async disposeObject(options) {
++    return await this._contentSession.send('Runtime.disposeObject', options);
++  }
++
++  dispose() {}
++}
++
++var EXPORTED_SYMBOLS = ['RuntimeHandler'];
++this.RuntimeHandler = RuntimeHandler;
+diff --git a/testing/juggler/protocol/TargetHandler.js b/testing/juggler/protocol/TargetHandler.js
+new file mode 100644
+index 000000000000..4ea36eeba758
+--- /dev/null
++++ b/testing/juggler/protocol/TargetHandler.js
+@@ -0,0 +1,75 @@
++"use strict";
++
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
++const {BrowserContextManager} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const helper = new Helper();
++
++class TargetHandler {
++  /**
++   * @param {ChromeSession} session
++   */
++  constructor(session) {
++    this._session = session;
++    this._contextManager = BrowserContextManager.instance();
++    this._targetRegistry = TargetRegistry.instance();
++    this._enabled = false;
++    this._eventListeners = [];
++  }
++
++  async attachToTarget({targetId}) {
++    const sessionId = await this._session.dispatcher().createSession(targetId);
++    return {sessionId};
++  }
++
++  async createBrowserContext() {
++    return {browserContextId: this._contextManager.createBrowserContext()};
++  }
++
++  async removeBrowserContext({browserContextId}) {
++    this._contextManager.removeBrowserContext(browserContextId);
++  }
++
++  async getBrowserContexts() {
++    return {browserContextIds: this._contextManager.getBrowserContexts()};
++  }
++
++  async enable() {
++    if (this._enabled)
++      return;
++    this._enabled = true;
++    for (const targetInfo of this._targetRegistry.targetInfos())
++      this._onTargetCreated(targetInfo);
++
++    this._eventListeners = [
++      helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
++      helper.on(this._targetRegistry, TargetRegistry.Events.TargetChanged, this._onTargetChanged.bind(this)),
++      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
++    ];
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
++
++  _onTargetCreated(targetInfo) {
++    this._session.emitEvent('Target.targetCreated', targetInfo);
++  }
++
++  _onTargetChanged(targetInfo) {
++    this._session.emitEvent('Target.targetInfoChanged', targetInfo);
++  }
++
++  _onTargetDestroyed(targetInfo) {
++    this._session.emitEvent('Target.targetDestroyed', targetInfo);
++  }
++
++  async newPage({browserContextId}) {
++    const targetId = await this._targetRegistry.newPage({browserContextId});
++    return {targetId};
++  }
++}
++
++var EXPORTED_SYMBOLS = ['TargetHandler'];
++this.TargetHandler = TargetHandler;
+diff --git a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp b/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
+index 9aea55ddf773..188a0f28b8e1 100644
+--- a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
++++ b/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
+@@ -179,8 +179,16 @@ nsBrowserStatusFilter::OnStateChange(nsIWebProgress* aWebProgress,
+ }
+ 
+ NS_IMETHODIMP
+-nsBrowserStatusFilter::OnProgressChange(nsIWebProgress* aWebProgress,
+-                                        nsIRequest* aRequest,
++nsBrowserStatusFilter::OnFrameLocationChange(nsIWebProgress *aWebProgress,
++                                             nsIRequest *aRequest,
++                                             nsIURI *aLocation,
++                                             uint32_t aFlags) {
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsBrowserStatusFilter::OnProgressChange(nsIWebProgress *aWebProgress,
++                                        nsIRequest *aRequest,
+                                         int32_t aCurSelfProgress,
+                                         int32_t aMaxSelfProgress,
+                                         int32_t aCurTotalProgress,
+diff --git a/toolkit/toolkit.mozbuild b/toolkit/toolkit.mozbuild
+index 79d6eeed7247..0362763ead99 100644
+--- a/toolkit/toolkit.mozbuild
++++ b/toolkit/toolkit.mozbuild
+@@ -168,6 +168,7 @@ if CONFIG['ENABLE_MARIONETTE']:
+     DIRS += [
+         '/testing/firefox-ui',
+         '/testing/marionette',
++        '/testing/juggler',
+         '/toolkit/components/telemetry/tests/marionette',
+     ]
+ 
+diff --git a/uriloader/base/nsDocLoader.cpp b/uriloader/base/nsDocLoader.cpp
+index 92cb5f3cf6da..7918f127c801 100644
+--- a/uriloader/base/nsDocLoader.cpp
++++ b/uriloader/base/nsDocLoader.cpp
+@@ -1370,6 +1370,24 @@ void nsDocLoader::FireOnLocationChange(nsIWebProgress* aWebProgress,
+   }
+ }
+ 
++void nsDocLoader::FireOnFrameLocationChange(nsIWebProgress* aWebProgress,
++                                       nsIRequest* aRequest,
++                                       nsIURI *aUri,
++                                       uint32_t aFlags) {
++  NOTIFY_LISTENERS(nsIWebProgress::NOTIFY_FRAME_LOCATION,
++    nsCOMPtr<nsIWebProgressListener2> listener2 =
++      do_QueryReferent(info.mWeakListener);
++    if (!listener2)
++      continue;
++    listener2->OnFrameLocationChange(aWebProgress, aRequest, aUri, aFlags);
++  );
++
++  // Pass the notification up to the parent...
++  if (mParent) {
++    mParent->FireOnFrameLocationChange(aWebProgress, aRequest, aUri, aFlags);
++  }
++}
++
+ void nsDocLoader::FireOnStatusChange(nsIWebProgress* aWebProgress,
+                                      nsIRequest* aRequest, nsresult aStatus,
+                                      const char16_t* aMessage) {
+diff --git a/uriloader/base/nsDocLoader.h b/uriloader/base/nsDocLoader.h
+index 4b551ff8e5c1..abc59361f2d6 100644
+--- a/uriloader/base/nsDocLoader.h
++++ b/uriloader/base/nsDocLoader.h
+@@ -210,6 +210,11 @@ class nsDocLoader : public nsIDocumentLoader,
+   void FireOnLocationChange(nsIWebProgress* aWebProgress, nsIRequest* aRequest,
+                             nsIURI* aUri, uint32_t aFlags);
+ 
++  void FireOnFrameLocationChange(nsIWebProgress* aWebProgress,
++                               nsIRequest* aRequest,
++                               nsIURI *aUri,
++                               uint32_t aFlags);
++
+   MOZ_MUST_USE bool RefreshAttempted(nsIWebProgress* aWebProgress, nsIURI* aURI,
+                                      int32_t aDelay, bool aSameURI);
+ 
+diff --git a/uriloader/base/nsIWebProgress.idl b/uriloader/base/nsIWebProgress.idl
+index b0cde5026dc7..09ebb0ef6799 100644
+--- a/uriloader/base/nsIWebProgress.idl
++++ b/uriloader/base/nsIWebProgress.idl
+@@ -87,6 +87,10 @@ interface nsIWebProgress : nsISupports
+    * NOTIFY_REFRESH
+    *   Receive onRefreshAttempted events.
+    *   This is defined on nsIWebProgressListener2.
++   *
++   * NOTIFY_FRAME_LOCATION
++   *   Receive onFrameLocationChange events.
++   *   This is defined on nsIWebProgressListener2.
+    */
+   const unsigned long NOTIFY_PROGRESS         = 0x00000010;
+   const unsigned long NOTIFY_STATUS           = 0x00000020;
+@@ -94,11 +98,12 @@ interface nsIWebProgress : nsISupports
+   const unsigned long NOTIFY_LOCATION         = 0x00000080;
+   const unsigned long NOTIFY_REFRESH          = 0x00000100;
+   const unsigned long NOTIFY_CONTENT_BLOCKING = 0x00000200;
++  const unsigned long NOTIFY_FRAME_LOCATION   = 0x00000400;
+ 
+   /**
+    * This flag enables all notifications.
+    */
+-  const unsigned long NOTIFY_ALL              = 0x000003ff;
++  const unsigned long NOTIFY_ALL              = 0x000007ff;
+ 
+   /**
+    * Registers a listener to receive web progress events.
+diff --git a/uriloader/base/nsIWebProgressListener2.idl b/uriloader/base/nsIWebProgressListener2.idl
+index 87701f8d2cfe..ae1aa85c019c 100644
+--- a/uriloader/base/nsIWebProgressListener2.idl
++++ b/uriloader/base/nsIWebProgressListener2.idl
+@@ -66,4 +66,27 @@ interface nsIWebProgressListener2 : nsIWebProgressListener {
+                              in nsIURI aRefreshURI,
+                              in long aMillis,
+                              in boolean aSameURI);
++
++  /**
++   * Called when the location of the window or its subframes changes.  This is not
++   * when a load is requested, but rather once it is verified that the load is
++   * going to occur in the given window.  For instance, a load that starts in a
++   * window might send progress and status messages for the new site, but it
++   * will not send the onLocationChange until we are sure that we are loading
++   * this new page here.
++   *
++   * @param aWebProgress
++   *        The nsIWebProgress instance that fired the notification.
++   * @param aRequest
++   *        The associated nsIRequest.  This may be null in some cases.
++   * @param aLocation
++   *        The URI of the location that is being loaded.
++   * @param aFlags
++   *        This is a value which explains the situation or the reason why
++   *        the location has changed.
++   */
++  void onFrameLocationChange(in nsIWebProgress aWebProgress,
++                             in nsIRequest aRequest,
++                             in nsIURI aLocation,
++                             [optional] in unsigned long aFlags);
+ };
+-- 
+2.17.1
+

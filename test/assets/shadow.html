@@ -1,0 +1,17 @@
+<script>
+
+let h1 = null;
+let button = null;
+let clicked = false;
+
+window.addEventListener('DOMContentLoaded', () => {
+  const shadowRoot = document.body.attachShadow({mode: 'open'});
+  h1 = document.createElement('h1');
+  h1.textContent = 'Hellow Shadow DOM v1';
+  button = document.createElement('button');
+  button.textContent = 'Click';
+  button.addEventListener('click', () => clicked = true);
+  shadowRoot.appendChild(h1);
+  shadowRoot.appendChild(button);
+});
+</script>

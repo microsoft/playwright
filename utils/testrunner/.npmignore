@@ -1,0 +1,13 @@
+# exclude all examples and README.md
+examples/
+README.md
+
+# repeats from .gitignore
+node_modules
+.npmignore
+.DS_Store
+*.swp
+*.pyc
+.vscode
+package-lock.json
+yarn.lock

@@ -1,0 +1,2 @@
+[MarkDown] Non-existing event found in class Foo: 'stop'
+[MarkDown] Event not found in class Foo: 'finish'

@@ -1,0 +1,52 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function generatePalette(amount) {
+        var result = [];
+        var hueStep = 360 / amount;
+        for (var i = 0; i < amount; ++i)
+            result.push('hsl(' + (hueStep * i) + ', 100%, 90%)');
+        return result;
+    }
+
+    var palette = generatePalette(100);
+    for (var i = 0; i < 200; ++i) {
+        var box = document.createElement('div');
+        box.classList.add('box');
+        box.style.setProperty('background-color', palette[i % palette.length]);
+        var x = i;
+        do {
+            var digit = x % 10;
+            x = (x / 10)|0;
+            var img = document.createElement('img');
+            img.src = `./digits/${digit}.png`;
+            box.insertBefore(img, box.firstChild);
+        } while (x);
+        document.body.appendChild(box);
+    }
+});
+</script>
+
+<style>
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.box {
+    font-family: arial;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    width: 50px;
+    height: 50px;
+    box-sizing: border-box;
+    border: 1px solid darkgray;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+</style>

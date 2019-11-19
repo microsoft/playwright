@@ -1,0 +1,19 @@
+<script>
+  async function sleep(delay) {
+    return new Promise(resolve => setTimeout(resolve, delay));
+  }
+
+  async function main() {
+    const roundOne = Promise.all([
+      fetch('fetch-request-a.js'),
+      fetch('fetch-request-b.js'),
+      fetch('fetch-request-c.js'),
+    ]);
+
+    await roundOne;
+    await sleep(50);
+    await fetch('fetch-request-d.js');
+  }
+
+  main();
+</script>

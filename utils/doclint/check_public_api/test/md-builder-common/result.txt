@@ -1,0 +1,39 @@
+{
+  "classes": [
+    {
+      "name": "Foo",
+      "members": [
+        {
+          "name": "frame",
+          "type": {
+            "name": "[Frame]"
+          },
+          "kind": "event"
+        },
+        {
+          "name": "$",
+          "type": {
+            "name": "Promise<ElementHandle>"
+          },
+          "kind": "method",
+          "args": [
+            {
+              "name": "selector",
+              "type": {
+                "name": "string"
+              },
+              "kind": "property"
+            }
+          ]
+        },
+        {
+          "name": "url",
+          "type": {
+            "name": "string"
+          },
+          "kind": "property"
+        }
+      ]
+    }
+  ]
+}

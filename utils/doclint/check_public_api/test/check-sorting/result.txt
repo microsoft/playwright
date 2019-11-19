@@ -1,0 +1,4 @@
+[MarkDown] Events should go first. Event 'b' in class Foo breaks order
+[MarkDown] Event 'c' in class Foo breaks alphabetic ordering of events
+[MarkDown] Bad alphabetic ordering of Foo members: Foo.ddd should go after Foo.ccc()
+[MarkDown] Bad alphabetic ordering of Foo members: Foo.ccc() should go after Foo.bbb()

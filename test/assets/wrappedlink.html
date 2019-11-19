@@ -1,0 +1,32 @@
+<style>
+:root {
+  font-family: monospace;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+div {
+  width: 10ch;
+  word-wrap: break-word;
+  border: 1px solid blue;
+  transform: rotate(33deg);
+  line-height: 8ch;
+  padding: 2ch;
+}
+
+a {
+  margin-left: 7ch;
+}
+</style>
+<div>
+  <a href='#clicked'>123321</a>
+</div>
+<script>
+  document.querySelector('a').addEventListener('click', () => {
+    window.__clicked = true;
+  });
+</script>
