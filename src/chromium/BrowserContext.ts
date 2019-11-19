@@ -56,7 +56,7 @@ export class BrowserContext extends EventEmitter {
     return !!this._id;
   }
 
-  async overridePermissions(origin: string, userPermissions: string[]) {
+  async overridePermissions(origin: string, permissions: string[]) {
     const webPermissionToProtocol = new Map<string, Protocol.Browser.PermissionType>([
       ['geolocation', 'geolocation'],
       ['midi', 'midi'],
@@ -75,13 +75,13 @@ export class BrowserContext extends EventEmitter {
       // chrome-specific permissions we have.
       ['midi-sysex', 'midiSysex'],
     ]);
-    const permissions = userPermissions.map(permission => {
+    const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
       if (!protocolPermission)
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._connection.send('Browser.grantPermissions', {origin, browserContextId: this._id || undefined, permissions});
+    await this._connection.send('Browser.grantPermissions', {origin, browserContextId: this._id || undefined, permissions: filtered});
   }
 
   async clearPermissionOverrides() {
