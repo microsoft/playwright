@@ -55,14 +55,6 @@ module.exports.addTests = function({testRunner, expect, playwright, defaultBrows
       await browserWithExtension.close();
       expect(backgroundPageTarget).toBeTruthy();
     });
-    it('target.page() should return a background_page', async({}) => {
-      const browserWithExtension = await playwright.launch(extensionOptions);
-      const backgroundPageTarget = await browserWithExtension.waitForTarget(target => target.type() === 'background_page');
-      const page = await backgroundPageTarget.page();
-      expect(await page.evaluate(() => 2 * 3)).toBe(6);
-      expect(await page.evaluate(() => window.MAGIC)).toBe(42);
-      await browserWithExtension.close();
-    });
     it('should have default url when launching browser', async function() {
       const browser = await playwright.launch(extensionOptions);
       const pages = (await browser.pages()).map(page => page.url());

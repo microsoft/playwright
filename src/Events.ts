@@ -35,8 +35,6 @@ export const Events = {
     Load: 'load',
     Metrics: 'metrics',
     Popup: 'popup',
-    WorkerCreated: 'workercreated',
-    WorkerDestroyed: 'workerdestroyed',
   },
 
   Browser: {

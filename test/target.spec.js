@@ -72,35 +72,6 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(allPages).toContain(page);
       expect(allPages).not.toContain(otherPage);
     });
-    it.skip(FFOX || WEBKIT)('should report when a service worker is created and destroyed', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      const createdTarget = new Promise(fulfill => context.once('targetcreated', target => fulfill(target)));
-
-      await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
-
-      expect((await createdTarget).type()).toBe('service_worker');
-      expect((await createdTarget).url()).toBe(server.PREFIX + '/serviceworkers/empty/sw.js');
-
-      const destroyedTarget = new Promise(fulfill => context.once('targetdestroyed', target => fulfill(target)));
-      await page.evaluate(() => window.registrationPromise.then(registration => registration.unregister()));
-      expect(await destroyedTarget).toBe(await createdTarget);
-    });
-    it.skip(FFOX || WEBKIT)('should create a worker from a service worker', async({page, server, context}) => {
-      await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
-
-      const target = await context.waitForTarget(target => target.type() === 'service_worker');
-      const worker = await target.worker();
-      expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
-    });
-    it.skip(FFOX || WEBKIT)('should create a worker from a shared worker', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.evaluate(() => {
-        new SharedWorker('data:text/javascript,console.log("hi")');
-      });
-      const target = await context.waitForTarget(target => target.type() === 'shared_worker');
-      const worker = await target.worker();
-      expect(await worker.evaluate(() => self.toString())).toBe('[object SharedWorkerGlobalScope]');
-    });
     it.skip(WEBKIT)('should report when a target url changes', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       let changedTarget = new Promise(fulfill => context.once('targetchanged', target => fulfill(target)));

@@ -21,7 +21,6 @@ import { BrowserContext } from './BrowserContext';
 import { CDPSession } from './Connection';
 import { Page, Viewport } from './Page';
 import { TaskQueue } from './TaskQueue';
-import { Worker } from './Worker';
 import { Protocol } from './protocol';
 
 export class Target {
@@ -33,7 +32,7 @@ export class Target {
   private _defaultViewport: Viewport;
   private _screenshotTaskQueue: TaskQueue;
   private _pagePromise: Promise<Page> | null = null;
-  private _workerPromise: Promise<Worker> | null = null;
+
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
   _isClosedPromise: Promise<void>;
@@ -83,17 +82,6 @@ export class Target {
           .then(client => Page.create(client, this, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotTaskQueue));
     }
     return this._pagePromise;
-  }
-
-  async worker(): Promise<Worker | null> {
-    if (this._targetInfo.type !== 'service_worker' && this._targetInfo.type !== 'shared_worker')
-      return null;
-    if (!this._workerPromise) {
-      // TODO(einbinder): Make workers send their console logs.
-      this._workerPromise = this._sessionFactory()
-          .then(client => new Worker(client, this._targetInfo.url, () => {} /* consoleAPICalled */, () => {} /* exceptionThrown */));
-    }
-    return this._workerPromise;
   }
 
   url(): string {

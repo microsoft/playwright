@@ -50,7 +50,6 @@ export class Page extends EventEmitter {
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
   private _screenshotTaskQueue: TaskQueue;
-  private _workers = new Map<string, Worker>();
   private _disconnectPromise: Promise<Error> | undefined;
   private _sessionListeners: RegisteredListener[] = [];
 
@@ -178,11 +177,6 @@ export class Page extends EventEmitter {
   frames(): Frame[] {
     return this._frameManager.frames();
   }
-
-  workers(): Worker[] {
-    return Array.from(this._workers.values());
-  }
-
 
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);

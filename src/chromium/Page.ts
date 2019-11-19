@@ -35,7 +35,6 @@ import { Response, NetworkManagerEvents } from './NetworkManager';
 import { TaskQueue } from './TaskQueue';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { Tracing } from './Tracing';
-import { Worker } from './Worker';
 import { Target } from './Target';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
@@ -69,7 +68,6 @@ export class Page extends EventEmitter {
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
   private _screenshotTaskQueue: TaskQueue;
-  private _workers = new Map<string, Worker>();
   private _fileChooserInterceptionIsDisabled = false;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   private _disconnectPromise: Promise<Error> | undefined;
@@ -97,27 +95,6 @@ export class Page extends EventEmitter {
     this._coverage = new Coverage(client);
 
     this._screenshotTaskQueue = screenshotTaskQueue;
-
-    client.on('Target.attachedToTarget', event => {
-      if (event.targetInfo.type !== 'worker') {
-        // If we don't detach from service workers, they will never die.
-        client.send('Target.detachFromTarget', {
-          sessionId: event.sessionId
-        }).catch(debugError);
-        return;
-      }
-      const session = Connection.fromSession(client).session(event.sessionId);
-      const worker = new Worker(session, event.targetInfo.url, this._addConsoleMessage.bind(this), this._handleException.bind(this));
-      this._workers.set(event.sessionId, worker);
-      this.emit(Events.Page.WorkerCreated, worker);
-    });
-    client.on('Target.detachedFromTarget', event => {
-      const worker = this._workers.get(event.sessionId);
-      if (!worker)
-        return;
-      this.emit(Events.Page.WorkerDestroyed, worker);
-      this._workers.delete(event.sessionId);
-    });
 
     this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
     this._frameManager.on(FrameManagerEvents.FrameDetached, event => this.emit(Events.Page.FrameDetached, event));
@@ -215,8 +192,7 @@ export class Page extends EventEmitter {
     const {level, text, args, source, url, lineNumber} = event.entry;
     if (args)
       args.map(arg => releaseObject(this._client, arg));
-    if (source !== 'worker')
-      this.emit(Events.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
+    this.emit(Events.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
   }
 
   mainFrame(): Frame {
@@ -245,10 +221,6 @@ export class Page extends EventEmitter {
 
   frames(): Frame[] {
     return this._frameManager.frames();
-  }
-
-  workers(): Worker[] {
-    return Array.from(this._workers.values());
   }
 
   async setRequestInterception(value: boolean) {
