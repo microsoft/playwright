@@ -15,13 +15,10 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserContext } from './Browser';
-import { TargetSession, Connection } from './Connection';
-import { Events } from '../Events';
-import { Page, Viewport } from './Page';
-import { TaskQueue } from './TaskQueue';
-import { Protocol } from './protocol';
 import { helper, RegisteredListener } from '../helper';
+import { Browser, BrowserContext } from './Browser';
+import { Page } from './Page';
+import { Protocol } from './protocol';
 
 export class Target {
   private _browserContext: BrowserContext;

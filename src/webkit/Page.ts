@@ -21,7 +21,7 @@ import * as mime from 'mime';
 import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from '../Events';
 import { Frame, FrameManager, FrameManagerEvents } from './FrameManager';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { valueFromRemoteObject } from './protocolHelper';
 import { Keyboard, Mouse } from './Input';
 import { createJSHandle, ElementHandle, JSHandle, ClickOptions } from './JSHandle';
@@ -70,7 +70,7 @@ export class Page extends EventEmitter {
     this._frameManager = new FrameManager(session, this, this._timeoutSettings);
 
     this._screenshotTaskQueue = screenshotTaskQueue;
-    
+
     this._setSession(session);
     this._setTarget(target);
 
@@ -113,14 +113,11 @@ export class Page extends EventEmitter {
     });
   }
 
-  async _swapTargetOnNavigation(newSession : TargetSession, newTarget : Target)
-  {
-    this._setSession(newSession); 
+  async _swapTargetOnNavigation(newSession : TargetSession, newTarget : Target) {
+    this._setSession(newSession);
     this._setTarget(newTarget);
-
     await this._frameManager._swapTargetOnNavigation(newSession);
-
-    await this._initialize().catch(e => console.log('failed to enable agents after swap: ' + e));
+    await this._initialize().catch(e => debugError('failed to enable agents after swap: ' + e));
   }
 
   target(): Target {
@@ -140,7 +137,7 @@ export class Page extends EventEmitter {
   }
 
   async _onConsoleMessage(event : Protocol.Console.messageAddedPayload) {
-    const {type, level, text, parameters, url, line:lineNumber, column:columnNumber} = event.message;
+    const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
     let derivedType: string = type;
     if (type === 'log')
       derivedType = level;
@@ -148,7 +145,7 @@ export class Page extends EventEmitter {
       derivedType = 'timeEnd';
     const mainFrameContext = await this.mainFrame().executionContext();
     const handles = (parameters || []).map(p => {
-      let context = null;;
+      let context = null;
       if (p.objectId) {
         const objectId = JSON.parse(p.objectId);
         context = this._frameManager._contextIdToContext.get(objectId.injectedScriptId);
@@ -169,7 +166,7 @@ export class Page extends EventEmitter {
     const formattedText = textTokens.length ? textTokens.join(' ') : text;
     this.emit(Events.Page.Console, new ConsoleMessage(derivedType, formattedText, handles, location));
   }
-  
+
   mainFrame(): Frame {
     return this._frameManager.mainFrame();
   }
@@ -239,7 +236,7 @@ export class Page extends EventEmitter {
       };
       if (!cookie.url && pageURL.startsWith('http'))
         item.url = pageURL;
-      await this._session.send('Page.deleteCookie', item).catch(e => console.log("deleting " + JSON.stringify(item) + " => " +e));
+      await this._session.send('Page.deleteCookie', item).catch(e => debugError('deleting ' + JSON.stringify(item) + ' => ' + e));
     }
   }
 
@@ -388,22 +385,22 @@ export class Page extends EventEmitter {
   async _screenshotTask(options?: ScreenshotOptions): Promise<Buffer | string> {
     const params: Protocol.Page.snapshotRectParameters = { x: 0, y: 0, width: 800, height: 600, coordinateSystem: 'Page' };
     if (options.fullPage) {
-      const pageSize = await this.evaluate(() => {
-        return {
+      const pageSize = await this.evaluate(() =>
+        ({
           width: document.body.scrollWidth,
           height: document.body.scrollHeight
-        };
-      });
+        }));
       Object.assign(params, pageSize);
-    } else if (options.clip)
+    } else if (options.clip) {
       Object.assign(params, options.clip);
-    else if (this._viewport)
+    } else if (this._viewport) {
       Object.assign(params, this._viewport);
+    }
     const [, result] = await Promise.all([
       this._session._connection.send('Target.activate', { targetId: this._target._targetId }),
       this._session.send('Page.snapshotRect', params),
     ]).catch(e => {
-      console.log('Failed to take screenshot: ' + e);
+      debugError('Failed to take screenshot: ' + e);
       throw e;
     });
     const prefix = 'data:image/png;base64,';
@@ -421,7 +418,7 @@ export class Page extends EventEmitter {
     this.browser()._connection.send('Target.close', {
       targetId: this._target._targetId
     }).catch(e => {
-      console.log(e);
+      debugError(e);
     });
     await this._target._isClosedPromise;
   }
@@ -516,76 +513,6 @@ type ScreenshotOptions = {
   encoding?: string,
 }
 
-type MediaFeature = {
-  name: string,
-  value: string
-}
-
-const supportedMetrics: Set<string> = new Set([
-  'Timestamp',
-  'Documents',
-  'Frames',
-  'JSEventListeners',
-  'Nodes',
-  'LayoutCount',
-  'RecalcStyleCount',
-  'LayoutDuration',
-  'RecalcStyleDuration',
-  'ScriptDuration',
-  'TaskDuration',
-  'JSHeapUsedSize',
-  'JSHeapTotalSize',
-]);
-
-const PagePaperFormats = {
-  letter: {width: 8.5, height: 11},
-  legal: {width: 8.5, height: 14},
-  tabloid: {width: 11, height: 17},
-  ledger: {width: 17, height: 11},
-  a0: {width: 33.1, height: 46.8 },
-  a1: {width: 23.4, height: 33.1 },
-  a2: {width: 16.54, height: 23.4 },
-  a3: {width: 11.7, height: 16.54 },
-  a4: {width: 8.27, height: 11.7 },
-  a5: {width: 5.83, height: 8.27 },
-  a6: {width: 4.13, height: 5.83 },
-};
-
-const unitToPixels = {
-  'px': 1,
-  'in': 96,
-  'cm': 37.8,
-  'mm': 3.78
-};
-
-function convertPrintParameterToInches(parameter: (string | number | undefined)): (number | undefined) {
-  if (typeof parameter === 'undefined')
-    return undefined;
-  let pixels: number;
-  if (helper.isNumber(parameter)) {
-    // Treat numbers as pixel values to be aligned with phantom's paperSize.
-    pixels = parameter as number;
-  } else if (helper.isString(parameter)) {
-    const text: string = parameter as string;
-    let unit = text.substring(text.length - 2).toLowerCase();
-    let valueText = '';
-    if (unitToPixels.hasOwnProperty(unit)) {
-      valueText = text.substring(0, text.length - 2);
-    } else {
-      // In case of unknown unit try to parse the whole parameter as number of pixels.
-      // This is consistent with phantom's paperSize behavior.
-      unit = 'px';
-      valueText = text;
-    }
-    const value = Number(valueText);
-    assert(!isNaN(value), 'Failed to parse parameter value: ' + text);
-    pixels = value * unitToPixels[unit];
-  } else {
-    throw new Error('page.pdf() Cannot handle parameter type: ' + (typeof parameter));
-  }
-  return pixels / 96;
-}
-
 type NetworkCookie = {
   name: string,
   value: string,
@@ -598,19 +525,6 @@ type NetworkCookie = {
   session: boolean,
   sameSite?: 'Strict'|'Lax'|'Extended'|'None'
 };
-
-type NetworkCookieParam = {
-  name: string,
-  value: string,
-  url?: string,
-  domain?: string,
-  path?: string,
-  expires?: number,
-  httpOnly?: boolean,
-  secure?: boolean,
-  sameSite?: 'Strict'|'Lax'
-};
-
 
 type DeleteNetworkCookieParam = {
   name: string,

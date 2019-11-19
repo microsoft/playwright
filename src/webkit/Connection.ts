@@ -89,7 +89,7 @@ export class Connection extends EventEmitter {
         else
           callback.resolve(object.result);
       } else {
-        assert(this._closed, "Received response for unknown callback: " + object.id);
+        assert(this._closed, 'Received response for unknown callback: ' + object.id);
       }
     } else {
       this.emit(object.method, object.params);
@@ -114,16 +114,16 @@ export class Connection extends EventEmitter {
     } else if (object.method === 'Target.dispatchMessageFromTarget') {
       const session = this._sessions.get(object.params.targetId);
       if (!session)
-        throw new Error("Unknown target: " + object.params.targetId);
+        throw new Error('Unknown target: ' + object.params.targetId);
       session._dispatchMessageFromTarget(object.params.message);
     } else if (object.method === 'Target.didCommitProvisionalTarget') {
       const {oldTargetId, newTargetId} = object.params;
       const newSession = this._sessions.get(newTargetId);
       if (!newSession)
-        throw new Error("Unknown new target: " + newTargetId);
+        throw new Error('Unknown new target: ' + newTargetId);
       const oldSession = this._sessions.get(oldTargetId);
       if (!oldSession)
-        throw new Error("Unknown old target: " + oldTargetId);
+        throw new Error('Unknown old target: ' + oldTargetId);
     }
   }
 
@@ -188,28 +188,28 @@ export class TargetSession extends EventEmitter {
       method,
       params
     };
-    debugWrappedMessage("SEND ► " + JSON.stringify(messageObj, null, 2));
+    debugWrappedMessage('SEND ► ' + JSON.stringify(messageObj, null, 2));
     this._out.push(messageObj);
     // Serialize message before adding callback in case JSON throws.
     const message = JSON.stringify(messageObj);
     const result = new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(innerId, {resolve, reject, error: new Error(), method});
     });
-    this._connection.send("Target.sendMessageToTarget", {
+    this._connection.send('Target.sendMessageToTarget', {
       message: message, targetId: this._sessionId
     }).catch(e => {
       // There is a possible race of the connection closure. We may have received
       // targetDestroyed notification before response for the command, in that
       // case it's safe to swallow the exception.g
       const callback = this._callbacks.get(innerId);
-      assert(!callback, "Callback was not rejected when target was destroyed.");
+      assert(!callback, 'Callback was not rejected when target was destroyed.');
     });
     return result;
   }
 
   _dispatchMessageFromTarget(message: string) {
     const object = JSON.parse(message);
-    debugWrappedMessage("◀ RECV " + JSON.stringify(object, null, 2));
+    debugWrappedMessage('◀ RECV ' + JSON.stringify(object, null, 2));
     this._in.push(object);
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id);
@@ -219,8 +219,6 @@ export class TargetSession extends EventEmitter {
       else
         callback.resolve(object.result);
     } else {
-      if (object.id)
-        console.log(JSON.stringify(object, null, 2));
       assert(!object.id);
       // console.log(`[${this._sessionId}] ${object.method}`);
       this.emit(object.method, object.params);

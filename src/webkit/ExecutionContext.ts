@@ -103,7 +103,7 @@ export class ExecutionContext {
                 return void 0;
               throw e;
             }
-          }
+          };
           return this._session.send('Runtime.callFunctionOn', {
             // Serialize object using standard JSON implementation to correctly pass 'undefined'.
             functionDeclaration: serializeFunction + '\n' + suffix + '\n',
@@ -121,7 +121,8 @@ export class ExecutionContext {
           });
         }
         return valueFromRemoteObject(response.result);
-      }).catch(rewriteError);    }
+      }).catch(rewriteError);
+    }
 
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
@@ -147,10 +148,10 @@ export class ExecutionContext {
     let serializableArgs;
     if (args.some(isUnserializable)) {
       serializableArgs = [];
-      let paramStrings = [];
-      for (let arg of args) {
+      const paramStrings = [];
+      for (const arg of args) {
         if (isUnserializable(arg)) {
-          paramStrings.push(unserializableToString(arg))
+          paramStrings.push(unserializableToString(arg));
         } else {
           paramStrings.push('arguments[' + serializableArgs.length + ']');
           serializableArgs.push(arg);
@@ -172,7 +173,7 @@ export class ExecutionContext {
         returnByValue: false,
         emulateUserGesture: true
       });
-    } catch(err) {
+    } catch (err) {
       if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
         err.message += ' Are you passing a nested JSHandle?';
       throw err;
@@ -198,7 +199,7 @@ export class ExecutionContext {
       if (response.wasThrown)
         throw new Error('Evaluation failed: ' + response.result.description);
       if (!returnByValue)
-        return createJSHandle(this, response.result);;
+        return createJSHandle(this, response.result);
       if (response.result.objectId) {
         const serializeFunction = function() {
           try {
@@ -208,7 +209,7 @@ export class ExecutionContext {
               return void 0;
             throw e;
           }
-        }
+        };
         return this._session.send('Runtime.callFunctionOn', {
           // Serialize object using standard JSON implementation to correctly pass 'undefined'.
           functionDeclaration: serializeFunction + '\n' + suffix + '\n',
@@ -294,7 +295,7 @@ export class ExecutionContext {
 
   async _contextGlobalObjectId() {
     if (!this._globalObjectId) {
-      const globalObject = await this._session.send('Runtime.evaluate', { expression: "this", contextId: this._contextId });
+      const globalObject = await this._session.send('Runtime.evaluate', { expression: 'this', contextId: this._contextId });
       this._globalObjectId = globalObject.result.objectId;
     }
     return this._globalObjectId;

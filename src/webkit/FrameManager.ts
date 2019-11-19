@@ -16,17 +16,18 @@
  */
 import * as EventEmitter from 'events';
 import * as fs from 'fs';
-import {helper, assert, debugError, RegisteredListener} from '../helper';
-import {TimeoutError} from '../Errors';
-import {Events} from '../Events';
-import {ExecutionContext, EVALUATION_SCRIPT_URL} from './ExecutionContext';
-import {NetworkManager, Response, Request, NetworkManagerEvents} from './NetworkManager';
-import { TargetSession } from './Connection';
-import { Page } from './Page';
+import { TimeoutError } from '../Errors';
+import { Events } from '../Events';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
-import { JSHandle, ElementHandle } from './JSHandle';
+import { TargetSession } from './Connection';
+import { ExecutionContext } from './ExecutionContext';
+import { ElementHandle, JSHandle } from './JSHandle';
+import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
+import { Page } from './Page';
 import { Protocol } from './protocol';
 const readFileAsync = helper.promisify(fs.readFile);
+
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
   TargetSwappedOnNavigation: Symbol('TargetSwappedOnNavigation'),
@@ -34,7 +35,8 @@ export const FrameManagerEvents = {
   FrameAttached: Symbol('FrameAttached'),
   FrameDetached: Symbol('FrameDetached'),
   FrameNavigated: Symbol('FrameNavigated'),
-}
+};
+
 export class FrameManager extends EventEmitter {
   _session: TargetSession;
   _page: Page;
@@ -71,8 +73,7 @@ export class FrameManager extends EventEmitter {
     ]);
   }
 
-  _addSessionListeners()
-  {
+  _addSessionListeners() {
     this._sessionListeners = [
       helper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame)),
       helper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
@@ -82,8 +83,7 @@ export class FrameManager extends EventEmitter {
     ];
   }
 
-  async _swapTargetOnNavigation(newSession)
-  {
+  async _swapTargetOnNavigation(newSession) {
     helper.removeEventListeners(this._sessionListeners);
     this.disconnectFromTarget();
     this._session = newSession;
@@ -95,7 +95,7 @@ export class FrameManager extends EventEmitter {
 
   disconnectFromTarget() {
     for (const frame of this.frames())
-       frame._setContext(null);
+      frame._setContext(null);
     // this._mainFrame = null;
   }
 
@@ -210,7 +210,7 @@ export class FrameManager extends EventEmitter {
       return;
     /** @type {!ExecutionContext} */
     const context: ExecutionContext = new ExecutionContext(this._session, contextPayload, frame);
-    frame._setContext(context)
+    frame._setContext(context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -282,7 +282,7 @@ export class Frame {
   }
 
   async waitForNavigation(): Promise<Response | null> {
-    //FIXME: this method only works for main frames.
+    // FIXME: this method only works for main frames.
     const watchDog = new NextNavigationWatchdog(this, 10000);
     return watchDog.waitForNavigation();
   }
@@ -521,7 +521,7 @@ export class Frame {
     return this._detached;
   }
 
-  async click(selector: string, options: { delay?: number; button?: "left" | "right" | "middle"; clickCount?: number; } | undefined) {
+  async click(selector: string, options: { delay?: number; button?: 'left' | 'right' | 'middle'; clickCount?: number; } | undefined) {
     const handle = await this.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.click(options);
@@ -586,7 +586,7 @@ export class Frame {
       return this.waitForFunction(selectorOrFunctionOrTimeout, options, ...args);
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
- 
+
   async title(): Promise<string> {
     return this.evaluate(() => document.title);
   }
@@ -696,7 +696,7 @@ class NextNavigationWatchdog {
   constructor(frame, timeout) {
     this._frame = frame;
     this._newDocumentNavigationPromise = new Promise(fulfill => {
-      this._newDocumentNavigationCallback = fulfill
+      this._newDocumentNavigationCallback = fulfill;
     });
     this._sameDocumentNavigationPromise = new Promise(fulfill => {
       this._sameDocumentNavigationCallback = fulfill;
@@ -742,7 +742,7 @@ class NextNavigationWatchdog {
           break;
       }
     } catch (e) {
-      console.log("_onTargetReconnected " + e);
+      debugError('_onTargetReconnected ' + e);
     }
   }
 
