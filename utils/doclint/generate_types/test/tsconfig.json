@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "target": "es2015",
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": [
+    "test.ts",
+    "../../../../index.d.ts"
+  ]
+}

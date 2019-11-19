@@ -1,0 +1,4 @@
+[MarkDown] Heading arguments for "foo.test(...files)" do not match described ones, i.e. "...files" != "...filePaths"
+[MarkDown] Method Foo.foo() fails to describe its parameters:
+- Argument not found: arg3
+- Non-existing argument found: arg2

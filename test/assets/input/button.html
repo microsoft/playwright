@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Button test</title>
+  </head>
+  <body>
+    <script src="mouse-helper.js"></script>
+    <button>Click target</button>
+    <script>
+      window.result = 'Was not clicked';
+      window.offsetX = undefined;
+      window.offsetY = undefined;
+      window.shiftKey = undefined;
+      document.querySelector('button').addEventListener('click', e => {
+        result = 'Clicked';
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+        shiftKey = e.shiftKey;
+      }, false);
+    </script>
+  </body>
+</html>

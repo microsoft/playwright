@@ -1,0 +1,12 @@
+test/assets/modernizr.js
+third_party/*
+utils/browser/playwright-web.js
+utils/doclint/check_public_api/test/
+utils/testrunner/examples/
+node6/*
+node6-test/*
+node6-testrunner/*
+lib/
+*.js
+src/chromium/protocol.d.ts
+src/webkit/protocol.d.ts

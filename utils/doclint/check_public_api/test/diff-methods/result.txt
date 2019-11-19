@@ -1,0 +1,3 @@
+[MarkDown] Non-existing method found: Foo.proceed()
+[MarkDown] Method not found: Foo.stop()
+[MarkDown] Property not found: Foo.zzz

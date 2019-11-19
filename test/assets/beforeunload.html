@@ -1,0 +1,10 @@
+<div>beforeunload demo.</div>
+<script>
+window.addEventListener('beforeunload', event => {
+  // Chrome way.
+  event.returnValue = 'Leave?';
+  // Firefox way.
+  event.preventDefault();
+});
+</script>
+
