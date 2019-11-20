@@ -24,7 +24,7 @@ type KeyDescription = {
   key: string,
   text: string,
   code: string,
-  location: number,
+  isKeypad: boolean
 };
 
 export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
@@ -58,7 +58,7 @@ export class Keyboard {
       text: text,
       unmodifiedText: text,
       autoRepeat,
-      isKeypad: description.location === 3,
+      isKeypad: description.isKeypad,
     });
   }
 
@@ -86,7 +86,7 @@ export class Keyboard {
       keyCode: 0,
       code: '',
       text: '',
-      location: 0
+      isKeypad: false
     };
 
     const definition = keyDefinitions[keyString];
@@ -98,15 +98,13 @@ export class Keyboard {
       description.key = definition.shiftKey;
 
     if (definition.keyCode)
-      description.keyCode = definition.keyCode;
+      description.keyCode = definition.windowsVirtualKeyCode || definition.keyCode;
     if (shift && definition.shiftKeyCode)
       description.keyCode = definition.shiftKeyCode;
 
     if (definition.code)
       description.code = definition.code;
 
-    if (definition.location)
-      description.location = definition.location;
 
     if (description.key.length === 1)
       description.text = description.key;
@@ -117,8 +115,10 @@ export class Keyboard {
       description.text = definition.shiftText;
 
     // if any modifiers besides shift are pressed, no text should be sent
-    if (this._modifiers & ~8)
+    if (this._modifiers & ~1)
       description.text = '';
+
+    description.isKeypad = definition.location === 3;
 
     return description;
   }

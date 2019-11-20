@@ -82,7 +82,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.keyboard.sendCharacter('a');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨a');
     });
-    it.skip(WEBKIT)('should report shiftKey', async({page, server}) => {
+    it('should report shiftKey', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');
       const keyboard = page.keyboard;
       const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
@@ -131,7 +131,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
             'Keypress: ^ Digit6 94 94 []',
             'Keyup: ^ Digit6 54 []'].join('\n'));
     });
-    it.skip(WEBKIT)('should send proper codes while typing with shift', async({page, server}) => {
+    it('should send proper codes while typing with shift', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');
       const keyboard = page.keyboard;
       await keyboard.down('Shift');
@@ -184,7 +184,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.keyboard.type(text);
       expect(await page.evaluate('result')).toBe(text);
     });
-    it.skip(WEBKIT)('should specify location', async({page, server}) => {
+    it('should specify location', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.evaluate(() => {
         window.addEventListener('keydown', event => window.keyLocation = event.location, true);
