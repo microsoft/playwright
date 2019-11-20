@@ -366,12 +366,3 @@ function computeQuadArea(quad) {
   }
   return Math.abs(area);
 }
-
-type BoxModel = {
-  content: {x: number, y: number}[],
-  padding: {x: number, y: number}[],
-  border: {x: number, y: number}[],
-  margin: {x: number, y: number}[],
-  width: number,
-  height : number
-};

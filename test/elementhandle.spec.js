@@ -69,69 +69,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('ElementHandle.boxModel', function() {
-    it('should work', async({page, server}) => {
-      await page.goto(server.PREFIX + '/resetcss.html');
-
-      // Step 1: Add Frame and position it absolutely.
-      await utils.attachFrame(page, 'frame1', server.PREFIX + '/resetcss.html');
-      await page.evaluate(() => {
-        const frame = document.querySelector('#frame1');
-        frame.style = `
-          position: absolute;
-          left: 1px;
-          top: 2px;
-        `;
-      });
-
-      // Step 2: Add div and position it absolutely inside frame.
-      const frame = page.frames()[1];
-      const divHandle = (await frame.evaluateHandle(() => {
-        const div = document.createElement('div');
-        document.body.appendChild(div);
-        div.style = `
-          box-sizing: border-box;
-          position: absolute;
-          border-left: 1px solid black;
-          padding-left: 2px;
-          margin-left: 3px;
-          left: 4px;
-          top: 5px;
-          width: 6px;
-          height: 7px;
-        `;
-        return div;
-      })).asElement();
-
-      // Step 3: query div's boxModel and assert box values.
-      const box = await divHandle.boxModel();
-      expect(box.width).toBe(6);
-      expect(box.height).toBe(7);
-      expect(box.margin[0]).toEqual({
-        x: 1 + 4, // frame.left + div.left
-        y: 2 + 5,
-      });
-      expect(box.border[0]).toEqual({
-        x: 1 + 4 + 3, // frame.left + div.left + div.margin-left
-        y: 2 + 5,
-      });
-      expect(box.padding[0]).toEqual({
-        x: 1 + 4 + 3 + 1, // frame.left + div.left + div.marginLeft + div.borderLeft
-        y: 2 + 5,
-      });
-      expect(box.content[0]).toEqual({
-        x: 1 + 4 + 3 + 1 + 2, // frame.left + div.left + div.marginLeft + div.borderLeft + dif.paddingLeft
-        y: 2 + 5,
-      });
-    });
-
-    it('should return null for invisible elements', async({page, server}) => {
-      await page.setContent('<div style="display:none">hi</div>');
-      const element = await page.$('div');
-      expect(await element.boxModel()).toBe(null);
-    });
-  });
-
   describe.skip(WEBKIT)('ElementHandle.contentFrame', function() {
     it('should work', async({page,server}) => {
       await page.goto(server.EMPTY_PAGE);
