@@ -129,7 +129,6 @@ export class Page extends EventEmitter {
     client.on('Page.javascriptDialogOpening', event => this._onDialog(event));
     client.on('Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails));
     client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
-    client.on('Performance.metrics', event => this._emitMetrics(event));
     client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
     client.on('Page.fileChooserOpened', event => this._onFileChooser(event));
     this._target._isClosedPromise.then(() => {
@@ -354,27 +353,6 @@ export class Page extends EventEmitter {
 
   async setUserAgent(userAgent: string) {
     return this._frameManager.networkManager().setUserAgent(userAgent);
-  }
-
-  async metrics(): Promise<Metrics> {
-    const response = await this._client.send('Performance.getMetrics');
-    return this._buildMetricsObject(response.metrics);
-  }
-
-  _emitMetrics(event: Protocol.Performance.metricsPayload) {
-    this.emit(Events.Page.Metrics, {
-      title: event.title,
-      metrics: this._buildMetricsObject(event.metrics)
-    });
-  }
-
-  _buildMetricsObject(metrics: Protocol.Performance.Metric[] | null): Metrics {
-    const result = {};
-    for (const metric of metrics || []) {
-      if (supportedMetrics.has(metric.name))
-        result[metric.name] = metric.value;
-    }
-    return result;
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
@@ -792,22 +770,6 @@ export class Page extends EventEmitter {
   }
 }
 
-type Metrics = {
-  Timestamp?: number,
-  Documents?: number,
-  Frames?: number,
-  JSEventListeners?: number,
-  Nodes?: number,
-  LayoutCount?: number,
-  RecalcStyleCount?: number,
-  LayoutDuration?: number,
-  RecalcStyleDuration?: number,
-  ScriptDuration?: number,
-  TaskDuration?: number,
-  JSHeapUsedSize?: number,
-  JSHeapTotalSize?: number,
-}
-
 type ScreenshotOptions = {
   type?: string,
   path?: string,
@@ -822,22 +784,6 @@ type MediaFeature = {
   name: string,
   value: string
 }
-
-const supportedMetrics: Set<string> = new Set([
-  'Timestamp',
-  'Documents',
-  'Frames',
-  'JSEventListeners',
-  'Nodes',
-  'LayoutCount',
-  'RecalcStyleCount',
-  'LayoutDuration',
-  'RecalcStyleDuration',
-  'ScriptDuration',
-  'TaskDuration',
-  'JSHeapUsedSize',
-  'JSHeapTotalSize',
-]);
 
 type NetworkCookie = {
   name: string,

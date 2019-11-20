@@ -104,10 +104,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
         page.waitForFileChooser(),
         page.click('input'),
       ]);
-      await Promise.all([
-        chooser.accept([FILE_TO_UPLOAD]),
-        new Promise(x => page.once('metrics', x)),
-      ]);
+      await chooser.accept([FILE_TO_UPLOAD]);
       expect(await page.$eval('input', input => input.files.length)).toBe(1);
       expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
     });

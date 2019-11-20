@@ -33,7 +33,6 @@ export const Events = {
     FrameDetached: 'framedetached',
     FrameNavigated: 'framenavigated',
     Load: 'load',
-    Metrics: 'metrics',
     Popup: 'popup',
   },
 

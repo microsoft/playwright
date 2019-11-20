@@ -71,7 +71,6 @@
   * [event: 'framedetached'](#event-framedetached)
   * [event: 'framenavigated'](#event-framenavigated)
   * [event: 'load'](#event-load)
-  * [event: 'metrics'](#event-metrics)
   * [event: 'pageerror'](#event-pageerror)
   * [event: 'popup'](#event-popup)
   * [event: 'request'](#event-request)
@@ -116,7 +115,6 @@
   * [page.isClosed()](#pageisclosed)
   * [page.keyboard](#pagekeyboard)
   * [page.mainFrame()](#pagemainframe)
-  * [page.metrics()](#pagemetrics)
   * [page.mouse](#pagemouse)
   * [page.pdf](#pagepdf)
   * [page.queryObjects(prototypeHandle)](#pagequeryobjectsprototypehandle)
@@ -1010,15 +1008,6 @@ Emitted when a frame is navigated to a new url.
 
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
-#### event: 'metrics'
-- <[Object]>
-  - `title` <[string]> The title passed to `console.timeStamp`.
-  - `metrics` <[Object]> Object containing metrics as key/value pairs. The values
-    of metrics are of <[number]> type.
-
-Emitted when the JavaScript code makes a call to `console.timeStamp`. For the list
-of metrics see `page.metrics`.
-
 #### event: 'pageerror'
 - <[Error]> The exception message
 
@@ -1628,24 +1617,6 @@ Indicates that the page has been closed.
 
 Page is guaranteed to have a main frame which persists during navigations.
 
-#### page.metrics()
-- returns: <[Promise]<[Object]>> Object containing metrics as key/value pairs.
-  - `Timestamp` <[number]> The timestamp when the metrics sample was taken.
-  - `Documents` <[number]> Number of documents in the page.
-  - `Frames` <[number]> Number of frames in the page.
-  - `JSEventListeners` <[number]> Number of events in the page.
-  - `Nodes` <[number]> Number of DOM nodes in the page.
-  - `LayoutCount` <[number]> Total number of full or partial page layout.
-  - `RecalcStyleCount` <[number]> Total number of page style recalculations.
-  - `LayoutDuration` <[number]> Combined durations of all page layouts.
-  - `RecalcStyleDuration` <[number]> Combined duration of all page style recalculations.
-  - `ScriptDuration` <[number]> Combined duration of JavaScript execution.
-  - `TaskDuration` <[number]> Combined duration of all tasks performed by the browser.
-  - `JSHeapUsedSize` <[number]> Used JavaScript heap size.
-  - `JSHeapTotalSize` <[number]> Total JavaScript heap size.
-
-> **NOTE** All timestamps are in monotonic time: monotonically increasing time in seconds since an arbitrary point in the past.
-
 #### page.mouse
 
 - returns: <[Mouse]>
@@ -2179,8 +2150,8 @@ The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/do
 The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
 
 ```js
-page.on('workercreated', worker => console.log('Worker created: ' + worker.url()));
-page.on('workerdestroyed', worker => console.log('Worker destroyed: ' + worker.url()));
+page.workers.on('workercreated', worker => console.log('Worker created: ' + worker.url()));
+page.workers.on('workerdestroyed', worker => console.log('Worker destroyed: ' + worker.url()));
 
 console.log('Current workers:');
 for (const worker of page.workers())
