@@ -35,6 +35,7 @@ createZIPForLinuxOrMac() {
 }
 
 trap "cd $(pwd -P)" EXIT
+cd "$(dirname $0)"
 cd checkout
 
 if [[ "$(uname)" == "Darwin" ]]; then
