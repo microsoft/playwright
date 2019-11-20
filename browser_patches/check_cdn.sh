@@ -2,6 +2,15 @@
 set -e
 set +x
 
+if [[ ($1 == '--help') || ($1 == '-h') ]]; then
+  echo "usage: $0 [revision-to-start]"
+  echo
+  echo "List CDN status for browser revisions"
+  echo "Pass optional |revision-to-start| to limit revision search"
+  exit 0
+fi
+
+
 HOST="https://playwrightaccount.blob.core.windows.net/builds"
 ARCHIVES=(
   "$HOST/firefox/%s/firefox-mac.zip"
@@ -28,23 +37,27 @@ GRN=$'\e[1;32m'
 YEL=$'\e[1;33m'
 END=$'\e[0m'
 
+trap "cd $(pwd -P)" EXIT
+cd "$(dirname "$0")"
+
+FFOX_REVISION=$(cat firefox/BUILD_NUMBER)
+WK_REVISION=$(cat webkit/BUILD_NUMBER)
 # Read start revision if there's any.
-REVISION=$(git rev-parse HEAD)
+REVISION=$FFOX_REVISION
+if (( FFOX_REVISION < WK_REVISION )); then
+  REVISION=$WK_REVISION
+fi
 if [[ $# == 1 ]]; then
-  if ! git rev-parse $1; then
-    echo "ERROR: there is no $REVISION in this repo - pull from upstream?"
-    exit 1
-  fi
-  REVISION=$(git rev-parse $1)
+  REVISION=$1
 fi
 
-printf "%12s" ""
+printf "%7s" ""
 for i in "${ALIASES[@]}"; do
   printf $COLUMN $i
 done
 printf "\n"
-while true; do
-  printf "%-12s" ${REVISION:0:10}
+while (( REVISION > 0 )); do
+  printf "%-7s" ${REVISION}
   for i in "${ARCHIVES[@]}"; do
     URL=$(printf $i $REVISION)
     if [[ $(curl -s -L -I $URL | head -1 | cut -f2 -d' ') == 200 ]]; then
@@ -54,5 +67,5 @@ while true; do
     fi
   done;
   echo
-  REVISION=$(git rev-parse $REVISION^)
+  REVISION=$((REVISION - 1 ))
 done;
