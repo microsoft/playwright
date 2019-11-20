@@ -322,7 +322,6 @@
   * [target.page()](#targetpage)
   * [target.type()](#targettype)
   * [target.url()](#targeturl)
-  * [target.worker()](#targetworker)
 - [class: CDPSession](#class-cdpsession)
   * [cdpSession.detach()](#cdpsessiondetach)
   * [cdpSession.send(method[, params])](#cdpsessionsendmethod-params)
@@ -3958,11 +3957,6 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 
 #### target.url()
 - returns: <[string]>
-
-#### target.worker()
-- returns: <[Promise]<?[Worker]>>
-
-If the target is not of type `"service_worker"` or `"shared_worker"`, returns `null`.
 
 ### class: CDPSession
 

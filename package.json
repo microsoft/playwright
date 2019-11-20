@@ -24,7 +24,7 @@
     "doc": "node utils/doclint/cli.js",
     "coverage": "cross-env COVERAGE=true npm run unit",
     "tsc": "tsc -p .",
-    "build": "npm run tsc",
+    "build": "tsc -p .",
     "watch": "tsc -w -p .",
     "apply-next-version": "node utils/apply_next_version.js",
     "bundle": "npx browserify -r ./index.js:playwright -o utils/browser/playwright-web.js",
