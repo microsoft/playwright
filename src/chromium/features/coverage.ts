@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { CDPSession } from './Connection';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
-import { Protocol } from './protocol';
+import { CDPSession } from '../Connection';
+import { assert, debugError, helper, RegisteredListener } from '../../helper';
+import { Protocol } from '../protocol';
 
-const {EVALUATION_SCRIPT_URL} = require('./ExecutionContext');
+import { EVALUATION_SCRIPT_URL } from '../ExecutionContext';
 
 type CoverageEntry = {
   url: string,

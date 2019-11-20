@@ -59,6 +59,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
 
   const GOLDEN_DIR = path.join(__dirname, 'golden-' + product.toLowerCase());
   const OUTPUT_DIR = path.join(__dirname, 'output-' + product.toLowerCase());
+  const ASSETS_DIR = path.join(__dirname, 'assets');
   if (fs.existsSync(OUTPUT_DIR))
     rm(OUTPUT_DIR);
   const {expect} = new Matchers({
@@ -76,6 +77,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
     defaultBrowserOptions,
     playwrightPath,
     headless: !!defaultBrowserOptions.headless,
+    ASSETS_DIR,
   };
 
   beforeAll(async() => {
@@ -129,7 +131,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
 
       // Page-level tests that are given a browser, a context and a page.
       // Each test is launched in a new browser context.
-      require('./accessibility.spec.js').addTests(testOptions);
+      require('../src/chromium/features/accessibility.spec.js').addTests(testOptions);
       require('./browser.spec.js').addTests(testOptions);
       require('./click.spec.js').addTests(testOptions);
       require('./cookies.spec.js').addTests(testOptions);
@@ -155,9 +157,10 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       require('./worker.spec.js').addTests(testOptions);
       if (CHROME) {
         require('./CDPSession.spec.js').addTests(testOptions);
-        require('./coverage.spec.js').addTests(testOptions);
+        require('../src/chromium/features/coverage.spec.js').addTests(testOptions);
         // Add page-level Chromium-specific tests.
         require('./chromiumonly.spec.js').addPageTests(testOptions);
+        require('../src/chromium/features/pdf.spec.js').addTests(testOptions);
       }
     });
 
@@ -173,7 +176,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
   if (CHROME) {
     require('./oopif.spec.js').addTests(testOptions);
     require('./headful.spec.js').addTests(testOptions);
-    require('./tracing.spec.js').addTests(testOptions);
+    require('../src/chromium/features/tracing.spec.js').addTests(testOptions);
     // Add top-level Chromium-specific tests.
     require('./chromiumonly.spec.js').addLauncherTests(testOptions);
   }

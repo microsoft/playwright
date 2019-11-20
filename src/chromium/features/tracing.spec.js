@@ -17,14 +17,14 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, ASSETS_DIR}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Tracing', function() {
     beforeEach(async function(state) {
-      state.outputFile = path.join(__dirname, 'assets', `trace-${state.parallelIndex}.json`);
+      state.outputFile = path.join(ASSETS_DIR, `trace-${state.parallelIndex}.json`);
       state.browser = await playwright.launch(defaultBrowserOptions);
       state.page = await state.browser.newPage();
     });
@@ -47,7 +47,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       await page.tracing.start({path: outputFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
       await page.tracing.stop();
 
-      const traceJson = JSON.parse(fs.readFileSync(outputFile));
+      const traceJson = JSON.parse(fs.readFileSync(outputFile).toString());
       expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires');
     });
     it('should throw if tracing on two pages', async({page, server, browser, outputFile}) => {
