@@ -3,7 +3,8 @@ set -e
 set +x
 
 trap "cd $(pwd -P)" EXIT
-cd checkout
+cd "$(dirname $0)"
+cd "checkout"
 
 if ! [[ $(git rev-parse --abbrev-ref HEAD) == "pwdev" ]]; then
   echo "ERROR: Cannot build any branch other than PWDEV"
