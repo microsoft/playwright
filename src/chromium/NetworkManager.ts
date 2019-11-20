@@ -441,7 +441,6 @@ export class Response {
   private _statusText: string;
   private _url: string;
   private _headers: {[key: string]: string} = {};
-  private _securityDetails: SecurityDetails;
 
   constructor(client: CDPSession, request: Request, responsePayload: Protocol.Network.Response) {
     this._client = client;
@@ -460,7 +459,6 @@ export class Response {
     this._url = request.url();
     for (const key of Object.keys(responsePayload.headers))
       this._headers[key.toLowerCase()] = responsePayload.headers[key];
-    this._securityDetails = responsePayload.securityDetails ? new SecurityDetails(responsePayload.securityDetails) : null;
   }
 
   remoteAddress(): { ip: string; port: number; } {
@@ -485,10 +483,6 @@ export class Response {
 
   headers(): object {
     return this._headers;
-  }
-
-  securityDetails(): SecurityDetails | null {
-    return this._securityDetails;
   }
 
   buffer(): Promise<Buffer> {
@@ -521,42 +515,6 @@ export class Response {
 
   frame(): Frame | null {
     return this._request.frame();
-  }
-}
-
-export class SecurityDetails {
-  private _subjectName: string;
-  private _issuer: string;
-  private _validFrom: number;
-  private _validTo: number;
-  private _protocol: string;
-
-  constructor(securityPayload: Protocol.Network.SecurityDetails) {
-    this._subjectName = securityPayload['subjectName'];
-    this._issuer = securityPayload['issuer'];
-    this._validFrom = securityPayload['validFrom'];
-    this._validTo = securityPayload['validTo'];
-    this._protocol = securityPayload['protocol'];
-  }
-
-  subjectName(): string {
-    return this._subjectName;
-  }
-
-  issuer(): string {
-    return this._issuer;
-  }
-
-  validFrom(): number {
-    return this._validFrom;
-  }
-
-  validTo(): number {
-    return this._validTo;
-  }
-
-  protocol(): string {
-    return this._protocol;
   }
 }
 

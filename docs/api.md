@@ -299,17 +299,10 @@
   * [response.ok()](#responseok)
   * [response.remoteAddress()](#responseremoteaddress)
   * [response.request()](#responserequest)
-  * [response.securityDetails()](#responsesecuritydetails)
   * [response.status()](#responsestatus)
   * [response.statusText()](#responsestatustext)
   * [response.text()](#responsetext)
   * [response.url()](#responseurl)
-- [class: SecurityDetails](#class-securitydetails)
-  * [securityDetails.issuer()](#securitydetailsissuer)
-  * [securityDetails.protocol()](#securitydetailsprotocol)
-  * [securityDetails.subjectName()](#securitydetailssubjectname)
-  * [securityDetails.validFrom()](#securitydetailsvalidfrom)
-  * [securityDetails.validTo()](#securitydetailsvalidto)
 - [class: Target](#class-target)
   * [target.browser()](#targetbrowser)
   * [target.browserContext()](#targetbrowsercontext)
@@ -3802,9 +3795,6 @@ Contains a boolean stating whether the response was successful (status in the ra
 #### response.request()
 - returns: <[Request]> A matching [Request] object.
 
-#### response.securityDetails()
-- returns: <?[SecurityDetails]> Security details if the response was received over the secure connection, or `null` otherwise.
-
 #### response.status()
 - returns: <[number]>
 
@@ -3822,25 +3812,6 @@ Contains the status text of the response (e.g. usually an "OK" for a success).
 - returns: <[string]>
 
 Contains the URL of the response.
-
-### class: SecurityDetails
-
-[SecurityDetails] class represents the security details when response was received over the secure connection.
-
-#### securityDetails.issuer()
-- returns: <[string]> A string with the name of issuer of the certificate.
-
-#### securityDetails.protocol()
-- returns: <[string]> String with the security protocol, eg. "TLS 1.2".
-
-#### securityDetails.subjectName()
-- returns: <[string]> Name of the subject to which the certificate was issued to.
-
-#### securityDetails.validFrom()
-- returns: <[number]> [UnixTime] stating the start of validity of the certificate.
-
-#### securityDetails.validTo()
-- returns: <[number]> [UnixTime] stating the end of validity of the certificate.
 
 ### class: Target
 
@@ -4018,7 +3989,6 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [Request]: #class-request  "Request"
 [Response]: #class-response  "Response"
-[SecurityDetails]: #class-securitydetails "SecurityDetails"
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [Target]: #class-target "Target"
 [TimeoutError]: #class-timeouterror "TimeoutError"

@@ -314,9 +314,6 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         ]);
         expect(error).toBe(null);
         expect(response.ok()).toBe(true);
-        expect(response.securityDetails()).toBeTruthy();
-        const protocol = serverRequest.socket.getProtocol().replace('v', ' ');
-        expect(response.securityDetails().protocol()).toBe(protocol);
         await page.close();
         await browser.close();
       });
