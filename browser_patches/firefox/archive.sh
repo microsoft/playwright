@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $0"
+  echo "usage: $(basename $0)"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo

@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $0 [firefox|webkit]"
+  echo "usage: $(basename $0) [firefox|webkit]"
   echo
   echo "Archive and upload a browser"
   echo
@@ -17,7 +17,7 @@ fi
 
 if [[ $# == 0 ]]; then
   echo "missing browser: 'firefox' or 'webkit'"
-  echo "try '$0 --help' for more information"
+  echo "try '$(basename $0) --help' for more information"
   exit 1
 fi
 

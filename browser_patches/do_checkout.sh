@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: do_something.sh [firefox|webkit]"
+  echo "usage: $(basename $0) [firefox|webkit]"
   echo
   echo "Produces a browser checkout ready to be built."
   echo
@@ -15,7 +15,7 @@ fi
 
 if [[ $# == 0 ]]; then
   echo "missing browser: 'firefox' or 'webkit'"
-  echo "try './do_something.sh --help' for more information"
+  echo "try './$(basename $0) --help' for more information"
   exit 1
 fi
 
@@ -40,7 +40,7 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   REMOTE_URL=""
   REMOTE_URL="https://github.com/webkit/webkit"
 else
-  echo ERROR: unknown browser to export - "$1"
+  echo ERROR: unknown browser - "$1"
   exit 1
 fi
 

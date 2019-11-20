@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $0 [revision-to-start]"
+  echo "usage: $(basename $0) [revision-to-start]"
   echo
   echo "List CDN status for browser revisions"
   echo "Pass optional |revision-to-start| to limit revision search"
@@ -42,11 +42,11 @@ cd "$(dirname "$0")"
 
 FFOX_REVISION=$(cat firefox/BUILD_NUMBER)
 WK_REVISION=$(cat webkit/BUILD_NUMBER)
-# Read start revision if there's any.
 REVISION=$FFOX_REVISION
 if (( FFOX_REVISION < WK_REVISION )); then
   REVISION=$WK_REVISION
 fi
+# Read start revision if there's any.
 if [[ $# == 1 ]]; then
   REVISION=$1
 fi
