@@ -25,7 +25,7 @@ import { TimeoutSettings } from '../TimeoutSettings';
 import { Accessibility } from './features/accessibility';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
-import { CDPSession, CDPSessionEvents, Connection } from './Connection';
+import { CDPSession, CDPSessionEvents } from './Connection';
 import { Coverage } from './features/coverage';
 import { Dialog, DialogType } from './Dialog';
 import { EmulationManager } from './EmulationManager';
@@ -40,7 +40,7 @@ import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './pro
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import { Tracing } from './features/tracing';
-import { Worker } from './Worker';
+import { Workers } from './features/workers';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -66,12 +66,12 @@ export class Page extends EventEmitter {
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
   readonly pdf: PDF;
+  readonly workers: Workers;
   readonly tracing: Tracing;
   private _pageBindings = new Map<string, Function>();
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
   private _screenshotTaskQueue: TaskQueue;
-  private _workers = new Map<string, Worker>();
   private _fileChooserInterceptionIsDisabled = false;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   private _disconnectPromise: Promise<Error> | undefined;
@@ -98,6 +98,7 @@ export class Page extends EventEmitter {
     this.tracing = new Tracing(client);
     this.coverage = new Coverage(client);
     this.pdf = new PDF(client);
+    this.workers = new Workers(client, this._addConsoleMessage.bind(this), this._handleException.bind(this));
 
     this._screenshotTaskQueue = screenshotTaskQueue;
 
@@ -109,17 +110,6 @@ export class Page extends EventEmitter {
         }).catch(debugError);
         return;
       }
-      const session = Connection.fromSession(client).session(event.sessionId);
-      const worker = new Worker(session, event.targetInfo.url, this._addConsoleMessage.bind(this), this._handleException.bind(this));
-      this._workers.set(event.sessionId, worker);
-      this.emit(Events.Page.WorkerCreated, worker);
-    });
-    client.on('Target.detachedFromTarget', event => {
-      const worker = this._workers.get(event.sessionId);
-      if (!worker)
-        return;
-      this.emit(Events.Page.WorkerDestroyed, worker);
-      this._workers.delete(event.sessionId);
     });
 
     this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
@@ -236,10 +226,6 @@ export class Page extends EventEmitter {
 
   frames(): Frame[] {
     return this._frameManager.frames();
-  }
-
-  workers(): Worker[] {
-    return Array.from(this._workers.values());
   }
 
   async setRequestInterception(value: boolean) {
