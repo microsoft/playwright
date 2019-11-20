@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import {assert} from '../helper';
-import {Events} from '../Events';
 import * as debug from 'debug';
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import { ConnectionTransport } from '../ConnectionTransport';
+import { assert } from '../helper';
 import { Protocol } from './protocol';
 
 const debugProtocol = debug('playwright:protocol');

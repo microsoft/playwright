@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
-import { Events } from '../Events';
+import { Events } from './events';
 import { assert, debugError, helper } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { Accessibility } from './features/accessibility';

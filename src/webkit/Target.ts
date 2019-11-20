@@ -25,7 +25,6 @@ export class Target {
   _targetId: string;
   private _type: 'page' | 'service-worker' | 'worker';
   _pagePromise: Promise<Page> | null = null;
-  private _openerId?: string;
   private _url: string;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
@@ -34,7 +33,7 @@ export class Target {
   _isInitialized: boolean;
   _eventListeners: RegisteredListener[];
 
-  constructor(targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext, openerId?: string) {
+  constructor(targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
     const {targetId, url, type} = targetInfo;
     this._browserContext = browserContext;
     this._targetId = targetId;
@@ -42,7 +41,6 @@ export class Target {
     /** @type {?Promise<!Page>} */
     this._pagePromise = null;
     this._url = url;
-    this._openerId = openerId;
     this._isClosedPromise = new Promise(fulfill => this._closedCallback = fulfill);
     if (type === 'page') {
       const session = this._browserContext.browser()._connection.session(this._targetId);
@@ -87,9 +85,5 @@ export class Target {
 
   browserContext(): BrowserContext {
     return this._browserContext;
-  }
-
-  opener(): Target | null {
-    return this._openerId ? this.browser()._targets.get(this._openerId) : null;
   }
 }

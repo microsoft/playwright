@@ -27,9 +27,9 @@ module.exports = checkSources;
 function checkSources(sources) {
   // special treatment for Events.js
   const classEvents = new Map();
-  const eventsSource = sources.find(source => source.name().startsWith('Events.'));
+  const eventsSource = sources.find(source => source.name().startsWith('events.'));
   if (eventsSource) {
-    const {Events} = eventsSource.filePath().endsWith('.js') ? require(eventsSource.filePath()) : require(path.join(eventsSource.filePath(), '..', '..', 'lib', 'Events.js'));
+    const {Events} = eventsSource.filePath().endsWith('.js') ? require(eventsSource.filePath()) : require(path.join(eventsSource.filePath(), '..', '..', '..', 'lib', 'chromium', 'events.js'));
     for (const [className, events] of Object.entries(Events))
       classEvents.set(className, Array.from(Object.values(events)).filter(e => typeof e === 'string').map(e => Documentation.Member.createEvent(e)));
   }

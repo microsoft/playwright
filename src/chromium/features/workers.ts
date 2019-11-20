@@ -20,7 +20,7 @@ import { ExecutionContext } from '../ExecutionContext';
 import { debugError } from '../../helper';
 import { JSHandle } from '../JSHandle';
 import { Protocol } from '../protocol';
-import { Events } from '../../Events';
+import { Events } from '../events';
 
 type AddToConsoleCallback = (type: string, args: JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
 type HandleExceptionCallback = (exceptionDetails: Protocol.Runtime.ExceptionDetails) => void;

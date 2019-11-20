@@ -2,7 +2,7 @@
 <!-- GEN:test-stats -->
 |Firefox|Chromium|WebKit|all|
 |---|---|---|---|
-|508/634|685/692|325/637|309/634|
+|508/632|683/690|325/635|309/632|
 <!-- GEN:stop -->
 
 # Contributing

@@ -17,7 +17,7 @@
 import * as EventEmitter from 'events';
 import * as fs from 'fs';
 import { TimeoutError } from '../Errors';
-import { Events } from '../Events';
+import { Events } from './events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { TargetSession } from './Connection';

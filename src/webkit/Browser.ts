@@ -18,7 +18,7 @@
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { Connection } from './Connection';
-import { Events } from '../Events';
+import { Events } from './events';
 import { RegisteredListener, assert, helper } from '../helper';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
@@ -157,13 +157,6 @@ export class Browser extends EventEmitter {
       context =  this._defaultContext;
     const target = new Target(targetInfo, context);
     this._targets.set(targetInfo.targetId, target);
-    if (target.opener() && target.opener()._pagePromise) {
-      const openerPage = await target.opener()._pagePromise;
-      if (openerPage.listenerCount(Events.Page.Popup)) {
-        const popupPage = await target.page();
-        openerPage.emit(Events.Page.Popup, popupPage);
-      }
-    }
     this.emit(Events.Browser.TargetCreated, target);
     context.emit(Events.BrowserContext.TargetCreated, target);
   }

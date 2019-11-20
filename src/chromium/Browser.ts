@@ -17,7 +17,7 @@
 
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
-import { Events } from '../Events';
+import { Events } from './events';
 import { assert, helper } from '../helper';
 import { BrowserContext } from './BrowserContext';
 import { Connection, ConnectionEvents } from './Connection';
