@@ -166,84 +166,12 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
-  describe('BrowserContext.overridePermissions', function() {
-    function getPermission(page, name) {
-      return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
-    }
-
-    it.skip(WEBKIT)('should be prompt by default', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      expect(await getPermission(page, 'geolocation')).toBe('prompt');
-    });
-    it.skip(WEBKIT)('should deny permission when not listed', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await context.overridePermissions(server.EMPTY_PAGE, []);
-      expect(await getPermission(page, 'geolocation')).toBe('denied');
-    });
-    it.skip(WEBKIT)('should fail when bad permission is given', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      let error = null;
-      await context.overridePermissions(server.EMPTY_PAGE, ['foo']).catch(e => error = e);
-      expect(error.message).toBe('Unknown permission: foo');
-    });
-    it.skip(WEBKIT)('should grant permission when listed', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await context.overridePermissions(server.EMPTY_PAGE, ['geolocation']);
-      expect(await getPermission(page, 'geolocation')).toBe('granted');
-    });
-    it.skip(WEBKIT)('should reset permissions', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await context.overridePermissions(server.EMPTY_PAGE, ['geolocation']);
-      expect(await getPermission(page, 'geolocation')).toBe('granted');
-      await context.clearPermissionOverrides();
-      expect(await getPermission(page, 'geolocation')).toBe('prompt');
-    });
-    it.skip(WEBKIT)('should trigger permission onchange', async({page, server, context}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.evaluate(() => {
-        window.events = [];
-        return navigator.permissions.query({name: 'geolocation'}).then(function(result) {
-          window.events.push(result.state);
-          result.onchange = function() {
-            window.events.push(result.state);
-          };
-        });
-      });
-      expect(await page.evaluate(() => window.events)).toEqual(['prompt']);
-      await context.overridePermissions(server.EMPTY_PAGE, []);
-      expect(await page.evaluate(() => window.events)).toEqual(['prompt', 'denied']);
-      await context.overridePermissions(server.EMPTY_PAGE, ['geolocation']);
-      expect(await page.evaluate(() => window.events)).toEqual(['prompt', 'denied', 'granted']);
-      await context.clearPermissionOverrides();
-      expect(await page.evaluate(() => window.events)).toEqual(['prompt', 'denied', 'granted', 'prompt']);
-    });
-    it.skip(WEBKIT)('should isolate permissions between browser contexs', async({page, server, context, browser}) => {
-      await page.goto(server.EMPTY_PAGE);
-      const otherContext = await browser.createIncognitoBrowserContext();
-      const otherPage = await otherContext.newPage();
-      await otherPage.goto(server.EMPTY_PAGE);
-      expect(await getPermission(page, 'geolocation')).toBe('prompt');
-      expect(await getPermission(otherPage, 'geolocation')).toBe('prompt');
-
-      await context.overridePermissions(server.EMPTY_PAGE, []);
-      await otherContext.overridePermissions(server.EMPTY_PAGE, ['geolocation']);
-      expect(await getPermission(page, 'geolocation')).toBe('denied');
-      expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
-
-      await context.clearPermissionOverrides();
-      expect(await getPermission(page, 'geolocation')).toBe('prompt');
-      expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
-
-      await otherContext.close();
-    });
-  });
 
   // FIXME: not supported in WebKit (as well as Emulation domain in general).
   // It was removed from WebKit in https://webkit.org/b/126630
   describe.skip(FFOX || WEBKIT)('Page.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
-      await context.overridePermissions(server.PREFIX, ['geolocation']);
+      await context.permissions.override(server.PREFIX, ['geolocation']);
       await page.goto(server.EMPTY_PAGE);
       await page.setGeolocation({longitude: 10, latitude: 10});
       const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {

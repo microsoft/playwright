@@ -53,14 +53,16 @@
   * [event: 'targetcreated'](#event-targetcreated-1)
   * [event: 'targetdestroyed'](#event-targetdestroyed-1)
   * [browserContext.browser()](#browsercontextbrowser)
-  * [browserContext.clearPermissionOverrides()](#browsercontextclearpermissionoverrides)
   * [browserContext.close()](#browsercontextclose)
   * [browserContext.isIncognito()](#browsercontextisincognito)
   * [browserContext.newPage()](#browsercontextnewpage)
-  * [browserContext.overridePermissions(origin, permissions)](#browsercontextoverridepermissionsorigin-permissions)
   * [browserContext.pages()](#browsercontextpages)
+  * [browserContext.permissions](#browsercontextpermissions)
   * [browserContext.targets()](#browsercontexttargets)
   * [browserContext.waitForTarget(predicate[, options])](#browsercontextwaitfortargetpredicate-options)
+- [class: Permissions](#class-permissions)
+  * [permissions.clearOverrides()](#permissionsclearoverrides)
+  * [permissions.override(origin, permissions)](#permissionsoverrideorigin-permissions)
 - [class: Page](#class-page)
   * [event: 'close'](#event-close)
   * [event: 'console'](#event-console)
@@ -828,18 +830,6 @@ Emitted when a target inside the browser context is destroyed, for example when 
 
 The browser this browser context belongs to.
 
-#### browserContext.clearPermissionOverrides()
-- returns: <[Promise]>
-
-Clears all permission overrides for the browser context.
-
-```js
-const context = browser.defaultBrowserContext();
-context.overridePermissions('https://example.com', ['clipboard-read']);
-// do stuff ..
-context.clearPermissionOverrides();
-```
-
 #### browserContext.close()
 - returns: <[Promise]>
 
@@ -861,8 +851,48 @@ The default browser context is the only non-incognito browser context.
 
 Creates a new page in the browser context.
 
+#### browserContext.pages()
+- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
 
-#### browserContext.overridePermissions(origin, permissions)
+An array of all pages inside the browser context.
+
+#### browserContext.permissions
+- returns: <[Permissions]>
+
+#### browserContext.targets()
+- returns: <[Array]<[Target]>>
+
+An array of all active targets inside the browser context.
+
+#### browserContext.waitForTarget(predicate[, options])
+- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
+- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
+
+This searches for a target in this specific browser context.
+
+An example of finding a target for a page opened via `window.open`:
+```js
+await page.evaluate(() => window.open('https://www.example.com/'));
+const newWindowTarget = await browserContext.waitForTarget(target => target.url() === 'https://www.example.com/');
+```
+
+### class: Permissions
+
+#### permissions.clearOverrides()
+- returns: <[Promise]>
+
+Clears all permission overrides for the browser context.
+
+```js
+const context = browser.defaultBrowserContext();
+context.permissions.override('https://example.com', ['clipboard-read']);
+// do stuff ..
+context.permissions.clearOverrides();
+```
+
+#### permissions.override(origin, permissions)
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
 - `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
     - `'geolocation'`
@@ -886,32 +916,7 @@ Creates a new page in the browser context.
 
 ```js
 const context = browser.defaultBrowserContext();
-await context.overridePermissions('https://html5demos.com', ['geolocation']);
-```
-
-
-#### browserContext.pages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
-
-An array of all pages inside the browser context.
-
-#### browserContext.targets()
-- returns: <[Array]<[Target]>>
-
-An array of all active targets inside the browser context.
-
-#### browserContext.waitForTarget(predicate[, options])
-- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
-- `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
-- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
-
-This searches for a target in this specific browser context.
-
-An example of finding a target for a page opened via `window.open`:
-```js
-await page.evaluate(() => window.open('https://www.example.com/'));
-const newWindowTarget = await browserContext.waitForTarget(target => target.url() === 'https://www.example.com/');
+await context.permissions.override('https://html5demos.com', ['geolocation']);
 ```
 
 ### class: Page
@@ -1762,7 +1767,7 @@ Sets the page's geolocation.
 await page.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
-> **NOTE** Consider using [browserContext.overridePermissions](#browsercontextoverridepermissionsorigin-permissions) to grant permissions for the page to read its geolocation.
+> **NOTE** Consider using [browserContext.permissions.override](#permissionsoverrideorigin-permissions) to grant permissions for the page to read its geolocation.
 
 #### page.setJavaScriptEnabled(enabled)
 - `enabled` <[boolean]> Whether or not to enable JavaScript on the page.

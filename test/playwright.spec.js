@@ -131,7 +131,9 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
 
       // Page-level tests that are given a browser, a context and a page.
       // Each test is launched in a new browser context.
-      require('../src/chromium/features/accessibility.spec.js').addTests(testOptions);
+      require('../src/tests/accessibility.spec.js').addTests(testOptions);
+      require('../src/tests/permissions.spec.js').addTests(testOptions);
+      require('../src/chromium/features/workers.spec.js').addTests(testOptions);
       require('./browser.spec.js').addTests(testOptions);
       require('./click.spec.js').addTests(testOptions);
       require('./cookies.spec.js').addTests(testOptions);
@@ -154,7 +156,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       require('./target.spec.js').addTests(testOptions);
       require('./touchscreen.spec.js').addTests(testOptions);
       require('./waittask.spec.js').addTests(testOptions);
-      require('../src/chromium/features/workers.spec.js').addTests(testOptions);
       if (CHROME) {
         require('./CDPSession.spec.js').addTests(testOptions);
         require('../src/chromium/features/coverage.spec.js').addTests(testOptions);
