@@ -146,7 +146,7 @@ export class Keyboard {
       } else {
         if (delay)
           await new Promise(f => setTimeout(f, delay));
-        // unsupported character
+        await this.sendCharacter(char);
       }
     }
   }
@@ -178,6 +178,12 @@ export class Keyboard {
     }
     await Promise.all(promises);
     return restore;
+  }
+
+  async sendCharacter(text: string) {
+    await this._session.send('Page.insertText', {
+      text
+    });
   }
 }
 
