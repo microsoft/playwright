@@ -284,41 +284,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('ExecutionContext.queryObjects', function() {
-    it('should work', async({page, server}) => {
-      // Instantiate an object
-      await page.evaluate(() => window.set = new Set(['hello', 'world']));
-      const prototypeHandle = await page.evaluateHandle(() => Set.prototype);
-      const objectsHandle = await page.queryObjects(prototypeHandle);
-      const count = await page.evaluate(objects => objects.length, objectsHandle);
-      expect(count).toBe(1);
-      const values = await page.evaluate(objects => Array.from(objects[0].values()), objectsHandle);
-      expect(values).toEqual(['hello', 'world']);
-    });
-    it('should work for non-blank page', async({page, server}) => {
-      // Instantiate an object
-      await page.goto(server.EMPTY_PAGE);
-      await page.evaluate(() => window.set = new Set(['hello', 'world']));
-      const prototypeHandle = await page.evaluateHandle(() => Set.prototype);
-      const objectsHandle = await page.queryObjects(prototypeHandle);
-      const count = await page.evaluate(objects => objects.length, objectsHandle);
-      expect(count).toBe(1);
-    });
-    it('should fail for disposed handles', async({page, server}) => {
-      const prototypeHandle = await page.evaluateHandle(() => HTMLBodyElement.prototype);
-      await prototypeHandle.dispose();
-      let error = null;
-      await page.queryObjects(prototypeHandle).catch(e => error = e);
-      expect(error.message).toBe('Prototype JSHandle is disposed!');
-    });
-    it('should fail primitive values as prototypes', async({page, server}) => {
-      const prototypeHandle = await page.evaluateHandle(() => 42);
-      let error = null;
-      await page.queryObjects(prototypeHandle).catch(e => error = e);
-      expect(error.message).toBe('Prototype JSHandle must not be referencing primitive value');
-    });
-  });
-
   describe('Page.Events.Console', function() {
     it('should work', async({page, server}) => {
       let message = null;
