@@ -253,11 +253,6 @@ export class Page extends EventEmitter {
     return context.evaluateHandle(pageFunction, ...args);
   }
 
-  async queryObjects(prototypeHandle: JSHandle): Promise<JSHandle> {
-    const context = await this.mainFrame().executionContext();
-    return context.queryObjects(prototypeHandle);
-  }
-
   async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
     return this.mainFrame().$eval(selector, pageFunction, ...args);
   }

@@ -119,7 +119,6 @@
   * [page.metrics()](#pagemetrics)
   * [page.mouse](#pagemouse)
   * [page.pdf](#pagepdf)
-  * [page.queryObjects(prototypeHandle)](#pagequeryobjectsprototypehandle)
   * [page.reload([options])](#pagereloadoptions)
   * [page.screenshot([options])](#pagescreenshotoptions)
   * [page.select(selector, ...values)](#pageselectselector-values)
@@ -238,7 +237,6 @@
   * [executionContext.evaluate(pageFunction[, ...args])](#executioncontextevaluatepagefunction-args)
   * [executionContext.evaluateHandle(pageFunction[, ...args])](#executioncontextevaluatehandlepagefunction-args)
   * [executionContext.frame()](#executioncontextframe)
-  * [executionContext.queryObjects(prototypeHandle)](#executioncontextqueryobjectsprototypehandle)
 - [class: JSHandle](#class-jshandle)
   * [jsHandle.asElement()](#jshandleaselement)
   * [jsHandle.dispose()](#jshandledispose)
@@ -1652,27 +1650,6 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 #### page.pdf
 - returns: <[PDF]>
-
-#### page.queryObjects(prototypeHandle)
-- `prototypeHandle` <[JSHandle]> A handle to the object prototype.
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to a handle to an array of objects with this prototype.
-
-The method iterates the JavaScript heap and finds all the objects with the given prototype.
-
-```js
-// Create a Map object
-await page.evaluate(() => window.map = new Map());
-// Get a handle to the Map object prototype
-const mapPrototype = await page.evaluateHandle(() => Map.prototype);
-// Query all map instances into an array
-const mapInstances = await page.queryObjects(mapPrototype);
-// Count amount of map objects in heap
-const count = await page.evaluate(maps => maps.length, mapInstances);
-await mapInstances.dispose();
-await mapPrototype.dispose();
-```
-
-Shortcut for [page.mainFrame().executionContext().queryObjects(prototypeHandle)](#executioncontextqueryobjectsprototypehandle).
 
 #### page.reload([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
@@ -3250,26 +3227,6 @@ await resultHandle.dispose();
 - returns: <?[Frame]> Frame associated with this execution context.
 
 > **NOTE** Not every execution context is associated with a frame. For example, workers and extensions have execution contexts that are not associated with frames.
-
-
-#### executionContext.queryObjects(prototypeHandle)
-- `prototypeHandle` <[JSHandle]> A handle to the object prototype.
-- returns: <[Promise]<[JSHandle]>> A handle to an array of objects with this prototype
-
-The method iterates the JavaScript heap and finds all the objects with the given prototype.
-
-```js
-// Create a Map object
-await page.evaluate(() => window.map = new Map());
-// Get a handle to the Map object prototype
-const mapPrototype = await page.evaluateHandle(() => Map.prototype);
-// Query all map instances into an array
-const mapInstances = await page.queryObjects(mapPrototype);
-// Count amount of map objects in heap
-const count = await page.evaluate(maps => maps.length, mapInstances);
-await mapInstances.dispose();
-await mapPrototype.dispose();
-```
 
 ### class: JSHandle
 

@@ -147,15 +147,6 @@ export class ExecutionContext {
     }
   }
 
-  async queryObjects(prototypeHandle: JSHandle): Promise<JSHandle> {
-    assert(!prototypeHandle._disposed, 'Prototype JSHandle is disposed!');
-    assert(prototypeHandle._remoteObject.objectId, 'Prototype JSHandle must not be referencing primitive value');
-    const response = await this._client.send('Runtime.queryObjects', {
-      prototypeObjectId: prototypeHandle._remoteObject.objectId
-    });
-    return createJSHandle(this, response.objects);
-  }
-
   async _adoptElementHandle(elementHandle: ElementHandle): Promise<ElementHandle> {
     assert(elementHandle.executionContext() !== this, 'Cannot adopt handle that already belongs to this execution context');
     assert(this._world, 'Cannot adopt handle without DOMWorld');
