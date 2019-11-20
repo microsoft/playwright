@@ -436,44 +436,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Page.metrics', function() {
-    it('should get metrics from a page', async({page, server}) => {
-      await page.goto('about:blank');
-      const metrics = await page.metrics();
-      checkMetrics(metrics);
-    });
-    it('metrics event fired on console.timeStamp', async({page, server}) => {
-      const metricsPromise = new Promise(fulfill => page.once('metrics', fulfill));
-      await page.evaluate(() => console.timeStamp('test42'));
-      const metrics = await metricsPromise;
-      expect(metrics.title).toBe('test42');
-      checkMetrics(metrics.metrics);
-    });
-    function checkMetrics(metrics) {
-      const metricsToCheck = new Set([
-        'Timestamp',
-        'Documents',
-        'Frames',
-        'JSEventListeners',
-        'Nodes',
-        'LayoutCount',
-        'RecalcStyleCount',
-        'LayoutDuration',
-        'RecalcStyleDuration',
-        'ScriptDuration',
-        'TaskDuration',
-        'JSHeapUsedSize',
-        'JSHeapTotalSize',
-      ]);
-      for (const name in metrics) {
-        expect(metricsToCheck.has(name)).toBeTruthy();
-        expect(metrics[name]).toBeGreaterThanOrEqual(0);
-        metricsToCheck.delete(name);
-      }
-      expect(metricsToCheck.size).toBe(0);
-    }
-  });
-
   describe('Page.waitForRequest', function() {
     it('should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
