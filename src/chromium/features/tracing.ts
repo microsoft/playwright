@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { CDPSession } from './Connection';
-import { assert } from '../helper';
-import { readProtocolStream } from './protocolHelper';
+import { CDPSession } from '../Connection';
+import { assert } from '../../helper';
+import { readProtocolStream } from '../protocolHelper';
 
 export class Tracing {
   private _client: CDPSession;

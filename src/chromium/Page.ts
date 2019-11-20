@@ -19,27 +19,28 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
-import { Accessibility } from './Accessibility';
-import { CDPSession, CDPSessionEvents, Connection } from './Connection';
-import { Coverage } from './Coverage';
-import { Dialog, DialogType } from './Dialog';
-import { EmulationManager } from './EmulationManager';
 import { Events } from '../Events';
-import { Frame } from './Frame';
-import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { assert, debugError, helper } from '../helper';
-import { releaseObject, getExceptionMessage, valueFromRemoteObject } from './protocolHelper';
-import { Keyboard, Mouse, Touchscreen } from './Input';
-import { createJSHandle, ElementHandle, JSHandle, ClickOptions, PointerActionOptions, MultiClickOptions } from './JSHandle';
-import { Response, NetworkManagerEvents } from './NetworkManager';
-import { TaskQueue } from './TaskQueue';
 import { TimeoutSettings } from '../TimeoutSettings';
-import { Tracing } from './Tracing';
-import { Worker } from './Worker';
-import { Target } from './Target';
+import { Accessibility } from './features/accessibility';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
+import { CDPSession, CDPSessionEvents, Connection } from './Connection';
+import { Coverage } from './features/coverage';
+import { Dialog, DialogType } from './Dialog';
+import { EmulationManager } from './EmulationManager';
+import { PDF } from './features/pdf';
+import { Frame } from './Frame';
+import { FrameManager, FrameManagerEvents } from './FrameManager';
+import { Keyboard, Mouse, Touchscreen } from './Input';
+import { ClickOptions, createJSHandle, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions } from './JSHandle';
+import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
+import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
+import { Target } from './Target';
+import { TaskQueue } from './TaskQueue';
+import { Tracing } from './features/tracing';
+import { Worker } from './Worker';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -60,12 +61,13 @@ export class Page extends EventEmitter {
   private _mouse: Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _touchscreen: Touchscreen;
-  private _accessibility: Accessibility;
   private _frameManager: FrameManager;
   private _emulationManager: EmulationManager;
-  private _tracing: Tracing;
+  readonly accessibility: Accessibility;
+  readonly coverage: Coverage;
+  readonly pdf: PDF;
+  readonly tracing: Tracing;
   private _pageBindings = new Map<string, Function>();
-  private _coverage: Coverage;
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
   private _screenshotTaskQueue: TaskQueue;
@@ -90,11 +92,12 @@ export class Page extends EventEmitter {
     this._mouse = new Mouse(client, this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
     this._touchscreen = new Touchscreen(client, this._keyboard);
-    this._accessibility = new Accessibility(client);
+    this.accessibility = new Accessibility(client);
     this._frameManager = new FrameManager(client, this, ignoreHTTPSErrors, this._timeoutSettings);
     this._emulationManager = new EmulationManager(client);
-    this._tracing = new Tracing(client);
-    this._coverage = new Coverage(client);
+    this.tracing = new Tracing(client);
+    this.coverage = new Coverage(client);
+    this.pdf = new PDF(client);
 
     this._screenshotTaskQueue = screenshotTaskQueue;
 
@@ -229,18 +232,6 @@ export class Page extends EventEmitter {
 
   get touchscreen(): Touchscreen {
     return this._touchscreen;
-  }
-
-  get coverage(): Coverage {
-    return this._coverage;
-  }
-
-  get tracing(): Tracing {
-    return this._tracing;
-  }
-
-  get accessibility(): Accessibility {
-    return this._accessibility;
   }
 
   frames(): Frame[] {

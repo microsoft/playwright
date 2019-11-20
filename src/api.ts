@@ -16,13 +16,13 @@
  */
 export = {
   Chromium: {
-    Accessibility: require('./chromium/Accessibility').Accessibility,
+    Accessibility: require('./chromium/features/accessibility').Accessibility,
     Browser: require('./chromium/Browser').Browser,
     BrowserContext: require('./chromium/BrowserContext').BrowserContext,
     BrowserFetcher: require('./chromium/BrowserFetcher').BrowserFetcher,
     CDPSession: require('./chromium/Connection').CDPSession,
     ConsoleMessage: require('./chromium/Page').ConsoleMessage,
-    Coverage: require('./chromium/Coverage').Coverage,
+    Coverage: require('./chromium/features/coverage').Coverage,
     Dialog: require('./chromium/Dialog').Dialog,
     ElementHandle: require('./chromium/JSHandle').ElementHandle,
     ExecutionContext: require('./chromium/ExecutionContext').ExecutionContext,
@@ -31,6 +31,7 @@ export = {
     JSHandle: require('./chromium/JSHandle').JSHandle,
     Keyboard: require('./chromium/Input').Keyboard,
     Mouse: require('./chromium/Input').Mouse,
+    PDF: require('./chromium/features/pdf').PDF,
     Page: require('./chromium/Page').Page,
     Playwright: require('./chromium/Playwright').Playwright,
     Request: require('./chromium/NetworkManager').Request,
@@ -39,7 +40,7 @@ export = {
     Target: require('./chromium/Target').Target,
     TimeoutError: require('./Errors').TimeoutError,
     Touchscreen: require('./chromium/Input').Touchscreen,
-    Tracing: require('./chromium/Tracing').Tracing,
+    Tracing: require('./chromium/features/tracing').Tracing,
     Worker: require('./chromium/Worker').Worker,
   },
   Firefox: {

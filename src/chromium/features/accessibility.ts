@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { CDPSession } from './Connection';
-import { ElementHandle } from './JSHandle';
-import { Protocol } from './protocol';
+import { CDPSession } from '../Connection';
+import { ElementHandle } from '../JSHandle';
+import { Protocol } from '../protocol';
 
 type SerializedAXNode = {
   role: string,
