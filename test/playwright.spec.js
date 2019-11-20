@@ -161,6 +161,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
         require('../src/chromium/features/coverage.spec.js').addTests(testOptions);
         // Add page-level Chromium-specific tests.
         require('./chromiumonly.spec.js').addPageTests(testOptions);
+        require('../src/chromium/features/geolocation.spec.js').addTests(testOptions);
         require('../src/chromium/features/pdf.spec.js').addTests(testOptions);
       }
     });
