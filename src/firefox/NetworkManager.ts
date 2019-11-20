@@ -1,5 +1,5 @@
-import {helper, assert, debugError} from '../helper';
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { JugglerSession } from './Connection';
 import { FrameManager } from './FrameManager';
 
@@ -12,10 +12,11 @@ export const NetworkManagerEvents = {
 
 export class NetworkManager extends EventEmitter {
   private _session: JugglerSession;
-  private _requests: Map<any, any>;
+  private _requests: Map<string, Request>;
   private _frameManager: FrameManager;
-  private _eventListeners: any[];
-  constructor(session) {
+  private _eventListeners: RegisteredListener[];
+
+  constructor(session: JugglerSession) {
     super();
     this._session = session;
 
@@ -130,22 +131,21 @@ const causeToResourceType = {
 };
 
 export class Request {
-  _id(_id: any, request: Request) {
-    throw new Error('Method not implemented.');
-  }
-  _session: any;
-  _frame: any;
+  _id: string;
+  private _session: any;
+  private _frame: any;
   _redirectChain: any;
-  _url: any;
-  _postData: any;
-  _suspended: any;
+  private _url: any;
+  private _postData: any;
+  private _suspended: any;
   _response: any;
   _errorText: any;
-  _isNavigationRequest: any;
-  _method: any;
-  _resourceType: any;
-  _headers: {};
-  _interceptionHandled: boolean;
+  private _isNavigationRequest: any;
+  private _method: any;
+  private _resourceType: any;
+  private _headers: {};
+  private _interceptionHandled: boolean;
+
   constructor(session, frame, redirectChain, payload) {
     this._session = session;
     this._frame = frame;
@@ -236,17 +236,17 @@ export class Request {
 }
 
 export class Response {
-  _session: any;
-  _request: any;
-  _remoteIPAddress: any;
-  _remotePort: any;
-  _status: any;
-  _statusText: any;
-  _headers: {};
-  _securityDetails: SecurityDetails;
-  _bodyLoadedPromise: Promise<unknown>;
-  _bodyLoadedPromiseFulfill: (value?: unknown) => void;
-  _contentPromise: any;
+  private _session: any;
+  private _request: any;
+  private _remoteIPAddress: any;
+  private _remotePort: any;
+  private _status: any;
+  private _statusText: any;
+  private _headers: {};
+  private _bodyLoadedPromise: Promise<unknown>;
+  private _bodyLoadedPromiseFulfill: (value?: unknown) => void;
+  private _contentPromise: any;
+
   constructor(session, request, payload) {
     this._session = session;
     this._request = request;
@@ -255,7 +255,6 @@ export class Response {
     this._status = payload.status;
     this._statusText = payload.statusText;
     this._headers = {};
-    this._securityDetails = payload.securityDetails ? new SecurityDetails(payload.securityDetails) : null;
     for (const {name, value} of payload.headers)
       this._headers[name.toLowerCase()] = value;
     this._bodyLoadedPromise = new Promise(fulfill => {
@@ -287,10 +286,6 @@ export class Response {
   async json(): Promise<object> {
     const content = await this.text();
     return JSON.parse(content);
-  }
-
-  securityDetails() {
-    return this._securityDetails;
   }
 
   headers() {
@@ -326,40 +321,5 @@ export class Response {
 
   request() {
     return this._request;
-  }
-}
-
-export class SecurityDetails {
-  _subjectName: string;
-  _issuer: string;
-  _validFrom: number;
-  _validTo: number;
-  _protocol: string;
-  constructor(securityPayload: any) {
-    this._subjectName = securityPayload['subjectName'];
-    this._issuer = securityPayload['issuer'];
-    this._validFrom = securityPayload['validFrom'];
-    this._validTo = securityPayload['validTo'];
-    this._protocol = securityPayload['protocol'];
-  }
-
-  subjectName(): string {
-    return this._subjectName;
-  }
-
-  issuer(): string {
-    return this._issuer;
-  }
-
-  validFrom(): number {
-    return this._validFrom;
-  }
-
-  validTo(): number {
-    return this._validTo;
-  }
-
-  protocol(): string {
-    return this._protocol;
   }
 }
