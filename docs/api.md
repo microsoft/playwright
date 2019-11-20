@@ -78,8 +78,6 @@
   * [event: 'requestfailed'](#event-requestfailed)
   * [event: 'requestfinished'](#event-requestfinished)
   * [event: 'response'](#event-response)
-  * [event: 'workercreated'](#event-workercreated)
-  * [event: 'workerdestroyed'](#event-workerdestroyed)
   * [page.$(selector)](#pageselector)
   * [page.$$(selector)](#pageselector-1)
   * [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
@@ -155,12 +153,16 @@
   * [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
   * [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
   * [page.waitForXPath(xpath[, options])](#pagewaitforxpathxpath-options)
-  * [page.workers()](#pageworkers)
+  * [page.workers](#pageworkers)
 - [class: Worker](#class-worker)
   * [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
   * [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
   * [worker.executionContext()](#workerexecutioncontext)
   * [worker.url()](#workerurl)
+- [class: Workers](#class-workers)
+  * [event: 'workercreated'](#event-workercreated)
+  * [event: 'workerdestroyed'](#event-workerdestroyed)
+  * [workers.list()](#workerslist)
 - [class: Accessibility](#class-accessibility)
   * [accessibility.snapshot([options])](#accessibilitysnapshotoptions)
 - [class: Keyboard](#class-keyboard)
@@ -1064,16 +1066,6 @@ Emitted when a request finishes successfully.
 - <[Response]>
 
 Emitted when a [response] is received.
-
-#### event: 'workercreated'
-- <[Worker]>
-
-Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
-
-#### event: 'workerdestroyed'
-- <[Worker]>
-
-Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
 #### page.$(selector)
 - `selector` <[string]> A [selector] to query page for
@@ -2177,9 +2169,8 @@ const playwright = require('playwright');
 ```
 Shortcut for [page.mainFrame().waitForXPath(xpath[, options])](#framewaitforxpathxpath-options).
 
-#### page.workers()
-- returns: <[Array]<[Worker]>>
-This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
+#### page.workers
+- returns: <[Workers]>
 
 > **NOTE** This does not contain ServiceWorkers
 
@@ -2224,6 +2215,26 @@ Shortcut for [(await worker.executionContext()).evaluateHandle(pageFunction, ...
 
 #### worker.url()
 - returns: <[string]>
+
+### class: Workers
+
+The Workers class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) collection.
+
+#### event: 'workercreated'
+- <[Worker]>
+
+Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
+
+#### event: 'workerdestroyed'
+- <[Worker]>
+
+Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
+
+#### workers.list()
+- returns: <[Array]<[Worker]>>
+This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
+
+> **NOTE** This does not contain ServiceWorkers
 
 ### class: Accessibility
 
@@ -2495,22 +2506,22 @@ Dispatches a `mouseup` event.
 
 > **NOTE** Generating a pdf is currently only supported in Chrome headless.
 
-`page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia('screen')](#pageemulatemediamediatype) before calling `page.pdf()`:
+`pdf.generate()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia('screen')](#pageemulatemediamediatype) before calling `pdf.generate()`:
 
-> **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
+> **NOTE** By default, `pdf.generate()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
 
 ```js
 // Generates a PDF with 'screen' media type.
 await page.emulateMedia('screen');
-await page.pdf({path: 'page.pdf'});
+await page.pdf.generate({path: 'page.pdf'});
 ```
 
 The `width`, `height`, and `margin` options accept values labeled with units. Unlabeled values are treated as pixels.
 
 A few examples:
-- `page.pdf({width: 100})` - prints with width set to 100 pixels
-- `page.pdf({width: '100px'})` - prints with width set to 100 pixels
-- `page.pdf({width: '10cm'})` - prints with width set to 10 centimeters.
+- `page.pdf.generate({width: 100})` - prints with width set to 100 pixels
+- `page.pdf.generate({width: '100px'})` - prints with width set to 100 pixels
+- `page.pdf.generate({width: '10cm'})` - prints with width set to 10 centimeters.
 
 All possible units are:
 - `px` - pixel

@@ -41,7 +41,8 @@ export = {
     TimeoutError: require('./Errors').TimeoutError,
     Touchscreen: require('./chromium/Input').Touchscreen,
     Tracing: require('./chromium/features/tracing').Tracing,
-    Worker: require('./chromium/Worker').Worker,
+    Worker: require('./chromium/features/workers').Worker,
+    Workers: require('./chromium/features/workers').Workers,
   },
   Firefox: {
     Accessibility: require('./firefox/Accessibility').Accessibility,

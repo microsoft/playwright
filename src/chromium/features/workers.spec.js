@@ -1,4 +1,4 @@
-const utils = require('./utils');
+const utils = require('../../../test/utils');
 const {waitEvent} = utils;
 
 module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
@@ -9,22 +9,22 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   describe.skip(FFOX || WEBKIT)('Workers', function() {
     it('Page.workers', async function({page, server}) {
       await Promise.all([
-        new Promise(x => page.once('workercreated', x)),
+        new Promise(x => page.workers.once('workercreated', x)),
         page.goto(server.PREFIX + '/worker/worker.html')]);
-      const worker = page.workers()[0];
+      const worker = page.workers.list()[0];
       expect(worker.url()).toContain('worker.js');
 
-      expect(await worker.evaluate(() => self.workerFunction())).toBe('worker function result');
+      expect(await worker.evaluate(() => self['workerFunction']())).toBe('worker function result');
 
       await page.goto(server.EMPTY_PAGE);
-      expect(page.workers().length).toBe(0);
+      expect(page.workers.list().length).toBe(0);
     });
     it('should emit created and destroyed events', async function({page}) {
-      const workerCreatedPromise = new Promise(x => page.once('workercreated', x));
+      const workerCreatedPromise = new Promise(x => page.workers.once('workercreated', x));
       const workerObj = await page.evaluateHandle(() => new Worker('data:text/javascript,1'));
       const worker = await workerCreatedPromise;
       const workerThisObj = await worker.evaluateHandle(() => this);
-      const workerDestroyedPromise = new Promise(x => page.once('workerdestroyed', x));
+      const workerDestroyedPromise = new Promise(x => page.workers.once('workerdestroyed', x));
       await page.evaluate(workerObj => workerObj.terminate(), workerObj);
       expect(await workerDestroyedPromise).toBe(worker);
       const error = await workerThisObj.getProperty('self').catch(error => error);
@@ -51,7 +51,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await (await log.args()[3].getProperty('origin')).jsonValue()).toBe('null');
     });
     it('should have an execution context', async function({page}) {
-      const workerCreatedPromise = new Promise(x => page.once('workercreated', x));
+      const workerCreatedPromise = new Promise(x => page.workers.once('workercreated', x));
       await page.evaluate(() => new Worker(`data:text/javascript,console.log(1)`));
       const worker = await workerCreatedPromise;
       expect(await (await worker.executionContext()).evaluate('1+1')).toBe(2);

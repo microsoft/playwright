@@ -35,8 +35,6 @@ export const Events = {
     Load: 'load',
     Metrics: 'metrics',
     Popup: 'popup',
-    WorkerCreated: 'workercreated',
-    WorkerDestroyed: 'workerdestroyed',
   },
 
   Browser: {
@@ -52,4 +50,8 @@ export const Events = {
     TargetChanged: 'targetchanged',
   },
 
+  Workers: {
+    WorkerCreated: 'workercreated',
+    WorkerDestroyed: 'workerdestroyed',
+  }
 };

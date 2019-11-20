@@ -154,7 +154,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       require('./target.spec.js').addTests(testOptions);
       require('./touchscreen.spec.js').addTests(testOptions);
       require('./waittask.spec.js').addTests(testOptions);
-      require('./worker.spec.js').addTests(testOptions);
+      require('../src/chromium/features/workers.spec.js').addTests(testOptions);
       if (CHROME) {
         require('./CDPSession.spec.js').addTests(testOptions);
         require('../src/chromium/features/coverage.spec.js').addTests(testOptions);
