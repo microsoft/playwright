@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import {RegisteredListener, helper, assert} from '../helper';
-import {Page, Viewport} from './Page';
-import {EventEmitter} from 'events';
-import {Connection, ConnectionEvents} from './Connection';
-import {Events} from '../Events';
+import { EventEmitter } from 'events';
+import { Events } from '../Events';
+import { assert, helper, RegisteredListener } from '../helper';
+import { Connection, ConnectionEvents } from './Connection';
+import { Permissions } from './features/permissions';
+import { Page, Viewport } from './Page';
 
 export class Browser extends EventEmitter {
   private _connection: Connection;
@@ -262,35 +263,15 @@ export class BrowserContext extends EventEmitter {
   _connection: Connection;
   _browser: Browser;
   _browserContextId: string;
+  readonly permissions: Permissions;
 
   constructor(connection: Connection, browser: Browser, browserContextId: string | null) {
     super();
     this._connection = connection;
     this._browser = browser;
     this._browserContextId = browserContextId;
+    this.permissions = new Permissions(connection, browserContextId);
   }
-
-
-  async overridePermissions(origin: string, permissions: Array<string>) {
-    const webPermissionToProtocol = new Map([
-      ['geolocation', 'geo'],
-      ['microphone', 'microphone'],
-      ['camera', 'camera'],
-      ['notifications', 'desktop-notifications'],
-    ]);
-    permissions = permissions.map(permission => {
-      const protocolPermission = webPermissionToProtocol.get(permission);
-      if (!protocolPermission)
-        throw new Error('Unknown permission: ' + permission);
-      return protocolPermission;
-    });
-    await this._connection.send('Browser.grantPermissions', {origin, browserContextId: this._browserContextId || undefined, permissions});
-  }
-
-  async clearPermissionOverrides() {
-    await this._connection.send('Browser.resetPermissions', {browserContextId: this._browserContextId || undefined});
-  }
-
 
   targets(): Array<Target> {
     return this._browser.targets().filter(target => target.browserContext() === this);

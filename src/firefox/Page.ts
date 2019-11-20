@@ -13,7 +13,7 @@ import {FrameManager, normalizeWaitUntil, FrameManagerEvents} from './FrameManag
 import {NetworkManager, Request, Response, NetworkManagerEvents} from './NetworkManager';
 import {TimeoutSettings} from '../TimeoutSettings';
 import {NavigationWatchdog} from './NavigationWatchdog';
-import {Accessibility} from './Accessibility';
+import {Accessibility} from './features/accessibility';
 import { Target, BrowserContext } from './Browser';
 import { Events } from '../Events';
 
@@ -26,7 +26,7 @@ export class Page extends EventEmitter {
   private _keyboard: Keyboard;
   private _mouse: Mouse;
   private _touchscreen: Touchscreen;
-  private _accessibility: Accessibility;
+  readonly accessibility: Accessibility;
   private _closed: boolean;
   private _pageBindings: Map<string, Function>;
   private _networkManager: NetworkManager;
@@ -56,7 +56,7 @@ export class Page extends EventEmitter {
     this._keyboard = new Keyboard(session);
     this._mouse = new Mouse(session, this._keyboard);
     this._touchscreen = new Touchscreen(session, this._keyboard, this._mouse);
-    this._accessibility = new Accessibility(session);
+    this.accessibility = new Accessibility(session);
     this._closed = false;
     this._pageBindings = new Map();
     this._networkManager = new NetworkManager(session);
@@ -332,10 +332,6 @@ export class Page extends EventEmitter {
 
   mainFrame() {
     return this._frameManager.mainFrame();
-  }
-
-  get accessibility() {
-    return this._accessibility;
   }
 
   get keyboard(){

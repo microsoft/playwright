@@ -94,6 +94,7 @@ class AXNode {
   private _name: string;
   private _role: string;
   private _cachedHasFocusableChild: boolean|undefined;
+
   constructor(payload) {
     this._payload = payload;
     this._children = (payload.children || []).map(x => new AXNode(x));
@@ -105,6 +106,7 @@ class AXNode {
     this._role = this._payload.role;
     this._cachedHasFocusableChild;
   }
+
   _isPlainTextField(): boolean {
     if (this._richlyEditable)
       return false;
@@ -112,10 +114,12 @@ class AXNode {
       return true;
     return this._role === 'entry';
   }
+
   _isTextOnlyObject(): boolean {
     const role = this._role;
     return (role === 'text leaf' || role === 'text' || role === 'statictext');
   }
+
   _hasFocusableChild(): boolean {
     if (this._cachedHasFocusableChild === undefined) {
       this._cachedHasFocusableChild = false;
@@ -128,6 +132,7 @@ class AXNode {
     }
     return this._cachedHasFocusableChild;
   }
+
   isLeafNode(): boolean {
     if (!this._children.length)
       return true;
@@ -160,6 +165,7 @@ class AXNode {
       return true;
     return false;
   }
+
   isControl(): boolean {
     switch (this._role) {
       case 'checkbutton':
@@ -191,6 +197,7 @@ class AXNode {
         return false;
     }
   }
+
   isInteresting(insideControl: boolean): boolean {
     if (this._focusable || this._richlyEditable)
       return true;
@@ -202,6 +209,7 @@ class AXNode {
       return false;
     return this.isLeafNode() && !!this._name.trim();
   }
+
   serialize(): SerializedAXNode {
     const node: {[x in keyof SerializedAXNode]: any} = {
       role: this._role

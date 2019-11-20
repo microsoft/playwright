@@ -19,20 +19,21 @@ import { EventEmitter } from 'events';
 import { assert } from '../helper';
 import { Browser } from './Browser';
 import { Connection } from './Connection';
+import { Permissions } from './features/permissions';
 import { Page } from './Page';
 import { Target } from './Target';
-import { Protocol } from './protocol';
 
 export class BrowserContext extends EventEmitter {
-  private _connection: Connection;
+  readonly permissions: Permissions;
+
   private _browser: Browser;
   private _id: string;
 
   constructor(connection: Connection, browser: Browser, contextId: string | null) {
     super();
-    this._connection = connection;
     this._browser = browser;
     this._id = contextId;
+    this.permissions = new Permissions(connection, contextId);
   }
 
   targets(): Target[] {
@@ -54,38 +55,6 @@ export class BrowserContext extends EventEmitter {
 
   isIncognito(): boolean {
     return !!this._id;
-  }
-
-  async overridePermissions(origin: string, permissions: string[]) {
-    const webPermissionToProtocol = new Map<string, Protocol.Browser.PermissionType>([
-      ['geolocation', 'geolocation'],
-      ['midi', 'midi'],
-      ['notifications', 'notifications'],
-      ['camera', 'videoCapture'],
-      ['microphone', 'audioCapture'],
-      ['background-sync', 'backgroundSync'],
-      ['ambient-light-sensor', 'sensors'],
-      ['accelerometer', 'sensors'],
-      ['gyroscope', 'sensors'],
-      ['magnetometer', 'sensors'],
-      ['accessibility-events', 'accessibilityEvents'],
-      ['clipboard-read', 'clipboardRead'],
-      ['clipboard-write', 'clipboardWrite'],
-      ['payment-handler', 'paymentHandler'],
-      // chrome-specific permissions we have.
-      ['midi-sysex', 'midiSysex'],
-    ]);
-    const filtered = permissions.map(permission => {
-      const protocolPermission = webPermissionToProtocol.get(permission);
-      if (!protocolPermission)
-        throw new Error('Unknown permission: ' + permission);
-      return protocolPermission;
-    });
-    await this._connection.send('Browser.grantPermissions', {origin, browserContextId: this._id || undefined, permissions: filtered});
-  }
-
-  async clearPermissionOverrides() {
-    await this._connection.send('Browser.resetPermissions', {browserContextId: this._id || undefined});
   }
 
   newPage(): Promise<Page> {
