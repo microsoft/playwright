@@ -2,14 +2,7 @@
 set -e
 set +x
 
-function cleanup() {
-  cd $OLD_DIR
-}
-
-OLD_DIR=$(pwd -P)
-cd "$(dirname "$0")"
-trap cleanup EXIT
-
+trap "cd $(pwd -P)" EXIT
 cd checkout
 
 if ! [[ $(git rev-parse --abbrev-ref HEAD) == "pwdev" ]]; then

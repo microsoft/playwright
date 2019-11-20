@@ -75,11 +75,7 @@ createZipForMac() {
   rm -rf $tmpdir
 }
 
-cleanup() {
-  cd $OLD_DIR
-}
-
-OLD_DIR=$(pwd -P)
+trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
-trap cleanup EXIT
+
 main "$@"

@@ -12,7 +12,6 @@ set -e
 set -x
 
 createZIPForLinuxOrMac() {
-  cd checkout
   local zipname=$1
   local OBJ_FOLDER=$(ls -1 | grep obj-)
   if [[ $OBJ_FOLDER == "" ]]; then
@@ -35,13 +34,8 @@ createZIPForLinuxOrMac() {
   cd -
 }
 
-cleanup() {
-  cd $OLD_DIR
-}
-
-OLD_DIR=$(pwd -P)
-cd "$(dirname "$0")"
-trap cleanup EXIT
+trap "cd $(pwd -P)" EXIT
+cd checkout
 
 if [[ "$(uname)" == "Darwin" ]]; then
   createZIPForLinuxOrMac "firefox-mac.zip"

@@ -2,13 +2,8 @@
 set -e
 set +x
 
-cleanup() {
-  cd $OLD_DIR
-}
-
-OLD_DIR=$(pwd -P)
+trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
-trap cleanup EXIT
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $0 [firefox|webkit]"
