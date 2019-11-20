@@ -412,23 +412,6 @@ export class ElementHandle extends JSHandle {
     return {x, y, width, height};
   }
 
-  async boxModel(): Promise<BoxModel | null> {
-    const result = await this._getBoxModel();
-
-    if (!result)
-      return null;
-
-    const {content, padding, border, margin, width, height} = result.model;
-    return {
-      content: this._fromProtocolQuad(content),
-      padding: this._fromProtocolQuad(padding),
-      border: this._fromProtocolQuad(border),
-      margin: this._fromProtocolQuad(margin),
-      width,
-      height
-    };
-  }
-
   async screenshot(options: any = {}): Promise<string | Buffer> {
     let needsViewportReset = false;
 
@@ -567,12 +550,3 @@ function computeQuadArea(quad) {
   }
   return Math.abs(area);
 }
-
-type BoxModel = {
-  content: {x: number, y: number}[],
-  padding: {x: number, y: number}[],
-  border: {x: number, y: number}[],
-  margin: {x: number, y: number}[],
-  width: number,
-  height : number
-};
