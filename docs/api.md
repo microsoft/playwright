@@ -70,7 +70,6 @@
   * [event: 'console'](#event-console)
   * [event: 'dialog'](#event-dialog)
   * [event: 'domcontentloaded'](#event-domcontentloaded)
-  * [event: 'error'](#event-error)
   * [event: 'frameattached'](#event-frameattached)
   * [event: 'framedetached'](#event-framedetached)
   * [event: 'framenavigated'](#event-framenavigated)
@@ -994,13 +993,6 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 #### event: 'domcontentloaded'
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
-
-#### event: 'error'
-- <[Error]>
-
-Emitted when the page crashes.
-
-> **NOTE** `error` event has a special meaning in Node, see [error events](https://nodejs.org/api/events.html#events_error_events) for details.
 
 #### event: 'frameattached'
 - <[Frame]>

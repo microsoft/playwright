@@ -21,7 +21,6 @@ export const Events = {
     Console: 'console',
     Dialog: 'dialog',
     DOMContentLoaded: 'domcontentloaded',
-    Error: 'error',
     // Can't use just 'error' due to node.js special treatment of error events.
     // @see https://nodejs.org/api/events.html#events_error_events
     PageError: 'pageerror',
@@ -47,10 +46,5 @@ export const Events = {
     TargetCreated: 'targetcreated',
     TargetDestroyed: 'targetdestroyed',
     TargetChanged: 'targetchanged',
-  },
-
-  Workers: {
-    WorkerCreated: 'workercreated',
-    WorkerDestroyed: 'workerdestroyed',
   }
 };

@@ -100,7 +100,7 @@ if (process.env.BROWSER === 'firefox') {
       testRunner,
     });
     if (process.env.COVERAGE)
-      utils.recordAPICoverage(testRunner, require('../lib/api').Chromium, require('../lib/Events').Events, CHROMIUM_NO_COVERAGE);
+      utils.recordAPICoverage(testRunner, require('../lib/api').Chromium, require('../lib/chromium/events').Events, CHROMIUM_NO_COVERAGE);
   });
 }
 

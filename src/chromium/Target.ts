@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Events } from '../Events';
+import { Events } from './events';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import { CDPSession } from './Connection';

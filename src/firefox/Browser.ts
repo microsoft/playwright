@@ -16,7 +16,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { Events } from '../Events';
+import { Events } from './events';
 import { assert, helper, RegisteredListener } from '../helper';
 import { Connection, ConnectionEvents } from './Connection';
 import { Permissions } from './features/permissions';

@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import { TargetSession, TargetSessionEvents } from './Connection';
-import { Events } from '../Events';
+import { Events } from './events';
 import { Frame, FrameManager, FrameManagerEvents } from './FrameManager';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { valueFromRemoteObject } from './protocolHelper';

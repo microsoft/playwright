@@ -15,7 +15,7 @@ import {TimeoutSettings} from '../TimeoutSettings';
 import {NavigationWatchdog} from './NavigationWatchdog';
 import {Accessibility} from './features/accessibility';
 import { Target, BrowserContext } from './Browser';
-import { Events } from '../Events';
+import { Events } from './events';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
