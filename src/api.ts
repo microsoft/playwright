@@ -28,6 +28,7 @@ export = {
     ExecutionContext: require('./chromium/ExecutionContext').ExecutionContext,
     FileChooser: require('./chromium/Page').FileChooser,
     Frame: require('./chromium/Frame').Frame,
+    Geolocation: require('./chromium/features/geolocation').Geolocation,
     JSHandle: require('./chromium/JSHandle').JSHandle,
     Keyboard: require('./chromium/Input').Keyboard,
     Mouse: require('./chromium/Input').Mouse,

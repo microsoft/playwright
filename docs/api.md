@@ -60,6 +60,8 @@
   * [browserContext.permissions](#browsercontextpermissions)
   * [browserContext.targets()](#browsercontexttargets)
   * [browserContext.waitForTarget(predicate[, options])](#browsercontextwaitfortargetpredicate-options)
+- [class: Geolocation](#class-geolocation)
+  * [geolocation.set(options)](#geolocationsetoptions)
 - [class: Permissions](#class-permissions)
   * [permissions.clearOverrides()](#permissionsclearoverrides)
   * [permissions.override(origin, permissions)](#permissionsoverrideorigin-permissions)
@@ -110,6 +112,7 @@
   * [page.fill(selector, value)](#pagefillselector-value)
   * [page.focus(selector)](#pagefocusselector)
   * [page.frames()](#pageframes)
+  * [page.geolocation](#pagegeolocation)
   * [page.goBack([options])](#pagegobackoptions)
   * [page.goForward([options])](#pagegoforwardoptions)
   * [page.goto(url[, options])](#pagegotourl-options)
@@ -129,7 +132,6 @@
   * [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
   * [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
   * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
-  * [page.setGeolocation(options)](#pagesetgeolocationoptions)
   * [page.setJavaScriptEnabled(enabled)](#pagesetjavascriptenabledenabled)
   * [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
   * [page.setRequestInterception(value)](#pagesetrequestinterceptionvalue)
@@ -868,6 +870,24 @@ await page.evaluate(() => window.open('https://www.example.com/'));
 const newWindowTarget = await browserContext.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
+### class: Geolocation
+
+#### geolocation.set(options)
+- `options` <[Object]>
+  - `latitude` <[number]> Latitude between -90 and 90.
+  - `longitude` <[number]> Longitude between -180 and 180.
+  - `accuracy` <[number]> Optional non-negative accuracy value.
+- returns: <[Promise]>
+
+Sets the page's geolocation.
+
+```js
+await page.geolocation.set({latitude: 59.95, longitude: 30.31667});
+```
+
+> **NOTE** Consider using [browserContext.permissions.override](#permissionsoverrideorigin-permissions) to grant permissions for the page to read its geolocation.
+
+
 ### class: Permissions
 
 #### permissions.clearOverrides()
@@ -1528,6 +1548,9 @@ Shortcut for [page.mainFrame().focus(selector)](#framefocusselector).
 #### page.frames()
 - returns: <[Array]<[Frame]>> An array of all frames attached to the page.
 
+#### page.geolocation
+- returns: <[Geolocation]>
+
 #### page.goBack([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -1743,21 +1766,6 @@ This setting will change the default maximum time for the following methods and 
 The extra HTTP headers will be sent with every request the page initiates.
 
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
-
-#### page.setGeolocation(options)
-- `options` <[Object]>
-  - `latitude` <[number]> Latitude between -90 and 90.
-  - `longitude` <[number]> Longitude between -180 and 180.
-  - `accuracy` <[number]> Optional non-negative accuracy value.
-- returns: <[Promise]>
-
-Sets the page's geolocation.
-
-```js
-await page.setGeolocation({latitude: 59.95, longitude: 30.31667});
-```
-
-> **NOTE** Consider using [browserContext.permissions.override](#permissionsoverrideorigin-permissions) to grant permissions for the page to read its geolocation.
 
 #### page.setJavaScriptEnabled(enabled)
 - `enabled` <[boolean]> Whether or not to enable JavaScript on the page.

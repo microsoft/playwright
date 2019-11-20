@@ -39,6 +39,7 @@ import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
+import { Geolocation } from './features/geolocation';
 import { Tracing } from './features/tracing';
 import { Workers } from './features/workers';
 
@@ -65,6 +66,7 @@ export class Page extends EventEmitter {
   private _emulationManager: EmulationManager;
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
+  readonly geolocation: Geolocation;
   readonly pdf: PDF;
   readonly workers: Workers;
   readonly tracing: Tracing;
@@ -99,6 +101,7 @@ export class Page extends EventEmitter {
     this.coverage = new Coverage(client);
     this.pdf = new PDF(client);
     this.workers = new Workers(client, this._addConsoleMessage.bind(this), this._handleException.bind(this));
+    this.geolocation = new Geolocation(client);
 
     this._screenshotTaskQueue = screenshotTaskQueue;
 
@@ -174,17 +177,6 @@ export class Page extends EventEmitter {
       this._fileChooserInterceptors.delete(callback);
       throw e;
     });
-  }
-
-  async setGeolocation(options: { longitude: number; latitude: number; accuracy: (number | undefined); }) {
-    const { longitude, latitude, accuracy = 0} = options;
-    if (longitude < -180 || longitude > 180)
-      throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
-    if (latitude < -90 || latitude > 90)
-      throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
-    if (accuracy < 0)
-      throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
-    await this._client.send('Emulation.setGeolocationOverride', {longitude, latitude, accuracy});
   }
 
   target(): Target {
