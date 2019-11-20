@@ -53,7 +53,6 @@ export class NetworkManager extends EventEmitter {
     this._client.on('Fetch.requestPaused', this._onRequestPaused.bind(this));
     this._client.on('Fetch.authRequired', this._onAuthRequired.bind(this));
     this._client.on('Network.requestWillBeSent', this._onRequestWillBeSent.bind(this));
-    this._client.on('Network.requestServedFromCache', this._onRequestServedFromCache.bind(this));
     this._client.on('Network.responseReceived', this._onResponseReceived.bind(this));
     this._client.on('Network.loadingFinished', this._onLoadingFinished.bind(this));
     this._client.on('Network.loadingFailed', this._onLoadingFailed.bind(this));
@@ -204,12 +203,6 @@ export class NetworkManager extends EventEmitter {
   }
 
 
-  _onRequestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
-    if (request)
-      request._fromMemoryCache = true;
-  }
-
   _handleRequestRedirect(request: Request, responsePayload: Protocol.Network.Response) {
     const response = new Response(this._client, request, responsePayload);
     request._response = response;
@@ -279,7 +272,6 @@ export class Request {
   private _postData: string;
   private _headers: {[key: string]: string} = {};
   private _frame: Frame;
-  _fromMemoryCache = false;
 
   constructor(client: CDPSession, frame: Frame | null, interceptionId: string, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: Request[]) {
     this._client = client;
@@ -448,8 +440,6 @@ export class Response {
   private _status: number;
   private _statusText: string;
   private _url: string;
-  private _fromDiskCache: boolean;
-  private _fromServiceWorker: boolean;
   private _headers: {[key: string]: string} = {};
   private _securityDetails: SecurityDetails;
 
@@ -468,8 +458,6 @@ export class Response {
     this._status = responsePayload.status;
     this._statusText = responsePayload.statusText;
     this._url = request.url();
-    this._fromDiskCache = !!responsePayload.fromDiskCache;
-    this._fromServiceWorker = !!responsePayload.fromServiceWorker;
     for (const key of Object.keys(responsePayload.headers))
       this._headers[key.toLowerCase()] = responsePayload.headers[key];
     this._securityDetails = responsePayload.securityDetails ? new SecurityDetails(responsePayload.securityDetails) : null;
@@ -529,14 +517,6 @@ export class Response {
 
   request(): Request {
     return this._request;
-  }
-
-  fromCache(): boolean {
-    return this._fromDiskCache || this._request._fromMemoryCache;
-  }
-
-  fromServiceWorker(): boolean {
-    return this._fromServiceWorker;
   }
 
   frame(): Frame | null {

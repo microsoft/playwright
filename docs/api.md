@@ -294,8 +294,6 @@
 - [class: Response](#class-response)
   * [response.buffer()](#responsebuffer)
   * [response.frame()](#responseframe)
-  * [response.fromCache()](#responsefromcache)
-  * [response.fromServiceWorker()](#responsefromserviceworker)
   * [response.headers()](#responseheaders)
   * [response.json()](#responsejson)
   * [response.ok()](#responseok)
@@ -3782,16 +3780,6 @@ page.on('request', request => {
 
 #### response.frame()
 - returns: <?[Frame]> A [Frame] that initiated this response, or `null` if navigating to error pages.
-
-#### response.fromCache()
-- returns: <[boolean]>
-
-True if the response was served from either the browser's disk cache or memory cache.
-
-#### response.fromServiceWorker()
-- returns: <[boolean]>
-
-True if the response was served by a service worker.
 
 #### response.headers()
 - returns: <[Object]> An object with HTTP headers associated with the response. All header names are lower-case.

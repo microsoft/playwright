@@ -97,52 +97,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(FFOX)('Response.fromCache', function() {
-    it.skip(WEBKIT)('should return |false| for non-cached content', async({page, server}) => {
-      const response = await page.goto(server.EMPTY_PAGE);
-      expect(response.fromCache()).toBe(false);
-    });
-
-    it.skip(WEBKIT)('should work', async({page, server}) => {
-      const responses = new Map();
-      page.on('response', r => !utils.isFavicon(r.request()) && responses.set(r.url().split('/').pop(), r));
-
-      // Load and re-load to make sure it's cached.
-      await page.goto(server.PREFIX + '/cached/one-style.html');
-      await page.reload();
-
-      expect(responses.size).toBe(2);
-      expect(responses.get('one-style.css').status()).toBe(200);
-      expect(responses.get('one-style.css').fromCache()).toBe(true);
-      expect(responses.get('one-style.html').status()).toBe(304);
-      expect(responses.get('one-style.html').fromCache()).toBe(false);
-    });
-  });
-
-  describe.skip(FFOX)('Response.fromServiceWorker', function() {
-    it.skip(WEBKIT)('should return |false| for non-service-worker content', async({page, server}) => {
-      const response = await page.goto(server.EMPTY_PAGE);
-      expect(response.fromServiceWorker()).toBe(false);
-    });
-
-    // FIXME: WebKit responses contain sw.js
-    it.skip(WEBKIT)('Response.fromServiceWorker', async({page, server}) => {
-      const responses = new Map();
-      page.on('response', r => responses.set(r.url().split('/').pop(), r));
-
-      // Load and re-load to make sure serviceworker is installed and running.
-      await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html', {waitUntil: 'networkidle2'});
-      await page.evaluate(async() => await window.activationPromise);
-      await page.reload();
-
-      expect(responses.size).toBe(2);
-      expect(responses.get('sw.html').status()).toBe(200);
-      expect(responses.get('sw.html').fromServiceWorker()).toBe(true);
-      expect(responses.get('style.css').status()).toBe(200);
-      expect(responses.get('style.css').fromServiceWorker()).toBe(true);
-    });
-  });
-
   describe('Request.postData', function() {
     it('should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
