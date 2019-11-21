@@ -1,19 +1,43 @@
 #!/bin/bash
+set -e
+set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0)"
+  echo "usage: $(basename $0) [output-absolute-path]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
   exit 0
 fi
 
-set -e
-set -x
+if [[ $# != 1 ]]; then
+  echo "error: missing zip output path"
+  echo "try '$(basename $0) --help' for details"
+  exit 1
+fi
+
+ZIP_PATH=$1
+if [[ $ZIP_PATH != /* ]]; then
+  echo "ERROR: path $ZIP_PATH is not absolute"
+  exit 1
+fi
+if [[ $ZIP_PATH != *.zip ]]; then
+  echo "ERROR: path $ZIP_PATH must have .zip extension"
+  exit 1
+fi
+if [[ -f $ZIP_PATH ]]; then
+  echo "ERROR: path $ZIP_PATH exists; can't do anything."
+  exit 1
+fi
+if ! [[ -d $(dirname $ZIP_PATH) ]]; then
+  echo "ERROR: folder for path $($ZIP_PATH) does not exist."
+  exit 1
+fi
 
 main() {
   cd checkout
 
+  set -x
   if [[ "$(uname)" == "Darwin" ]]; then
     createZipForMac
   elif [[ "$(uname)" == "Linux" ]]; then
@@ -42,8 +66,7 @@ createZipForLinux() {
   rm $tmpdir/libgdk_pixbuf*
 
   # tar resulting directory and cleanup TMP.
-  local zipname="minibrowser-linux.zip"
-  zip -jr ../$zipname $tmpdir
+  zip -jr $ZIP_PATH $tmpdir
   rm -rf $tmpdir
 }
 
@@ -69,9 +92,7 @@ createZipForMac() {
   node ../concat_protocol.js > $tmpdir/protocol.json
 
   # zip resulting directory and cleanup TMP.
-  local MAC_MAJOR_MINOR_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
-  local zipname="minibrowser-mac-$MAC_MAJOR_MINOR_VERSION.zip"
-  ditto -c -k $tmpdir ../$zipname
+  ditto -c -k $tmpdir $ZIP_PATH
   rm -rf $tmpdir
 }
 

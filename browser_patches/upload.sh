@@ -6,19 +6,13 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit]"
+  echo "usage: $(basename $0) [firefox|webkit] [zip-path]"
   echo
-  echo "Archive and upload a browser"
+  echo "Upload .zip as a browser build."
   echo
   echo "NOTE: \$AZ_ACCOUNT_KEY (azure account name) and \$AZ_ACCOUNT_NAME (azure account name)"
   echo "env variables are required to upload builds to CDN."
   exit 0
-fi
-
-if [[ $# == 0 ]]; then
-  echo "missing browser: 'firefox' or 'webkit'"
-  echo "try '$(basename $0) --help' for more information"
-  exit 1
 fi
 
 if [[ (-z $AZ_ACCOUNT_KEY) || (-z $AZ_ACCOUNT_NAME) ]]; then
@@ -28,36 +22,64 @@ if [[ (-z $AZ_ACCOUNT_KEY) || (-z $AZ_ACCOUNT_NAME) ]]; then
   exit 1
 fi
 
-ARCHIVE_SCRIPT=""
+if [[ $# < 1 ]]; then
+  echo "missing browser: 'firefox' or 'webkit'"
+  echo "try '$(basename $0) --help' for more information"
+  exit 1
+fi
 BROWSER_NAME=""
 BUILD_NUMBER=""
+BLOB_NAME=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   # we always apply our patches atop of beta since it seems to get better
   # reliability guarantees.
-  ARCHIVE_FOLDER="$PWD/firefox"
   BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
-  ARCHIVE_SCRIPT="$PWD/firefox/archive.sh"
   BROWSER_NAME="firefox"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    BLOB_NAME="firefox-mac.zip"
+  elif [[ "$(uname)" == "Linux" ]]; then
+    BLOB_NAME="firefox-linux.zip"
+  else
+    echo "ERROR: unzupported platform - $(uname)"
+    exit 1
+  fi
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
-  ARCHIVE_FOLDER="$PWD/webkit"
   BUILD_NUMBER=$(cat "$PWD/webkit/BUILD_NUMBER")
-  ARCHIVE_SCRIPT="$PWD/webkit/archive.sh"
   BROWSER_NAME="webkit"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    MAC_MAJOR_MINOR_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
+    BLOB_NAME="minibrowser-mac-$MAC_MAJOR_MINOR_VERSION.zip"
+  elif [[ "$(uname)" == "Linux" ]]; then
+    BLOB_NAME="minibrowser-linux.zip"
+  else
+    echo "ERROR: unzupported platform - $(uname)"
+    exit 1
+  fi
 else
   echo ERROR: unknown browser to export - "$1"
   exit 1
 fi
 
-if ! [[ -z $(ls $ARCHIVE_FOLDER | grep '.zip') ]]; then
-  echo ERROR: .zip file already exists in $ARCHIVE_FOLDER!
-  echo Remove manually all zip files and re-run the script.
+if [[ $# < 2 ]]; then
+  echo "missing path to zip archive to upload"
+  echo "try '$(basename $0) --help' for more information"
+  exit 1
+fi
+ZIP_PATH=$2
+if ! [[ -f $ZIP_PATH ]]; then
+  echo "ERROR: $ZIP_PATH does not exist"
+  exit 1
+fi
+if ! [[ $ZIP_PATH == *.zip ]]; then
+  echo "ERROR: $ZIP_PATH is not a zip archive (must have a .zip extension)"
   exit 1
 fi
 
-$ARCHIVE_SCRIPT
-ZIP_NAME=$(ls $ARCHIVE_FOLDER | grep '.zip')
-ZIP_PATH=$ARCHIVE_FOLDER/$ZIP_NAME
-BLOB_NAME="$BROWSER_NAME/$BUILD_NUMBER/$ZIP_NAME"
-az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $ZIP_PATH -n "$BLOB_NAME"
-echo "Uploaded $(du -h "$ZIP_PATH" | awk '{print $1}') as $BLOB_NAME"
-rm $ZIP_PATH
+BLOB_PATH="$BROWSER_NAME/$BUILD_NUMBER/$BLOB_NAME"
+az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $ZIP_PATH -n "$BLOB_PATH"
+
+echo "UPLOAD SUCCESSFUL!"
+echo "--  SRC: $ZIP_PATH"
+echo "-- SIZE: $(du -h "$ZIP_PATH" | awk '{print $1}')"
+echo "--  DST: $BLOB_PATH"
+
