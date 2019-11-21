@@ -20,7 +20,7 @@ import { CDPSession } from './Connection';
 import { DOMWorld } from './DOMWorld';
 import { ExecutionContext } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
-import { ClickOptions, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions } from './JSHandle';
+import { ClickOptions, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions, FillOptions } from './JSHandle';
 import { Response } from './NetworkManager';
 import { Protocol } from './protocol';
 
@@ -152,8 +152,8 @@ export class Frame {
     return this._secondaryWorld.tripleclick(selector, options);
   }
 
-  async fill(selector: string, value: string) {
-    return this._secondaryWorld.fill(selector, value);
+  async fill(selector: string, value: string, options?: FillOptions) {
+    return this._secondaryWorld.fill(selector, value, options);
   }
 
   async focus(selector: string) {

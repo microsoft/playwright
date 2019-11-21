@@ -108,7 +108,7 @@
   * [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
   * [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
   * [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
-  * [page.fill(selector, value)](#pagefillselector-value)
+  * [page.fill(selector, value, [options])](#pagefillselector-value-options)
   * [page.focus(selector)](#pagefocusselector)
   * [page.frames()](#pageframes)
   * [page.geolocation](#pagegeolocation)
@@ -211,7 +211,7 @@
   * [frame.evaluate(pageFunction[, ...args])](#frameevaluatepagefunction-args)
   * [frame.evaluateHandle(pageFunction[, ...args])](#frameevaluatehandlepagefunction-args)
   * [frame.executionContext()](#frameexecutioncontext)
-  * [frame.fill(selector, value)](#framefillselector-value)
+  * [frame.fill(selector, value, [options])](#framefillselector-value-options)
   * [frame.focus(selector)](#framefocusselector)
   * [frame.goto(url[, options])](#framegotourl-options)
   * [frame.hover(selector[, options])](#framehoverselector-options)
@@ -257,7 +257,7 @@
   * [elementHandle.evaluate(pageFunction[, ...args])](#elementhandleevaluatepagefunction-args)
   * [elementHandle.evaluateHandle(pageFunction[, ...args])](#elementhandleevaluatehandlepagefunction-args)
   * [elementHandle.executionContext()](#elementhandleexecutioncontext)
-  * [elementHandle.fill(value)](#elementhandlefillvalue)
+  * [elementHandle.fill(value[, options])](#elementhandlefillvalue-options)
   * [elementHandle.focus()](#elementhandlefocus)
   * [elementHandle.getProperties()](#elementhandlegetproperties)
   * [elementHandle.getProperty(propertyName)](#elementhandlegetpropertypropertyname)
@@ -1512,9 +1512,11 @@ const fs = require('fs');
 })();
 ```
 
-#### page.fill(selector, value)
+#### page.fill(selector, value, [options])
 - `selector` <[string]> A [selector] to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
+- `options` <[Object]>
+  - `enabled` <[boolean]> Whether to wait for the element to become enabled before filling the value. Defaults to `false`.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
 This method focuses the element and triggers an `input` event after filling.
@@ -2796,9 +2798,11 @@ await resultHandle.dispose();
 
 Returns promise that resolves to the frame's default execution context.
 
-#### frame.fill(selector, value)
+#### frame.fill(selector, value, [options])
 - `selector` <[string]> A [selector] to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
+- `options` <[Object]>
+  - `enabled` <[boolean]> Whether to wait for the element to become enabled before filling the value. Defaults to `false`.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
 This method focuses the element and triggers an `input` event after filling.
@@ -3395,8 +3399,10 @@ See [Page.evaluateHandle](#pageevaluatehandlepagefunction-args) for more details
 #### elementHandle.executionContext()
 - returns: <[ExecutionContext]>
 
-#### elementHandle.fill(value)
+#### elementHandle.fill(value[, options])
 - `value` <[string]> Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
+- `options` <[Object]>
+  - `enabled` <[boolean]> Whether to wait for the element to become enabled before filling the value. Defaults to `false`.
 - returns: <[Promise]> Promise which resolves when the element is successfully filled.
 
 This method focuses the element and triggers an `input` event after filling.

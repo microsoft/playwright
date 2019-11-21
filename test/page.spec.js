@@ -1048,6 +1048,43 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.fill('textarea', 123).catch(e => error = e);
       expect(error.message).toContain('Value must be string.');
     });
+    it('should not wait for input to be enabled by default', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.evaluate(() => document.querySelector('input').setAttribute('disabled', 'true'));
+      await page.fill('input', 'some value');
+      expect(await page.evaluate(() => result)).toBe('');
+    });
+    it('should wait for input to be enabled', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.evaluate(() => document.querySelector('input').setAttribute('disabled', 'true'));
+      let filled = false;
+      const fillPromise = page.fill('input', 'some value', { enabled: true }).then(() => filled = true);
+      for (let i = 0; i < 10; i++) {
+        await page.evaluate(value => document.querySelector('input').setAttribute('foo', value), String(i));
+        expect(await page.evaluate(() => result)).toBe('');
+        expect(filled).toBe(false);
+      }
+      await Promise.all([
+        fillPromise,
+        page.evaluate(() => document.querySelector('input').removeAttribute('disabled')),
+      ]);
+      expect(await page.evaluate(() => result)).toBe('some value');
+    });
+    it('should timeout for disabled input', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.evaluate(() => document.querySelector('input').setAttribute('disabled', 'true'));
+      let error = null;
+      page.setDefaultTimeout(1);
+      await page.fill('input', 'some value', { enabled: true }).catch(e => error = e);
+      expect(error.message).toBe('Timed out while waiting for the element to be enabled');
+    });
+    it('should throw for non-input when waiting for enabled', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      const handle = await page.evaluateHandle(() => document.querySelector('span').firstChild);
+      let error = null;
+      await handle.fill('', { enabled: true }).catch(e => error = e);
+      expect(error.message).toContain('Node is not of type HTMLElement');
+    });
   });
 
   // FIXME: WebKit shouldn't send targetDestroyed on PSON so that we could

@@ -25,6 +25,7 @@ import { valueFromRemoteObject, releaseObject } from './protocolHelper';
 import { Page } from './Page';
 import { Modifier, Button } from './Input';
 import { Protocol } from './protocol';
+import { TimeoutError } from '../Errors';
 
 type Point = {
   x: number;
@@ -45,6 +46,10 @@ export type ClickOptions = PointerActionOptions & {
 export type MultiClickOptions = PointerActionOptions & {
   delay?: number;
   button?: Button;
+};
+
+export type FillOptions = {
+  enabled?: boolean;
 };
 
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
@@ -337,8 +342,22 @@ export class ElementHandle extends JSHandle {
     }, values);
   }
 
-  async fill(value: string): Promise<void> {
+  async fill(value: string, options?: FillOptions): Promise<void> {
+    const { enabled = false } = options || {};
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
+
+    if (enabled) {
+      try {
+        await this._context._world.waitForFunction((node: Node) => {
+          return node.nodeType !== Node.ELEMENT_NODE ? true : !(node as Element).hasAttribute('disabled');
+        }, { polling: 'mutation' }, this);
+      } catch (e) {
+        if (e instanceof TimeoutError)
+          e.message = 'Timed out while waiting for the element to be enabled';
+        throw e;
+      }
+    }
+
     const error = await this.evaluate((element: HTMLElement) => {
       if (element.nodeType !== Node.ELEMENT_NODE)
         return 'Node is not of type HTMLElement';
