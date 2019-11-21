@@ -42,6 +42,7 @@ import { TaskQueue } from './TaskQueue';
 import { Geolocation } from './features/geolocation';
 import { Tracing } from './features/tracing';
 import { Workers } from './features/workers';
+import { Interception } from './features/interception';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -66,6 +67,7 @@ export class Page extends EventEmitter {
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
   readonly geolocation: Geolocation;
+  readonly interception: Interception;
   readonly pdf: PDF;
   readonly workers: Workers;
   readonly tracing: Tracing;
@@ -100,6 +102,7 @@ export class Page extends EventEmitter {
     this.pdf = new PDF(client);
     this.workers = new Workers(client, this._addConsoleMessage.bind(this), this._handleException.bind(this));
     this.geolocation = new Geolocation(client);
+    this.interception = new Interception(this._frameManager.networkManager());
 
     this._screenshotTaskQueue = screenshotTaskQueue;
 
@@ -211,10 +214,6 @@ export class Page extends EventEmitter {
 
   frames(): Frame[] {
     return this._frameManager.frames();
-  }
-
-  async setRequestInterception(value: boolean) {
-    return this._frameManager.networkManager().setRequestInterception(value);
   }
 
   setOfflineMode(enabled: boolean) {

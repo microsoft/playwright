@@ -99,7 +99,7 @@ playwright.launch().then(async browser => {
   await page.emulateMedia("screen");
   await page.pdf({ path: "page.pdf" });
 
-  await page.setRequestInterception(true);
+  await page.interception.enable();
   page.on("request", interceptedRequest => {
     if (
       interceptedRequest.url().endsWith(".png") ||

@@ -169,7 +169,7 @@ export class Request {
     return this._errorText ? {errorText: this._errorText} : null;
   }
 
-  async continue(overrides: any = {}) {
+  async _continue(overrides: any = {}) {
     assert(!overrides.url, 'Playwright-Firefox does not support overriding URL');
     assert(!overrides.method, 'Playwright-Firefox does not support overriding method');
     assert(!overrides.postData, 'Playwright-Firefox does not support overriding postData');
@@ -187,7 +187,7 @@ export class Request {
     });
   }
 
-  async abort() {
+  async _abort() {
     assert(this._suspended, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;

@@ -864,8 +864,8 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
     it.skip(WEBKIT)('should stay disabled when toggling request interception on/off', async({page, server}) => {
       await page.setCacheEnabled(false);
-      await page.setRequestInterception(true);
-      await page.setRequestInterception(false);
+      await page.interception.enable();
+      await page.interception.disable();
 
       await page.goto(server.PREFIX + '/cached/one-style.html');
       const [nonCachedRequest] = await Promise.all([

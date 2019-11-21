@@ -23,12 +23,12 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(WEBKIT)('Page.setRequestInterception', function() {
+  describe.skip(WEBKIT)('Interception.enable', function() {
     it('should intercept', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         if (utils.isFavicon(request)) {
-          request.continue();
+          page.interception.continue(request);
           return;
         }
         expect(request.url()).toContain('empty.html');
@@ -39,7 +39,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         expect(request.resourceType()).toBe('document');
         expect(request.frame() === page.mainFrame()).toBe(true);
         expect(request.frame().url()).toBe('about:blank');
-        request.continue();
+        page.interception.continue(request);
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
@@ -48,8 +48,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it('should work when POST is redirected with 302', async({page, server}) => {
       server.setRedirect('/rredirect', '/empty.html');
       await page.goto(server.EMPTY_PAGE);
-      await page.setRequestInterception(true);
-      page.on('request', request => request.continue());
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
       await page.setContent(`
         <form action='/rredirect' method='post'>
           <input type="hidden" id="foo" name="foo" value="FOOBAR">
@@ -63,24 +63,24 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     // @see https://github.com/GoogleChrome/puppeteer/issues/3973
     it('should work when header manipulation headers with redirect', async({page, server}) => {
       server.setRedirect('/rrredirect', '/empty.html');
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         const headers = Object.assign({}, request.headers(), {
           foo: 'bar'
         });
-        request.continue({ headers });
+        page.interception.continue(request, { headers });
       });
       await page.goto(server.PREFIX + '/rrredirect');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/4743
     it('should be able to remove headers', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         const headers = Object.assign({}, request.headers(), {
           foo: 'bar',
           origin: undefined, // remove "origin" header
         });
-        request.continue({ headers });
+        page.interception.continue(request, { headers });
       });
 
       const [serverRequest] = await Promise.all([
@@ -91,12 +91,12 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(serverRequest.headers.origin).toBe(undefined);
     });
     it('should contain referer header', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const requests = [];
       page.on('request', request => {
         if (!utils.isFavicon(request))
           requests.push(request);
-        request.continue();
+        page.interception.continue(request);
       });
       await page.goto(server.PREFIX + '/one-style.html');
       expect(requests[1].url()).toContain('/one-style.css');
@@ -108,26 +108,26 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.setCookie({ name: 'foo', value: 'bar'});
 
       // Setup request interception.
-      await page.setRequestInterception(true);
-      page.on('request', request => request.continue());
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
       const response = await page.reload();
       expect(response.status()).toBe(200);
     });
     it('should stop intercepting', async({page, server}) => {
-      await page.setRequestInterception(true);
-      page.once('request', request => request.continue());
+      await page.interception.enable();
+      page.once('request', request => page.interception.continue(request));
       await page.goto(server.EMPTY_PAGE);
-      await page.setRequestInterception(false);
+      await page.interception.disable();
       await page.goto(server.EMPTY_PAGE);
     });
     it('should show custom HTTP headers', async({page, server}) => {
       await page.setExtraHTTPHeaders({
         foo: 'bar'
       });
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         expect(request.headers()['foo']).toBe('bar');
-        request.continue();
+        page.interception.continue(request);
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
@@ -136,8 +136,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it('should work with redirect inside sync XHR', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRedirect('/logo.png', '/pptr.png');
-      await page.setRequestInterception(true);
-      page.on('request', request => request.continue());
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
       const status = await page.evaluate(async() => {
         const request = new XMLHttpRequest();
         request.open('GET', '/logo.png', false);  // `false` makes the request synchronous
@@ -148,21 +148,21 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
     it('should work with custom referer headers', async({page, server}) => {
       await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         expect(request.headers()['referer']).toBe(server.EMPTY_PAGE);
-        request.continue();
+        page.interception.continue(request);
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
     });
     it('should be abortable', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         if (request.url().endsWith('.css'))
-          request.abort();
+          page.interception.abort(request);
         else
-          request.continue();
+          page.interception.continue(request);
       });
       let failedRequests = 0;
       page.on('requestfailed', event => ++failedRequests);
@@ -172,9 +172,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(failedRequests).toBe(1);
     });
     it.skip(FFOX)('should be abortable with custom error codes', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
-        request.abort('internetdisconnected');
+        page.interception.abort(request, 'internetdisconnected');
       });
       let failedRequest = null;
       page.on('requestfailed', request => failedRequest = request);
@@ -186,8 +186,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.setExtraHTTPHeaders({
         referer: 'http://google.com/'
       });
-      await page.setRequestInterception(true);
-      page.on('request', request => request.continue());
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
       const [request] = await Promise.all([
         server.waitForRequest('/grid.html'),
         page.goto(server.PREFIX + '/grid.html'),
@@ -195,8 +195,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(request.headers['referer']).toBe('http://google.com/');
     });
     it('should fail navigation when aborting main resource', async({page, server}) => {
-      await page.setRequestInterception(true);
-      page.on('request', request => request.abort());
+      await page.interception.enable();
+      page.on('request', request => page.interception.abort(request));
       let error = null;
       await page.goto(server.EMPTY_PAGE).catch(e => error = e);
       expect(error).toBeTruthy();
@@ -206,10 +206,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         expect(error.message).toContain('NS_ERROR_FAILURE');
     });
     it('should work with redirects', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const requests = [];
       page.on('request', request => {
-        request.continue();
+        page.interception.continue(request);
         requests.push(request);
       });
       server.setRedirect('/non-existing-page.html', '/non-existing-page-2.html');
@@ -233,10 +233,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       }
     });
     it('should work with redirects for subresources', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const requests = [];
       page.on('request', request => {
-        request.continue();
+        page.interception.continue(request);
         if (!utils.isFavicon(request))
           requests.push(request);
       });
@@ -258,14 +258,14 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(redirectChain[2].url()).toContain('/three-style.css');
     });
     it('should be able to abort redirects', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       server.setRedirect('/non-existing.json', '/non-existing-2.json');
       server.setRedirect('/non-existing-2.json', '/simple.html');
       page.on('request', request => {
         if (request.url().includes('non-existing-2'))
-          request.abort();
+          page.interception.abort(request);
         else
-          request.continue();
+          page.interception.continue(request);
       });
       await page.goto(server.EMPTY_PAGE);
       const result = await page.evaluate(async() => {
@@ -284,16 +284,16 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.EMPTY_PAGE);
       let responseCount = 1;
       server.setRoute('/zzz', (req, res) => res.end((responseCount++) * 11 + ''));
-      await page.setRequestInterception(true);
+      await page.interception.enable();
 
       let spinner = false;
       // Cancel 2nd request.
       page.on('request', request => {
         if (utils.isFavicon(request)) {
-          request.continue();
+          page.interception.continue(request);
           return;
         }
-        spinner ? request.abort() : request.continue();
+        spinner ? page.interception.abort(request) : page.interception.continue(request);
         spinner = !spinner;
       });
       const results = await page.evaluate(() => Promise.all([
@@ -304,11 +304,11 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(results).toEqual(['11', 'FAILED', '22']);
     });
     it.skip(FFOX)('should navigate to dataURL and fire dataURL requests', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const requests = [];
       page.on('request', request => {
         requests.push(request);
-        request.continue();
+        page.interception.continue(request);
       });
       const dataURL = 'data:text/html,<div>yo</div>';
       const response = await page.goto(dataURL);
@@ -318,11 +318,11 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
     it.skip(FFOX)('should be able to fetch dataURL and fire dataURL requests', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const requests = [];
       page.on('request', request => {
         requests.push(request);
-        request.continue();
+        page.interception.continue(request);
       });
       const dataURL = 'data:text/html,<div>yo</div>';
       const text = await page.evaluate(url => fetch(url).then(r => r.text()), dataURL);
@@ -331,11 +331,11 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(requests[0].url()).toBe(dataURL);
     });
     it.skip(FFOX)('should navigate to URL with hash and and fire requests without hash', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const requests = [];
       page.on('request', request => {
         requests.push(request);
-        request.continue();
+        page.interception.continue(request);
       });
       const response = await page.goto(server.EMPTY_PAGE + '#hash');
       expect(response.status()).toBe(200);
@@ -346,25 +346,25 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it('should work with encoded server', async({page, server}) => {
       // The requestWillBeSent will report encoded URL, whereas interception will
       // report URL as-is. @see crbug.com/759388
-      await page.setRequestInterception(true);
-      page.on('request', request => request.continue());
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
       const response = await page.goto(server.PREFIX + '/some nonexisting page');
       expect(response.status()).toBe(404);
     });
     it('should work with badly encoded server', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       server.setRoute('/malformed?rnd=%911', (req, res) => res.end());
-      page.on('request', request => request.continue());
+      page.on('request', request => page.interception.continue(request));
       const response = await page.goto(server.PREFIX + '/malformed?rnd=%911');
       expect(response.status()).toBe(200);
     });
     it.skip(FFOX)('should work with encoded server - 2', async({page, server}) => {
       // The requestWillBeSent will report URL as-is, whereas interception will
       // report encoded URL for stylesheet. @see crbug.com/759388
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const requests = [];
       page.on('request', request => {
-        request.continue();
+        page.interception.continue(request);
         requests.push(request);
       });
       const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
@@ -374,7 +374,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
     it.skip(FFOX)('should not throw "Invalid Interception Id" if the request was cancelled', async({page, server}) => {
       await page.setContent('<iframe></iframe>');
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       let request = null;
       page.on('request', async r => request = r);
       page.$eval('iframe', (frame, url) => frame.src = url, server.EMPTY_PAGE),
@@ -383,14 +383,14 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       // Delete frame to cause request to be canceled.
       await page.$eval('iframe', frame => frame.remove());
       let error = null;
-      await request.continue().catch(e => error = e);
+      await page.interception.continue(request).catch(e => error = e);
       expect(error).toBe(null);
     });
     it('should throw if interception is not enabled', async({page, server}) => {
       let error = null;
       page.on('request', async request => {
         try {
-          await request.continue();
+          await page.interception.continue(request);
         } catch (e) {
           error = e;
         }
@@ -399,11 +399,11 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(error.message).toContain('Request Interception is not enabled');
     });
     it.skip(FFOX)('should work with file URLs', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       const urls = new Set();
       page.on('request', request => {
         urls.add(request.url().split('/').pop());
-        request.continue();
+        page.interception.continue(request);
       });
       await page.goto(pathToFileURL(path.join(__dirname, 'assets', 'one-style.html')));
       expect(urls.size).toBe(2);
@@ -412,18 +412,18 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(WEBKIT)('Request.continue', function() {
+  describe.skip(WEBKIT)('Interception.continue', function() {
     it('should work', async({page, server}) => {
-      await page.setRequestInterception(true);
-      page.on('request', request => request.continue());
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
       await page.goto(server.EMPTY_PAGE);
     });
     it('should amend HTTP headers', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         const headers = Object.assign({}, request.headers());
         headers['FOO'] = 'bar';
-        request.continue({ headers });
+        page.interception.continue(request, { headers });
       });
       await page.goto(server.EMPTY_PAGE);
       const [request] = await Promise.all([
@@ -433,10 +433,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(request.headers['foo']).toBe('bar');
     });
     it.skip(FFOX)('should redirect in a way non-observable to page', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         const redirectURL = request.url().includes('/empty.html') ? server.PREFIX + '/consolelog.html' : undefined;
-        request.continue({ url: redirectURL });
+        page.interception.continue(request, { url: redirectURL });
       });
       let consoleMessage = null;
       page.on('console', msg => consoleMessage = msg);
@@ -447,9 +447,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it.skip(FFOX)('should amend method', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
 
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
-        request.continue({ method: 'POST' });
+        page.interception.continue(request, { method: 'POST' });
       });
       const [request] = await Promise.all([
         server.waitForRequest('/sleep.zzz'),
@@ -460,9 +460,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it.skip(FFOX)('should amend post data', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
 
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
-        request.continue({ postData: 'doggo' });
+        page.interception.continue(request, { postData: 'doggo' });
       });
       const [serverRequest] = await Promise.all([
         server.waitForRequest('/sleep.zzz'),
@@ -471,9 +471,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await serverRequest.postBody).toBe('doggo');
     });
     it.skip(FFOX)('should amend both post data and method on navigation', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
-        request.continue({ method: 'POST', postData: 'doggo' });
+        page.interception.continue(request, { method: 'POST', postData: 'doggo' });
       });
       const [serverRequest] = await Promise.all([
         server.waitForRequest('/empty.html'),
@@ -484,11 +484,11 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Request.respond', function() {
+  describe.skip(FFOX || WEBKIT)('interception.fulfill', function() {
     it('should work', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
-        request.respond({
+        page.interception.fulfill(request, {
           status: 201,
           headers: {
             foo: 'bar'
@@ -502,9 +502,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
     });
     it('should work with status code 422', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
-        request.respond({
+        page.interception.fulfill(request, {
           status: 422,
           body: 'Yo, page!'
         });
@@ -515,13 +515,13 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
     });
     it('should redirect', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         if (!request.url().includes('rrredirect')) {
-          request.continue();
+          page.interception.continue(request);
           return;
         }
-        request.respond({
+        page.interception.fulfill(request, {
           status: 302,
           headers: {
             location: server.EMPTY_PAGE,
@@ -534,10 +534,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(response.url()).toBe(server.EMPTY_PAGE);
     });
     it('should allow mocking binary responses', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
-        request.respond({
+        page.interception.fulfill(request, {
           contentType: 'image/png',
           body: imageBuffer
         });
@@ -552,9 +552,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
     });
     it('should stringify intercepted request response headers', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
-        request.respond({
+        page.interception.fulfill(request, {
           status: 200,
           headers: {
             'foo': true

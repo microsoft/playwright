@@ -235,7 +235,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
 
     // FIXME: requires request interception.
     it.skip(WEBKIT)('Page.Events.RequestFailed', async({page, server}) => {
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       page.on('request', request => {
         if (request.url().endsWith('css'))
           request.abort();
@@ -318,7 +318,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         requests.set(request.url().split('/').pop(), request);
         request.continue();
       });
-      await page.setRequestInterception(true);
+      await page.interception.enable();
       server.setRedirect('/rrredirect', '/frames/one-frame.html');
       await page.goto(server.PREFIX + '/rrredirect');
       expect(requests.get('rrredirect').isNavigationRequest()).toBe(true);
