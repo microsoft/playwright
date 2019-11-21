@@ -22,7 +22,7 @@ import { assert, helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage } from './protocolHelper';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
 import { Protocol } from './protocol';
-
+import { injectedSource } from '../injected/injectedSource';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
@@ -30,6 +30,7 @@ const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 export class ExecutionContext {
   _client: CDPSession;
   _world: DOMWorld;
+  private _injectedPromise: Promise<JSHandle> | null = null;
   private _contextId: number;
 
   constructor(client: CDPSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, world: DOMWorld | null) {
@@ -158,5 +159,11 @@ export class ExecutionContext {
       executionContextId: this._contextId,
     });
     return createJSHandle(this, object) as ElementHandle;
+  }
+
+  _injected(): Promise<JSHandle> {
+    if (!this._injectedPromise)
+      this._injectedPromise = this.evaluateHandle(injectedSource);
+    return this._injectedPromise;
   }
 }

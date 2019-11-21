@@ -24,8 +24,8 @@
     "doc": "node utils/doclint/cli.js",
     "coverage": "cross-env COVERAGE=true npm run unit",
     "tsc": "tsc -p .",
-    "build": "tsc -p .",
-    "watch": "tsc -w -p .",
+    "build": "npx webpack --config src/injected/webpack-injected.config.js --mode='production' && tsc -p .",
+    "watch": "npx webpack --config src/injected/webpack-injected.config.js --mode='development' --watch --silent | tsc -w -p .",
     "apply-next-version": "node utils/apply_next_version.js",
     "bundle": "npx browserify -r ./index.js:playwright -o utils/browser/playwright-web.js",
     "test-types": "node utils/doclint/generate_types && npx -p typescript@2.1 tsc -p utils/doclint/generate_types/test/",
@@ -62,7 +62,10 @@
     "pixelmatch": "^4.0.2",
     "pngjs": "^3.3.3",
     "text-diff": "^1.0.1",
-    "typescript": "3.6.3"
+    "ts-loader": "^6.1.2",
+    "typescript": "3.6.3",
+    "webpack": "^4.41.0",
+    "webpack-cli": "^3.3.9"
   },
   "browser": {
     "./lib/BrowserFetcher.js": false,
