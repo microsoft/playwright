@@ -439,6 +439,10 @@ export class Page extends EventEmitter {
     return this.mainFrame().hover(selector);
   }
 
+  fill(selector: string, value: string) {
+    return this.mainFrame().fill(selector, value);
+  }
+
   focus(selector: string) {
     return this.mainFrame().focus(selector);
   }
