@@ -20,11 +20,12 @@ import { EventEmitter } from 'events';
 import { Events } from './events';
 import { assert, helper } from '../helper';
 import { BrowserContext } from './BrowserContext';
-import { Connection, ConnectionEvents } from './Connection';
+import { Connection, ConnectionEvents, CDPSession } from './Connection';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import { Protocol } from './protocol';
+import { Chromium } from './features/chromium';
 
 export class Browser extends EventEmitter {
   private _ignoreHTTPSErrors: boolean;
@@ -32,10 +33,12 @@ export class Browser extends EventEmitter {
   private _process: childProcess.ChildProcess;
   private _screenshotTaskQueue = new TaskQueue();
   private _connection: Connection;
+  private _client: CDPSession;
   private _closeCallback: () => Promise<void>;
   private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
+  readonly chromium: Chromium;
 
   static async create(
     connection: Connection,
@@ -44,33 +47,37 @@ export class Browser extends EventEmitter {
     defaultViewport: Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
-    const browser = new Browser(connection, contextIds, ignoreHTTPSErrors, defaultViewport, process, closeCallback);
-    await connection.send('Target.setDiscoverTargets', {discover: true});
+    const session = await connection.createBrowserSession();
+    const browser = new Browser(connection, session, contextIds, ignoreHTTPSErrors, defaultViewport, process, closeCallback);
+    await session.send('Target.setDiscoverTargets', {discover: true});
     return browser;
   }
 
   constructor(
     connection: Connection,
+    client: CDPSession,
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
     defaultViewport: Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     super();
+    this._connection = connection;
+    this._client = client;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._defaultViewport = defaultViewport;
     this._process = process;
-    this._connection = connection;
     this._closeCallback = closeCallback || (() => Promise.resolve());
+    this.chromium = new Chromium(this._client);
 
-    this._defaultContext = new BrowserContext(this._connection, this, null);
+    this._defaultContext = new BrowserContext(this._client, this, null);
     for (const contextId of contextIds)
-      this._contexts.set(contextId, new BrowserContext(this._connection, this, contextId));
+      this._contexts.set(contextId, new BrowserContext(this._client, this, contextId));
 
     this._connection.on(ConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
-    this._connection.on('Target.targetCreated', this._targetCreated.bind(this));
-    this._connection.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
-    this._connection.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
+    this._client.on('Target.targetCreated', this._targetCreated.bind(this));
+    this._client.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
+    this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
   }
 
   process(): childProcess.ChildProcess | null {
@@ -78,8 +85,8 @@ export class Browser extends EventEmitter {
   }
 
   async createIncognitoBrowserContext(): Promise<BrowserContext> {
-    const {browserContextId} = await this._connection.send('Target.createBrowserContext');
-    const context = new BrowserContext(this._connection, this, browserContextId);
+    const {browserContextId} = await this._client.send('Target.createBrowserContext');
+    const context = new BrowserContext(this._client, this, browserContextId);
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -93,7 +100,7 @@ export class Browser extends EventEmitter {
   }
 
   async _disposeContext(contextId: string | null) {
-    await this._connection.send('Target.disposeBrowserContext', {browserContextId: contextId || undefined});
+    await this._client.send('Target.disposeBrowserContext', {browserContextId: contextId || undefined});
     this._contexts.delete(contextId);
   }
 

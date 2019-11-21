@@ -85,20 +85,20 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.evaluate(() => window.registrationPromise.then(registration => registration.unregister()));
       expect(await destroyedTarget).toBe(await createdTarget);
     });
-    it.skip(FFOX || WEBKIT)('should create a worker from a service worker', async({page, server, context}) => {
+    it.skip(FFOX || WEBKIT)('should create a worker from a service worker', async({browser, page, server, context}) => {
       await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
 
       const target = await context.waitForTarget(target => target.type() === 'service_worker');
-      const worker = await target.worker();
+      const worker = await browser.chromium.serviceWorker(target);
       expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
     });
-    it.skip(FFOX || WEBKIT)('should create a worker from a shared worker', async({page, server, context}) => {
+    it.skip(FFOX || WEBKIT)('should create a worker from a shared worker', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         new SharedWorker('data:text/javascript,console.log("hi")');
       });
       const target = await context.waitForTarget(target => target.type() === 'shared_worker');
-      const worker = await target.worker();
+      const worker = await browser.chromium.serviceWorker(target);
       expect(await worker.evaluate(() => self.toString())).toBe('[object SharedWorkerGlobalScope]');
     });
     it.skip(WEBKIT)('should report when a target url changes', async({page, server, context}) => {

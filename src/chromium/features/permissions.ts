@@ -16,14 +16,14 @@
  */
 
 import { Protocol } from '../protocol';
-import { Connection } from './../Connection';
+import { CDPSession } from './../Connection';
 
 export class Permissions {
-  private _client: Connection;
+  private _client: CDPSession;
   private _browserContextId: string;
 
-  constructor(connection: Connection, browserContextId: string | null) {
-    this._client = connection;
+  constructor(client: CDPSession, browserContextId: string | null) {
+    this._client = client;
     this._browserContextId = browserContextId;
   }
 

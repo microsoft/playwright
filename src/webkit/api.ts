@@ -11,3 +11,5 @@ export { ElementHandle, JSHandle } from './JSHandle';
 export { Request, Response } from './NetworkManager';
 export { ConsoleMessage, Page } from './Page';
 export { Playwright } from './Playwright';
+export { Target } from './Target';
+

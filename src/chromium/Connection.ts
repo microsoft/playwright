@@ -140,6 +140,13 @@ export class Connection extends EventEmitter {
     const {sessionId} = await this.send('Target.attachToTarget', {targetId: targetInfo.targetId, flatten: true});
     return this._sessions.get(sessionId);
   }
+
+  async createBrowserSession(): Promise<CDPSession> {
+    const { sessionId } = await this.send('Target.attachToBrowserTarget');
+    const session = new CDPSession(this, 'browser', sessionId);
+    this._sessions.set(sessionId, session);
+    return session;
+  }
 }
 
 export const CDPSessionEvents = {
