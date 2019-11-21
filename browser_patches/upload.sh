@@ -6,9 +6,12 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit] [zip-path]"
+  echo "usage: $(basename $0) [firefox|webkit] [--check] [zip-path]"
   echo
   echo "Upload .zip as a browser build."
+  echo
+  echo "--check      pass |--check| as a second parameter instead of a zip-path to check for"
+  echo "             the build existing in the CDN"
   echo
   echo "NOTE: \$AZ_ACCOUNT_KEY (azure account name) and \$AZ_ACCOUNT_NAME (azure account name)"
   echo "env variables are required to upload builds to CDN."
@@ -60,6 +63,16 @@ else
   exit 1
 fi
 
+BLOB_PATH="$BROWSER_NAME/$BUILD_NUMBER/$BLOB_NAME"
+if [[ $2 == '--check' ]]; then
+  EXISTS=$(az storage blob exists -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -n "$BLOB_PATH" --query "exists")
+  if [[ $EXISTS == "true" ]]; then
+    exit 0
+  else
+    exit 1
+  fi
+fi
+
 if [[ $# < 2 ]]; then
   echo "missing path to zip archive to upload"
   echo "try '$(basename $0) --help' for more information"
@@ -75,7 +88,6 @@ if ! [[ $ZIP_PATH == *.zip ]]; then
   exit 1
 fi
 
-BLOB_PATH="$BROWSER_NAME/$BUILD_NUMBER/$BLOB_NAME"
 az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $ZIP_PATH -n "$BLOB_PATH"
 
 echo "UPLOAD SUCCESSFUL!"
