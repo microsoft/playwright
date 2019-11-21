@@ -243,6 +243,42 @@ export class ElementHandle extends JSHandle {
     }, values);
   }
 
+  async fill(value: string): Promise<void> {
+    assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
+    const error = await this.evaluate((element: HTMLElement) => {
+      if (element.nodeType !== Node.ELEMENT_NODE)
+        return 'Node is not of type HTMLElement';
+      if (element.nodeName.toLowerCase() === 'input') {
+        const input = element as HTMLInputElement;
+        const type = input.getAttribute('type') || '';
+        const kTextInputTypes = new Set(['', 'password', 'search', 'tel', 'text', 'url']);
+        if (!kTextInputTypes.has(type.toLowerCase()))
+          return 'Cannot fill input of type "' + type + '".';
+        input.selectionStart = 0;
+        input.selectionEnd = input.value.length;
+      } else if (element.nodeName.toLowerCase() === 'textarea') {
+        const textarea = element as HTMLTextAreaElement;
+        textarea.selectionStart = 0;
+        textarea.selectionEnd = textarea.value.length;
+      } else if (element.isContentEditable) {
+        if (!element.ownerDocument || !element.ownerDocument.defaultView)
+          return 'Element does not belong to a window';
+        const range = element.ownerDocument.createRange();
+        range.selectNodeContents(element);
+        const selection = element.ownerDocument.defaultView.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } else {
+        return 'Element is not an <input>, <textarea> or [contenteditable] element.';
+      }
+      return false;
+    });
+    if (error)
+      throw new Error(error);
+    await this.focus();
+    await this._page.keyboard.sendCharacter(value);
+  }
+
   async focus() {
     await this.evaluate(element => element.focus());
   }

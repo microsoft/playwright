@@ -526,6 +526,13 @@ export class Frame {
     await handle.dispose();
   }
 
+  async fill(selector: string, value: string) {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.fill(value);
+    await handle.dispose();
+  }
+
   async focus(selector: string) {
     const handle = await this.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
