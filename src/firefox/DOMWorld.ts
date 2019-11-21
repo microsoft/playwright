@@ -259,13 +259,6 @@ export class DOMWorld {
     }, values) as Promise<string[]>;
   }
 
-  async tap(selector: string) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.tap();
-    await handle.dispose();
-  }
-
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
     const handle = await this.$(selector);
     assert(handle, 'No node found for selector: ' + selector);

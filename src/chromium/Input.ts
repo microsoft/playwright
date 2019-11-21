@@ -303,35 +303,3 @@ export class Mouse {
     });
   }
 }
-
-export class Touchscreen {
-  private _client: CDPSession;
-  private _keyboard: Keyboard;
-
-  constructor(client: CDPSession, keyboard: Keyboard) {
-    this._client = client;
-    this._keyboard = keyboard;
-  }
-
-  async tap(x: number, y: number) {
-    // Touches appear to be lost during the first frame after navigation.
-    // This waits a frame before sending the tap.
-    // @see https://crbug.com/613219
-    await this._client.send('Runtime.evaluate', {
-      expression: 'new Promise(x => requestAnimationFrame(() => requestAnimationFrame(x)))',
-      awaitPromise: true
-    });
-
-    const touchPoints = [{x: Math.round(x), y: Math.round(y)}];
-    await this._client.send('Input.dispatchTouchEvent', {
-      type: 'touchStart',
-      touchPoints,
-      modifiers: this._keyboard._modifiers
-    });
-    await this._client.send('Input.dispatchTouchEvent', {
-      type: 'touchEnd',
-      touchPoints: [],
-      modifiers: this._keyboard._modifiers
-    });
-  }
-}

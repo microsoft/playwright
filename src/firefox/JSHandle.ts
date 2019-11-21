@@ -274,12 +274,6 @@ export class ElementHandle extends JSHandle {
     await this._frame._page.mouse.click(x, y, options);
   }
 
-  async tap() {
-    await this._scrollIntoViewIfNeeded();
-    const {x, y} = await this._clickablePoint();
-    await this._frame._page.touchscreen.tap(x, y);
-  }
-
   async uploadFile(...filePaths: Array<string>) {
     const files = filePaths.map(filePath => path.resolve(filePath));
     await this._session.send('Page.setFileInputFiles', {

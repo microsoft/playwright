@@ -136,10 +136,8 @@
   * [page.setRequestInterception(value)](#pagesetrequestinterceptionvalue)
   * [page.setUserAgent(userAgent)](#pagesetuseragentuseragent)
   * [page.setViewport(viewport)](#pagesetviewportviewport)
-  * [page.tap(selector[, options])](#pagetapselector-options)
   * [page.target()](#pagetarget)
   * [page.title()](#pagetitle)
-  * [page.touchscreen](#pagetouchscreen)
   * [page.tracing](#pagetracing)
   * [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
   * [page.type(selector, text[, options])](#pagetypeselector-text-options)
@@ -180,8 +178,6 @@
   * [mouse.up([options])](#mouseupoptions)
 - [class: PDF](#class-pdf)
   * [pdf.generate([options])](#pdfgenerateoptions)
-- [class: Touchscreen](#class-touchscreen)
-  * [touchscreen.tap(x, y)](#touchscreentapx-y)
 - [class: Tracing](#class-tracing)
   * [tracing.start([options])](#tracingstartoptions)
   * [tracing.stop()](#tracingstop)
@@ -224,7 +220,6 @@
   * [frame.parentFrame()](#frameparentframe)
   * [frame.select(selector, ...values)](#frameselectselector-values)
   * [frame.setContent(html[, options])](#framesetcontenthtml-options)
-  * [frame.tap(selector[, options])](#frametapselector-options)
   * [frame.title()](#frametitle)
   * [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
   * [frame.type(selector, text[, options])](#frametypeselector-text-options)
@@ -272,7 +267,6 @@
   * [elementHandle.press(key[, options])](#elementhandlepresskey-options)
   * [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
   * [elementHandle.select(...values)](#elementhandleselectvalues)
-  * [elementHandle.tap([options])](#elementhandletapoptions)
   * [elementHandle.toString()](#elementhandletostring)
   * [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
   * [elementHandle.type(text[, options])](#elementhandletypetext-options)
@@ -1829,20 +1823,6 @@ await page.setViewport({
 await page.goto('https://example.com');
 ```
 
-#### page.tap(selector[, options])
-- `selector` <[string]> A [selector] to search for element to tap. If there are multiple elements satisfying the selector, the first will be tapped.
-- `options` <[Object]>
-  - `relativePoint` <[Object]> A point to tap relative to the top-left corner of element padding box. If not specified, taps some visible point of the element.
-    - x <[number]>
-    - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the tap, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-- returns: <[Promise]>
-
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.touchscreen](#pagetouchscreen) to tap in the center of the element.
-If there's no element matching `selector`, the method throws an error.
-
-Shortcut for [page.mainFrame().tap(selector)](#frametapselector).
-
 #### page.target()
 - returns: <[Target]> a target this page was created from.
 
@@ -1850,9 +1830,6 @@ Shortcut for [page.mainFrame().tap(selector)](#frametapselector).
 - returns: <[Promise]<[string]>> The page's title.
 
 Shortcut for [page.mainFrame().title()](#frametitle).
-
-#### page.touchscreen
-- returns: <[Touchscreen]>
 
 #### page.tracing
 - returns: <[Tracing]>
@@ -2489,15 +2466,6 @@ The `format` options are:
 > 2. Page styles are not visible inside templates.
 
 
-### class: Touchscreen
-
-#### touchscreen.tap(x, y)
-- `x` <[number]>
-- `y` <[number]>
-- returns: <[Promise]>
-
-Dispatches a `touchstart` and `touchend` event.
-
 ### class: Tracing
 
 You can use [`tracing.start`](#tracingstartoptions) and [`tracing.stop`](#tracingstop) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
@@ -2921,18 +2889,6 @@ frame.select('select#colors', 'red', 'green', 'blue'); // multiple selections
     - `networkidle0` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
     - `networkidle2` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]>
-
-#### frame.tap(selector[, options])
-- `selector` <[string]> A [selector] to search for element to tap. If there are multiple elements satisfying the selector, the first will be tapped.
-- `options` <[Object]>
-  - `relativePoint` <[Object]> A point to tap relative to the top-left corner of element padding box. If not specified, taps some visible point of the element.
-    - x <[number]>
-    - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the tap, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-- returns: <[Promise]>
-
-This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.touchscreen](#pagetouchscreen) to tap in the center of the element.
-If there's no element matching `selector`, the method throws an error.
 
 #### frame.title()
 - returns: <[Promise]<[string]>> The page's title.
@@ -3527,17 +3483,6 @@ handle.select('blue'); // single selection
 handle.select('red', 'green', 'blue'); // multiple selections
 ```
 
-#### elementHandle.tap([options])
-- `options` <[Object]>
-  - `relativePoint` <[Object]> A point to tap relative to the top-left corner of element padding box. If not specified, taps some visible point of the element.
-    - x <[number]>
-    - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the tap, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-- returns: <[Promise]> Promise which resolves when the element is successfully tapped. Promise gets rejected if the element is detached from DOM.
-
-This method scrolls element into view if needed, and then uses [touchscreen.tap](#touchscreentapx-y) to tap in the center of the element.
-If the element is detached from DOM, the method throws an error.
-
 #### elementHandle.toString()
 - returns: <[string]>
 
@@ -3972,7 +3917,6 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [Target]: #class-target "Target"
 [TimeoutError]: #class-timeouterror "TimeoutError"
-[Touchscreen]: #class-touchscreen "Touchscreen"
 [Tracing]: #class-tracing "Tracing"
 [UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
 [USKeyboardLayout]: ../lib/USKeyboardLayout.js "USKeyboardLayout"

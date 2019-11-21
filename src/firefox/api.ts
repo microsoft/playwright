@@ -9,7 +9,7 @@ export { ExecutionContext } from './ExecutionContext';
 export { Accessibility } from './features/accessibility';
 export { Permissions } from './features/permissions';
 export { Frame } from './FrameManager';
-export { Keyboard, Mouse, Touchscreen } from './Input';
+export { Keyboard, Mouse } from './Input';
 export { ElementHandle, JSHandle } from './JSHandle';
 export { Request, Response } from './NetworkManager';
 export { ConsoleMessage, Page } from './Page';

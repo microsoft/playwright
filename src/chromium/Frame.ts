@@ -168,10 +168,6 @@ export class Frame {
     return this._secondaryWorld.select(selector, ...values);
   }
 
-  async tap(selector: string, options?: PointerActionOptions) {
-    return this._secondaryWorld.tap(selector, options);
-  }
-
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
     return this._mainWorld.type(selector, text, options);
   }
