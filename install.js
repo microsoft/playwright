@@ -18,6 +18,7 @@
 if (require('./package.json').name === 'playwright-core')
   return;
 
+const browserSkips = {Chromium: false, Firefox: false, WebKit: false};
 for (const browser of ['Chromium', 'Firefox', 'WebKit']) {
   const templates = [
     `PLAYWRIGHT_SKIP_${browser}_DOWNLOAD`,
@@ -28,7 +29,8 @@ for (const browser of ['Chromium', 'Firefox', 'WebKit']) {
   for (const varName of varNames) {
     if (process.env[varName.toUpperCase()]) {
       logPolitely(`**INFO** Skipping ${browser} download. "${varName}" environment variable was found.`);
-      return;
+      browserSkips[browser] = true;
+      break;
     }
   }
 }
@@ -47,14 +49,18 @@ if (require('fs').existsSync(require('path').join(__dirname, 'src'))) {
 
 (async function() {
   const {generateWebKitProtocol, generateChromeProtocol} = require('./utils/protocol-types-generator/') ;
+  if (!browserSkips.Chromium) {
+    const chromeRevision = await downloadBrowser('chromium', require('./chromium').createBrowserFetcher({host: downloadHost}));
+    await generateChromeProtocol(chromeRevision);
+  }
 
-  const chromeRevision = await downloadBrowser('chromium', require('./chromium').createBrowserFetcher({host: downloadHost}));
-  await generateChromeProtocol(chromeRevision);
+  if (!browserSkips.Firefox)
+    await downloadBrowser('firefox', require('./firefox').createBrowserFetcher({host: downloadHost}));
 
-  await downloadBrowser('firefox', require('./firefox').createBrowserFetcher({host: downloadHost}));
-
-  const webkitRevision = await downloadBrowser('webkit', require('./webkit').createBrowserFetcher({host: downloadHost}));
-  await generateWebKitProtocol(webkitRevision);
+  if (!browserSkips.WebKit) {
+    const webkitRevision = await downloadBrowser('webkit', require('./webkit').createBrowserFetcher({host: downloadHost}));
+    await generateWebKitProtocol(webkitRevision);
+  }
 })();
 function getRevision(browser) {
   if (browser === 'chromium')

@@ -23,7 +23,8 @@ type KeyDefinition = {
   code?: string
   text?: string
   shiftText?: string
-  location ?: number
+  location ?: number,
+  windowsVirtualKeyCode?: number;
 }
 
 export const keyDefinitions: { [s: string]: KeyDefinition; } = {
@@ -48,12 +49,12 @@ export const keyDefinitions: { [s: string]: KeyDefinition; } = {
   'Enter': {'keyCode': 13, 'code': 'Enter', 'key': 'Enter', 'text': '\r'},
   '\r': {'keyCode': 13, 'code': 'Enter', 'key': 'Enter', 'text': '\r'},
   '\n': {'keyCode': 13, 'code': 'Enter', 'key': 'Enter', 'text': '\r'},
-  'ShiftLeft': {'keyCode': 16, 'code': 'ShiftLeft', 'key': 'Shift', 'location': 1},
-  'ShiftRight': {'keyCode': 16, 'code': 'ShiftRight', 'key': 'Shift', 'location': 2},
-  'ControlLeft': {'keyCode': 17, 'code': 'ControlLeft', 'key': 'Control', 'location': 1},
-  'ControlRight': {'keyCode': 17, 'code': 'ControlRight', 'key': 'Control', 'location': 2},
-  'AltLeft': {'keyCode': 18, 'code': 'AltLeft', 'key': 'Alt', 'location': 1},
-  'AltRight': {'keyCode': 18, 'code': 'AltRight', 'key': 'Alt', 'location': 2},
+  'ShiftLeft': {'keyCode': 16, 'code': 'ShiftLeft', 'key': 'Shift', 'location': 1, 'windowsVirtualKeyCode': 160},
+  'ShiftRight': {'keyCode': 16, 'code': 'ShiftRight', 'key': 'Shift', 'location': 2, 'windowsVirtualKeyCode': 161},
+  'ControlLeft': {'keyCode': 17, 'code': 'ControlLeft', 'key': 'Control', 'location': 1, 'windowsVirtualKeyCode': 162},
+  'ControlRight': {'keyCode': 17, 'code': 'ControlRight', 'key': 'Control', 'location': 2, 'windowsVirtualKeyCode': 163},
+  'AltLeft': {'keyCode': 18, 'code': 'AltLeft', 'key': 'Alt', 'location': 1, 'windowsVirtualKeyCode': 164},
+  'AltRight': {'keyCode': 18, 'code': 'AltRight', 'key': 'Alt', 'location': 2, 'windowsVirtualKeyCode': 165},
   'Pause': {'keyCode': 19, 'code': 'Pause', 'key': 'Pause'},
   'CapsLock': {'keyCode': 20, 'code': 'CapsLock', 'key': 'CapsLock'},
   'Escape': {'keyCode': 27, 'code': 'Escape', 'key': 'Escape'},
@@ -175,9 +176,9 @@ export const keyDefinitions: { [s: string]: KeyDefinition; } = {
   'Props': {'keyCode': 247, 'code': 'Props', 'key': 'CrSel'},
   'Cancel': {'keyCode': 3, 'key': 'Cancel', 'code': 'Abort'},
   'Clear': {'keyCode': 12, 'key': 'Clear', 'code': 'Numpad5', 'location': 3},
-  'Shift': {'keyCode': 16, 'key': 'Shift', 'code': 'ShiftLeft', 'location': 1},
-  'Control': {'keyCode': 17, 'key': 'Control', 'code': 'ControlLeft', 'location': 1},
-  'Alt': {'keyCode': 18, 'key': 'Alt', 'code': 'AltLeft', 'location': 1},
+  'Shift': {'keyCode': 16, 'key': 'Shift', 'code': 'ShiftLeft', 'location': 1, 'windowsVirtualKeyCode': 160},
+  'Control': {'keyCode': 17, 'key': 'Control', 'code': 'ControlLeft', 'location': 1, 'windowsVirtualKeyCode': 162},
+  'Alt': {'keyCode': 18, 'key': 'Alt', 'code': 'AltLeft', 'location': 1, 'windowsVirtualKeyCode': 164},
   'Accept': {'keyCode': 30, 'key': 'Accept'},
   'ModeChange': {'keyCode': 31, 'key': 'ModeChange'},
   ' ': {'keyCode': 32, 'key': ' ', 'code': 'Space'},
