@@ -40,8 +40,8 @@ END=$'\e[0m'
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
-FFOX_REVISION=$(cat firefox/BUILD_NUMBER)
-WK_REVISION=$(cat webkit/BUILD_NUMBER)
+FFOX_REVISION=$(cat ../firefox/BUILD_NUMBER)
+WK_REVISION=$(cat ../webkit/BUILD_NUMBER)
 REVISION=$FFOX_REVISION
 if (( FFOX_REVISION < WK_REVISION )); then
   REVISION=$WK_REVISION
