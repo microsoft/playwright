@@ -16,7 +16,7 @@ export { Permissions } from './features/permissions';
 export { Tracing } from './features/tracing';
 export { Worker, Workers } from './features/workers';
 export { Frame } from './Frame';
-export { Keyboard, Mouse, Touchscreen } from './Input';
+export { Keyboard, Mouse } from './Input';
 export { ElementHandle, JSHandle } from './JSHandle';
 export { Request, Response } from './NetworkManager';
 export { ConsoleMessage, FileChooser, Page } from './Page';

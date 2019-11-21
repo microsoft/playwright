@@ -379,10 +379,6 @@ export class ElementHandle extends JSHandle {
     await this._client.send('DOM.setFileInputFiles', { objectId, files });
   }
 
-  tap(options?: PointerActionOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.touchscreen.tap(point.x, point.y), options);
-  }
-
   async focus() {
     await this.evaluate(element => element.focus());
   }

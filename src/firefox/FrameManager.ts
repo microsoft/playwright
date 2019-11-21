@@ -252,10 +252,6 @@ export class Frame {
     return this._mainWorld.click(selector, options);
   }
 
-  async tap(selector: string) {
-    return this._mainWorld.tap(selector);
-  }
-
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
     return this._mainWorld.type(selector, text, options);
   }

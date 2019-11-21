@@ -134,7 +134,7 @@ export class Keyboard {
       key: description.key,
       windowsVirtualKeyCode: description.keyCode,
       code: description.code,
-      isKeypad: description.location === 3
+      isKeypad: description.isKeypad
     });
   }
 

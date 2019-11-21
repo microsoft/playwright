@@ -257,36 +257,3 @@ export class Mouse {
     });
   }
 }
-
-export class Touchscreen {
-  _client: JugglerSession;
-  _keyboard: Keyboard;
-  _mouse: Mouse;
-  constructor(client: JugglerSession, keyboard: Keyboard, mouse: Mouse) {
-    this._client = client;
-    this._keyboard = keyboard;
-    this._mouse = mouse;
-  }
-
-  async tap(x: number, y: number) {
-    const touchPoints = [{x: Math.round(x), y: Math.round(y)}];
-    let {defaultPrevented} = (await this._client.send('Page.dispatchTouchEvent', {
-      type: 'touchStart',
-      touchPoints,
-      modifiers: this._keyboard._modifiers
-    }));
-    defaultPrevented = (await this._client.send('Page.dispatchTouchEvent', {
-      type: 'touchEnd',
-      touchPoints,
-      modifiers: this._keyboard._modifiers
-    })).defaultPrevented || defaultPrevented;
-    // Do not dispatch related mouse events if either of touch events
-    // were prevented.
-    // See https://developer.mozilla.org/en-US/docs/Web/API/Touch_events/Supporting_both_TouchEvent_and_MouseEvent#Event_order
-    if (defaultPrevented)
-      return;
-    await this._mouse.move(x, y);
-    await this._mouse.down();
-    await this._mouse.up();
-  }
-}

@@ -1,21 +1,20 @@
-import { JSHandle, ElementHandle } from './JSHandle';
-
-import {RegisteredListener, helper, debugError, assert} from '../helper';
-import {Keyboard, Mouse, Touchscreen} from './Input';
-import {Dialog} from './Dialog';
-import {TimeoutError} from '../Errors';
+import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
-import {EventEmitter} from 'events';
-import {createHandle} from './JSHandle';
-import {Connection, JugglerSession, JugglerSessionEvents} from './Connection';
-import {FrameManager, normalizeWaitUntil, FrameManagerEvents} from './FrameManager';
-import {NetworkManager, Request, Response, NetworkManagerEvents} from './NetworkManager';
-import {TimeoutSettings} from '../TimeoutSettings';
-import {NavigationWatchdog} from './NavigationWatchdog';
-import {Accessibility} from './features/accessibility';
-import { Target, BrowserContext } from './Browser';
+import { TimeoutError } from '../Errors';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { TimeoutSettings } from '../TimeoutSettings';
+import { BrowserContext, Target } from './Browser';
+import { Connection, JugglerSession, JugglerSessionEvents } from './Connection';
+import { Dialog } from './Dialog';
 import { Events } from './events';
+import { Accessibility } from './features/accessibility';
+import { FrameManager, FrameManagerEvents, normalizeWaitUntil } from './FrameManager';
+import { Keyboard, Mouse } from './Input';
+import { createHandle, ElementHandle, JSHandle } from './JSHandle';
+import { NavigationWatchdog } from './NavigationWatchdog';
+import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
+
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -25,7 +24,6 @@ export class Page extends EventEmitter {
   private _target: Target;
   private _keyboard: Keyboard;
   private _mouse: Mouse;
-  private _touchscreen: Touchscreen;
   readonly accessibility: Accessibility;
   private _closed: boolean;
   private _pageBindings: Map<string, Function>;
@@ -34,7 +32,7 @@ export class Page extends EventEmitter {
   private _eventListeners: RegisteredListener[];
   private _viewport: Viewport;
   private _disconnectPromise: Promise<Error>;
-  emulateMedia: (type: string) => Promise<void>;
+
   static async create(session, target: Target, defaultViewport: Viewport | null) {
     const page = new Page(session, target);
     await Promise.all([
@@ -55,7 +53,6 @@ export class Page extends EventEmitter {
     this._target = target;
     this._keyboard = new Keyboard(session);
     this._mouse = new Mouse(session, this._keyboard);
-    this._touchscreen = new Touchscreen(session, this._keyboard, this._mouse);
     this.accessibility = new Accessibility(session);
     this._closed = false;
     this._pageBindings = new Map();
@@ -146,6 +143,10 @@ export class Page extends EventEmitter {
 
   async setExtraHTTPHeaders(headers) {
     await this._networkManager.setExtraHTTPHeaders(headers);
+  }
+
+  async emulateMedia(type: string): Promise<void> {
+    await this.emulateMediaType(type);
   }
 
   async emulateMediaType(type: string | null) {
@@ -342,10 +343,6 @@ export class Page extends EventEmitter {
     return this._mouse;
   }
 
-  get touchscreen(){
-    return this._touchscreen;
-  }
-
   async waitForNavigation(options: { timeout?: number; waitUntil?: string | Array<string>; } = {}) {
     return this._frameManager.mainFrame().waitForNavigation(options);
   }
@@ -482,10 +479,6 @@ export class Page extends EventEmitter {
     return await this._frameManager.mainFrame().click(selector, options);
   }
 
-  tap(selector: string) {
-    return this.mainFrame().tap(selector);
-  }
-
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
     return await this._frameManager.mainFrame().type(selector, text, options);
   }
@@ -572,9 +565,6 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 }
-
-// Expose alias for deprecated method.
-Page.prototype.emulateMedia = Page.prototype.emulateMediaType;
 
 export class ConsoleMessage {
   private _type: string;

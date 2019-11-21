@@ -32,7 +32,7 @@ import { EmulationManager } from './EmulationManager';
 import { PDF } from './features/pdf';
 import { Frame } from './Frame';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
-import { Keyboard, Mouse, Touchscreen } from './Input';
+import { Keyboard, Mouse } from './Input';
 import { ClickOptions, createJSHandle, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions } from './JSHandle';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
@@ -61,7 +61,6 @@ export class Page extends EventEmitter {
   private _keyboard: Keyboard;
   private _mouse: Mouse;
   private _timeoutSettings: TimeoutSettings;
-  private _touchscreen: Touchscreen;
   private _frameManager: FrameManager;
   private _emulationManager: EmulationManager;
   readonly accessibility: Accessibility;
@@ -93,7 +92,6 @@ export class Page extends EventEmitter {
     this._keyboard = new Keyboard(client);
     this._mouse = new Mouse(client, this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
-    this._touchscreen = new Touchscreen(client, this._keyboard);
     this.accessibility = new Accessibility(client);
     this._frameManager = new FrameManager(client, this, ignoreHTTPSErrors, this._timeoutSettings);
     this._emulationManager = new EmulationManager(client);
@@ -209,10 +207,6 @@ export class Page extends EventEmitter {
 
   get keyboard(): Keyboard {
     return this._keyboard;
-  }
-
-  get touchscreen(): Touchscreen {
-    return this._touchscreen;
   }
 
   frames(): Frame[] {
@@ -727,10 +721,6 @@ export class Page extends EventEmitter {
 
   select(selector: string, ...values: string[]): Promise<string[]> {
     return this.mainFrame().select(selector, ...values);
-  }
-
-  tap(selector: string, options?: PointerActionOptions) {
-    return this.mainFrame().tap(selector, options);
   }
 
   type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
