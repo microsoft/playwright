@@ -334,7 +334,7 @@ export class Request {
     };
   }
 
-  async continue(overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
+  async _continue(overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
     // Request interception is not supported for data: urls.
     if (this._url.startsWith('data:'))
       return;
@@ -360,7 +360,7 @@ export class Request {
     });
   }
 
-  async respond(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
+  async _fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
     // Mocking responses for dataURL requests is not currently supported.
     if (this._url.startsWith('data:'))
       return;
@@ -393,7 +393,7 @@ export class Request {
     });
   }
 
-  async abort(errorCode: string = 'failed') {
+  async _abort(errorCode: string = 'failed') {
     // Request interception is not supported for data: urls.
     if (this._url.startsWith('data:'))
       return;

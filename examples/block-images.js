@@ -21,7 +21,7 @@ const playwright = require('playwright');
 (async() => {
   const browser = await playwright.launch();
   const page = await browser.newPage();
-  await page.setRequestInterception(true);
+  await page.interception.enable();
   page.on('request', request => {
     if (request.resourceType() === 'image')
       request.abort();

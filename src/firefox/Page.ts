@@ -9,6 +9,7 @@ import { Connection, JugglerSession, JugglerSessionEvents } from './Connection';
 import { Dialog } from './Dialog';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
+import { Interception } from './features/interception';
 import { FrameManager, FrameManagerEvents, normalizeWaitUntil } from './FrameManager';
 import { Keyboard, Mouse } from './Input';
 import { createHandle, ElementHandle, JSHandle } from './JSHandle';
@@ -25,6 +26,7 @@ export class Page extends EventEmitter {
   private _keyboard: Keyboard;
   private _mouse: Mouse;
   readonly accessibility: Accessibility;
+  readonly interception: Interception;
   private _closed: boolean;
   private _pageBindings: Map<string, Function>;
   private _networkManager: NetworkManager;
@@ -59,6 +61,7 @@ export class Page extends EventEmitter {
     this._networkManager = new NetworkManager(session);
     this._frameManager = new FrameManager(session, this, this._networkManager, this._timeoutSettings);
     this._networkManager.setFrameManager(this._frameManager);
+    this.interception = new Interception(this._networkManager);
     this._eventListeners = [
       helper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
       helper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
@@ -135,10 +138,6 @@ export class Page extends EventEmitter {
         cookies: items
       });
     }
-  }
-
-  async setRequestInterception(enabled) {
-    await this._networkManager.setRequestInterception(enabled);
   }
 
   async setExtraHTTPHeaders(headers) {

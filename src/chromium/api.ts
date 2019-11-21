@@ -11,6 +11,7 @@ export { ExecutionContext } from './ExecutionContext';
 export { Accessibility } from './features/accessibility';
 export { Coverage } from './features/coverage';
 export { Geolocation } from './features/geolocation';
+export { Interception } from './features/interception';
 export { PDF } from './features/pdf';
 export { Permissions } from './features/permissions';
 export { Tracing } from './features/tracing';
@@ -22,3 +23,4 @@ export { Request, Response } from './NetworkManager';
 export { ConsoleMessage, FileChooser, Page } from './Page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';
+

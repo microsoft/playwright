@@ -116,6 +116,7 @@
   * [page.goForward([options])](#pagegoforwardoptions)
   * [page.goto(url[, options])](#pagegotourl-options)
   * [page.hover(selector[, options])](#pagehoverselector-options)
+  * [page.interception](#pageinterception)
   * [page.isClosed()](#pageisclosed)
   * [page.keyboard](#pagekeyboard)
   * [page.mainFrame()](#pagemainframe)
@@ -133,7 +134,6 @@
   * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
   * [page.setJavaScriptEnabled(enabled)](#pagesetjavascriptenabledenabled)
   * [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
-  * [page.setRequestInterception(value)](#pagesetrequestinterceptionvalue)
   * [page.setUserAgent(userAgent)](#pagesetuseragentuseragent)
   * [page.setViewport(viewport)](#pagesetviewportviewport)
   * [page.target()](#pagetarget)
@@ -233,6 +233,12 @@
   * [executionContext.evaluate(pageFunction[, ...args])](#executioncontextevaluatepagefunction-args)
   * [executionContext.evaluateHandle(pageFunction[, ...args])](#executioncontextevaluatehandlepagefunction-args)
   * [executionContext.frame()](#executioncontextframe)
+- [class: Interception](#class-interception)
+  * [interception.abort(request, [errorCode])](#interceptionabortrequest-errorcode)
+  * [interception.continue(request, [overrides])](#interceptioncontinuerequest-overrides)
+  * [interception.disable()](#interceptiondisable)
+  * [interception.enable()](#interceptionenable)
+  * [interception.fulfill(request, response)](#interceptionfulfillrequest-response)
 - [class: JSHandle](#class-jshandle)
   * [jsHandle.asElement()](#jshandleaselement)
   * [jsHandle.dispose()](#jshandledispose)
@@ -272,8 +278,6 @@
   * [elementHandle.type(text[, options])](#elementhandletypetext-options)
   * [elementHandle.uploadFile(...filePaths)](#elementhandleuploadfilefilepaths)
 - [class: Request](#class-request)
-  * [request.abort([errorCode])](#requestaborterrorcode)
-  * [request.continue([overrides])](#requestcontinueoverrides)
   * [request.failure()](#requestfailure)
   * [request.frame()](#requestframe)
   * [request.headers()](#requestheaders)
@@ -282,7 +286,6 @@
   * [request.postData()](#requestpostdata)
   * [request.redirectChain()](#requestredirectchain)
   * [request.resourceType()](#requestresourcetype)
-  * [request.respond(response)](#requestrespondresponse)
   * [request.response()](#requestresponse)
   * [request.url()](#requesturl)
 - [class: Response](#class-response)
@@ -1035,7 +1038,7 @@ const [popup] = await Promise.all([
 - <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only.
-In order to intercept and mutate requests, see `page.setRequestInterception`.
+In order to intercept and mutate requests, see `page.interception.enable()`.
 
 #### event: 'requestfailed'
 - <[Request]>
@@ -1604,6 +1607,9 @@ If there's no element matching `selector`, the method throws an error.
 
 Shortcut for [page.mainFrame().hover(selector)](#framehoverselector).
 
+#### page.interception
+- returns: <[Interception]>
+
 #### page.isClosed()
 
 - returns: <[boolean]>
@@ -1762,36 +1768,6 @@ The extra HTTP headers will be sent with every request the page initiates.
 #### page.setOfflineMode(enabled)
 - `enabled` <[boolean]> When `true`, enables offline mode for the page.
 - returns: <[Promise]>
-
-#### page.setRequestInterception(value)
-- `value` <[boolean]> Whether to enable request interception.
-- returns: <[Promise]>
-
-Activating request interception enables `request.abort`, `request.continue` and
-`request.respond` methods.  This provides the capability to modify network requests that are made by a page.
-
-Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
-An example of a naïve request interceptor that aborts all image requests:
-
-```js
-const playwright = require('playwright');
-
-(async () => {
-  const browser = await playwright.launch();
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on('request', interceptedRequest => {
-    if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg'))
-      interceptedRequest.abort();
-    else
-      interceptedRequest.continue();
-  });
-  await page.goto('https://example.com');
-  await browser.close();
-})();
-```
-
-> **NOTE** Enabling request interception disables page caching.
 
 #### page.setUserAgent(userAgent)
 - `userAgent` <[string]> Specific user agent to use in this page
@@ -3150,6 +3126,115 @@ await resultHandle.dispose();
 
 > **NOTE** Not every execution context is associated with a frame. For example, workers and extensions have execution contexts that are not associated with frames.
 
+### class: Interception
+
+#### interception.abort(request, [errorCode])
+- `request` <[Request]>
+- `errorCode` <[string]> Optional error code. Defaults to `failed`, could be
+  one of the following:
+  - `aborted` - An operation was aborted (due to user action)
+  - `accessdenied` - Permission to access a resource, other than the network, was denied
+  - `addressunreachable` - The IP address is unreachable. This usually means
+    that there is no route to the specified host or network.
+  - `blockedbyclient` - The client chose to block the request.
+  - `blockedbyresponse` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+  - `connectionaborted` - A connection timed out as a result of not receiving an ACK for data sent.
+  - `connectionclosed` - A connection was closed (corresponding to a TCP FIN).
+  - `connectionfailed` - A connection attempt failed.
+  - `connectionrefused` - A connection attempt was refused.
+  - `connectionreset` - A connection was reset (corresponding to a TCP RST).
+  - `internetdisconnected` - The Internet connection has been lost.
+  - `namenotresolved` - The host name could not be resolved.
+  - `timedout` - An operation timed out.
+  - `failed` - A generic failure occurred.
+- returns: <[Promise]>
+
+Aborts request. To use this, request interception should be enabled with `page.interception.enable()`.
+Exception is immediately thrown if the request interception is not enabled.
+
+#### interception.continue(request, [overrides])
+- `request` <[Request]>
+- `overrides` <[Object]> Optional request overwrites, which can be one of the following:
+  - `url` <[string]> If set, the request url will be changed. This is not a redirect. The request will be silently forwarded to the new url. For example, the address bar will show the original url.
+  - `method` <[string]> If set changes the request method (e.g. `GET` or `POST`)
+  - `postData` <[string]> If set changes the post data of request
+  - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
+- returns: <[Promise]>
+
+Continues request with optional request overrides. To use this, request interception should be enabled with `page.interception.enable()`.
+Exception is immediately thrown if the request interception is not enabled.
+
+```js
+await page.interception.enable();
+page.on('request', request => {
+  // Override headers
+  const headers = Object.assign({}, request.headers(), {
+    foo: 'bar', // set "foo" header
+    origin: undefined, // remove "origin" header
+  });
+  page.interception.continue(request, {headers});
+});
+```
+
+#### interception.disable()
+
+Disables network request interception.
+
+#### interception.enable()
+
+Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
+An example of a naïve request interceptor that aborts all image requests:
+
+```js
+const playwright = require('playwright');
+
+(async () => {
+  const browser = await playwright.launch();
+  const page = await browser.newPage();
+  await page.interception.enable();
+  page.on('request', interceptedRequest => {
+    if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg'))
+      page.interception.abort(interceptedRequest);
+    else
+      page.interception.continue(interceptedRequest);
+  });
+  await page.goto('https://example.com');
+  await browser.close();
+})();
+```
+
+> **NOTE** Enabling request interception disables page caching.
+
+#### interception.fulfill(request, response)
+- `request` <[Request]>
+- `response` <[Object]> Response that will fulfill this request
+  - `status` <[number]> Response status code, defaults to `200`.
+  - `headers` <[Object]> Optional response headers. Header values will be converted to a string.
+  - `contentType` <[string]> If set, equals to setting `Content-Type` response header
+  - `body` <[string]|[Buffer]> Optional response body
+- returns: <[Promise]>
+
+Fulfills request with given response. To use this, request interception should
+be enabled with `page.interception.enable()`. Exception is thrown if
+request interception is not enabled.
+
+An example of fulfilling all requests with 404 responses:
+
+```js
+await page.interception.enable();
+page.on('request', request => {
+  page.interception.respond(request, {
+    status: 404,
+    contentType: 'text/plain',
+    body: 'Not Found!'
+  });
+});
+```
+
+> **NOTE** Mocking responses for dataURL requests is not supported.
+> Calling `request.respond` for a dataURL request is a noop.
+
+
 ### class: JSHandle
 
 JSHandle represents an in-page JavaScript object. JSHandles can be created with the [page.evaluateHandle](#pageevaluatehandlepagefunction-args) method.
@@ -3544,52 +3629,6 @@ If request fails at some point, then instead of `'requestfinished'` event (and p
 
 If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new request is  issued to a redirected url.
 
-#### request.abort([errorCode])
-- `errorCode` <[string]> Optional error code. Defaults to `failed`, could be
-  one of the following:
-  - `aborted` - An operation was aborted (due to user action)
-  - `accessdenied` - Permission to access a resource, other than the network, was denied
-  - `addressunreachable` - The IP address is unreachable. This usually means
-    that there is no route to the specified host or network.
-  - `blockedbyclient` - The client chose to block the request.
-  - `blockedbyresponse` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-  - `connectionaborted` - A connection timed out as a result of not receiving an ACK for data sent.
-  - `connectionclosed` - A connection was closed (corresponding to a TCP FIN).
-  - `connectionfailed` - A connection attempt failed.
-  - `connectionrefused` - A connection attempt was refused.
-  - `connectionreset` - A connection was reset (corresponding to a TCP RST).
-  - `internetdisconnected` - The Internet connection has been lost.
-  - `namenotresolved` - The host name could not be resolved.
-  - `timedout` - An operation timed out.
-  - `failed` - A generic failure occurred.
-- returns: <[Promise]>
-
-Aborts request. To use this, request interception should be enabled with `page.setRequestInterception`.
-Exception is immediately thrown if the request interception is not enabled.
-
-#### request.continue([overrides])
-- `overrides` <[Object]> Optional request overwrites, which can be one of the following:
-  - `url` <[string]> If set, the request url will be changed. This is not a redirect. The request will be silently forwarded to the new url. For example, the address bar will show the original url.
-  - `method` <[string]> If set changes the request method (e.g. `GET` or `POST`)
-  - `postData` <[string]> If set changes the post data of request
-  - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
-- returns: <[Promise]>
-
-Continues request with optional request overrides. To use this, request interception should be enabled with `page.setRequestInterception`.
-Exception is immediately thrown if the request interception is not enabled.
-
-```js
-await page.setRequestInterception(true);
-page.on('request', request => {
-  // Override headers
-  const headers = Object.assign({}, request.headers(), {
-    foo: 'bar', // set "foo" header
-    origin: undefined, // remove "origin" header
-  });
-  request.continue({headers});
-});
-```
-
 #### request.failure()
 - returns: <?[Object]> Object describing request failure, if any
   - `errorText` <[string]> Human-readable error message, e.g. `'net::ERR_FAILED'`.
@@ -3654,34 +3693,6 @@ console.log(chain.length); // 0
 
 Contains the request's resource type as it was perceived by the rendering engine.
 ResourceType will be one of the following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`, `eventsource`, `websocket`, `manifest`, `other`.
-
-#### request.respond(response)
-- `response` <[Object]> Response that will fulfill this request
-  - `status` <[number]> Response status code, defaults to `200`.
-  - `headers` <[Object]> Optional response headers. Header values will be converted to a string.
-  - `contentType` <[string]> If set, equals to setting `Content-Type` response header
-  - `body` <[string]|[Buffer]> Optional response body
-- returns: <[Promise]>
-
-Fulfills request with given response. To use this, request interception should
-be enabled with `page.setRequestInterception`. Exception is thrown if
-request interception is not enabled.
-
-An example of fulfilling all requests with 404 responses:
-
-```js
-await page.setRequestInterception(true);
-page.on('request', request => {
-  request.respond({
-    status: 404,
-    contentType: 'text/plain',
-    body: 'Not Found!'
-  });
-});
-```
-
-> **NOTE** Mocking responses for dataURL requests is not supported.
-> Calling `request.respond` for a dataURL request is a noop.
 
 #### request.response()
 - returns: <?[Response]> A matching [Response] object, or `null` if the response has not been received yet.
