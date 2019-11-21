@@ -1,6 +1,6 @@
 {
   "name": "playwright",
-  "version": "2.0.0-post",
+  "version": "0.9.0-post",
   "description": "A high-level API to control headless Chrome over the DevTools Protocol",
   "main": "index.js",
   "repository": "github:Microsoft/playwright",
