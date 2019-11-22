@@ -33,7 +33,7 @@ import { PDF } from './features/pdf';
 import { Frame } from './Frame';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { Keyboard, Mouse } from './Input';
-import { ClickOptions, createJSHandle, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions } from './JSHandle';
+import { ClickOptions, createJSHandle, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions, SelectOption } from './JSHandle';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
@@ -715,7 +715,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().hover(selector, options);
   }
 
-  select(selector: string, ...values: string[]): Promise<string[]> {
+  select(selector: string, ...values: (string | SelectOption)[]): Promise<string[]> {
     return this.mainFrame().select(selector, ...values);
   }
 

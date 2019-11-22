@@ -20,7 +20,7 @@ import { CDPSession } from './Connection';
 import { DOMWorld } from './DOMWorld';
 import { ExecutionContext } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
-import { ClickOptions, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions } from './JSHandle';
+import { ClickOptions, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions, SelectOption } from './JSHandle';
 import { Response } from './NetworkManager';
 import { Protocol } from './protocol';
 
@@ -164,7 +164,7 @@ export class Frame {
     return this._secondaryWorld.hover(selector, options);
   }
 
-  select(selector: string, ...values: string[]): Promise<string[]>{
+  select(selector: string, ...values: (string | SelectOption)[]): Promise<string[]>{
     return this._secondaryWorld.select(selector, ...values);
   }
 

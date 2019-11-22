@@ -1615,16 +1615,29 @@ Page is guaranteed to have a main frame which persists during navigations.
 > **NOTE** Screenshots take at least 1/6 second on OS X. See https://crbug.com/741689 for discussion.
 
 #### page.select(selector, ...values)
-- `selector` <[string]> A [selector] to query page for
-- `...values` <...[string]> Values of options to select. If the `<select>` has the `multiple` attribute, all values are considered, otherwise only the first one is taken into account.
+- `selector` <[string]> A [selector] to query page for.
+- `...values` <...[string]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+  - `value` <[string]> Matches by `option.value`.
+  - `label` <[string]> Matches by `option.label`.
+  - `id` <[string]> Matches by `option.id`.
+  - `index` <[number]> Matches by the index.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
 If there's no `<select>` element matching `selector`, the method throws an error.
 
 ```js
-page.select('select#colors', 'blue'); // single selection
-page.select('select#colors', 'red', 'green', 'blue'); // multiple selections
+// single selection matching the value
+page.select('select#colors', 'blue');
+
+// single selection matching both the value and the label
+page.select('select#colors', { value: 'blue', label: 'Blue' });
+
+// multiple selection
+page.select('select#colors', 'red', 'green', 'blue');
+
+// multiple selection for blue, red and second option
+page.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
 Shortcut for [page.mainFrame().select()](#frameselectselector-values)
@@ -2809,16 +2822,29 @@ If the name is empty, returns the id attribute instead.
 - returns: <?[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
 
 #### frame.select(selector, ...values)
-- `selector` <[string]> A [selector] to query frame for
-- `...values` <...[string]> Values of options to select. If the `<select>` has the `multiple` attribute, all values are considered, otherwise only the first one is taken into account.
+- `selector` <[string]> A [selector] to query frame for.
+- `...values` <...[string]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+  - `value` <[string]> Matches by `option.value`.
+  - `label` <[string]> Matches by `option.label`.
+  - `id` <[string]> Matches by `option.id`.
+  - `index` <[number]> Matches by the index.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
 If there's no `<select>` element matching `selector`, the method throws an error.
 
 ```js
-frame.select('select#colors', 'blue'); // single selection
-frame.select('select#colors', 'red', 'green', 'blue'); // multiple selections
+// single selection matching the value
+frame.select('select#colors', 'blue');
+
+// single selection matching both the value and the label
+frame.select('select#colors', { value: 'blue', label: 'Blue' });
+
+// multiple selection
+frame.select('select#colors', 'red', 'green', 'blue');
+
+// multiple selection matching blue, red and second option
+frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
 #### frame.setContent(html[, options])
@@ -3523,15 +3549,28 @@ This method scrolls element into view if needed, and then uses [page.screenshot]
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.select(...values)
-- `...values` <...[string]> Values of options to select. If the `<select>` has the `multiple` attribute, all values are considered, otherwise only the first one is taken into account.
+- `...values` <...[string]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+  - `value` <[string]> Matches by `option.value`.
+  - `label` <[string]> Matches by `option.label`.
+  - `id` <[string]> Matches by `option.id`.
+  - `index` <[number]> Matches by the index.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
 If element is not a `<select>` element, the method throws an error.
 
 ```js
-handle.select('blue'); // single selection
-handle.select('red', 'green', 'blue'); // multiple selections
+// single selection matching the value
+handle.select('blue');
+
+// single selection matching both the value and the label
+handle.select({ value: 'blue', label: 'Blue' });
+
+// multiple selection
+handle.select('red', 'green', 'blue');
+
+// multiple selection for blue, red and second option
+handle.select({ value: 'blue' }, { index: 2 }, 'red');
 ```
 
 #### elementHandle.toString()

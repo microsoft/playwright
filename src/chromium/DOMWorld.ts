@@ -21,7 +21,7 @@ import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './Frame';
 import { FrameManager } from './FrameManager';
 import { assert, helper } from '../helper';
-import { ElementHandle, JSHandle, ClickOptions, PointerActionOptions, MultiClickOptions } from './JSHandle';
+import { ElementHandle, JSHandle, ClickOptions, PointerActionOptions, MultiClickOptions, SelectOption } from './JSHandle';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { TimeoutSettings } from '../TimeoutSettings';
 const readFileAsync = helper.promisify(fs.readFile);
@@ -322,7 +322,7 @@ export class DOMWorld {
     await handle.dispose();
   }
 
-  async select(selector: string, ...values: string[]): Promise<string[]> {
+  async select(selector: string, ...values: (string | SelectOption)[]): Promise<string[]> {
     const handle = await this.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     const result = await handle.select(...values);

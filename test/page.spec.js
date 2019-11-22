@@ -890,6 +890,41 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
       expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
     });
+    it('should select single option by value', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/select.html');
+      await page.select('select', { value: 'blue' });
+      expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
+      expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
+    });
+    it('should select single option by label', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/select.html');
+      await page.select('select', { label: 'Indigo' });
+      expect(await page.evaluate(() => result.onInput)).toEqual(['indigo']);
+      expect(await page.evaluate(() => result.onChange)).toEqual(['indigo']);
+    });
+    it('should select single option by id', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/select.html');
+      await page.select('select', { id: 'whiteOption' });
+      expect(await page.evaluate(() => result.onInput)).toEqual(['white']);
+      expect(await page.evaluate(() => result.onChange)).toEqual(['white']);
+    });
+    it('should select single option by index', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/select.html');
+      await page.select('select', { index: 2 });
+      expect(await page.evaluate(() => result.onInput)).toEqual(['brown']);
+      expect(await page.evaluate(() => result.onChange)).toEqual(['brown']);
+    });
+    it('should select single option by multiple attributes', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/select.html');
+      await page.select('select', { value: 'green', label: 'Green' });
+      expect(await page.evaluate(() => result.onInput)).toEqual(['green']);
+      expect(await page.evaluate(() => result.onChange)).toEqual(['green']);
+    });
+    it('should not select single option when some attributes do not match', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/select.html');
+      await page.select('select', { value: 'green', label: 'Brown' });
+      expect(await page.evaluate(() => document.querySelector('select').value)).toEqual('');
+    });
     it('should select only first option', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.select('select', 'blue', 'green', 'red');
@@ -911,6 +946,13 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.select('select', 'blue', 'green', 'red');
       expect(await page.evaluate(() => result.onInput)).toEqual(['blue', 'green', 'red']);
       expect(await page.evaluate(() => result.onChange)).toEqual(['blue', 'green', 'red']);
+    });
+    it('should select multiple options with attributes', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/select.html');
+      await page.evaluate(() => makeMultiple());
+      await page.select('select', 'blue', { label: 'Green' }, { index: 4 });
+      expect(await page.evaluate(() => result.onInput)).toEqual(['blue', 'gray', 'green']);
+      expect(await page.evaluate(() => result.onChange)).toEqual(['blue', 'gray', 'green']);
     });
     it('should respect event bubbling', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
@@ -958,15 +1000,49 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.select('select');
       expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
     });
-    it('should throw if passed in non-strings', async({page, server}) => {
+    it('should throw if passed wrong types', async({page, server}) => {
+      let error;
       await page.setContent('<select><option value="12"/></select>');
-      let error = null;
+
+      error = null;
       try {
         await page.select('select', 12);
       } catch (e) {
         error = e;
       }
       expect(error.message).toContain('Values must be strings');
+
+      error = null;
+      try {
+        await page.select('select', { value: 12 });
+      } catch (e) {
+        error = e;
+      }
+      expect(error.message).toContain('Values must be strings');
+
+      error = null;
+      try {
+        await page.select('select', { label: 12 });
+      } catch (e) {
+        error = e;
+      }
+      expect(error.message).toContain('Labels must be strings');
+
+      error = null;
+      try {
+        await page.select('select', { id: 12 });
+      } catch (e) {
+        error = e;
+      }
+      expect(error.message).toContain('Ids must be strings');
+
+      error = null;
+      try {
+        await page.select('select', { index: '12' });
+      } catch (e) {
+        error = e;
+      }
+      expect(error.message).toContain('Indices must be numbers');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3327
     it.skip(FFOX || WEBKIT)('should work when re-defining top-level Event class', async({page, server}) => {
