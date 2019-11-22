@@ -43,29 +43,22 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(WEBKIT)('Browser.target', function() {
-    it('should return browser target', async({browser}) => {
-      const target = browser.target();
-      expect(target.type()).toBe('browser');
-    });
-  });
-
   describe('Browser.process', function() {
     it('should return child_process instance', async function({browser}) {
       const process = await browser.process();
       expect(process.pid).toBeGreaterThan(0);
     });
-    it.skip(WEBKIT)('should not return child_process for remote browser', async function({browser}) {
-      const browserWSEndpoint = browser.wsEndpoint();
+    it.skip(WEBKIT || FFOX)('should not return child_process for remote browser', async function({browser}) {
+      const browserWSEndpoint = browser.chromium.wsEndpoint();
       const remoteBrowser = await playwright.connect({browserWSEndpoint});
       expect(remoteBrowser.process()).toBe(null);
       remoteBrowser.disconnect();
     });
   });
 
-  describe.skip(WEBKIT)('Browser.isConnected', () => {
+  describe.skip(WEBKIT || FFOX)('Browser.isConnected', () => {
     it('should set the browser connected state', async({browser}) => {
-      const browserWSEndpoint = browser.wsEndpoint();
+      const browserWSEndpoint = browser.chromium.wsEndpoint();
       const newBrowser = await playwright.connect({browserWSEndpoint});
       expect(newBrowser.isConnected()).toBe(true);
       newBrowser.disconnect();

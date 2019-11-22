@@ -91,7 +91,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('span');
       expect(await page.evaluate(() => window.CLICKED)).toBe(42);
     });
-    it.skip(FFOX || WEBKIT)('should select the text by triple clicking', async({page, server}) => {
+    it('should select the text by triple clicking', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
       const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
@@ -185,7 +185,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('#button-80');
       expect(await page.evaluate(() => document.querySelector('#button-80').textContent)).toBe('clicked');
     });
-    it.skip(FFOX || WEBKIT)('should double click the button', async({page, server}) => {
+    it('should double click the button', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.evaluate(() => {
         window.double = false;

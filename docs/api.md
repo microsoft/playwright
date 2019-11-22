@@ -587,7 +587,7 @@ const playwright = require('playwright');
 (async () => {
   const browser = await playwright.launch();
   // Store the endpoint to be able to reconnect to Chromium
-  const browserWSEndpoint = browser.wsEndpoint();
+  const browserWSEndpoint = browser.chromium.wsEndpoint();
   // Disconnect playwright from Chromium
   browser.disconnect();
 

@@ -261,7 +261,7 @@ export class Launcher {
 
     assert(Number(!!browserWSEndpoint) + Number(!!browserURL) + Number(!!transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
 
-    let connection = null;
+    let connection: Connection = null;
     if (transport) {
       connection = new Connection('', transport, slowMo);
     } else if (browserWSEndpoint) {
@@ -274,7 +274,9 @@ export class Launcher {
     }
 
     const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
-    return Browser.create(connection, browserContextIds, ignoreHTTPSErrors, defaultViewport, null, () => connection.send('Browser.close').catch(debugError));
+    return Browser.create(connection, browserContextIds, ignoreHTTPSErrors, defaultViewport, null, async () => {
+      connection.rootSession.send('Browser.close').catch(debugError);
+    });
   }
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {

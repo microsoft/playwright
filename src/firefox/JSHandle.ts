@@ -1,17 +1,37 @@
-import {assert, debugError} from '../helper';
+/**
+ * Copyright 2019 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {assert, debugError, helper} from '../helper';
 import * as path from 'path';
 import {ExecutionContext} from './ExecutionContext';
 import {Frame} from './FrameManager';
+import { JugglerSession } from './Connection';
+import { MultiClickOptions, ClickOptions, selectFunction, SelectOption } from '../input';
 
 export class JSHandle {
   _context: ExecutionContext;
-  _session: any;
-  _executionContextId: any;
-  _objectId: any;
-  _type: any;
-  _subtype: any;
+  protected _session: JugglerSession;
+  private _executionContextId: string;
+  protected _objectId: string;
+  private _type: string;
+  private _subtype: string;
   _disposed: boolean;
   _protocolValue: { unserializableValue: any; value: any; objectId: any; };
+
   constructor(context: ExecutionContext, payload: any) {
     this._context = context;
     this._session = this._context._session;
@@ -29,6 +49,14 @@ export class JSHandle {
 
   executionContext(): ExecutionContext {
     return this._context;
+  }
+
+  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<(any)> {
+    return await this.executionContext().evaluate(pageFunction, this, ...args);
+  }
+
+  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
+    return await this.executionContext().evaluateHandle(pageFunction, this, ...args);
   }
 
   toString(): string {
@@ -268,10 +296,22 @@ export class ElementHandle extends JSHandle {
       throw new Error(error);
   }
 
-  async click(options: { delay?: number; button?: string; clickCount?: number; } | undefined) {
+  async click(options?: ClickOptions) {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
     await this._frame._page.mouse.click(x, y, options);
+  }
+  
+  async dblclick(options?: MultiClickOptions): Promise<void> {
+    await this._scrollIntoViewIfNeeded();
+    const {x, y} = await this._clickablePoint();
+    await this._frame._page.mouse.dblclick(x, y, options);
+  }
+
+  async tripleclick(options?: MultiClickOptions): Promise<void> {
+    await this._scrollIntoViewIfNeeded();
+    const {x, y} = await this._clickablePoint();
+    await this._frame._page.mouse.tripleclick(x, y, options);
   }
 
   async uploadFile(...filePaths: Array<string>) {
@@ -303,6 +343,20 @@ export class ElementHandle extends JSHandle {
     await this._frame._page.keyboard.press(key, options);
   }
 
+  async select(...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+    const options = values.map(value => typeof value === 'object' ? value : { value });
+    for (const option of options) {
+      if (option instanceof ElementHandle)
+        continue;
+      if (option.value !== undefined)
+        assert(helper.isString(option.value), 'Values must be strings. Found value "' + option.value + '" of type "' + (typeof option.value) + '"');
+      if (option.label !== undefined)
+        assert(helper.isString(option.label), 'Labels must be strings. Found label "' + option.label + '" of type "' + (typeof option.label) + '"');
+      if (option.index !== undefined)
+        assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
+    }
+    return this.evaluate(selectFunction, ...options);
+  }
 
   async _clickablePoint(): Promise<{ x: number; y: number; }> {
     const result = await this._session.send('Page.getContentQuads', {

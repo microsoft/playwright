@@ -145,7 +145,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const context = await browser.createIncognitoBrowserContext();
       expect(browser.browserContexts().length).toBe(2);
       const remoteBrowser = await playwright.connect({
-        browserWSEndpoint: browser.wsEndpoint()
+        browserWSEndpoint: browser.chromium.wsEndpoint()
       });
       const contexts = remoteBrowser.browserContexts();
       expect(contexts.length).toBe(2);

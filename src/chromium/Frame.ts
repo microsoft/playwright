@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import { helper } from '../helper';
+import { helper, assert } from '../helper';
+import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
 import { CDPSession } from './Connection';
 import { DOMWorld } from './DOMWorld';
 import { ExecutionContext } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
-import { ClickOptions, ElementHandle, JSHandle, MultiClickOptions, PointerActionOptions, SelectOption } from './JSHandle';
+import { ElementHandle, JSHandle } from './JSHandle';
 import { Response } from './NetworkManager';
 import { Protocol } from './protocol';
 
@@ -141,37 +142,62 @@ export class Frame {
   }
 
   async click(selector: string, options?: ClickOptions) {
-    return this._secondaryWorld.click(selector, options);
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.click(options);
+    await handle.dispose();
   }
 
   async dblclick(selector: string, options?: MultiClickOptions) {
-    return this._secondaryWorld.dblclick(selector, options);
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.dblclick(options);
+    await handle.dispose();
   }
 
   async tripleclick(selector: string, options?: MultiClickOptions) {
-    return this._secondaryWorld.tripleclick(selector, options);
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.tripleclick(options);
+    await handle.dispose();
   }
 
   async fill(selector: string, value: string) {
-    return this._secondaryWorld.fill(selector, value);
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.fill(value);
+    await handle.dispose();
   }
 
   async focus(selector: string) {
-    return this._secondaryWorld.focus(selector);
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.focus();
+    await handle.dispose();
   }
 
   async hover(selector: string, options?: PointerActionOptions) {
-    return this._secondaryWorld.hover(selector, options);
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.hover(options);
+    await handle.dispose();
   }
 
-  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]>{
+  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
     const secondaryExecutionContext = await this._secondaryWorld.executionContext();
-    const adoptedValues = values.map(async value => value instanceof ElementHandle ? secondaryExecutionContext._adoptElementHandle(value) : value);
-    return this._secondaryWorld.select(selector, ...(await Promise.all(adoptedValues)));
+    const adoptedValues = await Promise.all(values.map(async value => value instanceof ElementHandle ? secondaryExecutionContext._adoptElementHandle(value) : value));
+    const result = await handle.select(...adoptedValues);
+    await handle.dispose();
+    return result;
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    return this._mainWorld.type(selector, text, options);
+    const handle = await this._secondaryWorld.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.type(text, options);
+    await handle.dispose();
   }
 
   waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<JSHandle | null> {

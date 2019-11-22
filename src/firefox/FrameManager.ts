@@ -8,6 +8,9 @@ import {ExecutionContext} from './ExecutionContext';
 import {NavigationWatchdog, NextNavigationWatchdog} from './NavigationWatchdog';
 import {DOMWorld} from './DOMWorld';
 import { JSHandle, ElementHandle } from './JSHandle';
+import { TimeoutSettings } from '../TimeoutSettings';
+import { NetworkManager } from './NetworkManager';
+import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -21,7 +24,7 @@ export class FrameManager extends EventEmitter {
   _page: Page;
   _networkManager: any;
   _timeoutSettings: any;
-  _mainFrame: any;
+  _mainFrame: Frame;
   _frames: Map<string, Frame>;
   _contextIdToContext: Map<string, ExecutionContext>;
   _eventListeners: RegisteredListener[];
@@ -71,7 +74,7 @@ export class FrameManager extends EventEmitter {
     return this._frames.get(frameId);
   }
 
-  mainFrame() {
+  mainFrame(): Frame {
     return this._mainFrame;
   }
 
@@ -139,18 +142,19 @@ export class FrameManager extends EventEmitter {
 export class Frame {
   _parentFrame: Frame|null = null;
   private _session: JugglerSession;
-  _page: any;
+  _page: Page;
   _frameManager: FrameManager;
-  private _networkManager: any;
-  private _timeoutSettings: any;
+  private _networkManager: NetworkManager;
+  private _timeoutSettings: TimeoutSettings;
   _frameId: string;
   _url: string = '';
   private _name: string = '';
   _children: Set<Frame>;
   private _detached: boolean;
   _firedEvents: Set<string>;
-  _mainWorld: any;
-  _lastCommittedNavigationId: any;
+  _mainWorld: DOMWorld;
+  _lastCommittedNavigationId: string;
+
   constructor(session: JugglerSession, frameManager : FrameManager, networkManager, page: Page, frameId: string, timeoutSettings) {
     this._session = session;
     this._page = page;
@@ -248,20 +252,54 @@ export class Frame {
     return watchDog.navigationResponse();
   }
 
-  async click(selector: string, options: { delay?: number; button?: string; clickCount?: number; } | undefined = {}) {
-    return this._mainWorld.click(selector, options);
+  async click(selector: string, options?: ClickOptions) {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.click(options);
+    await handle.dispose();
+  }
+
+  async dblclick(selector: string, options?: MultiClickOptions) {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.dblclick(options);
+    await handle.dispose();
+  }
+
+  async tripleclick(selector: string, options?: MultiClickOptions) {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.tripleclick(options);
+    await handle.dispose();
+  }
+
+  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    const result = await handle.select(...values);
+    await handle.dispose();
+    return result;
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    return this._mainWorld.type(selector, text, options);
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.type(text, options);
+    await handle.dispose();
   }
 
   async focus(selector: string) {
-    return this._mainWorld.focus(selector);
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.focus();
+    await handle.dispose();
   }
 
   async hover(selector: string) {
-    return this._mainWorld.hover(selector);
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.hover();
+    await handle.dispose();
   }
 
   _detach() {
@@ -276,10 +314,6 @@ export class Frame {
     this._name = name;
     this._lastCommittedNavigationId = navigationId;
     this._firedEvents.clear();
-  }
-
-  select(selector: string, ...values: Array<string>): Promise<Array<string>> {
-    return this._mainWorld.select(selector, ...values);
   }
 
   waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { polling?: string | number; timeout?: number; visible?: boolean; hidden?: boolean; } | undefined, ...args: Array<any>): Promise<JSHandle> {

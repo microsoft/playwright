@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { CDPSession } from './Connection';
 import { assert } from '../helper';
+import { Modifier, Button } from '../input';
 import { keyDefinitions } from '../USKeyboardLayout';
+import { CDPSession } from './Connection';
 
 type KeyDescription = {
   keyCode: number,
@@ -27,10 +28,7 @@ type KeyDescription = {
   location: number,
 };
 
-export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 const kModifiers: Modifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
-
-export type Button = 'left' | 'right' | 'middle';
 
 export class Keyboard {
   private _client: CDPSession;

@@ -10,12 +10,12 @@ export class Interception {
     this._networkManager = networkManager;
   }
 
-  enable() {
-    this._networkManager.setRequestInterception(true);
+  async enable() {
+    await this._networkManager.setRequestInterception(true);
   }
 
-  disable() {
-    this._networkManager.setRequestInterception(false);
+  async disable() {
+    await this._networkManager.setRequestInterception(false);
   }
 
   async continue(request: Request, overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {

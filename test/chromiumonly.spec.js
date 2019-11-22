@@ -45,7 +45,7 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
         const browserURL = 'http://127.0.0.1:21222';
 
         let error = null;
-        await playwright.connect({browserURL, browserWSEndpoint: originalBrowser.wsEndpoint()}).catch(e => error = e);
+        await playwright.connect({browserURL, browserWSEndpoint: originalBrowser.chromium.wsEndpoint()}).catch(e => error = e);
         expect(error.message).toContain('Exactly one of browserWSEndpoint, browserURL or transport');
 
         originalBrowser.close();
@@ -68,7 +68,7 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
         expect((await browser.pages()).length).toBe(1);
-        expect(browser.wsEndpoint()).toBe('');
+        expect(browser.chromium.wsEndpoint()).toBe('');
         const page = await browser.newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
@@ -78,7 +78,7 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = ['--remote-debugging-pipe'].concat(options.args || []);
         const browser = await playwright.launch(options);
-        expect(browser.wsEndpoint()).toBe('');
+        expect(browser.chromium.wsEndpoint()).toBe('');
         const page = await browser.newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
@@ -100,7 +100,7 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
         const originalBrowser = await playwright.launch(defaultBrowserOptions);
         await originalBrowser.pages();
         // 2. Connect a remote browser and connect to first page.
-        const remoteBrowser = await playwright.connect({browserWSEndpoint: originalBrowser.wsEndpoint()});
+        const remoteBrowser = await playwright.connect({browserWSEndpoint: originalBrowser.chromium.wsEndpoint()});
         const [page] = await remoteBrowser.pages();
         // 3. Make sure |page.waitForFileChooser()| does not work with multiclient.
         let error = null;
