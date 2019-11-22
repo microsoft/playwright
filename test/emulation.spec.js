@@ -15,10 +15,10 @@
  */
 
 module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
+  let {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
-
+  describe = fdescribe;
   const iPhone = playwright.devices['iPhone 6'];
   const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 
@@ -97,53 +97,47 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe('Page.emulateMedia', function() {
-    it.skip(WEBKIT)('should be an alias for Page.emulateMediaType', async({page, server}) => {
-      expect(page.emulateMedia).toEqual(page.emulateMediaType);
-    });
-  });
-
-  describe.skip(WEBKIT)('Page.emulateMediaType', function() {
+  describe.skip(WEBKIT)('Page.emulateMedia type', function() {
     it('should work', async({page, server}) => {
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
-      await page.emulateMediaType('print');
+      await page.emulateMedia({ type: 'print' });
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
-      await page.emulateMediaType(null);
+      await page.emulateMedia({});
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
     });
-    it('should throw in case of bad argument', async({page, server}) => {
+    it('should throw in case of bad type argument', async({page, server}) => {
       let error = null;
-      await page.emulateMediaType('bad').catch(e => error = e);
+      await page.emulateMedia({ type: 'bad' }).catch(e => error = e);
       expect(error.message).toBe('Unsupported media type: bad');
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Page.emulateMediaFeatures', function() {
+  describe.skip(FFOX || WEBKIT)('Page.emulateMedia features', function() {
     it('should work', async({page, server}) => {
-      await page.emulateMediaFeatures([
+      await page.emulateMedia({ features: [
         { name: 'prefers-reduced-motion', value: 'reduce' },
-      ]);
+      ] });
       expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);
-      await page.emulateMediaFeatures([
+      await page.emulateMedia({ features: [
         { name: 'prefers-color-scheme', value: 'light' },
-      ]);
+      ] });
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
-      await page.emulateMediaFeatures([
+      await page.emulateMedia({ features: [
         { name: 'prefers-color-scheme', value: 'dark' },
-      ]);
+      ] });
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
-      await page.emulateMediaFeatures([
+      await page.emulateMedia({ features: [
         { name: 'prefers-reduced-motion', value: 'reduce' },
         { name: 'prefers-color-scheme', value: 'light' },
-      ]);
+      ] });
       expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
@@ -152,7 +146,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should throw in case of bad argument', async({page, server}) => {
       let error = null;
-      await page.emulateMediaFeatures([{ name: 'bad', value: '' }]).catch(e => error = e);
+      await page.emulateMedia({ features: [{ name: 'bad', value: '' }] }).catch(e => error = e);
       expect(error.message).toBe('Unsupported media feature: bad');
     });
   });

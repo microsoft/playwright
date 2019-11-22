@@ -323,13 +323,10 @@ export class Page extends EventEmitter {
     ]);
   }
 
-  async emulateMedia(type: string | null) {
-    return this.emulateMediaType(type);
-  }
-
-  async emulateMediaType(type: string | null) {
-    assert(type === 'screen' || type === 'print' || type === null, 'Unsupported media type: ' + type);
-    await this._session.send('Page.setEmulatedMedia', {media: type || ''});
+  async emulateMedia(options: { type?: string, features?: MediaFeature[] }) {
+    assert(!options.features, 'Media feature emulation is not supported');
+    assert(options.type === 'screen' || options.type === 'print' || options.type === undefined, 'Unsupported media type: ' + options.type);
+    await this._session.send('Page.setEmulatedMedia', { media: options.type });
   }
 
   async setViewport(viewport: Viewport) {
@@ -554,4 +551,9 @@ export class ConsoleMessage {
   location(): object {
     return this._location;
   }
+}
+
+type MediaFeature = {
+  name: string,
+  value: string
 }

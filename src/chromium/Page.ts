@@ -532,26 +532,15 @@ export class Page extends EventEmitter {
     await this._client.send('Page.setBypassCSP', { enabled });
   }
 
-  async emulateMedia(type: string | null) {
-    return this.emulateMediaType(type);
-  }
-
-  async emulateMediaType(type: string | null) {
-    assert(type === 'screen' || type === 'print' || type === null, 'Unsupported media type: ' + type);
-    await this._client.send('Emulation.setEmulatedMedia', {media: type || ''});
-  }
-
-  async emulateMediaFeatures(features: MediaFeature[] | null) {
-    if (features === null)
-      await this._client.send('Emulation.setEmulatedMedia', {features: null});
-    if (Array.isArray(features)) {
-      features.every(mediaFeature => {
+  async emulateMedia(options: { type?: string, features?: MediaFeature[] }) {
+    assert(options.type === 'screen' || options.type === 'print' || options.type === undefined, 'Unsupported media type: ' + options.type);
+    if (options.features) {
+      options.features.forEach(mediaFeature => {
         const name = mediaFeature.name;
         assert(/^prefers-(?:color-scheme|reduced-motion)$/.test(name), 'Unsupported media feature: ' + name);
-        return true;
       });
-      await this._client.send('Emulation.setEmulatedMedia', {features: features});
     }
+    await this._client.send('Emulation.setEmulatedMedia', { media: options.type, features: options.features });
   }
 
   async emulateTimezone(timezoneId: string | null) {
