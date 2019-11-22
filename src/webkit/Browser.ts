@@ -180,9 +180,17 @@ export class Browser extends EventEmitter {
     newTarget._pagePromise = oldTarget._pagePromise;
   }
 
-  _onTargetChanged(target) {
+  _onTargetChanged(target: Target) {
     this.emit(Events.BrowserContext.TargetChanged, target);
     target.browserContext().emit(Events.BrowserContext.TargetChanged, target);
+  }
+
+  disconnect() {
+    throw new Error('Unsupported operation');
+  }
+
+  isConnected(): boolean {
+    return true;
   }
 
   async close() {

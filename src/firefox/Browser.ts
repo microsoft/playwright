@@ -39,7 +39,6 @@ export class Browser extends EventEmitter {
     return browser;
   }
 
-
   constructor(connection: Connection, browserContextIds: Array<string>, defaultViewport: Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
     super();
     this._connection = connection;
@@ -63,14 +62,9 @@ export class Browser extends EventEmitter {
     ];
   }
 
-  wsEndpoint() {
-    return this._connection.url();
-  }
-
   disconnect() {
     this._connection.dispose();
   }
-
 
   isConnected(): boolean {
     return !this._connection._closed;
@@ -82,7 +76,6 @@ export class Browser extends EventEmitter {
     this._contexts.set(browserContextId, context);
     return context;
   }
-
 
   browserContexts(): Array<BrowserContext> {
     return [this._defaultContext, ...Array.from(this._contexts.values())];
@@ -97,23 +90,19 @@ export class Browser extends EventEmitter {
     this._contexts.delete(browserContextId);
   }
 
-
   async userAgent(): Promise<string> {
     const info = await this._connection.send('Browser.getInfo');
     return info.userAgent;
   }
-
 
   async version(): Promise<string> {
     const info = await this._connection.send('Browser.getInfo');
     return info.version;
   }
 
-
   process(): import('child_process').ChildProcess | null {
     return this._process;
   }
-
 
   async waitForTarget(predicate: (target: Target) => boolean, options: { timeout?: number; } = {}): Promise<Target> {
     const {
@@ -141,11 +130,9 @@ export class Browser extends EventEmitter {
     }
   }
 
-
   newPage(): Promise<Page> {
     return this._createPageInContext(this._defaultContext._browserContextId);
   }
-
 
   async _createPageInContext(browserContextId: string | null): Promise<Page> {
     const {targetId} = await this._connection.send('Target.newPage', {
@@ -162,10 +149,6 @@ export class Browser extends EventEmitter {
 
   targets() {
     return Array.from(this._targets.values());
-  }
-
-  target() {
-    return this.targets().find(target => target.type() === 'browser');
   }
 
   async _onTargetCreated({targetId, url, browserContextId, openerId, type}) {
@@ -200,7 +183,7 @@ export class Browser extends EventEmitter {
 
   async close() {
     helper.removeEventListeners(this._eventListeners);
-    await this._closeCallback();
+    this._closeCallback();
   }
 }
 

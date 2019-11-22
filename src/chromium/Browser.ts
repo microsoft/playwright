@@ -68,7 +68,7 @@ export class Browser extends EventEmitter {
     this._defaultViewport = defaultViewport;
     this._process = process;
     this._closeCallback = closeCallback || (() => Promise.resolve());
-    this.chromium = new Chromium(this._client);
+    this.chromium = new Chromium(this._connection, this._client);
 
     this._defaultContext = new BrowserContext(this._client, this, null);
     for (const contextId of contextIds)
@@ -142,10 +142,6 @@ export class Browser extends EventEmitter {
     }
   }
 
-  wsEndpoint(): string {
-    return this._connection.url();
-  }
-
   async newPage(): Promise<Page> {
     return this._defaultContext.newPage();
   }
@@ -160,10 +156,6 @@ export class Browser extends EventEmitter {
 
   targets(): Target[] {
     return Array.from(this._targets.values()).filter(target => target._isInitialized);
-  }
-
-  target(): Target {
-    return this.targets().find(target => target.type() === 'browser');
   }
 
   async waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {

@@ -34,6 +34,7 @@ export const Events = {
     TargetCreated: 'targetcreated',
     TargetDestroyed: 'targetdestroyed',
     TargetChanged: 'targetchanged',
+    Disconnected: 'disconnected'
   },
 
   BrowserContext: {

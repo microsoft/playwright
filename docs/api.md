@@ -41,12 +41,10 @@
   * [browser.newPage()](#browsernewpage)
   * [browser.pages()](#browserpages)
   * [browser.process()](#browserprocess)
-  * [browser.target()](#browsertarget)
   * [browser.targets()](#browsertargets)
   * [browser.userAgent()](#browseruseragent)
   * [browser.version()](#browserversion)
   * [browser.waitForTarget(predicate[, options])](#browserwaitfortargetpredicate-options)
-  * [browser.wsEndpoint()](#browserwsendpoint)
 - [class: BrowserContext](#class-browsercontext)
   * [event: 'targetchanged'](#event-targetchanged-1)
   * [event: 'targetcreated'](#event-targetcreated-1)
@@ -177,10 +175,12 @@
 - [class: PDF](#class-pdf)
   * [pdf.generate([options])](#pdfgenerateoptions)
 - [class: Chromium](#class-chromium)
+  * [chromium.createBrowserCDPSession()](#chromiumcreatebrowsercdpsession)
   * [chromium.createCDPSession(target)](#chromiumcreatecdpsessiontarget)
   * [chromium.serviceWorker(target)](#chromiumserviceworkertarget)
   * [chromium.startTracing(page, [options])](#chromiumstarttracingpage-options)
   * [chromium.stopTracing()](#chromiumstoptracing)
+  * [chromium.wsEndpoint()](#chromiumwsendpoint)
 - [class: FileChooser](#class-filechooser)
   * [fileChooser.accept(filePaths)](#filechooseracceptfilepaths)
   * [fileChooser.cancel()](#filechoosercancel)
@@ -686,11 +686,6 @@ the method will return an array with all the pages in all browser contexts.
 #### browser.process()
 - returns: <?[ChildProcess]> Spawned browser process. Returns `null` if the browser instance was created with [`playwright.connect`](#playwrightconnectoptions) method.
 
-#### browser.target()
-- returns: <[Target]>
-
-A target associated with the browser.
-
 #### browser.targets()
 - returns: <[Array]<[Target]>>
 
@@ -720,14 +715,6 @@ An example of finding a target for a page opened via `window.open`:
 await page.evaluate(() => window.open('https://www.example.com/'));
 const newWindowTarget = await browser.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
-
-#### browser.wsEndpoint()
-- returns: <[string]> Browser websocket url.
-
-Browser websocket endpoint which can be used as an argument to
-[playwright.connect](#playwrightconnectoptions). The format is `ws://${host}:${port}/devtools/browser/<id>`
-
-You can find the `webSocketDebuggerUrl` from `http://${host}:${port}/json/version`. Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
 
 ### class: BrowserContext
 
@@ -2418,6 +2405,11 @@ await page.goto('https://www.google.com');
 await page.chromium.stopTracing();
 ```
 
+#### chromium.createBrowserCDPSession()
+- returns: <[Promise]<[CDPSession]>>
+
+Creates a Chrome Devtools Protocol session attached to the browser.
+
 #### chromium.createCDPSession(target)
 - `target` <[Target]> Target to return CDP connection for.
 - returns: <[Promise]<[CDPSession]>>
@@ -2442,6 +2434,14 @@ Only one trace can be active at a time per browser.
 
 #### chromium.stopTracing()
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
+
+#### chromium.wsEndpoint()
+- returns: <[string]> Browser websocket url.
+
+Browser websocket endpoint which can be used as an argument to
+[playwright.connect](#playwrightconnectoptions). The format is `ws://${host}:${port}/devtools/browser/<id>`
+
+You can find the `webSocketDebuggerUrl` from `http://${host}:${port}/json/version`. Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
 
 ### class: FileChooser
 
