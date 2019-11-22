@@ -14,7 +14,7 @@ package-lock.json
 yarn.lock
 /node6
 /src/chromium/protocol.d.ts
-/src/injected/injectedSource.ts
+/src/generated/*
 /src/webkit/protocol.d.ts
 /utils/browser/playwright-web.js
 /index.d.ts

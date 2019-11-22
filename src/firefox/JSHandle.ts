@@ -21,6 +21,7 @@ import {ExecutionContext} from './ExecutionContext';
 import {Frame} from './FrameManager';
 import { JugglerSession } from './Connection';
 import { MultiClickOptions, ClickOptions, selectFunction, SelectOption } from '../input';
+import Injected from '../injected/injected';
 
 export class JSHandle {
   _context: ExecutionContext;
@@ -202,8 +203,10 @@ export class ElementHandle extends JSHandle {
 
   async $(selector: string): Promise<ElementHandle | null> {
     const handle = await this._frame.evaluateHandle(
-        (element, selector) => element.querySelector(selector),
-        this, selector
+      (element, selector, injected: Injected) => {
+        return injected.querySelector('css=' + selector, element);
+      },
+      this, selector, await this._context._injected()
     );
     const element = handle.asElement();
     if (element)
@@ -301,7 +304,7 @@ export class ElementHandle extends JSHandle {
     const {x, y} = await this._clickablePoint();
     await this._frame._page.mouse.click(x, y, options);
   }
-  
+
   async dblclick(options?: MultiClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();

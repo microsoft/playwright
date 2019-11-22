@@ -1,19 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-const fs = require('fs');
 const path = require('path');
-
-class InlineInjectedSource {
-  apply(compiler) {
-    compiler.hooks.emit.tapAsync('InlineInjectedSource', (compilation, callback) => {
-      const source = compilation.assets['injectedSource.js'].source();
-      const newSource = 'export const injectedSource = ' + JSON.stringify(source) + ';';
-      fs.writeFileSync(path.join(__dirname, 'injectedSource.ts'), newSource);
-      callback();
-    });
-  }
-}
+const InlineSource = require('./webpack-inline-source-plugin.js');
 
 module.exports = {
   entry: path.join(__dirname, 'injected.ts'),
@@ -35,9 +24,9 @@ module.exports = {
   },
   output: {
     filename: 'injectedSource.js',
-    path: path.resolve(__dirname, '../../lib/injected')
+    path: path.resolve(__dirname, '../../lib/injected/packed')
   },
   plugins: [
-    new InlineInjectedSource(),
+    new InlineSource(path.join(__dirname, '..', 'generated', 'injectedSource.ts')),
   ]
 };

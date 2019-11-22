@@ -21,7 +21,8 @@ import { helper } from '../helper';
 import { valueFromRemoteObject } from './protocolHelper';
 import { createJSHandle, JSHandle } from './JSHandle';
 import { Protocol } from './protocol';
-
+import * as injectedSource from '../generated/injectedSource';
+import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
@@ -33,6 +34,7 @@ export class ExecutionContext {
   _contextId: number;
   private _contextDestroyedCallback: any;
   private _executionContextDestroyedPromise: Promise<unknown>;
+  private _injectedPromise: Promise<JSHandle> | null = null;
 
   constructor(client: TargetSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, frame: Frame | null) {
     this._session = client;
@@ -299,5 +301,18 @@ export class ExecutionContext {
       this._globalObjectId = globalObject.result.objectId;
     }
     return this._globalObjectId;
+  }
+
+  _injected(): Promise<JSHandle> {
+    if (!this._injectedPromise) {
+      const engineSources = [cssSelectorEngineSource.source];
+      const source = `
+        new (${injectedSource.source})([
+          ${engineSources.join(',\n')}
+        ])
+      `;
+      this._injectedPromise = this.evaluateHandle(source);
+    }
+    return this._injectedPromise;
   }
 }
