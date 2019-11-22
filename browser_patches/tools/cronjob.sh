@@ -44,4 +44,4 @@ if [[ -n $(git status -s) ]]; then
 fi
 
 git pull origin master
-../checkout_build_archive_upload.sh $BROWSER_NAME
+../checkout_build_archive_upload.sh $BROWSER_NAME >/tmp/checkout_build_archive_upload--$BROWSER_NAME.log
