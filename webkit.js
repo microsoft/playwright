@@ -22,7 +22,6 @@ for (const className in api.WebKit) {
     helper.installAsyncStackHooks(api.WebKit[className]);
 }
 
-// If node does not support async await, use the compiled version.
 const {Playwright} = require('./lib/webkit/Playwright');
 const packageJson = require('./package.json');
 

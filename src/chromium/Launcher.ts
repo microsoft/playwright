@@ -68,12 +68,10 @@ const DEFAULT_ARGS = [
 export class Launcher {
   private _projectRoot: string;
   private _preferredRevision: string;
-  private _isPlaywrightCore: boolean;
 
-  constructor(projectRoot: string, preferredRevision: string, isPlaywrightCore: boolean) {
+  constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
     this._preferredRevision = preferredRevision;
-    this._isPlaywrightCore = isPlaywrightCore;
   }
 
   async launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) = {}): Promise<Browser> {
@@ -280,23 +278,7 @@ export class Launcher {
   }
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
-    // playwright-core doesn't take into account PLAYWRIGHT_* env variables.
-    if (!this._isPlaywrightCore) {
-      const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH || process.env.npm_config_playwright_executable_path || process.env.npm_package_config_playwright_executable_path;
-      if (executablePath) {
-        const missingText = !fs.existsSync(executablePath) ? 'Tried to use PLAYWRIGHT_EXECUTABLE_PATH env variable to launch browser but did not find any executable at: ' + executablePath : null;
-        return { executablePath, missingText };
-      }
-    }
     const browserFetcher = new BrowserFetcher(this._projectRoot);
-    if (!this._isPlaywrightCore) {
-      const revision = process.env['PLAYWRIGHT_CHROMIUM_REVISION'];
-      if (revision) {
-        const revisionInfo = browserFetcher.revisionInfo(revision);
-        const missingText = !revisionInfo.local ? 'Tried to use PLAYWRIGHT_CHROMIUM_REVISION env variable to launch browser but did not find executable at: ' + revisionInfo.executablePath : null;
-        return {executablePath: revisionInfo.executablePath, missingText};
-      }
-    }
     const revisionInfo = browserFetcher.revisionInfo(this._preferredRevision);
     const missingText = !revisionInfo.local ? `Chromium revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return {executablePath: revisionInfo.executablePath, missingText};

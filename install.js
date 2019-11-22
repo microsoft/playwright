@@ -14,30 +14,6 @@
  * limitations under the License.
  */
 
-// playwright-core should not install anything.
-if (require('./package.json').name === 'playwright-core')
-  return;
-
-const browserSkips = {Chromium: false, Firefox: false, WebKit: false};
-for (const browser of ['Chromium', 'Firefox', 'WebKit']) {
-  const templates = [
-    `PLAYWRIGHT_SKIP_${browser}_DOWNLOAD`,
-    `NPM_CONFIG_PLAYWRIGHT_SKIP_${browser}_DOWNLOAD`,
-    `NPM_PACKAGE_CONFIG_PLAYWRIGHT_SKIP_${browser}_DOWNLOAD`,
-  ];
-  const varNames = [...templates.map(n => n.toUpperCase()), ...templates.map(n => n.toLowerCase())];
-  for (const varName of varNames) {
-    if (process.env[varName.toUpperCase()]) {
-      logPolitely(`**INFO** Skipping ${browser} download. "${varName}" environment variable was found.`);
-      browserSkips[browser] = true;
-      break;
-    }
-  }
-}
-
-const downloadHost = process.env.PLAYWRIGHT_DOWNLOAD_HOST || process.env.npm_config_playwright_download_host || process.env.npm_package_config_playwright_download_host;
-
-
 if (require('fs').existsSync(require('path').join(__dirname, 'src'))) {
   try {
     require('child_process').execSync('npm run build', {
@@ -49,26 +25,32 @@ if (require('fs').existsSync(require('path').join(__dirname, 'src'))) {
 
 (async function() {
   const {generateWebKitProtocol, generateChromeProtocol} = require('./utils/protocol-types-generator/') ;
-  if (!browserSkips.Chromium) {
-    const chromeRevision = await downloadBrowser('chromium', require('./chromium').createBrowserFetcher({host: downloadHost}));
+  try {
+    const chromeRevision = await downloadBrowser('chromium', require('./chromium').createBrowserFetcher());
     await generateChromeProtocol(chromeRevision);
+  } catch (e) {
+    console.warn(e.message);
   }
 
-  if (!browserSkips.Firefox)
-    await downloadBrowser('firefox', require('./firefox').createBrowserFetcher({host: downloadHost}));
-
-  if (!browserSkips.WebKit) {
-    const webkitRevision = await downloadBrowser('webkit', require('./webkit').createBrowserFetcher({host: downloadHost}));
+  try {
+    await downloadBrowser('firefox', require('./firefox').createBrowserFetcher());
+  } catch (e) {
+    console.warn(e.message);
+  }
+  try {
+    const webkitRevision = await downloadBrowser('webkit', require('./webkit').createBrowserFetcher());
     await generateWebKitProtocol(webkitRevision);
+  } catch (e) {
+    console.warn(e.message);
   }
 })();
 function getRevision(browser) {
   if (browser === 'chromium')
-    return process.env.PLAYWRIGHT_CHROMIUM_REVISION || process.env.npm_config_playwright_chromium_revision || process.env.npm_package_config_playwright_chromium_revision || require('./package.json').playwright.chromium_revision;
+    return require('./package.json').playwright.chromium_revision;
   if (browser === 'firefox')
-    return process.env.PLAYWRIGHT_FIREFOX_REVISION || process.env.npm_config_playwright_firefox_revision || process.env.npm_package_config_playwright_firefox_revision || require('./package.json').playwright.firefox_revision;
+    return require('./package.json').playwright.firefox_revision;
   if (browser === 'webkit')
-    return process.env.PLAYWRIGHT_WEBKIT_REVISION || process.env.npm_config_playwright_webkit_revision || process.env.npm_package_config_playwright_webkit_revision || require('./package.json').playwright.webkit_revision;
+    return require('./package.json').playwright.webkit_revision;
 }
 async function downloadBrowser(browser, browserFetcher) {
   const revision = getRevision(browser);
@@ -78,18 +60,6 @@ async function downloadBrowser(browser, browserFetcher) {
   // Do nothing if the revision is already downloaded.
   if (revisionInfo.local)
     return revisionInfo;
-
-  // Override current environment proxy settings with npm configuration, if any.
-  const NPM_HTTPS_PROXY = process.env.npm_config_https_proxy || process.env.npm_config_proxy;
-  const NPM_HTTP_PROXY = process.env.npm_config_http_proxy || process.env.npm_config_proxy;
-  const NPM_NO_PROXY = process.env.npm_config_no_proxy;
-
-  if (NPM_HTTPS_PROXY)
-    process.env.HTTPS_PROXY = NPM_HTTPS_PROXY;
-  if (NPM_HTTP_PROXY)
-    process.env.HTTP_PROXY = NPM_HTTP_PROXY;
-  if (NPM_NO_PROXY)
-    process.env.NO_PROXY = NPM_NO_PROXY;
 
   let progressBar = null;
   let lastDownloadedBytes = 0;
@@ -108,13 +78,7 @@ async function downloadBrowser(browser, browserFetcher) {
     progressBar.tick(delta);
   }
 
-  try {
-    await browserFetcher.download(revisionInfo.revision, onProgress);
-  } catch(error) {
-    console.error(`ERROR: Failed to download ${browser} ${revision}! Set "PLAYWRIGHT_SKIP_${browser.toUpperCase()}_DOWNLOAD" env variable to skip download.`);
-    console.error(error);
-    process.exit(1);
-  }
+  await browserFetcher.download(revisionInfo.revision, onProgress);
   logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
   const localRevisions = await browserFetcher.localRevisions();
   // Remove previous chromium revisions.
