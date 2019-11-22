@@ -678,7 +678,7 @@ export class Page extends EventEmitter {
     if (runBeforeUnload) {
       await this._client.send('Page.close');
     } else {
-      await this._client._connection.send('Target.closeTarget', { targetId: this._target._targetId });
+      await this.browser()._closeTarget(this._target);
       await this._target._isClosedPromise;
     }
   }
