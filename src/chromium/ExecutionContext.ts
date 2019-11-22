@@ -22,7 +22,8 @@ import { assert, helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage } from './protocolHelper';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
 import { Protocol } from './protocol';
-import { injectedSource } from '../injected/injectedSource';
+import * as injectedSource from '../generated/injectedSource';
+import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
@@ -162,8 +163,15 @@ export class ExecutionContext {
   }
 
   _injected(): Promise<JSHandle> {
-    if (!this._injectedPromise)
-      this._injectedPromise = this.evaluateHandle(injectedSource);
+    if (!this._injectedPromise) {
+      const engineSources = [cssSelectorEngineSource.source];
+      const source = `
+        new (${injectedSource.source})([
+          ${engineSources.join(',\n')}
+        ])
+      `;
+      this._injectedPromise = this.evaluateHandle(source);
+    }
     return this._injectedPromise;
   }
 }

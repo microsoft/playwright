@@ -9,5 +9,5 @@ node6-testrunner/*
 lib/
 *.js
 src/chromium/protocol.d.ts
-src/injected/injectedSource.ts
+src/generated/*
 src/webkit/protocol.d.ts

@@ -25,6 +25,7 @@ import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { releaseObject, valueFromRemoteObject } from './protocolHelper';
+import Injected from '../injected/injected';
 
 type Point = {
   x: number;
@@ -430,8 +431,10 @@ export class ElementHandle extends JSHandle {
 
   async $(selector: string): Promise<ElementHandle | null> {
     const handle = await this.evaluateHandle(
-        (element, selector) => element.querySelector(selector),
-        selector
+        (element, selector, injected: Injected) => {
+          return injected.querySelector('css=' + selector, element);
+        },
+        selector, await this._context._injected()
     );
     const element = handle.asElement();
     if (element)
