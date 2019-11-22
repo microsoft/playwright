@@ -99,9 +99,7 @@
   * [page.dblclick(selector[, options])](#pagedblclickselector-options)
   * [page.deleteCookie(...cookies)](#pagedeletecookiecookies)
   * [page.emulate(options)](#pageemulateoptions)
-  * [page.emulateMedia(type)](#pageemulatemediatype)
-  * [page.emulateMediaFeatures(features)](#pageemulatemediafeaturesfeatures)
-  * [page.emulateMediaType(type)](#pageemulatemediatypetype)
+  * [page.emulateMedia(options)](#pageemulatemediaoptions)
   * [page.emulateTimezone(timezoneId)](#pageemulatetimezonetimezoneid)
   * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
   * [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
@@ -1252,70 +1250,62 @@ const iPhone = playwright.devices['iPhone 6'];
 
 List of all available devices is available in the source code: [DeviceDescriptors.js](https://github.com/Microsoft/playwright/blob/master/lib/DeviceDescriptors.js).
 
-#### page.emulateMedia(type)
-- `type` <?[string]> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
-- returns: <[Promise]>
-
-**Note:** This method is deprecated, and only kept around as an alias for backwards compatibility. Use [`page.emulateMediaType(type)`](#pageemulatemediatypetype) instead.
-
-#### page.emulateMediaFeatures(features)
-- `features` <?[Array]<[Object]>> Given an array of media feature objects, emulates CSS media features on the page. Each media feature object must have the following properties:
-  - `name` <[string]> The CSS media feature name. Supported names are `'prefers-colors-scheme'` and `'prefers-reduced-motion'`.
-  - `value` <[string]> The value for the given CSS media feature.
+#### page.emulateMedia(options)
+- `options` <[Object]>
+  - `type` <?[string]> Optional. Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
+  - `features` <?[Array]<[Object]>> Optional. Given an array of media feature objects, emulates CSS media features on the page. Each media feature object must have the following properties:
+    - `name` <[string]> The CSS media feature name. Supported names are `'prefers-colors-scheme'` and `'prefers-reduced-motion'`.
+    - `value` <[string]> The value for the given CSS media feature.
 - returns: <[Promise]>
 
 ```js
-await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
-await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
+await page.evaluate(() => matchMedia('screen').matches));
 // → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
-// → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
+await page.evaluate(() => matchMedia('print').matches));
+// → true
 
-await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
-await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches));
-// → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
+await page.emulateMedia({ type: 'print' });
+await page.evaluate(() => matchMedia('screen').matches));
 // → false
+await page.evaluate(() => matchMedia('print').matches));
+// → true
 
-await page.emulateMediaFeatures([
-  { name: 'prefers-color-scheme', value: 'dark' },
-  { name: 'prefers-reduced-motion', value: 'reduce' },
-]);
-await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
+await page.emulateMedia({});
+await page.evaluate(() => matchMedia('screen').matches));
 // → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
-// → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
-await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches));
+await page.evaluate(() => matchMedia('print').matches));
 // → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
 ```
 
-#### page.emulateMediaType(type)
-- `type` <?[string]> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
-- returns: <[Promise]>
-
 ```js
-await page.evaluate(() => matchMedia('screen').matches));
+await page.emulateMedia({ features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
+await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
 // → true
-await page.evaluate(() => matchMedia('print').matches));
-// → true
-
-await page.emulateMediaType('print');
-await page.evaluate(() => matchMedia('screen').matches));
+await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
 // → false
-await page.evaluate(() => matchMedia('print').matches));
-// → true
+await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
+// → false
 
-await page.emulateMediaType(null);
-await page.evaluate(() => matchMedia('screen').matches));
+await page.emulateMedia({ features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches));
 // → true
-await page.evaluate(() => matchMedia('print').matches));
+await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
+// → false
+
+await page.emulateMedia({ features: [
+  { name: 'prefers-color-scheme', value: 'dark' },
+  { name: 'prefers-reduced-motion', value: 'reduce' },
+] });
+await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
 // → true
+await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
+// → false
+await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
+// → false
+await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches));
+// → true
+await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
+// → false
 ```
 
 #### page.emulateTimezone(timezoneId)
@@ -2366,13 +2356,13 @@ Dispatches a `mouseup` event.
 
 > **NOTE** Generating a pdf is currently only supported in Chrome headless.
 
-`pdf.generate()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia('screen')](#pageemulatemediamediatype) before calling `pdf.generate()`:
+`pdf.generate()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia({ type: 'screen' })](#pageemulatemedia) before calling `pdf.generate()`:
 
 > **NOTE** By default, `pdf.generate()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
 
 ```js
 // Generates a PDF with 'screen' media type.
-await page.emulateMedia('screen');
+await page.emulateMedia({ type: 'screen' });
 await page.pdf.generate({path: 'page.pdf'});
 ```
 

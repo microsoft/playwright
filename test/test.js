@@ -72,10 +72,6 @@ beforeEach(async({server, httpsServer}) => {
   httpsServer.reset();
 });
 
-const CHROMIUM_NO_COVERAGE = new Set([
-  'page.emulateMedia', // Legacy alias for `page.emulateMediaType`.
-]);
-
 if (process.env.BROWSER === 'firefox') {
   describe('Firefox', () => {
     require('./playwright.spec.js').addTests({
@@ -100,7 +96,7 @@ if (process.env.BROWSER === 'firefox') {
       testRunner,
     });
     if (process.env.COVERAGE)
-      utils.recordAPICoverage(testRunner, require('../lib/api').Chromium, require('../lib/chromium/events').Events, CHROMIUM_NO_COVERAGE);
+      utils.recordAPICoverage(testRunner, require('../lib/api').Chromium, require('../lib/chromium/events').Events);
   });
 }
 

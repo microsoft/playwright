@@ -55,7 +55,7 @@ function traceAPICoverage(apiCoverage, events, className, classType) {
 }
 
 const utils = module.exports = {
-  recordAPICoverage: function(testRunner, api, events, disabled) {
+  recordAPICoverage: function(testRunner, api, events) {
     const coverage = new Map();
     for (const [className, classType] of Object.entries(api))
       traceAPICoverage(coverage, events, className, classType);
@@ -63,7 +63,7 @@ const utils = module.exports = {
       testRunner.it('should call all API methods', () => {
         const missingMethods = [];
         for (const method of coverage.keys()) {
-          if (!coverage.get(method) && !disabled.has(method))
+          if (!coverage.get(method))
             missingMethods.push(method);
         }
         if (missingMethods.length)
