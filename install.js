@@ -1,5 +1,6 @@
 /**
  * Copyright 2017 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +15,14 @@
  * limitations under the License.
  */
 
-if (require('fs').existsSync(require('path').join(__dirname, 'src'))) {
-  try {
-    require('child_process').execSync('npm run build', {
-      stdio: 'ignore'
-    });
-  } catch (e) {
-  }
+ // This file is only run when someone clones the github repo for development
+ 
+try {
+  require('child_process').execSync('npm run build', {
+    stdio: 'ignore'
+  });
+} catch (e) {
+  console.warn('Build failed');
 }
 
 (async function() {
