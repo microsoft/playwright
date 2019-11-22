@@ -256,7 +256,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(WEBKIT)('Page.evaluateOnNewDocument', function() {
+  describe('Page.evaluateOnNewDocument', function() {
     it('should evaluate before anything else on the page', async({page, server}) => {
       await page.evaluateOnNewDocument(function(){
         window.injected = 123;
