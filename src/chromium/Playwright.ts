@@ -25,9 +25,9 @@ export class Playwright {
   private _projectRoot: string;
   private _launcher: Launcher;
 
-  constructor(projectRoot: string, preferredRevision: string, isPlaywrightCore: boolean) {
+  constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
-    this._launcher = new Launcher(projectRoot, preferredRevision, isPlaywrightCore);
+    this._launcher = new Launcher(projectRoot, preferredRevision);
   }
 
   launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) | undefined): Promise<Browser> {

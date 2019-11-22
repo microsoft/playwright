@@ -22,7 +22,6 @@ for (const className in api.Firefox) {
     helper.installAsyncStackHooks(api.Firefox[className]);
 }
 
-// If node does not support async await, use the compiled version.
 const {Playwright} = require('./lib/firefox/Playwright');
 const packageJson = require('./package.json');
 

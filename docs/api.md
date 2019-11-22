@@ -10,8 +10,6 @@
 
 <!-- GEN:toc -->
 - [Overview](#overview)
-- [playwright vs playwright-core](#playwright-vs-playwright-core)
-- [Environment Variables](#environment-variables)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
 - [class: Playwright](#class-playwright)
   * [playwright.connect(options)](#playwrightconnectoptions)
@@ -339,50 +337,6 @@ The Playwright API is hierarchical and mirrors the browser structure.
 
 (Diagram source: [link](https://docs.google.com/drawings/d/1Q_AM6KYs9kbyLZF-Lpp5mtpAWth73Cq8IKCsWYgi8MM/edit?usp=sharing))
 
-### playwright vs playwright-core
-
-Every release since v1.7.0 we publish two packages:
-- [playwright](https://www.npmjs.com/package/playwright)
-- [playwright-core](https://www.npmjs.com/package/playwright-core)
-
-`playwright` is a *product* for browser automation. When installed, it downloads a version of
-Chromium, which it then drives using `playwright-core`. Being an end-user product, `playwright` supports a bunch of convenient `PLAYWRIGHT_*` env variables to tweak its behavior.
-
-`playwright-core` is a *library* to help drive anything that supports DevTools protocol. `playwright-core` doesn't download Chromium when installed. Being a library, `playwright-core` is fully driven
-through its programmatic interface and disregards all the `PLAYWRIGHT_*` env variables.
-
-To sum up, the only differences between `playwright-core` and `playwright` are:
-- `playwright-core` doesn't automatically download Chromium when installed.
-- `playwright-core` ignores all `PLAYWRIGHT_*` env variables.
-
-In most cases, you'll be fine using the `playwright` package.
-
-However, you should use `playwright-core` if:
-- you're building another end-user product or library atop of DevTools protocol. For example, one might build a PDF generator using `playwright-core` and write a custom `install.js` script that downloads [`headless_shell`](https://chromium.googlesource.com/chromium/src/+/lkgr/headless/README.md) instead of Chromium to save disk space.
-- you're bundling Playwright to use in Chrome Extension / browser with the DevTools protocol where downloading an additional Chromium binary is unnecessary.
-
-When using `playwright-core`, remember to change the *include* line:
-
-```js
-const playwright = require('playwright-core');
-```
-
-You will then need to call [`playwright.connect([options])`](#playwrightconnectoptions) or [`playwright.launch([options])`](#playwrightlaunchoptions) with an explicit `executablePath` option.
-
-### Environment Variables
-
-Playwright looks for certain [environment variables](https://en.wikipedia.org/wiki/Environment_variable) to aid its operations.
-If Playwright doesn't find them in the environment during the installation step, a lowercased variant of these variables will be used from the [npm config](https://docs.npmjs.com/cli/config).
-
-- `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` - defines HTTP proxy settings that are used to download and run Chromium.
-- `PLAYWRIGHT_SKIP_CHROMIUM_DOWNLOAD` - do not download bundled Chromium during installation step.
-- `PLAYWRIGHT_DOWNLOAD_HOST` - overwrite URL prefix that is used to download Chromium. Note: this includes protocol and might even include path prefix. Defaults to `https://storage.googleapis.com`.
-- `PLAYWRIGHT_CHROMIUM_REVISION` - specify a certain version of Chromium you'd like Playwright to use. See [playwright.launch([options])](#playwrightlaunchoptions) on how executable path is inferred. **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
-- `PLAYWRIGHT_EXECUTABLE_PATH` - specify an executable path to be used in `playwright.launch`. See [playwright.launch([options])](#playwrightlaunchoptions) on how the executable path is inferred. **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
-
-> **NOTE** PLAYWRIGHT_* env variables are not accounted for in the [`playwright-core`](https://www.npmjs.com/package/playwright-core) package.
-
-
 ### Working with Chrome Extensions
 
 Playwright can be used for testing Chrome Extensions.
@@ -509,10 +463,7 @@ try {
 > **NOTE** The old way (Playwright versions <= v1.14.0) errors can be obtained with `require('playwright/Errors')`.
 
 #### playwright.executablePath()
-- returns: <[string]> A path where Playwright expects to find bundled Chromium. Chromium might not exist there if the download was skipped with [`PLAYWRIGHT_SKIP_CHROMIUM_DOWNLOAD`](#environment-variables).
-
-> **NOTE** `playwright.executablePath()` is affected by the `PLAYWRIGHT_EXECUTABLE_PATH` and `PLAYWRIGHT_CHROMIUM_REVISION` env variables. See [Environment Variables](#environment-variables) for details.
-
+- returns: <[string]> A path where Playwright expects to find bundled Chromium.
 
 #### playwright.launch([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:

@@ -139,12 +139,6 @@ export class Launcher {
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
     const browserFetcher = new BrowserFetcher(this._projectRoot);
-    const revision = process.env['PLAYWRIGHT_WEBKIT_REVISION'];
-    if (revision) {
-      const revisionInfo = browserFetcher.revisionInfo(revision);
-      const missingText = !revisionInfo.local ? 'Tried to use PLAYWRIGHT_WEBKIT_REVISION env variable to launch browser but did not find executable at: ' + revisionInfo.executablePath : null;
-      return {executablePath: revisionInfo.executablePath, missingText};
-    }
     const revisionInfo = browserFetcher.revisionInfo(this._preferredRevision);
     const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return {executablePath: revisionInfo.executablePath, missingText};

@@ -22,9 +22,7 @@ for (const className in api.Chromium) {
     helper.installAsyncStackHooks(api.Chromium[className]);
 }
 
-// If node does not support async await, use the compiled version.
 const {Playwright} = require('./lib/chromium/Playwright');
 const packageJson = require('./package.json');
-const isPlaywrightCore = packageJson.name === 'playwright-core';
 
-module.exports = new Playwright(__dirname, packageJson.playwright.chromium_revision, isPlaywrightCore);
+module.exports = new Playwright(__dirname, packageJson.playwright.chromium_revision);

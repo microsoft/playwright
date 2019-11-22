@@ -42,3 +42,6 @@ tsconfig.json
 
 # exclude types, see https://github.com/GoogleChrome/puppeteer/issues/3878
 /index.d.ts
+
+# install.js only does stuff for development
+/install.js
