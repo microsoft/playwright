@@ -16,6 +16,14 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
+if [[ (-z $AZ_ACCOUNT_KEY) || (-z $AZ_ACCOUNT_NAME) ]]; then
+  echo "ERROR: Either \$AZ_ACCOUNT_KEY or \$AZ_ACCOUNT_NAME environment variable is missing."
+  echo "       'Azure Account Name' and 'Azure Account Key' secrets that are required"
+  echo "       to upload builds ot Azure CDN."
+  exit 1
+fi
+
+
 BROWSER_NAME=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   BROWSER_NAME="firefox"
