@@ -16,7 +16,7 @@
  */
 
 const assert = require('assert');
-const playwright = require('..');
+const playwright = require('../chromium');
 const https = require('https');
 const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
 
