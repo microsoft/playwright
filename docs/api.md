@@ -34,6 +34,7 @@
   * [event: 'targetcreated'](#event-targetcreated)
   * [event: 'targetdestroyed'](#event-targetdestroyed)
   * [browser.browserContexts()](#browserbrowsercontexts)
+  * [browser.chromium](#browserchromium)
   * [browser.close()](#browserclose)
   * [browser.createIncognitoBrowserContext()](#browsercreateincognitobrowsercontext)
   * [browser.defaultBrowserContext()](#browserdefaultbrowsercontext)
@@ -138,7 +139,6 @@
   * [page.setViewport(viewport)](#pagesetviewportviewport)
   * [page.target()](#pagetarget)
   * [page.title()](#pagetitle)
-  * [page.tracing](#pagetracing)
   * [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
   * [page.type(selector, text[, options])](#pagetypeselector-text-options)
   * [page.url()](#pageurl)
@@ -178,9 +178,11 @@
   * [mouse.up([options])](#mouseupoptions)
 - [class: PDF](#class-pdf)
   * [pdf.generate([options])](#pdfgenerateoptions)
-- [class: Tracing](#class-tracing)
-  * [tracing.start([options])](#tracingstartoptions)
-  * [tracing.stop()](#tracingstop)
+- [class: Chromium](#class-chromium)
+  * [chromium.createCDPSession(target)](#chromiumcreatecdpsessiontarget)
+  * [chromium.serviceWorker(target)](#chromiumserviceworkertarget)
+  * [chromium.startTracing(page, [options])](#chromiumstarttracingpage-options)
+  * [chromium.stopTracing()](#chromiumstoptracing)
 - [class: FileChooser](#class-filechooser)
   * [fileChooser.accept(filePaths)](#filechooseracceptfilepaths)
   * [fileChooser.cancel()](#filechoosercancel)
@@ -303,7 +305,6 @@
 - [class: Target](#class-target)
   * [target.browser()](#targetbrowser)
   * [target.browserContext()](#targetbrowsercontext)
-  * [target.createCDPSession()](#targetcreatecdpsession)
   * [target.opener()](#targetopener)
   * [target.page()](#targetpage)
   * [target.type()](#targettype)
@@ -679,6 +680,9 @@ Emitted when a target is destroyed, for example when a page is closed.
 
 Returns an array of all open browser contexts. In a newly created browser, this will return
 a single instance of [BrowserContext].
+
+#### browser.chromium
+- returns: <[Chromium]>
 
 #### browser.close()
 - returns: <[Promise]>
@@ -1807,9 +1811,6 @@ await page.goto('https://example.com');
 
 Shortcut for [page.mainFrame().title()](#frametitle).
 
-#### page.tracing
-- returns: <[Tracing]>
-
 #### page.tripleclick(selector[, options])
 - `selector` <[string]> A [selector] to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
 - `options` <[Object]>
@@ -2442,17 +2443,31 @@ The `format` options are:
 > 2. Page styles are not visible inside templates.
 
 
-### class: Tracing
+### class: Chromium
 
-You can use [`tracing.start`](#tracingstartoptions) and [`tracing.stop`](#tracingstop) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
+Chromium-specific features including Tracing, service worker support, etc.
+You can use [`chromium.startTracing`](#chromiumstarttracingpage-options) and [`chromium.stopTracing`](#chromiumstoptracing) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
 
 ```js
-await page.tracing.start({path: 'trace.json'});
+await page.chromium.startTracing({path: 'trace.json'});
 await page.goto('https://www.google.com');
-await page.tracing.stop();
+await page.chromium.stopTracing();
 ```
 
-#### tracing.start([options])
+#### chromium.createCDPSession(target)
+- `target` <[Target]> Target to return CDP connection for.
+- returns: <[Promise]<[CDPSession]>>
+
+Creates a Chrome Devtools Protocol session attached to the target.
+
+#### chromium.serviceWorker(target)
+- `target` <[Target]> Target to treat as a service worker
+- returns: <[Promise]<[Worker]>>
+
+Attaches to the service worker target.
+
+#### chromium.startTracing(page, [options])
+- `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
 - `options` <[Object]>
   - `path` <[string]> A path to write the trace file to.
   - `screenshots` <[boolean]> captures screenshots in the trace.
@@ -2461,7 +2476,7 @@ await page.tracing.stop();
 
 Only one trace can be active at a time per browser.
 
-#### tracing.stop()
+#### chromium.stopTracing()
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
 
 ### class: FileChooser
@@ -3763,11 +3778,6 @@ Get the browser the target belongs to.
 
 The browser context the target belongs to.
 
-#### target.createCDPSession()
-- returns: <[Promise]<[CDPSession]>>
-
-Creates a Chrome Devtools Protocol session attached to the target.
-
 #### target.opener()
 - returns: <?[Target]>
 
@@ -3799,7 +3809,7 @@ Useful links:
 - Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
 
 ```js
-const client = await page.target().createCDPSession();
+const client = await page.chromium.createCDPSession(target);
 await client.send('Animation.enable');
 client.on('Animation.animationCreated', () => console.log('Animation created!'));
 const response = await client.send('Animation.getPlaybackRate');
@@ -3906,6 +3916,7 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [CDPSession]: #class-cdpsession  "CDPSession"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
+[Chromium]: #class-chromium "Chromium"
 [ConnectionTransport]: ../lib/WebSocketTransport.js "ConnectionTransport"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
 [Coverage]: #class-coverage "Coverage"
@@ -3928,7 +3939,6 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [Target]: #class-target "Target"
 [TimeoutError]: #class-timeouterror "TimeoutError"
-[Tracing]: #class-tracing "Tracing"
 [UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
 [USKeyboardLayout]: ../lib/USKeyboardLayout.js "USKeyboardLayout"
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"

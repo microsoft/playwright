@@ -40,7 +40,6 @@ import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './pro
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import { Geolocation } from './features/geolocation';
-import { Tracing } from './features/tracing';
 import { Workers } from './features/workers';
 import { Interception } from './features/interception';
 
@@ -57,7 +56,7 @@ export type Viewport = {
 
 export class Page extends EventEmitter {
   private _closed = false;
-  private _client: CDPSession;
+  _client: CDPSession;
   private _target: Target;
   private _keyboard: Keyboard;
   private _mouse: Mouse;
@@ -70,7 +69,6 @@ export class Page extends EventEmitter {
   readonly interception: Interception;
   readonly pdf: PDF;
   readonly workers: Workers;
-  readonly tracing: Tracing;
   private _pageBindings = new Map<string, Function>();
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
@@ -97,7 +95,6 @@ export class Page extends EventEmitter {
     this.accessibility = new Accessibility(client);
     this._frameManager = new FrameManager(client, this, ignoreHTTPSErrors, this._timeoutSettings);
     this._emulationManager = new EmulationManager(client);
-    this.tracing = new Tracing(client);
     this.coverage = new Coverage(client);
     this.pdf = new PDF(client);
     this.workers = new Workers(client, this._addConsoleMessage.bind(this), this._handleException.bind(this));

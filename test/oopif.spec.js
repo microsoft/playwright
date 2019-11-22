@@ -45,7 +45,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should load oopif iframes with subresources and request interception', async function({page, server, context}) {
       await page.interception.enable();
-      page.on('request', request => request.continue());
+      page.on('request', request => page.interception.continue(request));
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
       expect(oopifs(context).length).toBe(1);
     });

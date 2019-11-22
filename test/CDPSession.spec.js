@@ -21,9 +21,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Target.createCDPSession', function() {
-    it('should work', async function({page, server}) {
-      const client = await page.target().createCDPSession();
+  describe('Chromium.createCDPSession', function() {
+    it('should work', async function({page, browser, server}) {
+      const client = await browser.chromium.createCDPSession(page.target());
 
       await Promise.all([
         client.send('Runtime.enable'),
@@ -32,16 +32,16 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const foo = await page.evaluate(() => window.foo);
       expect(foo).toBe('bar');
     });
-    it('should send events', async function({page, server}) {
-      const client = await page.target().createCDPSession();
+    it('should send events', async function({page, browser, server}) {
+      const client = await browser.chromium.createCDPSession(page.target());
       await client.send('Network.enable');
       const events = [];
       client.on('Network.requestWillBeSent', event => events.push(event));
       await page.goto(server.EMPTY_PAGE);
       expect(events.length).toBe(1);
     });
-    it('should enable and disable domains independently', async function({page, server}) {
-      const client = await page.target().createCDPSession();
+    it('should enable and disable domains independently', async function({page, browser, server}) {
+      const client = await browser.chromium.createCDPSession(page.target());
       await client.send('Runtime.enable');
       await client.send('Debugger.enable');
       // JS coverage enables and then disables Debugger domain.
@@ -55,8 +55,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       // expect events to be dispatched.
       expect(event.url).toBe('foo.js');
     });
-    it('should be able to detach session', async function({page, server}) {
-      const client = await page.target().createCDPSession();
+    it('should be able to detach session', async function({page, browser, server}) {
+      const client = await browser.chromium.createCDPSession(page.target());
       await client.send('Runtime.enable');
       const evalResponse = await client.send('Runtime.evaluate', {expression: '1 + 2', returnByValue: true});
       expect(evalResponse.result.value).toBe(3);
@@ -69,8 +69,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       }
       expect(error.message).toContain('Session closed.');
     });
-    it('should throw nice errors', async function({page}) {
-      const client = await page.target().createCDPSession();
+    it('should throw nice errors', async function({page, browser}) {
+      const client = await browser.chromium.createCDPSession(page.target());
       const error = await theSourceOfTheProblems().catch(error => error);
       expect(error.stack).toContain('theSourceOfTheProblems');
       expect(error.message).toContain('ThisCommand.DoesNotExist');

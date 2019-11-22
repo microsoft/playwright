@@ -44,7 +44,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should work with request interception', async({page, server, httpsServer}) => {
       await page.interception.enable();
-      page.on('request', request => request.continue());
+      page.on('request', request => page.interception.continue(request));
       const response = await page.goto(httpsServer.EMPTY_PAGE);
       expect(response.status()).toBe(200);
     });

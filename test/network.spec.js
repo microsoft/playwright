@@ -238,9 +238,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.interception.enable();
       page.on('request', request => {
         if (request.url().endsWith('css'))
-          request.abort();
+          page.interception.abort(request);
         else
-          request.continue();
+          page.interception.continue(request);
       });
       const failedRequests = [];
       page.on('requestfailed', request => failedRequests.push(request));
@@ -316,7 +316,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const requests = new Map();
       page.on('request', request => {
         requests.set(request.url().split('/').pop(), request);
-        request.continue();
+        page.interception.continue(request);
       });
       await page.interception.enable();
       server.setRedirect('/rrredirect', '/frames/one-frame.html');

@@ -18,7 +18,7 @@
 import { EventEmitter } from 'events';
 import { assert } from '../helper';
 import { Browser } from './Browser';
-import { Connection } from './Connection';
+import { CDPSession } from './Connection';
 import { Permissions } from './features/permissions';
 import { Page } from './Page';
 import { Target } from './Target';
@@ -29,11 +29,11 @@ export class BrowserContext extends EventEmitter {
   private _browser: Browser;
   private _id: string;
 
-  constructor(connection: Connection, browser: Browser, contextId: string | null) {
+  constructor(client: CDPSession, browser: Browser, contextId: string | null) {
     super();
     this._browser = browser;
     this._id = contextId;
-    this.permissions = new Permissions(connection, contextId);
+    this.permissions = new Permissions(client, contextId);
   }
 
   targets(): Target[] {

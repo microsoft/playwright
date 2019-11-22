@@ -15,23 +15,25 @@
  * limitations under the License.
  */
 
-import { Events } from './events';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import { CDPSession } from './Connection';
+import { Events } from './events';
+import { Worker } from './features/workers';
 import { Page, Viewport } from './Page';
-import { TaskQueue } from './TaskQueue';
 import { Protocol } from './protocol';
+import { TaskQueue } from './TaskQueue';
 
 export class Target {
   private _targetInfo: Protocol.Target.TargetInfo;
   private _browserContext: BrowserContext;
   _targetId: string;
-  private _sessionFactory: () => Promise<CDPSession>;
+  _sessionFactory: () => Promise<CDPSession>;
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: Viewport;
   private _screenshotTaskQueue: TaskQueue;
   private _pagePromise: Promise<Page> | null = null;
+  private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
   _isClosedPromise: Promise<void>;
@@ -71,16 +73,23 @@ export class Target {
       this._initializedCallback(true);
   }
 
-  createCDPSession(): Promise<CDPSession> {
-    return this._sessionFactory();
-  }
-
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory()
           .then(client => Page.create(client, this, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotTaskQueue));
     }
     return this._pagePromise;
+  }
+
+  async _worker(): Promise<Worker | null> {
+    if (this._targetInfo.type !== 'service_worker' && this._targetInfo.type !== 'shared_worker')
+      return null;
+    if (!this._workerPromise) {
+      // TODO(einbinder): Make workers send their console logs.
+      this._workerPromise = this._sessionFactory()
+        .then(client => new Worker(client, this._targetInfo.url, () => { } /* consoleAPICalled */, () => { } /* exceptionThrown */));
+    }
+    return this._workerPromise;
   }
 
   url(): string {

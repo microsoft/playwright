@@ -14,21 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { CDPSession } from '../Connection';
 import { assert } from '../../helper';
+import { CDPSession } from '../Connection';
+import { Page } from '../Page';
 import { readProtocolStream } from '../protocolHelper';
+import { Target } from '../Target';
+import { Worker } from './workers';
 
-export class Tracing {
+export class Chromium {
   private _client: CDPSession;
   private _recording = false;
   private _path = '';
+  private _tracingClient: CDPSession | undefined;
 
   constructor(client: CDPSession) {
     this._client = client;
   }
 
-  async start(options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+  createCDPSession(target: Target): Promise<CDPSession> {
+    return target._sessionFactory();
+  }
+
+  serviceWorker(target: Target): Promise<Worker | null> {
+    return target._worker();
+  }
+
+  async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._recording, 'Cannot start recording trace while already recording trace.');
+    this._tracingClient = page ? page._client : this._client;
 
     const defaultCategories = [
       '-*', 'devtools.timeline', 'v8.execute', 'disabled-by-default-devtools.timeline',
@@ -47,19 +60,20 @@ export class Tracing {
 
     this._path = path;
     this._recording = true;
-    await this._client.send('Tracing.start', {
+    await this._tracingClient.send('Tracing.start', {
       transferMode: 'ReturnAsStream',
       categories: categories.join(',')
     });
   }
 
-  async stop(): Promise<Buffer> {
+  async stopTracing(): Promise<Buffer> {
+    assert(this._tracingClient, 'Tracing was not started.');
     let fulfill: (buffer: Buffer) => void;
     const contentPromise = new Promise<Buffer>(x => fulfill = x);
-    this._client.once('Tracing.tracingComplete', event => {
-      readProtocolStream(this._client, event.stream, this._path).then(fulfill);
+    this._tracingClient.once('Tracing.tracingComplete', event => {
+      readProtocolStream(this._tracingClient, event.stream, this._path).then(fulfill);
     });
-    await this._client.send('Tracing.end');
+    await this._tracingClient.send('Tracing.end');
     this._recording = false;
     return contentPromise;
   }
