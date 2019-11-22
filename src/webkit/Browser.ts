@@ -72,6 +72,19 @@ export class Browser extends EventEmitter {
     this._screenshotTaskQueue = new TaskQueue();
   }
 
+  async userAgent(): Promise<string> {
+    const context = await this.createIncognitoBrowserContext();
+    const page = await context.newPage();
+    const userAgent = await page.evaluate('navigator.userAgent');
+    context.close();
+    return userAgent;
+  }
+
+  async version(): Promise<string> {
+    const userAgent = await this.userAgent();
+    return userAgent.split(' ').pop();
+  }
+
   process(): childProcess.ChildProcess | null {
     return this._process;
   }

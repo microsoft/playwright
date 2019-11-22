@@ -19,18 +19,20 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(WEBKIT)('Browser.version', function() {
+  describe('Browser.version', function() {
     it('should return whether we are in headless', async({browser}) => {
       const version = await browser.version();
       expect(version.length).toBeGreaterThan(0);
-      if (CHROME || WEBKIT)
+      if (CHROME)
         expect(version.startsWith('Headless')).toBe(headless);
+      else if (WEBKIT)
+        expect(version.startsWith('Safari/')).toBe(true);
       else
         expect(version.startsWith('Firefox/')).toBe(true);
     });
   });
 
-  describe.skip(WEBKIT)('Browser.userAgent', function() {
+  describe('Browser.userAgent', function() {
     it('should include WebKit', async({browser}) => {
       const userAgent = await browser.userAgent();
       expect(userAgent.length).toBeGreaterThan(0);
