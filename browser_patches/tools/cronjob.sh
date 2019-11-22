@@ -32,6 +32,7 @@ if [[ -d ${LOCKDIR} ]]; then
   echo "Already running (lockdir $LOCKDIR exists. Remove it manually if running)"
   exit 0
 fi
+mkdir -p $LOCKDIR
 # make sure the lockfile is removed when we exit and then claim it
 trap "rm -rf ${LOCKDIR}; cd $(pwd -P); exit" INT TERM EXIT
 cd "$(dirname "$0")"
