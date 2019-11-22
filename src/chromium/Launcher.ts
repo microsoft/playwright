@@ -188,7 +188,7 @@ export class Launcher {
         killChrome();
       } else if (connection) {
         // Attempt to close chrome gracefully
-        connection.send('Browser.close').catch(error => {
+        connection.rootSession.send('Browser.close').catch(error => {
           debugError(error);
           killChrome();
         });
@@ -273,7 +273,7 @@ export class Launcher {
       connection = new Connection(connectionURL, connectionTransport, slowMo);
     }
 
-    const {browserContextIds} = await connection.send('Target.getBrowserContexts');
+    const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
     return Browser.create(connection, browserContextIds, ignoreHTTPSErrors, defaultViewport, null, () => connection.send('Browser.close').catch(debugError));
   }
 

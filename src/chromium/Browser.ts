@@ -47,15 +47,13 @@ export class Browser extends EventEmitter {
     defaultViewport: Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
-    const session = await connection.createBrowserSession();
-    const browser = new Browser(connection, session, contextIds, ignoreHTTPSErrors, defaultViewport, process, closeCallback);
-    await session.send('Target.setDiscoverTargets', {discover: true});
+    const browser = new Browser(connection, contextIds, ignoreHTTPSErrors, defaultViewport, process, closeCallback);
+    await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
     return browser;
   }
 
   constructor(
     connection: Connection,
-    client: CDPSession,
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
     defaultViewport: Viewport | null,
@@ -63,7 +61,7 @@ export class Browser extends EventEmitter {
     closeCallback?: (() => Promise<void>)) {
     super();
     this._connection = connection;
-    this._client = client;
+    this._client = connection.rootSession;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._defaultViewport = defaultViewport;
     this._process = process;
@@ -151,11 +149,15 @@ export class Browser extends EventEmitter {
   }
 
   async _createPageInContext(contextId: string | null): Promise<Page> {
-    const {targetId} = await this._connection.send('Target.createTarget', {url: 'about:blank', browserContextId: contextId || undefined});
+    const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
     const target = await this._targets.get(targetId);
     assert(await target._initializedPromise, 'Failed to create target for page');
     const page = await target.page();
     return page;
+  }
+
+  async _closeTarget(target: Target) {
+    await this._client.send('Target.closeTarget', { targetId: target._targetId });
   }
 
   targets(): Target[] {
@@ -222,6 +224,6 @@ export class Browser extends EventEmitter {
   }
 
   _getVersion(): Promise<any> {
-    return this._connection.send('Browser.getVersion');
+    return this._client.send('Browser.getVersion');
   }
 }
