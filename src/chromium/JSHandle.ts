@@ -47,6 +47,13 @@ export type MultiClickOptions = PointerActionOptions & {
   button?: Button;
 };
 
+export type SelectOption = {
+  value?: string;
+  id?: string;
+  label?: string;
+  index?: number;
+};
+
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
@@ -317,24 +324,45 @@ export class ElementHandle extends JSHandle {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
-  async select(...values: string[]): Promise<string[]> {
-    for (const value of values)
-      assert(helper.isString(value), 'Values must be strings. Found value "' + value + '" of type "' + (typeof value) + '"');
-    return this.evaluate((element: HTMLSelectElement, values: string[]) => {
+  async select(...values: (string | SelectOption)[]): Promise<string[]> {
+    const options = values.map(value => typeof value === 'object' ? value : { value });
+    for (const option of options) {
+      if (option.value !== undefined)
+        assert(helper.isString(option.value), 'Values must be strings. Found value "' + option.value + '" of type "' + (typeof option.value) + '"');
+      if (option.label !== undefined)
+        assert(helper.isString(option.label), 'Labels must be strings. Found label "' + option.label + '" of type "' + (typeof option.label) + '"');
+      if (option.id !== undefined)
+        assert(helper.isString(option.id), 'Ids must be strings. Found id "' + option.id + '" of type "' + (typeof option.id) + '"');
+      if (option.index !== undefined)
+        assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
+    }
+    return this.evaluate((element: HTMLSelectElement, optionsToSelect: SelectOption[]) => {
       if (element.nodeName.toLowerCase() !== 'select')
         throw new Error('Element is not a <select> element.');
 
       const options = Array.from(element.options);
       element.value = undefined;
-      for (const option of options) {
-        option.selected = values.includes(option.value);
+      for (let index = 0; index < options.length; index++) {
+        const option = options[index];
+        option.selected = optionsToSelect.some(optionToSelect => {
+          let matches = true;
+          if (optionToSelect.value !== undefined)
+            matches = matches && optionToSelect.value === option.value;
+          if (optionToSelect.label !== undefined)
+            matches = matches && optionToSelect.label === option.label;
+          if (optionToSelect.id !== undefined)
+            matches = matches && optionToSelect.id === option.id;
+          if (optionToSelect.index !== undefined)
+            matches = matches && optionToSelect.index === index;
+          return matches;
+        });
         if (option.selected && !element.multiple)
           break;
       }
       element.dispatchEvent(new Event('input', { 'bubbles': true }));
       element.dispatchEvent(new Event('change', { 'bubbles': true }));
       return options.filter(option => option.selected).map(option => option.value);
-    }, values);
+    }, options);
   }
 
   async fill(value: string): Promise<void> {
