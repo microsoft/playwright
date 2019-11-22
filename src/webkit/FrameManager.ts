@@ -26,6 +26,7 @@ import { ElementHandle, JSHandle } from './JSHandle';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
+import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
 const readFileAsync = helper.promisify(fs.readFile);
 
 export const FrameManagerEvents = {
@@ -46,6 +47,7 @@ export class FrameManager extends EventEmitter {
   _isolatedWorlds: Set<string>;
   _sessionListeners: RegisteredListener[];
   _mainFrame: Frame;
+
   constructor(session: TargetSession, page: Page, timeoutSettings: TimeoutSettings) {
     super();
     this._session = session;
@@ -519,10 +521,24 @@ export class Frame {
     return this._detached;
   }
 
-  async click(selector: string, options: { delay?: number; button?: 'left' | 'right' | 'middle'; clickCount?: number; } | undefined) {
+  async click(selector: string, options?: ClickOptions) {
     const handle = await this.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.click(options);
+    await handle.dispose();
+  }
+
+  async dblclick(selector: string, options?: MultiClickOptions) {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.dblclick(options);
+    await handle.dispose();
+  }
+
+  async tripleclick(selector: string, options?: MultiClickOptions) {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.tripleclick(options);
     await handle.dispose();
   }
 
@@ -547,26 +563,12 @@ export class Frame {
     await handle.dispose();
   }
 
-  /**
-  */
-  select(selector: string, ...values: Array<string>): Promise<Array<string>>{
-    for (const value of values)
-      assert(helper.isString(value), 'Values must be strings. Found value "' + value + '" of type "' + (typeof value) + '"');
-    return this.$eval(selector, (element : HTMLSelectElement, values) => {
-      if (element.nodeName.toLowerCase() !== 'select')
-        throw new Error('Element is not a <select> element.');
-
-      const options = Array.from(element.options);
-      element.value = undefined;
-      for (const option of options) {
-        option.selected = values.includes(option.value);
-        if (option.selected && !element.multiple)
-          break;
-      }
-      element.dispatchEvent(new Event('input', { 'bubbles': true }));
-      element.dispatchEvent(new Event('change', { 'bubbles': true }));
-      return options.filter(option => option.selected).map(option => option.value);
-    }, values);
+  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    const result = await handle.select(...values);
+    await handle.dispose();
+    return result;
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {

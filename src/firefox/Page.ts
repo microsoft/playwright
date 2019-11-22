@@ -10,11 +10,12 @@ import { Dialog } from './Dialog';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
-import { FrameManager, FrameManagerEvents, normalizeWaitUntil } from './FrameManager';
+import { FrameManager, FrameManagerEvents, normalizeWaitUntil, Frame } from './FrameManager';
 import { Keyboard, Mouse } from './Input';
 import { createHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
+import { ClickOptions, MultiClickOptions } from '../input';
 
 
 const writeFileAsync = helper.promisify(fs.writeFile);
@@ -327,7 +328,7 @@ export class Page extends EventEmitter {
     this.emit(Events.Page.Dialog, new Dialog(this._session, params));
   }
 
-  mainFrame() {
+  mainFrame(): Frame {
     return this._frameManager.mainFrame();
   }
 
@@ -460,19 +461,27 @@ export class Page extends EventEmitter {
   }
 
   async evaluate(pageFunction, ...args) {
-    return await this._frameManager.mainFrame().evaluate(pageFunction, ...args);
+    return await this.mainFrame().evaluate(pageFunction, ...args);
   }
 
   async addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {
-    return await this._frameManager.mainFrame().addScriptTag(options);
+    return await this.mainFrame().addScriptTag(options);
   }
 
   async addStyleTag(options: { content?: string; path?: string; url?: string; }): Promise<ElementHandle> {
-    return await this._frameManager.mainFrame().addStyleTag(options);
+    return await this.mainFrame().addStyleTag(options);
   }
 
-  async click(selector: string, options: { delay?: number; button?: string; clickCount?: number; } | undefined = {}) {
-    return await this._frameManager.mainFrame().click(selector, options);
+  async click(selector: string, options?: ClickOptions) {
+    return await this.mainFrame().click(selector, options);
+  }
+
+  async dblclick(selector: string, options?: MultiClickOptions) {
+    return this.mainFrame().dblclick(selector, options);
+  }
+
+  async tripleclick(selector: string, options?: MultiClickOptions) {
+    return this.mainFrame().tripleclick(selector, options);
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {

@@ -218,54 +218,6 @@ export class DOMWorld {
     }
   }
 
-  async click(selector: string, options: { delay?: number; button?: string; clickCount?: number; } | undefined = {}) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.click(options);
-    await handle.dispose();
-  }
-
-  async focus(selector: string) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.focus();
-    await handle.dispose();
-  }
-
-  async hover(selector: string) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.hover();
-    await handle.dispose();
-  }
-
-  select(selector: string, ...values: Array<string>): Promise<Array<string>> {
-    for (const value of values)
-      assert(helper.isString(value), 'Values must be strings. Found value "' + value + '" of type "' + (typeof value) + '"');
-    return this.$eval(selector, (element : HTMLSelectElement, values : string[]) => {
-      if (element.nodeName.toLowerCase() !== 'select')
-        throw new Error('Element is not a <select> element.');
-
-      const options = Array.from(element.options);
-      element.value = undefined;
-      for (const option of options) {
-        option.selected = values.includes(option.value);
-        if (option.selected && !element.multiple)
-          break;
-      }
-      element.dispatchEvent(new Event('input', { 'bubbles': true }));
-      element.dispatchEvent(new Event('change', { 'bubbles': true }));
-      return options.filter(option => option.selected).map(option => option.value);
-    }, values) as Promise<string[]>;
-  }
-
-  async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.type(text, options);
-    await handle.dispose();
-  }
-
   waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined): Promise<ElementHandle> {
     return this._waitForSelectorOrXPath(selector, false, options);
   }

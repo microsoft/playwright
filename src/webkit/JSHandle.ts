@@ -16,20 +16,14 @@
  */
 import * as fs from 'fs';
 import { assert, debugError, helper } from '../helper';
+import { ClickOptions, MultiClickOptions, selectFunction, SelectOption } from '../input';
 import { TargetSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
-import { Button } from './Input';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { releaseObject, valueFromRemoteObject } from './protocolHelper';
 const writeFileAsync = helper.promisify(fs.writeFile);
-
-export type ClickOptions = {
-  delay?: number;
-  button?: Button;
-  clickCount?: number;
-};
 
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
   const frame = context.frame();
@@ -223,24 +217,31 @@ export class ElementHandle extends JSHandle {
     await this._page.mouse.click(x, y, options);
   }
 
-  async select(...values: string[]): Promise<string[]> {
-    for (const value of values)
-      assert(helper.isString(value), 'Values must be strings. Found value "' + value + '" of type "' + (typeof value) + '"');
-    return this.evaluate((element: HTMLSelectElement, values: string[]) => {
-      if (element.nodeName.toLowerCase() !== 'select')
-        throw new Error('Element is not a <select> element.');
+  async dblclick(options?: MultiClickOptions): Promise<void> {
+    await this._scrollIntoViewIfNeeded();
+    const {x, y} = await this._clickablePoint();
+    await this._page.mouse.dblclick(x, y, options);
+  }
 
-      const options = Array.from(element.options);
-      element.value = undefined;
-      for (const option of options) {
-        option.selected = values.includes(option.value);
-        if (option.selected && !element.multiple)
-          break;
-      }
-      element.dispatchEvent(new Event('input', { 'bubbles': true }));
-      element.dispatchEvent(new Event('change', { 'bubbles': true }));
-      return options.filter(option => option.selected).map(option => option.value);
-    }, values);
+  async tripleclick(options?: MultiClickOptions): Promise<void> {
+    await this._scrollIntoViewIfNeeded();
+    const {x, y} = await this._clickablePoint();
+    await this._page.mouse.tripleclick(x, y, options);
+  }
+
+  async select(...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+    const options = values.map(value => typeof value === 'object' ? value : { value });
+    for (const option of options) {
+      if (option instanceof ElementHandle)
+        continue;
+      if (option.value !== undefined)
+        assert(helper.isString(option.value), 'Values must be strings. Found value "' + option.value + '" of type "' + (typeof option.value) + '"');
+      if (option.label !== undefined)
+        assert(helper.isString(option.label), 'Labels must be strings. Found label "' + option.label + '" of type "' + (typeof option.label) + '"');
+      if (option.index !== undefined)
+        assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
+    }
+    return this.evaluate(selectFunction, ...options);
   }
 
   async fill(value: string): Promise<void> {

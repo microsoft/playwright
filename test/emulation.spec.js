@@ -15,7 +15,7 @@
  */
 
 module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
-  let {describe, xdescribe, fdescribe} = testRunner;
+  const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
   const iPhone = playwright.devices['iPhone 6'];

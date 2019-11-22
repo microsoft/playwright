@@ -17,6 +17,7 @@
 
 import { keyDefinitions } from '../USKeyboardLayout';
 import { JugglerSession } from './Connection';
+import { Button, ClickOptions, MultiClickOptions } from '../input';
 
 interface KeyDescription {
   keyCode: number;
@@ -186,7 +187,7 @@ export class Mouse {
     }
   }
 
-  async click(x: number, y: number, options: { delay?: number; button?: string; clickCount?: number; } | undefined = {}) {
+  async click(x: number, y: number, options: ClickOptions = {}) {
     const {delay = null} = options;
     if (delay !== null) {
       await Promise.all([
@@ -204,6 +205,55 @@ export class Mouse {
     }
   }
 
+  async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
+    const { delay = null } = options;
+    if (delay !== null) {
+      await this.move(x, y);
+      await this.down({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.up({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.down({ ...options, clickCount: 2 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.up({ ...options, clickCount: 2 });
+    } else {
+      await Promise.all([
+        this.move(x, y),
+        this.down({ ...options, clickCount: 1 }),
+        this.up({ ...options, clickCount: 1 }),
+        this.down({ ...options, clickCount: 2 }),
+        this.up({ ...options, clickCount: 2 }),
+      ]);
+    }
+  }
+
+  async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
+    const { delay = null } = options;
+    if (delay !== null) {
+      await this.move(x, y);
+      await this.down({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.up({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.down({ ...options, clickCount: 2 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.up({ ...options, clickCount: 2 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.down({ ...options, clickCount: 3 });
+      await new Promise(f => setTimeout(f, delay));
+      await this.up({ ...options, clickCount: 3 });
+    } else {
+      await Promise.all([
+        this.move(x, y),
+        this.down({ ...options, clickCount: 1 }),
+        this.up({ ...options, clickCount: 1 }),
+        this.down({ ...options, clickCount: 2 }),
+        this.up({ ...options, clickCount: 2 }),
+        this.down({ ...options, clickCount: 3 }),
+        this.up({ ...options, clickCount: 3 }),
+      ]);
+    }
+  }
   async down(options: { button?: string; clickCount?: number; } | undefined = {}) {
     const {
       button = 'left',

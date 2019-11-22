@@ -18,6 +18,7 @@
 import { TargetSession } from './Connection';
 import { assert } from '../helper';
 import { keyDefinitions } from '../USKeyboardLayout';
+import { MultiClickOptions, ClickOptions } from '../input';
 
 type KeyDescription = {
   keyCode: number,
@@ -215,7 +216,7 @@ export class Mouse {
     }
   }
 
-  async click(x: number, y: number, options: { delay?: number; button?: Button; clickCount?: number; } = {}) {
+  async click(x: number, y: number, options: ClickOptions = {}) {
     const {delay = null} = options;
     if (delay !== null) {
       await Promise.all([
@@ -233,7 +234,7 @@ export class Mouse {
     }
   }
 
-  async dblclick(x: number, y: number, options: { delay?: number; button?: Button; } = {}) {
+  async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
       await this.move(x, y);
@@ -255,7 +256,7 @@ export class Mouse {
     }
   }
 
-  async tripleclick(x: number, y: number, options: { delay?: number; button?: Button; } = {}) {
+  async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
       await this.move(x, y);

@@ -16,41 +16,19 @@
  */
 
 import * as path from 'path';
+import { assert, debugError, helper } from '../helper';
+import { ClickOptions, Modifier, MultiClickOptions, PointerActionOptions, SelectOption, selectFunction } from '../input';
 import { CDPSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './Frame';
 import { FrameManager } from './FrameManager';
-import { assert, debugError, helper } from '../helper';
-import { valueFromRemoteObject, releaseObject } from './protocolHelper';
 import { Page } from './Page';
-import { Modifier, Button } from './Input';
 import { Protocol } from './protocol';
+import { releaseObject, valueFromRemoteObject } from './protocolHelper';
 
 type Point = {
   x: number;
   y: number;
-};
-
-export type PointerActionOptions = {
-  modifiers?: Modifier[];
-  relativePoint?: Point;
-};
-
-export type ClickOptions = PointerActionOptions & {
-  delay?: number;
-  button?: Button;
-  clickCount?: number;
-};
-
-export type MultiClickOptions = PointerActionOptions & {
-  delay?: number;
-  button?: Button;
-};
-
-export type SelectOption = {
-  value?: string;
-  label?: string;
-  index?: number;
 };
 
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
@@ -335,33 +313,7 @@ export class ElementHandle extends JSHandle {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this.evaluate((element: HTMLSelectElement, ...optionsToSelect: (Node | SelectOption)[]) => {
-      if (element.nodeName.toLowerCase() !== 'select')
-        throw new Error('Element is not a <select> element.');
-
-      const options = Array.from(element.options);
-      element.value = undefined;
-      for (let index = 0; index < options.length; index++) {
-        const option = options[index];
-        option.selected = optionsToSelect.some(optionToSelect => {
-          if (optionToSelect instanceof Node)
-            return option === optionToSelect;
-          let matches = true;
-          if (optionToSelect.value !== undefined)
-            matches = matches && optionToSelect.value === option.value;
-          if (optionToSelect.label !== undefined)
-            matches = matches && optionToSelect.label === option.label;
-          if (optionToSelect.index !== undefined)
-            matches = matches && optionToSelect.index === index;
-          return matches;
-        });
-        if (option.selected && !element.multiple)
-          break;
-      }
-      element.dispatchEvent(new Event('input', { 'bubbles': true }));
-      element.dispatchEvent(new Event('change', { 'bubbles': true }));
-      return options.filter(option => option.selected).map(option => option.value);
-    }, ...options);
+    return this.evaluate(selectFunction, ...options);
   }
 
   async fill(value: string): Promise<void> {

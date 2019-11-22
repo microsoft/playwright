@@ -21,9 +21,10 @@ import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './Frame';
 import { FrameManager } from './FrameManager';
 import { assert, helper } from '../helper';
-import { ElementHandle, JSHandle, ClickOptions, PointerActionOptions, MultiClickOptions, SelectOption } from './JSHandle';
+import { ElementHandle, JSHandle } from './JSHandle';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { TimeoutSettings } from '../TimeoutSettings';
+import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
 const readFileAsync = helper.promisify(fs.readFile);
 
 export class DOMWorld {
@@ -278,63 +279,6 @@ export class DOMWorld {
       await promise;
       return style;
     }
-  }
-
-  async click(selector: string, options?: ClickOptions) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.click(options);
-    await handle.dispose();
-  }
-
-  async dblclick(selector: string, options?: MultiClickOptions) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.dblclick(options);
-    await handle.dispose();
-  }
-
-  async tripleclick(selector: string, options?: MultiClickOptions) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.tripleclick(options);
-    await handle.dispose();
-  }
-
-  async fill(selector: string, value: string) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.fill(value);
-    await handle.dispose();
-  }
-
-  async focus(selector: string) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.focus();
-    await handle.dispose();
-  }
-
-  async hover(selector: string, options?: PointerActionOptions) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.hover(options);
-    await handle.dispose();
-  }
-
-  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    const result = await handle.select(...values);
-    await handle.dispose();
-    return result;
-  }
-
-  async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    const handle = await this.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.type(text, options);
-    await handle.dispose();
   }
 
   waitForSelector(selector: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } | undefined): Promise<ElementHandle | null> {

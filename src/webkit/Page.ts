@@ -18,19 +18,20 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { ClickOptions, MultiClickOptions } from '../input';
+import { TimeoutSettings } from '../TimeoutSettings';
+import { Browser, BrowserContext } from './Browser';
 import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { Frame, FrameManager, FrameManagerEvents } from './FrameManager';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
-import { valueFromRemoteObject } from './protocolHelper';
 import { Keyboard, Mouse } from './Input';
-import { createJSHandle, ElementHandle, JSHandle, ClickOptions } from './JSHandle';
-import { Response, NetworkManagerEvents } from './NetworkManager';
-import { TaskQueue } from './TaskQueue';
-import { TimeoutSettings } from '../TimeoutSettings';
-import { Target } from './Target';
-import { Browser, BrowserContext } from './Browser';
+import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
+import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
+import { valueFromRemoteObject } from './protocolHelper';
+import { Target } from './Target';
+import { TaskQueue } from './TaskQueue';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -435,6 +436,14 @@ export class Page extends EventEmitter {
 
   click(selector: string, options?: ClickOptions) {
     return this.mainFrame().click(selector, options);
+  }
+
+  dblclick(selector: string, options?: MultiClickOptions) {
+    return this.mainFrame().dblclick(selector, options);
+  }
+
+  tripleclick(selector: string, options?: MultiClickOptions) {
+    return this.mainFrame().tripleclick(selector, options);
   }
 
   hover(selector: string) {
