@@ -264,6 +264,17 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.PREFIX + '/tamperable.html');
       expect(await page.evaluate(() => window.result)).toBe(123);
     });
+    fit('should support multiple scripts', async({page, server}) => {
+      await page.evaluateOnNewDocument(function(){
+        window.script1 = 1;
+      });
+      await page.evaluateOnNewDocument(function(){
+        window.script2 = 2;
+      });
+      await page.goto(server.PREFIX + '/tamperable.html');
+      expect(await page.evaluate(() => window.script1)).toBe(1);
+      expect(await page.evaluate(() => window.script2)).toBe(2);
+    });
     it('should work with CSP', async({page, server}) => {
       server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
       await page.evaluateOnNewDocument(function(){

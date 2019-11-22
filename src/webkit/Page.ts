@@ -47,6 +47,7 @@ export class Page extends EventEmitter {
   private _mouse: Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _frameManager: FrameManager;
+  private _bootstrapScripts: string[] = [];
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
   private _screenshotTaskQueue: TaskQueue;
@@ -345,7 +346,10 @@ export class Page extends EventEmitter {
   }
 
   async evaluateOnNewDocument(pageFunction: Function | string, ...args: Array<any>) {
-    const source = helper.evaluationString(pageFunction, ...args);
+    const script = helper.evaluationString(pageFunction, ...args);
+    this._bootstrapScripts.push(script);
+    const source = this._bootstrapScripts.join(';');
+    // TODO(yurys): support process swap on navigation.
     await this._session.send('Page.setBootstrapScript', { source });
   }
 
