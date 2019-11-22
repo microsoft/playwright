@@ -23,7 +23,7 @@ if [[ (-z $AZ_ACCOUNT_KEY) || (-z $AZ_ACCOUNT_NAME) ]]; then
   exit 1
 fi
 
-if ! which az >/dev/null; then
+if ! command -v az >/dev/null; then
   echo "ERROR: az is not found in PATH"
   exit 1
 fi
