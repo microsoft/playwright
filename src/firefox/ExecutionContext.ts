@@ -33,7 +33,7 @@ export class ExecutionContext {
     this._executionContextId = executionContextId;
   }
 
-  async evaluateHandle(pageFunction, ...args) {
+  async evaluateHandle(pageFunction, ...args): Promise<JSHandle> {
     if (helper.isString(pageFunction)) {
       const payload = await this._session.send('Runtime.evaluate', {
         expression: pageFunction.trim(),
@@ -105,7 +105,7 @@ export class ExecutionContext {
     return this._frame;
   }
 
-  async evaluate(pageFunction, ...args) {
+  async evaluate(pageFunction, ...args): Promise<any> {
     try {
       const handle = await this.evaluateHandle(pageFunction, ...args);
       const result = await handle.jsonValue();

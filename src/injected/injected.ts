@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { SelectorEngine } from './selectorEngine';
+import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { Utils } from './utils';
 
 type ParsedSelector = { engine: SelectorEngine, selector: string }[];
@@ -17,25 +17,25 @@ export class Injected {
       this.engines.set(engine.name, engine);
   }
 
-  querySelector(selector: string, root: Element): Element | undefined {
+  querySelector(selector: string, root: SelectorRoot): Element | undefined {
     const parsed = this._parseSelector(selector);
     let element = root;
     for (const { engine, selector } of parsed) {
-      const next = engine.query(element.shadowRoot || element, selector);
+      const next = engine.query((element as Element).shadowRoot || element, selector);
       if (!next)
         return;
       element = next;
     }
-    return element;
+    return element as Element;
   }
 
-  querySelectorAll(selector: string, root: Element): Element[] {
+  querySelectorAll(selector: string, root: SelectorRoot): Element[] {
     const parsed = this._parseSelector(selector);
-    let set = new Set<Element>([ root ]);
+    let set = new Set<SelectorRoot>([ root ]);
     for (const { engine, selector } of parsed) {
       const newSet = new Set<Element>();
       for (const prev of set) {
-        for (const next of engine.queryAll(prev.shadowRoot || prev, selector)) {
+        for (const next of engine.queryAll((prev as Element).shadowRoot || prev, selector)) {
           if (newSet.has(next))
             continue;
           newSet.add(next);
@@ -43,7 +43,7 @@ export class Injected {
       }
       set = newSet;
     }
-    return Array.from(set);
+    return Array.from(set) as Element[];
   }
 
   private _parseSelector(selector: string): ParsedSelector {

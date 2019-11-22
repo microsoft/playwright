@@ -23,6 +23,8 @@ import { JugglerSession } from './Connection';
 import { MultiClickOptions, ClickOptions, selectFunction, SelectOption } from '../input';
 import Injected from '../injected/injected';
 
+type SelectorRoot = Element | ShadowRoot | Document;
+
 export class JSHandle {
   _context: ExecutionContext;
   protected _session: JugglerSession;
@@ -203,9 +205,7 @@ export class ElementHandle extends JSHandle {
 
   async $(selector: string): Promise<ElementHandle | null> {
     const handle = await this._frame.evaluateHandle(
-      (element, selector, injected: Injected) => {
-        return injected.querySelector('css=' + selector, element);
-      },
+      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
       this, selector, await this._context._injected()
     );
     const element = handle.asElement();
@@ -215,10 +215,10 @@ export class ElementHandle extends JSHandle {
     return null;
   }
 
-  async $$(selector: string): Promise<Array<ElementHandle>> {
+  async $$(selector: string): Promise<ElementHandle[]> {
     const arrayHandle = await this._frame.evaluateHandle(
-        (element, selector) => element.querySelectorAll(selector),
-        this, selector
+      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
+      this, selector, await this._context._injected()
     );
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
@@ -231,7 +231,7 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<object | undefined> {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -240,10 +240,10 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<object | undefined> {
     const arrayHandle = await this._frame.evaluateHandle(
-        (element, selector) => Array.from(element.querySelectorAll(selector)),
-        this, selector
+      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
+      this, selector, await this._context._injected()
     );
 
     const result = await this._frame.evaluate(pageFunction, arrayHandle, ...args);

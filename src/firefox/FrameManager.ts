@@ -352,7 +352,7 @@ export class Frame {
     return this._mainWorld.setContent(html);
   }
 
-  async evaluate(pageFunction, ...args) {
+  async evaluate(pageFunction, ...args): Promise<any> {
     return this._mainWorld.evaluate(pageFunction, ...args);
   }
 
@@ -376,7 +376,7 @@ export class Frame {
     return this._mainWorld.$x(expression);
   }
 
-  async evaluateHandle(pageFunction, ...args) {
+  async evaluateHandle(pageFunction, ...args): Promise<JSHandle> {
     return this._mainWorld.evaluateHandle(pageFunction, ...args);
   }
 
