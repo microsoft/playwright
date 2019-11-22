@@ -1593,10 +1593,9 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 #### page.select(selector, ...values)
 - `selector` <[string]> A [selector] to query page for.
-- `...values` <...[string]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
-  - `id` <[string]> Matches by `option.id`.
   - `index` <[number]> Matches by the index.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
@@ -2813,10 +2812,9 @@ If the name is empty, returns the id attribute instead.
 
 #### frame.select(selector, ...values)
 - `selector` <[string]> A [selector] to query frame for.
-- `...values` <...[string]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
-  - `id` <[string]> Matches by `option.id`.
   - `index` <[number]> Matches by the index.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
@@ -3539,10 +3537,9 @@ This method scrolls element into view if needed, and then uses [page.screenshot]
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.select(...values)
-- `...values` <...[string]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
-  - `id` <[string]> Matches by `option.id`.
   - `index` <[number]> Matches by the index.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 

@@ -902,9 +902,9 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => result.onInput)).toEqual(['indigo']);
       expect(await page.evaluate(() => result.onChange)).toEqual(['indigo']);
     });
-    it('should select single option by id', async({page, server}) => {
+    it('should select single option by handle', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
-      await page.select('select', { id: 'whiteOption' });
+      await page.select('select', await page.$('[id=whiteOption]'));
       expect(await page.evaluate(() => result.onInput)).toEqual(['white']);
       expect(await page.evaluate(() => result.onChange)).toEqual(['white']);
     });
@@ -1027,14 +1027,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
         error = e;
       }
       expect(error.message).toContain('Labels must be strings');
-
-      error = null;
-      try {
-        await page.select('select', { id: 12 });
-      } catch (e) {
-        error = e;
-      }
-      expect(error.message).toContain('Ids must be strings');
 
       error = null;
       try {
