@@ -15,20 +15,26 @@
  * limitations under the License.
  */
 import { assert } from '../../helper';
-import { CDPSession } from '../Connection';
+import { CDPSession, Connection } from '../Connection';
 import { Page } from '../Page';
 import { readProtocolStream } from '../protocolHelper';
 import { Target } from '../Target';
 import { Worker } from './workers';
 
 export class Chromium {
+  private _connection: Connection;
   private _client: CDPSession;
   private _recording = false;
   private _path = '';
   private _tracingClient: CDPSession | undefined;
 
-  constructor(client: CDPSession) {
+  constructor(connection: Connection, client: CDPSession) {
+    this._connection = connection;
     this._client = client;
+  }
+
+  createBrowserCDPSession(): Promise<CDPSession> {
+    return this._connection.createBrowserSession();
   }
 
   createCDPSession(target: Target): Promise<CDPSession> {
@@ -76,5 +82,9 @@ export class Chromium {
     await this._tracingClient.send('Tracing.end');
     this._recording = false;
     return contentPromise;
+  }
+
+  wsEndpoint(): string {
+    return this._connection.url();
   }
 }
