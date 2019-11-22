@@ -715,7 +715,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().hover(selector, options);
   }
 
-  select(selector: string, ...values: (string | SelectOption)[]): Promise<string[]> {
+  select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
     return this.mainFrame().select(selector, ...values);
   }
 

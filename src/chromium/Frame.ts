@@ -164,8 +164,10 @@ export class Frame {
     return this._secondaryWorld.hover(selector, options);
   }
 
-  select(selector: string, ...values: (string | SelectOption)[]): Promise<string[]>{
-    return this._secondaryWorld.select(selector, ...values);
+  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]>{
+    const secondaryExecutionContext = await this._secondaryWorld.executionContext();
+    const adoptedValues = values.map(async value => value instanceof ElementHandle ? secondaryExecutionContext._adoptElementHandle(value) : value);
+    return this._secondaryWorld.select(selector, ...(await Promise.all(adoptedValues)));
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {

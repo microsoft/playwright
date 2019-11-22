@@ -322,7 +322,7 @@ export class DOMWorld {
     await handle.dispose();
   }
 
-  async select(selector: string, ...values: (string | SelectOption)[]): Promise<string[]> {
+  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
     const handle = await this.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     const result = await handle.select(...values);
