@@ -52,9 +52,7 @@ else
 fi
 
 echo "-- preparing checkout"
-# the "do_checkout" script asks if you want to reset existing branch.
-# sure we do!
-yes | ./do_checkout.sh $BROWSER_NAME
+./prepare_checkout.sh $BROWSER_NAME
 echo "-- building"
 ./$BROWSER_NAME/build.sh
 echo "-- archiving to $ZIP_PATH"
