@@ -15,7 +15,7 @@ HOST="https://playwrightaccount.blob.core.windows.net/builds"
 ARCHIVES=(
   "$HOST/firefox/%s/firefox-mac.zip"
   "$HOST/firefox/%s/firefox-linux.zip"
-  "$HOST/firefox/%s/firefox-win.zip"
+  "$HOST/firefox/%s/firefox-win32.zip"
   "$HOST/webkit/%s/minibrowser-linux.zip"
   "$HOST/webkit/%s/minibrowser-mac-10.14.zip"
   "$HOST/webkit/%s/minibrowser-mac-10.15.zip"

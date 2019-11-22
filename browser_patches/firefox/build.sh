@@ -32,6 +32,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
+elif [[ "$(uname)" == MINGW* ]]; then
+  echo "-- building on MINGW"
 else
   echo "ERROR: cannot upload on this platform!" 1>&2
   exit 1;

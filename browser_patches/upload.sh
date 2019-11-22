@@ -42,6 +42,8 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
     BLOB_NAME="firefox-mac.zip"
   elif [[ "$(uname)" == "Linux" ]]; then
     BLOB_NAME="firefox-linux.zip"
+  elif [[ "$(uname)" == MINGW* ]]; then
+    BLOB_NAME="firefox-win32.zip"
   else
     echo "ERROR: unzupported platform - $(uname)"
     exit 1
