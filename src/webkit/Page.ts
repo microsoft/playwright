@@ -347,6 +347,11 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().evaluate(pageFunction, ...args);
   }
 
+  async evaluateOnNewDocument(pageFunction: Function | string, ...args: Array<any>) {
+    const source = helper.evaluationString(pageFunction, ...args);
+    await this._session.send('Page.setBootstrapScript', { source });
+  }
+
   async setCacheEnabled(enabled: boolean = true) {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
