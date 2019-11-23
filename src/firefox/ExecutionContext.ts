@@ -20,6 +20,7 @@ import {JSHandle, createHandle} from './JSHandle';
 import { Frame } from './FrameManager';
 import * as injectedSource from '../generated/injectedSource';
 import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
+import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
 
 export class ExecutionContext {
   _session: any;
@@ -120,7 +121,7 @@ export class ExecutionContext {
 
   _injected(): Promise<JSHandle> {
     if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source];
+      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
       const source = `
         new (${injectedSource.source})([
           ${engineSources.join(',\n')}

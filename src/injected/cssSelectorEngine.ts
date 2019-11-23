@@ -3,7 +3,7 @@
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 
-export const CSSEngine: SelectorEngine = {
+const CSSEngine: SelectorEngine = {
   name: 'css',
 
   create(root: SelectorRoot, targetElement: Element): string | undefined {
