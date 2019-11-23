@@ -58,6 +58,8 @@ fi
 
 echo "-- preparing checkout"
 ./prepare_checkout.sh $BROWSER_NAME
+echo "-- cleaning"
+./$BROWSER_NAME/clean.sh
 echo "-- building"
 ./$BROWSER_NAME/build.sh
 echo "-- archiving to $ZIP_PATH"
