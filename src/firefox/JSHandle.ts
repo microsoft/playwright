@@ -20,12 +20,13 @@ import { assert, debugError, helper } from '../helper';
 import { ClickOptions, fillFunction, MultiClickOptions, selectFunction, SelectOption } from '../input';
 import { JugglerSession } from './Connection';
 import Injected from '../injected/injected';
-
-type SelectorRoot = Element | ShadowRoot | Document;
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './FrameManager';
+import * as types from '../types';
 
-export class JSHandle {
+type SelectorRoot = Element | ShadowRoot | Document;
+
+export class JSHandle implements types.HandleEvaluationContext<JSHandle> {
   _context: ExecutionContext;
   protected _session: JugglerSession;
   private _executionContextId: string;
@@ -54,12 +55,12 @@ export class JSHandle {
     return this._context;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<(any)> {
-    return await this.executionContext().evaluate(pageFunction, this, ...args);
+  evaluate<Args extends any[], R>(pageFunction: types.FuncOn<any, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this.executionContext().evaluate(pageFunction, this, ...args);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return await this.executionContext().evaluateHandle(pageFunction, this, ...args);
+  evaluateHandle<Args extends any[]>(pageFunction: types.FuncOn<any, Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
+    return this.executionContext().evaluateHandle(pageFunction, this, ...args);
   }
 
   toString(): string {
@@ -188,7 +189,7 @@ export class ElementHandle extends JSHandle {
   }
 
   isIntersectingViewport(): Promise<boolean> {
-    return this._frame.evaluate(async element => {
+    return this._frame.evaluate(async (element: Element) => {
       const visibleRatio = await new Promise(resolve => {
         const observer = new IntersectionObserver(entries => {
           resolve(entries[0].intersectionRatio);
@@ -231,22 +232,22 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<object | undefined> {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await this._frame.evaluate(pageFunction, elementHandle, ...args);
+    const result = await this._frame.evaluate(pageFunction, elementHandle, ...args as any);
     await elementHandle.dispose();
     return result;
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<object | undefined> {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const arrayHandle = await this._frame.evaluateHandle(
       (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
       this, selector, await this._context._injected()
     );
 
-    const result = await this._frame.evaluate(pageFunction, arrayHandle, ...args);
+    const result = await this._frame.evaluate(pageFunction, arrayHandle, ...args as any);
     await arrayHandle.dispose();
     return result;
   }
@@ -268,7 +269,7 @@ export class ElementHandle extends JSHandle {
   }
 
   async _scrollIntoViewIfNeeded() {
-    const error = await this._frame.evaluate(async element => {
+    const error = await this._frame.evaluate(async (element: Element) => {
       if (!element.isConnected)
         return 'Node is detached from document';
       if (element.nodeType !== Node.ELEMENT_NODE)
@@ -284,7 +285,7 @@ export class ElementHandle extends JSHandle {
         requestAnimationFrame(() => {});
       });
       if (visibleRatio !== 1.0)
-        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
+        element.scrollIntoView({block: 'center', inline: 'center', behavior: ('instant' as ScrollBehavior)});
       return false;
     }, this);
     if (error)
@@ -325,7 +326,7 @@ export class ElementHandle extends JSHandle {
   }
 
   async focus() {
-    await this._frame.evaluate(element => element.focus(), this);
+    await this._frame.evaluate((element: HTMLElement) => element.focus(), this);
   }
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {

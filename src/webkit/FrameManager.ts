@@ -27,6 +27,7 @@ import { NetworkManager, NetworkManagerEvents, Request, Response } from './Netwo
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
+import * as types from '../types';
 const readFileAsync = helper.promisify(fs.readFile);
 
 export const FrameManagerEvents = {
@@ -229,7 +230,7 @@ export class FrameManager extends EventEmitter {
   }
 }
 
-export class Frame {
+export class Frame implements types.DOMEvaluationContext<JSHandle> {
   _id: string;
   _frameManager: FrameManager;
   _session: any;
@@ -309,14 +310,14 @@ export class Frame {
     return this._contextPromise;
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: Array<any>): Promise<JSHandle> {
+  async evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
     const context = await this.executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction: Function | string, ...args: Array<any>): Promise<any> {
+  async evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const context = await this.executionContext();
-    return context.evaluate(pageFunction, ...args);
+    return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -341,14 +342,14 @@ export class Frame {
     return value;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(any)> {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const document = await this._document();
-    return document.$eval(selector, pageFunction, ...args);
+    return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(any)> {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const document = await this._document();
-    const value = await document.$$eval(selector, pageFunction, ...args);
+    const value = await document.$$eval(selector, pageFunction, ...args as any);
     return value;
   }
 

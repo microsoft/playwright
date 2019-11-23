@@ -24,8 +24,9 @@ import { FrameManager } from './FrameManager';
 import { ElementHandle, JSHandle } from './JSHandle';
 import { Response } from './NetworkManager';
 import { Protocol } from './protocol';
+import * as types from '../types';
 
-export class Frame {
+export class Frame implements types.DOMEvaluationContext<JSHandle> {
   _id: string;
   _frameManager: FrameManager;
   private _client: CDPSession;
@@ -68,12 +69,12 @@ export class Frame {
     return this._mainWorld.executionContext();
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return this._mainWorld.evaluateHandle(pageFunction, ...args);
+  evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
+    return this._mainWorld.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return this._mainWorld.evaluate(pageFunction, ...args);
+  evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._mainWorld.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -84,12 +85,12 @@ export class Frame {
     return this._mainWorld.$x(expression);
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this._mainWorld.$eval(selector, pageFunction, ...args);
+  $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._mainWorld.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this._mainWorld.$$eval(selector, pageFunction, ...args);
+  $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._mainWorld.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<ElementHandle[]> {

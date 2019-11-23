@@ -32,6 +32,7 @@ import { Protocol } from './protocol';
 import { valueFromRemoteObject } from './protocolHelper';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
+import * as types from '../types';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -40,7 +41,7 @@ export type Viewport = {
   height: number;
 }
 
-export class Page extends EventEmitter {
+export class Page extends EventEmitter implements types.DOMEvaluationContext<JSHandle> {
   private _closed = false;
   private _session: TargetSession;
   private _target: Target;
@@ -198,17 +199,16 @@ export class Page extends EventEmitter {
     return this.mainFrame().$(selector);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    const context = await this.mainFrame().executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+  evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
+    return this.mainFrame().evaluateHandle(pageFunction, ...args as any);
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this.mainFrame().$eval(selector, pageFunction, ...args);
+  $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this.mainFrame().$$eval(selector, pageFunction, ...args);
+  $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<ElementHandle[]> {
@@ -342,8 +342,8 @@ export class Page extends EventEmitter {
     return this._viewport;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return this._frameManager.mainFrame().evaluate(pageFunction, ...args);
+  evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._frameManager.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
   async evaluateOnNewDocument(pageFunction: Function | string, ...args: Array<any>) {

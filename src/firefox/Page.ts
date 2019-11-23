@@ -16,11 +16,12 @@ import { createHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import { ClickOptions, MultiClickOptions } from '../input';
+import * as types from '../types';
 
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
-export class Page extends EventEmitter {
+export class Page extends EventEmitter implements types.DOMEvaluationContext<JSHandle> {
   private _timeoutSettings: TimeoutSettings;
   private _session: JugglerSession;
   private _target: Target;
@@ -460,8 +461,8 @@ export class Page extends EventEmitter {
     }
   }
 
-  evaluate(pageFunction, ...args) {
-    return this.mainFrame().evaluate(pageFunction, ...args);
+  evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
   addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {
@@ -532,20 +533,20 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().$$(selector);
   }
 
-  $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return this._frameManager.mainFrame().$eval(selector, pageFunction, ...args);
+  $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._frameManager.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args);
+  $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
   $x(expression: string): Promise<Array<ElementHandle>> {
     return this._frameManager.mainFrame().$x(expression);
   }
 
-  evaluateHandle(pageFunction, ...args) {
-    return this._frameManager.mainFrame().evaluateHandle(pageFunction, ...args);
+  evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
+    return this._frameManager.mainFrame().evaluateHandle(pageFunction, ...args as any);
   }
 
   async close(options: any = {}) {

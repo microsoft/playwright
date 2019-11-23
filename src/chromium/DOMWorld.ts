@@ -25,9 +25,10 @@ import { ElementHandle, JSHandle } from './JSHandle';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
+import * as types from '../types';
 const readFileAsync = helper.promisify(fs.readFile);
 
-export class DOMWorld {
+export class DOMWorld implements types.DOMEvaluationContext<JSHandle> {
   private _frameManager: FrameManager;
   private _frame: Frame;
   private _timeoutSettings: TimeoutSettings;
@@ -79,14 +80,14 @@ export class DOMWorld {
     return this._contextPromise;
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
+  async evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
     const context = await this.executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
+  async evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const context = await this.executionContext();
-    return context.evaluate(pageFunction, ...args);
+    return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -111,15 +112,14 @@ export class DOMWorld {
     return value;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const document = await this._document();
-    return document.$eval(selector, pageFunction, ...args);
+    return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const document = await this._document();
-    const value = await document.$$eval(selector, pageFunction, ...args);
-    return value;
+    return document.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<ElementHandle[]> {
@@ -439,7 +439,7 @@ class WaitTask {
   }
 }
 
-async function waitForPredicatePageFunction(predicateBody: string, polling: string, timeout: number, ...args): Promise<any> {
+async function waitForPredicatePageFunction(predicateBody: string, polling: string | number, timeout: number, ...args): Promise<any> {
   const predicate = new Function('...args', predicateBody);
   let timedOut = false;
   if (timeout)

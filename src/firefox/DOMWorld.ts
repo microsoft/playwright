@@ -4,10 +4,11 @@ import * as fs from 'fs';
 import * as util from 'util';
 import {ElementHandle, JSHandle} from './JSHandle';
 import { ExecutionContext } from './ExecutionContext';
+import * as types from '../types';
 
 const readFileAsync = util.promisify(fs.readFile);
 
-export class DOMWorld {
+export class DOMWorld implements types.DOMEvaluationContext<JSHandle> {
   _frame: any;
   _timeoutSettings: any;
   _documentPromise: any;
@@ -61,14 +62,14 @@ export class DOMWorld {
     throw new Error('Method not implemented.');
   }
 
-  async evaluateHandle(pageFunction, ...args): Promise<JSHandle> {
+  async evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
     const context = await this.executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction, ...args): Promise<any> {
+  async evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const context = await this.executionContext();
-    return context.evaluate(pageFunction, ...args);
+    return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -87,14 +88,14 @@ export class DOMWorld {
     return document.$x(expression);
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const document = await this._document();
-    return document.$eval(selector, pageFunction, ...args);
+    return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const document = await this._document();
-    return document.$$eval(selector, pageFunction, ...args);
+    return document.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<Array<ElementHandle>> {

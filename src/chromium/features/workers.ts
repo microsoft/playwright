@@ -21,6 +21,7 @@ import { debugError } from '../../helper';
 import { JSHandle } from '../JSHandle';
 import { Protocol } from '../protocol';
 import { Events } from '../events';
+import * as types from '../../types';
 
 type AddToConsoleCallback = (type: string, args: JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
 type HandleExceptionCallback = (exceptionDetails: Protocol.Runtime.ExceptionDetails) => void;
@@ -53,7 +54,7 @@ export class Workers extends EventEmitter {
   }
 }
 
-export class Worker extends EventEmitter {
+export class Worker extends EventEmitter implements types.EvaluationContext<JSHandle> {
   private _client: CDPSession;
   private _url: string;
   private _executionContextPromise: Promise<ExecutionContext>;
@@ -85,11 +86,11 @@ export class Worker extends EventEmitter {
     return this._executionContextPromise;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return (await this._executionContextPromise).evaluate(pageFunction, ...args);
+  async evaluate<Args extends any[], R>(pageFunction: string | ((...args: Args) => R | Promise<R>), ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return (await this._executionContextPromise).evaluate(pageFunction, ...args as any);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args);
+  async evaluateHandle<Args extends any[]>(pageFunction: string | ((...args: Args) => any), ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
+    return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
   }
 }

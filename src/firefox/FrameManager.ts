@@ -11,6 +11,7 @@ import { JSHandle, ElementHandle } from './JSHandle';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { NetworkManager } from './NetworkManager';
 import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
+import * as types from '../types';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -139,7 +140,7 @@ export class FrameManager extends EventEmitter {
   }
 }
 
-export class Frame {
+export class Frame implements types.DOMEvaluationContext<JSHandle> {
   _parentFrame: Frame|null = null;
   private _session: JugglerSession;
   _page: Page;
@@ -359,8 +360,8 @@ export class Frame {
     return this._mainWorld.setContent(html);
   }
 
-  async evaluate(pageFunction, ...args): Promise<any> {
-    return this._mainWorld.evaluate(pageFunction, ...args);
+  evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._mainWorld.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -371,20 +372,20 @@ export class Frame {
     return this._mainWorld.$$(selector);
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return this._mainWorld.$eval(selector, pageFunction, ...args);
+  $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._mainWorld.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return this._mainWorld.$$eval(selector, pageFunction, ...args);
+  $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._mainWorld.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $x(expression: string): Promise<Array<ElementHandle>> {
     return this._mainWorld.$x(expression);
   }
 
-  async evaluateHandle(pageFunction, ...args): Promise<JSHandle> {
-    return this._mainWorld.evaluateHandle(pageFunction, ...args);
+  evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
+    return this._mainWorld.evaluateHandle(pageFunction, ...args as any);
   }
 
   async addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {

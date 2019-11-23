@@ -24,11 +24,12 @@ import { Protocol } from './protocol';
 import * as injectedSource from '../generated/injectedSource';
 import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
+import * as types from '../types';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export class ExecutionContext {
+export class ExecutionContext implements types.EvaluationContext<JSHandle> {
   _globalObjectId?: string;
   _session: TargetSession;
   _frame: Frame;
@@ -55,11 +56,11 @@ export class ExecutionContext {
     return this._frame;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return await this._evaluateInternal(true /* returnByValue */, pageFunction, ...args);
+  evaluate<Args extends any[], R>(pageFunction: types.Func<Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this._evaluateInternal(true /* returnByValue */, pageFunction, ...args);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
+  evaluateHandle<Args extends any[]>(pageFunction: types.Func<Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
     return this._evaluateInternal(false /* returnByValue */, pageFunction, ...args);
   }
 

@@ -24,6 +24,7 @@ import { Page } from './Page';
 import { Protocol } from './protocol';
 import { releaseObject, valueFromRemoteObject } from './protocolHelper';
 import Injected from '../injected/injected';
+import * as types from '../types';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -38,7 +39,7 @@ export function createJSHandle(context: ExecutionContext, remoteObject: Protocol
   return new JSHandle(context, context._session, remoteObject);
 }
 
-export class JSHandle {
+export class JSHandle implements types.HandleEvaluationContext<JSHandle> {
   _context: ExecutionContext;
   protected _client: TargetSession;
   _remoteObject: Protocol.Runtime.RemoteObject;
@@ -54,12 +55,12 @@ export class JSHandle {
     return this._context;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return await this.executionContext().evaluate(pageFunction, this, ...args);
+  evaluate<Args extends any[], R>(pageFunction: types.FuncOn<any, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
+    return this.executionContext().evaluate(pageFunction, this, ...args);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return await this.executionContext().evaluateHandle(pageFunction, this, ...args);
+  evaluateHandle<Args extends any[]>(pageFunction: types.FuncOn<any, Args>, ...args: types.Boxed<Args, JSHandle>): Promise<JSHandle> {
+    return this.executionContext().evaluateHandle(pageFunction, this, ...args);
   }
 
   async getProperty(propertyName: string): Promise<JSHandle | null> {
@@ -311,22 +312,22 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<object | undefined> {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element, Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await elementHandle.evaluate(pageFunction, ...args);
+    const result = await elementHandle.evaluate(pageFunction, ...args as any);
     await elementHandle.dispose();
     return result;
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<object | undefined> {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.FuncOn<Element[], Args, R>, ...args: types.Boxed<Args, JSHandle>): Promise<R> {
     const arrayHandle = await this.evaluateHandle(
       (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
       selector, await this._context._injected()
     );
 
-    const result = await arrayHandle.evaluate(pageFunction, ...args);
+    const result = await arrayHandle.evaluate(pageFunction, ...args as any);
     await arrayHandle.dispose();
     return result;
   }
