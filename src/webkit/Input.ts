@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { TargetSession } from './Connection';
 import { assert } from '../helper';
+import * as input from '../input';
 import { keyDefinitions } from '../USKeyboardLayout';
-import { MultiClickOptions, ClickOptions } from '../input';
+import { TargetSession } from './Connection';
 
 type KeyDescription = {
   keyCode: number,
@@ -188,7 +188,7 @@ export class Keyboard {
   }
 }
 
-export class Mouse {
+export class Mouse implements input.MouseOperations {
   private _client: TargetSession;
   private _keyboard: Keyboard;
   private _x = 0;
@@ -216,74 +216,6 @@ export class Mouse {
     }
   }
 
-  async click(x: number, y: number, options: ClickOptions = {}) {
-    const {delay = null} = options;
-    if (delay !== null) {
-      await Promise.all([
-        this.move(x, y),
-        this.down(options),
-      ]);
-      await new Promise(f => setTimeout(f, delay));
-      await this.up(options);
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down(options),
-        this.up(options),
-      ]);
-    }
-  }
-
-  async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
-    const { delay = null } = options;
-    if (delay !== null) {
-      await this.move(x, y);
-      await this.down({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 2 });
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down({ ...options, clickCount: 1 }),
-        this.up({ ...options, clickCount: 1 }),
-        this.down({ ...options, clickCount: 2 }),
-        this.up({ ...options, clickCount: 2 }),
-      ]);
-    }
-  }
-
-  async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
-    const { delay = null } = options;
-    if (delay !== null) {
-      await this.move(x, y);
-      await this.down({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 3 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 3 });
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down({ ...options, clickCount: 1 }),
-        this.up({ ...options, clickCount: 1 }),
-        this.down({ ...options, clickCount: 2 }),
-        this.up({ ...options, clickCount: 2 }),
-        this.down({ ...options, clickCount: 3 }),
-        this.up({ ...options, clickCount: 3 }),
-      ]);
-    }
-  }
-
   async down(options: { button?: Button; clickCount?: number; } = {}) {
     const {button = 'left', clickCount = 1} = options;
     this._button = button;
@@ -308,5 +240,17 @@ export class Mouse {
       modifiers: this._keyboard._modifiers,
       clickCount
     });
+  }
+
+  async click(x: number, y: number, options?: input.ClickOptions) {
+    await new input.MouseClicker(this).click(x, y, options);
+  }
+
+  async dblclick(x: number, y: number, options?: input.ClickOptions) {
+    await new input.MouseClicker(this).dblclick(x, y, options);
+  }
+
+  async tripleclick(x: number, y: number, options?: input.ClickOptions) {
+    await new input.MouseClicker(this).tripleclick(x, y, options);
   }
 }
