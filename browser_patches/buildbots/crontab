@@ -1,0 +1,1 @@
+*/5 * * * * . $HOME/.profile; $HOME/prog/cron/playwright/browser_patches/buildbots/buildbot-linux.sh >/tmp/buildbot-linux-cronjob.log

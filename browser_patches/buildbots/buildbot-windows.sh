@@ -26,23 +26,13 @@ if ! command -v az >/dev/null; then
   exit 1
 fi
 
-BROWSER_NAME=""
-if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
-  BROWSER_NAME="firefox"
-elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
-  BROWSER_NAME="webkit"
-else
-  echo ERROR: unknown browser - "$1"
-  exit 1
-fi
-
 # make sure the lockfile is removed when we exit and then claim it
 trap "cd $(pwd -P);" EXIT
 cd "$(dirname "$0")"
 
 # Check if git repo is dirty.
 if [[ -n $(git status -s) ]]; then
-  echo "ERROR: $FRIENDLY_CHECKOUT_PATH has dirty GIT state - commit everything and re-run the script."
+  echo "ERROR: dirty GIT state - commit everything and re-run the script."
   exit 1
 fi
 
@@ -51,7 +41,7 @@ while true; do
   iteration=$(( iteration + 1 ))
   echo "== ITERATION ${iteration} =="
   git pull origin master
-  ../checkout_build_archive_upload.sh $BROWSER_NAME
+  ../checkout_build_archive_upload.sh firefox
   echo "------ Sleeping for 300 seconds before next turn... ------"
   sleep 300
 done;

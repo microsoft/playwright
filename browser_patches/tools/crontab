@@ -1,2 +1,0 @@
-*/1 * * * * . $HOME/.profile; $HOME/prog/cron/playwright/browser_patches/tools/cronjob.sh webkit &>/tmp/playwright-cronjob-building-log-webkit.txt
-*/1 * * * * . $HOME/.profile; $HOME/prog/cron/playwright/browser_patches/tools/cronjob.sh firefox &>/tmp/playwright-cronjob-building-log-firefox.txt
