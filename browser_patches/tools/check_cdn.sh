@@ -68,4 +68,7 @@ while (( REVISION > 0 )); do
   done;
   echo
   REVISION=$((REVISION - 1 ))
+  if [[ $REVISION == "999" ]]; then
+    REVISION=2
+  fi
 done;
