@@ -4,16 +4,16 @@ This document describes setting up bots infrastructure to produce
 browser builds.
 
 We currently have 4 build bots that produce 6 builds
-- **[bot-linux]** Ubuntu 18.04 machine
+- **[buildbot-linux]** Ubuntu 18.04 machine
     - builds: `Webkit-Linux`, `Firefox-Linux`
-- **[bot-mac-10.14]** Mac 10.14 machine
+- **[buildbot-mac-10.14]** Mac 10.14 machine
     - builds: `WebKit-mac-10.14`, `Firefox-Mac`
-- **[bot-mac-10.15]** machine
+- **[buildbot-mac-10.15]** machine
     - builds: `WebKit-mac-10.15`
-- **[bot-windows]** Windows machine
-    - builds: `Firefox-win32`
+- **[buildbot-windows]** Windows 10 machine
+    - builds: `Firefox-win32`, `Firefox-win64`
 
-# bot-windows
+# buildbot-windows
 
 ## Setting Up Host Machine
 

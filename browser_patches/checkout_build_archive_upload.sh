@@ -21,8 +21,12 @@ if [[ $# == 0 ]]; then
 fi
 
 BROWSER_NAME=""
+FFOX_WIN64=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   BROWSER_NAME="firefox"
+  if [[ ("$2" == "--win64") || ("$3" == "--win64") ]]; then
+    FFOX_WIN64="--win64"
+  fi
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   BROWSER_NAME="webkit"
 else
@@ -58,11 +62,19 @@ fi
 
 echo "-- preparing checkout"
 ./prepare_checkout.sh $BROWSER_NAME
+
 echo "-- cleaning"
 ./$BROWSER_NAME/clean.sh
+
 echo "-- building"
-./$BROWSER_NAME/build.sh
+if [[ $BROWSER_NAME == "firefox" ]]; then
+  ./$BROWSER_NAME/build.sh $FFOX_WIN64
+else
+  ./$BROWSER_NAME/build.sh
+fi
+
 echo "-- archiving to $ZIP_PATH"
 ./$BROWSER_NAME/archive.sh $ZIP_PATH
+
 echo "-- uploading"
 ./upload.sh $BROWSER_NAME $ZIP_PATH

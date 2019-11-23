@@ -36,6 +36,8 @@ while true; do
   echo "== ITERATION ${iteration} =="
   git pull origin master
   ../checkout_build_archive_upload.sh firefox
+  git pull origin master
+  ../checkout_build_archive_upload.sh firefox --win64
   echo "------ Sleeping for 300 seconds before next turn... ------"
   sleep 300
 done;

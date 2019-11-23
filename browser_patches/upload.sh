@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit] [--check] [zip-path]"
+  echo "usage: $(basename $0) [firefox|webkit] [--check] [zip-path] [--win64]"
   echo
   echo "Upload .zip as a browser build."
   echo
@@ -43,7 +43,11 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   elif [[ "$(uname)" == "Linux" ]]; then
     BLOB_NAME="firefox-linux.zip"
   elif [[ "$(uname)" == MINGW* ]]; then
-    BLOB_NAME="firefox-win32.zip"
+    if [[ ("$2" == "--win64") || ("$3" == "--win64") ]]; then
+      BLOB_NAME="firefox-win64.zip"
+    else
+      BLOB_NAME="firefox-win32.zip"
+    fi
   else
     echo "ERROR: unzupported platform - $(uname)"
     exit 1

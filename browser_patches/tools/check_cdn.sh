@@ -16,6 +16,7 @@ ARCHIVES=(
   "$HOST/firefox/%s/firefox-mac.zip"
   "$HOST/firefox/%s/firefox-linux.zip"
   "$HOST/firefox/%s/firefox-win32.zip"
+  "$HOST/firefox/%s/firefox-win64.zip"
   "$HOST/webkit/%s/minibrowser-linux.zip"
   "$HOST/webkit/%s/minibrowser-mac-10.14.zip"
   "$HOST/webkit/%s/minibrowser-mac-10.15.zip"
@@ -24,7 +25,8 @@ ARCHIVES=(
 ALIASES=(
   "FF-MAC"
   "FF-LINUX"
-  "FF-WIN"
+  "FF-WIN32"
+  "FF-WIN64"
   "WK-LINUX"
   "WK-MAC-10.14"
   "WK-MAC-10.15"
