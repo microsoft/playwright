@@ -25,6 +25,8 @@ import { Protocol } from './protocol';
 import { releaseObject, valueFromRemoteObject } from './protocolHelper';
 import Injected from '../injected/injected';
 
+type SelectorRoot = Element | ShadowRoot | Document;
+
 const writeFileAsync = helper.promisify(fs.writeFile);
 
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
@@ -52,7 +54,7 @@ export class JSHandle {
     return this._context;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<(any)> {
+  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
     return await this.executionContext().evaluate(pageFunction, this, ...args);
   }
 
@@ -310,9 +312,7 @@ export class ElementHandle extends JSHandle {
 
   async $(selector: string): Promise<ElementHandle | null> {
     const handle = await this.evaluateHandle(
-      (element, selector, injected: Injected) => {
-        return injected.querySelector('css=' + selector, element);
-      },
+      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
       selector, await this._context._injected()
     );
     const element = handle.asElement();
@@ -338,7 +338,7 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
+  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<object | undefined> {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -347,10 +347,10 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
+  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<object | undefined> {
     const arrayHandle = await this.evaluateHandle(
-        (element, selector) => Array.from(element.querySelectorAll(selector)),
-        selector
+      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
+      selector, await this._context._injected()
     );
 
     const result = await arrayHandle.evaluate(pageFunction, ...args);

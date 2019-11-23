@@ -3,6 +3,7 @@ import {TimeoutError} from '../Errors';
 import * as fs from 'fs';
 import * as util from 'util';
 import {ElementHandle, JSHandle} from './JSHandle';
+import { ExecutionContext } from './ExecutionContext';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -51,7 +52,7 @@ export class DOMWorld {
       waitTask.terminate(new Error('waitForFunction failed: frame got detached.'));
   }
 
-  async executionContext() {
+  async executionContext(): Promise<ExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
     return this._contextPromise;
@@ -60,12 +61,12 @@ export class DOMWorld {
     throw new Error('Method not implemented.');
   }
 
-  async evaluateHandle(pageFunction, ...args) {
+  async evaluateHandle(pageFunction, ...args): Promise<JSHandle> {
     const context = await this.executionContext();
     return context.evaluateHandle(pageFunction, ...args);
   }
 
-  async evaluate(pageFunction, ...args) {
+  async evaluate(pageFunction, ...args): Promise<any> {
     const context = await this.executionContext();
     return context.evaluate(pageFunction, ...args);
   }
