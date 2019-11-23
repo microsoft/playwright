@@ -92,29 +92,40 @@ else
 fi
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-BASE_REVISION=$(git merge-base $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH $CURRENT_BRANCH)
+NEW_BASE_REVISION=$(git merge-base $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH $CURRENT_BRANCH)
 echo "=============================================================="
 echo "    Repository:                $FRIENDLY_CHECKOUT_PATH"
 echo "    Changes between branches:  $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH..$CURRENT_BRANCH"
-echo "    BASE_REVISION:             $BASE_REIVSION"
+echo "    BASE_REVISION:             $NEW_BASE_REVISION"
 echo
 
-echo $BASE_REIVSION > $EXPORT_PATH/BASE_REVISION
-git checkout -b tmpsquash_export_script $BASE_REIVSION
+git checkout -b tmpsquash_export_script $NEW_BASE_REVISION
 git merge --squash $CURRENT_BRANCH
+
+HAS_CHANGES="false"
 if ! git commit -am "chore: bootstrap"; then
-  echo "No changes!"
-  git checkout $CURRENT_BRANCH
-  git branch -D tmpsquash_export_script
-  exit 0
+  echo "-- no code changes"
+else
+  HAS_CHANGES="true"
+  PATCH_NAME=$(git format-patch -1 HEAD)
+  mv $PATCH_NAME $EXPORT_PATH/patches/
 fi
-PATCH_NAME=$(git format-patch -1 HEAD)
-mv $PATCH_NAME $EXPORT_PATH/patches/
 git checkout $CURRENT_BRANCH
 git branch -D tmpsquash_export_script
+
+if [[ "$NEW_BASE_REVISION" == "$BASE_REVISION" ]]; then
+  echo "-- no BASE_REVISION changes"
+else
+  HAS_CHANGES="true"
+fi
+
+if [[ $HAS_CHANGES == "false" ]]; then
+  exit 0
+fi
+
 echo "REMOTE_URL=\"$REMOTE_URL\"
 BASE_BRANCH=\"$BASE_BRANCH\"
-BASE_REVISION=\"$BASE_REIVSION\"" > $EXPORT_PATH/UPSTREAM_CONFIG.sh
+BASE_REVISION=\"$NEW_BASE_REVISION\"" > $EXPORT_PATH/UPSTREAM_CONFIG.sh
 
 # Increment BUILD_NUMBER
 BUILD_NUMBER=$(cat $EXPORT_PATH/BUILD_NUMBER)
