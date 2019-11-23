@@ -1,6 +1,6 @@
-From db891a78ac18605d1fb4c6c4a260c1e16340789c Mon Sep 17 00:00:00 2001
+From 0ad0c75a7109b3db02515806dedfa1dad51f1183 Mon Sep 17 00:00:00 2001
 From: Andrey Lushnikov <lushnikov@chromium.org>
-Date: Fri, 15 Nov 2019 18:10:56 -0800
+Date: Fri, 22 Nov 2019 19:18:05 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
@@ -117,10 +117,10 @@ index b56ce1764dbb..1f4e7cb24d6f 100644
      /*
       * We don't want to send OnLocationChange notifications when
 diff --git a/dom/ipc/BrowserChild.cpp b/dom/ipc/BrowserChild.cpp
-index d033474bec84..e97ab5373f13 100644
+index 6cfb8fcbaa43..3618739a53a9 100644
 --- a/dom/ipc/BrowserChild.cpp
 +++ b/dom/ipc/BrowserChild.cpp
-@@ -3576,6 +3576,13 @@ NS_IMETHODIMP BrowserChild::OnStateChange(nsIWebProgress* aWebProgress,
+@@ -3582,6 +3582,13 @@ NS_IMETHODIMP BrowserChild::OnStateChange(nsIWebProgress* aWebProgress,
    return NS_OK;
  }
  
@@ -4891,5 +4891,5 @@ index 87701f8d2cfe..ae1aa85c019c 100644
 +                             [optional] in unsigned long aFlags);
  };
 -- 
-2.17.1
+2.22.1
 
