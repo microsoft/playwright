@@ -4,7 +4,7 @@
   "description": "A high-level API to control headless Chrome over the DevTools Protocol",
   "repository": "github:Microsoft/playwright",
   "engines": {
-    "node": ">=8.16.0"
+    "node": ">=10.17.0"
   },
   "playwright": {
     "chromium_revision": "717627",
