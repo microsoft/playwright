@@ -6,7 +6,7 @@ import { Utils } from './utils';
 
 type ParsedSelector = { engine: SelectorEngine, selector: string }[];
 
-export class Injected {
+class Injected {
   readonly utils: Utils;
   readonly engines: Map<string, SelectorEngine>;
 

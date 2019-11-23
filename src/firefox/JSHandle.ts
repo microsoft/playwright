@@ -253,16 +253,8 @@ export class ElementHandle extends JSHandle {
 
   async $x(expression: string): Promise<Array<ElementHandle>> {
     const arrayHandle = await this._frame.evaluateHandle(
-        (element, expression) => {
-          const document = element.ownerDocument || element;
-          const iterator = document.evaluate(expression, element, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
-          const array = [];
-          let item;
-          while ((item = iterator.iterateNext()))
-            array.push(item);
-          return array;
-        },
-        this, expression
+      (root: SelectorRoot, expression: string, injected: Injected) => injected.querySelectorAll('xpath=' + expression, root),
+      this, expression, await this._context._injected()
     );
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();

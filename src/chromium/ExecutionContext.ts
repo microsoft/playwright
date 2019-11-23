@@ -24,6 +24,7 @@ import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
 import { Protocol } from './protocol';
 import * as injectedSource from '../generated/injectedSource';
 import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
+import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
@@ -164,7 +165,7 @@ export class ExecutionContext {
 
   _injected(): Promise<JSHandle> {
     if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source];
+      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
       const source = `
         new (${injectedSource.source})([
           ${engineSources.join(',\n')}

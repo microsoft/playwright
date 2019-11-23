@@ -18,6 +18,7 @@ module.exports = class InlineSource {
       if (source.endsWith(';'))
         source = source.substring(0, source.length - 1);
       source = '(' + source + ').default';
+      fs.mkdirSync(path.dirname(this.outFile), { recursive: true });
       const newSource = 'export const source = ' + JSON.stringify(source) + ';';
       fs.writeFileSync(this.outFile, newSource);
       callback();
