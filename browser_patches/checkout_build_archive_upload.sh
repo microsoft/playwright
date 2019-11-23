@@ -30,7 +30,12 @@ else
   exit 1
 fi
 
-ZIP_PATH="/tmp/archive-$BROWSER_NAME.zip"
+if [[ $(uname) == MINGW* ]]; then
+  ZIP_PATH="$PWD/archive-$BROWSER_NAME.zip"
+else
+  ZIP_PATH="/tmp/archive-$BROWSER_NAME.zip"
+fi
+
 if [[ -f $ZIP_PATH ]]; then
   echo "Archive $ZIP_PATH already exists - remove and re-run the script."
   exit 1
