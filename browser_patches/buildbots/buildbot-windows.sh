@@ -3,15 +3,9 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit]"
+  echo "usage: $(basename $0)"
   echo
   echo "Pull from upstream & run checkout_build_archive_upload.sh in a loop"
-fi
-
-if [[ $# == 0 ]]; then
-  echo "missing browser: 'firefox' or 'webkit'"
-  echo "try './$(basename $0) --help' for more information"
-  exit 1
 fi
 
 if [[ (-z $AZ_ACCOUNT_KEY) || (-z $AZ_ACCOUNT_NAME) ]]; then

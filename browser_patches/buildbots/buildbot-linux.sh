@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit]"
+  echo "usage: $(basename $0)"
   echo
   echo "Pull from upstream & run checkout_build_archive_upload.sh"
   echo "in a safe way so that multiple instances of the script cannot be run"
