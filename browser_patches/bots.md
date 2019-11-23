@@ -56,8 +56,8 @@ change `<account-name>` and `<account-key>` with relevant keys/names.
 
 Run `c:\mozilla-build\start-shell.bat` and checkout PlayWright repo to `/c/playwright`.
 
-
 ## Running Build Loop
 
 1. Launch `c:\mozilla-build/start-shell.bat`
 2. Run `/c/playwright/browser_patches/tools/poll_build.sh`
+3. Disable "QuickEdit" terminal mode to avoid [terminal freezing and postponing builds](https://stackoverflow.com/questions/33883530/why-is-my-command-prompt-freezing-on-windows-10)
