@@ -90,12 +90,12 @@ if ! [[ $ZIP_PATH == *.zip ]]; then
   exit 1
 fi
 if [[ $(uname) == MINGW* ]]; then
-	WIN_PATH=$({ cd $(dirname $ZIP_PATH) && pwd -W; } | sed 's|/|\\|g')
-	WIN_PATH="${WIN_PATH}\\$(basename $ZIP_PATH)"
-	echo $WIN_PATH
-	az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $WIN_PATH -n $BLOB_PATH
+  # Convert POSIX path to MSYS
+  WIN_PATH=$({ cd $(dirname $ZIP_PATH) && pwd -W; } | sed 's|/|\\|g')
+  WIN_PATH="${WIN_PATH}\\$(basename $ZIP_PATH)"
+  az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $WIN_PATH -n $BLOB_PATH
 else
-	az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $ZIP_PATH -n "$BLOB_PATH"
+  az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $ZIP_PATH -n "$BLOB_PATH"
 fi
 
 echo "UPLOAD SUCCESSFUL!"
