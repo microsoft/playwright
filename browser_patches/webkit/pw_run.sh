@@ -6,6 +6,8 @@ function runOSX() {
     DYLIB_PATH="$SCRIPT_PATH/checkout/WebKitBuild/Release"
   elif [ -d $SCRIPT_PATH/MiniBrowser.app ]; then
     DYLIB_PATH="$SCRIPT_PATH"
+  elif [ -d $SCRIPT_PATH/WebKitBuild/Release/MiniBrowser.app ]; then
+    DYLIB_PATH="$SCRIPT_PATH/WebKitBuild/Release"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1
@@ -22,6 +24,9 @@ function runLinux() {
   elif [ -f $SCRIPT_PATH/MiniBrowser ]; then
     LD_PATH="$SCRIPT_PATH"
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
+  elif [ -d $SCRIPT_PATH/WebKitBuild ]; then
+    LD_PATH="$SCRIPT_PATH/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/WebKitBuild/Release/bin"
+    MINIBROWSER="$SCRIPT_PATH/WebKitBuild/Release/bin/MiniBrowser"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1
