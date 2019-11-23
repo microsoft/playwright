@@ -281,6 +281,13 @@ export class Frame {
     return result;
   }
 
+  async fill(selector: string, value: string) {
+    const handle = await this.$(selector);
+    assert(handle, 'No node found for selector: ' + selector);
+    await handle.fill(value);
+    await handle.dispose();
+  }
+
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
     const handle = await this.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
