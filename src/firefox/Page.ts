@@ -460,88 +460,92 @@ export class Page extends EventEmitter {
     }
   }
 
-  async evaluate(pageFunction, ...args) {
-    return await this.mainFrame().evaluate(pageFunction, ...args);
+  evaluate(pageFunction, ...args) {
+    return this.mainFrame().evaluate(pageFunction, ...args);
   }
 
-  async addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {
-    return await this.mainFrame().addScriptTag(options);
+  addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {
+    return this.mainFrame().addScriptTag(options);
   }
 
-  async addStyleTag(options: { content?: string; path?: string; url?: string; }): Promise<ElementHandle> {
-    return await this.mainFrame().addStyleTag(options);
+  addStyleTag(options: { content?: string; path?: string; url?: string; }): Promise<ElementHandle> {
+    return this.mainFrame().addStyleTag(options);
   }
 
-  async click(selector: string, options?: ClickOptions) {
-    return await this.mainFrame().click(selector, options);
+  click(selector: string, options?: ClickOptions) {
+    return this.mainFrame().click(selector, options);
   }
 
-  async dblclick(selector: string, options?: MultiClickOptions) {
+  dblclick(selector: string, options?: MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  async tripleclick(selector: string, options?: MultiClickOptions) {
+  tripleclick(selector: string, options?: MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    return await this._frameManager.mainFrame().type(selector, text, options);
+  fill(selector: string, value: string) {
+    return this.mainFrame().fill(selector, value);
   }
 
-  async focus(selector: string) {
-    return await this._frameManager.mainFrame().focus(selector);
+  select(selector: string, ...values: Array<string>): Promise<Array<string>> {
+    return this._frameManager.mainFrame().select(selector, ...values);
   }
 
-  async hover(selector: string) {
-    return await this._frameManager.mainFrame().hover(selector);
+  type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
+    return this._frameManager.mainFrame().type(selector, text, options);
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { polling?: string | number; timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}, ...args: Array<any>): Promise<JSHandle> {
-    return await this._frameManager.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
+  focus(selector: string) {
+    return this._frameManager.mainFrame().focus(selector);
   }
 
-  async waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<JSHandle> {
-    return await this._frameManager.mainFrame().waitForFunction(pageFunction, options, ...args);
+  hover(selector: string) {
+    return this._frameManager.mainFrame().hover(selector);
   }
 
-  async waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<ElementHandle> {
-    return await this._frameManager.mainFrame().waitForSelector(selector, options);
+  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { polling?: string | number; timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}, ...args: Array<any>): Promise<JSHandle> {
+    return this._frameManager.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
-  async waitForXPath(xpath: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<ElementHandle> {
-    return await this._frameManager.mainFrame().waitForXPath(xpath, options);
+  waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<JSHandle> {
+    return this._frameManager.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 
-  async title(): Promise<string> {
-    return await this._frameManager.mainFrame().title();
+  waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<ElementHandle> {
+    return this._frameManager.mainFrame().waitForSelector(selector, options);
   }
 
-  async $(selector: string): Promise<ElementHandle | null> {
-    return await this._frameManager.mainFrame().$(selector);
+  waitForXPath(xpath: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<ElementHandle> {
+    return this._frameManager.mainFrame().waitForXPath(xpath, options);
   }
 
-  async $$(selector: string): Promise<Array<ElementHandle>> {
-    return await this._frameManager.mainFrame().$$(selector);
+  title(): Promise<string> {
+    return this._frameManager.mainFrame().title();
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return await this._frameManager.mainFrame().$eval(selector, pageFunction, ...args);
+  $(selector: string): Promise<ElementHandle | null> {
+    return this._frameManager.mainFrame().$(selector);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return await this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args);
+  $$(selector: string): Promise<Array<ElementHandle>> {
+    return this._frameManager.mainFrame().$$(selector);
   }
 
-  async $x(expression: string): Promise<Array<ElementHandle>> {
-    return await this._frameManager.mainFrame().$x(expression);
+  $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+    return this._frameManager.mainFrame().$eval(selector, pageFunction, ...args);
   }
 
-  async evaluateHandle(pageFunction, ...args) {
-    return await this._frameManager.mainFrame().evaluateHandle(pageFunction, ...args);
+  $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+    return this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args);
   }
 
-  async select(selector: string, ...values: Array<string>): Promise<Array<string>> {
-    return await this._frameManager.mainFrame().select(selector, ...values);
+  $x(expression: string): Promise<Array<ElementHandle>> {
+    return this._frameManager.mainFrame().$x(expression);
+  }
+
+  evaluateHandle(pageFunction, ...args) {
+    return this._frameManager.mainFrame().evaluateHandle(pageFunction, ...args);
   }
 
   async close(options: any = {}) {

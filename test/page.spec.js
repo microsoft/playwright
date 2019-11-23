@@ -1046,7 +1046,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(FFOX)('Page.fill', function() {
+  describe('Page.fill', function() {
     it('should fill textarea', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.fill('textarea', 'some value');

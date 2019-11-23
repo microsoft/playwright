@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-import {assert, debugError, helper} from '../helper';
 import * as path from 'path';
-import {ExecutionContext} from './ExecutionContext';
-import {Frame} from './FrameManager';
+import { assert, debugError, helper } from '../helper';
+import { ClickOptions, fillFunction, MultiClickOptions, selectFunction, SelectOption } from '../input';
 import { JugglerSession } from './Connection';
-import { MultiClickOptions, ClickOptions, selectFunction, SelectOption } from '../input';
 import Injected from '../injected/injected';
 
 type SelectorRoot = Element | ShadowRoot | Document;
+import { ExecutionContext } from './ExecutionContext';
+import { Frame } from './FrameManager';
 
 export class JSHandle {
   _context: ExecutionContext;
@@ -359,6 +359,15 @@ export class ElementHandle extends JSHandle {
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
     return this.evaluate(selectFunction, ...options);
+  }
+
+  async fill(value: string): Promise<void> {
+    assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
+    const error = await this.evaluate(fillFunction);
+    if (error)
+      throw new Error(error);
+    await this.focus();
+    await this._frame._page.keyboard.sendCharacter(value);
   }
 
   async _clickablePoint(): Promise<{ x: number; y: number; }> {
