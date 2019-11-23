@@ -6,4 +6,6 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 cd "checkout"
 
-rm -rf WebKitBuild
+if [[ -d ./WebKitBuild ]]; then
+  rm -rf ./WebKitBuild/Release
+fi

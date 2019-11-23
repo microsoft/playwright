@@ -18,6 +18,9 @@ fi
 if [[ "$(uname)" == "Darwin" ]]; then
   ./Tools/Scripts/build-webkit --release
 elif [[ "$(uname)" == "Linux" ]]; then
+  if ! [[ -d ./WebKitBuild ]]; then
+    yes | DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
+  fi
   ./Tools/Scripts/build-webkit --gtk --release MiniBrowser
 else
   echo "ERROR: cannot upload on this platform!" 1>&2
