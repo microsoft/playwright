@@ -62,3 +62,12 @@ $ ./browser_patches/tools/check_cdn.sh
 ```
 
 As the builds appear, you can roll to a new browser version in the `./package.json` file.
+
+
+# FAQ
+
+## Q: Can I reuse my other browser checkout?
+
+Yes, you can. For this:
+- pass path to your browser checkout as a second argument to `prepare_checkout.sh` script.
+- pass path to your browser checkout as a second argument to `export.sh` when exporting changes.
