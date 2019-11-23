@@ -46,7 +46,10 @@ if [[ -n $(git status -s) ]]; then
   exit 1
 fi
 
+iteration=0
 while true; do
+  iteration=$(( iteration + 1 ))
+  echo "== ITERATION ${iteration} =="
   git pull origin master
   ../checkout_build_archive_upload.sh $BROWSER_NAME
   echo "------ Sleeping for 300 seconds before next turn... ------"
