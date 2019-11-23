@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../helper';
-import { Modifier, Button } from '../input';
+import * as input from '../input';
 import { keyDefinitions } from '../USKeyboardLayout';
 import { CDPSession } from './Connection';
 
@@ -28,7 +28,7 @@ type KeyDescription = {
   location: number,
 };
 
-const kModifiers: Modifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
+const kModifiers: input.Modifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
 
 export class Keyboard {
   private _client: CDPSession;
@@ -157,12 +157,12 @@ export class Keyboard {
     await this.up(key);
   }
 
-  async _ensureModifiers(modifiers: Modifier[]): Promise<Modifier[]> {
+  async _ensureModifiers(modifiers: input.Modifier[]): Promise<input.Modifier[]> {
     for (const modifier of modifiers) {
       if (!kModifiers.includes(modifier))
         throw new Error('Uknown modifier ' + modifier);
     }
-    const restore: Modifier[] = [];
+    const restore: input.Modifier[] = [];
     const promises: Promise<void>[] = [];
     for (const key of kModifiers) {
       const needDown = modifiers.includes(key);
@@ -179,12 +179,12 @@ export class Keyboard {
   }
 }
 
-export class Mouse {
+export class Mouse implements input.MouseOperations {
   private _client: CDPSession;
   private _keyboard: Keyboard;
   private _x = 0;
   private _y = 0;
-  private _button: 'none' | Button = 'none';
+  private _button: 'none' | input.Button = 'none';
 
   constructor(client: CDPSession, keyboard: Keyboard) {
     this._client = client;
@@ -207,75 +207,7 @@ export class Mouse {
     }
   }
 
-  async click(x: number, y: number, options: { delay?: number; button?: Button; clickCount?: number; } = {}) {
-    const {delay = null} = options;
-    if (delay !== null) {
-      await Promise.all([
-        this.move(x, y),
-        this.down(options),
-      ]);
-      await new Promise(f => setTimeout(f, delay));
-      await this.up(options);
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down(options),
-        this.up(options),
-      ]);
-    }
-  }
-
-  async dblclick(x: number, y: number, options: { delay?: number; button?: Button; } = {}) {
-    const { delay = null } = options;
-    if (delay !== null) {
-      await this.move(x, y);
-      await this.down({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 2 });
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down({ ...options, clickCount: 1 }),
-        this.up({ ...options, clickCount: 1 }),
-        this.down({ ...options, clickCount: 2 }),
-        this.up({ ...options, clickCount: 2 }),
-      ]);
-    }
-  }
-
-  async tripleclick(x: number, y: number, options: { delay?: number; button?: Button; } = {}) {
-    const { delay = null } = options;
-    if (delay !== null) {
-      await this.move(x, y);
-      await this.down({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 1 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 2 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.down({ ...options, clickCount: 3 });
-      await new Promise(f => setTimeout(f, delay));
-      await this.up({ ...options, clickCount: 3 });
-    } else {
-      await Promise.all([
-        this.move(x, y),
-        this.down({ ...options, clickCount: 1 }),
-        this.up({ ...options, clickCount: 1 }),
-        this.down({ ...options, clickCount: 2 }),
-        this.up({ ...options, clickCount: 2 }),
-        this.down({ ...options, clickCount: 3 }),
-        this.up({ ...options, clickCount: 3 }),
-      ]);
-    }
-  }
-
-  async down(options: { button?: Button; clickCount?: number; } = {}) {
+  async down(options: { button?: input.Button; clickCount?: number; } = {}) {
     const {button = 'left', clickCount = 1} = options;
     this._button = button;
     await this._client.send('Input.dispatchMouseEvent', {
@@ -288,7 +220,7 @@ export class Mouse {
     });
   }
 
-  async up(options: { button?: Button; clickCount?: number; } = {}) {
+  async up(options: { button?: input.Button; clickCount?: number; } = {}) {
     const {button = 'left', clickCount = 1} = options;
     this._button = 'none';
     await this._client.send('Input.dispatchMouseEvent', {
@@ -299,5 +231,17 @@ export class Mouse {
       modifiers: this._keyboard._modifiers,
       clickCount
     });
+  }
+
+  async click(x: number, y: number, options?: input.ClickOptions) {
+    await new input.MouseClicker(this).click(x, y, options);
+  }
+
+  async dblclick(x: number, y: number, options?: input.ClickOptions) {
+    await new input.MouseClicker(this).dblclick(x, y, options);
+  }
+
+  async tripleclick(x: number, y: number, options?: input.ClickOptions) {
+    await new input.MouseClicker(this).tripleclick(x, y, options);
   }
 }

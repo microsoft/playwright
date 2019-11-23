@@ -1,6 +1,3 @@
-import { assert } from "console";
-import { helper } from "./helper";
-
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
@@ -33,6 +30,88 @@ export type SelectOption = {
   label?: string;
   index?: number;
 };
+
+export interface MouseOperations {
+  move(x: number, y: number, options?: { steps?: number; }): Promise<void>;
+  down(options?: { button?: Button; clickCount?: number; }): Promise<void>;
+  up(options?: { button?: Button; clickCount?: number; }): Promise<void>;
+}
+
+export class MouseClicker {
+  private _operations: MouseOperations;
+
+  constructor(operations: MouseOperations) {
+    this._operations = operations;
+  }
+
+  async click(x: number, y: number, options: ClickOptions = {}) {
+    const {delay = null} = options;
+    if (delay !== null) {
+      await Promise.all([
+        this._operations.move(x, y),
+        this._operations.down(options),
+      ]);
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.up(options);
+    } else {
+      await Promise.all([
+        this._operations.move(x, y),
+        this._operations.down(options),
+        this._operations.up(options),
+      ]);
+    }
+  }
+
+  async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
+    const { delay = null } = options;
+    if (delay !== null) {
+      await this._operations.move(x, y);
+      await this._operations.down({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.up({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.down({ ...options, clickCount: 2 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.up({ ...options, clickCount: 2 });
+    } else {
+      await Promise.all([
+        this._operations.move(x, y),
+        this._operations.down({ ...options, clickCount: 1 }),
+        this._operations.up({ ...options, clickCount: 1 }),
+        this._operations.down({ ...options, clickCount: 2 }),
+        this._operations.up({ ...options, clickCount: 2 }),
+      ]);
+    }
+  }
+
+  async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
+    const { delay = null } = options;
+    if (delay !== null) {
+      await this._operations.move(x, y);
+      await this._operations.down({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.up({ ...options, clickCount: 1 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.down({ ...options, clickCount: 2 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.up({ ...options, clickCount: 2 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.down({ ...options, clickCount: 3 });
+      await new Promise(f => setTimeout(f, delay));
+      await this._operations.up({ ...options, clickCount: 3 });
+    } else {
+      await Promise.all([
+        this._operations.move(x, y),
+        this._operations.down({ ...options, clickCount: 1 }),
+        this._operations.up({ ...options, clickCount: 1 }),
+        this._operations.down({ ...options, clickCount: 2 }),
+        this._operations.up({ ...options, clickCount: 2 }),
+        this._operations.down({ ...options, clickCount: 3 }),
+        this._operations.up({ ...options, clickCount: 3 }),
+      ]);
+    }
+  }
+}
 
 export const selectFunction = (element: HTMLSelectElement, ...optionsToSelect: (Node | SelectOption)[]) => {
   if (element.nodeName.toLowerCase() !== 'select')
