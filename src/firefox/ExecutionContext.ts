@@ -16,7 +16,7 @@
  */
 
 import {helper} from '../helper';
-import {JSHandle, createHandle} from './JSHandle';
+import {JSHandle, createHandle, ElementHandle} from './JSHandle';
 import { Frame } from './FrameManager';
 import * as injectedSource from '../generated/injectedSource';
 import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
@@ -28,6 +28,7 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
   _frame: Frame;
   _executionContextId: string;
   private _injectedPromise: Promise<JSHandle> | null = null;
+  private _documentPromise: Promise<ElementHandle> | null = null;
 
   constructor(session: any, frame: Frame | null, executionContextId: string) {
     this._session = session;
@@ -131,5 +132,11 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
       this._injectedPromise = this.evaluateHandle(source);
     }
     return this._injectedPromise;
+  }
+
+  _document(): Promise<ElementHandle> {
+    if (!this._documentPromise)
+      this._documentPromise = this.evaluateHandle('document').then(handle => handle.asElement()!);
+    return this._documentPromise;
   }
 }
