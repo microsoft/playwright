@@ -17,15 +17,15 @@
 
 import * as fs from 'fs';
 import * as types from '../types';
-import { TimeoutError } from '../Errors';
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './Frame';
 import { FrameManager } from './FrameManager';
-import { assert, helper } from '../helper';
+import { helper } from '../helper';
 import { ElementHandle, JSHandle } from './JSHandle';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { TimeoutSettings } from '../TimeoutSettings';
-import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
+import { WaitTask, WaitTaskParams } from '../waitTask';
+
 const readFileAsync = helper.promisify(fs.readFile);
 
 export class DOMWorld {
@@ -36,7 +36,7 @@ export class DOMWorld {
   private _contextPromise: Promise<ExecutionContext>;
   private _contextResolveCallback: ((c: ExecutionContext) => void) | null;
   private _context: ExecutionContext | null;
-  _waitTasks = new Set<WaitTask>();
+  _waitTasks = new Set<WaitTask<JSHandle>>();
   private _detached = false;
 
   constructor(frameManager: FrameManager, frame: Frame, timeoutSettings: TimeoutSettings) {
@@ -366,177 +366,3 @@ export class DOMWorld {
   }
 }
 
-type WaitTaskParams = {
-  predicateBody: Function | string;
-  title: string;
-  polling: string | number;
-  timeout: number;
-  args: any[];
-};
-
-class WaitTask {
-  readonly promise: Promise<JSHandle>;
-  private _cleanup: () => void;
-  private _params: WaitTaskParams & { predicateBody: string };
-  private _runCount: number;
-  private _resolve: (result: JSHandle) => void;
-  private _reject: (reason: Error) => void;
-  private _timeoutTimer: NodeJS.Timer;
-  private _terminated: boolean;
-
-  constructor(params: WaitTaskParams, cleanup: () => void) {
-    if (helper.isString(params.polling))
-      assert(params.polling === 'raf' || params.polling === 'mutation', 'Unknown polling option: ' + params.polling);
-    else if (helper.isNumber(params.polling))
-      assert(params.polling > 0, 'Cannot poll with non-positive interval: ' + params.polling);
-    else
-      throw new Error('Unknown polling options: ' + params.polling);
-
-    this._params = {
-      ...params,
-      predicateBody: helper.isString(params.predicateBody) ? 'return (' + params.predicateBody + ')' : 'return (' + params.predicateBody + ')(...args)'
-    };
-    this._cleanup = cleanup;
-    this._runCount = 0;
-    this.promise = new Promise<JSHandle>((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
-    });
-    // Since page navigation requires us to re-install the pageScript, we should track
-    // timeout on our end.
-    if (params.timeout) {
-      const timeoutError = new TimeoutError(`waiting for ${params.title} failed: timeout ${params.timeout}ms exceeded`);
-      this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), params.timeout);
-    }
-  }
-
-  terminate(error: Error) {
-    this._terminated = true;
-    this._reject(error);
-    this._doCleanup();
-  }
-
-  async rerun(context: ExecutionContext) {
-    const runCount = ++this._runCount;
-    let success: JSHandle | null = null;
-    let error = null;
-    try {
-      success = await context.evaluateHandle(waitForPredicatePageFunction, this._params.predicateBody, this._params.polling, this._params.timeout, ...this._params.args);
-    } catch (e) {
-      error = e;
-    }
-
-    if (this._terminated || runCount !== this._runCount) {
-      if (success)
-        await success.dispose();
-      return;
-    }
-
-    // Ignore timeouts in pageScript - we track timeouts ourselves.
-    // If execution context has been already destroyed, `context.evaluate` will
-    // throw an error - ignore this predicate run altogether.
-    if (!error && await context.evaluate(s => !s, success).catch(e => true)) {
-      await success.dispose();
-      return;
-    }
-
-    // When the page is navigated, the promise is rejected.
-    // We will try again in the new execution context.
-    if (error && error.message.includes('Execution context was destroyed'))
-      return;
-
-    // We could have tried to evaluate in a context which was already
-    // destroyed.
-    if (error && error.message.includes('Cannot find context with specified id'))
-      return;
-
-    if (error)
-      this._reject(error);
-    else
-      this._resolve(success);
-
-    this._doCleanup();
-  }
-
-  _doCleanup() {
-    clearTimeout(this._timeoutTimer);
-    this._cleanup();
-  }
-}
-
-async function waitForPredicatePageFunction(predicateBody: string, polling: string | number, timeout: number, ...args): Promise<any> {
-  const predicate = new Function('...args', predicateBody);
-  let timedOut = false;
-  if (timeout)
-    setTimeout(() => timedOut = true, timeout);
-  if (polling === 'raf')
-    return await pollRaf();
-  if (polling === 'mutation')
-    return await pollMutation();
-  if (typeof polling === 'number')
-    return await pollInterval(polling);
-
-  function pollMutation(): Promise<any> {
-    const success = predicate.apply(null, args);
-    if (success)
-      return Promise.resolve(success);
-
-    let fulfill;
-    const result = new Promise(x => fulfill = x);
-    const observer = new MutationObserver(mutations => {
-      if (timedOut) {
-        observer.disconnect();
-        fulfill();
-      }
-      const success = predicate.apply(null, args);
-      if (success) {
-        observer.disconnect();
-        fulfill(success);
-      }
-    });
-    observer.observe(document, {
-      childList: true,
-      subtree: true,
-      attributes: true
-    });
-    return result;
-  }
-
-  function pollRaf(): Promise<any> {
-    let fulfill;
-    const result = new Promise(x => fulfill = x);
-    onRaf();
-    return result;
-
-    function onRaf() {
-      if (timedOut) {
-        fulfill();
-        return;
-      }
-      const success = predicate.apply(null, args);
-      if (success)
-        fulfill(success);
-      else
-        requestAnimationFrame(onRaf);
-    }
-  }
-
-  function pollInterval(pollInterval: number): Promise<any> {
-    let fulfill;
-    const result = new Promise(x => fulfill = x);
-    onTimeout();
-    return result;
-
-    function onTimeout() {
-      if (timedOut) {
-        fulfill();
-        return;
-      }
-      const success = predicate.apply(null, args);
-      if (success)
-        fulfill(success);
-      else
-        setTimeout(onTimeout, pollInterval);
-    }
-  }
-}
