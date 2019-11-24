@@ -29,13 +29,16 @@ fi
 # FRIENDLY_CHECKOUT_PATH is used only for logging.
 FRIENDLY_CHECKOUT_PATH="";
 CHECKOUT_PATH=""
+PATCHES_PATH=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
   CHECKOUT_PATH="$PWD/firefox/checkout"
+  PATCHES_PATH="$PWD/firefox/patches"
   source "./firefox/UPSTREAM_CONFIG.sh"
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
+  PATCHES_PATH="$PWD/webkit/patches"
   source "./webkit/UPSTREAM_CONFIG.sh"
 else
   echo ERROR: unknown browser - "$1"
@@ -101,7 +104,7 @@ if git show-ref --verify --quiet refs/heads/playwright-build; then
 fi
 git checkout -b playwright-build
 echo "-- applying all patches"
-git am ../patches/*
+git am $PATCHES_PATH/*
 
 echo
 echo
