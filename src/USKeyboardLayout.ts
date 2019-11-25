@@ -16,16 +16,18 @@
  */
 
 type KeyDefinition = {
-  keyCode?: number
-  shiftKeyCode?: number
-  key?: string
-  shiftKey?: string
-  code?: string
-  text?: string
-  shiftText?: string
-  location ?: number,
+  keyCode?: number;
+  shiftKeyCode?: number;
+  key?: string;
+  shiftKey?: string;
+  code?: string;
+  text?: string;
+  shiftText?: string;
+  location? : number;
   windowsVirtualKeyCode?: number;
 }
+
+export const keypadLocation = 3;
 
 export const keyDefinitions: { [s: string]: KeyDefinition; } = {
   '0': {'keyCode': 48, 'key': '0', 'code': 'Digit0'},

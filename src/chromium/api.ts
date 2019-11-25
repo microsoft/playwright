@@ -17,10 +17,10 @@ export { PDF } from './features/pdf';
 export { Permissions } from './features/permissions';
 export { Worker, Workers } from './features/workers';
 export { Frame } from './Frame';
-export { Keyboard, Mouse } from './Input';
+export { Mouse } from './Input';
+export { Keyboard } from '../input';
 export { ElementHandle, JSHandle } from './JSHandle';
 export { Request, Response } from './NetworkManager';
 export { ConsoleMessage, FileChooser, Page } from './Page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';
-

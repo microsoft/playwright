@@ -15,178 +15,68 @@
  * limitations under the License.
  */
 
-import { assert } from '../helper';
 import * as input from '../input';
-import { keyDefinitions } from '../USKeyboardLayout';
 import { CDPSession } from './Connection';
 
-type KeyDescription = {
-  keyCode: number,
-  key: string,
-  text: string,
-  code: string,
-  location: number,
-};
+function toModifiersMask(modifiers: Set<input.Modifier>): number {
+  let mask = 0;
+  if (modifiers.has('Alt'))
+    mask |= 1;
+  if (modifiers.has('Control'))
+    mask |= 2;
+  if (modifiers.has('Meta'))
+    mask |= 4;
+  if (modifiers.has('Shift'))
+    mask |= 8;
+  return mask;
+}
 
-const kModifiers: input.Modifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
-
-export class Keyboard {
+export class RawKeyboardImpl implements input.RawKeyboard {
   private _client: CDPSession;
-  _modifiers = 0;
-  private _pressedKeys = new Set<unknown>();
 
   constructor(client: CDPSession) {
     this._client = client;
   }
 
-  async down(key: string, options: { text?: string; } = { text: undefined }) {
-    const description = this._keyDescriptionForString(key);
-
-    const autoRepeat = this._pressedKeys.has(description.code);
-    this._pressedKeys.add(description.code);
-    this._modifiers |= this._modifierBit(description.key);
-
-    const text = options.text === undefined ? description.text : options.text;
+  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
-      modifiers: this._modifiers,
-      windowsVirtualKeyCode: description.keyCode,
-      code: description.code,
-      key: description.key,
-      text: text,
+      modifiers: toModifiersMask(modifiers),
+      windowsVirtualKeyCode: keyCode,
+      code,
+      key,
+      text,
       unmodifiedText: text,
       autoRepeat,
-      location: description.location,
-      isKeypad: description.location === 3
+      location,
+      isKeypad: location === input.keypadLocation
     });
   }
 
-  _modifierBit(key: string): number {
-    if (key === 'Alt')
-      return 1;
-    if (key === 'Control')
-      return 2;
-    if (key === 'Meta')
-      return 4;
-    if (key === 'Shift')
-      return 8;
-    return 0;
-  }
-
-  _keyDescriptionForString(keyString: string): KeyDescription {
-    const shift = this._modifiers & 8;
-    const description = {
-      key: '',
-      keyCode: 0,
-      code: '',
-      text: '',
-      location: 0
-    };
-
-    const definition = keyDefinitions[keyString];
-    assert(definition, `Unknown key: "${keyString}"`);
-
-    if (definition.key)
-      description.key = definition.key;
-    if (shift && definition.shiftKey)
-      description.key = definition.shiftKey;
-
-    if (definition.keyCode)
-      description.keyCode = definition.keyCode;
-    if (shift && definition.shiftKeyCode)
-      description.keyCode = definition.shiftKeyCode;
-
-    if (definition.code)
-      description.code = definition.code;
-
-    if (definition.location)
-      description.location = definition.location;
-
-    if (description.key.length === 1)
-      description.text = description.key;
-
-    if (definition.text)
-      description.text = definition.text;
-    if (shift && definition.shiftText)
-      description.text = definition.shiftText;
-
-    // if any modifiers besides shift are pressed, no text should be sent
-    if (this._modifiers & ~8)
-      description.text = '';
-
-    return description;
-  }
-
-  async up(key: string) {
-    const description = this._keyDescriptionForString(key);
-
-    this._modifiers &= ~this._modifierBit(description.key);
-    this._pressedKeys.delete(description.code);
+  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number): Promise<void> {
     await this._client.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
-      modifiers: this._modifiers,
-      key: description.key,
-      windowsVirtualKeyCode: description.keyCode,
-      code: description.code,
-      location: description.location
+      modifiers: toModifiersMask(modifiers),
+      key,
+      windowsVirtualKeyCode: keyCode,
+      code,
+      location
     });
   }
 
-  async sendCharacter(char: string) {
-    await this._client.send('Input.insertText', {text: char});
-  }
-
-  async type(text: string, options: { delay: (number | undefined); } | undefined) {
-    const delay = (options && options.delay) || null;
-    for (const char of text) {
-      if (keyDefinitions[char]) {
-        await this.press(char, {delay});
-      } else {
-        if (delay)
-          await new Promise(f => setTimeout(f, delay));
-        await this.sendCharacter(char);
-      }
-    }
-  }
-
-  async press(key: string, options: { delay?: number; text?: string; } = {}) {
-    const {delay = null} = options;
-    await this.down(key, options);
-    if (delay)
-      await new Promise(f => setTimeout(f, options.delay));
-    await this.up(key);
-  }
-
-  async _ensureModifiers(modifiers: input.Modifier[]): Promise<input.Modifier[]> {
-    for (const modifier of modifiers) {
-      if (!kModifiers.includes(modifier))
-        throw new Error('Uknown modifier ' + modifier);
-    }
-    const restore: input.Modifier[] = [];
-    const promises: Promise<void>[] = [];
-    for (const key of kModifiers) {
-      const needDown = modifiers.includes(key);
-      const isDown = (this._modifiers & this._modifierBit(key)) !== 0;
-      if (isDown)
-        restore.push(key);
-      if (needDown && !isDown)
-        promises.push(this.down(key));
-      else if (!needDown && isDown)
-        promises.push(this.up(key));
-    }
-    await Promise.all(promises);
-    return restore;
+  async sendText(text: string): Promise<void> {
+    await this._client.send('Input.insertText', { text });
   }
 }
 
 export class Mouse implements input.MouseOperations {
   private _client: CDPSession;
-  private _keyboard: Keyboard;
+  private _keyboard: input.Keyboard;
   private _x = 0;
   private _y = 0;
   private _button: 'none' | input.Button = 'none';
 
-  constructor(client: CDPSession, keyboard: Keyboard) {
+  constructor(client: CDPSession, keyboard: input.Keyboard) {
     this._client = client;
     this._keyboard = keyboard;
   }
@@ -202,7 +92,7 @@ export class Mouse implements input.MouseOperations {
         button: this._button,
         x: fromX + (this._x - fromX) * (i / steps),
         y: fromY + (this._y - fromY) * (i / steps),
-        modifiers: this._keyboard._modifiers
+        modifiers: toModifiersMask(this._keyboard._modifiers())
       });
     }
   }
@@ -215,7 +105,7 @@ export class Mouse implements input.MouseOperations {
       button,
       x: this._x,
       y: this._y,
-      modifiers: this._keyboard._modifiers,
+      modifiers: toModifiersMask(this._keyboard._modifiers()),
       clickCount
     });
   }
@@ -228,7 +118,7 @@ export class Mouse implements input.MouseOperations {
       button,
       x: this._x,
       y: this._y,
-      modifiers: this._keyboard._modifiers,
+      modifiers: toModifiersMask(this._keyboard._modifiers()),
       clickCount
     });
   }
