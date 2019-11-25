@@ -11,7 +11,7 @@ import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
 import { FrameManager, FrameManagerEvents, normalizeWaitUntil, Frame } from './FrameManager';
-import { Mouse, RawKeyboardImpl } from './Input';
+import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { createHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
@@ -25,7 +25,7 @@ export class Page extends EventEmitter {
   private _session: JugglerSession;
   private _target: Target;
   private _keyboard: input.Keyboard;
-  private _mouse: Mouse;
+  private _mouse: input.Mouse;
   readonly accessibility: Accessibility;
   readonly interception: Interception;
   private _closed: boolean;
@@ -60,7 +60,7 @@ export class Page extends EventEmitter {
     this._session = session;
     this._target = target;
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
-    this._mouse = new Mouse(session, this._keyboard);
+    this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
     this.accessibility = new Accessibility(session);
     this._closed = false;
     this._pageBindings = new Map();
@@ -342,7 +342,7 @@ export class Page extends EventEmitter {
     return this._keyboard;
   }
 
-  get mouse(){
+  get mouse(): input.Mouse {
     return this._mouse;
   }
 
