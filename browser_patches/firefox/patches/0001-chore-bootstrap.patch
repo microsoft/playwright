@@ -1,6 +1,6 @@
-From acb1ee0450ffe7739ed96e556095fb0f1c5d60d0 Mon Sep 17 00:00:00 2001
+From 533a4ce6515be3665e44ddeae30ecf5052a17191 Mon Sep 17 00:00:00 2001
 From: Pavel <pavel.feldman@gmail.com>
-Date: Mon, 25 Nov 2019 13:47:08 -0800
+Date: Mon, 25 Nov 2019 14:56:33 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
@@ -23,7 +23,7 @@ Subject: [PATCH] chore: bootstrap
  testing/juggler/content/ContentSession.js     |  63 ++
  testing/juggler/content/FrameTree.js          | 232 ++++++
  testing/juggler/content/NetworkMonitor.js     |  62 ++
- testing/juggler/content/PageAgent.js          | 638 +++++++++++++++++
+ testing/juggler/content/PageAgent.js          | 644 +++++++++++++++++
  testing/juggler/content/RuntimeAgent.js       | 468 ++++++++++++
  testing/juggler/content/ScrollbarManager.js   |  85 +++
  .../juggler/content/floating-scrollbars.css   |  47 ++
@@ -37,7 +37,7 @@ Subject: [PATCH] chore: bootstrap
  testing/juggler/protocol/NetworkHandler.js    | 154 ++++
  testing/juggler/protocol/PageHandler.js       | 277 ++++++++
  testing/juggler/protocol/PrimitiveTypes.js    | 143 ++++
- testing/juggler/protocol/Protocol.js          | 669 ++++++++++++++++++
+ testing/juggler/protocol/Protocol.js          | 670 ++++++++++++++++++
  testing/juggler/protocol/RuntimeHandler.js    |  41 ++
  testing/juggler/protocol/TargetHandler.js     |  75 ++
  .../statusfilter/nsBrowserStatusFilter.cpp    |  12 +-
@@ -46,7 +46,7 @@ Subject: [PATCH] chore: bootstrap
  uriloader/base/nsDocLoader.h                  |   5 +
  uriloader/base/nsIWebProgress.idl             |   7 +-
  uriloader/base/nsIWebProgressListener2.idl    |  23 +
- 42 files changed, 4579 insertions(+), 7 deletions(-)
+ 42 files changed, 4586 insertions(+), 7 deletions(-)
  create mode 100644 testing/juggler/BrowserContextManager.js
  create mode 100644 testing/juggler/Helper.js
  create mode 100644 testing/juggler/NetworkObserver.js
@@ -1795,10 +1795,10 @@ index 000000000000..2508cce41565
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 000000000000..0e47a99eda47
+index 000000000000..34b799b53113
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,638 @@
+@@ -0,0 +1,644 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -1857,12 +1857,18 @@ index 000000000000..0e47a99eda47
 +    this._scrollbarManager.setFloatingScrollbars(isMobile);
 +  }
 +
-+  async setEmulatedMedia({media}) {
++  async setEmulatedMedia({type, colorScheme}) {
 +    const docShell = this._frameTree.mainFrame().docShell();
-+    if (media)
-+      docShell.contentViewer.emulateMedium(media);
-+    else
-+      docShell.contentViewer.stopEmulatingMedium();
++    const cv = docShell.contentViewer;
++    if (type === '')
++      cv.stopEmulatingMedium();
++    else if (type)
++      cv.emulateMedium(type);
++    switch (colorScheme) {
++      case 'light': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_LIGHT); break;
++      case 'dark': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_DARK); break;
++      case 'no-preference': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_NO_PREFERENCE); break;
++    }
 +  }
 +
 +  async setUserAgent({userAgent}) {
@@ -4123,10 +4129,10 @@ index 000000000000..78b6601b91d0
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 000000000000..0b2044e057a4
+index 000000000000..1ed27df14a1a
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,669 @@
+@@ -0,0 +1,670 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4617,7 +4623,8 @@ index 000000000000..0b2044e057a4
 +    },
 +    'setEmulatedMedia': {
 +      params: {
-+        media: t.Enum(['screen', 'print', '']),
++        type: t.Optional(t.Enum(['screen', 'print', ''])),
++        colorScheme: t.Optional(t.Enum(['dark', 'light', 'no-preference'])),
 +      },
 +    },
 +    'setCacheDisabled': {

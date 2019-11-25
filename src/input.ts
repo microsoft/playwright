@@ -310,3 +310,6 @@ export const fillFunction = (element: HTMLElement) => {
   }
   return false;
 };
+
+export const mediaTypes = new Set(['screen', 'print']);
+export const mediaColorSchemes = new Set(['dark', 'light', 'no-preference']);

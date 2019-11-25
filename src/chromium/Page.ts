@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
 import { assert, debugError, helper } from '../helper';
-import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
+import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption, mediaTypes, mediaColorSchemes } from '../input';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
@@ -78,6 +78,7 @@ export class Page extends EventEmitter {
   private _fileChooserInterceptionIsDisabled = false;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   private _disconnectPromise: Promise<Error> | undefined;
+  private _emulatedMediaType: string | undefined;
 
   static async create(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
     const page = new Page(client, target, ignoreHTTPSErrors, screenshotTaskQueue);
@@ -534,15 +535,15 @@ export class Page extends EventEmitter {
     await this._client.send('Page.setBypassCSP', { enabled });
   }
 
-  async emulateMedia(options: { type?: string, features?: MediaFeature[] }) {
-    assert(options.type === 'screen' || options.type === 'print' || options.type === undefined, 'Unsupported media type: ' + options.type);
-    if (options.features) {
-      options.features.forEach(mediaFeature => {
-        const name = mediaFeature.name;
-        assert(/^prefers-(?:color-scheme|reduced-motion)$/.test(name), 'Unsupported media feature: ' + name);
-      });
-    }
-    await this._client.send('Emulation.setEmulatedMedia', { media: options.type, features: options.features });
+  async emulateMedia(options: {
+      type?: string,
+      colorScheme?: 'dark' | 'light' | 'no-preference' }) {
+    assert(!options.type || mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
+    assert(!options.colorScheme || mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
+    const media = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
+    const features = typeof options.colorScheme === 'undefined' ? [] : [{ name: 'prefers-color-scheme', value: options.colorScheme }];
+    await this._client.send('Emulation.setEmulatedMedia', { media: media || '', features });
+    this._emulatedMediaType = options.type;
   }
 
   async emulateTimezone(timezoneId: string | null) {

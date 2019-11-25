@@ -104,6 +104,9 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
       await page.emulateMedia({});
+      expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(false);
+      expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
+      await page.emulateMedia({ type: '' });
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
     });
@@ -114,39 +117,25 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Page.emulateMedia features', function() {
+  describe.skip(WEBKIT)('Page.emulateMedia colorScheme', function() {
     it('should work', async({page, server}) => {
-      await page.emulateMedia({ features: [
-        { name: 'prefers-reduced-motion', value: 'reduce' },
-      ] });
-      expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
-      expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);
-      await page.emulateMedia({ features: [
-        { name: 'prefers-color-scheme', value: 'light' },
-      ] });
+      await page.emulateMedia({ colorScheme: 'light' });
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
-      await page.emulateMedia({ features: [
-        { name: 'prefers-color-scheme', value: 'dark' },
-      ] });
+      await page.emulateMedia({ colorScheme: 'dark' });
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
-      await page.emulateMedia({ features: [
-        { name: 'prefers-reduced-motion', value: 'reduce' },
-        { name: 'prefers-color-scheme', value: 'light' },
-      ] });
-      expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
-      expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);
-      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+      await page.emulateMedia({ colorScheme: 'no-preference' });
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
-      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(false);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches)).toBe(true);
     });
     it('should throw in case of bad argument', async({page, server}) => {
       let error = null;
-      await page.emulateMedia({ features: [{ name: 'bad', value: '' }] }).catch(e => error = e);
-      expect(error.message).toBe('Unsupported media feature: bad');
+      await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
+      expect(error.message).toBe('Unsupported color scheme: bad');
     });
   });
 

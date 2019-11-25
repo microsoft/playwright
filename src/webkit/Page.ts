@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
-import { ClickOptions, MultiClickOptions } from '../input';
+import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions } from '../input';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { Browser, BrowserContext } from './Browser';
 import { TargetSession, TargetSessionEvents } from './Connection';
@@ -56,6 +56,7 @@ export class Page extends EventEmitter {
   private _workers = new Map<string, Worker>();
   private _disconnectPromise: Promise<Error> | undefined;
   private _sessionListeners: RegisteredListener[] = [];
+  private _emulatedMediaType: string | undefined;
 
   static async create(session: TargetSession, target: Target, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
     const page = new Page(session, target, screenshotTaskQueue);
@@ -326,10 +327,15 @@ export class Page extends EventEmitter {
     ]);
   }
 
-  async emulateMedia(options: { type?: string, features?: MediaFeature[] }) {
-    assert(!options.features, 'Media feature emulation is not supported');
-    assert(options.type === 'screen' || options.type === 'print' || options.type === undefined, 'Unsupported media type: ' + options.type);
-    await this._session.send('Page.setEmulatedMedia', { media: options.type });
+  async emulateMedia(options: {
+      type?: string | null,
+      colorScheme?: 'dark' | 'light' | 'no-preference' | null }) {
+    assert(!options.type || mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
+    assert(!options.colorScheme || mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
+    assert(!options.colorScheme, 'Media feature emulation is not supported');
+    const media = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
+    await this._session.send('Page.setEmulatedMedia', { media: media || '' });
+    this._emulatedMediaType = options.type;
   }
 
   async setViewport(viewport: Viewport) {

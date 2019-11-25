@@ -1240,9 +1240,7 @@ List of all available devices is available in the source code: [DeviceDescriptor
 #### page.emulateMedia(options)
 - `options` <[Object]>
   - `type` <?[string]> Optional. Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
-  - `features` <?[Array]<[Object]>> Optional. Given an array of media feature objects, emulates CSS media features on the page. Each media feature object must have the following properties:
-    - `name` <[string]> The CSS media feature name. Supported names are `'prefers-colors-scheme'` and `'prefers-reduced-motion'`.
-    - `value` <[string]> The value for the given CSS media feature.
+  - `colorScheme` <?[string]> Optional. Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
 - returns: <[Promise]>
 
 ```js
@@ -1265,32 +1263,11 @@ await page.evaluate(() => matchMedia('print').matches));
 ```
 
 ```js
-await page.emulateMedia({ features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
+await page.emulateMedia({ colorScheme: 'dark' }] });
 await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
 // → true
 await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
 // → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
-
-await page.emulateMedia({ features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
-await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches));
-// → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
-
-await page.emulateMedia({ features: [
-  { name: 'prefers-color-scheme', value: 'dark' },
-  { name: 'prefers-reduced-motion', value: 'reduce' },
-] });
-await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
-// → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
-// → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
-await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches));
-// → true
 await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
 // → false
 ```
