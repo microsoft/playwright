@@ -1,17 +1,20 @@
-From 533a4ce6515be3665e44ddeae30ecf5052a17191 Mon Sep 17 00:00:00 2001
+From 17dc6adce06c69517f15dfcc81c193c067910a6f Mon Sep 17 00:00:00 2001
 From: Pavel <pavel.feldman@gmail.com>
-Date: Mon, 25 Nov 2019 14:56:33 -0800
+Date: Mon, 25 Nov 2019 15:17:06 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
  browser/installer/allowed-dupes.mn            |   5 +
  browser/installer/package-manifest.in         |   5 +
- docshell/base/nsDocShell.cpp                  |  34 +
- docshell/base/nsDocShell.h                    |   7 +
- docshell/base/nsIDocShell.idl                 |   3 +
+ docshell/base/nsDocShell.cpp                  |  52 ++
+ docshell/base/nsDocShell.h                    |  10 +
+ docshell/base/nsIDocShell.idl                 |   5 +
+ dom/base/Document.cpp                         |   8 +
  dom/html/HTMLInputElement.cpp                 |   7 +
  dom/ipc/BrowserChild.cpp                      |   7 +
+ dom/security/nsCSPUtils.cpp                   |   5 +
  .../permissions/nsPermissionManager.cpp       |   8 +-
+ parser/html/nsHtml5TreeOpExecutor.cpp         |   5 +-
  .../manager/ssl/nsCertOverrideService.cpp     |   2 +-
  testing/juggler/BrowserContextManager.js      | 194 +++++
  testing/juggler/Helper.js                     | 101 +++
@@ -23,7 +26,7 @@ Subject: [PATCH] chore: bootstrap
  testing/juggler/content/ContentSession.js     |  63 ++
  testing/juggler/content/FrameTree.js          | 232 ++++++
  testing/juggler/content/NetworkMonitor.js     |  62 ++
- testing/juggler/content/PageAgent.js          | 644 +++++++++++++++++
+ testing/juggler/content/PageAgent.js          | 649 +++++++++++++++++
  testing/juggler/content/RuntimeAgent.js       | 468 ++++++++++++
  testing/juggler/content/ScrollbarManager.js   |  85 +++
  .../juggler/content/floating-scrollbars.css   |  47 ++
@@ -35,9 +38,9 @@ Subject: [PATCH] chore: bootstrap
  testing/juggler/protocol/BrowserHandler.js    |  66 ++
  testing/juggler/protocol/Dispatcher.js        | 255 +++++++
  testing/juggler/protocol/NetworkHandler.js    | 154 ++++
- testing/juggler/protocol/PageHandler.js       | 277 ++++++++
+ testing/juggler/protocol/PageHandler.js       | 281 ++++++++
  testing/juggler/protocol/PrimitiveTypes.js    | 143 ++++
- testing/juggler/protocol/Protocol.js          | 670 ++++++++++++++++++
+ testing/juggler/protocol/Protocol.js          | 675 ++++++++++++++++++
  testing/juggler/protocol/RuntimeHandler.js    |  41 ++
  testing/juggler/protocol/TargetHandler.js     |  75 ++
  .../statusfilter/nsBrowserStatusFilter.cpp    |  12 +-
@@ -46,7 +49,7 @@ Subject: [PATCH] chore: bootstrap
  uriloader/base/nsDocLoader.h                  |   5 +
  uriloader/base/nsIWebProgress.idl             |   7 +-
  uriloader/base/nsIWebProgressListener2.idl    |  23 +
- 42 files changed, 4586 insertions(+), 7 deletions(-)
+ 45 files changed, 4640 insertions(+), 8 deletions(-)
  create mode 100644 testing/juggler/BrowserContextManager.js
  create mode 100644 testing/juggler/Helper.js
  create mode 100644 testing/juggler/NetworkObserver.js
@@ -108,7 +111,7 @@ index 0efb8c4210bf..6695fa1deb70 100644
  @RESPATH@/components/TestInterfaceJS.js
  @RESPATH@/components/TestInterfaceJS.manifest
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index b56ce1764dbb..9e735bd9e185 100644
+index b56ce1764dbb..efa09b814dc6 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -97,6 +97,7 @@
@@ -119,15 +122,16 @@ index b56ce1764dbb..9e735bd9e185 100644
  #include "nsIDocumentLoaderFactory.h"
  #include "nsIDOMWindow.h"
  #include "nsIEditingSession.h"
-@@ -360,6 +361,7 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -360,6 +361,8 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mUseStrictSecurityChecks(false),
        mObserveErrorPages(true),
        mCSSErrorReportingEnabled(false),
 +      mFileInputInterceptionEnabled(false),
++      mBypassCSPEnabled(false),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1241,6 +1243,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1241,6 +1244,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -135,7 +139,7 @@ index b56ce1764dbb..9e735bd9e185 100644
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3678,6 +3681,37 @@ nsDocShell::GetContentBlockingLog(Promise** aPromise) {
+@@ -3678,6 +3682,54 @@ nsDocShell::GetContentBlockingLog(Promise** aPromise) {
    return NS_OK;
  }
  
@@ -144,6 +148,23 @@ index b56ce1764dbb..9e735bd9e185 100644
 +  GetInProcessSameTypeRootTreeItem(getter_AddRefs(rootAsItem));
 +  nsCOMPtr<nsIDocShell> rootShell = do_QueryInterface(rootAsItem);
 +  return nsDocShell::Cast(rootShell);
++}
++
++NS_IMETHODIMP
++nsDocShell::GetBypassCSPEnabled(bool* aEnabled) {
++  MOZ_ASSERT(aEnabled);
++  *aEnabled = mBypassCSPEnabled;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetBypassCSPEnabled(bool aEnabled) {
++  mBypassCSPEnabled = aEnabled;
++  return NS_OK;
++}
++
++bool nsDocShell::IsBypassCSPEnabled() {
++  return GetRootDocShell()->mBypassCSPEnabled;
 +}
 +
 +NS_IMETHODIMP
@@ -174,7 +195,7 @@ index b56ce1764dbb..9e735bd9e185 100644
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index 6338967342ed..3814dd914f1f 100644
+index 6338967342ed..18e91b706d2b 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -18,6 +18,7 @@
@@ -185,17 +206,19 @@ index 6338967342ed..3814dd914f1f 100644
  #include "mozilla/dom/ProfileTimelineMarkerBinding.h"
  #include "mozilla/gfx/Matrix.h"
  #include "mozilla/dom/ChildSHistory.h"
-@@ -469,6 +470,9 @@ class nsDocShell final : public nsDocLoader,
+@@ -469,6 +470,11 @@ class nsDocShell final : public nsDocLoader,
      mSkipBrowsingContextDetachOnDestroy = true;
    }
  
 +  bool IsFileInputInterceptionEnabled();
 +  void FilePickerShown(mozilla::dom::Element* element);
 +
++  bool IsBypassCSPEnabled();
++
    // Create a content viewer within this nsDocShell for the given
    // `WindowGlobalChild` actor.
    nsresult CreateContentViewerForActor(
-@@ -1020,6 +1024,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1020,6 +1026,8 @@ class nsDocShell final : public nsDocLoader,
  
    bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
  
@@ -204,26 +227,55 @@ index 6338967342ed..3814dd914f1f 100644
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1279,6 +1285,7 @@ class nsDocShell final : public nsDocLoader,
+@@ -1279,6 +1287,8 @@ class nsDocShell final : public nsDocLoader,
    bool mUseStrictSecurityChecks : 1;
    bool mObserveErrorPages : 1;
    bool mCSSErrorReportingEnabled : 1;
 +  bool mFileInputInterceptionEnabled: 1;
++  bool mBypassCSPEnabled : 1;
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mIsOffScreenBrowser : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index 72e125e93065..d88e87188a52 100644
+index 72e125e93065..44a6a9364aab 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
-@@ -1180,4 +1180,7 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -1180,4 +1180,9 @@ interface nsIDocShell : nsIDocShellTreeItem
     *   nsIWebNavigation.loadURI
     */
    [infallible] readonly attribute boolean isNavigating;
 +
 +  attribute boolean fileInputInterceptionEnabled;
 +
++  attribute boolean bypassCSPEnabled;
++
  };
+diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
+index ce08d895b439..4e1e89fc2699 100644
+--- a/dom/base/Document.cpp
++++ b/dom/base/Document.cpp
+@@ -3114,6 +3114,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
+ }
+ 
+ void Document::ApplySettingsFromCSP(bool aSpeculative) {
++  if (mDocumentContainer && mDocumentContainer->IsBypassCSPEnabled())
++    return;
++
+   nsresult rv = NS_OK;
+   if (!aSpeculative) {
+     // 1) apply settings from regular CSP
+@@ -3163,6 +3166,11 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
+     return NS_OK;
+   }
+ 
++  nsCOMPtr<nsIDocShell> shell(mDocumentContainer);
++  if (shell && nsDocShell::Cast(shell)->IsBypassCSPEnabled()) {
++    return NS_OK;
++  }
++
+   // If this is a data document - no need to set CSP.
+   if (mLoadedAsData) {
+     return NS_OK;
 diff --git a/dom/html/HTMLInputElement.cpp b/dom/html/HTMLInputElement.cpp
 index 304c76019486..7cb26cb74a25 100644
 --- a/dom/html/HTMLInputElement.cpp
@@ -267,6 +319,22 @@ index 6cfb8fcbaa43..3618739a53a9 100644
  NS_IMETHODIMP BrowserChild::OnProgressChange(nsIWebProgress* aWebProgress,
                                               nsIRequest* aRequest,
                                               int32_t aCurSelfProgress,
+diff --git a/dom/security/nsCSPUtils.cpp b/dom/security/nsCSPUtils.cpp
+index fb7692aa0337..66805103f6ff 100644
+--- a/dom/security/nsCSPUtils.cpp
++++ b/dom/security/nsCSPUtils.cpp
+@@ -122,6 +122,11 @@ void CSP_ApplyMetaCSPToDoc(mozilla::dom::Document& aDoc,
+     return;
+   }
+ 
++  if (aDoc.GetDocShell() &&
++      nsDocShell::Cast(aDoc.GetDocShell())->IsBypassCSPEnabled()) {
++    return;
++  }
++
+   nsAutoString policyStr(
+       nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
+           aPolicyStr));
 diff --git a/extensions/permissions/nsPermissionManager.cpp b/extensions/permissions/nsPermissionManager.cpp
 index ce3d5e64bb4e..64b86791e582 100644
 --- a/extensions/permissions/nsPermissionManager.cpp
@@ -307,6 +375,24 @@ index ce3d5e64bb4e..64b86791e582 100644
  
  #ifdef DEBUG
    // Parse the origin string into a principal, and extract some useful
+diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
+index f2588d3b6514..57b0e51e5a0e 100644
+--- a/parser/html/nsHtml5TreeOpExecutor.cpp
++++ b/parser/html/nsHtml5TreeOpExecutor.cpp
+@@ -1054,9 +1054,12 @@ void nsHtml5TreeOpExecutor::AddSpeculationCSP(const nsAString& aCSP) {
+   if (!StaticPrefs::security_csp_enable()) {
+     return;
+   }
+-
+   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
+ 
++  if (mDocShell && static_cast<nsDocShell*>(mDocShell.get())->IsBypassCSPEnabled()) {
++    return;
++  }
++
+   nsresult rv = NS_OK;
+   nsCOMPtr<nsIContentSecurityPolicy> preloadCsp = mDocument->GetPreloadCsp();
+   if (!preloadCsp) {
 diff --git a/security/manager/ssl/nsCertOverrideService.cpp b/security/manager/ssl/nsCertOverrideService.cpp
 index 31737688948a..255e5ae967b4 100644
 --- a/security/manager/ssl/nsCertOverrideService.cpp
@@ -1795,10 +1881,10 @@ index 000000000000..2508cce41565
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 000000000000..34b799b53113
+index 000000000000..daec73796e3b
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,644 @@
+@@ -0,0 +1,649 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -1874,6 +1960,11 @@ index 000000000000..34b799b53113
 +  async setUserAgent({userAgent}) {
 +    const docShell = this._frameTree.mainFrame().docShell();
 +    docShell.customUserAgent = userAgent;
++  }
++
++  async setBypassCSP({enabled}) {
++    const docShell = this._frameTree.mainFrame().docShell();
++    docShell.bypassCSPEnabled = enabled;
 +  }
 +
 +  addScriptToEvaluateOnNewDocument({script}) {
@@ -3697,10 +3788,10 @@ index 000000000000..f5e7e919594b
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 000000000000..18a2d679e0f4
+index 000000000000..13e659902758
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,277 @@
+@@ -0,0 +1,281 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -3812,6 +3903,10 @@ index 000000000000..18a2d679e0f4
 +
 +  async setFileInputFiles(options) {
 +    return await this._contentSession.send('Page.setFileInputFiles', options);
++  }
++
++  async setBypassCSP(options) {
++    return await this._contentSession.send('Page.setBypassCSP', options);
 +  }
 +
 +  async setEmulatedMedia(options) {
@@ -4129,10 +4224,10 @@ index 000000000000..78b6601b91d0
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 000000000000..1ed27df14a1a
+index 000000000000..d0b681cf80b2
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,670 @@
+@@ -0,0 +1,675 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4626,6 +4721,11 @@ index 000000000000..1ed27df14a1a
 +        type: t.Optional(t.Enum(['screen', 'print', ''])),
 +        colorScheme: t.Optional(t.Enum(['dark', 'light', 'no-preference'])),
 +      },
++    },
++    'setBypassCSP': {
++      params: {
++        enabled: t.Boolean
++      }
 +    },
 +    'setCacheDisabled': {
 +      params: {

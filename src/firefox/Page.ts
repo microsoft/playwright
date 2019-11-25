@@ -266,6 +266,10 @@ export class Page extends EventEmitter {
     await this._session.send('Page.setJavascriptEnabled', {enabled});
   }
 
+  async setBypassCSP(enabled: boolean) {
+    await this._session.send('Page.setBypassCSP', { enabled });
+  }
+
   async setCacheEnabled(enabled) {
     await this._session.send('Page.setCacheDisabled', {cacheDisabled: !enabled});
   }
