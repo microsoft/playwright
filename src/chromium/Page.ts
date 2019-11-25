@@ -44,6 +44,7 @@ import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './pro
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
+import * as types from '../types';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -231,17 +232,17 @@ export class Page extends EventEmitter {
     return this.mainFrame().$(selector);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
     const context = await this.mainFrame().executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this.mainFrame().$eval(selector, pageFunction, ...args);
+  $eval: types.$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+    return this.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this.mainFrame().$$eval(selector, pageFunction, ...args);
+  $$eval: types.$$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+    return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<ElementHandle[]> {
@@ -566,8 +567,8 @@ export class Page extends EventEmitter {
     return this._viewport;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return this._frameManager.mainFrame().evaluate(pageFunction, ...args);
+  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
+    return this._frameManager.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
   async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {

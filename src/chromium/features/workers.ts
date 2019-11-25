@@ -21,6 +21,7 @@ import { debugError } from '../../helper';
 import { JSHandle } from '../JSHandle';
 import { Protocol } from '../protocol';
 import { Events } from '../events';
+import * as types from '../../types';
 
 type AddToConsoleCallback = (type: string, args: JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
 type HandleExceptionCallback = (exceptionDetails: Protocol.Runtime.ExceptionDetails) => void;
@@ -85,11 +86,11 @@ export class Worker extends EventEmitter {
     return this._executionContextPromise;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return (await this._executionContextPromise).evaluate(pageFunction, ...args);
+  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
+    return (await this._executionContextPromise).evaluate(pageFunction, ...args as any);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args);
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+    return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
   }
 }

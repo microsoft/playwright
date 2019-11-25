@@ -16,6 +16,7 @@
  */
 
 import * as fs from 'fs';
+import * as types from '../types';
 import { TimeoutError } from '../Errors';
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './Frame';
@@ -79,14 +80,14 @@ export class DOMWorld {
     return this._contextPromise;
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
     const context = await this.executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
+  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
     const context = await this.executionContext();
-    return context.evaluate(pageFunction, ...args);
+    return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -111,14 +112,14 @@ export class DOMWorld {
     return value;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const document = await this._document();
-    return document.$eval(selector, pageFunction, ...args);
+    return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const document = await this._document();
-    const value = await document.$$eval(selector, pageFunction, ...args);
+    const value = await document.$$eval(selector, pageFunction, ...args as any);
     return value;
   }
 
@@ -439,7 +440,7 @@ class WaitTask {
   }
 }
 
-async function waitForPredicatePageFunction(predicateBody: string, polling: string, timeout: number, ...args): Promise<any> {
+async function waitForPredicatePageFunction(predicateBody: string, polling: string | number, timeout: number, ...args): Promise<any> {
   const predicate = new Function('...args', predicateBody);
   let timedOut = false;
   if (timeout)
