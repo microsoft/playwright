@@ -50,7 +50,7 @@ cd "$(dirname "$0")"
 
 # pull from upstream and check if a new build has to be uploaded.
 if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
-  if ./upload.sh $BROWSER_NAME --check; then
+  if ./upload.sh $BROWSER_NAME --check $FFOX_WIN64; then
     echo "Build is already uploaded - no changes."
     exit 0
   else
