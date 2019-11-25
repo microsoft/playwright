@@ -15,155 +15,72 @@
  * limitations under the License.
  */
 
-import { keyDefinitions } from '../USKeyboardLayout';
 import { JugglerSession } from './Connection';
 import * as input from '../input';
 
-interface KeyDescription {
-  keyCode: number;
-  key: string;
-  text: string;
-  code: string;
-  location: number;
+function toModifiersMask(modifiers: Set<input.Modifier>): number {
+  let mask = 0;
+  if (modifiers.has('Alt'))
+    mask |= 1;
+  if (modifiers.has('Control'))
+    mask |= 2;
+  if (modifiers.has('Shift'))
+    mask |= 4;
+  if (modifiers.has('Meta'))
+    mask |= 8;
+  return mask;
 }
 
-export class Keyboard {
-  _client: JugglerSession;
-  _modifiers: number;
-  _pressedKeys: Set<string>;
+export class RawKeyboardImpl implements input.RawKeyboard {
+  private _client: JugglerSession;
+
   constructor(client: JugglerSession) {
     this._client = client;
-    this._modifiers = 0;
-    this._pressedKeys = new Set();
   }
 
-  async down(key: string) {
-    const description = this._keyDescriptionForString(key);
-
-    const repeat = this._pressedKeys.has(description.code);
-    this._pressedKeys.add(description.code);
-    this._modifiers |= this._modifierBit(description.key);
-
+  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+    if (code === 'MetaLeft')
+      code = 'OSLeft';
+    if (code === 'MetaRight')
+      code = 'OSRight';
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keydown',
-      keyCode: description.keyCode,
-      code: description.code,
-      key: description.key,
-      repeat,
-      location: description.location
+      keyCode,
+      code,
+      key,
+      repeat: autoRepeat,
+      location
     });
   }
 
-  _modifierBit(key: string): number {
-    if (key === 'Alt')
-      return 1;
-    if (key === 'Control')
-      return 2;
-    if (key === 'Shift')
-      return 4;
-    if (key === 'Meta')
-      return 8;
-    return 0;
-  }
-
-  _keyDescriptionForString(keyString: string): KeyDescription {
-    const shift = this._modifiers & 8;
-    const description = {
-      key: '',
-      keyCode: 0,
-      code: '',
-      text: '',
-      location: 0
-    };
-    const definition = keyDefinitions[keyString];
-    if (!definition)
-      throw new Error(`Unknown key: "${keyString}"`);
-
-    if (definition.key)
-      description.key = definition.key;
-    if (shift && definition.shiftKey)
-      description.key = definition.shiftKey;
-
-    if (definition.keyCode)
-      description.keyCode = definition.keyCode;
-    if (shift && definition.shiftKeyCode)
-      description.keyCode = definition.shiftKeyCode;
-
-    if (definition.code)
-      description.code = definition.code;
-
-    if (definition.location)
-      description.location = definition.location;
-
-    if (description.key.length === 1)
-      description.text = description.key;
-
-    if (definition.text)
-      description.text = definition.text;
-    if (shift && definition.shiftText)
-      description.text = definition.shiftText;
-
-    // if any modifiers besides shift are pressed, no text should be sent
-    if (this._modifiers & ~8)
-      description.text = '';
-
-    if (description.code === 'MetaLeft')
-      description.code = 'OSLeft';
-    if (description.code === 'MetaRight')
-      description.code = 'OSRight';
-    return description;
-  }
-
-  async up(key: string) {
-    const description = this._keyDescriptionForString(key);
-
-    this._modifiers &= ~this._modifierBit(description.key);
-    this._pressedKeys.delete(description.code);
+  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number): Promise<void> {
+    if (code === 'MetaLeft')
+      code = 'OSLeft';
+    if (code === 'MetaRight')
+      code = 'OSRight';
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keyup',
-      key: description.key,
-      keyCode: description.keyCode,
-      code: description.code,
-      location: description.location,
+      key,
+      keyCode,
+      code,
+      location,
       repeat: false
     });
   }
 
-  async sendCharacter(char: string) {
-    await this._client.send('Page.insertText', {
-      text: char
-    });
-  }
-
-  async type(text: string, options: { delay?: number; } | undefined = {}) {
-    const {delay = null} = options;
-    for (const char of text) {
-      if (keyDefinitions[char])
-        await this.press(char, {delay});
-      else
-        await this.sendCharacter(char);
-      if (delay !== null)
-        await new Promise(f => setTimeout(f, delay));
-    }
-  }
-
-  async press(key: string, options: { delay?: number; } | undefined = {}) {
-    const {delay = null} = options;
-    await this.down(key);
-    if (delay !== null)
-      await new Promise(f => setTimeout(f, options.delay));
-    await this.up(key);
+  async sendText(text: string): Promise<void> {
+    await this._client.send('Page.insertText', { text });
   }
 }
 
 export class Mouse implements input.MouseOperations {
-  _client: any;
-  _keyboard: Keyboard;
+  _client: JugglerSession;
+  _keyboard: input.Keyboard;
   _x: number;
   _y: number;
   _buttons: number;
 
-  constructor(client, keyboard: Keyboard) {
+  constructor(client: JugglerSession, keyboard: input.Keyboard) {
     this._client = client;
     this._keyboard = keyboard;
     this._x = 0;
@@ -182,7 +99,7 @@ export class Mouse implements input.MouseOperations {
         button: 0,
         x: fromX + (this._x - fromX) * (i / steps),
         y: fromY + (this._y - fromY) * (i / steps),
-        modifiers: this._keyboard._modifiers,
+        modifiers: toModifiersMask(this._keyboard._modifiers()),
         buttons: this._buttons,
       });
     }
@@ -204,7 +121,7 @@ export class Mouse implements input.MouseOperations {
       button: this._buttonNameToButton(button),
       x: this._x,
       y: this._y,
-      modifiers: this._keyboard._modifiers,
+      modifiers: toModifiersMask(this._keyboard._modifiers()),
       clickCount,
       buttons: this._buttons,
     });
@@ -235,7 +152,7 @@ export class Mouse implements input.MouseOperations {
       button: this._buttonNameToButton(button),
       x: this._x,
       y: this._y,
-      modifiers: this._keyboard._modifiers,
+      modifiers: toModifiersMask(this._keyboard._modifiers()),
       clickCount: clickCount,
       buttons: this._buttons,
     });

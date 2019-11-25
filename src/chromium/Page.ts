@@ -36,13 +36,14 @@ import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
 import { Frame } from './Frame';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
-import { Keyboard, Mouse } from './Input';
+import { Mouse, RawKeyboardImpl } from './Input';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
+import * as input from '../input';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -59,7 +60,7 @@ export class Page extends EventEmitter {
   private _closed = false;
   _client: CDPSession;
   private _target: Target;
-  private _keyboard: Keyboard;
+  private _keyboard: input.Keyboard;
   private _mouse: Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _frameManager: FrameManager;
@@ -90,7 +91,7 @@ export class Page extends EventEmitter {
     super();
     this._client = client;
     this._target = target;
-    this._keyboard = new Keyboard(client);
+    this._keyboard = new input.Keyboard(new RawKeyboardImpl(client));
     this._mouse = new Mouse(client, this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
     this.accessibility = new Accessibility(client);
@@ -206,7 +207,7 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame();
   }
 
-  get keyboard(): Keyboard {
+  get keyboard(): input.Keyboard {
     return this._keyboard;
   }
 

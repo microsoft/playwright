@@ -11,12 +11,12 @@ import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
 import { FrameManager, FrameManagerEvents, normalizeWaitUntil, Frame } from './FrameManager';
-import { Keyboard, Mouse } from './Input';
+import { Mouse, RawKeyboardImpl } from './Input';
 import { createHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import { ClickOptions, MultiClickOptions } from '../input';
-
+import * as input from '../input';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -24,7 +24,7 @@ export class Page extends EventEmitter {
   private _timeoutSettings: TimeoutSettings;
   private _session: JugglerSession;
   private _target: Target;
-  private _keyboard: Keyboard;
+  private _keyboard: input.Keyboard;
   private _mouse: Mouse;
   readonly accessibility: Accessibility;
   readonly interception: Interception;
@@ -54,7 +54,7 @@ export class Page extends EventEmitter {
     this._timeoutSettings = new TimeoutSettings();
     this._session = session;
     this._target = target;
-    this._keyboard = new Keyboard(session);
+    this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
     this._mouse = new Mouse(session, this._keyboard);
     this.accessibility = new Accessibility(session);
     this._closed = false;
@@ -332,7 +332,7 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame();
   }
 
-  get keyboard(){
+  get keyboard(): input.Keyboard {
     return this._keyboard;
   }
 

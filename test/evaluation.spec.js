@@ -264,7 +264,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.PREFIX + '/tamperable.html');
       expect(await page.evaluate(() => window.result)).toBe(123);
     });
-    fit('should support multiple scripts', async({page, server}) => {
+    it('should support multiple scripts', async({page, server}) => {
       await page.evaluateOnNewDocument(function(){
         window.script1 = 1;
       });

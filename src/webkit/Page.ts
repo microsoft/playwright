@@ -25,13 +25,14 @@ import { Browser, BrowserContext } from './Browser';
 import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { Frame, FrameManager, FrameManagerEvents } from './FrameManager';
-import { Keyboard, Mouse } from './Input';
+import { RawKeyboardImpl, Mouse } from './Input';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
 import { valueFromRemoteObject } from './protocolHelper';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
+import * as input from '../input';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -44,7 +45,7 @@ export class Page extends EventEmitter {
   private _closed = false;
   private _session: TargetSession;
   private _target: Target;
-  private _keyboard: Keyboard;
+  private _keyboard: input.Keyboard;
   private _mouse: Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _frameManager: FrameManager;
@@ -66,7 +67,7 @@ export class Page extends EventEmitter {
 
   constructor(session: TargetSession, target: Target, screenshotTaskQueue: TaskQueue) {
     super();
-    this._keyboard = new Keyboard(session);
+    this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
     this._mouse = new Mouse(session, this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
     this._frameManager = new FrameManager(session, this, this._timeoutSettings);
@@ -173,7 +174,7 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame();
   }
 
-  get keyboard(): Keyboard {
+  get keyboard(): input.Keyboard {
     return this._keyboard;
   }
 
