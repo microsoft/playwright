@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
 import * as path from 'path';
 import { assert, debugError, helper } from '../helper';
 import { ClickOptions, fillFunction, MultiClickOptions, selectFunction, SelectOption } from '../input';
@@ -24,6 +25,7 @@ import Injected from '../injected/injected';
 type SelectorRoot = Element | ShadowRoot | Document;
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './FrameManager';
+const readFileAsync = helper.promisify(fs.readFile);
 
 export class JSHandle {
   _context: ExecutionContext;
@@ -309,13 +311,29 @@ export class ElementHandle extends JSHandle {
     await this._frame._page.mouse.tripleclick(x, y, options);
   }
 
-  async uploadFile(...filePaths: Array<string>) {
-    const files = filePaths.map(filePath => path.resolve(filePath));
-    await this._session.send('Page.setFileInputFiles', {
-      frameId: this._frameId,
-      objectId: this._objectId,
-      files,
-    });
+  async uploadFile(...files: Array<string>) {
+    const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
+    assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
+    const blobs = await Promise.all(files.map(path => readFileAsync(path)));
+    const payloads: FilePayload[] = [];
+    for (let i = 0; i < files.length; ++i) {
+      payloads.push({
+        name: path.basename(files[i]),
+        mimeType: 'application/octet-stream',
+        data: blobs[i].toString('base64')
+      });
+    }
+    await this.evaluate(async (element: HTMLInputElement, payloads: FilePayload[]) => {
+      const files = await Promise.all(payloads.map(async (file: FilePayload) => {
+        const result = await fetch(`data:${file.mimeType};base64,${file.data}`)
+        return new File([await result.blob()], file.name);
+      }));
+      const dt = new DataTransfer();
+      for (const file of files)
+        dt.items.add(file);
+      element.files = dt.files;
+      element.dispatchEvent(new Event('input', { 'bubbles': true }));
+    }, payloads);
   }
 
   async hover() {
@@ -410,3 +428,9 @@ function computeQuadCenter(quad) {
   }
   return {x: x / 4, y: y / 4};
 }
+
+type FilePayload = {
+  name: string,
+  mimeType: string,
+  data: string
+};
