@@ -1,12 +1,15 @@
-From 0ad0c75a7109b3db02515806dedfa1dad51f1183 Mon Sep 17 00:00:00 2001
-From: Andrey Lushnikov <lushnikov@chromium.org>
-Date: Fri, 22 Nov 2019 19:18:05 -0800
+From acb1ee0450ffe7739ed96e556095fb0f1c5d60d0 Mon Sep 17 00:00:00 2001
+From: Pavel <pavel.feldman@gmail.com>
+Date: Mon, 25 Nov 2019 13:47:08 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
  browser/installer/allowed-dupes.mn            |   5 +
  browser/installer/package-manifest.in         |   5 +
- docshell/base/nsDocShell.cpp                  |   1 +
+ docshell/base/nsDocShell.cpp                  |  34 +
+ docshell/base/nsDocShell.h                    |   7 +
+ docshell/base/nsIDocShell.idl                 |   3 +
+ dom/html/HTMLInputElement.cpp                 |   7 +
  dom/ipc/BrowserChild.cpp                      |   7 +
  .../permissions/nsPermissionManager.cpp       |   8 +-
  .../manager/ssl/nsCertOverrideService.cpp     |   2 +-
@@ -20,21 +23,21 @@ Subject: [PATCH] chore: bootstrap
  testing/juggler/content/ContentSession.js     |  63 ++
  testing/juggler/content/FrameTree.js          | 232 ++++++
  testing/juggler/content/NetworkMonitor.js     |  62 ++
- testing/juggler/content/PageAgent.js          | 621 ++++++++++++++++
- testing/juggler/content/RuntimeAgent.js       | 460 ++++++++++++
+ testing/juggler/content/PageAgent.js          | 638 +++++++++++++++++
+ testing/juggler/content/RuntimeAgent.js       | 468 ++++++++++++
  testing/juggler/content/ScrollbarManager.js   |  85 +++
  .../juggler/content/floating-scrollbars.css   |  47 ++
  testing/juggler/content/hidden-scrollbars.css |  13 +
- testing/juggler/content/main.js               |  39 ++
+ testing/juggler/content/main.js               |  39 +
  testing/juggler/jar.mn                        |  29 +
  testing/juggler/moz.build                     |  15 +
  .../juggler/protocol/AccessibilityHandler.js  |  15 +
  testing/juggler/protocol/BrowserHandler.js    |  66 ++
  testing/juggler/protocol/Dispatcher.js        | 255 +++++++
  testing/juggler/protocol/NetworkHandler.js    | 154 ++++
- testing/juggler/protocol/PageHandler.js       | 269 +++++++
+ testing/juggler/protocol/PageHandler.js       | 277 ++++++++
  testing/juggler/protocol/PrimitiveTypes.js    | 143 ++++
- testing/juggler/protocol/Protocol.js          | 660 ++++++++++++++++++
+ testing/juggler/protocol/Protocol.js          | 669 ++++++++++++++++++
  testing/juggler/protocol/RuntimeHandler.js    |  41 ++
  testing/juggler/protocol/TargetHandler.js     |  75 ++
  .../statusfilter/nsBrowserStatusFilter.cpp    |  12 +-
@@ -43,7 +46,7 @@ Subject: [PATCH] chore: bootstrap
  uriloader/base/nsDocLoader.h                  |   5 +
  uriloader/base/nsIWebProgress.idl             |   7 +-
  uriloader/base/nsIWebProgressListener2.idl    |  23 +
- 39 files changed, 4487 insertions(+), 7 deletions(-)
+ 42 files changed, 4579 insertions(+), 7 deletions(-)
  create mode 100644 testing/juggler/BrowserContextManager.js
  create mode 100644 testing/juggler/Helper.js
  create mode 100644 testing/juggler/NetworkObserver.js
@@ -105,10 +108,26 @@ index 0efb8c4210bf..6695fa1deb70 100644
  @RESPATH@/components/TestInterfaceJS.js
  @RESPATH@/components/TestInterfaceJS.manifest
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index b56ce1764dbb..1f4e7cb24d6f 100644
+index b56ce1764dbb..9e735bd9e185 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
-@@ -1241,6 +1241,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -97,6 +97,7 @@
+ #include "nsIDocShellTreeItem.h"
+ #include "nsIDocShellTreeOwner.h"
+ #include "mozilla/dom/Document.h"
++#include "mozilla/dom/Element.h"
+ #include "nsIDocumentLoaderFactory.h"
+ #include "nsIDOMWindow.h"
+ #include "nsIEditingSession.h"
+@@ -360,6 +361,7 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+       mUseStrictSecurityChecks(false),
+       mObserveErrorPages(true),
+       mCSSErrorReportingEnabled(false),
++      mFileInputInterceptionEnabled(false),
+       mAllowAuth(mItemType == typeContent),
+       mAllowKeywordFixup(false),
+       mIsOffScreenBrowser(false),
+@@ -1241,6 +1243,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      isSubFrame = mLSHE->GetIsSubFrame();
    }
  
@@ -116,6 +135,120 @@ index b56ce1764dbb..1f4e7cb24d6f 100644
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
+@@ -3678,6 +3681,37 @@ nsDocShell::GetContentBlockingLog(Promise** aPromise) {
+   return NS_OK;
+ }
+ 
++nsDocShell* nsDocShell::GetRootDocShell() {
++  nsCOMPtr<nsIDocShellTreeItem> rootAsItem;
++  GetInProcessSameTypeRootTreeItem(getter_AddRefs(rootAsItem));
++  nsCOMPtr<nsIDocShell> rootShell = do_QueryInterface(rootAsItem);
++  return nsDocShell::Cast(rootShell);
++}
++
++NS_IMETHODIMP
++nsDocShell::GetFileInputInterceptionEnabled(bool* aEnabled) {
++  MOZ_ASSERT(aEnabled);
++  *aEnabled = mFileInputInterceptionEnabled;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetFileInputInterceptionEnabled(bool aEnabled) {
++  mFileInputInterceptionEnabled = aEnabled;
++  return NS_OK;
++}
++
++bool nsDocShell::IsFileInputInterceptionEnabled() {
++  return GetRootDocShell()->mFileInputInterceptionEnabled;
++}
++
++void nsDocShell::FilePickerShown(mozilla::dom::Element* element) {
++  nsCOMPtr<nsIObserverService> observerService =
++      mozilla::services::GetObserverService();
++  observerService->NotifyObservers(
++      ToSupports(element), "juggler-file-picker-shown", nullptr);
++}
++
+ NS_IMETHODIMP
+ nsDocShell::GetIsNavigating(bool* aOut) {
+   *aOut = mIsNavigating;
+diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
+index 6338967342ed..3814dd914f1f 100644
+--- a/docshell/base/nsDocShell.h
++++ b/docshell/base/nsDocShell.h
+@@ -18,6 +18,7 @@
+ #include "mozilla/WeakPtr.h"
+ 
+ #include "mozilla/dom/BrowsingContext.h"
++#include "mozilla/dom/Element.h"
+ #include "mozilla/dom/ProfileTimelineMarkerBinding.h"
+ #include "mozilla/gfx/Matrix.h"
+ #include "mozilla/dom/ChildSHistory.h"
+@@ -469,6 +470,9 @@ class nsDocShell final : public nsDocLoader,
+     mSkipBrowsingContextDetachOnDestroy = true;
+   }
+ 
++  bool IsFileInputInterceptionEnabled();
++  void FilePickerShown(mozilla::dom::Element* element);
++
+   // Create a content viewer within this nsDocShell for the given
+   // `WindowGlobalChild` actor.
+   nsresult CreateContentViewerForActor(
+@@ -1020,6 +1024,8 @@ class nsDocShell final : public nsDocLoader,
+ 
+   bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
+ 
++  nsDocShell* GetRootDocShell();
++
+   // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
+   // load is requested in a subframe of the current DocShell, the subframe
+   // loadType may need to reflect the loadType of the parent document, or in
+@@ -1279,6 +1285,7 @@ class nsDocShell final : public nsDocLoader,
+   bool mUseStrictSecurityChecks : 1;
+   bool mObserveErrorPages : 1;
+   bool mCSSErrorReportingEnabled : 1;
++  bool mFileInputInterceptionEnabled: 1;
+   bool mAllowAuth : 1;
+   bool mAllowKeywordFixup : 1;
+   bool mIsOffScreenBrowser : 1;
+diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
+index 72e125e93065..d88e87188a52 100644
+--- a/docshell/base/nsIDocShell.idl
++++ b/docshell/base/nsIDocShell.idl
+@@ -1180,4 +1180,7 @@ interface nsIDocShell : nsIDocShellTreeItem
+    *   nsIWebNavigation.loadURI
+    */
+   [infallible] readonly attribute boolean isNavigating;
++
++  attribute boolean fileInputInterceptionEnabled;
++
+ };
+diff --git a/dom/html/HTMLInputElement.cpp b/dom/html/HTMLInputElement.cpp
+index 304c76019486..7cb26cb74a25 100644
+--- a/dom/html/HTMLInputElement.cpp
++++ b/dom/html/HTMLInputElement.cpp
+@@ -46,6 +46,7 @@
+ #include "nsMappedAttributes.h"
+ #include "nsIFormControl.h"
+ #include "mozilla/dom/Document.h"
++#include "nsDocShell.h"
+ #include "nsIFormControlFrame.h"
+ #include "nsITextControlFrame.h"
+ #include "nsIFrame.h"
+@@ -734,6 +735,12 @@ nsresult HTMLInputElement::InitFilePicker(FilePickerType aType) {
+     return NS_ERROR_FAILURE;
+   }
+ 
++  nsDocShell* docShell = static_cast<nsDocShell*>(win->GetDocShell());
++  if (docShell && docShell->IsFileInputInterceptionEnabled()) {
++    docShell->FilePickerShown(this);
++    return NS_OK;
++  }
++
+   if (IsPopupBlocked()) {
+     return NS_OK;
+   }
 diff --git a/dom/ipc/BrowserChild.cpp b/dom/ipc/BrowserChild.cpp
 index 6cfb8fcbaa43..3618739a53a9 100644
 --- a/dom/ipc/BrowserChild.cpp
@@ -1662,10 +1795,10 @@ index 000000000000..2508cce41565
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 000000000000..e8db4031620e
+index 000000000000..0e47a99eda47
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,621 @@
+@@ -0,0 +1,638 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -1693,6 +1826,7 @@ index 000000000000..e8db4031620e
 +    this._enabled = false;
 +
 +    const docShell = frameTree.mainFrame().docShell();
++    this._docShell = docShell;
 +    this._initialDPPX = docShell.contentViewer.overrideDPPX;
 +    this._customScrollbars = null;
 +  }
@@ -1773,7 +1907,9 @@ index 000000000000..e8db4031620e
 +      if (frame.pendingNavigationId())
 +        this._onNavigationStarted(frame);
 +    }
++
 +    this._eventListeners = [
++      helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
 +      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
 +      helper.addEventListener(this._session.mm(), 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
 +      helper.addEventListener(this._session.mm(), 'pageshow', this._onLoad.bind(this)),
@@ -1785,6 +1921,20 @@ index 000000000000..e8db4031620e
 +      helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
 +      helper.on(this._frameTree, 'samedocumentnavigation', this._onSameDocumentNavigation.bind(this)),
 +    ];
++  }
++
++  setInterceptFileChooserDialog({enabled}) {
++    this._docShell.fileInputInterceptionEnabled = !!enabled;
++  }
++
++  _filePickerShown(inputElement) {
++    if (inputElement.ownerGlobal.docShell !== this._docShell)
++      return;
++    const result = this._runtime.rawElementToRemoteObject(inputElement);
++    this._session.emitEvent('Page.fileChooserOpened', {
++      executionContextId: result.executionContextId,
++      element: result.element
++    });
 +  }
 +
 +  _onDOMContentLoaded(event) {
@@ -2289,10 +2439,10 @@ index 000000000000..e8db4031620e
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 000000000000..2c474230071b
+index 000000000000..a8f017a07133
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
-@@ -0,0 +1,460 @@
+@@ -0,0 +1,468 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -2382,6 +2532,14 @@ index 000000000000..2c474230071b
 +
 +    this._eventListeners = [];
 +    this._enabled = false;
++  }
++
++  rawElementToRemoteObject(node) {
++    const executionContext = Array.from(this._executionContexts.values()).find(context => node.ownerDocument == context._domWindow.document);
++    return {
++      executionContextId: executionContext.id(),
++      element: executionContext.rawValueToRemoteObject(node)
++    };
 +  }
 +
 +  _consoleAPICalled({wrappedJSObject}, topic, data) {
@@ -3533,10 +3691,10 @@ index 000000000000..f5e7e919594b
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 000000000000..32fb7e9d928a
+index 000000000000..18a2d679e0f4
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,269 @@
+@@ -0,0 +1,277 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -3746,6 +3904,14 @@ index 000000000000..32fb7e9d928a
 +      dialog.accept(promptText);
 +    else
 +      dialog.dismiss();
++  }
++
++  async setInterceptFileChooserDialog(options) {
++    return await this._contentSession.send('Page.setInterceptFileChooserDialog', options);
++  }
++
++  async handleFileChooser(options) {
++    return await this._contentSession.send('Page.handleFileChooser', options);
 +  }
 +}
 +
@@ -3957,10 +4123,10 @@ index 000000000000..78b6601b91d0
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 000000000000..63186502775d
+index 000000000000..0b2044e057a4
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,660 @@
+@@ -0,0 +1,669 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4405,6 +4571,10 @@ index 000000000000..63186502775d
 +      name: t.String,
 +      payload: t.Any,
 +    },
++    'fileChooserOpened': {
++      executionContextId: t.String,
++      element: types.RemoteObject
++    },
 +  },
 +
 +  methods: {
@@ -4597,6 +4767,11 @@ index 000000000000..63186502775d
 +        dialogId: t.String,
 +        accept: t.Boolean,
 +        promptText: t.Optional(t.String),
++      },
++    },
++    'setInterceptFileChooserDialog': {
++      params: {
++        enabled: t.Boolean,
 +      },
 +    },
 +  },
@@ -4891,5 +5066,5 @@ index 87701f8d2cfe..ae1aa85c019c 100644
 +                             [optional] in unsigned long aFlags);
  };
 -- 
-2.22.1
+2.17.1
 
