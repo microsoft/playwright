@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import * as types from '../types';
 import { helper, assert } from '../helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
 import { CDPSession } from './Connection';
@@ -68,12 +69,12 @@ export class Frame {
     return this._mainWorld.executionContext();
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return this._mainWorld.evaluateHandle(pageFunction, ...args);
+  evaluateHandle: types.EvaluateHandle<JSHandle> = (pageFunction, ...args) => {
+    return this._mainWorld.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return this._mainWorld.evaluate(pageFunction, ...args);
+  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
+    return this._mainWorld.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -84,12 +85,12 @@ export class Frame {
     return this._mainWorld.$x(expression);
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this._mainWorld.$eval(selector, pageFunction, ...args);
+  $eval: types.$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+    return this._mainWorld.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<(object | undefined)> {
-    return this._mainWorld.$$eval(selector, pageFunction, ...args);
+  $$eval: types.$$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+    return this._mainWorld.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<ElementHandle[]> {
