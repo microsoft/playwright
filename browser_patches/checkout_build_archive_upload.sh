@@ -77,4 +77,4 @@ echo "-- archiving to $ZIP_PATH"
 ./$BROWSER_NAME/archive.sh $ZIP_PATH
 
 echo "-- uploading"
-./upload.sh $BROWSER_NAME $ZIP_PATH
+./upload.sh $BROWSER_NAME $ZIP_PATH $FFOX_WIN64
