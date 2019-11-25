@@ -17,6 +17,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as types from '../types';
 import { assert, debugError, helper } from '../helper';
 import { ClickOptions, fillFunction, MultiClickOptions, selectFunction, SelectOption } from '../input';
 import { JugglerSession } from './Connection';
@@ -56,12 +57,12 @@ export class JSHandle {
     return this._context;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<(any)> {
-    return await this.executionContext().evaluate(pageFunction, this, ...args);
+  evaluate: types.EvaluateOn<JSHandle> = (pageFunction, ...args) => {
+    return this.executionContext().evaluate(pageFunction, this, ...args);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return await this.executionContext().evaluateHandle(pageFunction, this, ...args);
+  evaluateHandle: types.EvaluateHandleOn<JSHandle> = (pageFunction, ...args) => {
+    return this.executionContext().evaluateHandle(pageFunction, this, ...args);
   }
 
   toString(): string {
@@ -190,7 +191,7 @@ export class ElementHandle extends JSHandle {
   }
 
   isIntersectingViewport(): Promise<boolean> {
-    return this._frame.evaluate(async element => {
+    return this._frame.evaluate(async (element: Element) => {
       const visibleRatio = await new Promise(resolve => {
         const observer = new IntersectionObserver(entries => {
           resolve(entries[0].intersectionRatio);
@@ -233,7 +234,7 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<object | undefined> {
+  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -242,7 +243,7 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<object | undefined> {
+  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const arrayHandle = await this._frame.evaluateHandle(
       (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
       this, selector, await this._context._injected()
@@ -270,7 +271,7 @@ export class ElementHandle extends JSHandle {
   }
 
   async _scrollIntoViewIfNeeded() {
-    const error = await this._frame.evaluate(async element => {
+    const error = await this._frame.evaluate(async (element: Element) => {
       if (!element.isConnected)
         return 'Node is detached from document';
       if (element.nodeType !== Node.ELEMENT_NODE)
@@ -286,7 +287,7 @@ export class ElementHandle extends JSHandle {
         requestAnimationFrame(() => {});
       });
       if (visibleRatio !== 1.0)
-        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
+        element.scrollIntoView({block: 'center', inline: 'center', behavior: ('instant' as ScrollBehavior)});
       return false;
     }, this);
     if (error)

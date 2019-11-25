@@ -1,7 +1,25 @@
+/**
+ * Copyright 2019 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {helper, assert} from '../helper';
 import {TimeoutError} from '../Errors';
 import * as fs from 'fs';
 import * as util from 'util';
+import * as types from '../types';
 import {ElementHandle, JSHandle} from './JSHandle';
 import { ExecutionContext } from './ExecutionContext';
 
@@ -61,14 +79,14 @@ export class DOMWorld {
     throw new Error('Method not implemented.');
   }
 
-  async evaluateHandle(pageFunction, ...args): Promise<JSHandle> {
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
     const context = await this.executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction, ...args): Promise<any> {
+  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
     const context = await this.executionContext();
-    return context.evaluate(pageFunction, ...args);
+    return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -87,12 +105,12 @@ export class DOMWorld {
     return document.$x(expression);
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const document = await this._document();
     return document.$eval(selector, pageFunction, ...args);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
+  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const document = await this._document();
     return document.$$eval(selector, pageFunction, ...args);
   }

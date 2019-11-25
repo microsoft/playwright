@@ -16,6 +16,7 @@ import { createHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import * as input from '../input';
+import * as types from '../types';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -467,8 +468,8 @@ export class Page extends EventEmitter {
     }
   }
 
-  evaluate(pageFunction, ...args) {
-    return this.mainFrame().evaluate(pageFunction, ...args);
+  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
+    return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
   addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {
@@ -539,20 +540,20 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().$$(selector);
   }
 
-  $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return this._frameManager.mainFrame().$eval(selector, pageFunction, ...args);
+  $eval: types.$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+    return this._frameManager.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(object | undefined)> {
-    return this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args);
+  $$eval: types.$$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+    return this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
   $x(expression: string): Promise<Array<ElementHandle>> {
     return this._frameManager.mainFrame().$x(expression);
   }
 
-  evaluateHandle(pageFunction, ...args) {
-    return this._frameManager.mainFrame().evaluateHandle(pageFunction, ...args);
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+    return this._frameManager.mainFrame().evaluateHandle(pageFunction, ...args as any);
   }
 
   async close(options: any = {}) {
