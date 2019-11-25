@@ -15,7 +15,6 @@ import { Mouse, RawKeyboardImpl } from './Input';
 import { createHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
-import { ClickOptions, MultiClickOptions } from '../input';
 import * as input from '../input';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
@@ -151,10 +150,12 @@ export class Page extends EventEmitter {
     await this._networkManager.setExtraHTTPHeaders(headers);
   }
 
-  async emulateMedia(options: { type?: string, features?: MediaFeature[] }) {
-    assert(!options.features, 'Media feature emulation is not supported');
-    assert(options.type === 'screen' || options.type === 'print' || options.type === undefined, 'Unsupported media type: ' + options.type);
-    await this._session.send('Page.setEmulatedMedia', { media: options.type || '' });
+  async emulateMedia(options: {
+      type?: string,
+      colorScheme?: 'dark' | 'light' | 'no-preference' }) {
+    assert(!options.type || input.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
+    assert(!options.colorScheme || input.mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
+    await this._session.send('Page.setEmulatedMedia', options);
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {
@@ -478,15 +479,15 @@ export class Page extends EventEmitter {
     return this.mainFrame().addStyleTag(options);
   }
 
-  click(selector: string, options?: ClickOptions) {
+  click(selector: string, options?: input.ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string, options?: MultiClickOptions) {
+  dblclick(selector: string, options?: input.MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string, options?: MultiClickOptions) {
+  tripleclick(selector: string, options?: input.MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
