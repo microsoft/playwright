@@ -189,7 +189,7 @@ class InterceptableRequest {
     (this.request as any)[interceptableRequestSymbol] = this;
   }
 
-  async continue(overrides: any = {}) {
+  async continue(overrides: {url?: string, method?: string, postData?: string, headers?: {[key: string]: string}} = {}) {
     assert(!overrides.url, 'Playwright-Firefox does not support overriding URL');
     assert(!overrides.method, 'Playwright-Firefox does not support overriding method');
     assert(!overrides.postData, 'Playwright-Firefox does not support overriding postData');

@@ -8,6 +8,7 @@ node6-test/*
 node6-testrunner/*
 lib/
 *.js
-src/chromium/protocol.d.ts
 src/generated/*
+src/chromium/protocol.d.ts
+src/firefox/protocol.d.ts
 src/webkit/protocol.d.ts

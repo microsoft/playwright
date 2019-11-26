@@ -1,6 +1,8 @@
 // @ts-check
 const path = require('path');
 const fs = require('fs');
+const StreamZip = require('node-stream-zip');
+const vm = require('vm');
 
 async function generateChromeProtocol(revision) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.d.ts');
@@ -114,4 +116,99 @@ function typeOfProperty(property, domain) {
   return property.type;
 }
 
-module.exports = {generateChromeProtocol, generateWebKitProtocol};
+async function generateFirefoxProtocol(revision) {
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'firefox', 'protocol.d.ts');
+  if (revision.local && fs.existsSync(outputPath))
+    return;
+  const zip = new StreamZip({file: path.join(revision.executablePath, '..', 'omni.ja'), storeEntries: true});
+  // @ts-ignore
+  await new Promise(x => zip.on('ready', x));
+  const data = zip.entryDataSync(zip.entry('chrome/juggler/content/protocol/Protocol.js'))
+
+  const ctx = vm.createContext();
+  const protocolJSCode = data.toString('utf8');
+  function inject() {
+    this.ChromeUtils = {
+      import: () => ({t})
+    }
+    const t = {};
+    t.String = {"$type": "string"};
+    t.Number = {"$type": "number"};
+    t.Boolean = {"$type": "boolean"};
+    t.Undefined = {"$type": "undefined"};
+    t.Any = {"$type": "any"};
+
+    t.Enum = function(values) {
+      return {"$type": "enum", "$values": values};
+    }
+
+    t.Nullable = function(scheme) {
+      return {...scheme, "$nullable": true};
+    }
+
+    t.Optional = function(scheme) {
+      return {...scheme, "$optional": true};
+    }
+
+    t.Array = function(scheme) {
+      return {"$type": "array", "$items": scheme};
+    }
+
+    t.Recursive = function(types, schemeName) {
+      return {"$type": "ref", "$ref": schemeName };
+    }
+  }
+  const json = vm.runInContext(`(${inject})();${protocolJSCode}; this.protocol.types = types; this.protocol;`, ctx);
+  fs.writeFileSync(outputPath, firefoxJSONToTS(json));
+  console.log(`Wrote protocol.d.ts for Firefox to ${path.relative(process.cwd(), outputPath)}`);
+}
+
+function firefoxJSONToTS(json) {
+  const domains = Object.entries(json.domains);
+  return `// This is generated from /utils/protocol-types-generator/index.js
+export module Protocol {${Object.entries(json.types).map(([typeName, type]) => `
+  export type ${typeName} = ${firefoxTypeToString(type, '  ')};`).join('')}
+${domains.map(([domainName, domain]) => `
+  export module ${domainName} {${(Object.entries(domain.events)).map(([eventName, event]) => `
+    export type ${eventName}Payload = ${firefoxTypeToString(event)}`).join('')}${(Object.entries(domain.methods)).map(([commandName, command]) => `
+    export type ${commandName}Parameters = ${firefoxTypeToString(command.params)};
+    export type ${commandName}ReturnValue = ${firefoxTypeToString(command.returns)};`).join('')}
+  }`).join('')}
+  export interface Events {${domains.map(([domainName, domain]) => Object.keys(domain.events).map(eventName => `
+    "${domainName}.${eventName}": ${domainName}.${eventName}Payload;`).join('')).join('')}
+  }
+  export interface CommandParameters {${domains.map(([domainName, domain]) => Object.keys(domain.methods).map(commandName => `
+    "${domainName}.${commandName}": ${domainName}.${commandName}Parameters;`).join('')).join('')}
+  }
+  export interface CommandReturnValues {${domains.map(([domainName, domain]) => Object.keys(domain.methods).map(commandName => `
+    "${domainName}.${commandName}": ${domainName}.${commandName}ReturnValue;`).join('')).join('')}
+  }
+}`
+
+}
+
+function firefoxTypeToString(type, indent='    ') {
+  if (!type)
+    return 'void';
+  if (!type['$type']) {
+    const properties = Object.entries(type).filter(([name]) => !name.startsWith('$'));
+    const lines = [];
+    lines.push('{');
+    for (const [propertyName, property] of properties) {
+      const nameSuffix = property['$optional'] ? '?' : '';
+      const valueSuffix = property['$nullable'] ? '|null' : ''
+      lines.push(`${indent}  ${propertyName}${nameSuffix}: ${firefoxTypeToString(property, indent + '  ')}${valueSuffix};`);
+    }
+    lines.push(`${indent}}`);
+    return lines.join('\n');
+  }
+  if (type['$type'] === 'ref')
+    return type['$ref'];
+  if (type['$type'] === 'array')
+    return firefoxTypeToString(type['$items'], indent) + '[]';
+  if (type['$type'] === 'enum')
+    return type['$values'].map(v => JSON.stringify(v)).join('|');
+  return type['$type'];
+}
+
+module.exports = {generateChromeProtocol, generateFirefoxProtocol, generateWebKitProtocol};
