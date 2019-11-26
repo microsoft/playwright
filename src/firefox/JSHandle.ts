@@ -16,16 +16,15 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
-import * as types from '../types';
 import { assert, debugError, helper } from '../helper';
-import { ClickOptions, fillFunction, MultiClickOptions, selectFunction, SelectOption } from '../input';
-import { JugglerSession } from './Connection';
 import Injected from '../injected/injected';
-
-type SelectorRoot = Element | ShadowRoot | Document;
+import * as input from '../input';
+import * as types from '../types';
+import { JugglerSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './FrameManager';
+
+type SelectorRoot = Element | ShadowRoot | Document;
 const readFileAsync = helper.promisify(fs.readFile);
 
 export class JSHandle {
@@ -294,47 +293,28 @@ export class ElementHandle extends JSHandle {
       throw new Error(error);
   }
 
-  async click(options?: ClickOptions) {
+  async click(options?: input.ClickOptions) {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
     await this._frame._page.mouse.click(x, y, options);
   }
 
-  async dblclick(options?: MultiClickOptions): Promise<void> {
+  async dblclick(options?: input.MultiClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
     await this._frame._page.mouse.dblclick(x, y, options);
   }
 
-  async tripleclick(options?: MultiClickOptions): Promise<void> {
+  async tripleclick(options?: input.MultiClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
     await this._frame._page.mouse.tripleclick(x, y, options);
   }
 
-  async uploadFile(...files: Array<string>) {
+  async setInputFiles(...files: (string|input.FilePayload)[]) {
     const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    const blobs = await Promise.all(files.map(path => readFileAsync(path)));
-    const payloads: FilePayload[] = [];
-    for (let i = 0; i < files.length; ++i) {
-      payloads.push({
-        name: path.basename(files[i]),
-        mimeType: 'application/octet-stream',
-        data: blobs[i].toString('base64')
-      });
-    }
-    await this.evaluate(async (element: HTMLInputElement, payloads: FilePayload[]) => {
-      const files = await Promise.all(payloads.map(async (file: FilePayload) => {
-        const result = await fetch(`data:${file.mimeType};base64,${file.data}`);
-        return new File([await result.blob()], file.name);
-      }));
-      const dt = new DataTransfer();
-      for (const file of files)
-        dt.items.add(file);
-      element.files = dt.files;
-      element.dispatchEvent(new Event('input', { 'bubbles': true }));
-    }, payloads);
+    await this.evaluate(input.setFileInputFunction, await input.loadFiles(files));
   }
 
   async hover() {
@@ -357,7 +337,7 @@ export class ElementHandle extends JSHandle {
     await this._frame._page.keyboard.press(key, options);
   }
 
-  async select(...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+  async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
     const options = values.map(value => typeof value === 'object' ? value : { value });
     for (const option of options) {
       if (option instanceof ElementHandle)
@@ -369,12 +349,12 @@ export class ElementHandle extends JSHandle {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this.evaluate(selectFunction, ...options);
+    return this.evaluate(input.selectFunction, ...options);
   }
 
   async fill(value: string): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this.evaluate(fillFunction);
+    const error = await this.evaluate(input.fillFunction);
     if (error)
       throw new Error(error);
     await this.focus();

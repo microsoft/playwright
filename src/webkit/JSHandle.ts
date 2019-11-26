@@ -17,7 +17,7 @@
 
 import * as fs from 'fs';
 import { assert, debugError, helper } from '../helper';
-import { ClickOptions, MultiClickOptions, selectFunction, SelectOption, fillFunction } from '../input';
+import * as input from '../input';
 import { TargetSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
@@ -217,25 +217,25 @@ export class ElementHandle extends JSHandle {
     await this._page.mouse.move(x, y);
   }
 
-  async click(options?: ClickOptions): Promise<void> {
+  async click(options?: input.ClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
     await this._page.mouse.click(x, y, options);
   }
 
-  async dblclick(options?: MultiClickOptions): Promise<void> {
+  async dblclick(options?: input.MultiClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
     await this._page.mouse.dblclick(x, y, options);
   }
 
-  async tripleclick(options?: MultiClickOptions): Promise<void> {
+  async tripleclick(options?: input.MultiClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
     await this._page.mouse.tripleclick(x, y, options);
   }
 
-  async select(...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+  async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
     const options = values.map(value => typeof value === 'object' ? value : { value });
     for (const option of options) {
       if (option instanceof ElementHandle)
@@ -247,16 +247,22 @@ export class ElementHandle extends JSHandle {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this.evaluate(selectFunction, ...options);
+    return this.evaluate(input.selectFunction, ...options);
   }
 
   async fill(value: string): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this.evaluate(fillFunction);
+    const error = await this.evaluate(input.fillFunction);
     if (error)
       throw new Error(error);
     await this.focus();
     await this._page.keyboard.sendCharacters(value);
+  }
+
+  async setInputFiles(...files: (string|input.FilePayload)[]) {
+    const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
+    assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
+    await this.evaluate(input.setFileInputFunction, await input.loadFiles(files));
   }
 
   async focus() {
