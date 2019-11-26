@@ -254,40 +254,6 @@ export class Page extends EventEmitter {
     return this.mainFrame().$x(expression);
   }
 
-  async cookies(...urls: string[]): Promise<NetworkCookie[]> {
-    const {cookies} = await this._client.send('Network.getCookies', {
-      urls: urls.length ? urls : [this.url()]
-    });
-    // Chromiums's cookies are missing sameSite when it is 'None'
-    return cookies.map(cookie => ({sameSite: 'None', ...cookie}));
-  }
-
-  async deleteCookie(...cookies: Protocol.Network.deleteCookiesParameters[]) {
-    const pageURL = this.url();
-    for (const cookie of cookies) {
-      const item = Object.assign({}, cookie);
-      if (!cookie.url && pageURL.startsWith('http'))
-        item.url = pageURL;
-      await this._client.send('Network.deleteCookies', item);
-    }
-  }
-
-  async setCookie(...cookies: NetworkCookieParam[]) {
-    const pageURL = this.url();
-    const startsWithHTTP = pageURL.startsWith('http');
-    const items = cookies.map(cookie => {
-      const item = Object.assign({}, cookie);
-      if (!item.url && startsWithHTTP)
-        item.url = pageURL;
-      assert(item.url !== 'about:blank', `Blank page can not have cookie "${item.name}"`);
-      assert(!String.prototype.startsWith.call(item.url || '', 'data:'), `Data URL page can not have cookie "${item.name}"`);
-      return item;
-    });
-    await this.deleteCookie(...items);
-    if (items.length)
-      await this._client.send('Network.setCookies', { cookies: items });
-  }
-
   async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
     return this.mainFrame().addScriptTag(options);
   }
@@ -746,31 +712,6 @@ type MediaFeature = {
   name: string,
   value: string
 }
-
-type NetworkCookie = {
-  name: string,
-  value: string,
-  domain: string,
-  path: string,
-  expires: number,
-  size: number,
-  httpOnly: boolean,
-  secure: boolean,
-  session: boolean,
-  sameSite: 'Strict'|'Lax'|'Extended'|'None'
-};
-
-type NetworkCookieParam = {
-  name: string,
-  value: string,
-  url?: string,
-  domain?: string,
-  path?: string,
-  expires?: number,
-  httpOnly?: boolean,
-  secure?: boolean,
-  sameSite?: 'Strict'|'Lax'
-};
 
 type ConsoleMessageLocation = {
   url?: string,

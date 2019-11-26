@@ -44,7 +44,7 @@ export type Viewport = {
 
 export class Page extends EventEmitter {
   private _closed = false;
-  private _session: TargetSession;
+  _session: TargetSession;
   private _target: Target;
   private _keyboard: input.Keyboard;
   private _mouse: input.Mouse;
@@ -220,29 +220,6 @@ export class Page extends EventEmitter {
 
   async $x(expression: string): Promise<ElementHandle[]> {
     return this.mainFrame().$x(expression);
-  }
-
-  async cookies(...urls: string[]): Promise<NetworkCookie[]> {
-    const response = await this._session.send('Page.getCookies');
-    return response.cookies.map(cookie => {
-      // Webkit returns 0 for a cookie without an expiration
-      if (cookie.expires === 0)
-        cookie.expires = -1;
-      return cookie;
-    });
-  }
-
-  async deleteCookie(...cookies: DeleteNetworkCookieParam[]) {
-    const pageURL = this.url();
-    for (const cookie of cookies) {
-      const item = {
-        cookieName: cookie.name,
-        url: cookie.url
-      };
-      if (!cookie.url && pageURL.startsWith('http'))
-        item.url = pageURL;
-      await this._session.send('Page.deleteCookie', item).catch(e => debugError('deleting ' + JSON.stringify(item) + ' => ' + e));
-    }
   }
 
   async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
@@ -524,24 +501,6 @@ type ScreenshotOptions = {
   omitBackground?: boolean,
   encoding?: string,
 }
-
-type NetworkCookie = {
-  name: string,
-  value: string,
-  domain: string,
-  path: string,
-  expires: number,
-  size: number,
-  httpOnly: boolean,
-  secure: boolean,
-  session: boolean,
-  sameSite?: 'Strict'|'Lax'|'Extended'|'None'
-};
-
-type DeleteNetworkCookieParam = {
-  name: string,
-  url?: string,
-};
 
 type ConsoleMessageLocation = {
   url?: string,

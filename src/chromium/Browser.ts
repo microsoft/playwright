@@ -33,7 +33,7 @@ export class Browser extends EventEmitter {
   private _process: childProcess.ChildProcess;
   private _screenshotTaskQueue = new TaskQueue();
   private _connection: Connection;
-  private _client: CDPSession;
+  _client: CDPSession;
   private _closeCallback: () => Promise<void>;
   private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
@@ -146,7 +146,7 @@ export class Browser extends EventEmitter {
 
   async _createPageInContext(contextId: string | null): Promise<Page> {
     const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
-    const target = await this._targets.get(targetId);
+    const target = this._targets.get(targetId);
     assert(await target._initializedPromise, 'Failed to create target for page');
     const page = await target.page();
     return page;
