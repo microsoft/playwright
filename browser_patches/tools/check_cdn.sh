@@ -3,36 +3,47 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [revision-to-start]"
+  echo "usage: $(basename $0) [firefox|webkit]"
   echo
-  echo "List CDN status for browser revisions"
-  echo "Pass optional |revision-to-start| to limit revision search"
+  echo "List CDN status for browser"
   exit 0
 fi
 
+if [[ $# == 0 ]]; then
+  echo "missing browser: 'firefox' or 'webkit'"
+  echo "try './$(basename $0) --help' for more information"
+  exit 1
+fi
 
 HOST="https://playwrightaccount.blob.core.windows.net/builds"
-ARCHIVES=(
+
+FFOX_REVISION=$(cat ../firefox/BUILD_NUMBER)
+FFOX_ARCHIVES=(
   "$HOST/firefox/%s/firefox-mac.zip"
   "$HOST/firefox/%s/firefox-linux.zip"
   "$HOST/firefox/%s/firefox-win32.zip"
   "$HOST/firefox/%s/firefox-win64.zip"
-  "$HOST/webkit/%s/minibrowser-linux.zip"
-  "$HOST/webkit/%s/minibrowser-mac-10.14.zip"
-  "$HOST/webkit/%s/minibrowser-mac-10.15.zip"
 )
-
-ALIASES=(
+FFOX_ALIASES=(
   "FF-MAC"
   "FF-LINUX"
   "FF-WIN32"
   "FF-WIN64"
+)
+
+WK_REVISION=$(cat ../webkit/BUILD_NUMBER)
+WK_ARCHIVES=(
+  "$HOST/webkit/%s/minibrowser-linux.zip"
+  "$HOST/webkit/%s/minibrowser-mac-10.14.zip"
+  "$HOST/webkit/%s/minibrowser-mac-10.15.zip"
+)
+WK_ALIASES=(
   "WK-LINUX"
   "WK-MAC-10.14"
   "WK-MAC-10.15"
 )
-COLUMN="%-15s"
 
+COLUMN="%-15s"
 # COLORS
 RED=$'\e[1;31m'
 GRN=$'\e[1;32m'
@@ -42,15 +53,20 @@ END=$'\e[0m'
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
-FFOX_REVISION=$(cat ../firefox/BUILD_NUMBER)
-WK_REVISION=$(cat ../webkit/BUILD_NUMBER)
-REVISION=$FFOX_REVISION
-if (( FFOX_REVISION < WK_REVISION )); then
+REVISION=""
+ARCHIVES=""
+ALIASES=""
+if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
+  REVISION=$FFOX_REVISION
+  ARCHIVES=("${FFOX_ARCHIVES[@]}")
+  ALIASES=("${FFOX_ALIASES[@]}")
+elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   REVISION=$WK_REVISION
-fi
-# Read start revision if there's any.
-if [[ $# == 1 ]]; then
-  REVISION=$1
+  ARCHIVES=("${WK_ARCHIVES[@]}")
+  ALIASES=("${WK_ALIASES[@]}")
+else
+  echo ERROR: unknown browser - "$1"
+  exit 1
 fi
 
 printf "%7s" ""
