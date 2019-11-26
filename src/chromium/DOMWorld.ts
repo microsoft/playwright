@@ -35,6 +35,7 @@ export class DOMWorld {
   private _documentPromise: Promise<ElementHandle> | null = null;
   private _contextPromise: Promise<ExecutionContext>;
   private _contextResolveCallback: ((c: ExecutionContext) => void) | null;
+  private _context: ExecutionContext | null;
   _waitTasks = new Set<WaitTask>();
   private _detached = false;
 
@@ -51,11 +52,12 @@ export class DOMWorld {
   }
 
   _setContext(context: ExecutionContext | null) {
+    this._context = context;
     if (context) {
       this._contextResolveCallback.call(null, context);
       this._contextResolveCallback = null;
       for (const waitTask of this._waitTasks)
-        waitTask.rerun();
+        waitTask.rerun(context);
     } else {
       this._documentPromise = null;
       this._contextPromise = new Promise(fulfill => {
@@ -295,7 +297,22 @@ export class DOMWorld {
       polling = 'raf',
       timeout = this._timeoutSettings.timeout(),
     } = options;
-    return new WaitTask(this, pageFunction, 'function', polling, timeout, ...args).promise;
+    const params: WaitTaskParams = {
+      predicateBody: pageFunction,
+      title: 'function',
+      polling,
+      timeout,
+      args
+    };
+    return this._scheduleWaitTask(params);
+  }
+
+  private _scheduleWaitTask(params: WaitTaskParams): Promise<JSHandle> {
+    const task = new WaitTask(params, () => this._waitTasks.delete(task));
+    this._waitTasks.add(task);
+    if (this._context)
+      task.rerun(this._context);
+    return task.promise;
   }
 
   async title(): Promise<string> {
@@ -313,8 +330,14 @@ export class DOMWorld {
     } = options;
     const polling = waitForVisible || waitForHidden ? 'raf' : 'mutation';
     const title = `${isXPath ? 'XPath' : 'selector'} "${selectorOrXPath}"${waitForHidden ? ' to be hidden' : ''}`;
-    const waitTask = new WaitTask(this, predicate, title, polling, timeout, selectorOrXPath, isXPath, waitForVisible, waitForHidden);
-    const handle = await waitTask.promise;
+    const params: WaitTaskParams = {
+      predicateBody: predicate,
+      title,
+      polling,
+      timeout,
+      args: [selectorOrXPath, isXPath, waitForVisible, waitForHidden]
+    };
+    const handle = await this._scheduleWaitTask(params);
     if (!handle.asElement()) {
       await handle.dispose();
       return null;
@@ -343,60 +366,62 @@ export class DOMWorld {
   }
 }
 
+type WaitTaskParams = {
+  predicateBody: Function | string;
+  title: string;
+  polling: string | number;
+  timeout: number;
+  args: any[];
+};
+
 class WaitTask {
-  promise: Promise<JSHandle>;
-  _domWorld: DOMWorld;
-  _polling: string | number;
-  _timeout: number;
-  _predicateBody: string;
-  _args: any[];
-  _runCount: number;
-  _resolve: (result: JSHandle) => void;
-  _reject: (reason: Error) => void;
-  _timeoutTimer: NodeJS.Timer;
-  _terminated: boolean;
-  _runningTask: any;
+  readonly promise: Promise<JSHandle>;
+  private _cleanup: () => void;
+  private _params: WaitTaskParams & { predicateBody: string };
+  private _runCount: number;
+  private _resolve: (result: JSHandle) => void;
+  private _reject: (reason: Error) => void;
+  private _timeoutTimer: NodeJS.Timer;
+  private _terminated: boolean;
 
-  constructor(domWorld: DOMWorld, predicateBody: Function | string, title, polling: string | number, timeout: number, ...args: any[]) {
-    if (helper.isString(polling))
-      assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
-    else if (helper.isNumber(polling))
-      assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
+  constructor(params: WaitTaskParams, cleanup: () => void) {
+    if (helper.isString(params.polling))
+      assert(params.polling === 'raf' || params.polling === 'mutation', 'Unknown polling option: ' + params.polling);
+    else if (helper.isNumber(params.polling))
+      assert(params.polling > 0, 'Cannot poll with non-positive interval: ' + params.polling);
     else
-      throw new Error('Unknown polling options: ' + polling);
+      throw new Error('Unknown polling options: ' + params.polling);
 
-    this._domWorld = domWorld;
-    this._polling = polling;
-    this._timeout = timeout;
-    this._predicateBody = helper.isString(predicateBody) ? 'return (' + predicateBody + ')' : 'return (' + predicateBody + ')(...args)';
-    this._args = args;
+    this._params = {
+      ...params,
+      predicateBody: helper.isString(params.predicateBody) ? 'return (' + params.predicateBody + ')' : 'return (' + params.predicateBody + ')(...args)'
+    };
+    this._cleanup = cleanup;
     this._runCount = 0;
-    domWorld._waitTasks.add(this);
     this.promise = new Promise<JSHandle>((resolve, reject) => {
       this._resolve = resolve;
       this._reject = reject;
     });
     // Since page navigation requires us to re-install the pageScript, we should track
     // timeout on our end.
-    if (timeout) {
-      const timeoutError = new TimeoutError(`waiting for ${title} failed: timeout ${timeout}ms exceeded`);
-      this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), timeout);
+    if (params.timeout) {
+      const timeoutError = new TimeoutError(`waiting for ${params.title} failed: timeout ${params.timeout}ms exceeded`);
+      this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), params.timeout);
     }
-    this.rerun();
   }
 
   terminate(error: Error) {
     this._terminated = true;
     this._reject(error);
-    this._cleanup();
+    this._doCleanup();
   }
 
-  async rerun() {
+  async rerun(context: ExecutionContext) {
     const runCount = ++this._runCount;
     let success: JSHandle | null = null;
     let error = null;
     try {
-      success = await (await this._domWorld.executionContext()).evaluateHandle(waitForPredicatePageFunction, this._predicateBody, this._polling, this._timeout, ...this._args);
+      success = await context.evaluateHandle(waitForPredicatePageFunction, this._params.predicateBody, this._params.polling, this._params.timeout, ...this._params.args);
     } catch (e) {
       error = e;
     }
@@ -408,9 +433,9 @@ class WaitTask {
     }
 
     // Ignore timeouts in pageScript - we track timeouts ourselves.
-    // If the frame's execution context has already changed, `frame.evaluate` will
+    // If execution context has been already destroyed, `context.evaluate` will
     // throw an error - ignore this predicate run altogether.
-    if (!error && await this._domWorld.evaluate(s => !s, success).catch(e => true)) {
+    if (!error && await context.evaluate(s => !s, success).catch(e => true)) {
       await success.dispose();
       return;
     }
@@ -430,13 +455,12 @@ class WaitTask {
     else
       this._resolve(success);
 
-    this._cleanup();
+    this._doCleanup();
   }
 
-  _cleanup() {
+  _doCleanup() {
     clearTimeout(this._timeoutTimer);
-    this._domWorld._waitTasks.delete(this);
-    this._runningTask = null;
+    this._cleanup();
   }
 }
 
