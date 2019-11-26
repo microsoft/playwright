@@ -86,7 +86,6 @@
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
   * [page.addStyleTag(options)](#pageaddstyletagoptions)
   * [page.authenticate(credentials)](#pageauthenticatecredentials)
-  * [page.bringToFront()](#pagebringtofront)
   * [page.browser()](#pagebrowser)
   * [page.browserContext()](#pagebrowsercontext)
   * [page.click(selector[, options])](#pageclickselector-options)
@@ -1090,12 +1089,6 @@ Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
 Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
 To disable authentication, pass `null`.
-
-#### page.bringToFront()
-
-- returns: <[Promise]>
-
-Brings page to front (activates tab).
 
 #### page.browser()
 

@@ -128,25 +128,5 @@ module.exports.addTests = function({testRunner, expect, playwright, defaultBrows
       await browser.close();
     });
   });
-
-  describe('Page.bringToFront', function() {
-    it('should work', async() => {
-      const browser = await playwright.launch(headfulOptions);
-      const page1 = await browser.newPage();
-      const page2 = await browser.newPage();
-
-      await page1.bringToFront();
-      expect(await page1.evaluate(() => document.visibilityState)).toBe('visible');
-      expect(await page2.evaluate(() => document.visibilityState)).toBe('hidden');
-
-      await page2.bringToFront();
-      expect(await page1.evaluate(() => document.visibilityState)).toBe('hidden');
-      expect(await page2.evaluate(() => document.visibilityState)).toBe('visible');
-
-      await page1.close();
-      await page2.close();
-      await browser.close();
-    });
-  });
 };
 
