@@ -19,7 +19,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(FFOX)('DefaultBrowserContext', function() {
+  describe('DefaultBrowserContext', function() {
     beforeEach(async state => {
       state.browser = await playwright.launch(defaultBrowserOptions);
       state.page = await state.browser.newPage();
@@ -34,7 +34,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       await page.evaluate(() => {
         document.cookie = 'username=John Doe';
       });
-      expect(await page.cookies()).toEqual([{
+      expect(await page.browserContext().cookies()).toEqual([{
         name: 'username',
         value: 'John Doe',
         domain: 'localhost',
@@ -47,14 +47,15 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         sameSite: 'None',
       }]);
     });
-    it.skip(WEBKIT)('page.setCookie() should work', async({page, server}) => {
+    it.skip(WEBKIT)('context.setCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+      await page.browserContext().setCookies([{
+        url: server.EMPTY_PAGE,
         name: 'username',
         value: 'John Doe'
-      });
+      }]);
       expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
-      expect(await page.cookies()).toEqual([{
+      expect(await page.browserContext().cookies()).toEqual([{
         name: 'username',
         value: 'John Doe',
         domain: 'localhost',
@@ -67,30 +68,20 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         sameSite: 'None',
       }]);
     });
-    it.skip(WEBKIT)('page.deleteCookie() should work', async({page, server}) => {
+    it.skip(WEBKIT)('context.clearCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+      await page.browserContext().setCookies([{
+        url: server.EMPTY_PAGE,
         name: 'cookie1',
         value: '1'
       }, {
+        url: server.EMPTY_PAGE,
         name: 'cookie2',
         value: '2'
-      });
-      expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
-      await page.deleteCookie({name: 'cookie2'});
-      expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
-      expect(await page.cookies()).toEqual([{
-        name: 'cookie1',
-        value: '1',
-        domain: 'localhost',
-        path: '/',
-        expires: -1,
-        size: 8,
-        httpOnly: false,
-        secure: false,
-        session: true,
-        sameSite: 'None',
       }]);
+      expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
+      await page.browserContext().clearCookies();
+      expect(await page.evaluate('document.cookie')).toBe('');
     });
   });
 };

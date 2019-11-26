@@ -102,10 +102,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(requests[1].url()).toContain('/one-style.css');
       expect(requests[1].headers().referer).toContain('/one-style.html');
     });
-    it('should properly return navigation response when URL has cookies', async({page, server}) => {
+    it('should properly return navigation response when URL has cookies', async({context, page, server}) => {
       // Setup cookie.
       await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({ name: 'foo', value: 'bar'});
+      await context.setCookies([{ url: server.EMPTY_PAGE, name: 'foo', value: 'bar'}]);
 
       // Setup request interception.
       await page.interception.enable();

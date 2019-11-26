@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
-import * as types from '../types';
 import { assert, debugError, helper } from '../helper';
-import { ClickOptions, Modifier, MultiClickOptions, PointerActionOptions, SelectOption, selectFunction, fillFunction } from '../input';
+import Injected from '../injected/injected';
+import * as input from '../input';
+import * as types from '../types';
 import { CDPSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './Frame';
@@ -26,7 +26,6 @@ import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { releaseObject, valueFromRemoteObject } from './protocolHelper';
-import Injected from '../injected/injected';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -236,7 +235,7 @@ export class ElementHandle extends JSHandle {
     return { point, scrollX, scrollY };
   }
 
-  async _performPointerAction(action: (point: Point) => Promise<void>, options?: PointerActionOptions): Promise<void> {
+  async _performPointerAction(action: (point: Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     let point: Point;
     if (options && options.relativePoint) {
@@ -259,7 +258,7 @@ export class ElementHandle extends JSHandle {
       await this._scrollIntoViewIfNeeded();
       point = await this._clickablePoint();
     }
-    let restoreModifiers: Modifier[] | undefined;
+    let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
       restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
     await action(point);
@@ -289,23 +288,23 @@ export class ElementHandle extends JSHandle {
     }));
   }
 
-  hover(options?: PointerActionOptions): Promise<void> {
+  hover(options?: input.PointerActionOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: ClickOptions): Promise<void> {
+  click(options?: input.ClickOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: MultiClickOptions): Promise<void> {
+  dblclick(options?: input.MultiClickOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: MultiClickOptions): Promise<void> {
+  tripleclick(options?: input.MultiClickOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
-  async select(...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+  async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
     const options = values.map(value => typeof value === 'object' ? value : { value });
     for (const option of options) {
       if (option instanceof ElementHandle)
@@ -317,22 +316,22 @@ export class ElementHandle extends JSHandle {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this.evaluate(selectFunction, ...options);
+    return this.evaluate(input.selectFunction, ...options);
   }
 
   async fill(value: string): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this.evaluate(fillFunction);
+    const error = await this.evaluate(input.fillFunction);
     if (error)
       throw new Error(error);
     await this.focus();
     await this._page.keyboard.sendCharacters(value);
   }
 
-  async uploadFile(...filePaths: string[]) {
-    const files = filePaths.map(filePath => path.resolve(filePath));
-    const objectId = this._remoteObject.objectId;
-    await this._client.send('DOM.setFileInputFiles', { objectId, files });
+  async setInputFiles(...files: (string|input.FilePayload)[]) {
+    const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
+    assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
+    await this.evaluate(input.setFileInputFunction, await input.loadFiles(files));
   }
 
   async focus() {

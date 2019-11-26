@@ -558,7 +558,7 @@ export class Page extends EventEmitter {
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
-    const fileChooser = new FileChooser(this, this._session, handle, multiple);
+    const fileChooser = new FileChooser(handle, multiple);
     for (const interceptor of interceptors)
       interceptor.call(null, fileChooser);
   }
@@ -623,21 +623,12 @@ export type Viewport = {
   hasTouch?: boolean;
 }
 
-type MediaFeature = {
-  name: string,
-  value: string
-};
-
 export class FileChooser {
-  private _page; Page;
-  private _client: JugglerSession;
   private _element: ElementHandle;
   private _multiple: boolean;
   private _handled = false;
 
-  constructor(page: Page, client: JugglerSession, element: ElementHandle, multiple: boolean) {
-    this._page = page;
-    this._client = client;
+  constructor(element: ElementHandle, multiple: boolean) {
     this._element = element;
     this._multiple = multiple;
   }
@@ -649,7 +640,7 @@ export class FileChooser {
   async accept(filePaths: string[]): Promise<any> {
     assert(!this._handled, 'Cannot accept FileChooser which is already handled!');
     this._handled = true;
-    await this._element.uploadFile(...filePaths);
+    await this._element.setInputFiles(...filePaths);
   }
 
   async cancel(): Promise<any> {

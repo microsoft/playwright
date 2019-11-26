@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from './helper';
+import * as fs from 'fs';
+import * as path from 'path';
+import { assert, helper } from './helper';
 import * as keyboardLayout from './USKeyboardLayout';
+const readFileAsync = helper.promisify(fs.readFile);
 
 export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 export type Button = 'left' | 'right' | 'middle';
@@ -342,6 +345,39 @@ export const fillFunction = (element: HTMLElement) => {
     return 'Element is not an <input>, <textarea> or [contenteditable] element.';
   }
   return false;
+};
+
+export const loadFiles = async (items: (string|FilePayload)[]): Promise<FilePayload[]> => {
+  return Promise.all(items.map(async item => {
+    if (typeof item === 'string') {
+      const file: FilePayload = {
+          name: path.basename(item),
+          type: 'application/octet-stream',
+          data: (await readFileAsync(item)).toString('base64')
+      };
+      return file;
+    } else {
+      return item as FilePayload;
+    }
+  }));
+}
+
+export const setFileInputFunction = async (element: HTMLInputElement, payloads: FilePayload[]) => {
+  const files = await Promise.all(payloads.map(async (file: FilePayload) => {
+    const result = await fetch(`data:${file.type};base64,${file.data}`);
+    return new File([await result.blob()], file.name);
+  }));
+  const dt = new DataTransfer();
+  for (const file of files)
+    dt.items.add(file);
+  element.files = dt.files;
+  element.dispatchEvent(new Event('input', { 'bubbles': true }));
+};
+
+export type FilePayload = {
+  name: string,
+  type: string,
+  data: string
 };
 
 export const mediaTypes = new Set(['screen', 'print']);

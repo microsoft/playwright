@@ -270,10 +270,10 @@
   * [elementHandle.press(key[, options])](#elementhandlepresskey-options)
   * [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
   * [elementHandle.select(...values)](#elementhandleselectvalues)
+  * [elementHandle.setInputFiles(...files)](#elementhandlesetinputfilesfiles)
   * [elementHandle.toString()](#elementhandletostring)
   * [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
   * [elementHandle.type(text[, options])](#elementhandletypetext-options)
-  * [elementHandle.uploadFile(...filePaths)](#elementhandleuploadfilefilepaths)
 - [class: Request](#class-request)
   * [request.failure()](#requestfailure)
   * [request.frame()](#requestframe)
@@ -3541,6 +3541,15 @@ handle.select('red', 'green', 'blue');
 handle.select({ value: 'blue' }, { index: 2 }, 'red');
 ```
 
+#### elementHandle.setInputFiles(...files)
+- `...files` <...[string]|[Object]> Sets the value of the file input to these file paths or files. If some of the  `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `name` <[string]> <[File]> name
+  - `type` <[string]> <[File]> type
+  - `data` <[string]> Base64-encoded data
+- returns: <[Promise]>
+
+This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
+
 #### elementHandle.toString()
 - returns: <[string]>
 
@@ -3582,12 +3591,6 @@ const elementHandle = await page.$('input');
 await elementHandle.type('some text');
 await elementHandle.press('Enter');
 ```
-
-#### elementHandle.uploadFile(...filePaths)
-- `...filePaths` <...[string]> Sets the value of the file input to these paths. If some of the  `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
-- returns: <[Promise]>
-
-This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 ### class: Request
 
@@ -3883,6 +3886,7 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
 [ExecutionContext]: #class-executioncontext "ExecutionContext"
+[File]: #class-file "https://developer.mozilla.org/en-US/docs/Web/API/File"
 [FileChooser]: #class-filechooser "FileChooser"
 [Frame]: #class-frame "Frame"
 [JSHandle]: #class-jshandle "JSHandle"
