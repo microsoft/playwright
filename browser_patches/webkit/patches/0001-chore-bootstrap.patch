@@ -1,97 +1,102 @@
-From 2db630e411ec58f5b8b5c4eee18dd0abbdd83d20 Mon Sep 17 00:00:00 2001
-From: Joel Einbinder <joel.einbinder@gmail.com>
-Date: Tue, 19 Nov 2019 16:38:29 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From d4351da392a4cade240d990a2986f0fe73b84f4a Mon Sep 17 00:00:00 2001
+From: Andrey Lushnikov <lushnikov@chromium.org>
+Date: Tue, 26 Nov 2019 14:07:23 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
- Source/JavaScriptCore/CMakeLists.txt          |   3 +
- Source/JavaScriptCore/DerivedSources.make     |   3 +
+ Source/JavaScriptCore/CMakeLists.txt          |   4 +
+ Source/JavaScriptCore/DerivedSources.make     |   4 +
  .../inspector/InspectorBackendDispatcher.cpp  |  21 +-
  .../inspector/InspectorBackendDispatcher.h    |   5 +-
  .../inspector/InspectorTarget.h               |   3 +
- .../inspector/agents/InspectorTargetAgent.cpp |  46 +++-
+ .../inspector/agents/InspectorTargetAgent.cpp |  46 +-
  .../inspector/agents/InspectorTargetAgent.h   |   6 +-
- .../inspector/protocol/Browser.json           |  40 +++
- .../inspector/protocol/DOM.json               |  21 ++
+ .../inspector/protocol/Browser.json           |  40 ++
+ .../inspector/protocol/DOM.json               |  21 +
+ .../inspector/protocol/Dialog.json            |  36 ++
  .../inspector/protocol/Emulation.json         |  14 +
- .../inspector/protocol/Input.json             | 160 +++++++++++
- .../inspector/protocol/Page.json              |  25 +-
+ .../inspector/protocol/Input.json             | 160 ++++++
+ .../inspector/protocol/Page.json              |  66 ++-
  .../inspector/protocol/Target.json            |  18 +-
  .../inspector/InspectorInstrumentation.cpp    |   6 +
  .../inspector/InspectorInstrumentation.h      |   9 +
- .../inspector/agents/InspectorDOMAgent.cpp    |  57 ++++
+ .../inspector/agents/InspectorDOMAgent.cpp    |  57 +++
  .../inspector/agents/InspectorDOMAgent.h      |   1 +
- .../inspector/agents/InspectorPageAgent.cpp   |  26 +-
- .../inspector/agents/InspectorPageAgent.h     |   4 +-
+ .../inspector/agents/InspectorPageAgent.cpp   | 468 +++++++++++++++++-
+ .../inspector/agents/InspectorPageAgent.h     |   7 +-
  Source/WebCore/loader/FrameLoader.cpp         |   1 +
  Source/WebCore/page/History.cpp               |   1 +
  .../WebCore/platform/PlatformKeyboardEvent.h  |   2 +
- .../platform/gtk/PlatformKeyboardEventGtk.cpp | 242 +++++++++++++++++
- .../libwpe/PlatformKeyboardEventLibWPE.cpp    | 240 ++++++++++++++++
+ .../platform/gtk/PlatformKeyboardEventGtk.cpp | 242 +++++++++
+ .../libwpe/PlatformKeyboardEventLibWPE.cpp    | 240 +++++++++
  Source/WebKit/Shared/API/c/wpe/WebKit.h       |   1 +
  Source/WebKit/Shared/NativeWebKeyboardEvent.h |   5 +
  Source/WebKit/Shared/NativeWebMouseEvent.h    |   4 +
  Source/WebKit/Shared/WebEvent.h               |   6 +-
- Source/WebKit/Shared/WebKeyboardEvent.cpp     |  22 ++
+ Source/WebKit/Shared/WebKeyboardEvent.cpp     |  22 +
  .../Shared/gtk/NativeWebKeyboardEventGtk.cpp  |   2 +-
  .../Shared/gtk/NativeWebMouseEventGtk.cpp     |   4 +-
- Source/WebKit/Sources.txt                     |   8 +
+ Source/WebKit/Sources.txt                     |   9 +
  Source/WebKit/SourcesCocoa.txt                |   1 +
- Source/WebKit/SourcesGTK.txt                  |   5 +
+ Source/WebKit/SourcesGTK.txt                  |   6 +
  Source/WebKit/SourcesWPE.txt                  |   6 +-
  Source/WebKit/UIProcess/API/C/WKPage.cpp      |   2 +
- .../UIProcess/API/Cocoa/_WKBrowserInspector.h |  50 ++++
- .../API/Cocoa/_WKBrowserInspector.mm          |  52 ++++
- .../API/glib/WebKitBrowserInspector.cpp       | 141 ++++++++++
- .../API/glib/WebKitBrowserInspectorPrivate.h  |  36 +++
+ .../UIProcess/API/Cocoa/_WKBrowserInspector.h |  23 +
+ .../API/Cocoa/_WKBrowserInspector.mm          |  25 +
+ .../API/glib/WebKitBrowserInspector.cpp       | 114 +++++
+ .../API/glib/WebKitBrowserInspectorPrivate.h  |   9 +
  .../UIProcess/API/glib/WebKitWebContext.cpp   |   5 +
  .../UIProcess/API/gtk/PageClientImpl.cpp      |   2 +
- .../API/gtk/WebKitBrowserInspector.h          |  84 ++++++
+ .../API/gtk/WebKitBrowserInspector.h          |  57 +++
  Source/WebKit/UIProcess/API/gtk/webkit2.h     |   1 +
- .../API/wpe/WebKitBrowserInspector.h          |  81 ++++++
+ .../API/wpe/WebKitBrowserInspector.h          |  54 ++
  Source/WebKit/UIProcess/API/wpe/webkit.h      |   1 +
- .../UIProcess/BrowserInspectorController.cpp  | 128 +++++++++
- .../UIProcess/BrowserInspectorController.h    |  74 +++++
- .../WebKit/UIProcess/BrowserInspectorPipe.cpp |  62 +++++
- .../WebKit/UIProcess/BrowserInspectorPipe.h   |  43 +++
- .../UIProcess/BrowserInspectorTargetAgent.cpp | 110 ++++++++
- .../UIProcess/BrowserInspectorTargetAgent.h   |  62 +++++
+ .../UIProcess/BrowserInspectorController.cpp  | 101 ++++
+ .../UIProcess/BrowserInspectorController.h    |  47 ++
+ .../WebKit/UIProcess/BrowserInspectorPipe.cpp |  35 ++
+ .../WebKit/UIProcess/BrowserInspectorPipe.h   |  16 +
+ .../UIProcess/BrowserInspectorTargetAgent.cpp |  83 ++++
+ .../UIProcess/BrowserInspectorTargetAgent.h   |  35 ++
  .../PopUpSOAuthorizationSession.h             |   4 +
  .../PopUpSOAuthorizationSession.mm            |   1 +
- .../UIProcess/InspectorBrowserAgent.cpp       | 101 +++++++
- .../WebKit/UIProcess/InspectorBrowserAgent.h  |  81 ++++++
- .../UIProcess/InspectorBrowserAgentClient.h   |  52 ++++
+ .../UIProcess/InspectorBrowserAgent.cpp       |  74 +++
+ .../WebKit/UIProcess/InspectorBrowserAgent.h  |  54 ++
+ .../UIProcess/InspectorBrowserAgentClient.h   |  25 +
+ .../WebKit/UIProcess/InspectorDialogAgent.cpp |  62 +++
+ .../WebKit/UIProcess/InspectorDialogAgent.h   |  48 ++
  .../WebKit/UIProcess/InspectorTargetProxy.cpp |  18 +-
  .../WebKit/UIProcess/InspectorTargetProxy.h   |  11 +-
- .../WebKit/UIProcess/RemoteInspectorPipe.cpp  | 159 +++++++++++
- Source/WebKit/UIProcess/RemoteInspectorPipe.h |  70 +++++
+ .../WebKit/UIProcess/RemoteInspectorPipe.cpp  | 132 +++++
+ Source/WebKit/UIProcess/RemoteInspectorPipe.h |  43 ++
  .../AuthenticatorManager.cpp                  |   1 +
- .../UIProcess/WebPageInspectorController.cpp  |  56 +++-
+ .../UIProcess/WebPageInspectorController.cpp  |  56 ++-
  .../UIProcess/WebPageInspectorController.h    |   8 +
- .../WebPageInspectorEmulationAgent.cpp        |  61 +++++
- .../WebPageInspectorEmulationAgent.h          |  63 +++++
- .../UIProcess/WebPageInspectorInputAgent.cpp  | 257 ++++++++++++++++++
- .../UIProcess/WebPageInspectorInputAgent.h    |  76 ++++++
- .../UIProcess/WebPageInspectorTargetProxy.cpp | 129 +++++++++
- .../UIProcess/WebPageInspectorTargetProxy.h   |  67 +++++
- Source/WebKit/UIProcess/WebPageProxy.cpp      |  12 +-
- Source/WebKit/UIProcess/WebPageProxy.h        |   9 +
- .../glib/InspectorBrowserAgentClientGLib.cpp  | 130 +++++++++
- .../glib/InspectorBrowserAgentClientGLib.h    |  63 +++++
- .../gtk/WebPageInspectorEmulationAgentGtk.cpp |  58 ++++
- .../gtk/WebPageInspectorInputAgentGtk.cpp     | 108 ++++++++
- .../gtk/WebPageInspectorTargetProxyGtk.cpp    |  45 +++
+ .../WebPageInspectorEmulationAgent.cpp        |  39 ++
+ .../WebPageInspectorEmulationAgent.h          |  41 ++
+ .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 +++++++++
+ .../UIProcess/WebPageInspectorInputAgent.h    |  54 ++
+ .../UIProcess/WebPageInspectorTargetProxy.cpp | 109 ++++
+ .../UIProcess/WebPageInspectorTargetProxy.h   |  45 ++
+ Source/WebKit/UIProcess/WebPageProxy.cpp      |  20 +-
+ Source/WebKit/UIProcess/WebPageProxy.h        |  13 +
+ .../glib/InspectorBrowserAgentClientGLib.cpp  | 103 ++++
+ .../glib/InspectorBrowserAgentClientGLib.h    |  36 ++
+ .../UIProcess/gtk/InspectorDialogAgentGtk.cpp |  23 +
+ .../gtk/WebPageInspectorEmulationAgentGtk.cpp |  35 ++
+ .../gtk/WebPageInspectorInputAgentGtk.cpp     |  85 ++++
+ .../gtk/WebPageInspectorTargetProxyGtk.cpp    |  22 +
  .../WebKit/UIProcess/ios/PageClientImplIOS.mm |   2 +
- .../mac/InspectorBrowserAgentClientMac.h      |  56 ++++
- .../mac/InspectorBrowserAgentClientMac.mm     |  95 +++++++
+ .../mac/InspectorBrowserAgentClientMac.h      |  29 ++
+ .../mac/InspectorBrowserAgentClientMac.mm     |  68 +++
+ .../UIProcess/mac/InspectorDialogAgentMac.mm  |  15 +
  .../WebKit/UIProcess/mac/PageClientImplMac.mm |   5 +
- .../mac/WebPageInspectorEmulationAgentMac.mm  |  42 +++
- .../mac/WebPageInspectorInputAgentMac.mm      |  37 +++
- .../mac/WebPageInspectorTargetProxyMac.mm     |  41 +++
- .../wpe/WebPageInspectorEmulationAgentWPE.cpp |  41 +++
- .../wpe/WebPageInspectorInputAgentWPE.cpp     |  99 +++++++
- .../wpe/WebPageInspectorTargetProxyWPE.cpp    |  41 +++
- .../WebKit/WebKit.xcodeproj/project.pbxproj   |  54 ++++
+ .../mac/WebPageInspectorEmulationAgentMac.mm  |  19 +
+ .../mac/WebPageInspectorInputAgentMac.mm      |  14 +
+ .../mac/WebPageInspectorTargetProxyMac.mm     |  18 +
+ .../wpe/WebPageInspectorEmulationAgentWPE.cpp |  18 +
+ .../wpe/WebPageInspectorInputAgentWPE.cpp     |  76 +++
+ .../wpe/WebPageInspectorTargetProxyWPE.cpp    |  18 +
+ .../WebKit/WebKit.xcodeproj/project.pbxproj   |  63 ++-
  .../WebPage/WebPageInspectorTarget.cpp        |   7 +
  .../WebPage/WebPageInspectorTarget.h          |   1 +
  Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
@@ -100,9 +105,10 @@ Subject: [PATCH xserver] chore: bootstrap
  Tools/MiniBrowser/mac/AppDelegate.m           |  25 +-
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  17 +-
- Tools/MiniBrowser/wpe/main.cpp                |  37 +++
- 97 files changed, 4177 insertions(+), 53 deletions(-)
+ Tools/MiniBrowser/wpe/main.cpp                |  37 ++
+ 102 files changed, 3966 insertions(+), 55 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
+ create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Input.json
  create mode 100644 Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
@@ -120,6 +126,8 @@ Subject: [PATCH xserver] chore: bootstrap
  create mode 100644 Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
  create mode 100644 Source/WebKit/UIProcess/InspectorBrowserAgent.h
  create mode 100644 Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
+ create mode 100644 Source/WebKit/UIProcess/InspectorDialogAgent.cpp
+ create mode 100644 Source/WebKit/UIProcess/InspectorDialogAgent.h
  create mode 100644 Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
  create mode 100644 Source/WebKit/UIProcess/RemoteInspectorPipe.h
  create mode 100644 Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
@@ -130,11 +138,13 @@ Subject: [PATCH xserver] chore: bootstrap
  create mode 100644 Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
  create mode 100644 Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
  create mode 100644 Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
+ create mode 100644 Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
  create mode 100644 Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
+ create mode 100644 Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm
  create mode 100644 Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
  create mode 100644 Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
  create mode 100644 Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
@@ -143,10 +153,10 @@ Subject: [PATCH xserver] chore: bootstrap
  create mode 100644 Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp
 
 diff --git a/Source/JavaScriptCore/CMakeLists.txt b/Source/JavaScriptCore/CMakeLists.txt
-index 0f8c4194064..358d717ddc1 100644
+index 0f8c4194064..a28f84c44ba 100644
 --- a/Source/JavaScriptCore/CMakeLists.txt
 +++ b/Source/JavaScriptCore/CMakeLists.txt
-@@ -1143,6 +1143,7 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
+@@ -1143,16 +1143,20 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Animation.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/ApplicationCache.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Audit.json
@@ -154,7 +164,9 @@ index 0f8c4194064..358d717ddc1 100644
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/CSS.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Canvas.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Console.json
-@@ -1151,8 +1152,10 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
++    ${JAVASCRIPTCORE_DIR}/inspector/protocol/Dialog.json
+     ${JAVASCRIPTCORE_DIR}/inspector/protocol/DOM.json
+     ${JAVASCRIPTCORE_DIR}/inspector/protocol/DOMDebugger.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/DOMStorage.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Database.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Debugger.json
@@ -166,10 +178,10 @@ index 0f8c4194064..358d717ddc1 100644
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/LayerTree.json
      ${JAVASCRIPTCORE_DIR}/inspector/protocol/Network.json
 diff --git a/Source/JavaScriptCore/DerivedSources.make b/Source/JavaScriptCore/DerivedSources.make
-index f59212ff01c..c1fb126e017 100644
+index f59212ff01c..ca6ef5f8d07 100644
 --- a/Source/JavaScriptCore/DerivedSources.make
 +++ b/Source/JavaScriptCore/DerivedSources.make
-@@ -238,6 +238,7 @@ INSPECTOR_DOMAINS := \
+@@ -238,16 +238,20 @@ INSPECTOR_DOMAINS := \
      $(JavaScriptCore)/inspector/protocol/Animation.json \
      $(JavaScriptCore)/inspector/protocol/ApplicationCache.json \
      $(JavaScriptCore)/inspector/protocol/Audit.json \
@@ -177,7 +189,9 @@ index f59212ff01c..c1fb126e017 100644
      $(JavaScriptCore)/inspector/protocol/CSS.json \
      $(JavaScriptCore)/inspector/protocol/Canvas.json \
      $(JavaScriptCore)/inspector/protocol/Console.json \
-@@ -246,8 +247,10 @@ INSPECTOR_DOMAINS := \
++    $(JavaScriptCore)/inspector/protocol/Dialog.json \
+     $(JavaScriptCore)/inspector/protocol/DOM.json \
+     $(JavaScriptCore)/inspector/protocol/DOMDebugger.json \
      $(JavaScriptCore)/inspector/protocol/DOMStorage.json \
      $(JavaScriptCore)/inspector/protocol/Database.json \
      $(JavaScriptCore)/inspector/protocol/Debugger.json \
@@ -530,6 +544,48 @@ index 38cb48bedf2..285027ae5d7 100644
          }
      ],
      "events": [
+diff --git a/Source/JavaScriptCore/inspector/protocol/Dialog.json b/Source/JavaScriptCore/inspector/protocol/Dialog.json
+new file mode 100644
+index 00000000000..79edea03fed
+--- /dev/null
++++ b/Source/JavaScriptCore/inspector/protocol/Dialog.json
+@@ -0,0 +1,36 @@
++{
++    "domain": "Dialog",
++    "description": "Actions and events related to alert boxes.",
++    "availability": ["web"],
++    "types": [
++    ],
++    "commands": [
++        {
++            "name": "enable",
++            "description": "Enables dialog domain notifications."
++        },
++        {
++            "name": "disable",
++            "description": "Disables dialog domain notifications."
++        },
++        {
++            "name": "handleJavaScriptDialog",
++            "description": "Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).",
++            "parameters": [
++                { "name": "accept", "type": "boolean", "description": "Whether to accept or dismiss the dialog."},
++                { "name": "promptText", "optional": true, "type": "string", "description": "The text to enter into the dialog prompt before accepting. Used only if this is a prompt dialog."}
++            ]
++        }
++    ],
++    "events": [
++        {
++            "name": "javascriptDialogOpening",
++            "description": "Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.",
++            "parameters": [
++                { "name": "type", "type": "string", "description": "Dialog type."},
++                { "name": "message", "type": "string", "description": "Message that will be displayed by the dialog."},
++                { "name": "defaultPrompt", "optional": true, "type": "string", "description": "Default dialog prompt."}
++            ]
++        }
++    ]
++}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
 index 00000000000..168e3f2b93d
@@ -717,10 +773,51 @@ index 00000000000..79bbe73b0df
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8..b249eead6d6 100644
+index 367d1f235a8..9f455a19f22 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
-@@ -131,7 +131,8 @@
+@@ -108,6 +108,40 @@
+                 { "name": "session", "type": "boolean", "description": "True in case of session cookie." },
+                 { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
+             ]
++        },
++        {
++            "id": "AXNode",
++            "type": "object",
++            "description": "Accessibility Node",
++            "properties": [
++                { "name": "role", "type": "string", "description": "The role."},
++                { "name": "name", "type": "string","optional": true, "description": "A human readable name for the node."},
++                { "name": "value", "type": "any", "optional": true, "description": "The current value of the node."},
++                { "name": "description", "type": "string", "optional": true, "description": "An additional human readable description of the node."},
++                { "name": "keyshortcuts", "type": "string", "optional": true, "description": "Keyboard shortcuts associated with this node."},
++                { "name": "roledescription", "type": "string", "optional": true, "description": "A human readable alternative to the role."},
++                { "name": "valuetext", "type": "string", "optional": true, "description": "A description of the current value."},
++                { "name": "disabled", "type": "boolean", "optional": true, "description": "Whether the node is disabled."},
++                { "name": "expanded", "type": "boolean", "optional": true, "description": "Whether the node is expanded or collapsed."},
++                { "name": "focused", "type": "boolean", "optional": true, "description": "Whether the node is focused."},
++                { "name": "modal", "type": "boolean", "optional": true, "description": "Whether the node is modal."},
++                { "name": "multiline", "type": "boolean", "optional": true, "description": "Whether the node text input supports multiline."},
++                { "name": "multiselectable", "type": "boolean", "optional": true, "description": "Whether more than one child can be selected."},
++                { "name": "readonly", "type": "boolean", "optional": true, "description": "Whether the node is read only."},
++                { "name": "required", "type": "boolean", "optional": true, "description": "Whether the node is required."},
++                { "name": "selected", "type": "boolean", "optional": true, "description": "Whether the node is selected in its parent node."},
++                { "name": "checked", "type": "string", "optional": true, "enum": ["true", "false", "mixed"], "description": "Whether the checkbox is checked, or \"mixed\"."},
++                { "name": "pressed", "type": "string", "optional": true, "enum": ["true", "false", "mixed"], "description": "Whether the toggle button is checked, or \"mixed\"."},
++                { "name": "level", "type": "integer", "optional": true, "description": "The level of a heading."},
++                { "name": "valuemin", "type": "number", "optional": true, "description": "The minimum value in a node."},
++                { "name": "valuemax", "type": "number", "optional": true, "description": "The maximum value in a node."},
++                { "name": "autocomplete", "type": "string", "optional": true, "description": "What kind of autocomplete is supported by a control."},
++                { "name": "haspopup", "type": "string", "optional": true, "description": "What kind of popup is currently being shown for a node."},
++                { "name": "invalid", "type": "string", "optional": true, "enum": ["true", "false", "grammar", "spelling"], "description": "Whether and in what way this node's value is invalid."},
++                { "name": "orientation", "type": "string", "optional": true, "description": "Whether the node is oriented horizontally or vertically."},
++                { "name": "focusable", "type": "boolean", "optional": true, "description": "Whether the node is focusable."},
++                { "name": "children", "type": "array", "optional": true, "items": { "$ref": "AXNode"}, "description": "Child AXNodes of this node, if any."}
++            ]
+         }
+     ],
+     "commands": [
+@@ -131,7 +165,8 @@
              "name": "navigate",
              "description": "Navigates current page to the given URL.",
              "parameters": [
@@ -730,7 +827,7 @@ index 367d1f235a8..b249eead6d6 100644
              ]
          },
          {
-@@ -288,6 +289,13 @@
+@@ -288,6 +323,20 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -741,10 +838,17 @@ index 367d1f235a8..b249eead6d6 100644
 +            "parameters": [
 +                { "name": "text", "type": "string", "description": "Text to insert." }
 +            ]
++        },
++        {
++            "name": "accessibilitySnapshot",
++            "description": "Serializes and returns all of the accessibility nodes of the page.",
++            "returns": [
++                { "name": "axNode", "$ref": "AXNode", "description": "The root AXNode."}
++            ]
          }
      ],
      "events": [
-@@ -347,6 +355,21 @@
+@@ -347,6 +396,21 @@
              ]
          },
          {
@@ -854,7 +958,7 @@ index 6698431f316..40dd67f43e9 100644
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index c23edb612e1..caf43770492 100644
+index aecc79bc0ca..d9fa197eab6 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -65,6 +65,7 @@
@@ -873,7 +977,7 @@ index c23edb612e1..caf43770492 100644
  #include "RenderStyle.h"
  #include "RenderStyleConstants.h"
  #include "ScriptState.h"
-@@ -1470,6 +1472,61 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -1475,6 +1477,61 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
@@ -948,10 +1052,18 @@ index 51639abeb84..fbb7773978d 100644
      // InspectorInstrumentation
      int identifierForNode(Node&);
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..a6bdc295db7 100644
+index f2e228b7f74..a5eabfa65c4 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-@@ -39,6 +39,7 @@
+@@ -32,6 +32,7 @@
+ #include "config.h"
+ #include "InspectorPageAgent.h"
+ 
++#include "AXObjectCache.h"
+ #include "CachedResource.h"
+ #include "CachedResourceLoader.h"
+ #include "Cookie.h"
+@@ -39,6 +40,7 @@
  #include "CustomHeaderFields.h"
  #include "Document.h"
  #include "DocumentLoader.h"
@@ -959,7 +1071,7 @@ index f2e228b7f74..a6bdc295db7 100644
  #include "Frame.h"
  #include "FrameLoadRequest.h"
  #include "FrameLoader.h"
-@@ -63,6 +64,7 @@
+@@ -63,6 +65,7 @@
  #include "Settings.h"
  #include "StyleScope.h"
  #include "TextEncoding.h"
@@ -967,7 +1079,7 @@ index f2e228b7f74..a6bdc295db7 100644
  #include "UserGestureIndicator.h"
  #include <JavaScriptCore/ContentSearchUtilities.h>
  #include <JavaScriptCore/IdentifiersFactory.h>
-@@ -412,14 +414,16 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -412,14 +415,16 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -989,7 +1101,7 @@ index f2e228b7f74..a6bdc295db7 100644
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -761,6 +765,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -761,6 +766,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1002,7 +1114,7 @@ index f2e228b7f74..a6bdc295db7 100644
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -986,4 +996,10 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +997,451 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -1012,9 +1124,450 @@ index f2e228b7f74..a6bdc295db7 100644
 +    TypingCommand::insertText(*focusedDocument, text, 0);
 +}
 +
++static String roleFromObject(RefPtr<AXCoreObject> axObject) {
++    String computedRoleString = axObject->computedRoleString();
++    if (!computedRoleString.isEmpty())
++        return computedRoleString;
++    AccessibilityRole role = axObject->roleValue();
++    switch(role) {
++        case AccessibilityRole::Annotation:
++            return "Annotation";
++        case AccessibilityRole::Application:
++            return "Application";
++        case AccessibilityRole::ApplicationAlert:
++            return "ApplicationAlert";
++        case AccessibilityRole::ApplicationAlertDialog:
++            return "ApplicationAlertDialog";
++        case AccessibilityRole::ApplicationDialog:
++            return "ApplicationDialog";
++        case AccessibilityRole::ApplicationGroup:
++            return "ApplicationGroup";
++        case AccessibilityRole::ApplicationLog:
++            return "ApplicationLog";
++        case AccessibilityRole::ApplicationMarquee:
++            return "ApplicationMarquee";
++        case AccessibilityRole::ApplicationStatus:
++            return "ApplicationStatus";
++        case AccessibilityRole::ApplicationTextGroup:
++            return "ApplicationTextGroup";
++        case AccessibilityRole::ApplicationTimer:
++            return "ApplicationTimer";
++        case AccessibilityRole::Audio:
++            return "Audio";
++        case AccessibilityRole::Blockquote:
++            return "Blockquote";
++        case AccessibilityRole::Browser:
++            return "Browser";
++        case AccessibilityRole::BusyIndicator:
++            return "BusyIndicator";
++        case AccessibilityRole::Button:
++            return "Button";
++        case AccessibilityRole::Canvas:
++            return "Canvas";
++        case AccessibilityRole::Caption:
++            return "Caption";
++        case AccessibilityRole::Cell:
++            return "Cell";
++        case AccessibilityRole::CheckBox:
++            return "CheckBox";
++        case AccessibilityRole::ColorWell:
++            return "ColorWell";
++        case AccessibilityRole::Column:
++            return "Column";
++        case AccessibilityRole::ColumnHeader:
++            return "ColumnHeader";
++        case AccessibilityRole::ComboBox:
++            return "ComboBox";
++        case AccessibilityRole::Definition:
++            return "Definition";
++        case AccessibilityRole::Deletion:
++            return "Deletion";
++        case AccessibilityRole::DescriptionList:
++            return "DescriptionList";
++        case AccessibilityRole::DescriptionListTerm:
++            return "DescriptionListTerm";
++        case AccessibilityRole::DescriptionListDetail:
++            return "DescriptionListDetail";
++        case AccessibilityRole::Details:
++            return "Details";
++        case AccessibilityRole::Directory:
++            return "Directory";
++        case AccessibilityRole::DisclosureTriangle:
++            return "DisclosureTriangle";
++        case AccessibilityRole::Div:
++            return "Div";
++        case AccessibilityRole::Document:
++            return "Document";
++        case AccessibilityRole::DocumentArticle:
++            return "DocumentArticle";
++        case AccessibilityRole::DocumentMath:
++            return "DocumentMath";
++        case AccessibilityRole::DocumentNote:
++            return "DocumentNote";
++        case AccessibilityRole::Drawer:
++            return "Drawer";
++        case AccessibilityRole::EditableText:
++            return "EditableText";
++        case AccessibilityRole::Feed:
++            return "Feed";
++        case AccessibilityRole::Figure:
++            return "Figure";
++        case AccessibilityRole::Footer:
++            return "Footer";
++        case AccessibilityRole::Footnote:
++            return "Footnote";
++        case AccessibilityRole::Form:
++            return "Form";
++        case AccessibilityRole::GraphicsDocument:
++            return "GraphicsDocument";
++        case AccessibilityRole::GraphicsObject:
++            return "GraphicsObject";
++        case AccessibilityRole::GraphicsSymbol:
++            return "GraphicsSymbol";
++        case AccessibilityRole::Grid:
++            return "Grid";
++        case AccessibilityRole::GridCell:
++            return "GridCell";
++        case AccessibilityRole::Group:
++            return "Group";
++        case AccessibilityRole::GrowArea:
++            return "GrowArea";
++        case AccessibilityRole::Heading:
++            return "Heading";
++        case AccessibilityRole::HelpTag:
++            return "HelpTag";
++        case AccessibilityRole::HorizontalRule:
++            return "HorizontalRule";
++        case AccessibilityRole::Ignored:
++            return "Ignored";
++        case AccessibilityRole::Inline:
++            return "Inline";
++        case AccessibilityRole::Image:
++            return "Image";
++        case AccessibilityRole::ImageMap:
++            return "ImageMap";
++        case AccessibilityRole::ImageMapLink:
++            return "ImageMapLink";
++        case AccessibilityRole::Incrementor:
++            return "Incrementor";
++        case AccessibilityRole::Insertion:
++            return "Insertion";
++        case AccessibilityRole::Label:
++            return "Label";
++        case AccessibilityRole::LandmarkBanner:
++            return "LandmarkBanner";
++        case AccessibilityRole::LandmarkComplementary:
++            return "LandmarkComplementary";
++        case AccessibilityRole::LandmarkContentInfo:
++            return "LandmarkContentInfo";
++        case AccessibilityRole::LandmarkDocRegion:
++            return "LandmarkDocRegion";
++        case AccessibilityRole::LandmarkMain:
++            return "LandmarkMain";
++        case AccessibilityRole::LandmarkNavigation:
++            return "LandmarkNavigation";
++        case AccessibilityRole::LandmarkRegion:
++            return "LandmarkRegion";
++        case AccessibilityRole::LandmarkSearch:
++            return "LandmarkSearch";
++        case AccessibilityRole::Legend:
++            return "Legend";
++        case AccessibilityRole::Link:
++            return "Link";
++        case AccessibilityRole::List:
++            return "List";
++        case AccessibilityRole::ListBox:
++            return "ListBox";
++        case AccessibilityRole::ListBoxOption:
++            return "ListBoxOption";
++        case AccessibilityRole::ListItem:
++            return "ListItem";
++        case AccessibilityRole::ListMarker:
++            return "ListMarker";
++        case AccessibilityRole::Mark:
++            return "Mark";
++        case AccessibilityRole::MathElement:
++            return "MathElement";
++        case AccessibilityRole::Matte:
++            return "Matte";
++        case AccessibilityRole::Menu:
++            return "Menu";
++        case AccessibilityRole::MenuBar:
++            return "MenuBar";
++        case AccessibilityRole::MenuButton:
++            return "MenuButton";
++        case AccessibilityRole::MenuItem:
++            return "MenuItem";
++        case AccessibilityRole::MenuItemCheckbox:
++            return "MenuItemCheckbox";
++        case AccessibilityRole::MenuItemRadio:
++            return "MenuItemRadio";
++        case AccessibilityRole::MenuListPopup:
++            return "MenuListPopup";
++        case AccessibilityRole::MenuListOption:
++            return "MenuListOption";
++        case AccessibilityRole::Meter:
++            return "Meter";
++        case AccessibilityRole::Outline:
++            return "Outline";
++        case AccessibilityRole::Paragraph:
++            return "Paragraph";
++        case AccessibilityRole::PopUpButton:
++            return "PopUpButton";
++        case AccessibilityRole::Pre:
++            return "Pre";
++        case AccessibilityRole::Presentational:
++            return "Presentational";
++        case AccessibilityRole::ProgressIndicator:
++            return "ProgressIndicator";
++        case AccessibilityRole::RadioButton:
++            return "RadioButton";
++        case AccessibilityRole::RadioGroup:
++            return "RadioGroup";
++        case AccessibilityRole::RowHeader:
++            return "RowHeader";
++        case AccessibilityRole::Row:
++            return "Row";
++        case AccessibilityRole::RowGroup:
++            return "RowGroup";
++        case AccessibilityRole::RubyBase:
++            return "RubyBase";
++        case AccessibilityRole::RubyBlock:
++            return "RubyBlock";
++        case AccessibilityRole::RubyInline:
++            return "RubyInline";
++        case AccessibilityRole::RubyRun:
++            return "RubyRun";
++        case AccessibilityRole::RubyText:
++            return "RubyText";
++        case AccessibilityRole::Ruler:
++            return "Ruler";
++        case AccessibilityRole::RulerMarker:
++            return "RulerMarker";
++        case AccessibilityRole::ScrollArea:
++            return "ScrollArea";
++        case AccessibilityRole::ScrollBar:
++            return "ScrollBar";
++        case AccessibilityRole::SearchField:
++            return "SearchField";
++        case AccessibilityRole::Sheet:
++            return "Sheet";
++        case AccessibilityRole::Slider:
++            return "Slider";
++        case AccessibilityRole::SliderThumb:
++            return "SliderThumb";
++        case AccessibilityRole::SpinButton:
++            return "SpinButton";
++        case AccessibilityRole::SpinButtonPart:
++            return "SpinButtonPart";
++        case AccessibilityRole::SplitGroup:
++            return "SplitGroup";
++        case AccessibilityRole::Splitter:
++            return "Splitter";
++        case AccessibilityRole::StaticText:
++            return "StaticText";
++        case AccessibilityRole::Subscript:
++            return "Subscript";
++        case AccessibilityRole::Summary:
++            return "Summary";
++        case AccessibilityRole::Superscript:
++            return "Superscript";
++        case AccessibilityRole::Switch:
++            return "Switch";
++        case AccessibilityRole::SystemWide:
++            return "SystemWide";
++        case AccessibilityRole::SVGRoot:
++            return "SVGRoot";
++        case AccessibilityRole::SVGText:
++            return "SVGText";
++        case AccessibilityRole::SVGTSpan:
++            return "SVGTSpan";
++        case AccessibilityRole::SVGTextPath:
++            return "SVGTextPath";
++        case AccessibilityRole::TabGroup:
++            return "TabGroup";
++        case AccessibilityRole::TabList:
++            return "TabList";
++        case AccessibilityRole::TabPanel:
++            return "TabPanel";
++        case AccessibilityRole::Tab:
++            return "Tab";
++        case AccessibilityRole::Table:
++            return "Table";
++        case AccessibilityRole::TableHeaderContainer:
++            return "TableHeaderContainer";
++        case AccessibilityRole::TextArea:
++            return "TextArea";
++        case AccessibilityRole::TextGroup:
++            return "TextGroup";
++        case AccessibilityRole::Term:
++            return "Term";
++        case AccessibilityRole::Time:
++            return "Time";
++        case AccessibilityRole::Tree:
++            return "Tree";
++        case AccessibilityRole::TreeGrid:
++            return "TreeGrid";
++        case AccessibilityRole::TreeItem:
++            return "TreeItem";
++        case AccessibilityRole::TextField:
++            return "TextField";
++        case AccessibilityRole::ToggleButton:
++            return "ToggleButton";
++        case AccessibilityRole::Toolbar:
++            return "Toolbar";
++        case AccessibilityRole::Unknown:
++            return "Unknown";
++        case AccessibilityRole::UserInterfaceTooltip:
++            return "UserInterfaceTooltip";
++        case AccessibilityRole::ValueIndicator:
++            return "ValueIndicator";
++        case AccessibilityRole::Video:
++            return "Video";
++        case AccessibilityRole::WebApplication:
++            return "WebApplication";
++        case AccessibilityRole::WebArea:
++            return "WebArea";
++        case AccessibilityRole::WebCoreLink:
++            return "WebCoreLink";
++        case AccessibilityRole::Window:
++            return "Window";
++    };
++    return "Unknown";
++}
++
++static RefPtr<Inspector::Protocol::Page::AXNode> snapshotForAXObject(RefPtr<AXCoreObject> axObject) {
++    auto axNode = Inspector::Protocol::Page::AXNode::create()
++        .setRole(roleFromObject(axObject))
++        .release();
++
++    if (!axObject->computedLabel().isEmpty())
++        axNode->setName(axObject->computedLabel());
++    if (!axObject->stringValue().isEmpty())
++        axNode->setValue(JSON::Value::create(axObject->stringValue()));
++    if (!axObject->accessibilityDescription().isEmpty())
++        axNode->setDescription(axObject->accessibilityDescription());
++    if (!axObject->keyShortcutsValue().isEmpty())
++        axNode->setKeyshortcuts(axObject->keyShortcutsValue());
++    if (!axObject->valueDescription().isEmpty())
++        axNode->setValuetext(axObject->valueDescription());
++    if (!axObject->isEnabled())
++        axNode->setDisabled(!axObject->isEnabled());
++    if (axObject->supportsExpanded())
++        axNode->setExpanded(axObject->isExpanded());
++    if (axObject->isFocused())
++        axNode->setFocused(axObject->isFocused());
++    if (axObject->isModalNode())
++        axNode->setModal(axObject->isModalNode());
++    bool multiline = axObject->ariaIsMultiline() || axObject->roleValue() == AccessibilityRole::TextArea;
++    if (multiline)
++        axNode->setMultiline(multiline);
++    if (axObject->isMultiSelectable())
++        axNode->setMultiselectable(axObject->isMultiSelectable());
++    if (axObject->supportsReadOnly())
++        axNode->setReadonly(axObject->readOnlyValue() != "false");
++    if (axObject->supportsRequiredAttribute())
++        axNode->setRequired(axObject->isRequired());
++    if (axObject->isSelected())
++        axNode->setSelected(axObject->isSelected());
++    if (axObject->supportsChecked()) {
++        AccessibilityButtonState checkedState = axObject->checkboxOrRadioValue();
++        switch (checkedState) {
++            case AccessibilityButtonState::On:
++                axNode->setChecked(Inspector::Protocol::Page::AXNode::Checked::True);
++                break;
++            case AccessibilityButtonState::Off:
++                axNode->setChecked(Inspector::Protocol::Page::AXNode::Checked::False);
++                break;
++            case AccessibilityButtonState::Mixed:
++                axNode->setChecked(Inspector::Protocol::Page::AXNode::Checked::Mixed);
++                break;
++        }
++    }
++    if (axObject->supportsPressed()) {
++        AccessibilityButtonState checkedState = axObject->checkboxOrRadioValue();
++        switch (checkedState) {
++            case AccessibilityButtonState::On:
++                axNode->setPressed(Inspector::Protocol::Page::AXNode::Pressed::True);
++                break;
++            case AccessibilityButtonState::Off:
++                axNode->setPressed(Inspector::Protocol::Page::AXNode::Pressed::False);
++                break;
++            case AccessibilityButtonState::Mixed:
++                axNode->setPressed(Inspector::Protocol::Page::AXNode::Pressed::Mixed);
++                break;
++        }
++    }            
++    unsigned level = axObject->hierarchicalLevel() ? axObject->hierarchicalLevel() : axObject->headingLevel();
++    if (level)
++        axNode->setLevel(level);
++    if (axObject->minValueForRange() != 0)
++        axNode->setValuemin(axObject->minValueForRange());
++    if (axObject->maxValueForRange() != 0)
++        axNode->setValuemax(axObject->maxValueForRange());
++    if (axObject->supportsAutoComplete())
++        axNode->setAutocomplete(axObject->autoCompleteValue());
++    if (axObject->hasPopup())
++        axNode->setHaspopup(axObject->popupValue());
++
++    String invalidValue = axObject->invalidStatus();
++    if (invalidValue != "false") {
++        if (invalidValue == "grammar")
++            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::Grammar); 
++        else if (invalidValue == "spelling")
++            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::Spelling); 
++        else // Future versions of ARIA may allow additional truthy values. Ex. format, order, or size.
++            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::True); 
++    }
++    switch (axObject->orientation()) {
++        case AccessibilityOrientation::Undefined:
++            break;
++        case AccessibilityOrientation::Vertical:
++            axNode->setOrientation("vertical"_s);
++            break;
++        case AccessibilityOrientation::Horizontal:
++            axNode->setOrientation("horizontal"_s);
++            break;
++    }
++
++    if (axObject->isKeyboardFocusable())
++        axNode->setFocusable(axObject->isKeyboardFocusable());
++
++    if (axObject->hasChildren()) {
++        RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::AXNode>> children = JSON::ArrayOf<Inspector::Protocol::Page::AXNode>::create();
++        for (auto& childObject : axObject->children())
++            children->addItem(snapshotForAXObject(childObject));
++        axNode->setChildren(children);
++    }
++    return axNode;
++}
++
++
++void InspectorPageAgent::accessibilitySnapshot(ErrorString& errorString, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) {
++    if (!WebCore::AXObjectCache::accessibilityEnabled())
++        WebCore::AXObjectCache::enableAccessibility();
++    auto document = makeRefPtr(m_inspectedPage.mainFrame().document());
++    if (!document) {
++        errorString = "No document for main frame"_s;
++        return;
++    }
++    AXObjectCache* axObjectCache = document->axObjectCache();
++    if (!axObjectCache) {
++        errorString = "No AXObjectCache for main document"_s;
++        return;
++    }
++    AXCoreObject* axObject = axObjectCache->rootObject();
++    if (!axObject) {
++        errorString = "No AXObject for main document"_s;
++        return;
++    }
++
++    out_axNode = snapshotForAXObject(makeRefPtr(axObject));
++}
++
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..bc662ab7067 100644
+index 4fd8c0b1016..9f7cb087110 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -96,7 +96,7 @@ public:
@@ -1026,15 +1579,19 @@ index 4fd8c0b1016..bc662ab7067 100644
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -115,6 +115,7 @@ public:
+@@ -113,8 +113,10 @@ public:
+     void getCompositingBordersVisible(ErrorString&, bool* out_param) override;
+     void setCompositingBordersVisible(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
-     void snapshotRect(ErrorString&, int x, int y, int width, int height, const String& coordinateSystem, String* outDataURL) override;
+-    void snapshotRect(ErrorString&, int x, int y, int width, int height, const String& coordinateSystem, String* outDataURL) override;
++    void snapshotRect(ErrorString&, int x, int y, int width,  int height, const String& coordinateSystem, String* outDataURL) override;
      void archive(ErrorString&, String* data) override;
 +    void insertText(ErrorString&, const String& text) override;
++    void accessibilitySnapshot(ErrorString&, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) override;
  
      // InspectorInstrumentation
      void domContentEventFired();
-@@ -126,6 +127,7 @@ public:
+@@ -126,6 +128,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -1043,7 +1600,7 @@ index 4fd8c0b1016..bc662ab7067 100644
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index 101669e74c1..5c488263cd6 100644
+index 9b4211b4212..5881bd624df 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1179,6 +1179,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -1749,10 +2306,10 @@ index 58e37fe3827..429d245ea99 100644
  }
  
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
-index 3f7d3fb6216..1b7990a656c 100644
+index 3f7d3fb6216..f396e22edf5 100644
 --- a/Source/WebKit/Sources.txt
 +++ b/Source/WebKit/Sources.txt
-@@ -241,17 +241,22 @@ Shared/WebsiteData/WebsiteData.cpp
+@@ -241,17 +241,23 @@ Shared/WebsiteData/WebsiteData.cpp
  
  UIProcess/AuxiliaryProcessProxy.cpp
  UIProcess/BackgroundProcessResponsivenessTimer.cpp
@@ -1765,6 +2322,7 @@ index 3f7d3fb6216..1b7990a656c 100644
  UIProcess/GeolocationPermissionRequestManagerProxy.cpp
  UIProcess/GeolocationPermissionRequestProxy.cpp
 +UIProcess/InspectorBrowserAgent.cpp
++UIProcess/InspectorDialogAgent.cpp
  UIProcess/InspectorTargetProxy.cpp
  UIProcess/LegacyGlobalSettings.cpp
  UIProcess/PageLoadState.cpp
@@ -1775,7 +2333,7 @@ index 3f7d3fb6216..1b7990a656c 100644
  UIProcess/RemoteWebInspectorProxy.cpp
  UIProcess/ResponsivenessTimer.cpp
  UIProcess/StatisticsRequest.cpp
-@@ -293,6 +298,9 @@ UIProcess/WebPageDiagnosticLoggingClient.cpp
+@@ -293,6 +299,9 @@ UIProcess/WebPageDiagnosticLoggingClient.cpp
  UIProcess/WebPageGroup.cpp
  UIProcess/WebPageInjectedBundleClient.cpp
  UIProcess/WebPageInspectorController.cpp
@@ -1798,10 +2356,10 @@ index 63c4dfa10ab..c9a7dcf3dea 100644
  UIProcess/API/Cocoa/_WKContextMenuElementInfo.mm
  UIProcess/API/Cocoa/_WKCustomHeaderFields.mm @no-unify
 diff --git a/Source/WebKit/SourcesGTK.txt b/Source/WebKit/SourcesGTK.txt
-index fb80148f3e4..e244b3aef32 100644
+index 1a05e334343..646a1377cef 100644
 --- a/Source/WebKit/SourcesGTK.txt
 +++ b/Source/WebKit/SourcesGTK.txt
-@@ -129,6 +129,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
+@@ -128,6 +128,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
  UIProcess/API/glib/WebKitAutomationSession.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardList.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardListItem.cpp @no-unify
@@ -1809,7 +2367,7 @@ index fb80148f3e4..e244b3aef32 100644
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -225,6 +226,7 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
+@@ -224,6 +225,7 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
  
  UIProcess/cairo/BackingStoreCairo.cpp @no-unify
  
@@ -1817,7 +2375,15 @@ index fb80148f3e4..e244b3aef32 100644
  UIProcess/glib/RemoteInspectorClient.cpp
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
-@@ -253,6 +255,9 @@ UIProcess/gtk/WebColorPickerGtk.cpp
+@@ -238,6 +240,7 @@ UIProcess/gtk/AcceleratedBackingStoreX11.cpp @no-unify
+ UIProcess/gtk/DragAndDropHandler.cpp
+ UIProcess/gtk/GestureController.cpp
+ UIProcess/gtk/HardwareAccelerationManager.cpp
++UIProcess/gtk/InspectorDialogAgentGtk.cpp
+ UIProcess/gtk/InputMethodFilter.cpp
+ UIProcess/gtk/KeyBindingTranslator.cpp
+ UIProcess/gtk/PointerLockManager.cpp @no-unify
+@@ -252,6 +255,9 @@ UIProcess/gtk/WebColorPickerGtk.cpp
  UIProcess/gtk/WebContextMenuProxyGtk.cpp
  UIProcess/gtk/WebDataListSuggestionsDropdownGtk.cpp
  UIProcess/gtk/WebInspectorProxyGtk.cpp
@@ -1828,10 +2394,10 @@ index fb80148f3e4..e244b3aef32 100644
  UIProcess/gtk/WebPageProxyGtk.cpp @no-unify
  UIProcess/gtk/WebPasteboardProxyGtk.cpp
 diff --git a/Source/WebKit/SourcesWPE.txt b/Source/WebKit/SourcesWPE.txt
-index 5b514d5216e..75bd77c7614 100644
+index 3d200fa60e9..ced6b04bfd2 100644
 --- a/Source/WebKit/SourcesWPE.txt
 +++ b/Source/WebKit/SourcesWPE.txt
-@@ -118,6 +118,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
+@@ -116,6 +116,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
  UIProcess/API/glib/WebKitAutomationSession.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardList.cpp @no-unify
  UIProcess/API/glib/WebKitBackForwardListItem.cpp @no-unify
@@ -1839,7 +2405,7 @@ index 5b514d5216e..75bd77c7614 100644
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -186,7 +187,7 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
+@@ -184,7 +185,7 @@ UIProcess/Automation/wpe/WebAutomationSessionWPE.cpp
  UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
  
  UIProcess/geoclue/GeoclueGeolocationProvider.cpp
@@ -1848,7 +2414,7 @@ index 5b514d5216e..75bd77c7614 100644
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -211,6 +212,9 @@ UIProcess/soup/WebProcessPoolSoup.cpp
+@@ -209,6 +210,9 @@ UIProcess/soup/WebProcessPoolSoup.cpp
  UIProcess/wpe/TextCheckerWPE.cpp
  UIProcess/wpe/WebInspectorProxyWPE.cpp
  UIProcess/wpe/WebPageProxyWPE.cpp
@@ -1873,39 +2439,12 @@ index 19e273187ae..47e63871466 100644
  
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 new file mode 100644
-index 00000000000..812c2913e4f
+index 00000000000..15c5c4d3fb2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
-@@ -0,0 +1,50 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ *
-+ * met:
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,23 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#import <WebKit/WKFoundation.h>
 +#import <Foundation/Foundation.h>
@@ -1929,39 +2468,12 @@ index 00000000000..812c2913e4f
 +
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 new file mode 100644
-index 00000000000..2c9aead1b47
+index 00000000000..e41af8b7deb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
-@@ -0,0 +1,52 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ *
-+ * met:
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,25 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "_WKBrowserInspector.h"
@@ -1987,39 +2499,12 @@ index 00000000000..2c9aead1b47
 +@end
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 new file mode 100644
-index 00000000000..a893558f98b
+index 00000000000..c21192686c9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
-@@ -0,0 +1,141 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,114 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebKitBrowserInspector.h"
@@ -2134,39 +2619,12 @@ index 00000000000..a893558f98b
 +}
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h
 new file mode 100644
-index 00000000000..6e9afeac99a
+index 00000000000..ab6b7621d10
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h
-@@ -0,0 +1,36 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,9 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -2205,39 +2663,12 @@ index 00b7c6bbc46..c3a6cf416e1 100644
      webkitWebViewBaseForwardNextKeyEvent(webkitWebViewBase);
 diff --git a/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
 new file mode 100644
-index 00000000000..4ee8204a9b8
+index 00000000000..9bd1cd6c216
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
-@@ -0,0 +1,84 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,57 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#if !defined(__WEBKIT2_H_INSIDE__) && !defined(WEBKIT2_COMPILATION)
 +#error "Only <webkit2/webkit2.h> can be included directly."
@@ -2307,39 +2738,12 @@ index 4c196217e6f..a7208990a7e 100644
  #include <webkit2/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 new file mode 100644
-index 00000000000..675e517596b
+index 00000000000..11fde7598a3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
-@@ -0,0 +1,81 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,54 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#if !defined(__WEBKIT_H_INSIDE__) && !defined(WEBKIT2_COMPILATION)
 +#error "Only <wpe/webkit.h> can be included directly."
@@ -2406,39 +2810,12 @@ index 9cc31cb4968..930499e65b6 100644
  #include <wpe/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 new file mode 100644
-index 00000000000..b4e14cb4390
+index 00000000000..bd9351774f9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
-@@ -0,0 +1,128 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,101 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "BrowserInspectorController.h"
@@ -2540,39 +2917,12 @@ index 00000000000..b4e14cb4390
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.h b/Source/WebKit/UIProcess/BrowserInspectorController.h
 new file mode 100644
-index 00000000000..d1e7ea17002
+index 00000000000..9de68f71fbd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.h
-@@ -0,0 +1,74 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,47 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -2620,39 +2970,12 @@ index 00000000000..d1e7ea17002
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 new file mode 100644
-index 00000000000..483b4e46c98
+index 00000000000..46f05a2a45f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
-@@ -0,0 +1,62 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,35 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "BrowserInspectorPipe.h"
@@ -2688,39 +3011,12 @@ index 00000000000..483b4e46c98
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.h b/Source/WebKit/UIProcess/BrowserInspectorPipe.h
 new file mode 100644
-index 00000000000..a0088a43590
+index 00000000000..ac0caaabaed
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.h
-@@ -0,0 +1,43 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,16 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -2737,39 +3033,12 @@ index 00000000000..a0088a43590
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp
 new file mode 100644
-index 00000000000..0d1f5d75c3a
+index 00000000000..a2873d5e0f7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp
-@@ -0,0 +1,110 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,83 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "BrowserInspectorTargetAgent.h"
@@ -2853,39 +3122,12 @@ index 00000000000..0d1f5d75c3a
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h
 new file mode 100644
-index 00000000000..8b4d9273574
+index 00000000000..5c274280846
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h
-@@ -0,0 +1,62 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,35 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -2955,39 +3197,12 @@ index 0f18038de98..82a96677940 100644
  #import "WKWebViewConfigurationPrivate.h"
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 00000000000..5967318c785
+index 00000000000..7bf4924200d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,101 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,74 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "InspectorBrowserAgent.h"
@@ -3062,39 +3277,12 @@ index 00000000000..5967318c785
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 00000000000..f24c655ab39
+index 00000000000..6ad7680760d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-@@ -0,0 +1,81 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,54 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -3149,39 +3337,12 @@ index 00000000000..f24c655ab39
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
 new file mode 100644
-index 00000000000..f05cd030bac
+index 00000000000..82ed894a569
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
-@@ -0,0 +1,52 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,25 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -3205,6 +3366,128 @@ index 00000000000..f05cd030bac
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/InspectorDialogAgent.cpp b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
+new file mode 100644
+index 00000000000..62eecef3b98
+--- /dev/null
++++ b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
+@@ -0,0 +1,62 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
++
++#include "config.h"
++#include "InspectorDialogAgent.h"
++
++#include "APINavigation.h"
++#include "WebPageProxy.h"
++#include <JavaScriptCore/InspectorFrontendRouter.h>
++
++
++namespace WebKit {
++
++using namespace Inspector;
++
++InspectorDialogAgent::InspectorDialogAgent(Inspector::BackendDispatcher& backendDispatcher, Inspector::FrontendRouter& frontendRouter, WebPageProxy& page)
++    : InspectorAgentBase("Dialog"_s)
++    , m_frontendDispatcher(makeUnique<DialogFrontendDispatcher>(frontendRouter))
++    , m_backendDispatcher(DialogBackendDispatcher::create(backendDispatcher, this))
++    , m_page(page)
++{
++}
++
++InspectorDialogAgent::~InspectorDialogAgent()
++{
++    Inspector::ErrorString err;
++    disable(err);
++}
++
++void InspectorDialogAgent::didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*)
++{
++}
++
++void InspectorDialogAgent::willDestroyFrontendAndBackend(Inspector::DisconnectReason)
++{
++}
++
++void InspectorDialogAgent::enable(Inspector::ErrorString& errorString)
++{
++    if (m_page.inspectorDialogAgent()) {
++        errorString = "Dialog domain is already enabled."_s;
++        return;
++    }
++    m_page.setInspectorDialogAgent(this);
++}
++
++void InspectorDialogAgent::disable(Inspector::ErrorString&)
++{
++    if (m_page.inspectorDialogAgent() != this)
++        return;
++    m_page.setInspectorDialogAgent(nullptr);
++}
++
++void InspectorDialogAgent::handleJavaScriptDialog(Inspector::ErrorString& errorString, bool accept, const String* promptText) {
++    platformHandleJavaScriptDialog(accept, promptText);
++}
++
++void InspectorDialogAgent::javascriptDialogOpening(const String& type, const String& message, const String* defaultValue) {
++    m_frontendDispatcher->javascriptDialogOpening(type, message, defaultValue);
++}
++
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/InspectorDialogAgent.h b/Source/WebKit/UIProcess/InspectorDialogAgent.h
+new file mode 100644
+index 00000000000..203c203a0e2
+--- /dev/null
++++ b/Source/WebKit/UIProcess/InspectorDialogAgent.h
+@@ -0,0 +1,48 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
++
++#pragma once
++
++#include "WebEvent.h"
++
++#include <JavaScriptCore/InspectorAgentBase.h>
++#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include <JavaScriptCore/InspectorFrontendDispatchers.h>
++
++#include <wtf/Forward.h>
++#include <wtf/Noncopyable.h>
++
++namespace Inspector {
++class FrontendChannel;
++class FrontendRouter;
++}
++
++namespace WebKit {
++
++class NativeWebKeyboardEvent;
++class WebPageProxy;
++
++class InspectorDialogAgent : public Inspector::InspectorAgentBase, public Inspector::DialogBackendDispatcherHandler {
++    WTF_MAKE_NONCOPYABLE(InspectorDialogAgent);
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    InspectorDialogAgent(Inspector::BackendDispatcher& backendDispatcher, Inspector::FrontendRouter& frontendRouter, WebPageProxy& page);
++    ~InspectorDialogAgent() override;
++
++    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
++    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
++
++    void enable(Inspector::ErrorString&) override;
++    void disable(Inspector::ErrorString&) override;
++    void handleJavaScriptDialog(Inspector::ErrorString& errorString, bool accept, const String* promptText) override;
++
++    void javascriptDialogOpening(const String& type, const String& message, const String* defaultValue = nullptr);
++
++private:
++    void platformHandleJavaScriptDialog(bool accept, const String* promptText);
++    std::unique_ptr<Inspector::DialogFrontendDispatcher> m_frontendDispatcher;
++    Ref<Inspector::DialogBackendDispatcher> m_backendDispatcher;
++    WebPageProxy& m_page;
++};
++
++} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
 index 1b37c1ed439..c45d45de342 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
@@ -3296,39 +3579,12 @@ index a2239cec8e1..43415afbc77 100644
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 00000000000..87b426e9fff
+index 00000000000..a3a3bb02dcd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
-@@ -0,0 +1,159 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,132 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "RemoteInspectorPipe.h"
@@ -3461,39 +3717,12 @@ index 00000000000..87b426e9fff
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.h b/Source/WebKit/UIProcess/RemoteInspectorPipe.h
 new file mode 100644
-index 00000000000..37b0622557c
+index 00000000000..426eb17d012
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.h
-@@ -0,0 +1,70 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,43 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -3693,34 +3922,12 @@ index 828bc3ccc7e..40a333b7004 100644
      void setIndicating(bool);
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 00000000000..415f36c5647
+index 00000000000..0a2663a0ed8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,61 @@
-+/*
-+ * Copyright (C) 2018 Apple Inc. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,39 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -3760,34 +3967,12 @@ index 00000000000..415f36c5647
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 00000000000..2f9b7807e23
+index 00000000000..37bf050881a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
-@@ -0,0 +1,63 @@
-+/*
-+ * Copyright (C) 2018 Apple Inc. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,41 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -3829,34 +4014,12 @@ index 00000000000..2f9b7807e23
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 00000000000..16a05604460
+index 00000000000..3083ca03e8c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,257 @@
-+/*
-+ * Copyright (C) 2018 Apple Inc. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,235 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
@@ -4092,34 +4255,12 @@ index 00000000000..16a05604460
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 00000000000..9d51a913b23
+index 00000000000..36531345add
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
-@@ -0,0 +1,76 @@
-+/*
-+ * Copyright (C) 2018 Apple Inc. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,54 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -4174,38 +4315,17 @@ index 00000000000..9d51a913b23
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp
 new file mode 100644
-index 00000000000..a697c3f5355
+index 00000000000..cf99a7c8ccc
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp
-@@ -0,0 +1,129 @@
-+/*
-+ * Copyright (C) 2018 Apple Inc. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,109 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorTargetProxy.h"
 +
++#include "InspectorDialogAgent.h"
 +#include "ProvisionalPageProxy.h"
 +#include "WebPageInspectorController.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -4267,6 +4387,7 @@ index 00000000000..a697c3f5355
 +{
 +    m_agents.append(std::make_unique<WebPageInspectorEmulationAgent>(m_backendDispatcher.get(), page));
 +    m_agents.append(std::make_unique<WebPageInspectorInputAgent>(m_backendDispatcher.get(), page));
++    m_agents.append(std::make_unique<InspectorDialogAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), page));
 +}
 +
 +void WebPageInspectorTargetProxy::connect(Inspector::FrontendChannel::ConnectionType connectionType)
@@ -4309,34 +4430,12 @@ index 00000000000..a697c3f5355
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
 new file mode 100644
-index 00000000000..0550a3d8698
+index 00000000000..0655b5ea376
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
-@@ -0,0 +1,67 @@
-+/*
-+ * Copyright (C) 2018 Apple Inc. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
-+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,45 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -4381,10 +4480,10 @@ index 00000000000..0550a3d8698
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 0d0648cc904..a9d80527d6c 100644
+index 81b65c6e2db..2b7677a25a2 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
-@@ -865,6 +865,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
+@@ -867,6 +867,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
      m_pageLoadState.didSwapWebProcesses();
      if (reason != ProcessLaunchReason::InitialProcess)
          m_drawingArea->waitForBackingStoreUpdateOnNextPaint();
@@ -4392,7 +4491,7 @@ index 0d0648cc904..a9d80527d6c 100644
  }
  
  void WebPageProxy::didAttachToRunningProcess()
-@@ -1617,6 +1618,11 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
+@@ -1620,6 +1621,11 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
      m_process->processPool().sendToNetworkingProcess(Messages::NetworkProcess::SetSessionIsControlledByAutomation(m_websiteDataStore->sessionID(), m_controlledByAutomation));
  }
  
@@ -4404,7 +4503,43 @@ index 0d0648cc904..a9d80527d6c 100644
  void WebPageProxy::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      m_inspectorController->createInspectorTarget(targetId, type);
-@@ -6530,6 +6536,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -5330,6 +5336,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
+         if (auto* automationSession = process().processPool().automationSession())
+             automationSession->willShowJavaScriptDialog(*this);
+     }
++    if (m_inspectorDialogAgent)
++        m_inspectorDialogAgent->javascriptDialogOpening("alert"_s, message);
+     m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
+ }
+ 
+@@ -5349,6 +5357,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
+         if (auto* automationSession = process().processPool().automationSession())
+             automationSession->willShowJavaScriptDialog(*this);
+     }
++    if (m_inspectorDialogAgent)
++        m_inspectorDialogAgent->javascriptDialogOpening("confirm"_s, message);
+ 
+     m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
+ }
+@@ -5368,6 +5378,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
+         if (auto* automationSession = process().processPool().automationSession())
+             automationSession->willShowJavaScriptDialog(*this);
+     }
++    if (m_inspectorDialogAgent)
++        m_inspectorDialogAgent->javascriptDialogOpening("prompt"_s, message, &defaultValue);
+ 
+     m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(securityOrigin), WTFMove(reply));
+ }
+@@ -5526,6 +5538,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
+             return;
+         }
+     }
++    if (m_inspectorDialogAgent)
++        m_inspectorDialogAgent->javascriptDialogOpening("beforeunload"_s, message);
+ 
+     // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer.
+     m_process->responsivenessTimer().stop();
+@@ -6543,6 +6557,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              pageClient().didFinishProcessingAllPendingMouseEvents();
@@ -4413,7 +4548,7 @@ index 0d0648cc904..a9d80527d6c 100644
          }
  
          break;
-@@ -6556,7 +6564,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6569,7 +6585,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -4421,7 +4556,7 @@ index 0d0648cc904..a9d80527d6c 100644
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -6571,7 +6578,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6584,7 +6599,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -4429,7 +4564,7 @@ index 0d0648cc904..a9d80527d6c 100644
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -6580,6 +6586,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6593,6 +6607,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -4439,10 +4574,27 @@ index 0d0648cc904..a9d80527d6c 100644
          break;
      }
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 66c953932ee..949bf619314 100644
+index 488ac80306d..700b332f427 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
-@@ -535,6 +535,14 @@ public:
+@@ -35,6 +35,7 @@
+ #include "FocusedElementInformation.h"
+ #include "GeolocationPermissionRequestManagerProxy.h"
+ #include "HiddenPageThrottlingAutoIncreasesCounter.h"
++#include "InspectorDialogAgent.h"
+ #include "LayerTreeContext.h"
+ #include "MessageSender.h"
+ #include "NotificationPermissionRequestManagerProxy.h"
+@@ -470,6 +471,8 @@ public:
+     void setControlledByAutomation(bool);
+ 
+     WebPageInspectorController& inspectorController() { return *m_inspectorController; }
++    InspectorDialogAgent* inspectorDialogAgent() { return m_inspectorDialogAgent; }
++    void setInspectorDialogAgent(InspectorDialogAgent * dialogAgent) { m_inspectorDialogAgent = dialogAgent; }
+ 
+ #if PLATFORM(IOS_FAMILY)
+     void showInspectorIndication();
+@@ -535,6 +538,14 @@ public:
  
      void setPageLoadStateObserver(std::unique_ptr<PageLoadState::Observer>&&);
  
@@ -4457,7 +4609,15 @@ index 66c953932ee..949bf619314 100644
      void initializeWebPage();
      void setDrawingArea(std::unique_ptr<DrawingAreaProxy>&&);
  
-@@ -2575,6 +2583,7 @@ private:
+@@ -2229,6 +2240,7 @@ private:
+     bool m_treatsSHA1CertificatesAsInsecure { true };
+ 
+     RefPtr<WebInspectorProxy> m_inspector;
++    InspectorDialogAgent* m_inspectorDialogAgent { nullptr };
+ 
+ #if ENABLE(FULLSCREEN_API)
+     std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
+@@ -2577,6 +2589,7 @@ private:
  #if ENABLE(REMOTE_INSPECTOR)
      std::unique_ptr<WebPageDebuggable> m_inspectorDebuggable;
  #endif
@@ -4467,39 +4627,12 @@ index 66c953932ee..949bf619314 100644
  
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
-index 00000000000..665265973c3
+index 00000000000..d6373d3bb20
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
-@@ -0,0 +1,130 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,103 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "InspectorBrowserAgentClientGLib.h"
@@ -4603,39 +4736,12 @@ index 00000000000..665265973c3
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
 new file mode 100644
-index 00000000000..0fefb4c55b3
+index 00000000000..88227c220f2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
-@@ -0,0 +1,63 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,36 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -4670,37 +4776,43 @@ index 00000000000..0fefb4c55b3
 +} // namespace API
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp
+new file mode 100644
+index 00000000000..82c48662f40
+--- /dev/null
++++ b/Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp
+@@ -0,0 +1,23 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
++
++#include "config.h"
++#include "InspectorDialogAgent.h"
++
++#include "WebKitWebViewPrivate.h"
++#include <gtk/gtk.h>
++
++namespace WebKit {
++
++void InspectorDialogAgent::platformHandleJavaScriptDialog(bool accept, const String* promptText)
++{
++    WebKitWebView* webView = WEBKIT_WEB_VIEW(m_page.viewWidget());
++    if (promptText)
++        webkitWebViewSetCurrentScriptDialogUserInput(webView, *promptText);
++    if (accept)
++        webkitWebViewAcceptCurrentScriptDialog(webView);
++    else
++        webkitWebViewDismissCurrentScriptDialog(webView);
++}
++
++} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 new file mode 100644
-index 00000000000..25df994c053
+index 00000000000..e8a29bebe24
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
-@@ -0,0 +1,58 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,35 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -4736,35 +4848,12 @@ index 00000000000..25df994c053
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
 new file mode 100644
-index 00000000000..2427ea22acf
+index 00000000000..1019c4fed53
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
-@@ -0,0 +1,108 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,85 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
@@ -4850,35 +4939,12 @@ index 00000000000..2427ea22acf
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
 new file mode 100644
-index 00000000000..b6981cae157
+index 00000000000..5805ee6fdf4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
-@@ -0,0 +1,45 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,22 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorTargetProxy.h"
@@ -4914,39 +4980,12 @@ index e139968d4f0..98093c684db 100644
  
 diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
 new file mode 100644
-index 00000000000..719a0bb54d7
+index 00000000000..30599d83dfb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
-@@ -0,0 +1,56 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,29 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -4976,39 +5015,12 @@ index 00000000000..719a0bb54d7
 +} // namespace API
 diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
 new file mode 100644
-index 00000000000..8426bd70ba9
+index 00000000000..4812cb4ad58
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
-@@ -0,0 +1,95 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation. All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions are
-+ * met:
-+ *
-+ *     * Redistributions of source code must retain the above copyright
-+ * notice, this list of conditions and the following disclaimer.
-+ *     * Redistributions in binary form must reproduce the above
-+ * copyright notice, this list of conditions and the following disclaimer
-+ * in the documentation and/or other materials provided with the
-+ * distribution.
-+ *     * Neither the name of Microsoft Corporation nor the names of its
-+ * contributors may be used to endorse or promote products derived from
-+ * this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,68 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#import "config.h"
 +#import "InspectorBrowserAgentClientMac.h"
@@ -5075,6 +5087,27 @@ index 00000000000..8426bd70ba9
 +}
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm b/Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm
+new file mode 100644
+index 00000000000..c51c64d3530
+--- /dev/null
++++ b/Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm
+@@ -0,0 +1,15 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
++
++#import "config.h"
++#import "InspectorDialogAgent.h"
++
++namespace WebKit {
++
++
++void InspectorDialogAgent::platformHandleJavaScriptDialog(bool accept, const String* promptText)
++{
++  fprintf(stderr, "NOT IMPLEMENTED InspectorDialogAgent::platformHandleJavaScriptDialog");
++}
++
++} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 index 22653d74398..bf27558fdfd 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
@@ -5100,35 +5133,12 @@ index 22653d74398..bf27558fdfd 100644
  
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
 new file mode 100644
-index 00000000000..857195777b5
+index 00000000000..1a864e20400
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
-@@ -0,0 +1,42 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,19 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -5148,35 +5158,12 @@ index 00000000000..857195777b5
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 new file mode 100644
-index 00000000000..0f09fd52ae1
+index 00000000000..7ce9b71b0fb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
-@@ -0,0 +1,37 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,14 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
@@ -5191,35 +5178,12 @@ index 00000000000..0f09fd52ae1
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
 new file mode 100644
-index 00000000000..b0f0172a028
+index 00000000000..06a7e286abf
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
-@@ -0,0 +1,41 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,18 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorTargetProxy.h"
@@ -5238,35 +5202,12 @@ index 00000000000..b0f0172a028
 +#endif
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
 new file mode 100644
-index 00000000000..5465c0ae99d
+index 00000000000..2fef19fd5ee
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
-@@ -0,0 +1,41 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,18 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -5285,35 +5226,12 @@ index 00000000000..5465c0ae99d
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
 new file mode 100644
-index 00000000000..772ca6bc674
+index 00000000000..4ae3eb95dff
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
-@@ -0,0 +1,99 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,76 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
@@ -5390,35 +5308,12 @@ index 00000000000..772ca6bc674
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp
 new file mode 100644
-index 00000000000..d64407d5822
+index 00000000000..74dace1cc7c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp
-@@ -0,0 +1,41 @@
-+/*
-+ * Copyright (C) 2010 Apple Inc. All rights reserved.
-+ * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
+@@ -0,0 +1,18 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorTargetProxy.h"
@@ -5436,10 +5331,10 @@ index 00000000000..d64407d5822
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index 995793a36f5..eab2bc3ab90 100644
+index 5cb81ccc202..66ed2a11716 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-@@ -1665,6 +1665,19 @@
+@@ -1667,6 +1667,21 @@
  		CEE4AE2B1A5DCF430002F49B /* UIKitSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = CEE4AE2A1A5DCF430002F49B /* UIKitSPI.h */; };
  		D3B9484711FF4B6500032B39 /* WebPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484311FF4B6500032B39 /* WebPopupMenu.h */; };
  		D3B9484911FF4B6500032B39 /* WebSearchPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */; };
@@ -5452,6 +5347,8 @@ index 995793a36f5..eab2bc3ab90 100644
 +		D71A94432371F67E002C4D9E /* WebPageInspectorInputAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */; };
 +		D71A944A2372290B002C4D9E /* _WKBrowserInspector.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94492372290B002C4D9E /* _WKBrowserInspector.h */; settings = {ATTRIBUTES = (Private, ); }; };
 +		D71A944C237239FB002C4D9E /* BrowserInspectorPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */; };
++		D76D6886238CC2D3008D314B /* InspectorDialogAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D76D6885238CC2D3008D314B /* InspectorDialogAgentMac.mm */; };
++		D76D6888238DBD81008D314B /* InspectorDialogAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D76D6887238DBD80008D314B /* InspectorDialogAgent.h */; };
 +		D79902B1236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */; };
 +		D79902B2236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */; };
 +		D79902B3236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */; };
@@ -5459,7 +5356,7 @@ index 995793a36f5..eab2bc3ab90 100644
  		E105FE5418D7B9DE008F57A8 /* EditingRange.h in Headers */ = {isa = PBXBuildFile; fileRef = E105FE5318D7B9DE008F57A8 /* EditingRange.h */; };
  		E11D35AE16B63D1B006D23D7 /* com.apple.WebProcess.sb in Resources */ = {isa = PBXBuildFile; fileRef = E1967E37150AB5E200C73169 /* com.apple.WebProcess.sb */; };
  		E14A954A16E016A40068DE82 /* NetworkProcessPlatformStrategies.h in Headers */ = {isa = PBXBuildFile; fileRef = E14A954816E016A40068DE82 /* NetworkProcessPlatformStrategies.h */; };
-@@ -4700,6 +4713,20 @@
+@@ -4704,6 +4719,22 @@
  		D3B9484311FF4B6500032B39 /* WebPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPopupMenu.h; sourceTree = "<group>"; };
  		D3B9484411FF4B6500032B39 /* WebSearchPopupMenu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebSearchPopupMenu.cpp; sourceTree = "<group>"; };
  		D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebSearchPopupMenu.h; sourceTree = "<group>"; };
@@ -5473,6 +5370,8 @@ index 995793a36f5..eab2bc3ab90 100644
 +		D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorInputAgent.h; sourceTree = "<group>"; };
 +		D71A94492372290B002C4D9E /* _WKBrowserInspector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _WKBrowserInspector.h; sourceTree = "<group>"; };
 +		D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserInspectorPipe.h; sourceTree = "<group>"; };
++		D76D6885238CC2D3008D314B /* InspectorDialogAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorDialogAgentMac.mm; sourceTree = "<group>"; };
++		D76D6887238DBD80008D314B /* InspectorDialogAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorDialogAgent.h; sourceTree = "<group>"; };
 +		D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorEmulationAgentMac.mm; sourceTree = "<group>"; };
 +		D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorTargetProxyMac.mm; sourceTree = "<group>"; };
 +		D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorInputAgentMac.mm; sourceTree = "<group>"; };
@@ -5480,7 +5379,7 @@ index 995793a36f5..eab2bc3ab90 100644
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
  		DF58C6351371ACA000F9A37C /* NativeWebWheelEventMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NativeWebWheelEventMac.mm; sourceTree = "<group>"; };
  		E105FE5318D7B9DE008F57A8 /* EditingRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditingRange.h; sourceTree = "<group>"; };
-@@ -6301,6 +6328,7 @@
+@@ -6305,6 +6336,7 @@
  		37C4C08318149C2A003688B9 /* Cocoa */ = {
  			isa = PBXGroup;
  			children = (
@@ -5488,10 +5387,11 @@ index 995793a36f5..eab2bc3ab90 100644
  				1A43E826188F38E2009E4D30 /* Deprecated */,
  				37A5E01218BBF937000A081E /* _WKActivatedElementInfo.h */,
  				37A5E01118BBF937000A081E /* _WKActivatedElementInfo.mm */,
-@@ -7777,6 +7805,13 @@
+@@ -7783,6 +7815,14 @@
  		BC032DC310F438260058C15A /* UIProcess */ = {
  			isa = PBXGroup;
  			children = (
++				D76D6887238DBD80008D314B /* InspectorDialogAgent.h */,
 +				D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */,
 +				D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */,
 +				D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */,
@@ -5502,7 +5402,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
-@@ -8054,6 +8089,7 @@
+@@ -8060,6 +8100,7 @@
  		BC0C376610F807660076D7CB /* C */ = {
  			isa = PBXGroup;
  			children = (
@@ -5510,27 +5410,28 @@ index 995793a36f5..eab2bc3ab90 100644
  				5123CF18133D25E60056F800 /* cg */,
  				6EE849C41368D9040038D481 /* mac */,
  				BCB63477116BF10600603215 /* WebKit2_C.h */,
-@@ -8649,6 +8685,11 @@
+@@ -8655,6 +8696,12 @@
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
 +				D7EB04E62372A73B00F744CE /* InspectorBrowserAgentClientMac.mm */,
 +				D71A94302370E025002C4D9E /* InspectorBrowserAgentClientMac.h */,
++				D76D6885238CC2D3008D314B /* InspectorDialogAgentMac.mm */,
 +				D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */,
 +				D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */,
 +				D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */,
  				B878B613133428DC006888E9 /* CorrectionPanel.h */,
  				B878B614133428DC006888E9 /* CorrectionPanel.mm */,
  				C1817362205844A900DFDA65 /* DisplayLink.cpp */,
-@@ -9328,6 +9369,7 @@
+@@ -9334,6 +9381,7 @@
  				510F59101DDE296900412FF5 /* _WKIconLoadingDelegate.h in Headers */,
  				37A64E5518F38E3C00EB30F1 /* _WKInputDelegate.h in Headers */,
  				5CAFDE452130846300B1F7E1 /* _WKInspector.h in Headers */,
 +				D71A944A2372290B002C4D9E /* _WKBrowserInspector.h in Headers */,
  				5CAFDE472130846A00B1F7E1 /* _WKInspectorInternal.h in Headers */,
+ 				9979CA58237F49F10039EC05 /* _WKInspectorPrivate.h in Headers */,
  				A5C0F0AB2000658200536536 /* _WKInspectorWindow.h in Headers */,
- 				31B362952141EBCD007BFA53 /* _WKInternalDebugFeature.h in Headers */,
-@@ -9439,6 +9481,7 @@
+@@ -9447,6 +9495,7 @@
  				7C89D2981A6753B2003A5FDE /* APIPageConfiguration.h in Headers */,
  				1AC1336C18565C7A00F3EC05 /* APIPageHandle.h in Headers */,
  				1AFDD3151891B54000153970 /* APIPolicyClient.h in Headers */,
@@ -5538,7 +5439,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				7CE4D2201A4914CA00C7F152 /* APIProcessPoolConfiguration.h in Headers */,
  				F634445612A885C8000612D8 /* APISecurityOrigin.h in Headers */,
  				1AFDE6621954E9B100C48FFA /* APISessionState.h in Headers */,
-@@ -9558,6 +9601,7 @@
+@@ -9566,6 +9615,7 @@
  				BC06F43A12DBCCFB002D78DE /* GeolocationPermissionRequestProxy.h in Headers */,
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
@@ -5546,7 +5447,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
-@@ -9681,8 +9725,10 @@
+@@ -9689,8 +9739,10 @@
  				41DC45961E3D6E2200B11F51 /* NetworkRTCProvider.h in Headers */,
  				413075AB1DE85F330039EC69 /* NetworkRTCSocket.h in Headers */,
  				5C20CBA01BB1ECD800895BB1 /* NetworkSession.h in Headers */,
@@ -5557,7 +5458,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				570DAAC22303730300E8FC04 /* NfcConnection.h in Headers */,
  				570DAAAE23026F5C00E8FC04 /* NfcService.h in Headers */,
  				31A2EC5614899C0900810D71 /* NotificationPermissionRequest.h in Headers */,
-@@ -9764,6 +9810,7 @@
+@@ -9772,6 +9824,7 @@
  				CD2865EE2255562000606AC7 /* ProcessTaskStateObserver.h in Headers */,
  				463FD4821EB94EC000A2982C /* ProcessTerminationReason.h in Headers */,
  				86E67A251910B9D100004AB7 /* ProcessThrottler.h in Headers */,
@@ -5565,7 +5466,15 @@ index 995793a36f5..eab2bc3ab90 100644
  				83048AE61ACA45DC0082C832 /* ProcessThrottlerClient.h in Headers */,
  				A1E688701F6E2BAB007006A6 /* QuarantineSPI.h in Headers */,
  				57FD318222B3515E008D0E8B /* RedirectSOAuthorizationSession.h in Headers */,
-@@ -9926,6 +9973,7 @@
+@@ -9820,7 +9873,6 @@
+ 				511F8A7B138B460900A95F44 /* SecItemShimLibrary.h in Headers */,
+ 				E18E690C169B563F009B6670 /* SecItemShimProxy.h in Headers */,
+ 				E18E6918169B667B009B6670 /* SecItemShimProxyMessages.h in Headers */,
+-				7AA746D523593D8100095050 /* SecItemSPI.h in Headers */,
+ 				570AB8F320AE3BD700B8BE87 /* SecKeyProxyStore.h in Headers */,
+ 				514D9F5719119D35000063A7 /* ServicesController.h in Headers */,
+ 				1AFDE65A1954A42B00C48FFA /* SessionState.h in Headers */,
+@@ -9934,6 +9986,7 @@
  				F430E94422473DFF005FE053 /* WebContentMode.h in Headers */,
  				31A505FA1680025500A930EB /* WebContextClient.h in Headers */,
  				BC09B8F9147460F7005F5625 /* WebContextConnectionClient.h in Headers */,
@@ -5573,7 +5482,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				BCDE059B11CDA8AE00E41AF1 /* WebContextInjectedBundleClient.h in Headers */,
  				51871B5C127CB89D00F76232 /* WebContextMenu.h in Headers */,
  				BC032D7710F4378D0058C15A /* WebContextMenuClient.h in Headers */,
-@@ -10159,6 +10207,7 @@
+@@ -10167,6 +10220,7 @@
  				BCD25F1711D6BDE100169B0E /* WKBundleFrame.h in Headers */,
  				BCF049E611FE20F600F86A58 /* WKBundleFramePrivate.h in Headers */,
  				BC49862F124D18C100D834E1 /* WKBundleHitTestResult.h in Headers */,
@@ -5581,7 +5490,15 @@ index 995793a36f5..eab2bc3ab90 100644
  				BC204EF211C83EC8008F3375 /* WKBundleInitialize.h in Headers */,
  				65B86F1E12F11DE300B7DD8A /* WKBundleInspector.h in Headers */,
  				1A8B66B41BC45B010082DF77 /* WKBundleMac.h in Headers */,
-@@ -10355,6 +10404,7 @@
+@@ -10215,6 +10269,7 @@
+ 				5C795D71229F3757003FF1C4 /* WKContextMenuElementInfoPrivate.h in Headers */,
+ 				51A555F6128C6C47009ABCEC /* WKContextMenuItem.h in Headers */,
+ 				51A55601128C6D92009ABCEC /* WKContextMenuItemTypes.h in Headers */,
++				D76D6888238DBD81008D314B /* InspectorDialogAgent.h in Headers */,
+ 				A1EA02381DABFF7E0096021F /* WKContextMenuListener.h in Headers */,
+ 				BCC938E11180DE440085E5FE /* WKContextPrivate.h in Headers */,
+ 				9FB5F395169E6A80002C25BF /* WKContextPrivateMac.h in Headers */,
+@@ -10363,6 +10418,7 @@
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
@@ -5589,7 +5506,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
-@@ -11310,6 +11360,7 @@
+@@ -11318,6 +11374,7 @@
  				2D92A781212B6A7100F493FD /* MessageReceiverMap.cpp in Sources */,
  				2D92A782212B6A7100F493FD /* MessageSender.cpp in Sources */,
  				2D92A77A212B6A6100F493FD /* Module.cpp in Sources */,
@@ -5597,7 +5514,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
  				2D913443212CF9F000128AFD /* NetscapeBrowserFuncs.cpp in Sources */,
  				2D913444212CF9F000128AFD /* NetscapePlugin.cpp in Sources */,
-@@ -11334,6 +11385,7 @@
+@@ -11342,6 +11399,7 @@
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
@@ -5605,7 +5522,7 @@ index 995793a36f5..eab2bc3ab90 100644
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
-@@ -11373,11 +11425,13 @@
+@@ -11381,11 +11439,13 @@
  				A1ADAFB62368E6A8009CB776 /* SharedMemory.cpp in Sources */,
  				2DE6943D18BD2A68005C15E5 /* SmartMagnificationControllerMessageReceiver.cpp in Sources */,
  				1A334DED16DE8F88006A8E38 /* StorageAreaMapMessageReceiver.cpp in Sources */,
@@ -5619,6 +5536,14 @@ index 995793a36f5..eab2bc3ab90 100644
  				2D11B7532126A282006F8878 /* UnifiedSource2-mm.mm in Sources */,
  				2D11B7562126A282006F8878 /* UnifiedSource3.cpp in Sources */,
  				2D11B7552126A282006F8878 /* UnifiedSource3-mm.mm in Sources */,
+@@ -11452,6 +11512,7 @@
+ 				2D11B7942126A283006F8878 /* UnifiedSource34.cpp in Sources */,
+ 				2D11B7932126A283006F8878 /* UnifiedSource34-mm.mm in Sources */,
+ 				2D11B7962126A283006F8878 /* UnifiedSource35.cpp in Sources */,
++				D76D6886238CC2D3008D314B /* InspectorDialogAgentMac.mm in Sources */,
+ 				2D11B7952126A283006F8878 /* UnifiedSource35-mm.mm in Sources */,
+ 				2D11B7982126A283006F8878 /* UnifiedSource36.cpp in Sources */,
+ 				2D11B7972126A283006F8878 /* UnifiedSource36-mm.mm in Sources */,
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
 index a70f6fd5209..f02e5c774a4 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
@@ -5657,7 +5582,7 @@ index 6cbd7fad5ff..176c46f186b 100644
      void connect(Inspector::FrontendChannel::ConnectionType) override;
      void disconnect() override;
 diff --git a/Source/WebKit/WebProcess/WebProcess.cpp b/Source/WebKit/WebProcess/WebProcess.cpp
-index 92fad43e606..0a2e040824d 100644
+index 0c92cd9b030..0ed5b37c4d5 100644
 --- a/Source/WebKit/WebProcess/WebProcess.cpp
 +++ b/Source/WebKit/WebProcess/WebProcess.cpp
 @@ -628,7 +628,8 @@ void WebProcess::setCacheModel(CacheModel cacheModel)
@@ -5922,5 +5847,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.22.1
 
