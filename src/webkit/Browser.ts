@@ -75,7 +75,7 @@ export class Browser extends EventEmitter {
   async userAgent(): Promise<string> {
     const context = await this.createIncognitoBrowserContext();
     const page = await context.newPage();
-    const userAgent = await page.evaluate('navigator.userAgent');
+    const userAgent = await page.evaluate(() => navigator.userAgent);
     context.close();
     return userAgent;
   }

@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as fs from 'fs';
 import { assert, debugError, helper } from '../helper';
 import { ClickOptions, MultiClickOptions, selectFunction, SelectOption, fillFunction } from '../input';
@@ -24,6 +25,7 @@ import { Page } from './Page';
 import { Protocol } from './protocol';
 import { releaseObject, valueFromRemoteObject } from './protocolHelper';
 import Injected from '../injected/injected';
+import * as types from '../types';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -54,12 +56,12 @@ export class JSHandle {
     return this._context;
   }
 
-  async evaluate(pageFunction: Function | string, ...args: any[]): Promise<any> {
-    return await this.executionContext().evaluate(pageFunction, this, ...args);
+  evaluate: types.EvaluateOn<JSHandle> = (pageFunction, ...args) => {
+    return this.executionContext().evaluate(pageFunction, this, ...args);
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: any[]): Promise<JSHandle> {
-    return await this.executionContext().evaluateHandle(pageFunction, this, ...args);
+  evaluateHandle: types.EvaluateHandleOn<JSHandle> = (pageFunction, ...args) => {
+    return this.executionContext().evaluateHandle(pageFunction, this, ...args);
   }
 
   async getProperty(propertyName: string): Promise<JSHandle | null> {
@@ -311,22 +313,22 @@ export class ElementHandle extends JSHandle {
     return result;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<object | undefined> {
+  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await elementHandle.evaluate(pageFunction, ...args);
+    const result = await elementHandle.evaluate(pageFunction, ...args as any);
     await elementHandle.dispose();
     return result;
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: any[]): Promise<object | undefined> {
+  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const arrayHandle = await this.evaluateHandle(
       (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
       selector, await this._context._injected()
     );
 
-    const result = await arrayHandle.evaluate(pageFunction, ...args);
+    const result = await arrayHandle.evaluate(pageFunction, ...args as any);
     await arrayHandle.dispose();
     return result;
   }
