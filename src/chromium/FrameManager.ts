@@ -25,6 +25,7 @@ import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
+import { DOMWorld } from './DOMWorld';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -258,11 +259,11 @@ export class FrameManager extends EventEmitter {
   _onExecutionContextCreated(contextPayload) {
     const frameId = contextPayload.auxData ? contextPayload.auxData.frameId : null;
     const frame = this._frames.get(frameId) || null;
-    let world = null;
+    let world: DOMWorld | null = null;
     if (frame) {
       if (contextPayload.auxData && !!contextPayload.auxData['isDefault']) {
         world = frame._mainWorld;
-      } else if (contextPayload.name === UTILITY_WORLD_NAME && !frame._secondaryWorld._hasContext()) {
+      } else if (contextPayload.name === UTILITY_WORLD_NAME && !frame._secondaryWorld._context) {
         // In case of multiple sessions to the same target, there's a race between
         // connections so we might end up creating multiple isolated worlds.
         // We can use either.
@@ -271,7 +272,7 @@ export class FrameManager extends EventEmitter {
     }
     if (contextPayload.auxData && contextPayload.auxData['type'] === 'isolated')
       this._isolatedWorlds.add(contextPayload.name);
-    const context: ExecutionContext = new ExecutionContext(this._client, contextPayload, world);
+    const context: ExecutionContext = new ExecutionContext(this._client, contextPayload, frame);
     if (world)
       world._setContext(context);
     this._contextIdToContext.set(contextPayload.id, context);
@@ -282,16 +283,18 @@ export class FrameManager extends EventEmitter {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    if (context._world)
-      context._world._setContext(null);
+    const frame = context.frame();
+    if (frame) {
+      if (frame._mainWorld._context === context)
+        frame._mainWorld._setContext(null);
+      if (frame._secondaryWorld._context === context)
+        frame._secondaryWorld._setContext(null);
+    }
   }
 
   _onExecutionContextsCleared() {
-    for (const context of this._contextIdToContext.values()) {
-      if (context._world)
-        context._world._setContext(null);
-    }
-    this._contextIdToContext.clear();
+    for (const contextId of Array.from(this._contextIdToContext.keys()))
+      this._onExecutionContextDestroyed(contextId);
   }
 
   executionContextById(contextId: number): ExecutionContext {

@@ -16,7 +16,6 @@
  */
 
 import { CDPSession } from './Connection';
-import { DOMWorld } from './DOMWorld';
 import { Frame } from './Frame';
 import { assert, helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage } from './protocolHelper';
@@ -32,19 +31,19 @@ const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
 export class ExecutionContext implements types.EvaluationContext<JSHandle> {
   _client: CDPSession;
-  _world: DOMWorld;
+  private _frame: Frame;
   private _injectedPromise: Promise<JSHandle> | null = null;
   private _documentPromise: Promise<ElementHandle> | null = null;
   private _contextId: number;
 
-  constructor(client: CDPSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, world: DOMWorld | null) {
+  constructor(client: CDPSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, frame: Frame | null) {
     this._client = client;
-    this._world = world;
+    this._frame = frame;
     this._contextId = contextPayload.id;
   }
 
   frame(): Frame | null {
-    return this._world ? this._world.frame() : null;
+    return this._frame;
   }
 
   evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
@@ -154,7 +153,7 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
 
   async _adoptElementHandle(elementHandle: ElementHandle): Promise<ElementHandle> {
     assert(elementHandle.executionContext() !== this, 'Cannot adopt handle that already belongs to this execution context');
-    assert(this._world, 'Cannot adopt handle without DOMWorld');
+    assert(this._frame, 'Cannot adopt handle without a Frame');
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: elementHandle._remoteObject.objectId,
     });

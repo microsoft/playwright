@@ -17,28 +17,21 @@
 
 import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './Frame';
-import { ElementHandle, JSHandle } from './JSHandle';
-import { TimeoutSettings } from '../TimeoutSettings';
-import { WaitTask, WaitTaskParams, waitForSelectorOrXPath } from '../waitTask';
+import { JSHandle } from './JSHandle';
+import { WaitTask, WaitTaskParams } from '../waitTask';
 
 export class DOMWorld {
   private _frame: Frame;
-  private _timeoutSettings: TimeoutSettings;
   private _contextPromise: Promise<ExecutionContext>;
   private _contextResolveCallback: ((c: ExecutionContext) => void) | null;
-  private _context: ExecutionContext | null;
+  _context: ExecutionContext | null;
   _waitTasks = new Set<WaitTask<JSHandle>>();
   private _detached = false;
 
-  constructor(frame: Frame, timeoutSettings: TimeoutSettings) {
+  constructor(frame: Frame) {
     this._frame = frame;
-    this._timeoutSettings = timeoutSettings;
     this._contextPromise;
     this._setContext(null);
-  }
-
-  frame(): Frame {
-    return this._frame;
   }
 
   _setContext(context: ExecutionContext | null) {
@@ -55,10 +48,6 @@ export class DOMWorld {
     }
   }
 
-  _hasContext(): boolean {
-    return !this._contextResolveCallback;
-  }
-
   _detach() {
     this._detached = true;
     for (const waitTask of this._waitTasks)
@@ -71,42 +60,7 @@ export class DOMWorld {
     return this._contextPromise;
   }
 
-  async waitForSelector(selector: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
-    const handle = await this._scheduleWaitTask(params);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-  }
-
-  async waitForXPath(xpath: string, options: { visible?: boolean, hidden?: boolean, timeout?: number } = {}): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
-    const handle = await this._scheduleWaitTask(params);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-  }
-
-  waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } = {}, ...args): Promise<JSHandle> {
-    const {
-      polling = 'raf',
-      timeout = this._timeoutSettings.timeout(),
-    } = options;
-    const params: WaitTaskParams = {
-      predicateBody: pageFunction,
-      title: 'function',
-      polling,
-      timeout,
-      args
-    };
-    return this._scheduleWaitTask(params);
-  }
-
-  private _scheduleWaitTask(params: WaitTaskParams): Promise<JSHandle> {
+  scheduleWaitTask(params: WaitTaskParams): Promise<JSHandle> {
     const task = new WaitTask(params, () => this._waitTasks.delete(task));
     this._waitTasks.add(task);
     if (this._context)

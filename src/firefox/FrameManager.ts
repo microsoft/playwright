@@ -29,6 +29,7 @@ import { TimeoutSettings } from '../TimeoutSettings';
 import { NetworkManager } from './NetworkManager';
 import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
 import * as types from '../types';
+import { waitForSelectorOrXPath, WaitTaskParams } from '../waitTask';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
@@ -375,16 +376,48 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<JSHandle> {
-    return this._mainWorld.waitForFunction(pageFunction, options, ...args);
+  waitForFunction(
+    pageFunction: Function | string,
+    options: { polling?: string | number; timeout?: number; } = {},
+    ...args): Promise<JSHandle> {
+    const {
+      polling = 'raf',
+      timeout = this._frameManager._timeoutSettings.timeout(),
+    } = options;
+    const params: WaitTaskParams = {
+      predicateBody: pageFunction,
+      title: 'function',
+      polling,
+      timeout,
+      args
+    };
+    return this._mainWorld.scheduleWaitTask(params);
   }
 
-  waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined): Promise<ElementHandle> {
-    return this._mainWorld.waitForSelector(selector, options);
+  async waitForSelector(selector: string, options: {
+      visible?: boolean;
+      hidden?: boolean;
+      timeout?: number; } | undefined): Promise<ElementHandle | null> {
+    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
+    const handle = await this._mainWorld.scheduleWaitTask(params);
+    if (!handle.asElement()) {
+      await handle.dispose();
+      return null;
+    }
+    return handle.asElement();
   }
 
-  waitForXPath(xpath: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined): Promise<ElementHandle> {
-    return this._mainWorld.waitForXPath(xpath, options);
+  async waitForXPath(xpath: string, options: {
+      visible?: boolean;
+      hidden?: boolean;
+      timeout?: number; } | undefined): Promise<ElementHandle | null> {
+    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
+    const handle = await this._mainWorld.scheduleWaitTask(params);
+    if (!handle.asElement()) {
+      await handle.dispose();
+      return null;
+    }
+    return handle.asElement();
   }
 
   async content(): Promise<string> {

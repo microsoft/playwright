@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import {ElementHandle, JSHandle} from './JSHandle';
+import { JSHandle } from './JSHandle';
 import { ExecutionContext } from './ExecutionContext';
-import { WaitTaskParams, WaitTask, waitForSelectorOrXPath } from '../waitTask';
+import { WaitTaskParams, WaitTask } from '../waitTask';
 
 export class DOMWorld {
   _frame: any;
@@ -69,42 +69,7 @@ export class DOMWorld {
     return this._contextPromise;
   }
 
-  async waitForSelector(selector: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
-    const handle = await this._scheduleWaitTask(params);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-  }
-
-  async waitForXPath(xpath: string, options: { visible?: boolean, hidden?: boolean, timeout?: number } = {}): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
-    const handle = await this._scheduleWaitTask(params);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-  }
-
-  waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<JSHandle> {
-    const {
-      polling = 'raf',
-      timeout = this._timeoutSettings.timeout(),
-    } = options;
-    const params: WaitTaskParams = {
-      predicateBody: pageFunction,
-      title: 'function',
-      polling,
-      timeout,
-      args
-    };
-    return this._scheduleWaitTask(params);
-  }
-
-  private _scheduleWaitTask(params: WaitTaskParams): Promise<JSHandle> {
+  scheduleWaitTask(params: WaitTaskParams): Promise<JSHandle> {
     const task = new WaitTask(params, () => this._waitTasks.delete(task));
     this._waitTasks.add(task);
     if (this._context)
