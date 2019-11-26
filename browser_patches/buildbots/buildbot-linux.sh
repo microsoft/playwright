@@ -2,6 +2,11 @@
 set -e
 set +x
 
+if [[ $(uname) != "Linux" ]]; then
+  echo "ERROR: this script is desgined to be run on Linux. Can't run on $(uname)"
+  exit 1
+fi
+
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename $0)"
   echo

@@ -2,6 +2,17 @@
 set -e
 set +x
 
+if [[ "$(uname)" != "Darwin" ]]; then
+  echo "ERROR: this script is desgined to be run on OSX. Can't run on $(uname)"
+  exit 1
+fi
+
+MAC_MAJOR_MINOR_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
+if [[ $MAC_MAJOR_MINOR_VERSION != "10.14" ]]; then
+  echo "ERROR: this script is desgined to be run on OSX 10.14. Can't run on OSX $MAC_MAJOR_MINOR_VERSION"
+  exit 1
+fi
+
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename $0)"
   echo
