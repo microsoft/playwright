@@ -45,7 +45,7 @@ class Helper {
       const method = Reflect.get(classType.prototype, methodName);
       if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function' || method.constructor.name !== 'AsyncFunction')
         continue;
-      Reflect.set(classType.prototype, methodName, function(...args) {
+      Reflect.set(classType.prototype, methodName, function(...args: any[]) {
         const syncStack: any = {};
         Error.captureStackTrace(syncStack);
         return method.call(this, ...args).catch(e => {

@@ -208,8 +208,8 @@ export class ElementHandle extends JSHandle {
 
   async $(selector: string): Promise<ElementHandle | null> {
     const handle = await this._frame.evaluateHandle(
-      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
-      this, selector, await this._context._injected()
+        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
+        this, selector, await this._context._injected()
     );
     const element = handle.asElement();
     if (element)
@@ -220,8 +220,8 @@ export class ElementHandle extends JSHandle {
 
   async $$(selector: string): Promise<ElementHandle[]> {
     const arrayHandle = await this._frame.evaluateHandle(
-      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
-      this, selector, await this._context._injected()
+        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
+        this, selector, await this._context._injected()
     );
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
@@ -245,8 +245,8 @@ export class ElementHandle extends JSHandle {
 
   $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const arrayHandle = await this._frame.evaluateHandle(
-      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
-      this, selector, await this._context._injected()
+        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
+        this, selector, await this._context._injected()
     );
 
     const result = await this._frame.evaluate(pageFunction, arrayHandle, ...args);
@@ -256,8 +256,8 @@ export class ElementHandle extends JSHandle {
 
   async $x(expression: string): Promise<Array<ElementHandle>> {
     const arrayHandle = await this._frame.evaluateHandle(
-      (root: SelectorRoot, expression: string, injected: Injected) => injected.querySelectorAll('xpath=' + expression, root),
-      this, expression, await this._context._injected()
+        (root: SelectorRoot, expression: string, injected: Injected) => injected.querySelectorAll('xpath=' + expression, root),
+        this, expression, await this._context._injected()
     );
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
@@ -326,7 +326,7 @@ export class ElementHandle extends JSHandle {
     }
     await this.evaluate(async (element: HTMLInputElement, payloads: FilePayload[]) => {
       const files = await Promise.all(payloads.map(async (file: FilePayload) => {
-        const result = await fetch(`data:${file.mimeType};base64,${file.data}`)
+        const result = await fetch(`data:${file.mimeType};base64,${file.data}`);
         return new File([await result.blob()], file.name);
       }));
       const dt = new DataTransfer();
