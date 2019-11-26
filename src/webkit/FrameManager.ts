@@ -14,8 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as EventEmitter from 'events';
 import * as fs from 'fs';
+import * as types from '../types';
 import { TimeoutError } from '../Errors';
 import { Events } from './events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
@@ -318,14 +320,14 @@ export class Frame {
     return this._contextPromise;
   }
 
-  async evaluateHandle(pageFunction: Function | string, ...args: Array<any>): Promise<JSHandle> {
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
     const context = await this.executionContext();
-    return context.evaluateHandle(pageFunction, ...args);
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async evaluate(pageFunction: Function | string, ...args: Array<any>): Promise<any> {
+  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
     const context = await this.executionContext();
-    return context.evaluate(pageFunction, ...args);
+    return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -350,14 +352,14 @@ export class Frame {
     return value;
   }
 
-  async $eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(any)> {
+  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const document = await this._document();
-    return document.$eval(selector, pageFunction, ...args);
+    return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$eval(selector: string, pageFunction: Function | string, ...args: Array<any>): Promise<(any)> {
+  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const document = await this._document();
-    const value = await document.$$eval(selector, pageFunction, ...args);
+    const value = await document.$$eval(selector, pageFunction, ...args as any);
     return value;
   }
 
