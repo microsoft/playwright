@@ -514,10 +514,6 @@ export class Page extends EventEmitter {
     return response;
   }
 
-  async bringToFront() {
-    await this._client.send('Page.bringToFront');
-  }
-
   async emulate(options: { viewport: Viewport; userAgent: string; }) {
     await Promise.all([
       this.setViewport(options.viewport),
