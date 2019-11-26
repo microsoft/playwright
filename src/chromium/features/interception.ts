@@ -29,4 +29,12 @@ export class Interception {
   async abort(request: Request, errorCode: string = 'failed') {
     return request._abort(errorCode);
   }
+
+  setOfflineMode(enabled: boolean) {
+    return this._networkManager.setOfflineMode(enabled);
+  }
+
+  async authenticate(credentials: { username: string; password: string; } | null) {
+    return this._networkManager.authenticate(credentials);
+  }
 }
