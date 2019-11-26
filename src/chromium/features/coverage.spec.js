@@ -109,8 +109,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         expect(coverage.length).toBe(0);
       });
     });
-    // @see https://crbug.com/990945
-    xit('should not hang when there is a debugger statement', async function({page, server}) {
+    it('should not hang when there is a debugger statement', async function({page, server}) {
       await page.coverage.startJSCoverage();
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {

@@ -92,6 +92,7 @@ class JSCoverage {
       helper.addEventListener(this._client, 'Debugger.scriptParsed', this._onScriptParsed.bind(this)),
       helper.addEventListener(this._client, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
     ];
+    this._client.on('Debugger.paused', () => this._client.send('Debugger.resume'));
     await Promise.all([
       this._client.send('Profiler.enable'),
       this._client.send('Profiler.startPreciseCoverage', {callCount: false, detailed: true}),

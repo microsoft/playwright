@@ -217,10 +217,6 @@ export class Page extends EventEmitter {
     return this._frameManager.frames();
   }
 
-  setOfflineMode(enabled: boolean) {
-    return this._frameManager.networkManager().setOfflineMode(enabled);
-  }
-
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
   }
@@ -288,10 +284,6 @@ export class Page extends EventEmitter {
         return promise;
       };
     }
-  }
-
-  async authenticate(credentials: { username: string; password: string; } | null) {
-    return this._frameManager.networkManager().authenticate(credentials);
   }
 
   async setExtraHTTPHeaders(headers: { [s: string]: string; }) {

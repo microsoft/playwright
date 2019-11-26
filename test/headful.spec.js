@@ -94,7 +94,7 @@ module.exports.addTests = function({testRunner, expect, playwright, defaultBrows
       const page = await browser.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.interception.enable();
-      page.on('request', r => r.respond({body: 'YO, GOOGLE.COM'}));
+      page.on('request', r => page.interception.fulfill(r, {body: 'YO, GOOGLE.COM'}));
       await page.evaluate(() => {
         const frame = document.createElement('iframe');
         frame.setAttribute('src', 'https://google.com/');

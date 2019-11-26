@@ -88,7 +88,6 @@
   * [page.accessibility](#pageaccessibility)
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
   * [page.addStyleTag(options)](#pageaddstyletagoptions)
-  * [page.authenticate(credentials)](#pageauthenticatecredentials)
   * [page.browser()](#pagebrowser)
   * [page.browserContext()](#pagebrowsercontext)
   * [page.click(selector[, options])](#pageclickselector-options)
@@ -127,7 +126,6 @@
   * [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
   * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
   * [page.setJavaScriptEnabled(enabled)](#pagesetjavascriptenabledenabled)
-  * [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
   * [page.setUserAgent(userAgent)](#pagesetuseragentuseragent)
   * [page.setViewport(viewport)](#pagesetviewportviewport)
   * [page.target()](#pagetarget)
@@ -232,10 +230,12 @@
   * [executionContext.frame()](#executioncontextframe)
 - [class: Interception](#class-interception)
   * [interception.abort(request, [errorCode])](#interceptionabortrequest-errorcode)
+  * [interception.authenticate(credentials)](#interceptionauthenticatecredentials)
   * [interception.continue(request, [overrides])](#interceptioncontinuerequest-overrides)
   * [interception.disable()](#interceptiondisable)
   * [interception.enable()](#interceptionenable)
   * [interception.fulfill(request, response)](#interceptionfulfillrequest-response)
+  * [interception.setOfflineMode(enabled)](#interceptionsetofflinemodeenabled)
 - [class: JSHandle](#class-jshandle)
   * [jsHandle.asElement()](#jshandleaselement)
   * [jsHandle.dispose()](#jshandledispose)
@@ -1119,16 +1119,6 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 
 Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
 
-#### page.authenticate(credentials)
-- `credentials` <?[Object]>
-  - `username` <[string]>
-  - `password` <[string]>
-- returns: <[Promise]>
-
-Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
-
-To disable authentication, pass `null`.
-
 #### page.browser()
 
 - returns: <[Browser]>
@@ -1675,10 +1665,6 @@ The extra HTTP headers will be sent with every request the page initiates.
 - returns: <[Promise]>
 
 > **NOTE** changing this value won't affect scripts that have already been run. It will take full effect on the next [navigation](#pagegotourl-options).
-
-#### page.setOfflineMode(enabled)
-- `enabled` <[boolean]> When `true`, enables offline mode for the page.
-- returns: <[Promise]>
 
 #### page.setUserAgent(userAgent)
 - `userAgent` <[string]> Specific user agent to use in this page
@@ -3111,6 +3097,16 @@ await resultHandle.dispose();
 Aborts request. To use this, request interception should be enabled with `page.interception.enable()`.
 Exception is immediately thrown if the request interception is not enabled.
 
+#### interception.authenticate(credentials)
+- `credentials` <?[Object]>
+  - `username` <[string]>
+  - `password` <[string]>
+- returns: <[Promise]>
+
+Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+
+To disable authentication, pass `null`.
+
 #### interception.continue(request, [overrides])
 - `request` <[Request]>
 - `overrides` <[Object]> Optional request overwrites, which can be one of the following:
@@ -3195,6 +3191,9 @@ page.on('request', request => {
 > **NOTE** Mocking responses for dataURL requests is not supported.
 > Calling `request.respond` for a dataURL request is a noop.
 
+#### interception.setOfflineMode(enabled)
+- `enabled` <[boolean]> When `true`, enables offline mode for the page.
+- returns: <[Promise]>
 
 ### class: JSHandle
 

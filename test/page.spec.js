@@ -166,21 +166,21 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Page.setOfflineMode', function() {
+  describe.skip(FFOX || WEBKIT)('Interception.setOfflineMode', function() {
     it('should work', async({page, server}) => {
-      await page.setOfflineMode(true);
+      await page.interception.setOfflineMode(true);
       let error = null;
       await page.goto(server.EMPTY_PAGE).catch(e => error = e);
       expect(error).toBeTruthy();
-      await page.setOfflineMode(false);
+      await page.interception.setOfflineMode(false);
       const response = await page.reload();
       expect(response.status()).toBe(200);
     });
     it('should emulate navigator.onLine', async({page, server}) => {
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
-      await page.setOfflineMode(true);
+      await page.interception.setOfflineMode(true);
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
-      await page.setOfflineMode(false);
+      await page.interception.setOfflineMode(false);
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
     });
   });
