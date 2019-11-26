@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 export { TimeoutError } from '../Errors';
+export { Keyboard, Mouse } from '../input';
 export { Browser, BrowserContext, Target } from './Browser';
 export { BrowserFetcher } from './BrowserFetcher';
 export { Dialog } from './Dialog';
@@ -10,9 +11,8 @@ export { Accessibility } from './features/accessibility';
 export { Interception } from './features/interception';
 export { Permissions } from './features/permissions';
 export { Frame } from './FrameManager';
-export { Mouse, Keyboard } from '../input';
 export { ElementHandle, JSHandle } from './JSHandle';
 export { Request, Response } from './NetworkManager';
-export { ConsoleMessage, Page } from './Page';
+export { ConsoleMessage, FileChooser, Page } from './Page';
 export { Playwright } from './Playwright';
 
