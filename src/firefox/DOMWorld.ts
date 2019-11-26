@@ -20,7 +20,7 @@ import * as util from 'util';
 import * as types from '../types';
 import {ElementHandle, JSHandle} from './JSHandle';
 import { ExecutionContext } from './ExecutionContext';
-import { WaitTaskParams, WaitTask } from '../waitTask';
+import { WaitTaskParams, WaitTask, waitForSelectorOrXPath } from '../waitTask';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -238,12 +238,24 @@ export class DOMWorld {
     }
   }
 
-  waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined): Promise<ElementHandle> {
-    return this._waitForSelectorOrXPath(selector, false, options);
+  async waitForSelector(selector: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } | undefined): Promise<ElementHandle | null> {
+    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
+    const handle = await this._scheduleWaitTask(params);
+    if (!handle.asElement()) {
+      await handle.dispose();
+      return null;
+    }
+    return handle.asElement();
   }
 
-  waitForXPath(xpath: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined): Promise<ElementHandle> {
-    return this._waitForSelectorOrXPath(xpath, true, options);
+  async waitForXPath(xpath: string, options: { visible?: boolean, hidden?: boolean, timeout?: number } = {}): Promise<ElementHandle | null> {
+    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
+    const handle = await this._scheduleWaitTask(params);
+    if (!handle.asElement()) {
+      await handle.dispose();
+      return null;
+    }
+    return handle.asElement();
   }
 
   waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<JSHandle> {
@@ -263,50 +275,6 @@ export class DOMWorld {
 
   async title(): Promise<string> {
     return this.evaluate(() => document.title);
-  }
-
-  async _waitForSelectorOrXPath(selectorOrXPath: string, isXPath: boolean, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<ElementHandle> {
-    const {
-      visible: waitForVisible = false,
-      hidden: waitForHidden = false,
-      timeout = this._timeoutSettings.timeout(),
-    } = options;
-    const polling = waitForVisible || waitForHidden ? 'raf' : 'mutation';
-    const title = `${isXPath ? 'XPath' : 'selector'} "${selectorOrXPath}"${waitForHidden ? ' to be hidden' : ''}`;
-    const params: WaitTaskParams = {
-      predicateBody: predicate,
-      title,
-      polling,
-      timeout,
-      args: [selectorOrXPath, isXPath, waitForVisible, waitForHidden]
-    };
-    const handle = await this._scheduleWaitTask(params);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-
-    function predicate(selectorOrXPath: string, isXPath: boolean, waitForVisible: boolean, waitForHidden: boolean): (Node | boolean) | null {
-      const node = isXPath
-        ? document.evaluate(selectorOrXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-        : document.querySelector(selectorOrXPath);
-      if (!node)
-        return waitForHidden;
-      if (!waitForVisible && !waitForHidden)
-        return node;
-      const element: Element = node.nodeType === Node.TEXT_NODE ? node.parentElement : node as Element;
-
-      const style = window.getComputedStyle(element);
-      const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
-      const success = (waitForVisible === isVisible || waitForHidden === !isVisible);
-      return success ? node : null;
-
-      function hasVisibleBoundingBox(): boolean {
-        const rect = element.getBoundingClientRect();
-        return !!(rect.top || rect.bottom || rect.width || rect.height);
-      }
-    }
   }
 
   private _scheduleWaitTask(params: WaitTaskParams): Promise<JSHandle> {

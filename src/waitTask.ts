@@ -104,6 +104,43 @@ export class WaitTask<Handle extends types.Handle> {
   }
 }
 
+export function waitForSelectorOrXPath(
+  selectorOrXPath: string,
+  isXPath: boolean,
+  options: { visible?: boolean, hidden?: boolean, timeout: number }): WaitTaskParams {
+  const { visible: waitForVisible = false, hidden: waitForHidden = false, timeout } = options;
+  const polling = waitForVisible || waitForHidden ? 'raf' : 'mutation';
+  const title = `${isXPath ? 'XPath' : 'selector'} "${selectorOrXPath}"${waitForHidden ? ' to be hidden' : ''}`;
+  const params: WaitTaskParams = {
+    predicateBody: predicate,
+    title,
+    polling,
+    timeout,
+    args: [selectorOrXPath, isXPath, waitForVisible, waitForHidden]
+  };
+  return params;
+
+  function predicate(selectorOrXPath: string, isXPath: boolean, waitForVisible: boolean, waitForHidden: boolean): (Node | boolean) | null {
+    const node = isXPath
+      ? document.evaluate(selectorOrXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+      : document.querySelector(selectorOrXPath);
+    if (!node)
+      return waitForHidden;
+    if (!waitForVisible && !waitForHidden)
+      return node;
+    const element = (node.nodeType === Node.TEXT_NODE ? node.parentElement : node) as Element;
+    const style = window.getComputedStyle(element);
+    const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
+    const success = (waitForVisible === isVisible || waitForHidden === !isVisible);
+    return success ? node : null;
+
+    function hasVisibleBoundingBox(): boolean {
+      const rect = element.getBoundingClientRect();
+      return !!(rect.top || rect.bottom || rect.width || rect.height);
+    }
+  }
+}
+
 async function waitForPredicatePageFunction(predicateBody: string, polling: string | number, timeout: number, ...args): Promise<any> {
   const predicate = new Function('...args', predicateBody);
   let timedOut = false;
