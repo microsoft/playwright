@@ -17,7 +17,7 @@
 
 import { CDPSessionEvents } from './Connection';
 import { TimeoutError } from '../Errors';
-import { Frame } from './Frame';
+import { Frame } from './FrameManager';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { assert, helper, RegisteredListener } from '../helper';
 import { NetworkManagerEvents, Request, Response } from './NetworkManager';

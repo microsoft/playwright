@@ -23,7 +23,7 @@ import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
 import * as types from '../types';
 
-export class ExecutionContext implements types.EvaluationContext<JSHandle> {
+export class ExecutionContext {
   _session: any;
   _frame: Frame;
   _executionContextId: string;

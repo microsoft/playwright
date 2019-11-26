@@ -33,7 +33,7 @@ import { Overrides } from './features/overrides';
 import { Interception } from './features/interception';
 import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
-import { Frame } from './Frame';
+import { Frame } from './FrameManager';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';

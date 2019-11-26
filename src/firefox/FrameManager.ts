@@ -17,21 +17,14 @@
 
 import { JugglerSession } from './Connection';
 import { Page } from './Page';
-import * as fs from 'fs';
 import {RegisteredListener, helper, assert} from '../helper';
 import {TimeoutError} from '../Errors';
 import {EventEmitter} from 'events';
 import {ExecutionContext} from './ExecutionContext';
 import {NavigationWatchdog, NextNavigationWatchdog} from './NavigationWatchdog';
-import {DOMWorld} from './DOMWorld';
 import { JSHandle, ElementHandle } from './JSHandle';
 import { TimeoutSettings } from '../TimeoutSettings';
-import { NetworkManager } from './NetworkManager';
-import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
-import * as types from '../types';
-import { waitForSelectorOrXPath, WaitTaskParams } from '../waitTask';
-
-const readFileAsync = helper.promisify(fs.readFile);
+import * as frames from '../frames';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -40,7 +33,17 @@ export const FrameManagerEvents = {
   Load: Symbol('FrameManagerEvents.Load'),
   DOMContentLoaded: Symbol('FrameManagerEvents.DOMContentLoaded'),
 };
-export class FrameManager extends EventEmitter {
+
+const frameDataSymbol = Symbol('frameData');
+type FrameData = {
+  frameId: string,
+  lastCommittedNavigationId: string,
+  firedEvents: Set<string>,
+};
+
+export type Frame = frames.Frame<JSHandle, ElementHandle, ExecutionContext, Response>;
+
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, ExecutionContext, Response> {
   _session: JugglerSession;
   _page: Page;
   _networkManager: any;
@@ -49,6 +52,7 @@ export class FrameManager extends EventEmitter {
   _frames: Map<string, Frame>;
   _contextIdToContext: Map<string, ExecutionContext>;
   _eventListeners: RegisteredListener[];
+
   constructor(session: JugglerSession, page: Page, networkManager, timeoutSettings) {
     super();
     this._session = session;
@@ -77,8 +81,10 @@ export class FrameManager extends EventEmitter {
     const frameId = auxData ? auxData.frameId : null;
     const frame = this._frames.get(frameId) || null;
     const context = new ExecutionContext(this._session, frame, executionContextId);
-    if (frame)
-      frame._mainWorld._setContext(context);
+    if (frame) {
+      frame._contextCreated('main', context);
+      frame._contextCreated('utility', context);
+    }
     this._contextIdToContext.set(executionContextId, context);
   }
 
@@ -87,11 +93,15 @@ export class FrameManager extends EventEmitter {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    if (context._frame)
-      context._frame._mainWorld._setContext(null);
+    if (context.frame())
+      context.frame()._contextDestroyed(context);
   }
 
-  frame(frameId) {
+  _frameData(frame: Frame): FrameData {
+    return (frame as any)[frameDataSymbol];
+  }
+
+  frame(frameId: string): Frame {
     return this._frames.get(frameId);
   }
 
@@ -104,32 +114,38 @@ export class FrameManager extends EventEmitter {
     collect(this._mainFrame);
     return frames;
 
-    function collect(frame) {
+    function collect(frame: Frame) {
       frames.push(frame);
-      for (const subframe of frame._children)
+      for (const subframe of frame.childFrames())
         collect(subframe);
     }
   }
 
   _onNavigationCommitted(params) {
     const frame = this._frames.get(params.frameId);
-    frame._navigated(params.url, params.name, params.navigationId);
+    frame._navigated(params.url, params.name);
+    const data = this._frameData(frame);
+    data.lastCommittedNavigationId = params.navigationId;
+    data.firedEvents.clear();
     this.emit(FrameManagerEvents.FrameNavigated, frame);
   }
 
   _onSameDocumentNavigation(params) {
     const frame = this._frames.get(params.frameId);
-    frame._url = params.url;
+    frame._navigated(params.url, frame.name());
     this.emit(FrameManagerEvents.FrameNavigated, frame);
   }
 
   _onFrameAttached(params) {
-    const frame = new Frame(this._session, this, this._networkManager, this._page, params.frameId, this._timeoutSettings);
     const parentFrame = this._frames.get(params.parentFrameId) || null;
-    if (parentFrame) {
-      frame._parentFrame = parentFrame;
-      parentFrame._children.add(frame);
-    } else {
+    const frame = new frames.Frame(this, parentFrame);
+    const data: FrameData = {
+      frameId: params.frameId,
+      lastCommittedNavigationId: '',
+      firedEvents: new Set(),
+    };
+    frame[frameDataSymbol] = data;
+    if (!parentFrame) {
       assert(!this._mainFrame, 'INTERNAL ERROR: re-attaching main frame!');
       this._mainFrame = frame;
     }
@@ -146,7 +162,7 @@ export class FrameManager extends EventEmitter {
 
   _onEventFired({frameId, name}) {
     const frame = this._frames.get(frameId);
-    frame._firedEvents.add(name.toLowerCase());
+    this._frameData(frame).firedEvents.add(name.toLowerCase());
     if (frame === this._mainFrame) {
       if (name === 'load')
         this.emit(FrameManagerEvents.Load);
@@ -158,45 +174,17 @@ export class FrameManager extends EventEmitter {
   dispose() {
     helper.removeEventListeners(this._eventListeners);
   }
-}
 
-export class Frame {
-  _parentFrame: Frame|null = null;
-  private _session: JugglerSession;
-  _page: Page;
-  _frameManager: FrameManager;
-  private _networkManager: NetworkManager;
-  private _timeoutSettings: TimeoutSettings;
-  _frameId: string;
-  _url: string = '';
-  private _name: string = '';
-  _children: Set<Frame>;
-  private _detached: boolean;
-  _firedEvents: Set<string>;
-  _mainWorld: DOMWorld;
-  _lastCommittedNavigationId: string;
-
-  constructor(session: JugglerSession, frameManager : FrameManager, networkManager, page: Page, frameId: string, timeoutSettings) {
-    this._session = session;
-    this._page = page;
-    this._frameManager = frameManager;
-    this._networkManager = networkManager;
-    this._timeoutSettings = timeoutSettings;
-    this._frameId = frameId;
-    this._children = new Set();
-    this._detached = false;
-
-
-    this._firedEvents = new Set();
-
-    this._mainWorld = new DOMWorld(this, timeoutSettings);
+  timeoutSettings(): TimeoutSettings {
+    return this._timeoutSettings;
   }
 
-  async executionContext() {
-    return this._mainWorld.executionContext();
+  async adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle> {
+    assert(false, 'Multiple isolated worlds are not implemented');
+    return elementHandle;
   }
 
-  async waitForNavigation(options: { timeout?: number; waitUntil?: string | Array<string>; } = {}) {
+  async waitForFrameNavigation(frame: Frame, options: { timeout?: number; waitUntil?: string | Array<string>; } = {}) {
     const {
       timeout = this._timeoutSettings.navigationTimeout(),
       waitUntil = ['load'],
@@ -208,7 +196,7 @@ export class Frame {
     const timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
     const timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
 
-    const nextNavigationDog = new NextNavigationWatchdog(this._session, this);
+    const nextNavigationDog = new NextNavigationWatchdog(this, frame);
     const error1 = await Promise.race([
       nextNavigationDog.promise(),
       timeoutPromise,
@@ -229,7 +217,7 @@ export class Frame {
       return null;
     }
 
-    const watchDog = new NavigationWatchdog(this._session, this, this._networkManager, navigationId, url, normalizedWaitUntil);
+    const watchDog = new NavigationWatchdog(this, frame, this._networkManager, navigationId, url, normalizedWaitUntil);
     const error = await Promise.race([
       timeoutPromise,
       watchDog.promise(),
@@ -241,7 +229,7 @@ export class Frame {
     return watchDog.navigationResponse();
   }
 
-  async goto(url: string, options: { timeout?: number; waitUntil?: string | Array<string>; referer?: string; } = {}) {
+  async navigateFrame(frame: Frame, url: string, options: { timeout?: number; waitUntil?: string | Array<string>; referer?: string; } = {}) {
     const {
       timeout = this._timeoutSettings.navigationTimeout(),
       waitUntil = ['load'],
@@ -249,7 +237,7 @@ export class Frame {
     } = options;
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
     const {navigationId} = await this._session.send('Page.navigate', {
-      frameId: this._frameId,
+      frameId: this._frameData(frame).frameId,
       referer,
       url,
     });
@@ -261,7 +249,7 @@ export class Frame {
     const timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
     const timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
 
-    const watchDog = new NavigationWatchdog(this._session, this, this._networkManager, navigationId, url, normalizedWaitUntil);
+    const watchDog = new NavigationWatchdog(this, frame, this._networkManager, navigationId, url, normalizedWaitUntil);
     const error = await Promise.race([
       timeoutPromise,
       watchDog.promise(),
@@ -273,354 +261,13 @@ export class Frame {
     return watchDog.navigationResponse();
   }
 
-  async click(selector: string, options?: ClickOptions) {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.click(options);
-    await handle.dispose();
-  }
-
-  async dblclick(selector: string, options?: MultiClickOptions) {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.dblclick(options);
-    await handle.dispose();
-  }
-
-  async tripleclick(selector: string, options?: MultiClickOptions) {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.tripleclick(options);
-    await handle.dispose();
-  }
-
-  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    const result = await handle.select(...values);
-    await handle.dispose();
-    return result;
-  }
-
-  async fill(selector: string, value: string) {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.fill(value);
-    await handle.dispose();
-  }
-
-  async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.type(text, options);
-    await handle.dispose();
-  }
-
-  async focus(selector: string) {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.focus();
-    await handle.dispose();
-  }
-
-  async hover(selector: string) {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    const handle = await document.$(selector);
-    assert(handle, 'No node found for selector: ' + selector);
-    await handle.hover();
-    await handle.dispose();
-  }
-
-  _detach() {
-    this._parentFrame._children.delete(this);
-    this._parentFrame = null;
-    this._detached = true;
-    this._mainWorld._detach();
-  }
-
-  _navigated(url, name, navigationId) {
-    this._url = url;
-    this._name = name;
-    this._lastCommittedNavigationId = navigationId;
-    this._firedEvents.clear();
-  }
-
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { polling?: string | number; timeout?: number; visible?: boolean; hidden?: boolean; } | undefined, ...args: Array<any>): Promise<JSHandle> {
-    const xPathPattern = '//';
-
-    if (helper.isString(selectorOrFunctionOrTimeout)) {
-      const string = selectorOrFunctionOrTimeout;
-      if (string.startsWith(xPathPattern))
-        return this.waitForXPath(string, options);
-      return this.waitForSelector(string, options);
-    }
-    if (helper.isNumber(selectorOrFunctionOrTimeout))
-      return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
-    if (typeof selectorOrFunctionOrTimeout === 'function')
-      return this.waitForFunction(selectorOrFunctionOrTimeout, options, ...args);
-    return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
-  }
-
-  waitForFunction(
-    pageFunction: Function | string,
-    options: { polling?: string | number; timeout?: number; } = {},
-    ...args): Promise<JSHandle> {
-    const {
-      polling = 'raf',
-      timeout = this._frameManager._timeoutSettings.timeout(),
-    } = options;
-    const params: WaitTaskParams = {
-      predicateBody: pageFunction,
-      title: 'function',
-      polling,
-      timeout,
-      args
-    };
-    return this._mainWorld.scheduleWaitTask(params);
-  }
-
-  async waitForSelector(selector: string, options: {
-      visible?: boolean;
-      hidden?: boolean;
-      timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
-    const handle = await this._mainWorld.scheduleWaitTask(params);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-  }
-
-  async waitForXPath(xpath: string, options: {
-      visible?: boolean;
-      hidden?: boolean;
-      timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
-    const handle = await this._mainWorld.scheduleWaitTask(params);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-  }
-
-  async content(): Promise<string> {
-    const context = await this._mainWorld.executionContext();
-    return context.evaluate(() => {
-      let retVal = '';
-      if (document.doctype)
-        retVal = new XMLSerializer().serializeToString(document.doctype);
-      if (document.documentElement)
-        retVal += document.documentElement.outerHTML;
-      return retVal;
-    });
-  }
-
-  async setContent(html: string) {
-    const context = await this._mainWorld.executionContext();
+  async setFrameContent(frame: Frame, html: string) {
+    const context = await frame._utilityContext();
     await context.evaluate(html => {
       document.open();
       document.write(html);
       document.close();
     }, html);
-  }
-
-  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
-    return context.evaluate(pageFunction, ...args as any);
-  }
-
-  async $(selector: string): Promise<ElementHandle | null> {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    return document.$(selector);
-  }
-
-  async $$(selector: string): Promise<Array<ElementHandle>> {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    return document.$$(selector);
-  }
-
-  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    return document.$eval(selector, pageFunction, ...args as any);
-  }
-
-  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    return document.$$eval(selector, pageFunction, ...args as any);
-  }
-
-  async $x(expression: string): Promise<Array<ElementHandle>> {
-    const context = await this._mainWorld.executionContext();
-    const document = await context._document();
-    return document.$x(expression);
-  }
-
-  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
-    return context.evaluateHandle(pageFunction, ...args as any);
-  }
-
-  async addScriptTag(options: {
-      url?: string; path?: string;
-      content?: string;
-      type?: string;
-    }): Promise<ElementHandle> {
-    const {
-      url = null,
-      path = null,
-      content = null,
-      type = ''
-    } = options;
-    if (url !== null) {
-      try {
-        const context = await this._mainWorld.executionContext();
-        return (await context.evaluateHandle(addScriptUrl, url, type)).asElement();
-      } catch (error) {
-        throw new Error(`Loading script from ${url} failed`);
-      }
-    }
-
-    if (path !== null) {
-      let contents = await readFileAsync(path, 'utf8');
-      contents += '//# sourceURL=' + path.replace(/\n/g, '');
-      const context = await this._mainWorld.executionContext();
-      return (await context.evaluateHandle(addScriptContent, contents, type)).asElement();
-    }
-
-    if (content !== null) {
-      const context = await this._mainWorld.executionContext();
-      return (await context.evaluateHandle(addScriptContent, content, type)).asElement();
-    }
-
-    throw new Error('Provide an object with a `url`, `path` or `content` property');
-
-    async function addScriptUrl(url: string, type: string): Promise<HTMLElement> {
-      const script = document.createElement('script');
-      script.src = url;
-      if (type)
-        script.type = type;
-      const promise = new Promise((res, rej) => {
-        script.onload = res;
-        script.onerror = rej;
-      });
-      document.head.appendChild(script);
-      await promise;
-      return script;
-    }
-
-    function addScriptContent(content: string, type: string = 'text/javascript'): HTMLElement {
-      const script = document.createElement('script');
-      script.type = type;
-      script.text = content;
-      let error = null;
-      script.onerror = e => error = e;
-      document.head.appendChild(script);
-      if (error)
-        throw error;
-      return script;
-    }
-  }
-
-  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
-    const {
-      url = null,
-      path = null,
-      content = null
-    } = options;
-    if (url !== null) {
-      try {
-        const context = await this._mainWorld.executionContext();
-        return (await context.evaluateHandle(addStyleUrl, url)).asElement();
-      } catch (error) {
-        throw new Error(`Loading style from ${url} failed`);
-      }
-    }
-
-    if (path !== null) {
-      let contents = await readFileAsync(path, 'utf8');
-      contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
-      const context = await this._mainWorld.executionContext();
-      return (await context.evaluateHandle(addStyleContent, contents)).asElement();
-    }
-
-    if (content !== null) {
-      const context = await this._mainWorld.executionContext();
-      return (await context.evaluateHandle(addStyleContent, content)).asElement();
-    }
-
-    throw new Error('Provide an object with a `url`, `path` or `content` property');
-
-    async function addStyleUrl(url: string): Promise<HTMLElement> {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = url;
-      const promise = new Promise((res, rej) => {
-        link.onload = res;
-        link.onerror = rej;
-      });
-      document.head.appendChild(link);
-      await promise;
-      return link;
-    }
-
-    async function addStyleContent(content: string): Promise<HTMLElement> {
-      const style = document.createElement('style');
-      style.type = 'text/css';
-      style.appendChild(document.createTextNode(content));
-      const promise = new Promise((res, rej) => {
-        style.onload = res;
-        style.onerror = rej;
-      });
-      document.head.appendChild(style);
-      await promise;
-      return style;
-    }
-  }
-
-  async title(): Promise<string> {
-    const context = await this._mainWorld.executionContext();
-    return context.evaluate(() => document.title);
-  }
-
-  name() {
-    return this._name;
-  }
-
-  isDetached() {
-    return this._detached;
-  }
-
-  childFrames() {
-    return Array.from(this._children);
-  }
-
-  url() {
-    return this._url;
-  }
-
-  parentFrame() {
-    return this._parentFrame;
   }
 }
 

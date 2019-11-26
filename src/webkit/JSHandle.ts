@@ -34,7 +34,7 @@ const writeFileAsync = helper.promisify(fs.writeFile);
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
-    const frameManager = frame._frameManager;
+    const frameManager = frame._delegate as FrameManager;
     return new ElementHandle(context, context._session, remoteObject, frameManager.page(), frameManager);
   }
   return new JSHandle(context, context._session, remoteObject);

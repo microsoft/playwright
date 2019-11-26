@@ -16,7 +16,7 @@ export { Interception } from './features/interception';
 export { PDF } from './features/pdf';
 export { Permissions } from './features/permissions';
 export { Worker, Workers } from './features/workers';
-export { Frame } from './Frame';
+export { Frame } from '../frames';
 export { Keyboard, Mouse } from '../input';
 export { ElementHandle, JSHandle } from './JSHandle';
 export { Request, Response } from './NetworkManager';

@@ -19,7 +19,7 @@ import { TargetSession } from './Connection';
 import { Frame } from './FrameManager';
 import { helper } from '../helper';
 import { valueFromRemoteObject } from './protocolHelper';
-import { createJSHandle, JSHandle } from './JSHandle';
+import { createJSHandle, JSHandle, ElementHandle } from './JSHandle';
 import { Protocol } from './protocol';
 import * as injectedSource from '../generated/injectedSource';
 import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
@@ -29,7 +29,7 @@ import * as types from '../types';
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export class ExecutionContext implements types.EvaluationContext<JSHandle> {
+export class ExecutionContext {
   _globalObjectId?: string;
   _session: TargetSession;
   _frame: Frame;
@@ -37,6 +37,7 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
   private _contextDestroyedCallback: any;
   private _executionContextDestroyedPromise: Promise<unknown>;
   private _injectedPromise: Promise<JSHandle> | null = null;
+  private _documentPromise: Promise<ElementHandle> | null = null;
 
   constructor(client: TargetSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, frame: Frame | null) {
     this._session = client;
@@ -316,5 +317,11 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
       this._injectedPromise = this.evaluateHandle(source);
     }
     return this._injectedPromise;
+  }
+
+  _document(): Promise<ElementHandle> {
+    if (!this._documentPromise)
+      this._documentPromise = this.evaluateHandle('document').then(handle => handle.asElement()!);
+    return this._documentPromise;
   }
 }

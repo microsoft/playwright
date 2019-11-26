@@ -31,7 +31,7 @@ export class Page extends EventEmitter {
   private _closed: boolean;
   private _pageBindings: Map<string, Function>;
   private _networkManager: NetworkManager;
-  private _frameManager: FrameManager;
+  _frameManager: FrameManager;
   private _eventListeners: RegisteredListener[];
   private _viewport: Viewport;
   private _disconnectPromise: Promise<Error>;
@@ -312,7 +312,7 @@ export class Page extends EventEmitter {
     const frame = this._frameManager.mainFrame();
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
     const {navigationId, navigationURL} = await this._session.send('Page.goBack', {
-      frameId: frame._frameId,
+      frameId: this._frameManager._frameData(frame).frameId,
     });
     if (!navigationId)
       return null;
@@ -322,7 +322,7 @@ export class Page extends EventEmitter {
     const timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
     const timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
 
-    const watchDog = new NavigationWatchdog(this._session, frame, this._networkManager, navigationId, navigationURL, normalizedWaitUntil);
+    const watchDog = new NavigationWatchdog(this._frameManager, frame, this._networkManager, navigationId, navigationURL, normalizedWaitUntil);
     const error = await Promise.race([
       timeoutPromise,
       watchDog.promise(),
@@ -342,7 +342,7 @@ export class Page extends EventEmitter {
     const frame = this._frameManager.mainFrame();
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
     const {navigationId, navigationURL} = await this._session.send('Page.goForward', {
-      frameId: frame._frameId,
+      frameId: this._frameManager._frameData(frame).frameId,
     });
     if (!navigationId)
       return null;
@@ -352,7 +352,7 @@ export class Page extends EventEmitter {
     const timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
     const timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
 
-    const watchDog = new NavigationWatchdog(this._session, frame, this._networkManager, navigationId, navigationURL, normalizedWaitUntil);
+    const watchDog = new NavigationWatchdog(this._frameManager, frame, this._networkManager, navigationId, navigationURL, normalizedWaitUntil);
     const error = await Promise.race([
       timeoutPromise,
       watchDog.promise(),
@@ -372,7 +372,7 @@ export class Page extends EventEmitter {
     const frame = this._frameManager.mainFrame();
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
     const {navigationId, navigationURL} = await this._session.send('Page.reload', {
-      frameId: frame._frameId,
+      frameId: this._frameManager._frameData(frame).frameId,
     });
     if (!navigationId)
       return null;
@@ -382,7 +382,7 @@ export class Page extends EventEmitter {
     const timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
     const timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
 
-    const watchDog = new NavigationWatchdog(this._session, frame, this._networkManager, navigationId, navigationURL, normalizedWaitUntil);
+    const watchDog = new NavigationWatchdog(this._frameManager, frame, this._networkManager, navigationId, navigationURL, normalizedWaitUntil);
     const error = await Promise.race([
       timeoutPromise,
       watchDog.promise(),
