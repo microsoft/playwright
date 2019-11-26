@@ -19,14 +19,11 @@ import * as types from '../types';
 import * as fs from 'fs';
 import { helper, assert } from '../helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
-import { CDPSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
-import { FrameManager } from './FrameManager';
-import { ElementHandle, JSHandle, createJSHandle } from './JSHandle';
+import { ElementHandle, JSHandle } from './JSHandle';
 import { Response } from './NetworkManager';
-import { Protocol } from './protocol';
-import { LifecycleWatcher } from './LifecycleWatcher';
 import { waitForSelectorOrXPath, WaitTaskParams, WaitTask } from '../waitTask';
+import { TimeoutSettings } from '../TimeoutSettings';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
@@ -38,25 +35,35 @@ type World = {
   waitTasks: Set<WaitTask<JSHandle>>;
 };
 
+export type NavigateOptions = {
+  timeout?: number,
+  waitUntil?: string | string[],
+};
+
+export type GotoOptions = NavigateOptions & {
+  referer?: string,
+};
+
+export interface FrameDelegate {
+  timeoutSettings(): TimeoutSettings;
+  navigateFrame(frame: Frame, url: string, options?: GotoOptions): Promise<Response | null>;
+  waitForFrameNavigation(frame: Frame, options?: NavigateOptions): Promise<Response | null>;
+  setFrameContent(frame: Frame, html: string, options?: NavigateOptions): Promise<void>;
+  adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle>;
+}
+
 export class Frame {
-  _id: string;
-  _frameManager: FrameManager;
-  private _client: CDPSession;
+  _delegate: FrameDelegate;
   private _parentFrame: Frame;
   private _url = '';
   private _detached = false;
-  _loaderId = '';
-  _lifecycleEvents = new Set<string>();
-  _worlds = new Map<WorldType, World>();
+  private _worlds = new Map<WorldType, World>();
   private _childFrames = new Set<Frame>();
   private _name: string;
-  private _navigationURL: string;
 
-  constructor(frameManager: FrameManager, client: CDPSession, parentFrame: Frame | null, frameId: string) {
-    this._frameManager = frameManager;
-    this._client = client;
+  constructor(delegate: FrameDelegate, parentFrame: Frame | null) {
+    this._delegate = delegate;
     this._parentFrame = parentFrame;
-    this._id = frameId;
 
     this._worlds.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, waitTasks: new Set() });
     this._worlds.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, waitTasks: new Set() });
@@ -67,15 +74,12 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
-  async goto(
-    url: string,
-    options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } | undefined
-  ): Promise<Response | null> {
-    return await this._frameManager.navigateFrame(this, url, options);
+  goto(url: string, options?: GotoOptions): Promise<Response | null> {
+    return this._delegate.navigateFrame(this, url, options);
   }
 
-  async waitForNavigation(options: { timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<Response | null> {
-    return await this._frameManager.waitForFrameNavigation(this, options);
+  waitForNavigation(options?: NavigateOptions): Promise<Response | null> {
+    return this._delegate.waitForFrameNavigation(this, options);
   }
 
   _mainContext(): Promise<ExecutionContext> {
@@ -146,30 +150,8 @@ export class Frame {
     });
   }
 
-  async setContent(html: string, options: {
-      timeout?: number;
-      waitUntil?: string | string[];
-    } = {}) {
-    const {
-      waitUntil = ['load'],
-      timeout = this._frameManager._timeoutSettings.navigationTimeout(),
-    } = options;
-    const context = await this._utilityContext();
-    // We rely upon the fact that document.open() will reset frame lifecycle with "init"
-    // lifecycle event. @see https://crrev.com/608658
-    await context.evaluate(html => {
-      document.open();
-      document.write(html);
-      document.close();
-    }, html);
-    const watcher = new LifecycleWatcher(this._frameManager, this, waitUntil, timeout);
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise(),
-      watcher.lifecyclePromise(),
-    ]);
-    watcher.dispose();
-    if (error)
-      throw error;
+  setContent(html: string, options?: NavigateOptions) {
+    return this._delegate.setFrameContent(this, html, options);
   }
 
   name(): string {
@@ -404,7 +386,7 @@ export class Frame {
       visible?: boolean;
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
+    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._delegate.timeoutSettings().timeout(), ...options });
     const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
     if (!handle.asElement()) {
       await handle.dispose();
@@ -418,7 +400,7 @@ export class Frame {
       visible?: boolean;
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
+    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._delegate.timeoutSettings().timeout(), ...options });
     const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
     if (!handle.asElement()) {
       await handle.dispose();
@@ -434,7 +416,7 @@ export class Frame {
     ...args): Promise<JSHandle> {
     const {
       polling = 'raf',
-      timeout = this._frameManager._timeoutSettings.timeout(),
+      timeout = this._delegate.timeoutSettings().timeout(),
     } = options;
     const params: WaitTaskParams = {
       predicateBody: pageFunction,
@@ -451,28 +433,9 @@ export class Frame {
     return context.evaluate(() => document.title);
   }
 
-  _navigated(framePayload: Protocol.Page.Frame) {
-    this._name = framePayload.name;
-    // TODO(lushnikov): remove this once requestInterception has loaderId exposed.
-    this._navigationURL = framePayload.url;
-    this._url = framePayload.url;
-  }
-
-  _navigatedWithinDocument(url: string) {
+  _navigated(url: string, name: string) {
     this._url = url;
-  }
-
-  _onLifecycleEvent(loaderId: string, name: string) {
-    if (name === 'init') {
-      this._loaderId = loaderId;
-      this._lifecycleEvents.clear();
-    }
-    this._lifecycleEvents.add(name);
-  }
-
-  _onLoadingStopped() {
-    this._lifecycleEvents.add('DOMContentLoaded');
-    this._lifecycleEvents.add('load');
+    this._name = name;
   }
 
   _detach() {
@@ -527,12 +490,9 @@ export class Frame {
   private async _adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext, dispose: boolean): Promise<ElementHandle> {
     if (elementHandle.executionContext() === context)
       return elementHandle;
-    const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: elementHandle._remoteObject.objectId,
-    });
-    const result = await context._adoptBackendNodeId(nodeInfo.node.backendNodeId);
+    const handle = this._delegate.adoptElementHandle(elementHandle, context);
     if (dispose)
       await elementHandle.dispose();
-    return result;
+    return handle;
   }
 }

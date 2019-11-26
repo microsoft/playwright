@@ -20,11 +20,12 @@ import { assert, debugError } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
 import { EVALUATION_SCRIPT_URL, ExecutionContext } from './ExecutionContext';
-import { Frame } from './Frame';
+import { Frame, NavigateOptions, FrameDelegate } from './Frame';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
+import { ElementHandle, createJSHandle } from './JSHandle';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -36,7 +37,14 @@ export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('Events.FrameManager.FrameNavigatedWithinDocument'),
 };
 
-export class FrameManager extends EventEmitter {
+const frameDataSymbol = Symbol('frameData');
+type FrameData = {
+  id: string,
+  loaderId: string,
+  lifecycleEvents: Set<string>,
+};
+
+export class FrameManager extends EventEmitter implements FrameDelegate {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
@@ -81,6 +89,10 @@ export class FrameManager extends EventEmitter {
     return this._networkManager;
   }
 
+  _frameData(frame: Frame): FrameData {
+    return (frame as any)[frameDataSymbol];
+  }
+
   async navigateFrame(
     frame: Frame,
     url: string,
@@ -95,7 +107,7 @@ export class FrameManager extends EventEmitter {
     const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
     let ensureNewDocumentNavigation = false;
     let error = await Promise.race([
-      navigate(this._client, url, referer, frame._id),
+      navigate(this._client, url, referer, this._frameData(frame).id),
       watcher.timeoutOrTerminationPromise(),
     ]);
     if (!error) {
@@ -141,11 +153,50 @@ export class FrameManager extends EventEmitter {
     return watcher.navigationResponse();
   }
 
+  async setFrameContent(frame: Frame, html: string, options: NavigateOptions = {}) {
+    const {
+      waitUntil = ['load'],
+      timeout = this._timeoutSettings.navigationTimeout(),
+    } = options;
+    const context = await frame._utilityContext();
+    // We rely upon the fact that document.open() will reset frame lifecycle with "init"
+    // lifecycle event. @see https://crrev.com/608658
+    await context.evaluate(html => {
+      document.open();
+      document.write(html);
+      document.close();
+    }, html);
+    const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
+    const error = await Promise.race([
+      watcher.timeoutOrTerminationPromise(),
+      watcher.lifecyclePromise(),
+    ]);
+    watcher.dispose();
+    if (error)
+      throw error;
+  }
+
+  timeoutSettings(): TimeoutSettings {
+    return this._timeoutSettings;
+  }
+
+  async adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle> {
+    const nodeInfo = await this._client.send('DOM.describeNode', {
+      objectId: elementHandle._remoteObject.objectId,
+    });
+    return context._adoptBackendNodeId(nodeInfo.node.backendNodeId);
+  }
+
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
     const frame = this._frames.get(event.frameId);
     if (!frame)
       return;
-    frame._onLifecycleEvent(event.loaderId, event.name);
+    const data = this._frameData(frame);
+    if (event.name === 'init') {
+      data.loaderId = event.loaderId;
+      data.lifecycleEvents.clear();
+    }
+    data.lifecycleEvents.add(event.name);
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
@@ -153,7 +204,9 @@ export class FrameManager extends EventEmitter {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    frame._onLoadingStopped();
+    const data = this._frameData(frame);
+    data.lifecycleEvents.add('DOMContentLoaded');
+    data.lifecycleEvents.add('load');
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
@@ -189,8 +242,14 @@ export class FrameManager extends EventEmitter {
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new Frame(this, this._client, parentFrame, frameId);
-    this._frames.set(frame._id, frame);
+    const frame = new Frame(this, parentFrame);
+    const data: FrameData = {
+      id: frameId,
+      loaderId: '',
+      lifecycleEvents: new Set(),
+    };
+    frame[frameDataSymbol] = data;
+    this._frames.set(frameId, frame);
     this.emit(FrameManagerEvents.FrameAttached, frame);
   }
 
@@ -209,18 +268,25 @@ export class FrameManager extends EventEmitter {
     if (isMainFrame) {
       if (frame) {
         // Update frame id to retain frame identity on cross-process navigation.
-        this._frames.delete(frame._id);
-        frame._id = framePayload.id;
+        const data = this._frameData(frame);
+        this._frames.delete(data.id);
+        data.id = framePayload.id;
       } else {
         // Initial main frame navigation.
-        frame = new Frame(this, this._client, null, framePayload.id);
+        frame = new Frame(this, null);
+        const data: FrameData = {
+          id: framePayload.id,
+          loaderId: '',
+          lifecycleEvents: new Set(),
+        };
+        frame[frameDataSymbol] = data;
       }
       this._frames.set(framePayload.id, frame);
       this._mainFrame = frame;
     }
 
     // Update frame payload.
-    frame._navigated(framePayload);
+    frame._navigated(framePayload.url, framePayload.name);
 
     this.emit(FrameManagerEvents.FrameNavigated, frame);
   }
@@ -234,7 +300,7 @@ export class FrameManager extends EventEmitter {
       worldName: name,
     }),
     await Promise.all(this.frames().map(frame => this._client.send('Page.createIsolatedWorld', {
-      frameId: frame._id,
+      frameId: this._frameData(frame).id,
       grantUniveralAccess: true,
       worldName: name,
     }).catch(debugError))); // frames might be removed before we send this
@@ -244,7 +310,7 @@ export class FrameManager extends EventEmitter {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    frame._navigatedWithinDocument(url);
+    frame._navigated(url, frame.name());
     this.emit(FrameManagerEvents.FrameNavigatedWithinDocument, frame);
     this.emit(FrameManagerEvents.FrameNavigated, frame);
   }
@@ -294,7 +360,7 @@ export class FrameManager extends EventEmitter {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
     frame._detach();
-    this._frames.delete(frame._id);
+    this._frames.delete(this._frameData(frame).id);
     this.emit(FrameManagerEvents.FrameDetached, frame);
   }
 }
