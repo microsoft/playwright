@@ -160,7 +160,7 @@
 - [class: Keyboard](#class-keyboard)
   * [keyboard.down(key[, options])](#keyboarddownkey-options)
   * [keyboard.press(key[, options])](#keyboardpresskey-options)
-  * [keyboard.sendCharacter(char)](#keyboardsendcharacterchar)
+  * [keyboard.sendCharacters(text)](#keyboardsendcharacterstext)
   * [keyboard.type(text[, options])](#keyboardtypetext-options)
   * [keyboard.up(key)](#keyboardupkey)
 - [class: Mouse](#class-mouse)
@@ -1240,7 +1240,7 @@ List of all available devices is available in the source code: [DeviceDescriptor
 #### page.emulateMedia(options)
 - `options` <[Object]>
   - `type` <?[string]> Optional. Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
-  - `colorScheme` <?[string]> Optional. Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+  - `colorScheme` <"dark"|"light"|"no-preference"> Optional. Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
 - returns: <[Promise]>
 
 ```js
@@ -2127,7 +2127,7 @@ function findFocusedNode(node) {
 
 Keyboard provides an api for managing a virtual keyboard. The high level api is [`keyboard.type`](#keyboardtypetext-options), which takes raw characters and generates proper keydown, keypress/input, and keyup events on your page.
 
-For finer control, you can use [`keyboard.down`](#keyboarddownkey-options), [`keyboard.up`](#keyboardupkey), and [`keyboard.sendCharacter`](#keyboardsendcharacterchar) to manually fire events as if they were generated from a real keyboard.
+For finer control, you can use [`keyboard.down`](#keyboarddownkey-options), [`keyboard.up`](#keyboardupkey), and [`keyboard.sendCharacters`](#keyboardsendcharacterstext) to manually fire events as if they were generated from a real keyboard.
 
 An example of holding down `Shift` in order to select and delete some text:
 ```js
@@ -2181,17 +2181,17 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 
 Shortcut for [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
 
-#### keyboard.sendCharacter(char)
-- `char` <[string]> Character to send into the page.
+#### keyboard.sendCharacters(text)
+- `text` <[string]> Characters to send into the page.
 - returns: <[Promise]>
 
 Dispatches a `keypress` and `input` event. This does not send a `keydown` or `keyup` event.
 
 ```js
-page.keyboard.sendCharacter('嗨');
+page.keyboard.sendCharacters('嗨');
 ```
 
-> **NOTE** Modifier keys DO NOT effect `keyboard.sendCharacter`. Holding down `Shift` will not type the text in upper case.
+> **NOTE** Modifier keys DO NOT effect `keyboard.sendCharacters`. Holding down `Shift` will not type the text in upper case.
 
 #### keyboard.type(text[, options])
 - `text` <[string]> A text to type into a focused element.
@@ -2240,6 +2240,10 @@ await page.mouse.up();
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `clickCount` <[number]> defaults to 1. See [UIEvent.detail].
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">>
+  - `relativePoint` <[Object]> Optional relative point
+    - `x` <[number]> x coordinate
+    - `y` <[number]> y coordinate
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
@@ -2250,6 +2254,10 @@ Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownopt
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">>
+  - `relativePoint` <[Object]> Optional relative point
+    - `x` <[number]> x coordinate
+    - `y` <[number]> y coordinate
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
@@ -2277,6 +2285,10 @@ Dispatches a `mousemove` event.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">>
+  - `relativePoint` <[Object]> Optional relative point
+    - `x` <[number]> x coordinate
+    - `y` <[number]> y coordinate
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
@@ -3134,10 +3146,12 @@ page.on('request', request => {
 ```
 
 #### interception.disable()
+- returns: <[Promise]>
 
 Disables network request interception.
 
 #### interception.enable()
+- returns: <[Promise]>
 
 Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
 An example of a naïve request interceptor that aborts all image requests:
