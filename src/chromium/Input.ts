@@ -69,69 +69,42 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 }
 
-export class Mouse implements input.MouseOperations {
+export class RawMouseImpl implements input.RawMouse {
   private _client: CDPSession;
-  private _keyboard: input.Keyboard;
-  private _x = 0;
-  private _y = 0;
-  private _button: 'none' | input.Button = 'none';
 
-  constructor(client: CDPSession, keyboard: input.Keyboard) {
+  constructor(client: CDPSession) {
     this._client = client;
-    this._keyboard = keyboard;
   }
 
-  async move(x: number, y: number, options: { steps?: number; } = {}) {
-    const {steps = 1} = options;
-    const fromX = this._x, fromY = this._y;
-    this._x = x;
-    this._y = y;
-    for (let i = 1; i <= steps; i++) {
-      await this._client.send('Input.dispatchMouseEvent', {
-        type: 'mouseMoved',
-        button: this._button,
-        x: fromX + (this._x - fromX) * (i / steps),
-        y: fromY + (this._y - fromY) * (i / steps),
-        modifiers: toModifiersMask(this._keyboard._modifiers())
-      });
-    }
+  async move(x: number, y: number, button: input.Button | 'none', buttons: Set<input.Button>, modifiers: Set<input.Modifier>): Promise<void> {
+    await this._client.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      button,
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers)
+    });
   }
 
-  async down(options: { button?: input.Button; clickCount?: number; } = {}) {
-    const {button = 'left', clickCount = 1} = options;
-    this._button = button;
+  async down(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,
-      x: this._x,
-      y: this._y,
-      modifiers: toModifiersMask(this._keyboard._modifiers()),
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers),
       clickCount
     });
   }
 
-  async up(options: { button?: input.Button; clickCount?: number; } = {}) {
-    const {button = 'left', clickCount = 1} = options;
-    this._button = 'none';
+  async up(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       button,
-      x: this._x,
-      y: this._y,
-      modifiers: toModifiersMask(this._keyboard._modifiers()),
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers),
       clickCount
     });
-  }
-
-  async click(x: number, y: number, options?: input.ClickOptions) {
-    await new input.MouseClicker(this).click(x, y, options);
-  }
-
-  async dblclick(x: number, y: number, options?: input.ClickOptions) {
-    await new input.MouseClicker(this).dblclick(x, y, options);
-  }
-
-  async tripleclick(x: number, y: number, options?: input.ClickOptions) {
-    await new input.MouseClicker(this).tripleclick(x, y, options);
   }
 }

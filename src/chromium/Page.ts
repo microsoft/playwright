@@ -36,7 +36,7 @@ import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
 import { Frame } from './Frame';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
-import { Mouse, RawKeyboardImpl } from './Input';
+import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
@@ -62,7 +62,7 @@ export class Page extends EventEmitter {
   _client: CDPSession;
   private _target: Target;
   private _keyboard: input.Keyboard;
-  private _mouse: Mouse;
+  private _mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _frameManager: FrameManager;
   private _emulationManager: EmulationManager;
@@ -94,7 +94,7 @@ export class Page extends EventEmitter {
     this._client = client;
     this._target = target;
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(client));
-    this._mouse = new Mouse(client, this._keyboard);
+    this._mouse = new input.Mouse(new RawMouseImpl(client), this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
     this.accessibility = new Accessibility(client);
     this._frameManager = new FrameManager(client, this, ignoreHTTPSErrors, this._timeoutSettings);
@@ -680,7 +680,7 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 
-  get mouse(): Mouse {
+  get mouse(): input.Mouse {
     return this._mouse;
   }
 

@@ -172,33 +172,66 @@ export class Keyboard {
   }
 }
 
-export interface MouseOperations {
-  move(x: number, y: number, options?: { steps?: number; }): Promise<void>;
-  down(options?: { button?: Button; clickCount?: number; }): Promise<void>;
-  up(options?: { button?: Button; clickCount?: number; }): Promise<void>;
+export interface RawMouse {
+  move(x: number, y: number, button: Button | 'none', buttons: Set<Button>, modifiers: Set<Modifier>): Promise<void>;
+  down(x: number, y: number, button: Button, buttons: Set<Button>, modifiers: Set<Modifier>, clickCount: number): Promise<void>;
+  up(x: number, y: number, button: Button, buttons: Set<Button>, modifiers: Set<Modifier>, clickCount: number): Promise<void>;
 }
 
-export class MouseClicker {
-  private _operations: MouseOperations;
+export class Mouse {
+  private _raw: RawMouse;
+  private _keyboard: Keyboard;
+  private _x = 0;
+  private _y = 0;
+  private _lastButton: 'none' | Button = 'none';
+  private _buttons = new Set<Button>();
 
-  constructor(operations: MouseOperations) {
-    this._operations = operations;
+  constructor(raw: RawMouse, keyboard: Keyboard) {
+    this._raw = raw;
+    this._keyboard = keyboard;
+  }
+
+  async move(x: number, y: number, options: { steps?: number } = {}) {
+    const { steps = 1 } = options;
+    const fromX = this._x;
+    const fromY = this._y;
+    this._x = x;
+    this._y = y;
+    for (let i = 1; i <= steps; i++) {
+      const middleX = fromX + (x - fromX) * (i / steps);
+      const middleY = fromY + (y - fromY) * (i / steps);
+      await this._raw.move(middleX, middleY, this._lastButton, this._buttons, this._keyboard._modifiers());
+    }
+  }
+
+  async down(options: { button?: Button, clickCount?: number } = {}) {
+    const { button = 'left', clickCount = 1 } = options;
+    this._lastButton = button;
+    this._buttons.add(button);
+    await this._raw.down(this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
+  }
+
+  async up(options: { button?: Button, clickCount?: number } = {}) {
+    const { button = 'left', clickCount = 1 } = options;
+    this._lastButton = 'none';
+    this._buttons.delete(button);
+    await this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
   async click(x: number, y: number, options: ClickOptions = {}) {
     const {delay = null} = options;
     if (delay !== null) {
       await Promise.all([
-        this._operations.move(x, y),
-        this._operations.down(options),
+        this.move(x, y),
+        this.down(options),
       ]);
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.up(options);
+      await this.up(options);
     } else {
       await Promise.all([
-        this._operations.move(x, y),
-        this._operations.down(options),
-        this._operations.up(options),
+        this.move(x, y),
+        this.down(options),
+        this.up(options),
       ]);
     }
   }
@@ -206,21 +239,21 @@ export class MouseClicker {
   async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
-      await this._operations.move(x, y);
-      await this._operations.down({ ...options, clickCount: 1 });
+      await this.move(x, y);
+      await this.down({ ...options, clickCount: 1 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.up({ ...options, clickCount: 1 });
+      await this.up({ ...options, clickCount: 1 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.down({ ...options, clickCount: 2 });
+      await this.down({ ...options, clickCount: 2 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.up({ ...options, clickCount: 2 });
+      await this.up({ ...options, clickCount: 2 });
     } else {
       await Promise.all([
-        this._operations.move(x, y),
-        this._operations.down({ ...options, clickCount: 1 }),
-        this._operations.up({ ...options, clickCount: 1 }),
-        this._operations.down({ ...options, clickCount: 2 }),
-        this._operations.up({ ...options, clickCount: 2 }),
+        this.move(x, y),
+        this.down({ ...options, clickCount: 1 }),
+        this.up({ ...options, clickCount: 1 }),
+        this.down({ ...options, clickCount: 2 }),
+        this.up({ ...options, clickCount: 2 }),
       ]);
     }
   }
@@ -228,27 +261,27 @@ export class MouseClicker {
   async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
-      await this._operations.move(x, y);
-      await this._operations.down({ ...options, clickCount: 1 });
+      await this.move(x, y);
+      await this.down({ ...options, clickCount: 1 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.up({ ...options, clickCount: 1 });
+      await this.up({ ...options, clickCount: 1 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.down({ ...options, clickCount: 2 });
+      await this.down({ ...options, clickCount: 2 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.up({ ...options, clickCount: 2 });
+      await this.up({ ...options, clickCount: 2 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.down({ ...options, clickCount: 3 });
+      await this.down({ ...options, clickCount: 3 });
       await new Promise(f => setTimeout(f, delay));
-      await this._operations.up({ ...options, clickCount: 3 });
+      await this.up({ ...options, clickCount: 3 });
     } else {
       await Promise.all([
-        this._operations.move(x, y),
-        this._operations.down({ ...options, clickCount: 1 }),
-        this._operations.up({ ...options, clickCount: 1 }),
-        this._operations.down({ ...options, clickCount: 2 }),
-        this._operations.up({ ...options, clickCount: 2 }),
-        this._operations.down({ ...options, clickCount: 3 }),
-        this._operations.up({ ...options, clickCount: 3 }),
+        this.move(x, y),
+        this.down({ ...options, clickCount: 1 }),
+        this.up({ ...options, clickCount: 1 }),
+        this.down({ ...options, clickCount: 2 }),
+        this.up({ ...options, clickCount: 2 }),
+        this.down({ ...options, clickCount: 3 }),
+        this.up({ ...options, clickCount: 3 }),
       ]);
     }
   }

@@ -31,6 +31,26 @@ function toModifiersMask(modifiers: Set<input.Modifier>): number {
   return mask;
 }
 
+function toButtonNumber(button: input.Button): number {
+  if (button === 'left')
+    return 0;
+  if (button === 'middle')
+    return 1;
+  if (button === 'right')
+    return 2;
+}
+
+function toButtonsMask(buttons: Set<input.Button>): number {
+  let mask = 0;
+  if (buttons.has('left'))
+    mask |= 1;
+  if (buttons.has('right'))
+    mask |= 2;
+  if (buttons.has('middle'))
+    mask |= 4;
+  return mask;
+}
+
 export class RawKeyboardImpl implements input.RawKeyboard {
   private _client: JugglerSession;
 
@@ -73,100 +93,45 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 }
 
-export class Mouse implements input.MouseOperations {
-  _client: JugglerSession;
-  _keyboard: input.Keyboard;
-  _x: number;
-  _y: number;
-  _buttons: number;
+export class RawMouseImpl implements input.RawMouse {
+  private _client: JugglerSession;
 
-  constructor(client: JugglerSession, keyboard: input.Keyboard) {
+  constructor(client: JugglerSession) {
     this._client = client;
-    this._keyboard = keyboard;
-    this._x = 0;
-    this._y = 0;
-    this._buttons = 0;
   }
 
-  async move(x: number, y: number, options: { steps?: number; } | undefined = {}) {
-    const {steps = 1} = options;
-    const fromX = this._x, fromY = this._y;
-    this._x = x;
-    this._y = y;
-    for (let i = 1; i <= steps; i++) {
-      await this._client.send('Page.dispatchMouseEvent', {
-        type: 'mousemove',
-        button: 0,
-        x: fromX + (this._x - fromX) * (i / steps),
-        y: fromY + (this._y - fromY) * (i / steps),
-        modifiers: toModifiersMask(this._keyboard._modifiers()),
-        buttons: this._buttons,
-      });
-    }
+  async move(x: number, y: number, button: input.Button | 'none', buttons: Set<input.Button>, modifiers: Set<input.Modifier>): Promise<void> {
+    await this._client.send('Page.dispatchMouseEvent', {
+      type: 'mousemove',
+      button: 0,
+      buttons: toButtonsMask(buttons),
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers)
+    });
   }
 
-  async down(options: { button?: string; clickCount?: number; } | undefined = {}) {
-    const {
-      button = 'left',
-      clickCount = 1
-    } = options;
-    if (button === 'left')
-      this._buttons |= 1;
-    if (button === 'right')
-      this._buttons |= 2;
-    if (button === 'middle')
-      this._buttons |= 4;
+  async down(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
     await this._client.send('Page.dispatchMouseEvent', {
       type: 'mousedown',
-      button: this._buttonNameToButton(button),
-      x: this._x,
-      y: this._y,
-      modifiers: toModifiersMask(this._keyboard._modifiers()),
-      clickCount,
-      buttons: this._buttons,
+      button: toButtonNumber(button),
+      buttons: toButtonsMask(buttons),
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers),
+      clickCount
     });
   }
 
-  _buttonNameToButton(buttonName: string): number {
-    if (buttonName === 'left')
-      return 0;
-    if (buttonName === 'middle')
-      return 1;
-    if (buttonName === 'right')
-      return 2;
-  }
-
-  async up(options: { button?: string; clickCount?: number; } | undefined = {}) {
-    const {
-      button = 'left',
-      clickCount = 1
-    } = options;
-    if (button === 'left')
-      this._buttons &= ~1;
-    if (button === 'right')
-      this._buttons &= ~2;
-    if (button === 'middle')
-      this._buttons &= ~4;
+  async up(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
     await this._client.send('Page.dispatchMouseEvent', {
       type: 'mouseup',
-      button: this._buttonNameToButton(button),
-      x: this._x,
-      y: this._y,
-      modifiers: toModifiersMask(this._keyboard._modifiers()),
-      clickCount: clickCount,
-      buttons: this._buttons,
+      button: toButtonNumber(button),
+      buttons: toButtonsMask(buttons),
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers),
+      clickCount
     });
-  }
-
-  async click(x: number, y: number, options?: input.ClickOptions) {
-    await new input.MouseClicker(this).click(x, y, options);
-  }
-
-  async dblclick(x: number, y: number, options?: input.ClickOptions) {
-    await new input.MouseClicker(this).dblclick(x, y, options);
-  }
-
-  async tripleclick(x: number, y: number, options?: input.ClickOptions) {
-    await new input.MouseClicker(this).tripleclick(x, y, options);
   }
 }
