@@ -1,6 +1,6 @@
-From 17dc6adce06c69517f15dfcc81c193c067910a6f Mon Sep 17 00:00:00 2001
-From: Pavel <pavel.feldman@gmail.com>
-Date: Mon, 25 Nov 2019 15:17:06 -0800
+From c2644d89912059856a03ae1cf38bf80c37365c7f Mon Sep 17 00:00:00 2001
+From: Pavel Feldman <pavel.feldman@gmail.com>
+Date: Mon, 25 Nov 2019 22:01:12 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
@@ -16,7 +16,7 @@ Subject: [PATCH] chore: bootstrap
  .../permissions/nsPermissionManager.cpp       |   8 +-
  parser/html/nsHtml5TreeOpExecutor.cpp         |   5 +-
  .../manager/ssl/nsCertOverrideService.cpp     |   2 +-
- testing/juggler/BrowserContextManager.js      | 194 +++++
+ testing/juggler/BrowserContextManager.js      | 173 +++++
  testing/juggler/Helper.js                     | 101 +++
  testing/juggler/NetworkObserver.js            | 450 ++++++++++++
  testing/juggler/TargetRegistry.js             | 187 +++++
@@ -40,7 +40,7 @@ Subject: [PATCH] chore: bootstrap
  testing/juggler/protocol/NetworkHandler.js    | 154 ++++
  testing/juggler/protocol/PageHandler.js       | 281 ++++++++
  testing/juggler/protocol/PrimitiveTypes.js    | 143 ++++
- testing/juggler/protocol/Protocol.js          | 675 ++++++++++++++++++
+ testing/juggler/protocol/Protocol.js          | 668 ++++++++++++++++++
  testing/juggler/protocol/RuntimeHandler.js    |  41 ++
  testing/juggler/protocol/TargetHandler.js     |  75 ++
  .../statusfilter/nsBrowserStatusFilter.cpp    |  12 +-
@@ -49,7 +49,7 @@ Subject: [PATCH] chore: bootstrap
  uriloader/base/nsDocLoader.h                  |   5 +
  uriloader/base/nsIWebProgress.idl             |   7 +-
  uriloader/base/nsIWebProgressListener2.idl    |  23 +
- 45 files changed, 4640 insertions(+), 8 deletions(-)
+ 45 files changed, 4612 insertions(+), 8 deletions(-)
  create mode 100644 testing/juggler/BrowserContextManager.js
  create mode 100644 testing/juggler/Helper.js
  create mode 100644 testing/juggler/NetworkObserver.js
@@ -408,10 +408,10 @@ index 31737688948a..255e5ae967b4 100644
    }
 diff --git a/testing/juggler/BrowserContextManager.js b/testing/juggler/BrowserContextManager.js
 new file mode 100644
-index 000000000000..751fac95177c
+index 000000000000..febd84e31552
 --- /dev/null
 +++ b/testing/juggler/BrowserContextManager.js
-@@ -0,0 +1,194 @@
+@@ -0,0 +1,173 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -526,7 +526,7 @@ index 000000000000..751fac95177c
 +      let secure = false;
 +      if (cookie.secure !== undefined)
 +        secure = cookie.secure;
-+      else if (uri.scheme === 'https')
++      else if (uri && uri.scheme === 'https')
 +        secure = true;
 +      Services.cookies.add(
 +        domain,
@@ -543,38 +543,23 @@ index 000000000000..751fac95177c
 +    }
 +  }
 +
-+  deleteCookies(browserContextId, cookies) {
++  clearCookies(browserContextId) {
 +    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : undefined;
-+    for (const cookie of cookies) {
-+      let defaultDomain = '';
-+      let defaultPath = '/';
-+      if (cookie.url) {
-+        const uri = NetUtil.newURI(cookie.url);
-+        defaultDomain = uri.host;
-+        defaultPath = dirPath(uri.filePath);
-+      }
-+      Services.cookies.remove(
-+        cookie.domain || defaultDomain,
-+        cookie.name,
-+        cookie.path || defaultPath,
-+        { userContextId } /* originAttributes */,
-+      );
-+    }
++    Services.cookies.removeCookiesWithOriginAttributes(JSON.stringify({ userContextId }));
 +  }
 +
-+  getCookies(browserContextId, urls) {
++  getCookies(browserContextId) {
 +    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : 0;
 +    const result = [];
 +    const sameSiteToProtocol = {
-+      [Ci.nsICookie.SAMESITE_NONE]: undefined,
++      [Ci.nsICookie.SAMESITE_NONE]: 'None',
 +      [Ci.nsICookie.SAMESITE_LAX]: 'Lax',
 +      [Ci.nsICookie.SAMESITE_STRICT]: 'Strict',
 +    };
-+    const uris = urls.map(url => NetUtil.newURI(url));
 +    for (let cookie of Services.cookies.enumerator) {
 +      if (cookie.originAttributes.userContextId !== userContextId)
 +        continue;
-+      if (!uris.some(uri => cookieMatchesURI(cookie, uri)))
++      if (cookie.host === 'addons.mozilla.org')
 +        continue;
 +      result.push({
 +        name: cookie.name,
@@ -591,12 +576,6 @@ index 000000000000..751fac95177c
 +    }
 +    return result;
 +  }
-+}
-+
-+function cookieMatchesURI(cookie, uri) {
-+  const hostMatches = cookie.host === uri.host || cookie.host === '.' + uri.host;
-+  const pathMatches = uri.filePath.startsWith(cookie.path);
-+  return hostMatches && pathMatches;
 +}
 +
 +function dirPath(path) {
@@ -3295,7 +3274,7 @@ index 000000000000..fc8a7397e50a
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 000000000000..e16d1c5c5798
+index 000000000000..708059a95b3a
 --- /dev/null
 +++ b/testing/juggler/protocol/BrowserHandler.js
 @@ -0,0 +1,66 @@
@@ -3342,12 +3321,12 @@ index 000000000000..e16d1c5c5798
 +    this._contextManager.setCookies(browserContextId, cookies);
 +  }
 +
-+  deleteCookies({browserContextId, cookies}) {
-+    this._contextManager.deleteCookies(browserContextId, cookies);
++  clearCookies({browserContextId}) {
++    this._contextManager.clearCookies(browserContextId);
 +  }
 +
-+  getCookies({browserContextId, urls}) {
-+    return {cookies: this._contextManager.getCookies(browserContextId, urls)};
++  getCookies({browserContextId}) {
++    return {cookies: this._contextManager.getCookies(browserContextId)};
 +  }
 +
 +  async getInfo() {
@@ -4224,10 +4203,10 @@ index 000000000000..78b6601b91d0
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 000000000000..d0b681cf80b2
+index 000000000000..829576c5a48c
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,675 @@
+@@ -0,0 +1,668 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4351,26 +4330,19 @@ index 000000000000..d0b681cf80b2
 +          path: t.Optional(t.String),
 +          secure: t.Optional(t.Boolean),
 +          httpOnly: t.Optional(t.Boolean),
-+          sameSite: t.Optional(t.Enum(['Strict', 'Lax'])),
++          sameSite: t.Optional(t.Enum(['Strict', 'Lax', 'None'])),
 +          expires: t.Optional(t.Number),
 +        }),
 +      }
 +    },
-+    'deleteCookies': {
++    'clearCookies': {
 +      params: {
 +        browserContextId: t.Optional(t.String),
-+        cookies: t.Array({
-+          name: t.String,
-+          domain: t.Optional(t.String),
-+          path: t.Optional(t.String),
-+          url: t.Optional(t.String),
-+        }),
 +      }
 +    },
 +    'getCookies': {
 +      params: {
-+        browserContextId: t.Optional(t.String),
-+        urls: t.Array(t.String),
++        browserContextId: t.Optional(t.String)
 +      },
 +      returns: {
 +        cookies: t.Array({
@@ -4383,7 +4355,7 @@ index 000000000000..d0b681cf80b2
 +          httpOnly: t.Boolean,
 +          secure: t.Boolean,
 +          session: t.Boolean,
-+          sameSite: t.Optional(t.Enum(['Strict', 'Lax'])),
++          sameSite: t.Enum(['Strict', 'Lax', 'None']),
 +        }),
 +      },
 +    },
@@ -5173,5 +5145,5 @@ index 87701f8d2cfe..ae1aa85c019c 100644
 +                             [optional] in unsigned long aFlags);
  };
 -- 
-2.17.1
+2.24.0
 
