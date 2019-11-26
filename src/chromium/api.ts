@@ -11,7 +11,7 @@ export { Dialog } from './Dialog';
 export { ExecutionContext } from './ExecutionContext';
 export { Accessibility } from './features/accessibility';
 export { Coverage } from './features/coverage';
-export { Geolocation } from './features/geolocation';
+export { Overrides } from './features/overrides';
 export { Interception } from './features/interception';
 export { PDF } from './features/pdf';
 export { Permissions } from './features/permissions';

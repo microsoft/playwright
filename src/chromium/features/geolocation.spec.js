@@ -25,11 +25,11 @@ module.exports.addTests = function ({ testRunner, expect }) {
 
   // FIXME: not supported in WebKit (as well as Emulation domain in general).
   // It was removed from WebKit in https://webkit.org/b/126630
-  describe('Geolocation.set', function() {
+  describe('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
       await context.permissions.override(server.PREFIX, ['geolocation']);
       await page.goto(server.EMPTY_PAGE);
-      await page.geolocation.set({longitude: 10, latitude: 10});
+      await page.overrides.setGeolocation({longitude: 10, latitude: 10});
       const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
         resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
       })));
@@ -41,7 +41,7 @@ module.exports.addTests = function ({ testRunner, expect }) {
     it('should throw when invalid longitude', async({page, server, context}) => {
       let error = null;
       try {
-        await page.geolocation.set({longitude: 200, latitude: 10});
+        await page.overrides.setGeolocation({longitude: 200, latitude: 10});
       } catch (e) {
         error = e;
       }

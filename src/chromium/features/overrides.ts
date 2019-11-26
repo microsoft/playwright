@@ -17,14 +17,14 @@
 
 import { CDPSession } from '../Connection';
 
-export class Geolocation {
+export class Overrides {
   private _client: CDPSession;
 
   constructor(client: CDPSession) {
     this._client = client;
   }
 
-  async set(options: { longitude: number; latitude: number; accuracy: (number | undefined); }) {
+  async setGeolocation(options: { longitude: number; latitude: number; accuracy: (number | undefined); }) {
     const { longitude, latitude, accuracy = 0} = options;
     if (longitude < -180 || longitude > 180)
       throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
@@ -33,5 +33,15 @@ export class Geolocation {
     if (accuracy < 0)
       throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
     await this._client.send('Emulation.setGeolocationOverride', {longitude, latitude, accuracy});
+  }
+
+  async setTimezone(timezoneId: string | null) {
+    try {
+      await this._client.send('Emulation.setTimezoneOverride', {timezoneId: timezoneId || ''});
+    } catch (exception) {
+      if (exception.message.includes('Invalid timezone'))
+        throw new Error(`Invalid timezone ID: ${timezoneId}`);
+      throw exception;
+    }
   }
 }
