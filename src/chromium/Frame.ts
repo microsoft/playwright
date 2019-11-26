@@ -27,6 +27,7 @@ import { ElementHandle, JSHandle } from './JSHandle';
 import { Response } from './NetworkManager';
 import { Protocol } from './protocol';
 import { LifecycleWatcher } from './LifecycleWatcher';
+import { waitForSelectorOrXPath, WaitTaskParams } from '../waitTask';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
@@ -51,8 +52,8 @@ export class Frame {
     this._parentFrame = parentFrame;
     this._id = frameId;
 
-    this._mainWorld = new DOMWorld(this, frameManager._timeoutSettings);
-    this._secondaryWorld = new DOMWorld(this, frameManager._timeoutSettings);
+    this._mainWorld = new DOMWorld(this);
+    this._secondaryWorld = new DOMWorld(this);
 
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
@@ -383,11 +384,13 @@ export class Frame {
       visible?: boolean;
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const handle = await this._secondaryWorld.waitForSelector(selector, options);
-    if (!handle)
-      return null;
-    const mainExecutionContext = await this._mainWorld.executionContext();
-    const result = await mainExecutionContext._adoptElementHandle(handle);
+    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
+    const handle = await this._secondaryWorld.scheduleWaitTask(params);
+    let result = null;
+    if (handle.asElement()) {
+      const mainExecutionContext = await this._mainWorld.executionContext();
+      result = await mainExecutionContext._adoptElementHandle(handle.asElement());
+    }
     await handle.dispose();
     return result;
   }
@@ -396,11 +399,13 @@ export class Frame {
       visible?: boolean;
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<ElementHandle | null> {
-    const handle = await this._secondaryWorld.waitForXPath(xpath, options);
-    if (!handle)
-      return null;
-    const mainExecutionContext = await this._mainWorld.executionContext();
-    const result = await mainExecutionContext._adoptElementHandle(handle);
+    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
+    const handle = await this._secondaryWorld.scheduleWaitTask(params);
+    let result = null;
+    if (handle.asElement()) {
+      const mainExecutionContext = await this._mainWorld.executionContext();
+      result = await mainExecutionContext._adoptElementHandle(handle.asElement());
+    }
     await handle.dispose();
     return result;
   }
@@ -409,7 +414,18 @@ export class Frame {
     pageFunction: Function | string,
     options: { polling?: string | number; timeout?: number; } = {},
     ...args): Promise<JSHandle> {
-    return this._mainWorld.waitForFunction(pageFunction, options, ...args);
+    const {
+      polling = 'raf',
+      timeout = this._frameManager._timeoutSettings.timeout(),
+    } = options;
+    const params: WaitTaskParams = {
+      predicateBody: pageFunction,
+      title: 'function',
+      polling,
+      timeout,
+      args
+    };
+    return this._mainWorld.scheduleWaitTask(params);
   }
 
   async title(): Promise<string> {
