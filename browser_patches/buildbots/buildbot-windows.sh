@@ -43,6 +43,6 @@ while true; do
   newTimestamp=$(date +%s)
   delta=$(( 300 - newTimestamp + timestamp ));
   if (( delta > 0 )); then
-    sleep detla;
+    sleep $detla
   fi
 done;
