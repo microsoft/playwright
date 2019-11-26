@@ -20,16 +20,23 @@ import * as fs from 'fs';
 import { helper, assert } from '../helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
 import { CDPSession } from './Connection';
-import { DOMWorld } from './DOMWorld';
 import { ExecutionContext } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
-import { ElementHandle, JSHandle } from './JSHandle';
+import { ElementHandle, JSHandle, createJSHandle } from './JSHandle';
 import { Response } from './NetworkManager';
 import { Protocol } from './protocol';
 import { LifecycleWatcher } from './LifecycleWatcher';
-import { waitForSelectorOrXPath, WaitTaskParams } from '../waitTask';
+import { waitForSelectorOrXPath, WaitTaskParams, WaitTask } from '../waitTask';
 
 const readFileAsync = helper.promisify(fs.readFile);
+
+type WorldType = 'main' | 'utility';
+type World = {
+  contextPromise: Promise<ExecutionContext>;
+  contextResolveCallback: (c: ExecutionContext) => void;
+  context: ExecutionContext | null;
+  waitTasks: Set<WaitTask<JSHandle>>;
+};
 
 export class Frame {
   _id: string;
@@ -40,8 +47,7 @@ export class Frame {
   private _detached = false;
   _loaderId = '';
   _lifecycleEvents = new Set<string>();
-  _mainWorld: DOMWorld;
-  _secondaryWorld: DOMWorld;
+  _worlds = new Map<WorldType, World>();
   private _childFrames = new Set<Frame>();
   private _name: string;
   private _navigationURL: string;
@@ -52,8 +58,10 @@ export class Frame {
     this._parentFrame = parentFrame;
     this._id = frameId;
 
-    this._mainWorld = new DOMWorld(this);
-    this._secondaryWorld = new DOMWorld(this);
+    this._worlds.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, waitTasks: new Set() });
+    this._worlds.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, waitTasks: new Set() });
+    this._setContext('main', null);
+    this._setContext('utility', null);
 
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
@@ -70,52 +78,64 @@ export class Frame {
     return await this._frameManager.waitForFrameNavigation(this, options);
   }
 
+  _mainContext(): Promise<ExecutionContext> {
+    if (this._detached)
+      throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
+    return this._worlds.get('main').contextPromise;
+  }
+
+  _utilityContext(): Promise<ExecutionContext> {
+    if (this._detached)
+      throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
+    return this._worlds.get('utility').contextPromise;
+  }
+
   executionContext(): Promise<ExecutionContext> {
-    return this._mainWorld.executionContext();
+    return this._mainContext();
   }
 
   evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
+    const context = await this._mainContext();
     return context.evaluateHandle(pageFunction, ...args as any);
   }
 
   evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
+    const context = await this._mainContext();
     return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
-    const context = await this._mainWorld.executionContext();
+    const context = await this._mainContext();
     const document = await context._document();
     return document.$(selector);
   }
 
   async $x(expression: string): Promise<ElementHandle[]> {
-    const context = await this._mainWorld.executionContext();
+    const context = await this._mainContext();
     const document = await context._document();
     return document.$x(expression);
   }
 
   $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
+    const context = await this._mainContext();
     const document = await context._document();
     return document.$eval(selector, pageFunction, ...args as any);
   }
 
   $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
-    const context = await this._mainWorld.executionContext();
+    const context = await this._mainContext();
     const document = await context._document();
     return document.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<ElementHandle[]> {
-    const context = await this._mainWorld.executionContext();
+    const context = await this._mainContext();
     const document = await context._document();
     return document.$$(selector);
   }
 
   async content(): Promise<string> {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     return context.evaluate(() => {
       let retVal = '';
       if (document.doctype)
@@ -134,7 +154,7 @@ export class Frame {
       waitUntil = ['load'],
       timeout = this._frameManager._timeoutSettings.navigationTimeout(),
     } = options;
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     // We rely upon the fact that document.open() will reset frame lifecycle with "init"
     // lifecycle event. @see https://crrev.com/608658
     await context.evaluate(html => {
@@ -185,7 +205,7 @@ export class Frame {
     } = options;
     if (url !== null) {
       try {
-        const context = await this._mainWorld.executionContext();
+        const context = await this._mainContext();
         return (await context.evaluateHandle(addScriptUrl, url, type)).asElement();
       } catch (error) {
         throw new Error(`Loading script from ${url} failed`);
@@ -195,12 +215,12 @@ export class Frame {
     if (path !== null) {
       let contents = await readFileAsync(path, 'utf8');
       contents += '//# sourceURL=' + path.replace(/\n/g, '');
-      const context = await this._mainWorld.executionContext();
+      const context = await this._mainContext();
       return (await context.evaluateHandle(addScriptContent, contents, type)).asElement();
     }
 
     if (content !== null) {
-      const context = await this._mainWorld.executionContext();
+      const context = await this._mainContext();
       return (await context.evaluateHandle(addScriptContent, content, type)).asElement();
     }
 
@@ -241,7 +261,7 @@ export class Frame {
     } = options;
     if (url !== null) {
       try {
-        const context = await this._mainWorld.executionContext();
+        const context = await this._mainContext();
         return (await context.evaluateHandle(addStyleUrl, url)).asElement();
       } catch (error) {
         throw new Error(`Loading style from ${url} failed`);
@@ -251,12 +271,12 @@ export class Frame {
     if (path !== null) {
       let contents = await readFileAsync(path, 'utf8');
       contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
-      const context = await this._mainWorld.executionContext();
+      const context = await this._mainContext();
       return (await context.evaluateHandle(addStyleContent, contents)).asElement();
     }
 
     if (content !== null) {
-      const context = await this._mainWorld.executionContext();
+      const context = await this._mainContext();
       return (await context.evaluateHandle(addStyleContent, content)).asElement();
     }
 
@@ -290,7 +310,7 @@ export class Frame {
   }
 
   async click(selector: string, options?: ClickOptions) {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
@@ -299,7 +319,7 @@ export class Frame {
   }
 
   async dblclick(selector: string, options?: MultiClickOptions) {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
@@ -308,7 +328,7 @@ export class Frame {
   }
 
   async tripleclick(selector: string, options?: MultiClickOptions) {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
@@ -317,7 +337,7 @@ export class Frame {
   }
 
   async fill(selector: string, value: string) {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
@@ -326,7 +346,7 @@ export class Frame {
   }
 
   async focus(selector: string) {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
@@ -335,7 +355,7 @@ export class Frame {
   }
 
   async hover(selector: string, options?: PointerActionOptions) {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
@@ -344,19 +364,19 @@ export class Frame {
   }
 
   async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
-    const secondaryExecutionContext = await this._secondaryWorld.executionContext();
-    const adoptedValues = await Promise.all(values.map(async value => value instanceof ElementHandle ? secondaryExecutionContext._adoptElementHandle(value) : value));
+    const utilityContext = await this._utilityContext();
+    const adoptedValues = await Promise.all(values.map(async value => value instanceof ElementHandle ? this._adoptElementHandle(value, utilityContext, false /* dispose */) : value));
     const result = await handle.select(...adoptedValues);
     await handle.dispose();
     return result;
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
@@ -385,14 +405,13 @@ export class Frame {
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<ElementHandle | null> {
     const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
-    const handle = await this._secondaryWorld.scheduleWaitTask(params);
-    let result = null;
-    if (handle.asElement()) {
-      const mainExecutionContext = await this._mainWorld.executionContext();
-      result = await mainExecutionContext._adoptElementHandle(handle.asElement());
+    const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
+    if (!handle.asElement()) {
+      await handle.dispose();
+      return null;
     }
-    await handle.dispose();
-    return result;
+    const mainContext = await this._mainContext();
+    return this._adoptElementHandle(handle.asElement(), mainContext, true /* dispose */);
   }
 
   async waitForXPath(xpath: string, options: {
@@ -400,14 +419,13 @@ export class Frame {
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<ElementHandle | null> {
     const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._frameManager._timeoutSettings.timeout(), ...options });
-    const handle = await this._secondaryWorld.scheduleWaitTask(params);
-    let result = null;
-    if (handle.asElement()) {
-      const mainExecutionContext = await this._mainWorld.executionContext();
-      result = await mainExecutionContext._adoptElementHandle(handle.asElement());
+    const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
+    if (!handle.asElement()) {
+      await handle.dispose();
+      return null;
     }
-    await handle.dispose();
-    return result;
+    const mainContext = await this._mainContext();
+    return this._adoptElementHandle(handle.asElement(), mainContext, true /* dispose */);
   }
 
   waitForFunction(
@@ -425,11 +443,11 @@ export class Frame {
       timeout,
       args
     };
-    return this._mainWorld.scheduleWaitTask(params);
+    return this._scheduleWaitTask(params, this._worlds.get('main'));
   }
 
   async title(): Promise<string> {
-    const context = await this._secondaryWorld.executionContext();
+    const context = await this._utilityContext();
     return context.evaluate(() => document.title);
   }
 
@@ -459,10 +477,62 @@ export class Frame {
 
   _detach() {
     this._detached = true;
-    this._mainWorld._detach();
-    this._secondaryWorld._detach();
+    for (const world of this._worlds.values()) {
+      for (const waitTask of world.waitTasks)
+        waitTask.terminate(new Error('waitForFunction failed: frame got detached.'));
+    }
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
     this._parentFrame = null;
+  }
+
+  private _scheduleWaitTask(params: WaitTaskParams, world: World): Promise<JSHandle> {
+    const task = new WaitTask(params, () => world.waitTasks.delete(task));
+    world.waitTasks.add(task);
+    if (world.context)
+      task.rerun(world.context);
+    return task.promise;
+  }
+
+  private _setContext(worldType: WorldType, context: ExecutionContext | null) {
+    const world = this._worlds.get(worldType);
+    world.context = context;
+    if (context) {
+      world.contextResolveCallback.call(null, context);
+      for (const waitTask of world.waitTasks)
+        waitTask.rerun(context);
+    } else {
+      world.contextPromise = new Promise(fulfill => {
+        world.contextResolveCallback = fulfill;
+      });
+    }
+  }
+
+  _contextCreated(worldType: WorldType, context: ExecutionContext) {
+    const world = this._worlds.get(worldType);
+    // In case of multiple sessions to the same target, there's a race between
+    // connections so we might end up creating multiple isolated worlds.
+    // We can use either.
+    if (!world.context)
+      this._setContext(worldType, context);
+  }
+
+  _contextDestroyed(context: ExecutionContext) {
+    for (const [worldType, world] of this._worlds) {
+      if (world.context === context)
+        this._setContext(worldType, null);
+    }
+  }
+
+  private async _adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext, dispose: boolean): Promise<ElementHandle> {
+    if (elementHandle.executionContext() === context)
+      return elementHandle;
+    const nodeInfo = await this._client.send('DOM.describeNode', {
+      objectId: elementHandle._remoteObject.objectId,
+    });
+    const result = await context._adoptBackendNodeId(nodeInfo.node.backendNodeId);
+    if (dispose)
+      await elementHandle.dispose();
+    return result;
   }
 }

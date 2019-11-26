@@ -159,15 +159,6 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
     return createJSHandle(this, object) as ElementHandle;
   }
 
-  async _adoptElementHandle(elementHandle: ElementHandle): Promise<ElementHandle> {
-    assert(elementHandle.executionContext() !== this, 'Cannot adopt handle that already belongs to this execution context');
-    assert(this._frame, 'Cannot adopt handle without a Frame');
-    const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: elementHandle._remoteObject.objectId,
-    });
-    return this._adoptBackendNodeId(nodeInfo.node.backendNodeId);
-  }
-
   _injected(): Promise<JSHandle> {
     if (!this._injectedPromise) {
       const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
