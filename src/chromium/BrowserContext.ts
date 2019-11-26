@@ -17,6 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { assert } from '../helper';
+import { NetworkCookie, SetNetworkCookieParam, filterCookies } from '../network';
 import { Browser } from './Browser';
 import { CDPSession } from './Connection';
 import { Permissions } from './features/permissions';
@@ -63,6 +64,25 @@ export class BrowserContext extends EventEmitter {
 
   browser(): Browser {
     return this._browser;
+  }
+
+  async cookies(...urls: string[]): Promise<NetworkCookie[]> {
+    const { cookies } = await this._browser._client.send('Storage.getCookies', { browserContextId: this._id || undefined });
+    return filterCookies(cookies.map(c => ({ sameSite: 'None', ...c })), urls);
+  }
+
+  async clearCookies() {
+    await this._browser._client.send('Storage.clearCookies', { browserContextId: this._id || undefined });
+  }
+
+  async setCookies(cookies: SetNetworkCookieParam[]) {
+    const items = cookies.map(cookie => {
+      const item = Object.assign({}, cookie);
+      assert(item.url !== 'about:blank', `Blank page can not have cookie "${item.name}"`);
+      assert(!String.prototype.startsWith.call(item.url || '', 'data:'), `Data URL page can not have cookie "${item.name}"`);
+      return item;
+    });
+    await this._browser._client.send('Storage.setCookies', { cookies: items, browserContextId: this._id || undefined });
   }
 
   async close() {

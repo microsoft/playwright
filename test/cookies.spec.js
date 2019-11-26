@@ -19,17 +19,17 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Page.cookies', function() {
-    it('should return no cookies in pristine browser context', async({page, server}) => {
+  describe('BrowserContext.cookies', function() {
+    it('should return no cookies in pristine browser context', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      expect(await page.cookies()).toEqual([]);
+      expect(await context.cookies()).toEqual([]);
     });
-    it('should get a cookie', async({page, server}) => {
+    it('should get a cookie', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         document.cookie = 'username=John Doe';
       });
-      expect(await page.cookies()).toEqual([{
+      expect(await context.cookies()).toEqual([{
         name: 'username',
         value: 'John Doe',
         domain: 'localhost',
@@ -42,43 +42,43 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         sameSite: 'None',
       }]);
     });
-    it('should properly report httpOnly cookie', async({page, server}) => {
+    it('should properly report httpOnly cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', ';HttpOnly; Path=/');
         res.end();
       });
       await page.goto(server.EMPTY_PAGE);
-      const cookies = await page.cookies();
+      const cookies = await context.cookies();
       expect(cookies.length).toBe(1);
       expect(cookies[0].httpOnly).toBe(true);
     });
-    it.skip(FFOX || WEBKIT)('should properly report "Strict" sameSite cookie', async({page, server}) => {
+    it.skip(WEBKIT)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', ';SameSite=Strict');
         res.end();
       });
       await page.goto(server.EMPTY_PAGE);
-      const cookies = await page.cookies();
+      const cookies = await context.cookies();
       expect(cookies.length).toBe(1);
       expect(cookies[0].sameSite).toBe('Strict');
     });
-    it.skip(FFOX || WEBKIT)('should properly report "Lax" sameSite cookie', async({page, server}) => {
+    it.skip(WEBKIT)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', ';SameSite=Lax');
         res.end();
       });
       await page.goto(server.EMPTY_PAGE);
-      const cookies = await page.cookies();
+      const cookies = await context.cookies();
       expect(cookies.length).toBe(1);
       expect(cookies[0].sameSite).toBe('Lax');
     });
-    it('should get multiple cookies', async({page, server}) => {
+    it('should get multiple cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         document.cookie = 'username=John Doe';
         document.cookie = 'password=1234';
       });
-      const cookies = await page.cookies();
+      const cookies = await context.cookies();
       cookies.sort((a, b) => a.name.localeCompare(b.name));
       expect(cookies).toEqual([
         {
@@ -107,8 +107,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         },
       ]);
     });
-    it.skip(WEBKIT)('should get cookies from multiple urls', async({page, server}) => {
-      await page.setCookie({
+    it.skip(WEBKIT)('should get cookies from multiple urls', async({context}) => {
+      await context.setCookies([{
         url: 'https://foo.com',
         name: 'doggo',
         value: 'woofs',
@@ -120,8 +120,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         url: 'https://baz.com',
         name: 'birdo',
         value: 'tweets',
-      });
-      const cookies = await page.cookies('https://foo.com', 'https://baz.com');
+      }]);
+      const cookies = await context.cookies('https://foo.com', 'https://baz.com');
       cookies.sort((a, b) => a.name.localeCompare(b.name));
       expect(cookies).toEqual([{
         name: 'birdo',
@@ -149,27 +149,23 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(WEBKIT)('Page.setCookie', function() {
-    it('should work', async({page, server}) => {
+  describe.skip(WEBKIT)('BrowserContext.setCookies', function() {
+    it('should work', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+      await context.setCookies([{
+        url: server.EMPTY_PAGE,
         name: 'password',
         value: '123456'
-      });
+      }]);
       expect(await page.evaluate(() => document.cookie)).toEqual('password=123456');
     });
-    it('should isolate cookies in browser contexts', async({page, server, browser}) => {
+    it('should isolate cookies in browser contexts', async({context, server, browser}) => {
       const anotherContext = await browser.createIncognitoBrowserContext();
-      const anotherPage = await anotherContext.newPage();
+      await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
+      await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
 
-      await page.goto(server.EMPTY_PAGE);
-      await anotherPage.goto(server.EMPTY_PAGE);
-
-      await page.setCookie({name: 'page1cookie', value: 'page1value'});
-      await anotherPage.setCookie({name: 'page2cookie', value: 'page2value'});
-
-      const cookies1 = await page.cookies();
-      const cookies2 = await anotherPage.cookies();
+      const cookies1 = await context.cookies();
+      const cookies2 = await anotherContext.cookies();
       expect(cookies1.length).toBe(1);
       expect(cookies2.length).toBe(1);
       expect(cookies1[0].name).toBe('page1cookie');
@@ -178,15 +174,17 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(cookies2[0].value).toBe('page2value');
       await anotherContext.close();
     });
-    it('should set multiple cookies', async({page, server}) => {
+    it('should set multiple cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+      await context.setCookies([{
+        url: server.EMPTY_PAGE,
         name: 'password',
         value: '123456'
       }, {
+        url: server.EMPTY_PAGE,
         name: 'foo',
         value: 'bar'
-      });
+      }]);
       expect(await page.evaluate(() => {
         const cookies = document.cookie.split(';');
         return cookies.map(cookie => cookie.trim()).sort();
@@ -195,23 +193,23 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         'password=123456',
       ]);
     });
-    it('should have |expires| set to |-1| for session cookies', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+    it('should have |expires| set to |-1| for session cookies', async({context, server}) => {
+      await context.setCookies([{
+        url: server.EMPTY_PAGE,
         name: 'password',
         value: '123456'
-      });
-      const cookies = await page.cookies();
+      }]);
+      const cookies = await context.cookies();
       expect(cookies[0].session).toBe(true);
       expect(cookies[0].expires).toBe(-1);
     });
-    it('should set cookie with reasonable defaults', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+    it('should set cookie with reasonable defaults', async({context, server}) => {
+      await context.setCookies([{
+        url: server.EMPTY_PAGE,
         name: 'password',
         value: '123456'
-      });
-      const cookies = await page.cookies();
+      }]);
+      const cookies = await context.cookies();
       expect(cookies.sort((a, b) => a.name.localeCompare(b.name))).toEqual([{
         name: 'password',
         value: '123456',
@@ -225,14 +223,15 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         sameSite: 'None',
       }]);
     });
-    it('should set a cookie with a path', async({page, server}) => {
+    it('should set a cookie with a path', async({context, page, server}) => {
       await page.goto(server.PREFIX + '/grid.html');
-      await page.setCookie({
+      await context.setCookies([{
+        domain: 'localhost',
+        path: '/grid.html',
         name: 'gridcookie',
         value: 'GRID',
-        path: '/grid.html'
-      });
-      expect(await page.cookies()).toEqual([{
+      }]);
+      expect(await context.cookies()).toEqual([{
         name: 'gridcookie',
         value: 'GRID',
         domain: 'localhost',
@@ -246,29 +245,17 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       }]);
       expect(await page.evaluate('document.cookie')).toBe('gridcookie=GRID');
       await page.goto(server.EMPTY_PAGE);
-      expect(await page.cookies()).toEqual([]);
       expect(await page.evaluate('document.cookie')).toBe('');
       await page.goto(server.PREFIX + '/grid.html');
       expect(await page.evaluate('document.cookie')).toBe('gridcookie=GRID');
     });
-    it('should not set a cookie on a blank page', async function({page}) {
-      await page.goto('about:blank');
+    it('should not set a cookie with blank page URL', async function({context, server}) {
       let error = null;
       try {
-        await page.setCookie({name: 'example-cookie', value: 'best'});
-      } catch (e) {
-        error = e;
-      }
-      expect(error.message).toContain('At least one of the url and domain needs to be specified');
-    });
-    it('should not set a cookie with blank page URL', async function({page, server}) {
-      let error = null;
-      await page.goto(server.EMPTY_PAGE);
-      try {
-        await page.setCookie(
-            {name: 'example-cookie', value: 'best'},
+        await context.setCookies([
+            {url: server.EMPTY_PAGE, name: 'example-cookie', value: 'best'},
             {url: 'about:blank', name: 'example-cookie-blank', value: 'best'}
-        );
+        ]);
       } catch (e) {
         error = e;
       }
@@ -276,48 +263,46 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           `Blank page can not have cookie "example-cookie-blank"`
       );
     });
-    it('should not set a cookie on a data URL page', async function({page}) {
+    it('should not set a cookie on a data URL page', async function({context}) {
       let error = null;
-      await page.goto('data:,Hello%2C%20World!');
       try {
-        await page.setCookie({name: 'example-cookie', value: 'best'});
+        await context.setCookies([{url: 'data:,Hello%2C%20World!', name: 'example-cookie', value: 'best'}]);
       } catch (e) {
         error = e;
       }
-      expect(error.message).toContain('At least one of the url and domain needs to be specified');
+      expect(error.message).toContain('Data URL page can not have cookie "example-cookie"');
     });
-    it('should default to setting secure cookie for HTTPS websites', async({page, server}) => {
+    it('should default to setting secure cookie for HTTPS websites', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const SECURE_URL = 'https://example.com';
-      await page.setCookie({
+      await context.setCookies([{
         url: SECURE_URL,
         name: 'foo',
         value: 'bar',
-      });
-      const [cookie] = await page.cookies(SECURE_URL);
+      }]);
+      const [cookie] = await context.cookies(SECURE_URL);
       expect(cookie.secure).toBe(true);
     });
-    it('should be able to set unsecure cookie for HTTP website', async({page, server}) => {
+    it('should be able to set unsecure cookie for HTTP website', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const HTTP_URL = 'http://example.com';
-      await page.setCookie({
+      await context.setCookies([{
         url: HTTP_URL,
         name: 'foo',
         value: 'bar',
-      });
-      const [cookie] = await page.cookies(HTTP_URL);
+      }]);
+      const [cookie] = await context.cookies(HTTP_URL);
       expect(cookie.secure).toBe(false);
     });
-    it('should set a cookie on a different domain', async({page, server}) => {
+    it('should set a cookie on a different domain', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+      await context.setCookies([{
         url: 'https://www.example.com',
         name: 'example-cookie',
         value: 'best',
-      });
+      }]);
       expect(await page.evaluate('document.cookie')).toBe('');
-      expect(await page.cookies()).toEqual([]);
-      expect(await page.cookies('https://www.example.com')).toEqual([{
+      expect(await context.cookies('https://www.example.com')).toEqual([{
         name: 'example-cookie',
         value: 'best',
         domain: 'www.example.com',
@@ -330,9 +315,12 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         sameSite: 'None',
       }]);
     });
-    it('should set cookies from a frame', async({page, server}) => {
+    it('should set cookies from a frame', async({context, page, server}) => {
       await page.goto(server.PREFIX + '/grid.html');
-      await page.setCookie({name: 'localhost-cookie', value: 'best'});
+      await context.setCookies([
+        {url: server.PREFIX, name: 'localhost-cookie', value: 'best'},
+        {url: server.CROSS_PROCESS_PREFIX, name: '127-cookie', value: 'worst'}
+      ]);
       await page.evaluate(src => {
         let fulfill;
         const promise = new Promise(x => fulfill = x);
@@ -342,11 +330,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         iframe.src = src;
         return promise;
       }, server.CROSS_PROCESS_PREFIX);
-      await page.setCookie({name: '127-cookie', value: 'worst', url: server.CROSS_PROCESS_PREFIX});
       expect(await page.evaluate('document.cookie')).toBe('localhost-cookie=best');
       expect(await page.frames()[1].evaluate('document.cookie')).toBe('127-cookie=worst');
 
-      expect(await page.cookies()).toEqual([{
+      expect(await context.cookies(server.PREFIX)).toEqual([{
         name: 'localhost-cookie',
         value: 'best',
         domain: 'localhost',
@@ -359,7 +346,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         sameSite: 'None',
       }]);
 
-      expect(await page.cookies(server.CROSS_PROCESS_PREFIX)).toEqual([{
+      expect(await context.cookies(server.CROSS_PROCESS_PREFIX)).toEqual([{
         name: '127-cookie',
         value: 'worst',
         domain: '127.0.0.1',
@@ -374,22 +361,35 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe('Page.deleteCookie', function() {
-    it.skip(WEBKIT)('should work', async({page, server}) => {
+  describe.skip(WEBKIT)('BrowserContext.setCookies', function() {
+    it.skip(WEBKIT)('should clear cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setCookie({
+      await context.setCookies([{
+        url: server.EMPTY_PAGE,
         name: 'cookie1',
         value: '1'
-      }, {
-        name: 'cookie2',
-        value: '2'
-      }, {
-        name: 'cookie3',
-        value: '3'
-      });
-      expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2; cookie3=3');
-      await page.deleteCookie({name: 'cookie2'});
-      expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie3=3');
+      }]);
+      expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
+      await context.clearCookies();
+      expect(await page.evaluate('document.cookie')).toBe('');
+    });
+    it('should isolate cookies when clearing', async({context, server, browser}) => {
+      const anotherContext = await browser.createIncognitoBrowserContext();
+      await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
+      await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
+
+      expect((await context.cookies()).length).toBe(1);
+      expect((await anotherContext.cookies()).length).toBe(1);
+
+      await context.clearCookies();
+      expect((await context.cookies()).length).toBe(0);
+      expect((await anotherContext.cookies()).length).toBe(1);
+
+      await anotherContext.clearCookies();
+      expect((await context.cookies()).length).toBe(0);
+      expect((await anotherContext.cookies()).length).toBe(0);
+
+      await anotherContext.close();
     });
   });
 };

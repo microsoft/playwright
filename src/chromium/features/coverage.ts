@@ -56,8 +56,6 @@ export class Coverage {
   }
 }
 
-module.exports = {Coverage};
-
 class JSCoverage {
   _client: CDPSession;
   _enabled: boolean;

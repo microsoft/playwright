@@ -50,11 +50,14 @@
   * [event: 'targetcreated'](#event-targetcreated-1)
   * [event: 'targetdestroyed'](#event-targetdestroyed-1)
   * [browserContext.browser()](#browsercontextbrowser)
+  * [browserContext.clearCookies()](#browsercontextclearcookies)
   * [browserContext.close()](#browsercontextclose)
+  * [browserContext.cookies([...urls])](#browsercontextcookiesurls)
   * [browserContext.isIncognito()](#browsercontextisincognito)
   * [browserContext.newPage()](#browsercontextnewpage)
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.permissions](#browsercontextpermissions)
+  * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
   * [browserContext.targets()](#browsercontexttargets)
   * [browserContext.waitForTarget(predicate[, options])](#browsercontextwaitfortargetpredicate-options)
 - [class: Geolocation](#class-geolocation)
@@ -91,10 +94,8 @@
   * [page.click(selector[, options])](#pageclickselector-options)
   * [page.close([options])](#pagecloseoptions)
   * [page.content()](#pagecontent)
-  * [page.cookies([...urls])](#pagecookiesurls)
   * [page.coverage](#pagecoverage)
   * [page.dblclick(selector[, options])](#pagedblclickselector-options)
-  * [page.deleteCookie(...cookies)](#pagedeletecookiecookies)
   * [page.emulate(options)](#pageemulateoptions)
   * [page.emulateMedia(options)](#pageemulatemediaoptions)
   * [page.emulateTimezone(timezoneId)](#pageemulatetimezonetimezoneid)
@@ -122,7 +123,6 @@
   * [page.setBypassCSP(enabled)](#pagesetbypasscspenabled)
   * [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
   * [page.setContent(html[, options])](#pagesetcontenthtml-options)
-  * [page.setCookie(...cookies)](#pagesetcookiecookies)
   * [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
   * [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
   * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
@@ -757,6 +757,11 @@ Emitted when a target inside the browser context is destroyed, for example when 
 
 The browser this browser context belongs to.
 
+#### browserContext.clearCookies()
+- returns: <[Promise]>
+
+Clears context bookies.
+
 #### browserContext.close()
 - returns: <[Promise]>
 
@@ -764,6 +769,23 @@ Closes the browser context. All the targets that belong to the browser context
 will be closed.
 
 > **NOTE** only incognito browser contexts can be closed.
+
+#### browserContext.cookies([...urls])
+- `...urls` <...[string]>
+- returns: <[Promise]<[Array]<[Object]>>>
+  - `name` <[string]>
+  - `value` <[string]>
+  - `domain` <[string]>
+  - `path` <[string]>
+  - `expires` <[number]> Unix time in seconds.
+  - `size` <[number]>
+  - `httpOnly` <[boolean]>
+  - `secure` <[boolean]>
+  - `session` <[boolean]>
+  - `sameSite` <"Strict"|"Lax"|"None">
+
+If no URLs are specified, this method returns all cookies.
+If URLs are specified, only cookies that affect those URLs are returned.
 
 #### browserContext.isIncognito()
 - returns: <[boolean]>
@@ -785,6 +807,23 @@ An array of all pages inside the browser context.
 
 #### browserContext.permissions
 - returns: <[Permissions]>
+
+#### browserContext.setCookies(cookies)
+- `cookies` <[Array]<[Object]>>
+  - `name` <[string]> **required**
+  - `value` <[string]> **required**
+  - `url` <[string]> either url or domain / path are **required**
+  - `domain` <[string]> either url or domain / path are **required**
+  - `path` <[string]> either url or domain / path are **required**
+  - `expires` <[number]> Unix time in seconds.
+  - `httpOnly` <[boolean]>
+  - `secure` <[boolean]>
+  - `sameSite` <"Strict"|"Lax"|"None">
+- returns: <[Promise]>
+
+```js
+await browserContext.setCookies([cookieObject1, cookieObject2]);
+```
 
 #### browserContext.targets()
 - returns: <[Array]<[Target]>>
@@ -1145,23 +1184,6 @@ By default, `page.close()` **does not** run beforeunload handlers.
 
 Gets the full HTML contents of the page, including the doctype.
 
-#### page.cookies([...urls])
-- `...urls` <...[string]>
-- returns: <[Promise]<[Array]<[Object]>>>
-  - `name` <[string]>
-  - `value` <[string]>
-  - `domain` <[string]>
-  - `path` <[string]>
-  - `expires` <[number]> Unix time in seconds.
-  - `size` <[number]>
-  - `httpOnly` <[boolean]>
-  - `secure` <[boolean]>
-  - `session` <[boolean]>
-  - `sameSite` <"Strict"|"Lax"|"Extended"|"None">
-
-If no URLs are specified, this method returns cookies for the current page URL.
-If URLs are specified, only cookies for those URLs are returned.
-
 #### page.coverage
 
 - returns: <[Coverage]>
@@ -1185,14 +1207,6 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
 Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclickselector-options).
-
-#### page.deleteCookie(...cookies)
-- `...cookies` <...[Object]>
-  - `name` <[string]> **required**
-  - `url` <[string]>
-  - `domain` <[string]>
-  - `path` <[string]>
-- returns: <[Promise]>
 
 #### page.emulate(options)
 - `options` <[Object]>
@@ -1613,23 +1627,6 @@ Toggles ignoring cache for each request based on the enabled state. By default, 
     - `networkidle0` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
     - `networkidle2` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]>
-
-#### page.setCookie(...cookies)
-- `...cookies` <...[Object]>
-  - `name` <[string]> **required**
-  - `value` <[string]> **required**
-  - `url` <[string]>
-  - `domain` <[string]>
-  - `path` <[string]>
-  - `expires` <[number]> Unix time in seconds.
-  - `httpOnly` <[boolean]>
-  - `secure` <[boolean]>
-  - `sameSite` <"Strict"|"Lax">
-- returns: <[Promise]>
-
-```js
-await page.setCookie(cookieObject1, cookieObject2);
-```
 
 #### page.setDefaultNavigationTimeout(timeout)
 - `timeout` <[number]> Maximum navigation time in milliseconds

@@ -94,59 +94,6 @@ export class Page extends EventEmitter {
     });
   }
 
-  async cookies(...urls: Array<string>): Promise<Array<any>> {
-    const connection = Connection.fromSession(this._session);
-    const {cookies} = await connection.send('Browser.getCookies', {
-      browserContextId: this._target._context._browserContextId || undefined,
-      urls: urls.length ? urls : [this.url()]
-    });
-    // Firefox's cookies are missing sameSite when it is 'None'
-    return cookies.map(cookie => ({sameSite: 'None', ...cookie}));
-  }
-
-  async deleteCookie(...cookies: Array<any>) {
-    const pageURL = this.url();
-    const items = [];
-    for (const cookie of cookies) {
-      const item = {
-        url: cookie.url,
-        domain: cookie.domain,
-        path: cookie.path,
-        name: cookie.name,
-      };
-      if (!item.url && pageURL.startsWith('http'))
-        item.url = pageURL;
-      items.push(item);
-    }
-
-    const connection = Connection.fromSession(this._session);
-    await connection.send('Browser.deleteCookies', {
-      browserContextId: this._target._context._browserContextId || undefined,
-      cookies: items,
-    });
-  }
-
-  async setCookie(...cookies: Array<any>) {
-    const pageURL = this.url();
-    const startsWithHTTP = pageURL.startsWith('http');
-    const items = cookies.map(cookie => {
-      const item = Object.assign({}, cookie);
-      if (!item.url && startsWithHTTP)
-        item.url = pageURL;
-      assert(item.url !== 'about:blank', `Blank page can not have cookie "${item.name}"`);
-      assert(!String.prototype.startsWith.call(item.url || '', 'data:'), `Data URL page can not have cookie "${item.name}"`);
-      return item;
-    });
-    await this.deleteCookie(...items);
-    if (items.length) {
-      const connection = Connection.fromSession(this._session);
-      await connection.send('Browser.setCookies', {
-        browserContextId: this._target._context._browserContextId || undefined,
-        cookies: items
-      });
-    }
-  }
-
   async setExtraHTTPHeaders(headers) {
     await this._networkManager.setExtraHTTPHeaders(headers);
   }

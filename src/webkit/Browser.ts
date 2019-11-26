@@ -17,9 +17,10 @@
 
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
+import { assert, helper, RegisteredListener } from '../helper';
+import { filterCookies, NetworkCookie } from '../network';
 import { Connection } from './Connection';
 import { Events } from './events';
-import { RegisteredListener, assert, helper } from '../helper';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
@@ -254,5 +255,31 @@ export class BrowserContext extends EventEmitter {
   async close() {
     assert(this._id, 'Non-incognito profiles cannot be closed!');
     await this._browser._disposeContext(this._id);
+  }
+
+  async cookies(...urls: string[]): Promise<NetworkCookie[]> {
+    const page = (await this.pages())[0];
+    const response = await page._session.send('Page.getCookies');
+    const cookies = response.cookies.map(cookie => {
+      // Webkit returns 0 for a cookie without an expiration
+      if (cookie.expires === 0)
+        cookie.expires = -1;
+      return cookie;
+    });
+    return filterCookies(cookies, urls);
+  }
+
+  async clearCookies() {
+    const page = (await this.pages())[0];
+    const response = await page._session.send('Page.getCookies');
+    const promises = [];
+    for (const cookie of response.cookies) {
+      const item = {
+        cookieName: cookie.name,
+        url: (cookie.secure ? 'https://' : 'http://') + cookie.domain + cookie.path
+      };
+      promises.push(page._session.send('Page.deleteCookie', item));
+    }
+    await Promise.all(promises);
   }
 }
