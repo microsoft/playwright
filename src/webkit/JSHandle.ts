@@ -142,7 +142,7 @@ export class ElementHandle extends JSHandle {
   }
 
   async _scrollIntoViewIfNeeded() {
-    const error = await this.evaluate(async(element, pageJavascriptEnabled) => {
+    const error = await this.evaluate(async (element, pageJavascriptEnabled) => {
       if (!element.isConnected)
         return 'Node is detached from document';
       if (element.nodeType !== Node.ELEMENT_NODE)
@@ -287,8 +287,8 @@ export class ElementHandle extends JSHandle {
 
   async $(selector: string): Promise<ElementHandle | null> {
     const handle = await this.evaluateHandle(
-      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
-      selector, await this._context._injected()
+        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
+        selector, await this._context._injected()
     );
     const element = handle.asElement();
     if (element)
@@ -324,8 +324,8 @@ export class ElementHandle extends JSHandle {
 
   $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
     const arrayHandle = await this.evaluateHandle(
-      (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
-      selector, await this._context._injected()
+        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
+        selector, await this._context._injected()
     );
 
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
@@ -335,8 +335,8 @@ export class ElementHandle extends JSHandle {
 
   async $x(expression: string): Promise<ElementHandle[]> {
     const arrayHandle = await this.evaluateHandle(
-      (root: SelectorRoot, expression: string, injected: Injected) => injected.querySelectorAll('xpath=' + expression, root),
-      expression, await this._context._injected()
+        (root: SelectorRoot, expression: string, injected: Injected) => injected.querySelectorAll('xpath=' + expression, root),
+        expression, await this._context._injected()
     );
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
