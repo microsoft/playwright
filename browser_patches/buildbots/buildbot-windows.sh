@@ -39,10 +39,10 @@ while true; do
   ../checkout_build_archive_upload.sh firefox
   git pull origin master
   ../checkout_build_archive_upload.sh firefox --win64
-  echo "------ Sleeping for 300 seconds before next turn... ------"
   newTimestamp=$(date +%s)
   delta=$(( 300 - newTimestamp + timestamp ));
   if (( delta > 0 )); then
-    sleep $detla
+    echo "------ Sleeping for $delta seconds before next turn... ------"
+    sleep $delta
   fi
 done;
