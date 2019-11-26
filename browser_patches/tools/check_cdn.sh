@@ -15,6 +15,9 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
+trap "cd $(pwd -P)" EXIT
+cd "$(dirname "$0")"
+
 HOST="https://playwrightaccount.blob.core.windows.net/builds"
 
 FFOX_REVISION=$(cat ../firefox/BUILD_NUMBER)
@@ -49,9 +52,6 @@ RED=$'\e[1;31m'
 GRN=$'\e[1;32m'
 YEL=$'\e[1;33m'
 END=$'\e[0m'
-
-trap "cd $(pwd -P)" EXIT
-cd "$(dirname "$0")"
 
 REVISION=""
 ARCHIVES=""
