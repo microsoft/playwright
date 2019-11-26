@@ -378,7 +378,7 @@ export class ElementHandle extends JSHandle {
     if (error)
       throw new Error(error);
     await this.focus();
-    await this._frame._page.keyboard.sendCharacter(value);
+    await this._frame._page.keyboard.sendCharacters(value);
   }
 
   async _clickablePoint(): Promise<{ x: number; y: number; }> {

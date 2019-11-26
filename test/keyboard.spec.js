@@ -76,10 +76,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it('should send a character with sendCharacter', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
-      await page.keyboard.sendCharacter('嗨');
+      await page.keyboard.sendCharacters('嗨');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨');
       await page.evaluate(() => window.addEventListener('keydown', e => e.preventDefault(), true));
-      await page.keyboard.sendCharacter('a');
+      await page.keyboard.sendCharacters('a');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨a');
     });
     it.skip(FFOX)('should report shiftKey', async({page, server}) => {

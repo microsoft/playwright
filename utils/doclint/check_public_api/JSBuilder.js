@@ -116,7 +116,7 @@ function checkSources(sources) {
     const type = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
     const name = symbol.getName();
     if (symbol.valueDeclaration.dotDotDotToken) {
-      const innerType = serializeType(type.typeArguments[0], circular);
+      const innerType = serializeType(type.typeArguments ? type.typeArguments[0] : type, circular);
       innerType.name = '...' + innerType.name;
       return Documentation.Member.createProperty('...' + name, innerType);
     }
