@@ -21,8 +21,9 @@ import { Frame } from './FrameManager';
 import * as injectedSource from '../generated/injectedSource';
 import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
+import * as types from '../types';
 
-export class ExecutionContext {
+export class ExecutionContext implements types.EvaluationContext<JSHandle> {
   _session: any;
   _frame: Frame;
   _executionContextId: string;
@@ -34,7 +35,7 @@ export class ExecutionContext {
     this._executionContextId = executionContextId;
   }
 
-  async evaluateHandle(pageFunction, ...args): Promise<JSHandle> {
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
     if (helper.isString(pageFunction)) {
       const payload = await this._session.send('Runtime.evaluate', {
         expression: pageFunction.trim(),
@@ -62,7 +63,7 @@ export class ExecutionContext {
         throw new Error('Passed function is not well-serializable!');
       }
     }
-    args = args.map(arg => {
+    const protocolArgs = args.map(arg => {
       if (arg instanceof JSHandle) {
         if (arg._context !== this)
           throw new Error('JSHandles can be evaluated only in the context they were created!');
@@ -84,7 +85,7 @@ export class ExecutionContext {
     try {
       callFunctionPromise = this._session.send('Runtime.callFunction', {
         functionDeclaration: functionText,
-        args,
+        args: protocolArgs,
         executionContextId: this._executionContextId
       });
     } catch (err) {
@@ -106,9 +107,9 @@ export class ExecutionContext {
     return this._frame;
   }
 
-  async evaluate(pageFunction, ...args): Promise<any> {
+  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
     try {
-      const handle = await this.evaluateHandle(pageFunction, ...args);
+      const handle = await this.evaluateHandle(pageFunction, ...args as any);
       const result = await handle.jsonValue();
       await handle.dispose();
       return result;
