@@ -139,29 +139,29 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Page.emulateTimezone', function() {
+  describe.skip(FFOX || WEBKIT)('Overrides.setTimezone', function() {
     it('should work', async({page, server}) => {
       page.evaluate(() => {
         globalThis.date = new Date(1479579154987);
       });
-      await page.emulateTimezone('America/Jamaica');
+      await page.overrides.setTimezone('America/Jamaica');
       expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
 
-      await page.emulateTimezone('Pacific/Honolulu');
+      await page.overrides.setTimezone('Pacific/Honolulu');
       expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
 
-      await page.emulateTimezone('America/Buenos_Aires');
+      await page.overrides.setTimezone('America/Buenos_Aires');
       expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
 
-      await page.emulateTimezone('Europe/Berlin');
+      await page.overrides.setTimezone('Europe/Berlin');
       expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
     });
 
     it('should throw for invalid timezone IDs', async({page, server}) => {
       let error = null;
-      await page.emulateTimezone('Foo/Bar').catch(e => error = e);
+      await page.overrides.setTimezone('Foo/Bar').catch(e => error = e);
       expect(error.message).toBe('Invalid timezone ID: Foo/Bar');
-      await page.emulateTimezone('Baz/Qux').catch(e => error = e);
+      await page.overrides.setTimezone('Baz/Qux').catch(e => error = e);
       expect(error.message).toBe('Invalid timezone ID: Baz/Qux');
     });
   });

@@ -30,7 +30,7 @@ import { EmulationManager } from './EmulationManager';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Coverage } from './features/coverage';
-import { Geolocation } from './features/geolocation';
+import { Overrides } from './features/overrides';
 import { Interception } from './features/interception';
 import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
@@ -68,7 +68,7 @@ export class Page extends EventEmitter {
   private _emulationManager: EmulationManager;
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
-  readonly geolocation: Geolocation;
+  readonly overrides: Overrides;
   readonly interception: Interception;
   readonly pdf: PDF;
   readonly workers: Workers;
@@ -102,7 +102,7 @@ export class Page extends EventEmitter {
     this.coverage = new Coverage(client);
     this.pdf = new PDF(client);
     this.workers = new Workers(client, this._addConsoleMessage.bind(this), this._handleException.bind(this));
-    this.geolocation = new Geolocation(client);
+    this.overrides = new Overrides(client);
     this.interception = new Interception(this._frameManager.networkManager());
 
     this._screenshotTaskQueue = screenshotTaskQueue;
@@ -499,16 +499,6 @@ export class Page extends EventEmitter {
     const features = typeof options.colorScheme === 'undefined' ? [] : [{ name: 'prefers-color-scheme', value: options.colorScheme }];
     await this._client.send('Emulation.setEmulatedMedia', { media: media || '', features });
     this._emulatedMediaType = options.type;
-  }
-
-  async emulateTimezone(timezoneId: string | null) {
-    try {
-      await this._client.send('Emulation.setTimezoneOverride', {timezoneId: timezoneId || ''});
-    } catch (exception) {
-      if (exception.message.includes('Invalid timezone'))
-        throw new Error(`Invalid timezone ID: ${timezoneId}`);
-      throw exception;
-    }
   }
 
   async setViewport(viewport: Viewport) {

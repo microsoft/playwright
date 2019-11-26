@@ -60,8 +60,9 @@
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
   * [browserContext.targets()](#browsercontexttargets)
   * [browserContext.waitForTarget(predicate[, options])](#browsercontextwaitfortargetpredicate-options)
-- [class: Geolocation](#class-geolocation)
-  * [geolocation.set(options)](#geolocationsetoptions)
+- [class: Overrides](#class-overrides)
+  * [overrides.setGeolocation(options)](#overridessetgeolocationoptions)
+  * [overrides.setTimezone(timezoneId)](#overridessettimezonetimezoneid)
 - [class: Permissions](#class-permissions)
   * [permissions.clearOverrides()](#permissionsclearoverrides)
   * [permissions.override(origin, permissions)](#permissionsoverrideorigin-permissions)
@@ -97,7 +98,6 @@
   * [page.dblclick(selector[, options])](#pagedblclickselector-options)
   * [page.emulate(options)](#pageemulateoptions)
   * [page.emulateMedia(options)](#pageemulatemediaoptions)
-  * [page.emulateTimezone(timezoneId)](#pageemulatetimezonetimezoneid)
   * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
   * [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
   * [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
@@ -105,7 +105,6 @@
   * [page.fill(selector, value)](#pagefillselector-value)
   * [page.focus(selector)](#pagefocusselector)
   * [page.frames()](#pageframes)
-  * [page.geolocation](#pagegeolocation)
   * [page.goBack([options])](#pagegobackoptions)
   * [page.goForward([options])](#pagegoforwardoptions)
   * [page.goto(url[, options])](#pagegotourl-options)
@@ -115,6 +114,7 @@
   * [page.keyboard](#pagekeyboard)
   * [page.mainFrame()](#pagemainframe)
   * [page.mouse](#pagemouse)
+  * [page.overrides](#pageoverrides)
   * [page.pdf](#pagepdf)
   * [page.reload([options])](#pagereloadoptions)
   * [page.screenshot([options])](#pagescreenshotoptions)
@@ -844,9 +844,9 @@ await page.evaluate(() => window.open('https://www.example.com/'));
 const newWindowTarget = await browserContext.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
-### class: Geolocation
+### class: Overrides
 
-#### geolocation.set(options)
+#### overrides.setGeolocation(options)
 - `options` <[Object]>
   - `latitude` <[number]> Latitude between -90 and 90.
   - `longitude` <[number]> Longitude between -180 and 180.
@@ -856,11 +856,14 @@ const newWindowTarget = await browserContext.waitForTarget(target => target.url(
 Sets the page's geolocation.
 
 ```js
-await page.geolocation.set({latitude: 59.95, longitude: 30.31667});
+await page.overrides.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
 > **NOTE** Consider using [browserContext.permissions.override](#permissionsoverrideorigin-permissions) to grant permissions for the page to read its geolocation.
 
+#### overrides.setTimezone(timezoneId)
+- `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs. Passing `null` disables timezone emulation.
+- returns: <[Promise]>
 
 ### class: Permissions
 
@@ -1269,10 +1272,6 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 // → false
 ```
 
-#### page.emulateTimezone(timezoneId)
-- `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs. Passing `null` disables timezone emulation.
-- returns: <[Promise]>
-
 #### page.evaluate(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
@@ -1443,9 +1442,6 @@ Shortcut for [page.mainFrame().focus(selector)](#framefocusselector).
 #### page.frames()
 - returns: <[Array]<[Frame]>> An array of all frames attached to the page.
 
-#### page.geolocation
-- returns: <[Geolocation]>
-
 #### page.goBack([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -1534,6 +1530,9 @@ Page is guaranteed to have a main frame which persists during navigations.
 #### page.mouse
 
 - returns: <[Mouse]>
+
+#### page.overrides
+- returns: <[Overrides]>
 
 #### page.pdf
 - returns: <[PDF]>
