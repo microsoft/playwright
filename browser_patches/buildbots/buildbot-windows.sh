@@ -32,6 +32,7 @@ fi
 
 iteration=0
 while true; do
+  timestamp=$(date +%s)
   iteration=$(( iteration + 1 ))
   echo "== ITERATION ${iteration} =="
   git pull origin master
@@ -39,5 +40,9 @@ while true; do
   git pull origin master
   ../checkout_build_archive_upload.sh firefox --win64
   echo "------ Sleeping for 300 seconds before next turn... ------"
-  sleep 300
+  newTimestamp=$(date +%s)
+  delta=$(( 300 - newTimestamp + timestamp ));
+  if (( delta > 0 )); then
+    sleep detla;
+  fi
 done;
