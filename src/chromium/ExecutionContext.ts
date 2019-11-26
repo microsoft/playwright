@@ -34,6 +34,7 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
   _client: CDPSession;
   _world: DOMWorld;
   private _injectedPromise: Promise<JSHandle> | null = null;
+  private _documentPromise: Promise<ElementHandle> | null = null;
   private _contextId: number;
 
   constructor(client: CDPSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, world: DOMWorld | null) {
@@ -175,5 +176,11 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
       this._injectedPromise = this.evaluateHandle(source);
     }
     return this._injectedPromise;
+  }
+
+  _document(): Promise<ElementHandle> {
+    if (!this._documentPromise)
+      this._documentPromise = this.evaluateHandle('document').then(handle => handle.asElement()!);
+    return this._documentPromise;
   }
 }

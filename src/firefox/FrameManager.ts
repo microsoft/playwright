@@ -17,7 +17,7 @@
 
 import { JugglerSession } from './Connection';
 import { Page } from './Page';
-
+import * as fs from 'fs';
 import {RegisteredListener, helper, assert} from '../helper';
 import {TimeoutError} from '../Errors';
 import {EventEmitter} from 'events';
@@ -29,6 +29,8 @@ import { TimeoutSettings } from '../TimeoutSettings';
 import { NetworkManager } from './NetworkManager';
 import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
 import * as types from '../types';
+
+const readFileAsync = helper.promisify(fs.readFile);
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -271,28 +273,36 @@ export class Frame {
   }
 
   async click(selector: string, options?: ClickOptions) {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.click(options);
     await handle.dispose();
   }
 
   async dblclick(selector: string, options?: MultiClickOptions) {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.dblclick(options);
     await handle.dispose();
   }
 
   async tripleclick(selector: string, options?: MultiClickOptions) {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.tripleclick(options);
     await handle.dispose();
   }
 
   async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     const result = await handle.select(...values);
     await handle.dispose();
@@ -300,28 +310,36 @@ export class Frame {
   }
 
   async fill(selector: string, value: string) {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.fill(value);
     await handle.dispose();
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.type(text, options);
     await handle.dispose();
   }
 
   async focus(selector: string) {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.focus();
     await handle.dispose();
   }
 
   async hover(selector: string) {
-    const handle = await this.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.hover();
     await handle.dispose();
@@ -370,51 +388,186 @@ export class Frame {
   }
 
   async content(): Promise<string> {
-    return this._mainWorld.content();
+    const context = await this._mainWorld.executionContext();
+    return context.evaluate(() => {
+      let retVal = '';
+      if (document.doctype)
+        retVal = new XMLSerializer().serializeToString(document.doctype);
+      if (document.documentElement)
+        retVal += document.documentElement.outerHTML;
+      return retVal;
+    });
   }
 
   async setContent(html: string) {
-    return this._mainWorld.setContent(html);
+    const context = await this._mainWorld.executionContext();
+    await context.evaluate(html => {
+      document.open();
+      document.write(html);
+      document.close();
+    }, html);
   }
 
-  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
-    return this._mainWorld.evaluate(pageFunction, ...args as any);
+  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
+    const context = await this._mainWorld.executionContext();
+    return context.evaluate(pageFunction, ...args as any);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
-    return this._mainWorld.$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    return document.$(selector);
   }
 
   async $$(selector: string): Promise<Array<ElementHandle>> {
-    return this._mainWorld.$$(selector);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    return document.$$(selector);
   }
 
-  $eval: types.$Eval<JSHandle> = (selector, pageFunction, ...args) => {
-    return this._mainWorld.$eval(selector, pageFunction, ...args as any);
+  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval<JSHandle> = (selector, pageFunction, ...args) => {
-    return this._mainWorld.$$eval(selector, pageFunction, ...args as any);
+  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    return document.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $x(expression: string): Promise<Array<ElementHandle>> {
-    return this._mainWorld.$x(expression);
+    const context = await this._mainWorld.executionContext();
+    const document = await context._document();
+    return document.$x(expression);
   }
 
-  evaluateHandle: types.EvaluateHandle<JSHandle> = (pageFunction, ...args) => {
-    return this._mainWorld.evaluateHandle(pageFunction, ...args as any);
+  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+    const context = await this._mainWorld.executionContext();
+    return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  async addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {
-    return this._mainWorld.addScriptTag(options);
+  async addScriptTag(options: {
+      url?: string; path?: string;
+      content?: string;
+      type?: string;
+    }): Promise<ElementHandle> {
+    const {
+      url = null,
+      path = null,
+      content = null,
+      type = ''
+    } = options;
+    if (url !== null) {
+      try {
+        const context = await this._mainWorld.executionContext();
+        return (await context.evaluateHandle(addScriptUrl, url, type)).asElement();
+      } catch (error) {
+        throw new Error(`Loading script from ${url} failed`);
+      }
+    }
+
+    if (path !== null) {
+      let contents = await readFileAsync(path, 'utf8');
+      contents += '//# sourceURL=' + path.replace(/\n/g, '');
+      const context = await this._mainWorld.executionContext();
+      return (await context.evaluateHandle(addScriptContent, contents, type)).asElement();
+    }
+
+    if (content !== null) {
+      const context = await this._mainWorld.executionContext();
+      return (await context.evaluateHandle(addScriptContent, content, type)).asElement();
+    }
+
+    throw new Error('Provide an object with a `url`, `path` or `content` property');
+
+    async function addScriptUrl(url: string, type: string): Promise<HTMLElement> {
+      const script = document.createElement('script');
+      script.src = url;
+      if (type)
+        script.type = type;
+      const promise = new Promise((res, rej) => {
+        script.onload = res;
+        script.onerror = rej;
+      });
+      document.head.appendChild(script);
+      await promise;
+      return script;
+    }
+
+    function addScriptContent(content: string, type: string = 'text/javascript'): HTMLElement {
+      const script = document.createElement('script');
+      script.type = type;
+      script.text = content;
+      let error = null;
+      script.onerror = e => error = e;
+      document.head.appendChild(script);
+      if (error)
+        throw error;
+      return script;
+    }
   }
 
-  async addStyleTag(options: { content?: string; path?: string; url?: string; }): Promise<ElementHandle> {
-    return this._mainWorld.addStyleTag(options);
+  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+    const {
+      url = null,
+      path = null,
+      content = null
+    } = options;
+    if (url !== null) {
+      try {
+        const context = await this._mainWorld.executionContext();
+        return (await context.evaluateHandle(addStyleUrl, url)).asElement();
+      } catch (error) {
+        throw new Error(`Loading style from ${url} failed`);
+      }
+    }
+
+    if (path !== null) {
+      let contents = await readFileAsync(path, 'utf8');
+      contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
+      const context = await this._mainWorld.executionContext();
+      return (await context.evaluateHandle(addStyleContent, contents)).asElement();
+    }
+
+    if (content !== null) {
+      const context = await this._mainWorld.executionContext();
+      return (await context.evaluateHandle(addStyleContent, content)).asElement();
+    }
+
+    throw new Error('Provide an object with a `url`, `path` or `content` property');
+
+    async function addStyleUrl(url: string): Promise<HTMLElement> {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = url;
+      const promise = new Promise((res, rej) => {
+        link.onload = res;
+        link.onerror = rej;
+      });
+      document.head.appendChild(link);
+      await promise;
+      return link;
+    }
+
+    async function addStyleContent(content: string): Promise<HTMLElement> {
+      const style = document.createElement('style');
+      style.type = 'text/css';
+      style.appendChild(document.createTextNode(content));
+      const promise = new Promise((res, rej) => {
+        style.onload = res;
+        style.onerror = rej;
+      });
+      document.head.appendChild(style);
+      await promise;
+      return style;
+    }
   }
 
   async title(): Promise<string> {
-    return this._mainWorld.title();
+    const context = await this._mainWorld.executionContext();
+    return context.evaluate(() => document.title);
   }
 
   name() {
