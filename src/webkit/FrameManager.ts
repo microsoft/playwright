@@ -27,6 +27,8 @@ import { NetworkManager, NetworkManagerEvents, Request, Response } from './Netwo
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { MultiClickOptions, ClickOptions, SelectOption } from '../input';
+import { WaitTask, WaitTaskParams } from '../waitTask';
+
 const readFileAsync = helper.promisify(fs.readFile);
 
 export const FrameManagerEvents = {
@@ -238,8 +240,8 @@ export class Frame {
   _detached: boolean;
   _loaderId: string;
   _lifecycleEvents: Set<string>;
-  _waitTasks: Set<WaitTask>;
-  _executionContext: ExecutionContext;
+  _waitTasks: Set<WaitTask<JSHandle>>;
+  _executionContext: ExecutionContext | null;
   _contextPromise: Promise<ExecutionContext>;
   _contextResolveCallback: (arg: ExecutionContext) => void;
   _childFrames: Set<Frame>;
@@ -300,7 +302,14 @@ export class Frame {
       polling = 'raf',
       timeout = this._frameManager._timeoutSettings.timeout(),
     } = options;
-    return new WaitTask(this, pageFunction, 'function', polling, timeout, ...args).promise;
+    const params: WaitTaskParams = {
+      predicateBody: pageFunction,
+      title: 'function',
+      polling,
+      timeout,
+      args
+    };
+    return this._scheduleWaitTask(params);
   }
 
   async executionContext(): Promise<ExecutionContext> {
@@ -606,8 +615,14 @@ export class Frame {
     } = options;
     const polling = waitForVisible || waitForHidden ? 'raf' : 'mutation';
     const title = `${isXPath ? 'XPath' : 'selector'} "${selectorOrXPath}"${waitForHidden ? ' to be hidden' : ''}`;
-    const waitTask = new WaitTask(this, predicate, title, polling, timeout, selectorOrXPath, isXPath, waitForVisible, waitForHidden);
-    const handle = await waitTask.promise;
+    const params: WaitTaskParams = {
+      predicateBody: predicate,
+      title,
+      polling,
+      timeout,
+      args: [selectorOrXPath, isXPath, waitForVisible, waitForHidden]
+    };
+    const handle = await this._scheduleWaitTask(params);
     if (!handle.asElement()) {
       await handle.dispose();
       return null;
@@ -676,13 +691,21 @@ export class Frame {
       this._contextResolveCallback.call(null, context);
       this._contextResolveCallback = null;
       for (const waitTask of this._waitTasks)
-        waitTask.rerun();
+        waitTask.rerun(context);
     } else {
       this._documentPromise = null;
       this._contextPromise = new Promise(fulfill => {
         this._contextResolveCallback = fulfill;
       });
     }
+  }
+
+  private _scheduleWaitTask(params: WaitTaskParams): Promise<JSHandle> {
+    const task = new WaitTask(params, () => this._waitTasks.delete(task));
+    this._waitTasks.add(task);
+    if (this._executionContext)
+      task.rerun(this._executionContext);
+    return task.promise;
   }
 }
 
@@ -771,183 +794,5 @@ class NextNavigationWatchdog {
   dispose() {
     helper.removeEventListeners(this._eventListeners);
     clearTimeout(this._timeoutId);
-  }
-}
-
-class WaitTask {
-  promise: Promise<any>;
-  _domWorld: any;
-  _polling: string | number;
-  _timeout: number;
-  _predicateBody: string;
-  _args: any[];
-  _runCount: number;
-  _resolve: (value?: unknown) => void;
-  _reject: (reason?: any) => void;
-  _timeoutTimer: NodeJS.Timer;
-  _terminated: boolean;
-  _runningTask: any;
-  constructor(domWorld: Frame, predicateBody: Function | string, title, polling: string | number, timeout: number, ...args: Array<any>) {
-    if (helper.isString(polling))
-      assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
-    else if (helper.isNumber(polling))
-      assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
-    else
-      throw new Error('Unknown polling options: ' + polling);
-
-    this._domWorld = domWorld;
-    this._polling = polling;
-    this._timeout = timeout;
-    this._predicateBody = helper.isString(predicateBody) ? 'return (' + predicateBody + ')' : 'return (' + predicateBody + ')(...args)';
-    this._args = args;
-    this._runCount = 0;
-    domWorld._waitTasks.add(this);
-    this.promise = new Promise((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
-    });
-    // Since page navigation requires us to re-install the pageScript, we should track
-    // timeout on our end.
-    if (timeout) {
-      const timeoutError = new TimeoutError(`waiting for ${title} failed: timeout ${timeout}ms exceeded`);
-      this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), timeout);
-    }
-    this.rerun();
-  }
-
-  terminate(error: Error) {
-    this._terminated = true;
-    this._reject(error);
-    this._cleanup();
-  }
-
-  async rerun() {
-    const runCount = ++this._runCount;
-    /** @type {?JSHandle} */
-    let success: JSHandle | null = null;
-    let error = null;
-    try {
-      success = await (await this._domWorld.executionContext()).evaluateHandle(waitForPredicatePageFunction, this._predicateBody, this._polling, this._timeout, ...this._args);
-    } catch (e) {
-      error = e;
-    }
-
-    if (this._terminated || runCount !== this._runCount) {
-      if (success)
-        await success.dispose();
-      return;
-    }
-
-    // Ignore timeouts in pageScript - we track timeouts ourselves.
-    // If the frame's execution context has already changed, `frame.evaluate` will
-    // throw an error - ignore this predicate run altogether.
-    if (!error && await this._domWorld.evaluate(s => !s, success).catch(e => true)) {
-      await success.dispose();
-      return;
-    }
-
-    // When the page is navigated, the promise is rejected.
-    // We will try again in the new execution context.
-    if (error && error.message.includes('Execution context was destroyed'))
-      return;
-    // In WebKit cross-process navigation leads to targetDestroyed (followed
-    // by targetCreated).
-    if (error && error.message.includes('Target closed'))
-      return;
-
-    // We could have tried to evaluate in a context which was already
-    // destroyed.
-    if (error && error.message.includes('Cannot find context with specified id'))
-      return;
-
-    if (error)
-      this._reject(error);
-    else
-      this._resolve(success);
-
-    this._cleanup();
-  }
-
-  _cleanup() {
-    clearTimeout(this._timeoutTimer);
-    this._domWorld._waitTasks.delete(this);
-    this._runningTask = null;
-  }
-}
-
-async function waitForPredicatePageFunction(predicateBody: string, polling: string, timeout: number, ...args): Promise<any> {
-  const predicate = new Function('...args', predicateBody);
-  let timedOut = false;
-  if (timeout)
-    setTimeout(() => timedOut = true, timeout);
-  if (polling === 'raf')
-    return await pollRaf();
-  if (polling === 'mutation')
-    return await pollMutation();
-  if (typeof polling === 'number')
-    return await pollInterval(polling);
-
-  function pollMutation(): Promise<any> {
-    const success = predicate.apply(null, args);
-    if (success)
-      return Promise.resolve(success);
-
-    let fulfill;
-    const result = new Promise(x => fulfill = x);
-    const observer = new MutationObserver(mutations => {
-      if (timedOut) {
-        observer.disconnect();
-        fulfill();
-      }
-      const success = predicate.apply(null, args);
-      if (success) {
-        observer.disconnect();
-        fulfill(success);
-      }
-    });
-    observer.observe(document, {
-      childList: true,
-      subtree: true,
-      attributes: true
-    });
-    return result;
-  }
-
-  function pollRaf(): Promise<any> {
-    let fulfill;
-    const result = new Promise(x => fulfill = x);
-    onRaf();
-    return result;
-
-    function onRaf() {
-      if (timedOut) {
-        fulfill();
-        return;
-      }
-      const success = predicate.apply(null, args);
-      if (success)
-        fulfill(success);
-      else
-        requestAnimationFrame(onRaf);
-    }
-  }
-
-  function pollInterval(pollInterval: number): Promise<any> {
-    let fulfill;
-    const result = new Promise(x => fulfill = x);
-    onTimeout();
-    return result;
-
-    function onTimeout() {
-      if (timedOut) {
-        fulfill();
-        return;
-      }
-      const success = predicate.apply(null, args);
-      if (success)
-        fulfill(success);
-      else
-        setTimeout(onTimeout, pollInterval);
-    }
   }
 }
