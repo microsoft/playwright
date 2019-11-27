@@ -3,6 +3,7 @@
 
 import { assert, helper } from './helper';
 import * as types from './types';
+import * as js from './javascript';
 import { TimeoutError } from './Errors';
 
 export type WaitTaskParams = {
@@ -14,7 +15,7 @@ export type WaitTaskParams = {
   args: any[];
 };
 
-export class WaitTask<JSHandle extends types.JSHandle<JSHandle, ElementHandle>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle>> {
+export class WaitTask<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Response>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle, Response>, Response> {
   readonly promise: Promise<JSHandle>;
   private _cleanup: () => void;
   private _params: WaitTaskParams & { predicateBody: string };
@@ -56,7 +57,7 @@ export class WaitTask<JSHandle extends types.JSHandle<JSHandle, ElementHandle>, 
     this._doCleanup();
   }
 
-  async rerun(context: types.ExecutionContext<JSHandle, ElementHandle>) {
+  async rerun(context: js.ExecutionContext<JSHandle, ElementHandle, Response>) {
     const runCount = ++this._runCount;
     let success: JSHandle | null = null;
     let error = null;

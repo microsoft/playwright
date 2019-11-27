@@ -16,45 +16,28 @@
  */
 
 import { CDPSession } from './Connection';
-import { Frame } from './FrameManager';
 import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage } from './protocolHelper';
-import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
+import { createJSHandle, JSHandle, ElementHandle } from './JSHandle';
 import { Protocol } from './protocol';
-import * as injectedSource from '../generated/injectedSource';
-import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
-import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
-import * as types from '../types';
+import { Response } from './NetworkManager';
+import * as js from '../javascript';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export class ExecutionContext {
-  _client: CDPSession;
-  private _frame: Frame;
-  private _injectedPromise: Promise<JSHandle> | null = null;
-  private _documentPromise: Promise<ElementHandle> | null = null;
-  private _contextId: number;
+export type ExecutionContext = js.ExecutionContext<JSHandle, ElementHandle, Response>;
 
-  constructor(client: CDPSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, frame: Frame | null) {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSHandle, ElementHandle, Response> {
+  _client: CDPSession;
+  _contextId: number;
+
+  constructor(client: CDPSession, contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     this._client = client;
-    this._frame = frame;
     this._contextId = contextPayload.id;
   }
 
-  frame(): Frame | null {
-    return this._frame;
-  }
-
-  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
-    return this._evaluateInternal(true /* returnByValue */, pageFunction, ...args);
-  }
-
-  evaluateHandle: types.EvaluateHandle<JSHandle> = (pageFunction, ...args) => {
-    return this._evaluateInternal(false /* returnByValue */, pageFunction, ...args);
-  }
-
-  async _evaluateInternal(returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  async evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     const suffix = `//# sourceURL=${EVALUATION_SCRIPT_URL}`;
 
     if (helper.isString(pageFunction)) {
@@ -70,7 +53,7 @@ export class ExecutionContext {
       }).catch(rewriteError);
       if (exceptionDetails)
         throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? valueFromRemoteObject(remoteObject) : createJSHandle(this, remoteObject);
+      return returnByValue ? valueFromRemoteObject(remoteObject) : createJSHandle(context, remoteObject);
     }
 
     if (typeof pageFunction !== 'function')
@@ -111,7 +94,7 @@ export class ExecutionContext {
     const { exceptionDetails, result: remoteObject } = await callFunctionOnPromise.catch(rewriteError);
     if (exceptionDetails)
       throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-    return returnByValue ? valueFromRemoteObject(remoteObject) : createJSHandle(this, remoteObject);
+    return returnByValue ? valueFromRemoteObject(remoteObject) : createJSHandle(context, remoteObject);
 
     function convertArgument(arg: any): any {
       if (typeof arg === 'bigint') // eslint-disable-line valid-typeof
@@ -126,7 +109,7 @@ export class ExecutionContext {
         return { unserializableValue: 'NaN' };
       const objectHandle = arg && (arg instanceof JSHandle) ? arg : null;
       if (objectHandle) {
-        if (objectHandle._context !== this)
+        if (objectHandle._context !== context)
           throw new Error('JSHandles can be evaluated only in the context they were created!');
         if (objectHandle._disposed)
           throw new Error('JSHandle is disposed!');
@@ -151,30 +134,11 @@ export class ExecutionContext {
     }
   }
 
-  async _adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId): Promise<ElementHandle> {
+  async adoptBackendNodeId(context: ExecutionContext, backendNodeId: Protocol.DOM.BackendNodeId) {
     const {object} = await this._client.send('DOM.resolveNode', {
       backendNodeId,
       executionContextId: this._contextId,
     });
-    return createJSHandle(this, object) as ElementHandle;
-  }
-
-  _injected(): Promise<JSHandle> {
-    if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
-      const source = `
-        new (${injectedSource.source})([
-          ${engineSources.join(',\n')}
-        ])
-      `;
-      this._injectedPromise = this.evaluateHandle(source);
-    }
-    return this._injectedPromise;
-  }
-
-  _document(): Promise<ElementHandle> {
-    if (!this._documentPromise)
-      this._documentPromise = this.evaluateHandle('document').then(handle => handle.asElement()!);
-    return this._documentPromise;
+    return createJSHandle(context, object) as ElementHandle;
   }
 }

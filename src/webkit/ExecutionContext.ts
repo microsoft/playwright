@@ -16,32 +16,27 @@
  */
 
 import { TargetSession } from './Connection';
-import { Frame } from './FrameManager';
 import { helper } from '../helper';
 import { valueFromRemoteObject } from './protocolHelper';
 import { createJSHandle, JSHandle, ElementHandle } from './JSHandle';
 import { Protocol } from './protocol';
-import * as injectedSource from '../generated/injectedSource';
-import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
-import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
-import * as types from '../types';
+import { Response } from './NetworkManager';
+import * as js from '../javascript';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export class ExecutionContext {
-  _globalObjectId?: string;
-  _session: TargetSession;
-  _frame: Frame;
-  _contextId: number;
-  private _contextDestroyedCallback: any;
-  private _executionContextDestroyedPromise: Promise<unknown>;
-  private _injectedPromise: Promise<JSHandle> | null = null;
-  private _documentPromise: Promise<ElementHandle> | null = null;
+export type ExecutionContext = js.ExecutionContext<JSHandle, ElementHandle, Response>;
 
-  constructor(client: TargetSession, contextPayload: Protocol.Runtime.ExecutionContextDescription, frame: Frame | null) {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSHandle, ElementHandle, Response> {
+  private _globalObjectId?: string;
+  _session: TargetSession;
+  private _contextId: number;
+  private _contextDestroyedCallback: () => void;
+  private _executionContextDestroyedPromise: Promise<unknown>;
+
+  constructor(client: TargetSession, contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     this._session = client;
-    this._frame = frame;
     this._contextId = contextPayload.id;
     this._contextDestroyedCallback = null;
     this._executionContextDestroyedPromise = new Promise((resolve, reject) => {
@@ -53,19 +48,7 @@ export class ExecutionContext {
     this._contextDestroyedCallback();
   }
 
-  frame(): Frame | null {
-    return this._frame;
-  }
-
-  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
-    return this._evaluateInternal(true /* returnByValue */, pageFunction, ...args);
-  }
-
-  evaluateHandle: types.EvaluateHandle<JSHandle> = (pageFunction, ...args) => {
-    return this._evaluateInternal(false /* returnByValue */, pageFunction, ...args);
-  }
-
-  async _evaluateInternal(returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  async evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     const suffix = `//# sourceURL=${EVALUATION_SCRIPT_URL}`;
 
     if (helper.isString(pageFunction)) {
@@ -98,7 +81,7 @@ export class ExecutionContext {
         if (response.wasThrown)
           throw new Error('Evaluation failed: ' + response.result.description);
         if (!returnByValue)
-          return createJSHandle(this, response.result);
+          return createJSHandle(context, response.result);
         if (response.result.objectId) {
           const serializeFunction = function() {
             try {
@@ -204,7 +187,7 @@ export class ExecutionContext {
       if (response.wasThrown)
         throw new Error('Evaluation failed: ' + response.result.description);
       if (!returnByValue)
-        return createJSHandle(this, response.result);
+        return createJSHandle(context, response.result);
       if (response.result.objectId) {
         const serializeFunction = function() {
           try {
@@ -304,24 +287,5 @@ export class ExecutionContext {
       this._globalObjectId = globalObject.result.objectId;
     }
     return this._globalObjectId;
-  }
-
-  _injected(): Promise<JSHandle> {
-    if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
-      const source = `
-        new (${injectedSource.source})([
-          ${engineSources.join(',\n')}
-        ])
-      `;
-      this._injectedPromise = this.evaluateHandle(source);
-    }
-    return this._injectedPromise;
-  }
-
-  _document(): Promise<ElementHandle> {
-    if (!this._documentPromise)
-      this._documentPromise = this.evaluateHandle('document').then(handle => handle.asElement()!);
-    return this._documentPromise;
   }
 }

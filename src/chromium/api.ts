@@ -8,7 +8,7 @@ export { BrowserFetcher } from './BrowserFetcher';
 export { Chromium } from './features/chromium';
 export { CDPSession } from './Connection';
 export { Dialog } from './Dialog';
-export { ExecutionContext } from './ExecutionContext';
+export { ExecutionContext } from '../javascript';
 export { Accessibility } from './features/accessibility';
 export { Coverage } from './features/coverage';
 export { Overrides } from './features/overrides';

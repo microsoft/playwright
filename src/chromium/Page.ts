@@ -44,6 +44,7 @@ import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
 import * as types from '../types';
+import { ExecutionContextDelegate } from './ExecutionContext';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -155,7 +156,7 @@ export class Page extends EventEmitter {
       return;
     const frame = this._frameManager.frame(event.frameId);
     const context = await frame._utilityContext();
-    const handle = await context._adoptBackendNodeId(event.backendNodeId);
+    const handle = await (context._delegate as ExecutionContextDelegate).adoptBackendNodeId(context, event.backendNodeId);
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
