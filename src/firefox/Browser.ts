@@ -304,11 +304,10 @@ export class BrowserContext extends EventEmitter {
   }
 
   async setCookies(cookies: SetNetworkCookieParam[]) {
-    const items = cookies.map(cookie => {
+    cookies.forEach(cookie => {
       const item = Object.assign({}, cookie);
       assert(item.url !== 'about:blank', `Blank page can not have cookie "${item.name}"`);
       assert(!String.prototype.startsWith.call(item.url || '', 'data:'), `Data URL page can not have cookie "${item.name}"`);
-      return item;
     });
     await this._connection.send('Browser.setCookies', {
       browserContextId: this._browserContextId || undefined,

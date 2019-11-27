@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
 import { assert, debugError, helper } from '../helper';
 import Injected from '../injected/injected';
 import * as input from '../input';
@@ -25,7 +24,6 @@ import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './FrameManager';
 
 type SelectorRoot = Element | ShadowRoot | Document;
-const readFileAsync = helper.promisify(fs.readFile);
 
 export class JSHandle {
   _context: ExecutionContext;
