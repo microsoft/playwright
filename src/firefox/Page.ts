@@ -12,11 +12,12 @@ import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
 import { FrameManager, FrameManagerEvents, normalizeWaitUntil, Frame } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { createHandle, ElementHandle, JSHandle } from './JSHandle';
+import { createHandle, ElementHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import * as input from '../input';
 import * as types from '../types';
+import { JSHandle, toPayload, deserializeValue } from './ExecutionContext';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -559,8 +560,9 @@ export class Page extends EventEmitter {
 
 export class ConsoleMessage {
   private _type: string;
-  private _args: any[];
+  private _args: JSHandle[];
   private _location: any;
+
   constructor(type: string, args: Array<JSHandle>, location) {
     this._type = type;
     this._args = args;
@@ -581,9 +583,10 @@ export class ConsoleMessage {
 
   text(): string {
     return this._args.map(arg => {
-      if (arg._objectId)
+      const payload = toPayload(arg);
+      if (payload.objectId)
         return arg.toString();
-      return arg._deserializeValue(arg._protocolValue);
+      return deserializeValue(payload);
     }).join(' ');
   }
 }

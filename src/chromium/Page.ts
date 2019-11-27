@@ -36,7 +36,8 @@ import { Workers } from './features/workers';
 import { Frame } from './FrameManager';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
+import { createJSHandle, ElementHandle } from './JSHandle';
+import { JSHandle, toRemoteObject } from './ExecutionContext';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
@@ -359,7 +360,7 @@ export class Page extends EventEmitter {
     }
     const textTokens = [];
     for (const arg of args) {
-      const remoteObject = arg._remoteObject;
+      const remoteObject = toRemoteObject(arg);
       if (remoteObject.objectId)
         textTokens.push(arg.toString());
       else

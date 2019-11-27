@@ -26,7 +26,8 @@ import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { Frame, FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
-import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
+import { createJSHandle, ElementHandle } from './JSHandle';
+import { JSHandle, toRemoteObject } from './ExecutionContext';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
 import { valueFromRemoteObject } from './protocolHelper';
@@ -159,7 +160,7 @@ export class Page extends EventEmitter {
     this.emit('error', new Error('Page crashed!'));
   }
 
-  async _onConsoleMessage(event : Protocol.Console.messageAddedPayload) {
+  async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
     let derivedType: string = type;
     if (type === 'log')
@@ -179,7 +180,7 @@ export class Page extends EventEmitter {
     });
     const textTokens = [];
     for (const handle of handles) {
-      const remoteObject = handle._remoteObject;
+      const remoteObject = toRemoteObject(handle);
       if (remoteObject.objectId)
         textTokens.push(handle.toString());
       else

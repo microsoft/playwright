@@ -15,15 +15,16 @@
  * limitations under the License.
  */
 
-import {helper} from '../helper';
-import { JSHandle, createHandle, ElementHandle } from './JSHandle';
+import {helper, debugError} from '../helper';
+import { createHandle, ElementHandle } from './JSHandle';
 import { Response } from './NetworkManager';
 import * as js from '../javascript';
 import { JugglerSession } from './Connection';
 
-export type ExecutionContext = js.ExecutionContext<JSHandle, ElementHandle, Response>;
+export type ExecutionContext = js.ExecutionContext<ElementHandle, Response>;
+export type JSHandle = js.JSHandle<ElementHandle, Response>;
 
-export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSHandle, ElementHandle, Response> {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle, Response> {
   _session: JugglerSession;
   _executionContextId: string;
 
@@ -74,12 +75,12 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSH
       }
     }
     const protocolArgs = args.map(arg => {
-      if (arg instanceof JSHandle) {
+      if (arg instanceof js.JSHandle) {
         if (arg._context !== context)
           throw new Error('JSHandles can be evaluated only in the context they were created!');
         if (arg._disposed)
           throw new Error('JSHandle is disposed!');
-        return arg._protocolValue;
+        return this._toProtocolValue(toPayload(arg));
       }
       if (Object.is(arg, Infinity))
         return {unserializableValue: 'Infinity'};
@@ -112,4 +113,72 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSH
       throw error;
     }
   }
+
+  async getProperties(handle: JSHandle): Promise<Map<string, JSHandle>> {
+    const response = await this._session.send('Runtime.getObjectProperties', {
+      executionContextId: this._executionContextId,
+      objectId: toPayload(handle).objectId,
+    });
+    const result = new Map();
+    for (const property of response.properties)
+      result.set(property.name, createHandle(handle.executionContext(), property.value, null));
+    return result;
+  }
+
+  async releaseHandle(handle: JSHandle): Promise<void> {
+    await this._session.send('Runtime.disposeObject', {
+      executionContextId: this._executionContextId,
+      objectId: toPayload(handle).objectId,
+    }).catch(error => {
+      // Exceptions might happen in case of a page been navigated or closed.
+      // Swallow these since they are harmless and we don't leak anything in this case.
+      debugError(error);
+    });
+  }
+
+  async handleJSONValue(handle: JSHandle): Promise<any> {
+    const payload = toPayload(handle);
+    if (!payload.objectId)
+      return deserializeValue(payload);
+    const simpleValue = await this._session.send('Runtime.callFunction', {
+      executionContextId: this._executionContextId,
+      returnByValue: true,
+      functionDeclaration: (e => e).toString(),
+      args: [this._toProtocolValue(payload)],
+    });
+    return deserializeValue(simpleValue.result);
+  }
+
+  handleToString(handle: JSHandle): string {
+    const payload = toPayload(handle);
+    if (payload.objectId)
+      return 'JSHandle@' + (payload.subtype || payload.type);
+    return 'JSHandle:' + deserializeValue(payload);
+  }
+
+  private _toProtocolValue(payload: any): any {
+    return { value: payload.value, unserializableValue: payload.unserializableValue, objectId: payload.objectId };
+  }
+}
+
+const payloadSymbol = Symbol('payload');
+
+export function toPayload(handle: JSHandle): any {
+  return (handle as any)[payloadSymbol];
+}
+
+export function markJSHandle(handle: JSHandle, payload: any) {
+  (handle as any)[payloadSymbol] = payload;
+}
+
+export function deserializeValue({unserializableValue, value}) {
+  if (unserializableValue === 'Infinity')
+    return Infinity;
+  if (unserializableValue === '-Infinity')
+    return -Infinity;
+  if (unserializableValue === '-0')
+    return -0;
+  if (unserializableValue === 'NaN')
+    return NaN;
+  return value;
 }

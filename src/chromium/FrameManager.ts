@@ -19,14 +19,14 @@ import { EventEmitter } from 'events';
 import { assert, debugError } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
-import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate, ExecutionContext } from './ExecutionContext';
+import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate, ExecutionContext, JSHandle, toRemoteObject } from './ExecutionContext';
 import * as frames from '../frames';
 import * as js from '../javascript';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import { ElementHandle, JSHandle, createJSHandle } from './JSHandle';
+import { ElementHandle, createJSHandle } from './JSHandle';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -45,9 +45,9 @@ type FrameData = {
   lifecycleEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<JSHandle, ElementHandle, Response>;
+export type Frame = frames.Frame<ElementHandle, Response>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle, Response> {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
@@ -185,7 +185,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<J
 
   async adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: elementHandle._remoteObject.objectId,
+      objectId: toRemoteObject(elementHandle).objectId,
     });
     return (context._delegate as ExecutionContextDelegate).adoptBackendNodeId(context, nodeInfo.node.backendNodeId);
   }

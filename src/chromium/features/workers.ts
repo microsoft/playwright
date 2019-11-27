@@ -17,12 +17,12 @@
 import { EventEmitter } from 'events';
 import { CDPSession, Connection } from '../Connection';
 import { debugError } from '../../helper';
-import { JSHandle } from '../JSHandle';
 import { Protocol } from '../protocol';
 import { Events } from '../events';
 import * as types from '../../types';
 import * as js from '../../javascript';
-import { ExecutionContext, ExecutionContextDelegate } from '../ExecutionContext';
+import { JSHandle, ExecutionContext, ExecutionContextDelegate } from '../ExecutionContext';
+import { createJSHandle } from '../JSHandle';
 
 type AddToConsoleCallback = (type: string, args: JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
 type HandleExceptionCallback = (exceptionDetails: Protocol.Runtime.ExceptionDetails) => void;
@@ -68,7 +68,7 @@ export class Worker extends EventEmitter {
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
     let jsHandleFactory: (o: Protocol.Runtime.RemoteObject) => JSHandle;
     this._client.once('Runtime.executionContextCreated', async event => {
-      jsHandleFactory = remoteObject => new JSHandle(executionContext, client, remoteObject);
+      jsHandleFactory = remoteObject => createJSHandle(executionContext, remoteObject);
       const executionContext = new js.ExecutionContext(new ExecutionContextDelegate(client, event.context), null);
       this._executionContextCallback(executionContext);
     });

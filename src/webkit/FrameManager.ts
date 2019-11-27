@@ -21,8 +21,8 @@ import { Events } from './events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { TargetSession } from './Connection';
-import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
-import { ElementHandle, JSHandle } from './JSHandle';
+import { JSHandle, ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
+import { ElementHandle } from './JSHandle';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
@@ -42,9 +42,9 @@ type FrameData = {
   id: string,
 };
 
-export type Frame = frames.Frame<JSHandle, ElementHandle, Response>;
+export type Frame = frames.Frame<ElementHandle, Response>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle, Response> {
   _session: TargetSession;
   _page: Page;
   _networkManager: NetworkManager;

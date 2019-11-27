@@ -19,13 +19,14 @@ import { assert, debugError, helper } from '../helper';
 import Injected from '../injected/injected';
 import * as input from '../input';
 import * as types from '../types';
+import * as js from '../javascript';
 import { CDPSession } from './Connection';
 import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import { releaseObject, valueFromRemoteObject } from './protocolHelper';
-import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
+import { JSHandle, ExecutionContext, ExecutionContextDelegate, markJSHandle } from './ExecutionContext';
+import { Response } from './NetworkManager';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -41,102 +42,24 @@ export function createJSHandle(context: ExecutionContext, remoteObject: Protocol
     const frameManager = frame._delegate as FrameManager;
     return new ElementHandle(context, delegate._client, remoteObject, frameManager.page(), frameManager);
   }
-  return new JSHandle(context, delegate._client, remoteObject);
+  const handle = new js.JSHandle(context);
+  markJSHandle(handle, remoteObject);
+  return handle;
 }
 
-export class JSHandle {
-  _context: ExecutionContext;
-  protected _client: CDPSession;
-  _remoteObject: Protocol.Runtime.RemoteObject;
-  _disposed = false;
-
-  constructor(context: ExecutionContext, client: CDPSession, remoteObject: Protocol.Runtime.RemoteObject) {
-    this._context = context;
-    this._client = client;
-    this._remoteObject = remoteObject;
-  }
-
-  executionContext(): ExecutionContext {
-    return this._context;
-  }
-
-  evaluate: types.EvaluateOn<JSHandle> = (pageFunction, ...args) => {
-    return this.executionContext().evaluate(pageFunction, this, ...args);
-  }
-
-  evaluateHandle: types.EvaluateHandleOn<JSHandle> = (pageFunction, ...args) => {
-    return this.executionContext().evaluateHandle(pageFunction, this, ...args);
-  }
-
-  async getProperty(propertyName: string): Promise<JSHandle | null> {
-    const objectHandle = await this.evaluateHandle((object, propertyName) => {
-      const result = {__proto__: null};
-      result[propertyName] = object[propertyName];
-      return result;
-    }, propertyName);
-    const properties = await objectHandle.getProperties();
-    const result = properties.get(propertyName) || null;
-    await objectHandle.dispose();
-    return result;
-  }
-
-  async getProperties(): Promise<Map<string, JSHandle>> {
-    const response = await this._client.send('Runtime.getProperties', {
-      objectId: this._remoteObject.objectId,
-      ownProperties: true
-    });
-    const result = new Map();
-    for (const property of response.result) {
-      if (!property.enumerable)
-        continue;
-      result.set(property.name, createJSHandle(this._context, property.value));
-    }
-    return result;
-  }
-
-  async jsonValue(): Promise<object | null> {
-    if (this._remoteObject.objectId) {
-      const response = await this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: 'function() { return this; }',
-        objectId: this._remoteObject.objectId,
-        returnByValue: true,
-        awaitPromise: true,
-      });
-      return valueFromRemoteObject(response.result);
-    }
-    return valueFromRemoteObject(this._remoteObject);
-  }
-
-  asElement(): ElementHandle | null {
-    return null;
-  }
-
-  async dispose() {
-    if (this._disposed)
-      return;
-    this._disposed = true;
-    await releaseObject(this._client, this._remoteObject);
-  }
-
-  toString(): string {
-    if (this._remoteObject.objectId) {
-      const type =  this._remoteObject.subtype || this._remoteObject.type;
-      return 'JSHandle@' + type;
-    }
-    return 'JSHandle:' + valueFromRemoteObject(this._remoteObject);
-  }
-}
-
-export class ElementHandle extends JSHandle {
+export class ElementHandle extends js.JSHandle<ElementHandle, Response> {
+  private _client: CDPSession;
+  private _remoteObject: Protocol.Runtime.RemoteObject;
   private _page: Page;
   private _frameManager: FrameManager;
 
   constructor(context: ExecutionContext, client: CDPSession, remoteObject: Protocol.Runtime.RemoteObject, page: Page, frameManager: FrameManager) {
-    super(context, client, remoteObject);
+    super(context);
     this._client = client;
     this._remoteObject = remoteObject;
     this._page = page;
     this._frameManager = frameManager;
+    markJSHandle(this, remoteObject);
   }
 
   asElement(): ElementHandle | null {

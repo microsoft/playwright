@@ -26,11 +26,11 @@ import { TimeoutSettings } from './TimeoutSettings';
 const readFileAsync = helper.promisify(fs.readFile);
 
 type WorldType = 'main' | 'utility';
-type World<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Response>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle, Response>, Response> = {
-  contextPromise: Promise<js.ExecutionContext<JSHandle, ElementHandle, Response>>;
-  contextResolveCallback: (c: js.ExecutionContext<JSHandle, ElementHandle, Response>) => void;
-  context: js.ExecutionContext<JSHandle, ElementHandle, Response> | null;
-  waitTasks: Set<WaitTask<JSHandle, ElementHandle, Response>>;
+type World<ElementHandle extends types.ElementHandle<ElementHandle, Response>, Response> = {
+  contextPromise: Promise<js.ExecutionContext<ElementHandle, Response>>;
+  contextResolveCallback: (c: js.ExecutionContext<ElementHandle, Response>) => void;
+  context: js.ExecutionContext<ElementHandle, Response> | null;
+  waitTasks: Set<WaitTask<ElementHandle, Response>>;
 };
 
 export type NavigateOptions = {
@@ -42,24 +42,24 @@ export type GotoOptions = NavigateOptions & {
   referer?: string,
 };
 
-export interface FrameDelegate<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Response>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle, Response>, Response> {
+export interface FrameDelegate<ElementHandle extends types.ElementHandle<ElementHandle, Response>, Response> {
   timeoutSettings(): TimeoutSettings;
-  navigateFrame(frame: Frame<JSHandle, ElementHandle, Response>, url: string, options?: GotoOptions): Promise<Response | null>;
-  waitForFrameNavigation(frame: Frame<JSHandle, ElementHandle, Response>, options?: NavigateOptions): Promise<Response | null>;
-  setFrameContent(frame: Frame<JSHandle, ElementHandle, Response>, html: string, options?: NavigateOptions): Promise<void>;
-  adoptElementHandle(elementHandle: ElementHandle, context: js.ExecutionContext<JSHandle, ElementHandle, Response>): Promise<ElementHandle>;
+  navigateFrame(frame: Frame<ElementHandle, Response>, url: string, options?: GotoOptions): Promise<Response | null>;
+  waitForFrameNavigation(frame: Frame<ElementHandle, Response>, options?: NavigateOptions): Promise<Response | null>;
+  setFrameContent(frame: Frame<ElementHandle, Response>, html: string, options?: NavigateOptions): Promise<void>;
+  adoptElementHandle(elementHandle: ElementHandle, context: js.ExecutionContext<ElementHandle, Response>): Promise<ElementHandle>;
 }
 
-export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Response>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle, Response>, Response> {
-  _delegate: FrameDelegate<JSHandle, ElementHandle, Response>;
-  private _parentFrame: Frame<JSHandle, ElementHandle, Response>;
+export class Frame<ElementHandle extends types.ElementHandle<ElementHandle, Response>, Response> {
+  _delegate: FrameDelegate<ElementHandle, Response>;
+  private _parentFrame: Frame<ElementHandle, Response>;
   private _url = '';
   private _detached = false;
-  private _worlds = new Map<WorldType, World<JSHandle, ElementHandle, Response>>();
-  private _childFrames = new Set<Frame<JSHandle, ElementHandle, Response>>();
+  private _worlds = new Map<WorldType, World<ElementHandle, Response>>();
+  private _childFrames = new Set<Frame<ElementHandle, Response>>();
   private _name: string;
 
-  constructor(delegate: FrameDelegate<JSHandle, ElementHandle, Response>, parentFrame: Frame<JSHandle, ElementHandle, Response> | null) {
+  constructor(delegate: FrameDelegate<ElementHandle, Response>, parentFrame: Frame<ElementHandle, Response> | null) {
     this._delegate = delegate;
     this._parentFrame = parentFrame;
 
@@ -80,28 +80,28 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
     return this._delegate.waitForFrameNavigation(this, options);
   }
 
-  _mainContext(): Promise<js.ExecutionContext<JSHandle, ElementHandle, Response>> {
+  _mainContext(): Promise<js.ExecutionContext<ElementHandle, Response>> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
     return this._worlds.get('main').contextPromise;
   }
 
-  _utilityContext(): Promise<js.ExecutionContext<JSHandle, ElementHandle, Response>> {
+  _utilityContext(): Promise<js.ExecutionContext<ElementHandle, Response>> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
     return this._worlds.get('utility').contextPromise;
   }
 
-  executionContext(): Promise<js.ExecutionContext<JSHandle, ElementHandle, Response>> {
+  executionContext(): Promise<js.ExecutionContext<ElementHandle, Response>> {
     return this._mainContext();
   }
 
-  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandle<js.JSHandle<ElementHandle, Response>> = async (pageFunction, ...args) => {
     const context = await this._mainContext();
     return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
+  evaluate: types.Evaluate<js.JSHandle<ElementHandle, Response>> = async (pageFunction, ...args) => {
     const context = await this._mainContext();
     return context.evaluate(pageFunction, ...args as any);
   }
@@ -118,13 +118,13 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
     return document.$x(expression);
   }
 
-  $eval: types.$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
+  $eval: types.$Eval<js.JSHandle<ElementHandle, Response>> = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval<JSHandle> = async (selector, pageFunction, ...args) => {
+  $$eval: types.$$Eval<js.JSHandle<ElementHandle, Response>> = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$$eval(selector, pageFunction, ...args as any);
@@ -160,11 +160,11 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
     return this._url;
   }
 
-  parentFrame(): Frame<JSHandle, ElementHandle, Response> | null {
+  parentFrame(): Frame<ElementHandle, Response> | null {
     return this._parentFrame;
   }
 
-  childFrames(): Frame<JSHandle, ElementHandle, Response>[] {
+  childFrames(): Frame<ElementHandle, Response>[] {
     return Array.from(this._childFrames);
   }
 
@@ -368,7 +368,7 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
     await handle.dispose();
   }
 
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<JSHandle | null> {
+  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle<ElementHandle, Response> | null> {
     const xPathPattern = '//';
 
     if (helper.isString(selectorOrFunctionOrTimeout)) {
@@ -415,7 +415,7 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
   waitForFunction(
     pageFunction: Function | string,
     options: { polling?: string | number; timeout?: number; } = {},
-    ...args): Promise<JSHandle> {
+    ...args): Promise<js.JSHandle<ElementHandle, Response>> {
     const {
       polling = 'raf',
       timeout = this._delegate.timeoutSettings().timeout(),
@@ -451,7 +451,7 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
     this._parentFrame = null;
   }
 
-  private _scheduleWaitTask(params: WaitTaskParams, world: World<JSHandle, ElementHandle, Response>): Promise<JSHandle> {
+  private _scheduleWaitTask(params: WaitTaskParams, world: World<ElementHandle, Response>): Promise<js.JSHandle<ElementHandle, Response>> {
     const task = new WaitTask(params, () => world.waitTasks.delete(task));
     world.waitTasks.add(task);
     if (world.context)
@@ -459,7 +459,7 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
     return task.promise;
   }
 
-  private _setContext(worldType: WorldType, context: js.ExecutionContext<JSHandle, ElementHandle, Response> | null) {
+  private _setContext(worldType: WorldType, context: js.ExecutionContext<ElementHandle, Response> | null) {
     const world = this._worlds.get(worldType);
     world.context = context;
     if (context) {
@@ -473,7 +473,7 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
     }
   }
 
-  _contextCreated(worldType: WorldType, context: js.ExecutionContext<JSHandle, ElementHandle, Response>) {
+  _contextCreated(worldType: WorldType, context: js.ExecutionContext<ElementHandle, Response>) {
     const world = this._worlds.get(worldType);
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
@@ -482,14 +482,14 @@ export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Resp
       this._setContext(worldType, context);
   }
 
-  _contextDestroyed(context: js.ExecutionContext<JSHandle, ElementHandle, Response>) {
+  _contextDestroyed(context: js.ExecutionContext<ElementHandle, Response>) {
     for (const [worldType, world] of this._worlds) {
       if (world.context === context)
         this._setContext(worldType, null);
     }
   }
 
-  private async _adoptElementHandle(elementHandle: ElementHandle, context: js.ExecutionContext<JSHandle, ElementHandle, Response>, dispose: boolean): Promise<ElementHandle> {
+  private async _adoptElementHandle(elementHandle: ElementHandle, context: js.ExecutionContext<ElementHandle, Response>, dispose: boolean): Promise<ElementHandle> {
     if (elementHandle.executionContext() === context)
       return elementHandle;
     const handle = this._delegate.adoptElementHandle(elementHandle, context);

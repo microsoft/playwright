@@ -20,9 +20,9 @@ import { Page } from './Page';
 import {RegisteredListener, helper, assert} from '../helper';
 import {TimeoutError} from '../Errors';
 import {EventEmitter} from 'events';
-import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
+import { JSHandle, ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
 import {NavigationWatchdog, NextNavigationWatchdog} from './NavigationWatchdog';
-import { JSHandle, ElementHandle } from './JSHandle';
+import { ElementHandle } from './JSHandle';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { Response } from './NetworkManager';
 import * as frames from '../frames';
@@ -43,9 +43,9 @@ type FrameData = {
   firedEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<JSHandle, ElementHandle, Response>;
+export type Frame = frames.Frame<ElementHandle, Response>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle, Response> {
   _session: JugglerSession;
   _page: Page;
   _networkManager: any;

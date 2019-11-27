@@ -15,12 +15,12 @@ export type WaitTaskParams = {
   args: any[];
 };
 
-export class WaitTask<JSHandle extends types.JSHandle<JSHandle, ElementHandle, Response>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle, Response>, Response> {
-  readonly promise: Promise<JSHandle>;
+export class WaitTask<ElementHandle extends types.ElementHandle<ElementHandle, Response>, Response> {
+  readonly promise: Promise<js.JSHandle<ElementHandle, Response>>;
   private _cleanup: () => void;
   private _params: WaitTaskParams & { predicateBody: string };
   private _runCount: number;
-  private _resolve: (result: JSHandle) => void;
+  private _resolve: (result: js.JSHandle<ElementHandle, Response>) => void;
   private _reject: (reason: Error) => void;
   private _timeoutTimer: NodeJS.Timer;
   private _terminated: boolean;
@@ -39,7 +39,7 @@ export class WaitTask<JSHandle extends types.JSHandle<JSHandle, ElementHandle, R
     };
     this._cleanup = cleanup;
     this._runCount = 0;
-    this.promise = new Promise<JSHandle>((resolve, reject) => {
+    this.promise = new Promise<js.JSHandle<ElementHandle, Response>>((resolve, reject) => {
       this._resolve = resolve;
       this._reject = reject;
     });
@@ -57,9 +57,9 @@ export class WaitTask<JSHandle extends types.JSHandle<JSHandle, ElementHandle, R
     this._doCleanup();
   }
 
-  async rerun(context: js.ExecutionContext<JSHandle, ElementHandle, Response>) {
+  async rerun(context: js.ExecutionContext<ElementHandle, Response>) {
     const runCount = ++this._runCount;
-    let success: JSHandle | null = null;
+    let success: js.JSHandle<ElementHandle, Response> | null = null;
     let error = null;
     try {
       success = await context.evaluateHandle(waitForPredicatePageFunction, this._params.predicateBody, this._params.polling, this._params.timeout, ...this._params.args);
