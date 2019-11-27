@@ -19,7 +19,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(WEBKIT)('Page.Events.Dialog', function() {
+  describe('Page.Events.Dialog', function() {
     it('should fire', async({page, server}) => {
       page.on('dialog', dialog => {
         expect(dialog.type()).toBe('alert');
@@ -45,6 +45,20 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       });
       const result = await page.evaluate(() => prompt('question?'));
       expect(result).toBe(null);
+    });
+    it('should accept the confirm prompt', async({page, server}) => {
+      page.on('dialog', dialog => {
+        dialog.accept();
+      });
+      const result = await page.evaluate(() => confirm('boolean?'));
+      expect(result).toBe(true);
+    });
+    it('should dismiss the confirm prompt', async({page, server}) => {
+      page.on('dialog', dialog => {
+        dialog.dismiss();
+      });
+      const result = await page.evaluate(() => confirm('boolean?'));
+      expect(result).toBe(false);
     });
   });
 };

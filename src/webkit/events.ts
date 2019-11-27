@@ -19,6 +19,7 @@ export const Events = {
   Page: {
     Close: 'close',
     Console: 'console',
+    Dialog: 'dialog',
     DOMContentLoaded: 'domcontentloaded',
     Request: 'request',
     Response: 'response',

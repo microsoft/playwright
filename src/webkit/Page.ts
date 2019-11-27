@@ -34,6 +34,7 @@ import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
 import * as types from '../types';
+import { Dialog, DialogType } from './Dialog';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -94,6 +95,7 @@ export class Page extends EventEmitter {
     return Promise.all([
       this._frameManager.initialize(),
       this._session.send('Console.enable'),
+      this._session.send('Dialog.enable'),
     ]);
   }
 
@@ -105,7 +107,23 @@ export class Page extends EventEmitter {
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this.emit(Events.Page.Load)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this.emit(Events.Page.DOMContentLoaded)),
+      helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event))
     ];
+  }
+
+  _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
+    let dialogType = null;
+    if (event.type === 'alert')
+      dialogType = DialogType.Alert;
+    else if (event.type === 'confirm')
+      dialogType = DialogType.Confirm;
+    else if (event.type === 'prompt')
+      dialogType = DialogType.Prompt;
+    else if (event.type === 'beforeunload')
+      dialogType = DialogType.BeforeUnload;
+    assert(dialogType, 'Unknown javascript dialog type: ' + event.type);
+    const dialog = new Dialog(this._session, dialogType, event.message, event.defaultPrompt);
+    this.emit(Events.Page.Dialog, dialog);
   }
 
   _setTarget(newTarget: Target) {
