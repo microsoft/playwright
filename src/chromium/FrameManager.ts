@@ -19,13 +19,14 @@ import { EventEmitter } from 'events';
 import { assert, debugError } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
-import { EVALUATION_SCRIPT_URL, ExecutionContext } from './ExecutionContext';
+import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate, ExecutionContext } from './ExecutionContext';
 import * as frames from '../frames';
+import * as js from '../javascript';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import { ElementHandle, JSHandle } from './JSHandle';
+import { ElementHandle, JSHandle, createJSHandle } from './JSHandle';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -44,9 +45,9 @@ type FrameData = {
   lifecycleEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<JSHandle, ElementHandle, ExecutionContext, Response>;
+export type Frame = frames.Frame<JSHandle, ElementHandle, Response>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, ExecutionContext, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, Response> {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
@@ -186,7 +187,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<J
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: elementHandle._remoteObject.objectId,
     });
-    return context._adoptBackendNodeId(nodeInfo.node.backendNodeId);
+    return (context._delegate as ExecutionContextDelegate).adoptBackendNodeId(context, nodeInfo.node.backendNodeId);
   }
 
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
@@ -328,7 +329,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<J
     const frame = this._frames.get(frameId) || null;
     if (contextPayload.auxData && contextPayload.auxData['type'] === 'isolated')
       this._isolatedWorlds.add(contextPayload.name);
-    const context: ExecutionContext = new ExecutionContext(this._client, contextPayload, frame);
+    const context: ExecutionContext = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload), frame);
     if (frame) {
       if (contextPayload.auxData && !!contextPayload.auxData['isDefault'])
         frame._contextCreated('main', context);

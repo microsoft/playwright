@@ -20,11 +20,13 @@ import { Page } from './Page';
 import {RegisteredListener, helper, assert} from '../helper';
 import {TimeoutError} from '../Errors';
 import {EventEmitter} from 'events';
-import {ExecutionContext} from './ExecutionContext';
+import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
 import {NavigationWatchdog, NextNavigationWatchdog} from './NavigationWatchdog';
 import { JSHandle, ElementHandle } from './JSHandle';
 import { TimeoutSettings } from '../TimeoutSettings';
+import { Response } from './NetworkManager';
 import * as frames from '../frames';
+import * as js from '../javascript';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -41,9 +43,9 @@ type FrameData = {
   firedEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<JSHandle, ElementHandle, ExecutionContext, Response>;
+export type Frame = frames.Frame<JSHandle, ElementHandle, Response>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, ExecutionContext, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, Response> {
   _session: JugglerSession;
   _page: Page;
   _networkManager: any;
@@ -80,7 +82,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<J
   _onExecutionContextCreated({executionContextId, auxData}) {
     const frameId = auxData ? auxData.frameId : null;
     const frame = this._frames.get(frameId) || null;
-    const context = new ExecutionContext(this._session, frame, executionContextId);
+    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, executionContextId), frame);
     if (frame) {
       frame._contextCreated('main', context);
       frame._contextCreated('utility', context);

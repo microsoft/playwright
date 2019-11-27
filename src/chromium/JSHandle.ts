@@ -20,12 +20,12 @@ import Injected from '../injected/injected';
 import * as input from '../input';
 import * as types from '../types';
 import { CDPSession } from './Connection';
-import { ExecutionContext } from './ExecutionContext';
 import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { releaseObject, valueFromRemoteObject } from './protocolHelper';
+import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -35,12 +35,13 @@ type Point = {
 };
 
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): JSHandle {
+  const delegate = context._delegate as ExecutionContextDelegate;
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
     const frameManager = frame._delegate as FrameManager;
-    return new ElementHandle(context, context._client, remoteObject, frameManager.page(), frameManager);
+    return new ElementHandle(context, delegate._client, remoteObject, frameManager.page(), frameManager);
   }
-  return new JSHandle(context, context._client, remoteObject);
+  return new JSHandle(context, delegate._client, remoteObject);
 }
 
 export class JSHandle {

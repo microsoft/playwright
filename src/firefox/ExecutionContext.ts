@@ -16,33 +16,42 @@
  */
 
 import {helper} from '../helper';
-import {JSHandle, createHandle, ElementHandle} from './JSHandle';
-import { Frame } from './FrameManager';
-import * as injectedSource from '../generated/injectedSource';
-import * as cssSelectorEngineSource from '../generated/cssSelectorEngineSource';
-import * as xpathSelectorEngineSource from '../generated/xpathSelectorEngineSource';
-import * as types from '../types';
+import { JSHandle, createHandle, ElementHandle } from './JSHandle';
+import { Response } from './NetworkManager';
+import * as js from '../javascript';
+import { JugglerSession } from './Connection';
 
-export class ExecutionContext {
-  _session: any;
-  _frame: Frame;
+export type ExecutionContext = js.ExecutionContext<JSHandle, ElementHandle, Response>;
+
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSHandle, ElementHandle, Response> {
+  _session: JugglerSession;
   _executionContextId: string;
-  private _injectedPromise: Promise<JSHandle> | null = null;
-  private _documentPromise: Promise<ElementHandle> | null = null;
 
-  constructor(session: any, frame: Frame | null, executionContextId: string) {
+  constructor(session: JugglerSession, executionContextId: string) {
     this._session = session;
-    this._frame = frame;
     this._executionContextId = executionContextId;
   }
 
-  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+  async evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
+    if (returnByValue) {
+      try {
+        const handle = await this.evaluate(context, false /* returnByValue */, pageFunction, ...args as any);
+        const result = await handle.jsonValue();
+        await handle.dispose();
+        return result;
+      } catch (e) {
+        if (e.message.includes('cyclic object value') || e.message.includes('Object is not serializable'))
+          return undefined;
+        throw e;
+      }
+    }
+
     if (helper.isString(pageFunction)) {
       const payload = await this._session.send('Runtime.evaluate', {
         expression: pageFunction.trim(),
         executionContextId: this._executionContextId,
       }).catch(rewriteError);
-      return createHandle(this, payload.result, payload.exceptionDetails);
+      return createHandle(context, payload.result, payload.exceptionDetails);
     }
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
@@ -66,7 +75,7 @@ export class ExecutionContext {
     }
     const protocolArgs = args.map(arg => {
       if (arg instanceof JSHandle) {
-        if (arg._context !== this)
+        if (arg._context !== context)
           throw new Error('JSHandles can be evaluated only in the context they were created!');
         if (arg._disposed)
           throw new Error('JSHandle is disposed!');
@@ -95,48 +104,12 @@ export class ExecutionContext {
       throw err;
     }
     const payload = await callFunctionPromise.catch(rewriteError);
-    return createHandle(this, payload.result, payload.exceptionDetails);
+    return createHandle(context, payload.result, payload.exceptionDetails);
 
     function rewriteError(error) {
       if (error.message.includes('Failed to find execution context with id'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
       throw error;
     }
-  }
-
-  frame() {
-    return this._frame;
-  }
-
-  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
-    try {
-      const handle = await this.evaluateHandle(pageFunction, ...args as any);
-      const result = await handle.jsonValue();
-      await handle.dispose();
-      return result;
-    } catch (e) {
-      if (e.message.includes('cyclic object value') || e.message.includes('Object is not serializable'))
-        return undefined;
-      throw e;
-    }
-  }
-
-  _injected(): Promise<JSHandle> {
-    if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
-      const source = `
-        new (${injectedSource.source})([
-          ${engineSources.join(',\n')}
-        ])
-      `;
-      this._injectedPromise = this.evaluateHandle(source);
-    }
-    return this._injectedPromise;
-  }
-
-  _document(): Promise<ElementHandle> {
-    if (!this._documentPromise)
-      this._documentPromise = this.evaluateHandle('document').then(handle => handle.asElement()!);
-    return this._documentPromise;
   }
 }

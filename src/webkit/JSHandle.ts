@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import { assert, debugError, helper } from '../helper';
 import * as input from '../input';
 import { TargetSession } from './Connection';
-import { ExecutionContext } from './ExecutionContext';
+import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
@@ -32,12 +32,13 @@ type SelectorRoot = Element | ShadowRoot | Document;
 const writeFileAsync = helper.promisify(fs.writeFile);
 
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
+  const delegate = context._delegate as ExecutionContextDelegate;
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
     const frameManager = frame._delegate as FrameManager;
-    return new ElementHandle(context, context._session, remoteObject, frameManager.page(), frameManager);
+    return new ElementHandle(context, delegate._session, remoteObject, frameManager.page(), frameManager);
   }
-  return new JSHandle(context, context._session, remoteObject);
+  return new JSHandle(context, delegate._session, remoteObject);
 }
 
 export class JSHandle {

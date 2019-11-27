@@ -20,9 +20,9 @@ import Injected from '../injected/injected';
 import * as input from '../input';
 import * as types from '../types';
 import { JugglerSession } from './Connection';
-import { ExecutionContext } from './ExecutionContext';
 import { Frame, FrameManager } from './FrameManager';
 import { Page } from './Page';
+import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -38,8 +38,9 @@ export class JSHandle {
 
   constructor(context: ExecutionContext, payload: any) {
     this._context = context;
-    this._session = this._context._session;
-    this._executionContextId = this._context._executionContextId;
+    const delegate = context._delegate as ExecutionContextDelegate;
+    this._session = delegate._session;
+    this._executionContextId = delegate._executionContextId;
     this._objectId = payload.objectId;
     this._type = payload.type;
     this._subtype = payload.subtype;

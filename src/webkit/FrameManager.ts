@@ -21,12 +21,13 @@ import { Events } from './events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { TargetSession } from './Connection';
-import { ExecutionContext } from './ExecutionContext';
+import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
 import { ElementHandle, JSHandle } from './JSHandle';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import * as frames from '../frames';
+import * as js from '../javascript';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
@@ -41,9 +42,9 @@ type FrameData = {
   id: string,
 };
 
-export type Frame = frames.Frame<JSHandle, ElementHandle, ExecutionContext, Response>;
+export type Frame = frames.Frame<JSHandle, ElementHandle, Response>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, ExecutionContext, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, Response> {
   _session: TargetSession;
   _page: Page;
   _networkManager: NetworkManager;
@@ -102,7 +103,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<J
 
   disconnectFromTarget() {
     for (const context of this._contextIdToContext.values()) {
-      context._dispose();
+      (context._delegate as ExecutionContextDelegate)._dispose();
       context.frame()._contextDestroyed(context);
     }
     // this._mainFrame = null;
@@ -198,7 +199,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<J
     frame._navigated(framePayload.url, framePayload.name);
     for (const context of this._contextIdToContext.values()) {
       if (context.frame() === frame) {
-        context._dispose();
+        (context._delegate as ExecutionContextDelegate)._dispose();
         frame._contextDestroyed(context);
       }
     }
@@ -230,7 +231,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<J
     const frame = this._frames.get(frameId) || null;
     if (!frame)
       return;
-    const context: ExecutionContext = new ExecutionContext(this._session, contextPayload, frame);
+    const context: ExecutionContext = new js.ExecutionContext(new ExecutionContextDelegate(this._session, contextPayload), frame);
     if (frame) {
       frame._contextCreated('main', context);
       frame._contextCreated('utility', context);

@@ -6,7 +6,7 @@ export { Keyboard, Mouse } from '../input';
 export { Browser, BrowserContext, Target } from './Browser';
 export { BrowserFetcher } from './BrowserFetcher';
 export { Dialog } from './Dialog';
-export { ExecutionContext } from './ExecutionContext';
+export { ExecutionContext } from '../javascript';
 export { Accessibility } from './features/accessibility';
 export { Interception } from './features/interception';
 export { Permissions } from './features/permissions';
