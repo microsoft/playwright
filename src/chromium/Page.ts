@@ -377,7 +377,7 @@ export class Page extends EventEmitter {
     this.emit(Events.Page.Console, message);
   }
 
-  _onDialog(event) {
+  _onDialog(event : Protocol.Page.javascriptDialogOpeningPayload) {
     let dialogType = null;
     if (event.type === 'alert')
       dialogType = DialogType.Alert;
