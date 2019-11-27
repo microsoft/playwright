@@ -31,7 +31,7 @@ export type JSHandle = js.JSHandle<ElementHandle>;
 export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle> {
   private _globalObjectId?: string;
   _session: TargetSession;
-  private _contextId: number;
+  _contextId: number;
   private _contextDestroyedCallback: () => void;
   private _executionContextDestroyedPromise: Promise<unknown>;
 
@@ -157,7 +157,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<Ele
         functionDeclaration: functionText + '\n' + suffix + '\n',
         // TODO(yurys): support executionContextId in WebKit
         objectId: thisObjectId,
-        arguments: serializableArgs.map(convertArgument.bind(this)),
+        arguments: serializableArgs.map((arg: any) => this._convertArgument(arg)),
         returnByValue: false,
         emulateUserGesture: true
       });
@@ -216,21 +216,6 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<Ele
       }
       return valueFromRemoteObject(response.result);
     }).catch(rewriteError);
-
-    function convertArgument(this: ExecutionContext, arg: JSHandle | any) : Protocol.Runtime.CallArgument{
-      const objectHandle = arg && (arg instanceof js.JSHandle) ? arg : null;
-      if (objectHandle) {
-        if (objectHandle._context !== this)
-          throw new Error('JSHandles can be evaluated only in the context they were created!');
-        if (objectHandle._disposed)
-          throw new Error('JSHandle is disposed!');
-        const remoteObject = toRemoteObject(arg);
-        if (!remoteObject.objectId)
-          return { value: valueFromRemoteObject(remoteObject) };
-        return { objectId: remoteObject.objectId };
-      }
-      return { value: arg };
-    }
 
     function unserializableToString(arg) {
       if (Object.is(arg, -0))
@@ -332,6 +317,22 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<Ele
     }
     return 'JSHandle:' + valueFromRemoteObject(object);
   }
+
+  private _convertArgument(arg: JSHandle | any) : Protocol.Runtime.CallArgument {
+    const objectHandle = arg && (arg instanceof js.JSHandle) ? arg : null;
+    if (objectHandle) {
+      if (objectHandle._context._delegate !== this)
+        throw new Error('JSHandles can be evaluated only in the context they were created!');
+      if (objectHandle._disposed)
+        throw new Error('JSHandle is disposed!');
+      const remoteObject = toRemoteObject(arg);
+      if (!remoteObject.objectId)
+        return { value: valueFromRemoteObject(remoteObject) };
+      return { objectId: remoteObject.objectId };
+    }
+    return { value: arg };
+  }
+
 }
 
 const remoteObjectSymbol = Symbol('RemoteObject');
