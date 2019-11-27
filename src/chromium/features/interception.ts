@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { NetworkManager, Request } from '../NetworkManager';
+import { NetworkManager, Request, toInterceptableRequest } from '../NetworkManager';
 
 export class Interception {
   private _networkManager: NetworkManager;
@@ -19,15 +19,15 @@ export class Interception {
   }
 
   async continue(request: Request, overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
-    return request._continue(overrides);
+    return toInterceptableRequest(request).continue(overrides);
   }
 
   async fulfill(request: Request, response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
-    return request._fulfill(response);
+    return toInterceptableRequest(request).fulfill(response);
   }
 
   async abort(request: Request, errorCode: string = 'failed') {
-    return request._abort(errorCode);
+    return toInterceptableRequest(request).abort(errorCode);
   }
 
   setOfflineMode(enabled: boolean) {

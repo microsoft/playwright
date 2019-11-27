@@ -26,7 +26,6 @@ import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { JSHandle, ExecutionContext, ExecutionContextDelegate, markJSHandle } from './ExecutionContext';
-import { Response } from './NetworkManager';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -47,7 +46,7 @@ export function createJSHandle(context: ExecutionContext, remoteObject: Protocol
   return handle;
 }
 
-export class ElementHandle extends js.JSHandle<ElementHandle, Response> {
+export class ElementHandle extends js.JSHandle<ElementHandle> {
   private _client: CDPSession;
   private _remoteObject: Protocol.Runtime.RemoteObject;
   private _page: Page;

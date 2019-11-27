@@ -17,14 +17,13 @@
 
 import {helper, debugError} from '../helper';
 import { createHandle, ElementHandle } from './JSHandle';
-import { Response } from './NetworkManager';
 import * as js from '../javascript';
 import { JugglerSession } from './Connection';
 
-export type ExecutionContext = js.ExecutionContext<ElementHandle, Response>;
-export type JSHandle = js.JSHandle<ElementHandle, Response>;
+export type ExecutionContext = js.ExecutionContext<ElementHandle>;
+export type JSHandle = js.JSHandle<ElementHandle>;
 
-export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle, Response> {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle> {
   _session: JugglerSession;
   _executionContextId: string;
 

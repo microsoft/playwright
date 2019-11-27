@@ -21,6 +21,8 @@ import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
 import { assert, debugError, helper } from '../helper';
 import { Protocol } from './protocol';
+import * as network from '../network';
+import { ElementHandle } from './JSHandle';
 
 export const NetworkManagerEvents = {
   Request: Symbol('Events.NetworkManager.Request'),
@@ -29,13 +31,16 @@ export const NetworkManagerEvents = {
   RequestFinished: Symbol('Events.NetworkManager.RequestFinished'),
 };
 
+export type Request = network.Request<ElementHandle>;
+export type Response = network.Response<ElementHandle>;
+
 export class NetworkManager extends EventEmitter {
   private _client: CDPSession;
   private _ignoreHTTPSErrors: boolean;
   private _frameManager: FrameManager;
-  private _requestIdToRequest = new Map<string, Request>();
+  private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private _extraHTTPHeaders: {[key: string]: string} = {};
+  private _extraHTTPHeaders: network.Headers = {};
   private _offline = false;
   private _credentials: {username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
@@ -69,7 +74,7 @@ export class NetworkManager extends EventEmitter {
     await this._updateProtocolRequestInterception();
   }
 
-  async setExtraHTTPHeaders(extraHTTPHeaders: { [s: string]: string; }) {
+  async setExtraHTTPHeaders(extraHTTPHeaders: network.Headers) {
     this._extraHTTPHeaders = {};
     for (const key of Object.keys(extraHTTPHeaders)) {
       const value = extraHTTPHeaders[key];
@@ -79,7 +84,7 @@ export class NetworkManager extends EventEmitter {
     await this._client.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
   }
 
-  extraHTTPHeaders(): { [s: string]: string; } {
+  extraHTTPHeaders(): network.Headers {
     return Object.assign({}, this._extraHTTPHeaders);
   }
 
@@ -187,31 +192,38 @@ export class NetworkManager extends EventEmitter {
   }
 
   _onRequest(event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
-    let redirectChain = [];
+    let redirectChain: Request[] = [];
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
         this._handleRequestRedirect(request, event.redirectResponse);
-        redirectChain = request._redirectChain;
+        redirectChain = request.request._redirectChain;
       }
     }
     const frame = event.frameId ? this._frameManager.frame(event.frameId) : null;
-    const request = new Request(this._client, frame, interceptionId, this._userRequestInterceptionEnabled, event, redirectChain);
+    const request = new InterceptableRequest(this._client, frame, interceptionId, this._userRequestInterceptionEnabled, event, redirectChain);
     this._requestIdToRequest.set(event.requestId, request);
-    this.emit(NetworkManagerEvents.Request, request);
+    this.emit(NetworkManagerEvents.Request, request.request);
   }
 
+  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): Response {
+    const remoteAddress: network.RemoteAddress = { ip: responsePayload.remoteIPAddress, port: responsePayload.remotePort };
+    const getResponseBody = async () => {
+      const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
+      return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+    };
+    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), remoteAddress, getResponseBody);
+  }
 
-  _handleRequestRedirect(request: Request, responsePayload: Protocol.Network.Response) {
-    const response = new Response(this._client, request, responsePayload);
-    request._response = response;
-    request._redirectChain.push(request);
-    response._bodyLoadedPromiseFulfill.call(null, new Error('Response body is unavailable for redirect responses'));
+  _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
+    const response = this._createResponse(request, responsePayload);
+    request.request._redirectChain.push(request.request);
+    response._bodyLoaded(new Error('Response body is unavailable for redirect responses'));
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
     this.emit(NetworkManagerEvents.Response, response);
-    this.emit(NetworkManagerEvents.RequestFinished, request);
+    this.emit(NetworkManagerEvents.RequestFinished, request.request);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -219,8 +231,7 @@ export class NetworkManager extends EventEmitter {
     // FileUpload sends a response without a matching request.
     if (!request)
       return;
-    const response = new Response(this._client, request, event.response);
-    request._response = response;
+    const response = this._createResponse(request, event.response);
     this.emit(NetworkManagerEvents.Response, response);
   }
 
@@ -233,11 +244,11 @@ export class NetworkManager extends EventEmitter {
 
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
-    if (request.response())
-      request.response()._bodyLoadedPromiseFulfill.call(null);
+    if (request.request.response())
+      request.request.response()._bodyLoaded();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
-    this.emit(NetworkManagerEvents.RequestFinished, request);
+    this.emit(NetworkManagerEvents.RequestFinished, request.request);
   }
 
   _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
@@ -246,97 +257,44 @@ export class NetworkManager extends EventEmitter {
     // @see https://crbug.com/750469
     if (!request)
       return;
-    request._failureText = event.errorText;
-    const response = request.response();
+    request.request._setFailureText(event.errorText);
+    const response = request.request.response();
     if (response)
-      response._bodyLoadedPromiseFulfill.call(null);
+      response._bodyLoaded();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
-    this.emit(NetworkManagerEvents.RequestFailed, request);
+    this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }
 }
 
-export class Request {
-  _response: Response | null = null;
-  _redirectChain: Request[];
+const interceptableRequestSymbol = Symbol('interceptableRequest');
+
+export function toInterceptableRequest(request: network.Request<ElementHandle>): InterceptableRequest {
+  return (request as any)[interceptableRequestSymbol];
+}
+
+class InterceptableRequest {
+  readonly request: Request;
   _requestId: string;
   _interceptionId: string;
   private _client: CDPSession;
-  private _isNavigationRequest: boolean;
   private _allowInterception: boolean;
   private _interceptionHandled = false;
-  _failureText: string | null = null;
-  private _url: string;
-  private _resourceType: string;
-  private _method: string;
-  private _postData: string;
-  private _headers: {[key: string]: string} = {};
-  private _frame: Frame;
 
   constructor(client: CDPSession, frame: Frame | null, interceptionId: string, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: Request[]) {
     this._client = client;
     this._requestId = event.requestId;
-    this._isNavigationRequest = event.requestId === event.loaderId && event.type === 'Document';
     this._interceptionId = interceptionId;
     this._allowInterception = allowInterception;
 
-    this._url = event.request.url;
-    this._resourceType = event.type.toLowerCase();
-    this._method = event.request.method;
-    this._postData = event.request.postData;
-    this._frame = frame;
-    this._redirectChain = redirectChain;
-    for (const key of Object.keys(event.request.headers))
-      this._headers[key.toLowerCase()] = event.request.headers[key];
+    this.request = new network.Request(frame, redirectChain, event.requestId === event.loaderId && event.type === 'Document',
+        event.request.url, event.type.toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
+    (this.request as any)[interceptableRequestSymbol] = this;
   }
 
-  url(): string {
-    return this._url;
-  }
-
-  resourceType(): string {
-    return this._resourceType;
-  }
-
-  method(): string {
-    return this._method;
-  }
-
-  postData(): string | undefined {
-    return this._postData;
-  }
-
-  headers(): {[key: string]: string} {
-    return this._headers;
-  }
-
-  response(): Response | null {
-    return this._response;
-  }
-
-  frame(): Frame | null {
-    return this._frame;
-  }
-
-  isNavigationRequest(): boolean {
-    return this._isNavigationRequest;
-  }
-
-  redirectChain(): Request[] {
-    return this._redirectChain.slice();
-  }
-
-  failure(): { errorText: string; } | null {
-    if (!this._failureText)
-      return null;
-    return {
-      errorText: this._failureText
-    };
-  }
-
-  async _continue(overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
+  async continue(overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
     // Request interception is not supported for data: urls.
-    if (this._url.startsWith('data:'))
+    if (this.request.url().startsWith('data:'))
       return;
     assert(this._allowInterception, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
@@ -360,9 +318,9 @@ export class Request {
     });
   }
 
-  async _fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
+  async fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
     // Mocking responses for dataURL requests is not currently supported.
-    if (this._url.startsWith('data:'))
+    if (this.request.url().startsWith('data:'))
       return;
     assert(this._allowInterception, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
@@ -393,9 +351,9 @@ export class Request {
     });
   }
 
-  async _abort(errorCode: string = 'failed') {
+  async abort(errorCode: string = 'failed') {
     // Request interception is not supported for data: urls.
-    if (this._url.startsWith('data:'))
+    if (this.request.url().startsWith('data:'))
       return;
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
@@ -430,100 +388,19 @@ const errorReasons = {
   'failed': 'Failed',
 };
 
-export class Response {
-  _bodyLoadedPromiseFulfill: any;
-  private _client: CDPSession;
-  private _request: Request;
-  private _contentPromise: Promise<Buffer> | null = null;
-  private _bodyLoadedPromise: Promise<Error | null>;
-  private _remoteAddress: { ip: string; port: number; };
-  private _status: number;
-  private _statusText: string;
-  private _url: string;
-  private _headers: {[key: string]: string} = {};
-
-  constructor(client: CDPSession, request: Request, responsePayload: Protocol.Network.Response) {
-    this._client = client;
-    this._request = request;
-
-    this._bodyLoadedPromise = new Promise(fulfill => {
-      this._bodyLoadedPromiseFulfill = fulfill;
-    });
-
-    this._remoteAddress = {
-      ip: responsePayload.remoteIPAddress,
-      port: responsePayload.remotePort,
-    };
-    this._status = responsePayload.status;
-    this._statusText = responsePayload.statusText;
-    this._url = request.url();
-    for (const key of Object.keys(responsePayload.headers))
-      this._headers[key.toLowerCase()] = responsePayload.headers[key];
-  }
-
-  remoteAddress(): { ip: string; port: number; } {
-    return this._remoteAddress;
-  }
-
-  url(): string {
-    return this._url;
-  }
-
-  ok(): boolean {
-    return this._status === 0 || (this._status >= 200 && this._status <= 299);
-  }
-
-  status(): number {
-    return this._status;
-  }
-
-  statusText(): string {
-    return this._statusText;
-  }
-
-  headers(): object {
-    return this._headers;
-  }
-
-  buffer(): Promise<Buffer> {
-    if (!this._contentPromise) {
-      this._contentPromise = this._bodyLoadedPromise.then(async error => {
-        if (error)
-          throw error;
-        const response = await this._client.send('Network.getResponseBody', {
-          requestId: this._request._requestId
-        });
-        return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
-      });
-    }
-    return this._contentPromise;
-  }
-
-  async text(): Promise<string> {
-    const content = await this.buffer();
-    return content.toString('utf8');
-  }
-
-  async json(): Promise<object> {
-    const content = await this.text();
-    return JSON.parse(content);
-  }
-
-  request(): Request {
-    return this._request;
-  }
-
-  frame(): Frame | null {
-    return this._request.frame();
-  }
-}
-
 function headersArray(headers: { [s: string]: string; }): { name: string; value: string; }[] {
   const result = [];
   for (const name in headers) {
     if (!Object.is(headers[name], undefined))
       result.push({name, value: headers[name] + ''});
   }
+  return result;
+}
+
+function headersObject(headers: Protocol.Network.Headers): network.Headers {
+  const result: network.Headers = {};
+  for (const key of Object.keys(headers))
+    result[key.toLowerCase()] = headers[key];
   return result;
 }
 
