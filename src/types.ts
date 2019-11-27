@@ -15,18 +15,12 @@ export type $$Eval<Handle> = <Args extends any[], R>(selector: string, pageFunct
 export type EvaluateOn<Handle> = <Args extends any[], R>(pageFunction: PageFunctionOn<any, Args, R>, ...args: Boxed<Args, Handle>) => Promise<R>;
 export type EvaluateHandleOn<Handle> = <Args extends any[]>(pageFunction: PageFunctionOn<any, Args>, ...args: Boxed<Args, Handle>) => Promise<Handle>;
 
-export interface JSHandle<Handle extends JSHandle<Handle, EHandle, Response>, EHandle extends ElementHandle<Handle, EHandle, Response>, Response> {
-  executionContext(): js.ExecutionContext<Handle, EHandle, Response>;
-  dispose(): Promise<void>;
-  asElement(): EHandle | null;
-}
-
-export interface ElementHandle<Handle extends JSHandle<Handle, EHandle, Response>, EHandle extends ElementHandle<Handle, EHandle, Response>, Response> extends JSHandle<Handle, EHandle, Response> {
+export interface ElementHandle<EHandle extends ElementHandle<EHandle, Response>, Response> extends js.JSHandle<EHandle, Response> {
   $(selector: string): Promise<EHandle | null>;
   $x(expression: string): Promise<EHandle[]>;
   $$(selector: string): Promise<EHandle[]>;
-  $eval: $Eval<Handle>;
-  $$eval: $$Eval<Handle>;
+  $eval: $Eval<js.JSHandle<EHandle, Response>>;
+  $$eval: $$Eval<js.JSHandle<EHandle, Response>>;
   click(options?: input.ClickOptions): Promise<void>;
   dblclick(options?: input.MultiClickOptions): Promise<void>;
   tripleclick(options?: input.MultiClickOptions): Promise<void>;

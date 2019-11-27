@@ -19,134 +19,31 @@ import { assert, debugError, helper } from '../helper';
 import Injected from '../injected/injected';
 import * as input from '../input';
 import * as types from '../types';
+import * as js from '../javascript';
 import { JugglerSession } from './Connection';
 import { Frame, FrameManager } from './FrameManager';
 import { Page } from './Page';
-import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
+import { JSHandle, ExecutionContext, markJSHandle, ExecutionContextDelegate } from './ExecutionContext';
+import { Response } from './NetworkManager';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
-export class JSHandle {
-  _context: ExecutionContext;
-  protected _session: JugglerSession;
-  private _executionContextId: string;
-  protected _objectId: string;
-  private _type: string;
-  private _subtype: string;
-  _disposed: boolean;
-  _protocolValue: { unserializableValue: any; value: any; objectId: any; };
-
-  constructor(context: ExecutionContext, payload: any) {
-    this._context = context;
-    const delegate = context._delegate as ExecutionContextDelegate;
-    this._session = delegate._session;
-    this._executionContextId = delegate._executionContextId;
-    this._objectId = payload.objectId;
-    this._type = payload.type;
-    this._subtype = payload.subtype;
-    this._disposed = false;
-    this._protocolValue = {
-      unserializableValue: payload.unserializableValue,
-      value: payload.value,
-      objectId: payload.objectId,
-    };
-  }
-
-  executionContext(): ExecutionContext {
-    return this._context;
-  }
-
-  evaluate: types.EvaluateOn<JSHandle> = (pageFunction, ...args) => {
-    return this.executionContext().evaluate(pageFunction, this, ...args);
-  }
-
-  evaluateHandle: types.EvaluateHandleOn<JSHandle> = (pageFunction, ...args) => {
-    return this.executionContext().evaluateHandle(pageFunction, this, ...args);
-  }
-
-  toString(): string {
-    if (this._objectId)
-      return 'JSHandle@' + (this._subtype || this._type);
-    return 'JSHandle:' + this._deserializeValue(this._protocolValue);
-  }
-
-  async getProperty(propertyName: string): Promise<JSHandle | null> {
-    const objectHandle = await this._context.evaluateHandle((object, propertyName) => {
-      const result = {__proto__: null};
-      result[propertyName] = object[propertyName];
-      return result;
-    }, this, propertyName);
-    const properties = await objectHandle.getProperties();
-    const result = properties.get(propertyName) || null;
-    await objectHandle.dispose();
-    return result;
-  }
-
-  async getProperties(): Promise<Map<string, JSHandle>> {
-    const response = await this._session.send('Runtime.getObjectProperties', {
-      executionContextId: this._executionContextId,
-      objectId: this._objectId,
-    });
-    const result = new Map();
-    for (const property of response.properties)
-      result.set(property.name, createHandle(this._context, property.value, null));
-
-    return result;
-  }
-
-  _deserializeValue({unserializableValue, value}) {
-    if (unserializableValue === 'Infinity')
-      return Infinity;
-    if (unserializableValue === '-Infinity')
-      return -Infinity;
-    if (unserializableValue === '-0')
-      return -0;
-    if (unserializableValue === 'NaN')
-      return NaN;
-    return value;
-  }
-
-  async jsonValue() {
-    if (!this._objectId)
-      return this._deserializeValue(this._protocolValue);
-    const simpleValue = await this._session.send('Runtime.callFunction', {
-      executionContextId: this._executionContextId,
-      returnByValue: true,
-      functionDeclaration: (e => e).toString(),
-      args: [this._protocolValue],
-    });
-    return this._deserializeValue(simpleValue.result);
-  }
-
-  asElement(): ElementHandle | null {
-    return null;
-  }
-
-  async dispose() {
-    if (!this._objectId)
-      return;
-    this._disposed = true;
-    await this._session.send('Runtime.disposeObject', {
-      executionContextId: this._executionContextId,
-      objectId: this._objectId,
-    }).catch(error => {
-      // Exceptions might happen in case of a page been navigated or closed.
-      // Swallow these since they are harmless and we don't leak anything in this case.
-      debugError(error);
-    });
-  }
-}
-
-export class ElementHandle extends JSHandle {
+export class ElementHandle extends js.JSHandle<ElementHandle, Response> {
   _frame: Frame;
   _frameId: string;
   _page: Page;
+  _context: ExecutionContext;
+  protected _session: JugglerSession;
+  protected _objectId: string;
 
-  constructor(frame: Frame, frameId: string, page: Page, context: ExecutionContext, payload: any) {
-    super(context, payload);
+  constructor(frame: Frame, frameId: string, page: Page, session: JugglerSession, context: ExecutionContext, payload: any) {
+    super(context);
     this._frame = frame;
     this._frameId = frameId;
     this._page = page;
+    this._session = session;
+    this._objectId = payload.objectId;
+    markJSHandle(this, payload);
   }
 
   async contentFrame(): Promise<Frame | null> {
@@ -392,9 +289,12 @@ export function createHandle(context: ExecutionContext, result: any, exceptionDe
     const frameManager = frame._delegate as FrameManager;
     const frameId = frameManager._frameData(frame).frameId;
     const page = frameManager._page;
-    return new ElementHandle(frame, frameId, page, context, result);
+    const session = (context._delegate as ExecutionContextDelegate)._session;
+    return new ElementHandle(frame, frameId, page, session, context, result);
   }
-  return new JSHandle(context, result);
+  const handle = new js.JSHandle(context);
+  markJSHandle(handle, result);
+  return handle;
 }
 
 function computeQuadArea(quad) {

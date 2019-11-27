@@ -17,8 +17,8 @@
 
 import { CDPSession } from './Connection';
 import { helper } from '../helper';
-import { valueFromRemoteObject, getExceptionMessage } from './protocolHelper';
-import { createJSHandle, JSHandle, ElementHandle } from './JSHandle';
+import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './protocolHelper';
+import { createJSHandle, ElementHandle } from './JSHandle';
 import { Protocol } from './protocol';
 import { Response } from './NetworkManager';
 import * as js from '../javascript';
@@ -26,9 +26,10 @@ import * as js from '../javascript';
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export type ExecutionContext = js.ExecutionContext<JSHandle, ElementHandle, Response>;
+export type ExecutionContext = js.ExecutionContext<ElementHandle, Response>;
+export type JSHandle = js.JSHandle<ElementHandle, Response>;
 
-export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSHandle, ElementHandle, Response> {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle, Response> {
   _client: CDPSession;
   _contextId: number;
 
@@ -107,17 +108,18 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSH
         return { unserializableValue: '-Infinity' };
       if (Object.is(arg, NaN))
         return { unserializableValue: 'NaN' };
-      const objectHandle = arg && (arg instanceof JSHandle) ? arg : null;
+      const objectHandle = arg && (arg instanceof js.JSHandle) ? arg : null;
       if (objectHandle) {
         if (objectHandle._context !== context)
           throw new Error('JSHandles can be evaluated only in the context they were created!');
         if (objectHandle._disposed)
           throw new Error('JSHandle is disposed!');
-        if (objectHandle._remoteObject.unserializableValue)
-          return { unserializableValue: objectHandle._remoteObject.unserializableValue };
-        if (!objectHandle._remoteObject.objectId)
-          return { value: objectHandle._remoteObject.value };
-        return { objectId: objectHandle._remoteObject.objectId };
+        const remoteObject = toRemoteObject(objectHandle);
+        if (remoteObject.unserializableValue)
+          return { unserializableValue: remoteObject.unserializableValue };
+        if (!remoteObject.objectId)
+          return { value: remoteObject.value };
+        return { objectId: remoteObject.objectId };
       }
       return { value: arg };
     }
@@ -141,4 +143,55 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<JSH
     });
     return createJSHandle(context, object) as ElementHandle;
   }
+
+  async getProperties(handle: JSHandle): Promise<Map<string, JSHandle>> {
+    const response = await this._client.send('Runtime.getProperties', {
+      objectId: toRemoteObject(handle).objectId,
+      ownProperties: true
+    });
+    const result = new Map();
+    for (const property of response.result) {
+      if (!property.enumerable)
+        continue;
+      result.set(property.name, createJSHandle(handle.executionContext(), property.value));
+    }
+    return result;
+  }
+
+  async releaseHandle(handle: JSHandle): Promise<void> {
+    await releaseObject(this._client, toRemoteObject(handle));
+  }
+
+  async handleJSONValue(handle: JSHandle): Promise<any> {
+    const remoteObject = toRemoteObject(handle);
+    if (remoteObject.objectId) {
+      const response = await this._client.send('Runtime.callFunctionOn', {
+        functionDeclaration: 'function() { return this; }',
+        objectId: remoteObject.objectId,
+        returnByValue: true,
+        awaitPromise: true,
+      });
+      return valueFromRemoteObject(response.result);
+    }
+    return valueFromRemoteObject(remoteObject);
+  }
+
+  handleToString(handle: JSHandle): string {
+    const object = toRemoteObject(handle);
+    if (object.objectId) {
+      const type =  object.subtype || object.type;
+      return 'JSHandle@' + type;
+    }
+    return 'JSHandle:' + valueFromRemoteObject(object);
+  }
+}
+
+const remoteObjectSymbol = Symbol('RemoteObject');
+
+export function toRemoteObject(handle: JSHandle): Protocol.Runtime.RemoteObject {
+  return (handle as any)[remoteObjectSymbol];
+}
+
+export function markJSHandle(handle: JSHandle, remoteObject: Protocol.Runtime.RemoteObject) {
+  (handle as any)[remoteObjectSymbol] = remoteObject;
 }
