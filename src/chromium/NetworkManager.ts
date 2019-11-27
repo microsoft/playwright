@@ -17,7 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { CDPSession } from './Connection';
-import { Frame } from './Frame';
+import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
 import { assert, debugError, helper } from '../helper';
 import { Protocol } from './protocol';

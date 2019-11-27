@@ -15,24 +15,21 @@
  * limitations under the License.
  */
 
-import * as types from '../types';
+import * as types from './types';
 import * as fs from 'fs';
-import { helper, assert } from '../helper';
-import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
-import { ExecutionContext } from './ExecutionContext';
-import { ElementHandle, JSHandle } from './JSHandle';
-import { Response } from './NetworkManager';
-import { waitForSelectorOrXPath, WaitTaskParams, WaitTask } from '../waitTask';
-import { TimeoutSettings } from '../TimeoutSettings';
+import { helper, assert } from './helper';
+import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from './input';
+import { waitForSelectorOrXPath, WaitTaskParams, WaitTask } from './waitTask';
+import { TimeoutSettings } from './TimeoutSettings';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
 type WorldType = 'main' | 'utility';
-type World = {
+type World<JSHandle extends types.JSHandle<JSHandle, ElementHandle>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle>, ExecutionContext> = {
   contextPromise: Promise<ExecutionContext>;
   contextResolveCallback: (c: ExecutionContext) => void;
   context: ExecutionContext | null;
-  waitTasks: Set<WaitTask<JSHandle>>;
+  waitTasks: Set<WaitTask<JSHandle, ElementHandle>>;
 };
 
 export type NavigateOptions = {
@@ -44,24 +41,24 @@ export type GotoOptions = NavigateOptions & {
   referer?: string,
 };
 
-export interface FrameDelegate {
+export interface FrameDelegate<JSHandle extends types.JSHandle<JSHandle, ElementHandle>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle>, ExecutionContext extends types.ExecutionContext<JSHandle, ElementHandle>, Response> {
   timeoutSettings(): TimeoutSettings;
-  navigateFrame(frame: Frame, url: string, options?: GotoOptions): Promise<Response | null>;
-  waitForFrameNavigation(frame: Frame, options?: NavigateOptions): Promise<Response | null>;
-  setFrameContent(frame: Frame, html: string, options?: NavigateOptions): Promise<void>;
+  navigateFrame(frame: Frame<JSHandle, ElementHandle, ExecutionContext, Response>, url: string, options?: GotoOptions): Promise<Response | null>;
+  waitForFrameNavigation(frame: Frame<JSHandle, ElementHandle, ExecutionContext, Response>, options?: NavigateOptions): Promise<Response | null>;
+  setFrameContent(frame: Frame<JSHandle, ElementHandle, ExecutionContext, Response>, html: string, options?: NavigateOptions): Promise<void>;
   adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle>;
 }
 
-export class Frame {
-  _delegate: FrameDelegate;
-  private _parentFrame: Frame;
+export class Frame<JSHandle extends types.JSHandle<JSHandle, ElementHandle>, ElementHandle extends types.ElementHandle<JSHandle, ElementHandle>, ExecutionContext extends types.ExecutionContext<JSHandle, ElementHandle>, Response> {
+  _delegate: FrameDelegate<JSHandle, ElementHandle, ExecutionContext, Response>;
+  private _parentFrame: Frame<JSHandle, ElementHandle, ExecutionContext, Response>;
   private _url = '';
   private _detached = false;
-  private _worlds = new Map<WorldType, World>();
-  private _childFrames = new Set<Frame>();
+  private _worlds = new Map<WorldType, World<JSHandle, ElementHandle, ExecutionContext>>();
+  private _childFrames = new Set<Frame<JSHandle, ElementHandle, ExecutionContext, Response>>();
   private _name: string;
 
-  constructor(delegate: FrameDelegate, parentFrame: Frame | null) {
+  constructor(delegate: FrameDelegate<JSHandle, ElementHandle, ExecutionContext, Response>, parentFrame: Frame<JSHandle, ElementHandle, ExecutionContext, Response> | null) {
     this._delegate = delegate;
     this._parentFrame = parentFrame;
 
@@ -162,11 +159,11 @@ export class Frame {
     return this._url;
   }
 
-  parentFrame(): Frame | null {
+  parentFrame(): Frame<JSHandle, ElementHandle, ExecutionContext, Response> | null {
     return this._parentFrame;
   }
 
-  childFrames(): Frame[] {
+  childFrames(): Frame<JSHandle, ElementHandle, ExecutionContext, Response>[] {
     return Array.from(this._childFrames);
   }
 
@@ -351,7 +348,11 @@ export class Frame {
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     const utilityContext = await this._utilityContext();
-    const adoptedValues = await Promise.all(values.map(async value => value instanceof ElementHandle ? this._adoptElementHandle(value, utilityContext, false /* dispose */) : value));
+    const adoptedValues = await Promise.all(values.map(async value => {
+      if (typeof value === 'object' && (value as any).asElement && (value as any).asElement() === value)
+        return this._adoptElementHandle(value as ElementHandle, utilityContext, false /* dispose */);
+      return value;
+    }));
     const result = await handle.select(...adoptedValues);
     await handle.dispose();
     return result;
@@ -372,8 +373,8 @@ export class Frame {
     if (helper.isString(selectorOrFunctionOrTimeout)) {
       const string = selectorOrFunctionOrTimeout as string;
       if (string.startsWith(xPathPattern))
-        return this.waitForXPath(string, options);
-      return this.waitForSelector(string, options);
+        return this.waitForXPath(string, options) as any;
+      return this.waitForSelector(string, options) as any;
     }
     if (helper.isNumber(selectorOrFunctionOrTimeout))
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout as number));
@@ -449,7 +450,7 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleWaitTask(params: WaitTaskParams, world: World): Promise<JSHandle> {
+  private _scheduleWaitTask(params: WaitTaskParams, world: World<JSHandle, ElementHandle, ExecutionContext>): Promise<JSHandle> {
     const task = new WaitTask(params, () => world.waitTasks.delete(task));
     world.waitTasks.add(task);
     if (world.context)

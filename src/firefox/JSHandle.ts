@@ -21,7 +21,8 @@ import * as input from '../input';
 import * as types from '../types';
 import { JugglerSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
-import { Frame } from './FrameManager';
+import { Frame, FrameManager } from './FrameManager';
+import { Page } from './Page';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -137,11 +138,14 @@ export class JSHandle {
 
 export class ElementHandle extends JSHandle {
   _frame: Frame;
-  _frameId: any;
-  constructor(frame: Frame, context: ExecutionContext, payload: any) {
+  _frameId: string;
+  _page: Page;
+
+  constructor(frame: Frame, frameId: string, page: Page, context: ExecutionContext, payload: any) {
     super(context, payload);
     this._frame = frame;
-    this._frameId = frame._frameId;
+    this._frameId = frameId;
+    this._page = page;
   }
 
   async contentFrame(): Promise<Frame | null> {
@@ -151,7 +155,7 @@ export class ElementHandle extends JSHandle {
     });
     if (!frameId)
       return null;
-    const frame = this._frame._frameManager.frame(frameId);
+    const frame = this._page._frameManager.frame(frameId);
     return frame;
   }
 
@@ -177,7 +181,7 @@ export class ElementHandle extends JSHandle {
     assert(clip.height, 'Node has 0 height.');
     await this._scrollIntoViewIfNeeded();
 
-    return await this._frame._page.screenshot(Object.assign({}, options, {
+    return await this._page.screenshot(Object.assign({}, options, {
       clip: {
         x: clip.x,
         y: clip.y,
@@ -294,19 +298,19 @@ export class ElementHandle extends JSHandle {
   async click(options?: input.ClickOptions) {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
-    await this._frame._page.mouse.click(x, y, options);
+    await this._page.mouse.click(x, y, options);
   }
 
   async dblclick(options?: input.MultiClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
-    await this._frame._page.mouse.dblclick(x, y, options);
+    await this._page.mouse.dblclick(x, y, options);
   }
 
   async tripleclick(options?: input.MultiClickOptions): Promise<void> {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
-    await this._frame._page.mouse.tripleclick(x, y, options);
+    await this._page.mouse.tripleclick(x, y, options);
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
@@ -318,7 +322,7 @@ export class ElementHandle extends JSHandle {
   async hover() {
     await this._scrollIntoViewIfNeeded();
     const {x, y} = await this._clickablePoint();
-    await this._frame._page.mouse.move(x, y);
+    await this._page.mouse.move(x, y);
   }
 
   async focus() {
@@ -327,12 +331,12 @@ export class ElementHandle extends JSHandle {
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {
     await this.focus();
-    await this._frame._page.keyboard.type(text, options);
+    await this._page.keyboard.type(text, options);
   }
 
   async press(key: string, options: { delay?: number; } | undefined) {
     await this.focus();
-    await this._frame._page.keyboard.press(key, options);
+    await this._page.keyboard.press(key, options);
   }
 
   async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
@@ -356,7 +360,7 @@ export class ElementHandle extends JSHandle {
     if (error)
       throw new Error(error);
     await this.focus();
-    await this._frame._page.keyboard.sendCharacters(value);
+    await this._page.keyboard.sendCharacters(value);
   }
 
   async _clickablePoint(): Promise<{ x: number; y: number; }> {
@@ -376,14 +380,20 @@ export class ElementHandle extends JSHandle {
 }
 
 export function createHandle(context: ExecutionContext, result: any, exceptionDetails?: any) {
-  const frame = context.frame();
   if (exceptionDetails) {
     if (exceptionDetails.value)
       throw new Error('Evaluation failed: ' + JSON.stringify(exceptionDetails.value));
     else
       throw new Error('Evaluation failed: ' + exceptionDetails.text + '\n' + exceptionDetails.stack);
   }
-  return result.subtype === 'node' ? new ElementHandle(frame, context, result) : new JSHandle(context, result);
+  if (result.subtype === 'node') {
+    const frame = context.frame();
+    const frameManager = frame._delegate as FrameManager;
+    const frameId = frameManager._frameData(frame).frameId;
+    const page = frameManager._page;
+    return new ElementHandle(frame, frameId, page, context, result);
+  }
+  return new JSHandle(context, result);
 }
 
 function computeQuadArea(quad) {

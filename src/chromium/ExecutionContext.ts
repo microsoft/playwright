@@ -16,7 +16,7 @@
  */
 
 import { CDPSession } from './Connection';
-import { Frame } from './Frame';
+import { Frame } from './FrameManager';
 import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage } from './protocolHelper';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
@@ -29,7 +29,7 @@ import * as types from '../types';
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export class ExecutionContext implements types.EvaluationContext<JSHandle> {
+export class ExecutionContext {
   _client: CDPSession;
   private _frame: Frame;
   private _injectedPromise: Promise<JSHandle> | null = null;

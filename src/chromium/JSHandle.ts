@@ -21,7 +21,7 @@ import * as input from '../input';
 import * as types from '../types';
 import { CDPSession } from './Connection';
 import { ExecutionContext } from './ExecutionContext';
-import { Frame } from './Frame';
+import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';

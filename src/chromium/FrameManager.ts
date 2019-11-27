@@ -20,12 +20,12 @@ import { assert, debugError } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
 import { EVALUATION_SCRIPT_URL, ExecutionContext } from './ExecutionContext';
-import { Frame, NavigateOptions, FrameDelegate } from './Frame';
+import * as frames from '../frames';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import { ElementHandle } from './JSHandle';
+import { ElementHandle, JSHandle } from './JSHandle';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -44,7 +44,9 @@ type FrameData = {
   lifecycleEvents: Set<string>,
 };
 
-export class FrameManager extends EventEmitter implements FrameDelegate {
+export type Frame = frames.Frame<JSHandle, ElementHandle, ExecutionContext, Response>;
+
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<JSHandle, ElementHandle, ExecutionContext, Response> {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
@@ -153,7 +155,7 @@ export class FrameManager extends EventEmitter implements FrameDelegate {
     return watcher.navigationResponse();
   }
 
-  async setFrameContent(frame: Frame, html: string, options: NavigateOptions = {}) {
+  async setFrameContent(frame: Frame, html: string, options: frames.NavigateOptions = {}) {
     const {
       waitUntil = ['load'],
       timeout = this._timeoutSettings.navigationTimeout(),
@@ -242,7 +244,7 @@ export class FrameManager extends EventEmitter implements FrameDelegate {
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new Frame(this, parentFrame);
+    const frame = new frames.Frame(this, parentFrame);
     const data: FrameData = {
       id: frameId,
       loaderId: '',
@@ -273,7 +275,7 @@ export class FrameManager extends EventEmitter implements FrameDelegate {
         data.id = framePayload.id;
       } else {
         // Initial main frame navigation.
-        frame = new Frame(this, null);
+        frame = new frames.Frame(this, null);
         const data: FrameData = {
           id: framePayload.id,
           loaderId: '',
