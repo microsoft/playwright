@@ -60,6 +60,7 @@ export class Page extends EventEmitter {
   private _disconnectPromise: Promise<Error> | undefined;
   private _sessionListeners: RegisteredListener[] = [];
   private _emulatedMediaType: string | undefined;
+  private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
   static async create(session: TargetSession, target: Target, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
     const page = new Page(session, target, screenshotTaskQueue);
@@ -97,6 +98,7 @@ export class Page extends EventEmitter {
       this._frameManager.initialize(),
       this._session.send('Console.enable'),
       this._session.send('Dialog.enable'),
+      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
     ]);
   }
 
@@ -108,7 +110,8 @@ export class Page extends EventEmitter {
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this.emit(Events.Page.Load)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this.emit(Events.Page.DOMContentLoaded)),
-      helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event))
+      helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
+      helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event))
     ];
   }
 
@@ -438,6 +441,32 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 
+  async waitForFileChooser(options: { timeout?: number; } = {}): Promise<FileChooser> {
+    const {
+      timeout = this._timeoutSettings.timeout(),
+    } = options;
+    let callback;
+    const promise = new Promise<FileChooser>(x => callback = x);
+    this._fileChooserInterceptors.add(callback);
+    return helper.waitWithTimeout<FileChooser>(promise, 'waiting for file chooser', timeout).catch(e => {
+      this._fileChooserInterceptors.delete(callback);
+      throw e;
+    });
+  }
+
+  async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
+    if (!this._fileChooserInterceptors.size)
+      return;
+    const context = await this._frameManager.frame(event.frameId)._utilityContext();
+    const handle = createJSHandle(context, event.element) as ElementHandle;
+    const interceptors = Array.from(this._fileChooserInterceptors);
+    this._fileChooserInterceptors.clear();
+    const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
+    const fileChooser = new FileChooser(handle, multiple);
+    for (const interceptor of interceptors)
+      interceptor.call(null, fileChooser);
+  }
+
   get mouse(): input.Mouse {
     return this._mouse;
   }
@@ -557,7 +586,28 @@ export class ConsoleMessage {
   }
 }
 
-type MediaFeature = {
-  name: string,
-  value: string
+export class FileChooser {
+  private _element: ElementHandle;
+  private _multiple: boolean;
+  private _handled = false;
+
+  constructor(element: ElementHandle, multiple: boolean) {
+    this._element = element;
+    this._multiple = multiple;
+  }
+
+  isMultiple(): boolean {
+    return this._multiple;
+  }
+
+  async accept(filePaths: string[]): Promise<any> {
+    assert(!this._handled, 'Cannot accept FileChooser which is already handled!');
+    this._handled = true;
+    await this._element.setInputFiles(...filePaths);
+  }
+
+  async cancel(): Promise<any> {
+    assert(!this._handled, 'Cannot cancel FileChooser which is already handled!');
+    this._handled = true;
+  }
 }
