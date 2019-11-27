@@ -20,10 +20,10 @@ import { TimeoutError } from '../Errors';
 import * as frames from '../frames';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { JugglerSession } from './Connection';
 import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
-import { ElementHandle } from './JSHandle';
 import { NavigationWatchdog, NextNavigationWatchdog } from './NavigationWatchdog';
 import { Page } from './Page';
 
@@ -42,9 +42,9 @@ type FrameData = {
   firedEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<ElementHandle>;
+export type Frame = frames.Frame;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _session: JugglerSession;
   _page: Page;
   _networkManager: any;
@@ -180,7 +180,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<E
     return this._timeoutSettings;
   }
 
-  async adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle> {
+  async adoptElementHandle(elementHandle: dom.ElementHandle, context: ExecutionContext): Promise<dom.ElementHandle> {
     assert(false, 'Multiple isolated worlds are not implemented');
     return elementHandle;
   }

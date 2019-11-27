@@ -20,10 +20,9 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { JugglerSession } from './Connection';
 import { FrameManager, Frame } from './FrameManager';
 import * as network from '../network';
-import { ElementHandle } from './JSHandle';
 
-export type Request = network.Request<ElementHandle>;
-export type Response = network.Response<ElementHandle>;
+export type Request = network.Request;
+export type Response = network.Response;
 
 export const NetworkManagerEvents = {
   RequestFailed: Symbol('NetworkManagerEvents.RequestFailed'),
@@ -166,7 +165,7 @@ const causeToResourceType = {
 
 const interceptableRequestSymbol = Symbol('interceptableRequest');
 
-export function toInterceptableRequest(request: network.Request<ElementHandle>): InterceptableRequest {
+export function toInterceptableRequest(request: network.Request): InterceptableRequest {
   return (request as any)[interceptableRequestSymbol];
 }
 

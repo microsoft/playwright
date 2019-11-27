@@ -26,7 +26,7 @@ import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { Frame, FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
-import { createJSHandle, ElementHandle } from './JSHandle';
+import { createJSHandle } from './JSHandle';
 import { JSHandle, toRemoteObject } from './ExecutionContext';
 import { NetworkManagerEvents, Response } from './NetworkManager';
 import { Protocol } from './protocol';
@@ -35,6 +35,7 @@ import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
 import * as types from '../types';
+import * as dom from '../dom';
 import { Dialog, DialogType } from './Dialog';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
@@ -219,7 +220,7 @@ export class Page extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async $(selector: string): Promise<ElementHandle | null> {
+  async $(selector: string): Promise<dom.ElementHandle | null> {
     return this.mainFrame().$(selector);
   }
 
@@ -236,19 +237,19 @@ export class Page extends EventEmitter {
     return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$(selector: string): Promise<ElementHandle[]> {
+  async $$(selector: string): Promise<dom.ElementHandle[]> {
     return this.mainFrame().$$(selector);
   }
 
-  async $x(expression: string): Promise<ElementHandle[]> {
+  async $x(expression: string): Promise<dom.ElementHandle[]> {
     return this.mainFrame().$x(expression);
   }
 
-  async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
+  async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<dom.ElementHandle> {
     return this.mainFrame().addScriptTag(options);
   }
 
-  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<dom.ElementHandle> {
     return this.mainFrame().addStyleTag(options);
   }
 
@@ -458,7 +459,7 @@ export class Page extends EventEmitter {
     if (!this._fileChooserInterceptors.size)
       return;
     const context = await this._frameManager.frame(event.frameId)._utilityContext();
-    const handle = createJSHandle(context, event.element) as ElementHandle;
+    const handle = createJSHandle(context, event.element) as dom.ElementHandle;
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
@@ -508,11 +509,11 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
-  waitForSelector(selector: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } = {}): Promise<ElementHandle | null> {
+  waitForSelector(selector: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } = {}): Promise<dom.ElementHandle | null> {
     return this.mainFrame().waitForSelector(selector, options);
   }
 
-  waitForXPath(xpath: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } = {}): Promise<ElementHandle | null> {
+  waitForXPath(xpath: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } = {}): Promise<dom.ElementHandle | null> {
     return this.mainFrame().waitForXPath(xpath, options);
   }
 
@@ -588,6 +589,6 @@ export class ConsoleMessage {
 }
 
 type FileChooser = {
-  element: ElementHandle,
+  element: dom.ElementHandle,
   multiple: boolean
 };

@@ -19,10 +19,10 @@ import { EventEmitter } from 'events';
 import * as frames from '../frames';
 import { assert, debugError } from '../helper';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
 import { EVALUATION_SCRIPT_URL, ExecutionContext, ExecutionContextDelegate, toRemoteObject } from './ExecutionContext';
-import { ElementHandle } from './JSHandle';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
@@ -45,9 +45,9 @@ type FrameData = {
   lifecycleEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<ElementHandle>;
+export type Frame = frames.Frame;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
@@ -183,7 +183,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<E
     return this._timeoutSettings;
   }
 
-  async adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle> {
+  async adoptElementHandle(elementHandle: dom.ElementHandle, context: ExecutionContext): Promise<dom.ElementHandle> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(elementHandle).objectId,
     });

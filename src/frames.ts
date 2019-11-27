@@ -18,6 +18,7 @@
 import * as types from './types';
 import * as fs from 'fs';
 import * as js from './javascript';
+import * as dom from './dom';
 import * as network from './network';
 import { helper, assert } from './helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from './input';
@@ -27,11 +28,11 @@ import { TimeoutSettings } from './TimeoutSettings';
 const readFileAsync = helper.promisify(fs.readFile);
 
 type WorldType = 'main' | 'utility';
-type World<ElementHandle extends types.ElementHandle<ElementHandle>> = {
-  contextPromise: Promise<js.ExecutionContext<ElementHandle>>;
-  contextResolveCallback: (c: js.ExecutionContext<ElementHandle>) => void;
-  context: js.ExecutionContext<ElementHandle> | null;
-  waitTasks: Set<WaitTask<ElementHandle>>;
+type World = {
+  contextPromise: Promise<js.ExecutionContext>;
+  contextResolveCallback: (c: js.ExecutionContext) => void;
+  context: js.ExecutionContext | null;
+  waitTasks: Set<WaitTask>;
 };
 
 export type NavigateOptions = {
@@ -43,24 +44,24 @@ export type GotoOptions = NavigateOptions & {
   referer?: string,
 };
 
-export interface FrameDelegate<ElementHandle extends types.ElementHandle<ElementHandle>> {
+export interface FrameDelegate {
   timeoutSettings(): TimeoutSettings;
-  navigateFrame(frame: Frame<ElementHandle>, url: string, options?: GotoOptions): Promise<network.Response<ElementHandle> | null>;
-  waitForFrameNavigation(frame: Frame<ElementHandle>, options?: NavigateOptions): Promise<network.Response<ElementHandle> | null>;
-  setFrameContent(frame: Frame<ElementHandle>, html: string, options?: NavigateOptions): Promise<void>;
-  adoptElementHandle(elementHandle: ElementHandle, context: js.ExecutionContext<ElementHandle>): Promise<ElementHandle>;
+  navigateFrame(frame: Frame, url: string, options?: GotoOptions): Promise<network.Response | null>;
+  waitForFrameNavigation(frame: Frame, options?: NavigateOptions): Promise<network.Response | null>;
+  setFrameContent(frame: Frame, html: string, options?: NavigateOptions): Promise<void>;
+  adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext): Promise<dom.ElementHandle>;
 }
 
-export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
-  _delegate: FrameDelegate<ElementHandle>;
-  private _parentFrame: Frame<ElementHandle>;
+export class Frame {
+  _delegate: FrameDelegate;
+  private _parentFrame: Frame;
   private _url = '';
   private _detached = false;
-  private _worlds = new Map<WorldType, World<ElementHandle>>();
-  private _childFrames = new Set<Frame<ElementHandle>>();
+  private _worlds = new Map<WorldType, World>();
+  private _childFrames = new Set<Frame>();
   private _name: string;
 
-  constructor(delegate: FrameDelegate<ElementHandle>, parentFrame: Frame<ElementHandle> | null) {
+  constructor(delegate: FrameDelegate, parentFrame: Frame | null) {
     this._delegate = delegate;
     this._parentFrame = parentFrame;
 
@@ -73,65 +74,65 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
       this._parentFrame._childFrames.add(this);
   }
 
-  goto(url: string, options?: GotoOptions): Promise<network.Response<ElementHandle> | null> {
+  goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
     return this._delegate.navigateFrame(this, url, options);
   }
 
-  waitForNavigation(options?: NavigateOptions): Promise<network.Response<ElementHandle> | null> {
+  waitForNavigation(options?: NavigateOptions): Promise<network.Response | null> {
     return this._delegate.waitForFrameNavigation(this, options);
   }
 
-  _mainContext(): Promise<js.ExecutionContext<ElementHandle>> {
+  _mainContext(): Promise<js.ExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
     return this._worlds.get('main').contextPromise;
   }
 
-  _utilityContext(): Promise<js.ExecutionContext<ElementHandle>> {
+  _utilityContext(): Promise<js.ExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
     return this._worlds.get('utility').contextPromise;
   }
 
-  executionContext(): Promise<js.ExecutionContext<ElementHandle>> {
+  executionContext(): Promise<js.ExecutionContext> {
     return this._mainContext();
   }
 
-  evaluateHandle: types.EvaluateHandle<js.JSHandle<ElementHandle>> = async (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandle<js.JSHandle> = async (pageFunction, ...args) => {
     const context = await this._mainContext();
     return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  evaluate: types.Evaluate<js.JSHandle<ElementHandle>> = async (pageFunction, ...args) => {
+  evaluate: types.Evaluate<js.JSHandle> = async (pageFunction, ...args) => {
     const context = await this._mainContext();
     return context.evaluate(pageFunction, ...args as any);
   }
 
-  async $(selector: string): Promise<ElementHandle | null> {
+  async $(selector: string): Promise<dom.ElementHandle | null> {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$(selector);
   }
 
-  async $x(expression: string): Promise<ElementHandle[]> {
+  async $x(expression: string): Promise<dom.ElementHandle[]> {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$x(expression);
   }
 
-  $eval: types.$Eval<js.JSHandle<ElementHandle>> = async (selector, pageFunction, ...args) => {
+  $eval: types.$Eval<js.JSHandle> = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval<js.JSHandle<ElementHandle>> = async (selector, pageFunction, ...args) => {
+  $$eval: types.$$Eval<js.JSHandle> = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$(selector: string): Promise<ElementHandle[]> {
+  async $$(selector: string): Promise<dom.ElementHandle[]> {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$$(selector);
@@ -161,11 +162,11 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
     return this._url;
   }
 
-  parentFrame(): Frame<ElementHandle> | null {
+  parentFrame(): Frame | null {
     return this._parentFrame;
   }
 
-  childFrames(): Frame<ElementHandle>[] {
+  childFrames(): Frame[] {
     return Array.from(this._childFrames);
   }
 
@@ -177,7 +178,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
       url?: string; path?: string;
       content?: string;
       type?: string;
-    }): Promise<ElementHandle> {
+    }): Promise<dom.ElementHandle> {
     const {
       url = null,
       path = null,
@@ -234,7 +235,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
     }
   }
 
-  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<dom.ElementHandle> {
     const {
       url = null,
       path = null,
@@ -344,15 +345,15 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
     await handle.dispose();
   }
 
-  async select(selector: string, ...values: (string | ElementHandle | SelectOption)[]): Promise<string[]> {
+  async select(selector: string, ...values: (string | dom.ElementHandle | SelectOption)[]): Promise<string[]> {
     const context = await this._utilityContext();
     const document = await context._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     const utilityContext = await this._utilityContext();
     const adoptedValues = await Promise.all(values.map(async value => {
-      if (typeof value === 'object' && (value as any).asElement && (value as any).asElement() === value)
-        return this._adoptElementHandle(value as ElementHandle, utilityContext, false /* dispose */);
+      if (value instanceof dom.ElementHandle)
+        return this._adoptElementHandle(value, utilityContext, false /* dispose */);
       return value;
     }));
     const result = await handle.select(...adoptedValues);
@@ -369,7 +370,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
     await handle.dispose();
   }
 
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle<ElementHandle> | null> {
+  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle | null> {
     const xPathPattern = '//';
 
     if (helper.isString(selectorOrFunctionOrTimeout)) {
@@ -388,7 +389,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
   async waitForSelector(selector: string, options: {
       visible?: boolean;
       hidden?: boolean;
-      timeout?: number; } | undefined): Promise<ElementHandle | null> {
+      timeout?: number; } | undefined): Promise<dom.ElementHandle | null> {
     const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._delegate.timeoutSettings().timeout(), ...options });
     const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
     if (!handle.asElement()) {
@@ -402,7 +403,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
   async waitForXPath(xpath: string, options: {
       visible?: boolean;
       hidden?: boolean;
-      timeout?: number; } | undefined): Promise<ElementHandle | null> {
+      timeout?: number; } | undefined): Promise<dom.ElementHandle | null> {
     const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._delegate.timeoutSettings().timeout(), ...options });
     const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
     if (!handle.asElement()) {
@@ -416,7 +417,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
   waitForFunction(
     pageFunction: Function | string,
     options: { polling?: string | number; timeout?: number; } = {},
-    ...args): Promise<js.JSHandle<ElementHandle>> {
+    ...args): Promise<js.JSHandle> {
     const {
       polling = 'raf',
       timeout = this._delegate.timeoutSettings().timeout(),
@@ -452,7 +453,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
     this._parentFrame = null;
   }
 
-  private _scheduleWaitTask(params: WaitTaskParams, world: World<ElementHandle>): Promise<js.JSHandle<ElementHandle>> {
+  private _scheduleWaitTask(params: WaitTaskParams, world: World): Promise<js.JSHandle> {
     const task = new WaitTask(params, () => world.waitTasks.delete(task));
     world.waitTasks.add(task);
     if (world.context)
@@ -460,7 +461,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
     return task.promise;
   }
 
-  private _setContext(worldType: WorldType, context: js.ExecutionContext<ElementHandle> | null) {
+  private _setContext(worldType: WorldType, context: js.ExecutionContext | null) {
     const world = this._worlds.get(worldType);
     world.context = context;
     if (context) {
@@ -474,7 +475,7 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
     }
   }
 
-  _contextCreated(worldType: WorldType, context: js.ExecutionContext<ElementHandle>) {
+  _contextCreated(worldType: WorldType, context: js.ExecutionContext) {
     const world = this._worlds.get(worldType);
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
@@ -483,14 +484,14 @@ export class Frame<ElementHandle extends types.ElementHandle<ElementHandle>> {
       this._setContext(worldType, context);
   }
 
-  _contextDestroyed(context: js.ExecutionContext<ElementHandle>) {
+  _contextDestroyed(context: js.ExecutionContext) {
     for (const [worldType, world] of this._worlds) {
       if (world.context === context)
         this._setContext(worldType, null);
     }
   }
 
-  private async _adoptElementHandle(elementHandle: ElementHandle, context: js.ExecutionContext<ElementHandle>, dispose: boolean): Promise<ElementHandle> {
+  private async _adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext, dispose: boolean): Promise<dom.ElementHandle> {
     if (elementHandle.executionContext() === context)
       return elementHandle;
     const handle = this._delegate.adoptElementHandle(elementHandle, context);

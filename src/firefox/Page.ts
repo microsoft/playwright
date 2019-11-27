@@ -12,11 +12,12 @@ import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
 import { FrameManager, FrameManagerEvents, normalizeWaitUntil, Frame } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { createHandle, ElementHandle } from './JSHandle';
+import { createHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import * as input from '../input';
 import * as types from '../types';
+import * as dom from '../dom';
 import { JSHandle, toPayload, deserializeValue } from './ExecutionContext';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
@@ -33,6 +34,7 @@ export class Page extends EventEmitter {
   private _pageBindings: Map<string, Function>;
   private _networkManager: NetworkManager;
   _frameManager: FrameManager;
+  _javascriptEnabled = true;
   private _eventListeners: RegisteredListener[];
   private _viewport: Viewport;
   private _disconnectPromise: Promise<Error>;
@@ -209,6 +211,7 @@ export class Page extends EventEmitter {
   }
 
   async setJavaScriptEnabled(enabled) {
+    this._javascriptEnabled = enabled;
     await this._session.send('Page.setJavascriptEnabled', {enabled});
   }
 
@@ -421,11 +424,11 @@ export class Page extends EventEmitter {
     return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
-  addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<ElementHandle> {
+  addScriptTag(options: { content?: string; path?: string; type?: string; url?: string; }): Promise<dom.ElementHandle> {
     return this.mainFrame().addScriptTag(options);
   }
 
-  addStyleTag(options: { content?: string; path?: string; url?: string; }): Promise<ElementHandle> {
+  addStyleTag(options: { content?: string; path?: string; url?: string; }): Promise<dom.ElementHandle> {
     return this.mainFrame().addStyleTag(options);
   }
 
@@ -469,11 +472,11 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 
-  waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<ElementHandle> {
+  waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<dom.ElementHandle> {
     return this._frameManager.mainFrame().waitForSelector(selector, options);
   }
 
-  waitForXPath(xpath: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<ElementHandle> {
+  waitForXPath(xpath: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<dom.ElementHandle> {
     return this._frameManager.mainFrame().waitForXPath(xpath, options);
   }
 
@@ -481,11 +484,11 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().title();
   }
 
-  $(selector: string): Promise<ElementHandle | null> {
+  $(selector: string): Promise<dom.ElementHandle | null> {
     return this._frameManager.mainFrame().$(selector);
   }
 
-  $$(selector: string): Promise<Array<ElementHandle>> {
+  $$(selector: string): Promise<Array<dom.ElementHandle>> {
     return this._frameManager.mainFrame().$$(selector);
   }
 
@@ -497,7 +500,7 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
-  $x(expression: string): Promise<Array<ElementHandle>> {
+  $x(expression: string): Promise<Array<dom.ElementHandle>> {
     return this._frameManager.mainFrame().$x(expression);
   }
 
@@ -548,7 +551,7 @@ export class Page extends EventEmitter {
     if (!this._fileChooserInterceptors.size)
       return;
     const context = this._frameManager.executionContextById(executionContextId);
-    const handle = createHandle(context, element) as ElementHandle;
+    const handle = createHandle(context, element) as dom.ElementHandle;
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
@@ -621,6 +624,6 @@ export type Viewport = {
 }
 
 type FileChooser = {
-  element: ElementHandle,
+  element: dom.ElementHandle,
   multiple: boolean
 };

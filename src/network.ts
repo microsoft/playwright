@@ -50,9 +50,9 @@ export function filterCookies(cookies: NetworkCookie[], urls: string[]) {
 
 export type Headers = { [key: string]: string };
 
-export class Request<ElementHandle extends types.ElementHandle<ElementHandle>> {
-  _response: Response<ElementHandle> | null = null;
-  _redirectChain: Request<ElementHandle>[];
+export class Request {
+  _response: Response | null = null;
+  _redirectChain: Request[];
   private _isNavigationRequest: boolean;
   private _failureText: string | null = null;
   private _url: string;
@@ -60,9 +60,9 @@ export class Request<ElementHandle extends types.ElementHandle<ElementHandle>> {
   private _method: string;
   private _postData: string;
   private _headers: Headers;
-  private _frame: frames.Frame<ElementHandle>;
+  private _frame: frames.Frame;
 
-  constructor(frame: frames.Frame<ElementHandle> | null, redirectChain: Request<ElementHandle>[], isNavigationRequest: boolean,
+  constructor(frame: frames.Frame | null, redirectChain: Request[], isNavigationRequest: boolean,
     url: string, resourceType: string, method: string, postData: string, headers: Headers) {
     this._frame = frame;
     this._redirectChain = redirectChain;
@@ -98,11 +98,11 @@ export class Request<ElementHandle extends types.ElementHandle<ElementHandle>> {
     return this._headers;
   }
 
-  response(): Response<ElementHandle> | null {
+  response(): Response | null {
     return this._response;
   }
 
-  frame(): frames.Frame<ElementHandle> | null {
+  frame(): frames.Frame | null {
     return this._frame;
   }
 
@@ -110,7 +110,7 @@ export class Request<ElementHandle extends types.ElementHandle<ElementHandle>> {
     return this._isNavigationRequest;
   }
 
-  redirectChain(): Request<ElementHandle>[] {
+  redirectChain(): Request[] {
     return this._redirectChain.slice();
   }
 
@@ -130,8 +130,8 @@ export type RemoteAddress = {
 
 type GetResponseBodyCallback = () => Promise<Buffer>;
 
-export class Response<ElementHandle extends types.ElementHandle<ElementHandle>> {
-  private _request: Request<ElementHandle>;
+export class Response {
+  private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
   private _bodyLoadedPromise: Promise<Error | null>;
   private _bodyLoadedPromiseFulfill: any;
@@ -142,7 +142,7 @@ export class Response<ElementHandle extends types.ElementHandle<ElementHandle>> 
   private _headers: Headers;
   private _getResponseBodyCallback: GetResponseBodyCallback;
 
-  constructor(request: Request<ElementHandle>, status: number, statusText: string, headers: Headers, remoteAddress: RemoteAddress, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: Headers, remoteAddress: RemoteAddress, getResponseBodyCallback: GetResponseBodyCallback) {
     this._request = request;
     this._request._response = this;
     this._status = status;
@@ -205,11 +205,11 @@ export class Response<ElementHandle extends types.ElementHandle<ElementHandle>> 
     return JSON.parse(content);
   }
 
-  request(): Request<ElementHandle> {
+  request(): Request {
     return this._request;
   }
 
-  frame(): frames.Frame<ElementHandle> | null {
+  frame(): frames.Frame | null {
     return this._request.frame();
   }
 }
