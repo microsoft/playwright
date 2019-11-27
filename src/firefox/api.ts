@@ -13,6 +13,6 @@ export { Permissions } from './features/permissions';
 export { Frame } from './FrameManager';
 export { ElementHandle } from './JSHandle';
 export { Request, Response } from '../network';
-export { ConsoleMessage, FileChooser, Page } from './Page';
+export { ConsoleMessage, Page } from './Page';
 export { Playwright } from './Playwright';
 

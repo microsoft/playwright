@@ -20,6 +20,7 @@ export const Events = {
     Close: 'close',
     Console: 'console',
     Dialog: 'dialog',
+    FileChooser: 'filechooser',
     DOMContentLoaded: 'domcontentloaded',
     Request: 'request',
     Response: 'response',

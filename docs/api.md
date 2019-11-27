@@ -71,6 +71,7 @@
   * [event: 'console'](#event-console)
   * [event: 'dialog'](#event-dialog)
   * [event: 'domcontentloaded'](#event-domcontentloaded)
+  * [event: 'filechooser'](#event-filechooser)
   * [event: 'frameattached'](#event-frameattached)
   * [event: 'framedetached'](#event-framedetached)
   * [event: 'framenavigated'](#event-framenavigated)
@@ -176,10 +177,6 @@
   * [chromium.startTracing(page, [options])](#chromiumstarttracingpage-options)
   * [chromium.stopTracing()](#chromiumstoptracing)
   * [chromium.wsEndpoint()](#chromiumwsendpoint)
-- [class: FileChooser](#class-filechooser)
-  * [fileChooser.accept(filePaths)](#filechooseracceptfilepaths)
-  * [fileChooser.cancel()](#filechoosercancel)
-  * [fileChooser.isMultiple()](#filechooserismultiple)
 - [class: Dialog](#class-dialog)
   * [dialog.accept([promptText])](#dialogacceptprompttext)
   * [dialog.defaultValue()](#dialogdefaultvalue)
@@ -971,6 +968,19 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 #### event: 'domcontentloaded'
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
+
+#### event: 'filechooser'
+- <[Object]>
+  - `element` <[ElementHandle]> handle to the input element that was clicked
+  - `multiple` <[boolean]> Whether file chooser allow for [multiple](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple) file selection.
+
+Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`elementHandle.setInputFiles`](#elementhandlesetinputfilesfiles).
+
+```js
+page.on('filechooser', async ({element, multiple}) => {
+  await element.setInputFiles('/tmp/myfile.pdf');
+});
+```
 
 #### event: 'frameattached'
 - <[Frame]>
@@ -1795,7 +1805,9 @@ Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, .
 #### page.waitForFileChooser([options])
 - `options` <[Object]> Optional waiting parameters
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-- returns: <[Promise]<[FileChooser]>> A promise that resolves after a page requests a file picker.
+- returns: <[Promise]<[Object]>>
+  - `element` <[ElementHandle]> handle to the input element that was clicked
+  - `multiple` <[boolean]> Whether file chooser allow for [multiple](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple) file selection.
 
 > **NOTE** In non-headless Chromium, this method results in the native file picker dialog **not showing up** for the user.
 
@@ -1804,15 +1816,14 @@ The following example clicks a button that issues a file chooser, and then
 responds with `/tmp/myfile.pdf` as if a user has selected this file.
 
 ```js
-const [fileChooser] = await Promise.all([
+const [{element, multiple}] = await Promise.all([
   page.waitForFileChooser(),
   page.click('#upload-file-button'), // some button that triggers file selection
 ]);
-await fileChooser.accept(['/tmp/myfile.pdf']);
+await element.setInputFiles('/tmp/myfile.pdf');
 ```
 
 > **NOTE** This must be called *before* the file chooser is launched. It will not return a currently active file chooser.
-
 
 #### page.waitForFunction(pageFunction[, options[, ...args]])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
@@ -2395,37 +2406,6 @@ Browser websocket endpoint which can be used as an argument to
 [playwright.connect](#playwrightconnectoptions). The format is `ws://${host}:${port}/devtools/browser/<id>`
 
 You can find the `webSocketDebuggerUrl` from `http://${host}:${port}/json/version`. Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-
-### class: FileChooser
-
-[FileChooser] objects are returned via the ['page.waitForFileChooser'](#pagewaitforfilechooseroptions) method.
-
-File choosers let you react to the page requesting for a file.
-
-An example of using [FileChooser]:
-
-```js
-const [fileChooser] = await Promise.all([
-  page.waitForFileChooser(),
-  page.click('#upload-file-button'), // some button that triggers file selection
-]);
-await fileChooser.accept(['/tmp/myfile.pdf']);
-```
-
-> **NOTE** In browsers, only one file chooser can be opened at a time.
-> All file choosers must be accepted or canceled. Not doing so will prevent subsequent file choosers from appearing.
-
-#### fileChooser.accept(filePaths)
-- `filePaths` <[Array]<[string]>> Accept the file chooser request with given paths. If some of the  `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
-- returns: <[Promise]>
-
-#### fileChooser.cancel()
-- returns: <[Promise]>
-
-Closes the file chooser without selecting any files.
-
-#### fileChooser.isMultiple()
-- returns: <[boolean]> Whether file chooser allow for [multiple](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple) file selection.
 
 ### class: Dialog
 
