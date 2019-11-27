@@ -20,6 +20,6 @@ export { Frame } from '../frames';
 export { Keyboard, Mouse } from '../input';
 export { ElementHandle } from './JSHandle';
 export { Request, Response } from '../network';
-export { ConsoleMessage, FileChooser, Page } from './Page';
+export { ConsoleMessage, Page } from './Page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';

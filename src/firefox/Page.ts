@@ -552,9 +552,10 @@ export class Page extends EventEmitter {
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
-    const fileChooser = new FileChooser(handle, multiple);
+    const fileChooser = { element: handle, multiple };
     for (const interceptor of interceptors)
       interceptor.call(null, fileChooser);
+    this.emit(Events.Page.FileChooser, fileChooser);
   }
 }
 
@@ -619,28 +620,7 @@ export type Viewport = {
   hasTouch?: boolean;
 }
 
-export class FileChooser {
-  private _element: ElementHandle;
-  private _multiple: boolean;
-  private _handled = false;
-
-  constructor(element: ElementHandle, multiple: boolean) {
-    this._element = element;
-    this._multiple = multiple;
-  }
-
-  isMultiple(): boolean {
-    return this._multiple;
-  }
-
-  async accept(filePaths: string[]): Promise<any> {
-    assert(!this._handled, 'Cannot accept FileChooser which is already handled!');
-    this._handled = true;
-    await this._element.setInputFiles(...filePaths);
-  }
-
-  async cancel(): Promise<any> {
-    assert(!this._handled, 'Cannot cancel FileChooser which is already handled!');
-    this._handled = true;
-  }
-}
+type FileChooser = {
+  element: ElementHandle,
+  multiple: boolean
+};
