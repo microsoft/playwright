@@ -24,11 +24,10 @@ import { JugglerSession } from './Connection';
 import { Frame, FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { JSHandle, ExecutionContext, markJSHandle, ExecutionContextDelegate } from './ExecutionContext';
-import { Response } from './NetworkManager';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
-export class ElementHandle extends js.JSHandle<ElementHandle, Response> {
+export class ElementHandle extends js.JSHandle<ElementHandle> {
   _frame: Frame;
   _frameId: string;
   _page: Page;

@@ -20,7 +20,6 @@ import { assert, debugError, helper } from '../helper';
 import * as input from '../input';
 import { TargetSession } from './Connection';
 import { JSHandle, ExecutionContext, ExecutionContextDelegate, markJSHandle } from './ExecutionContext';
-import { Response } from './NetworkManager';
 import { FrameManager } from './FrameManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
@@ -44,7 +43,7 @@ export function createJSHandle(context: ExecutionContext, remoteObject: Protocol
   return handle;
 }
 
-export class ElementHandle extends js.JSHandle<ElementHandle, Response> {
+export class ElementHandle extends js.JSHandle<ElementHandle> {
   private _client: TargetSession;
   private _remoteObject: Protocol.Runtime.RemoteObject;
   private _page: Page;

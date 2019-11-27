@@ -1,7 +1,29 @@
+/**
+ * Copyright 2019 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { EventEmitter } from 'events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { JugglerSession } from './Connection';
-import { FrameManager } from './FrameManager';
+import { FrameManager, Frame } from './FrameManager';
+import * as network from '../network';
+import { ElementHandle } from './JSHandle';
+
+export type Request = network.Request<ElementHandle>;
+export type Response = network.Response<ElementHandle>;
 
 export const NetworkManagerEvents = {
   RequestFailed: Symbol('NetworkManagerEvents.RequestFailed'),
@@ -12,7 +34,7 @@ export const NetworkManagerEvents = {
 
 export class NetworkManager extends EventEmitter {
   private _session: JugglerSession;
-  private _requests: Map<string, Request>;
+  private _requests: Map<string, InterceptableRequest>;
   private _frameManager: FrameManager;
   private _eventListeners: RegisteredListener[];
 
@@ -39,7 +61,7 @@ export class NetworkManager extends EventEmitter {
     this._frameManager = frameManager;
   }
 
-  async setExtraHTTPHeaders(headers) {
+  async setExtraHTTPHeaders(headers: network.Headers) {
     const array = [];
     for (const [name, value] of Object.entries(headers)) {
       assert(helper.isString(value), `Expected value of header "${name}" to be String, but "${typeof value}" is found.`);
@@ -54,26 +76,37 @@ export class NetworkManager extends EventEmitter {
 
   _onRequestWillBeSent(event) {
     const redirected = event.redirectedFrom ? this._requests.get(event.redirectedFrom) : null;
-    const frame = redirected ? redirected.frame() : (this._frameManager && event.frameId ? this._frameManager.frame(event.frameId) : null);
+    const frame = redirected ? redirected.request.frame() : (this._frameManager && event.frameId ? this._frameManager.frame(event.frameId) : null);
     if (!frame)
       return;
-    let redirectChain = [];
+    let redirectChain: Request[] = [];
     if (redirected) {
-      redirectChain = redirected._redirectChain;
-      redirectChain.push(redirected);
+      redirectChain = redirected.request._redirectChain;
+      redirectChain.push(redirected.request);
       this._requests.delete(redirected._id);
     }
-    const request = new Request(this._session, frame, redirectChain, event);
+    const request = new InterceptableRequest(this._session, frame, redirectChain, event);
     this._requests.set(request._id, request);
-    this.emit(NetworkManagerEvents.Request, request);
+    this.emit(NetworkManagerEvents.Request, request.request);
   }
 
   _onResponseReceived(event) {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
-    const response = new Response(this._session, request, event);
-    request._response = response;
+    const remoteAddress: network.RemoteAddress = { ip: event.remoteIPAddress, port: event.remotePort };
+    const getResponseBody = async () => {
+      const response = await this._session.send('Network.getResponseBody', {
+        requestId: request._id
+      });
+      if (response.evicted)
+        throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
+      return Buffer.from(response.base64body, 'base64');
+    };
+    const headers: network.Headers = {};
+    for (const {name, value} of event.headers)
+      headers[name.toLowerCase()] = value;
+    const response = new network.Response(request.request, event.status, event.statusText, headers, remoteAddress, getResponseBody);
     this.emit(NetworkManagerEvents.Response, response);
   }
 
@@ -81,15 +114,16 @@ export class NetworkManager extends EventEmitter {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
+    const response = request.request.response();
     // Keep redirected requests in the map for future reference in redirectChain.
-    const isRedirected = request.response().status() >= 300 && request.response().status() <= 399;
+    const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
-      request.response()._bodyLoadedPromiseFulfill.call(null, new Error('Response body is unavailable for redirect responses'));
+      response._bodyLoaded(new Error('Response body is unavailable for redirect responses'));
     } else {
       this._requests.delete(request._id);
-      request.response()._bodyLoadedPromiseFulfill.call(null);
+      response._bodyLoaded();
     }
-    this.emit(NetworkManagerEvents.RequestFinished, request);
+    this.emit(NetworkManagerEvents.RequestFinished, request.request);
   }
 
   _onRequestFailed(event) {
@@ -97,10 +131,10 @@ export class NetworkManager extends EventEmitter {
     if (!request)
       return;
     this._requests.delete(request._id);
-    if (request.response())
-      request.response()._bodyLoadedPromiseFulfill.call(null);
-    request._errorText = event.errorCode;
-    this.emit(NetworkManagerEvents.RequestFailed, request);
+    if (request.request.response())
+      request.request.response()._bodyLoaded();
+    request.request._setFailureText(event.errorCode);
+    this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }
 }
 
@@ -130,46 +164,35 @@ const causeToResourceType = {
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
-export class Request {
+const interceptableRequestSymbol = Symbol('interceptableRequest');
+
+export function toInterceptableRequest(request: network.Request<ElementHandle>): InterceptableRequest {
+  return (request as any)[interceptableRequestSymbol];
+}
+
+class InterceptableRequest {
+  readonly request: Request;
   _id: string;
-  private _session: any;
-  private _frame: any;
-  _redirectChain: any;
-  private _url: any;
-  private _postData: any;
-  private _suspended: any;
-  _response: any;
-  _errorText: any;
-  private _isNavigationRequest: any;
-  private _method: any;
-  private _resourceType: any;
-  private _headers: {};
+  private _session: JugglerSession;
+  private _suspended: boolean;
   private _interceptionHandled: boolean;
 
-  constructor(session, frame, redirectChain, payload) {
-    this._session = session;
-    this._frame = frame;
+  constructor(session: JugglerSession, frame: Frame, redirectChain: Request[], payload: any) {
     this._id = payload.requestId;
-    this._redirectChain = redirectChain;
-    this._url = payload.url;
-    this._postData = payload.postData;
+    this._session = session;
     this._suspended = payload.suspended;
-    this._response = null;
-    this._errorText = null;
-    this._isNavigationRequest = payload.isNavigationRequest;
-    this._method = payload.method;
-    this._resourceType = causeToResourceType[payload.cause] || 'other';
-    this._headers = {};
     this._interceptionHandled = false;
+
+    const headers: network.Headers = {};
     for (const {name, value} of payload.headers)
-      this._headers[name.toLowerCase()] = value;
+      headers[name.toLowerCase()] = value;
+
+    this.request = new network.Request(frame, redirectChain, payload.isNavigationRequest,
+        payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData, headers);
+    (this.request as any)[interceptableRequestSymbol] = this;
   }
 
-  failure() {
-    return this._errorText ? {errorText: this._errorText} : null;
-  }
-
-  async _continue(overrides: any = {}) {
+  async continue(overrides: any = {}) {
     assert(!overrides.url, 'Playwright-Firefox does not support overriding URL');
     assert(!overrides.method, 'Playwright-Firefox does not support overriding method');
     assert(!overrides.postData, 'Playwright-Firefox does not support overriding postData');
@@ -187,7 +210,7 @@ export class Request {
     });
   }
 
-  async _abort() {
+  async abort() {
     assert(this._suspended, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
@@ -196,130 +219,5 @@ export class Request {
     }).catch(error => {
       debugError(error);
     });
-  }
-
-  postData() {
-    return this._postData;
-  }
-
-  headers() {
-    return {...this._headers};
-  }
-
-  redirectChain() {
-    return this._redirectChain.slice();
-  }
-
-  resourceType() {
-    return this._resourceType;
-  }
-
-  url() {
-    return this._url;
-  }
-
-  method() {
-    return this._method;
-  }
-
-  isNavigationRequest() {
-    return this._isNavigationRequest;
-  }
-
-  frame() {
-    return this._frame;
-  }
-
-  response() {
-    return this._response;
-  }
-}
-
-export class Response {
-  private _session: any;
-  private _request: any;
-  private _remoteIPAddress: any;
-  private _remotePort: any;
-  private _status: any;
-  private _statusText: any;
-  private _headers: {};
-  private _bodyLoadedPromise: Promise<unknown>;
-  private _bodyLoadedPromiseFulfill: (value?: unknown) => void;
-  private _contentPromise: any;
-
-  constructor(session, request, payload) {
-    this._session = session;
-    this._request = request;
-    this._remoteIPAddress = payload.remoteIPAddress;
-    this._remotePort = payload.remotePort;
-    this._status = payload.status;
-    this._statusText = payload.statusText;
-    this._headers = {};
-    for (const {name, value} of payload.headers)
-      this._headers[name.toLowerCase()] = value;
-    this._bodyLoadedPromise = new Promise(fulfill => {
-      this._bodyLoadedPromiseFulfill = fulfill;
-    });
-  }
-
-  buffer(): Promise<Buffer> {
-    if (!this._contentPromise) {
-      this._contentPromise = this._bodyLoadedPromise.then(async error => {
-        if (error)
-          throw error;
-        const response = await this._session.send('Network.getResponseBody', {
-          requestId: this._request._id
-        });
-        if (response.evicted)
-          throw new Error(`Response body for ${this._request.method()} ${this._request.url()} was evicted!`);
-        return Buffer.from(response.base64body, 'base64');
-      });
-    }
-    return this._contentPromise;
-  }
-
-  async text(): Promise<string> {
-    const content = await this.buffer();
-    return content.toString('utf8');
-  }
-
-  async json(): Promise<object> {
-    const content = await this.text();
-    return JSON.parse(content);
-  }
-
-  headers() {
-    return {...this._headers};
-  }
-
-  status() {
-    return this._status;
-  }
-
-  statusText() {
-    return this._statusText;
-  }
-
-  ok() {
-    return this._status >= 200 && this._status <= 299;
-  }
-
-  remoteAddress() {
-    return {
-      ip: this._remoteIPAddress,
-      port: this._remotePort,
-    };
-  }
-
-  frame() {
-    return this._request.frame();
-  }
-
-  url() {
-    return this._request.url();
-  }
-
-  request() {
-    return this._request;
   }
 }

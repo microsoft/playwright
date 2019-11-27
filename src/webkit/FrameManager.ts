@@ -42,9 +42,9 @@ type FrameData = {
   id: string,
 };
 
-export type Frame = frames.Frame<ElementHandle, Response>;
+export type Frame = frames.Frame<ElementHandle>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle> {
   _session: TargetSession;
   _page: Page;
   _networkManager: NetworkManager;

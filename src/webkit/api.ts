@@ -8,7 +8,7 @@ export { ExecutionContext, JSHandle } from '../javascript';
 export { Frame } from './FrameManager';
 export { Mouse, Keyboard } from '../input';
 export { ElementHandle } from './JSHandle';
-export { Request, Response } from './NetworkManager';
+export { Request, Response } from '../network';
 export { ConsoleMessage, Page } from './Page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';

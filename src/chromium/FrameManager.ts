@@ -45,9 +45,9 @@ type FrameData = {
   lifecycleEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<ElementHandle, Response>;
+export type Frame = frames.Frame<ElementHandle>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle> {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;

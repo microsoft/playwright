@@ -24,7 +24,6 @@ import { JSHandle, ExecutionContext, ExecutionContextDelegate } from './Executio
 import {NavigationWatchdog, NextNavigationWatchdog} from './NavigationWatchdog';
 import { ElementHandle } from './JSHandle';
 import { TimeoutSettings } from '../TimeoutSettings';
-import { Response } from './NetworkManager';
 import * as frames from '../frames';
 import * as js from '../javascript';
 
@@ -43,9 +42,9 @@ type FrameData = {
   firedEvents: Set<string>,
 };
 
-export type Frame = frames.Frame<ElementHandle, Response>;
+export type Frame = frames.Frame<ElementHandle>;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle, Response> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle> {
   _session: JugglerSession;
   _page: Page;
   _networkManager: any;

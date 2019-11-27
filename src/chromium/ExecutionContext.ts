@@ -20,16 +20,15 @@ import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './protocolHelper';
 import { createJSHandle, ElementHandle } from './JSHandle';
 import { Protocol } from './protocol';
-import { Response } from './NetworkManager';
 import * as js from '../javascript';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export type ExecutionContext = js.ExecutionContext<ElementHandle, Response>;
-export type JSHandle = js.JSHandle<ElementHandle, Response>;
+export type ExecutionContext = js.ExecutionContext<ElementHandle>;
+export type JSHandle = js.JSHandle<ElementHandle>;
 
-export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle, Response> {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle> {
   _client: CDPSession;
   _contextId: number;
 
