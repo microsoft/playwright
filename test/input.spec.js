@@ -38,7 +38,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(WEBKIT)('Page.waitForFileChooser', function() {
+  describe('Page.waitForFileChooser', function() {
     it('should work when file input is attached to DOM', async({page, server}) => {
       await page.setContent(`<input type=file>`);
       const [chooser] = await Promise.all([
@@ -97,7 +97,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(WEBKIT)('FileChooser.accept', function() {
+  describe('FileChooser.accept', function() {
     it('should accept single file', async({page, server}) => {
       await page.setContent(`<input type=file oninput='javascript:console.timeStamp()'>`);
       const [chooser] = await Promise.all([
@@ -161,7 +161,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(WEBKIT)('FileChooser.cancel', function() {
+  describe('FileChooser.cancel', function() {
     it('should cancel dialog', async({page, server}) => {
       // Consider file chooser canceled if we can summon another one.
       // There's no reliable way in WebPlatform to see that FileChooser was
@@ -191,7 +191,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(WEBKIT)('FileChooser.isMultiple', () => {
+  describe('FileChooser.isMultiple', () => {
     it('should work for single file pick', async({page, server}) => {
       await page.setContent(`<input type=file>`);
       const [chooser] = await Promise.all([

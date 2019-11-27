@@ -183,7 +183,9 @@ export class ElementHandle extends js.JSHandle<ElementHandle> {
   async setInputFiles(...files: (string|input.FilePayload)[]) {
     const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    await this.evaluate(input.setFileInputFunction, await input.loadFiles(files));
+    const filePayloads = await input.loadFiles(files);
+    const objectId = this._remoteObject.objectId;
+    await this._client.send('DOM.setInputFiles', { objectId, files: filePayloads });
   }
 
   async focus() {
