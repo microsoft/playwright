@@ -23,9 +23,8 @@ import * as js from '../javascript';
 import { CDPSession } from './Connection';
 import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
-import { Page } from './Page';
 import { Protocol } from './protocol';
-import { JSHandle, ExecutionContext, ExecutionContextDelegate, markJSHandle } from './ExecutionContext';
+import { JSHandle, ExecutionContext, ExecutionContextDelegate, markJSHandle, toRemoteObject } from './ExecutionContext';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
@@ -35,83 +34,164 @@ type Point = {
 };
 
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): JSHandle {
-  const delegate = context._delegate as ExecutionContextDelegate;
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
     const frameManager = frame._delegate as FrameManager;
-    return new ElementHandle(context, delegate._client, remoteObject, frameManager.page(), frameManager);
+    const page = frameManager.page();
+    const delegate = new ElementHandleDelegate((context._delegate as ExecutionContextDelegate)._client, frameManager);
+    const handle = new ElementHandle(context, page.keyboard, page.mouse, delegate);
+    markJSHandle(handle, remoteObject);
+    return handle;
   }
   const handle = new js.JSHandle(context);
   markJSHandle(handle, remoteObject);
   return handle;
 }
 
-export class ElementHandle extends js.JSHandle<ElementHandle> {
+class ElementHandleDelegate {
   private _client: CDPSession;
-  private _remoteObject: Protocol.Runtime.RemoteObject;
-  private _page: Page;
   private _frameManager: FrameManager;
 
-  constructor(context: ExecutionContext, client: CDPSession, remoteObject: Protocol.Runtime.RemoteObject, page: Page, frameManager: FrameManager) {
-    super(context);
+  constructor(client: CDPSession, frameManager: FrameManager) {
     this._client = client;
-    this._remoteObject = remoteObject;
-    this._page = page;
     this._frameManager = frameManager;
-    markJSHandle(this, remoteObject);
   }
 
-  asElement(): ElementHandle | null {
-    return this;
-  }
-
-  async contentFrame(): Promise<Frame|null> {
+  async contentFrame(handle: ElementHandle): Promise<Frame|null> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: this._remoteObject.objectId
+      objectId: toRemoteObject(handle).objectId
     });
     if (typeof nodeInfo.node.frameId !== 'string')
       return null;
     return this._frameManager.frame(nodeInfo.node.frameId);
   }
 
-  async _scrollIntoViewIfNeeded() {
-    const error = await this.evaluate(async (element, pageJavascriptEnabled) => {
-      if (!element.isConnected)
-        return 'Node is detached from document';
-      if (element.nodeType !== Node.ELEMENT_NODE)
-        return 'Node is not of type HTMLElement';
-      // force-scroll if page's javascript is disabled.
-      if (!pageJavascriptEnabled) {
-        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
-        return false;
-      }
-      const visibleRatio = await new Promise(resolve => {
-        const observer = new IntersectionObserver(entries => {
-          resolve(entries[0].intersectionRatio);
-          observer.disconnect();
-        });
-        observer.observe(element);
-      });
-      if (visibleRatio !== 1.0)
-        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
-      return false;
-    }, this._page._javascriptEnabled);
-    if (error)
-      throw new Error(error);
+  isJavascriptEnabled(): boolean {
+    return this._frameManager.page()._javascriptEnabled;
   }
 
-  async _clickablePoint(): Promise<Point> {
+  private _getBoxModel(handle: ElementHandle): Promise<void | Protocol.DOM.getBoxModelReturnValue> {
+    return this._client.send('DOM.getBoxModel', {
+      objectId: toRemoteObject(handle).objectId
+    }).catch(error => debugError(error));
+  }
+
+  async boundingBox(handle: ElementHandle): Promise<{ x: number; y: number; width: number; height: number; } | null> {
+    const result = await this._getBoxModel(handle);
+    if (!result)
+      return null;
+    const quad = result.model.border;
+    const x = Math.min(quad[0], quad[2], quad[4], quad[6]);
+    const y = Math.min(quad[1], quad[3], quad[5], quad[7]);
+    const width = Math.max(quad[0], quad[2], quad[4], quad[6]) - x;
+    const height = Math.max(quad[1], quad[3], quad[5], quad[7]) - y;
+    return {x, y, width, height};
+  }
+
+  async screenshot(handle: ElementHandle, options: any = {}): Promise<string | Buffer> {
+    let needsViewportReset = false;
+
+    let boundingBox = await this.boundingBox(handle);
+    assert(boundingBox, 'Node is either not visible or not an HTMLElement');
+
+    const viewport = this._frameManager.page().viewport();
+
+    if (viewport && (boundingBox.width > viewport.width || boundingBox.height > viewport.height)) {
+      const newViewport = {
+        width: Math.max(viewport.width, Math.ceil(boundingBox.width)),
+        height: Math.max(viewport.height, Math.ceil(boundingBox.height)),
+      };
+      await this._frameManager.page().setViewport(Object.assign({}, viewport, newViewport));
+
+      needsViewportReset = true;
+    }
+
+    await handle._scrollIntoViewIfNeeded();
+
+    boundingBox = await this.boundingBox(handle);
+    assert(boundingBox, 'Node is either not visible or not an HTMLElement');
+    assert(boundingBox.width !== 0, 'Node has 0 width.');
+    assert(boundingBox.height !== 0, 'Node has 0 height.');
+
+    const { layoutViewport: { pageX, pageY } } = await this._client.send('Page.getLayoutMetrics');
+
+    const clip = Object.assign({}, boundingBox);
+    clip.x += pageX;
+    clip.y += pageY;
+
+    const imageData = await this._frameManager.page().screenshot(Object.assign({}, {
+      clip
+    }, options));
+
+    if (needsViewportReset)
+      await this._frameManager.page().setViewport(viewport);
+
+    return imageData;
+  }
+
+  async ensurePointerActionPoint(handle: ElementHandle, relativePoint?: Point): Promise<Point> {
+    await handle._scrollIntoViewIfNeeded();
+    if (!relativePoint)
+      return this._clickablePoint(handle);
+    let r = await this._viewportPointAndScroll(handle, relativePoint);
+    if (r.scrollX || r.scrollY) {
+      const error = await handle.evaluate((element, scrollX, scrollY) => {
+        if (!element.ownerDocument || !element.ownerDocument.defaultView)
+          return 'Node does not have a containing window';
+        element.ownerDocument.defaultView.scrollBy(scrollX, scrollY);
+        return false;
+      }, r.scrollX, r.scrollY);
+      if (error)
+        throw new Error(error);
+      r = await this._viewportPointAndScroll(handle, relativePoint);
+      if (r.scrollX || r.scrollY)
+        throw new Error('Failed to scroll relative point into viewport');
+    }
+    return r.point;
+  }
+
+  private async _clickablePoint(handle: ElementHandle): Promise<Point> {
+    const fromProtocolQuad = (quad: number[]): Point[] => {
+      return [
+        {x: quad[0], y: quad[1]},
+        {x: quad[2], y: quad[3]},
+        {x: quad[4], y: quad[5]},
+        {x: quad[6], y: quad[7]}
+      ];
+    };
+
+    const intersectQuadWithViewport = (quad: Point[], width: number, height: number): Point[] => {
+      return quad.map(point => ({
+        x: Math.min(Math.max(point.x, 0), width),
+        y: Math.min(Math.max(point.y, 0), height),
+      }));
+    }
+
+    const computeQuadArea = (quad: Point[]) => {
+      // Compute sum of all directed areas of adjacent triangles
+      // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
+      let area = 0;
+      for (let i = 0; i < quad.length; ++i) {
+        const p1 = quad[i];
+        const p2 = quad[(i + 1) % quad.length];
+        area += (p1.x * p2.y - p2.x * p1.y) / 2;
+      }
+      return Math.abs(area);
+    }
+
     const [result, layoutMetrics] = await Promise.all([
       this._client.send('DOM.getContentQuads', {
-        objectId: this._remoteObject.objectId
+        objectId: toRemoteObject(handle).objectId
       }).catch(debugError),
       this._client.send('Page.getLayoutMetrics'),
     ]);
     if (!result || !result.quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
     // Filter out quads that have too small area to click into.
-    const {clientWidth, clientHeight} = layoutMetrics.layoutViewport;
-    const quads = result.quads.map(quad => this._fromProtocolQuad(quad)).map(quad => this._intersectQuadWithViewport(quad, clientWidth, clientHeight)).filter(quad => computeQuadArea(quad) > 1);
+    const { clientWidth, clientHeight } = layoutMetrics.layoutViewport;
+    const quads = result.quads.map(fromProtocolQuad)
+      .map(quad => intersectQuadWithViewport(quad, clientWidth, clientHeight))
+      .filter(quad => computeQuadArea(quad) > 1);
     if (!quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
     // Return the middle point of the first quad.
@@ -128,8 +208,8 @@ export class ElementHandle extends js.JSHandle<ElementHandle> {
     };
   }
 
-  async _viewportPointAndScroll(relativePoint: Point): Promise<{point: Point, scrollX: number, scrollY: number}> {
-    const model = await this._getBoxModel();
+  async _viewportPointAndScroll(handle: ElementHandle, relativePoint: Point): Promise<{point: Point, scrollX: number, scrollY: number}> {
+    const model = await this._getBoxModel(handle);
     let point: Point;
     if (!model) {
       point = relativePoint;
@@ -157,74 +237,78 @@ export class ElementHandle extends js.JSHandle<ElementHandle> {
       scrollY = point.y - metrics.layoutViewport.clientHeight + 1;
     return { point, scrollX, scrollY };
   }
+}
+
+export class ElementHandle extends js.JSHandle<ElementHandle> {
+  private _delegate: ElementHandleDelegate;
+  private _keyboard: input.Keyboard;
+  private _mouse: input.Mouse;
+
+  constructor(context: ExecutionContext, keyboard: input.Keyboard, mouse: input.Mouse, delegate: ElementHandleDelegate) {
+    super(context);
+    this._delegate = delegate;
+    this._keyboard = keyboard;
+    this._mouse = mouse;
+  }
+
+  asElement(): ElementHandle | null {
+    return this;
+  }
+
+  async contentFrame(): Promise<Frame | null> {
+    return this._delegate.contentFrame(this);
+  }
+
+  async _scrollIntoViewIfNeeded() {
+    const error = await this.evaluate(async (element, pageJavascriptEnabled) => {
+      if (!element.isConnected)
+        return 'Node is detached from document';
+      if (element.nodeType !== Node.ELEMENT_NODE)
+        return 'Node is not of type HTMLElement';
+      // force-scroll if page's javascript is disabled.
+      if (!pageJavascriptEnabled) {
+        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
+        return false;
+      }
+      const visibleRatio = await new Promise(resolve => {
+        const observer = new IntersectionObserver(entries => {
+          resolve(entries[0].intersectionRatio);
+          observer.disconnect();
+        });
+        observer.observe(element);
+      });
+      if (visibleRatio !== 1.0)
+        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
+      return false;
+    }, this._delegate.isJavascriptEnabled());
+    if (error)
+      throw new Error(error);
+  }
 
   async _performPointerAction(action: (point: Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
-    await this._scrollIntoViewIfNeeded();
-    let point: Point;
-    if (options && options.relativePoint) {
-      let r = await this._viewportPointAndScroll(options.relativePoint);
-      if (r.scrollX || r.scrollY) {
-        const error = await this.evaluate((element, scrollX, scrollY) => {
-          if (!element.ownerDocument || !element.ownerDocument.defaultView)
-            return 'Node does not have a containing window';
-          element.ownerDocument.defaultView.scrollBy(scrollX, scrollY);
-          return false;
-        }, r.scrollX, r.scrollY);
-        if (error)
-          throw new Error(error);
-        r = await this._viewportPointAndScroll(options.relativePoint);
-        if (r.scrollX || r.scrollY)
-          throw new Error('Failed to scroll relative point into viewport');
-      }
-      point = r.point;
-    } else {
-      await this._scrollIntoViewIfNeeded();
-      point = await this._clickablePoint();
-    }
+    const point = await this._delegate.ensurePointerActionPoint(this, options ? options.relativePoint : undefined);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
-      restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
+      restoreModifiers = await this._keyboard._ensureModifiers(options.modifiers);
     await action(point);
     if (restoreModifiers)
-      await this._page.keyboard._ensureModifiers(restoreModifiers);
-  }
-
-  _getBoxModel(): Promise<void | Protocol.DOM.getBoxModelReturnValue> {
-    return this._client.send('DOM.getBoxModel', {
-      objectId: this._remoteObject.objectId
-    }).catch(error => debugError(error));
-  }
-
-  _fromProtocolQuad(quad: number[]): Array<{ x: number; y: number; }> {
-    return [
-      {x: quad[0], y: quad[1]},
-      {x: quad[2], y: quad[3]},
-      {x: quad[4], y: quad[5]},
-      {x: quad[6], y: quad[7]}
-    ];
-  }
-
-  _intersectQuadWithViewport(quad: Array<{ x: number; y: number; }>, width: number, height: number): Array<{ x: number; y: number; }> {
-    return quad.map(point => ({
-      x: Math.min(Math.max(point.x, 0), width),
-      y: Math.min(Math.max(point.y, 0), height),
-    }));
+      await this._keyboard._ensureModifiers(restoreModifiers);
   }
 
   hover(options?: input.PointerActionOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
+    return this._performPointerAction(point => this._mouse.move(point.x, point.y), options);
   }
 
   click(options?: input.ClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._mouse.click(point.x, point.y, options), options);
   }
 
   dblclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._mouse.dblclick(point.x, point.y, options), options);
   }
 
   tripleclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._mouse.tripleclick(point.x, point.y, options), options);
   }
 
   async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
@@ -248,7 +332,7 @@ export class ElementHandle extends js.JSHandle<ElementHandle> {
     if (error)
       throw new Error(error);
     await this.focus();
-    await this._page.keyboard.sendCharacters(value);
+    await this._keyboard.sendCharacters(value);
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
@@ -263,68 +347,20 @@ export class ElementHandle extends js.JSHandle<ElementHandle> {
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {
     await this.focus();
-    await this._page.keyboard.type(text, options);
+    await this._keyboard.type(text, options);
   }
 
   async press(key: string, options: { delay?: number; text?: string; } | undefined) {
     await this.focus();
-    await this._page.keyboard.press(key, options);
+    await this._keyboard.press(key, options);
   }
 
   async boundingBox(): Promise<{ x: number; y: number; width: number; height: number; } | null> {
-    const result = await this._getBoxModel();
-
-    if (!result)
-      return null;
-
-    const quad = result.model.border;
-    const x = Math.min(quad[0], quad[2], quad[4], quad[6]);
-    const y = Math.min(quad[1], quad[3], quad[5], quad[7]);
-    const width = Math.max(quad[0], quad[2], quad[4], quad[6]) - x;
-    const height = Math.max(quad[1], quad[3], quad[5], quad[7]) - y;
-
-    return {x, y, width, height};
+    return this._delegate.boundingBox(this);
   }
 
   async screenshot(options: any = {}): Promise<string | Buffer> {
-    let needsViewportReset = false;
-
-    let boundingBox = await this.boundingBox();
-    assert(boundingBox, 'Node is either not visible or not an HTMLElement');
-
-    const viewport = this._page.viewport();
-
-    if (viewport && (boundingBox.width > viewport.width || boundingBox.height > viewport.height)) {
-      const newViewport = {
-        width: Math.max(viewport.width, Math.ceil(boundingBox.width)),
-        height: Math.max(viewport.height, Math.ceil(boundingBox.height)),
-      };
-      await this._page.setViewport(Object.assign({}, viewport, newViewport));
-
-      needsViewportReset = true;
-    }
-
-    await this._scrollIntoViewIfNeeded();
-
-    boundingBox = await this.boundingBox();
-    assert(boundingBox, 'Node is either not visible or not an HTMLElement');
-    assert(boundingBox.width !== 0, 'Node has 0 width.');
-    assert(boundingBox.height !== 0, 'Node has 0 height.');
-
-    const { layoutViewport: { pageX, pageY } } = await this._client.send('Page.getLayoutMetrics');
-
-    const clip = Object.assign({}, boundingBox);
-    clip.x += pageX;
-    clip.y += pageY;
-
-    const imageData = await this._page.screenshot(Object.assign({}, {
-      clip
-    }, options));
-
-    if (needsViewportReset)
-      await this._page.setViewport(viewport);
-
-    return imageData;
+    return this._delegate.screenshot(this, options);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -403,16 +439,4 @@ export class ElementHandle extends js.JSHandle<ElementHandle> {
       return visibleRatio > 0;
     });
   }
-}
-
-function computeQuadArea(quad) {
-  // Compute sum of all directed areas of adjacent triangles
-  // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
-  let area = 0;
-  for (let i = 0; i < quad.length; ++i) {
-    const p1 = quad[i];
-    const p2 = quad[(i + 1) % quad.length];
-    area += (p1.x * p2.y - p2.x * p1.y) / 2;
-  }
-  return Math.abs(area);
 }
