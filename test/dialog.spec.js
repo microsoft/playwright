@@ -53,7 +53,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const result = await page.evaluate(() => confirm('boolean?'));
       expect(result).toBe(true);
     });
-    it('should accept the confirm prompt', async({page, server}) => {
+    it('should dismiss the confirm prompt', async({page, server}) => {
       page.on('dialog', dialog => {
         dialog.dismiss();
       });
