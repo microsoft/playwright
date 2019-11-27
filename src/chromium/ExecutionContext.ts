@@ -151,7 +151,7 @@ export class ExecutionContext implements types.EvaluationContext<JSHandle> {
     }
   }
 
-  async _adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId) {
+  async _adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId): Promise<ElementHandle> {
     const {object} = await this._client.send('DOM.resolveNode', {
       backendNodeId,
       executionContextId: this._contextId,

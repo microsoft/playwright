@@ -25,7 +25,7 @@ import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import { ElementHandle, createJSHandle } from './JSHandle';
+import { ElementHandle } from './JSHandle';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

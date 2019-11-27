@@ -5,7 +5,7 @@ import { TimeoutError } from '../Errors';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { BrowserContext, Target } from './Browser';
-import { Connection, JugglerSession, JugglerSessionEvents } from './Connection';
+import { JugglerSession, JugglerSessionEvents } from './Connection';
 import { Dialog } from './Dialog';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
@@ -35,7 +35,6 @@ export class Page extends EventEmitter {
   private _eventListeners: RegisteredListener[];
   private _viewport: Viewport;
   private _disconnectPromise: Promise<Error>;
-  private _fileChooserInterceptionIsDisabled = false;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
   static async create(session: JugglerSession, target: Target, defaultViewport: Viewport | null) {
@@ -44,9 +43,7 @@ export class Page extends EventEmitter {
       session.send('Runtime.enable'),
       session.send('Network.enable'),
       session.send('Page.enable'),
-      session.send('Page.setInterceptFileChooserDialog', { enabled: true }).catch(e => {
-        page._fileChooserInterceptionIsDisabled = true;
-      }),
+      session.send('Page.setInterceptFileChooserDialog', { enabled: true })
     ]);
 
     if (defaultViewport)
@@ -534,8 +531,6 @@ export class Page extends EventEmitter {
   }
 
   async waitForFileChooser(options: { timeout?: number; } = {}): Promise<FileChooser> {
-    if (this._fileChooserInterceptionIsDisabled)
-      throw new Error('File chooser handling does not work with multiple connections to the same page');
     const {
       timeout = this._timeoutSettings.timeout(),
     } = options;
@@ -549,11 +544,9 @@ export class Page extends EventEmitter {
   }
 
   async _onFileChooserOpened({executionContextId, element}) {
-    const context = this._frameManager.executionContextById(executionContextId);
-    if (!this._fileChooserInterceptors.size) {
-      this._session.send('Page.handleFileChooser', { action: 'fallback' }).catch(debugError);
+    if (!this._fileChooserInterceptors.size)
       return;
-    }
+    const context = this._frameManager.executionContextById(executionContextId);
     const handle = createHandle(context, element) as ElementHandle;
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();

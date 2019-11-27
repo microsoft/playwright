@@ -351,16 +351,16 @@ export const loadFiles = async (items: (string|FilePayload)[]): Promise<FilePayl
   return Promise.all(items.map(async item => {
     if (typeof item === 'string') {
       const file: FilePayload = {
-          name: path.basename(item),
-          type: 'application/octet-stream',
-          data: (await readFileAsync(item)).toString('base64')
+        name: path.basename(item),
+        type: 'application/octet-stream',
+        data: (await readFileAsync(item)).toString('base64')
       };
       return file;
     } else {
       return item as FilePayload;
     }
   }));
-}
+};
 
 export const setFileInputFunction = async (element: HTMLInputElement, payloads: FilePayload[]) => {
   const files = await Promise.all(payloads.map(async (file: FilePayload) => {

@@ -18,7 +18,6 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
-import * as path from 'path';
 import { assert, debugError, helper } from '../helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption, mediaTypes, mediaColorSchemes } from '../input';
 import { TimeoutSettings } from '../TimeoutSettings';
@@ -76,7 +75,6 @@ export class Page extends EventEmitter {
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
   private _screenshotTaskQueue: TaskQueue;
-  private _fileChooserInterceptionIsDisabled = false;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   private _disconnectPromise: Promise<Error> | undefined;
   private _emulatedMediaType: string | undefined;
@@ -135,7 +133,7 @@ export class Page extends EventEmitter {
     client.on('Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails));
     client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
     client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
-    client.on('Page.fileChooserOpened', event => this._onFileChooser(event));
+    client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
     this._target._isClosedPromise.then(() => {
       this.emit(Events.Page.Close);
       this._closed = true;
@@ -148,27 +146,25 @@ export class Page extends EventEmitter {
       this._client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true}),
       this._client.send('Performance.enable', {}),
       this._client.send('Log.enable', {}),
-      this._client.send('Page.setInterceptFileChooserDialog', {enabled: true}).catch(e => {
-        this._fileChooserInterceptionIsDisabled = true;
-      }),
+      this._client.send('Page.setInterceptFileChooserDialog', {enabled: true})
     ]);
   }
 
-  _onFileChooser(event: Protocol.Page.fileChooserOpenedPayload) {
-    if (!this._fileChooserInterceptors.size) {
-      this._client.send('Page.handleFileChooser', { action: 'fallback' }).catch(debugError);
+  async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
+    if (!this._fileChooserInterceptors.size)
       return;
-    }
+    const frame = this._frameManager.frame(event.frameId);
+    const context = await frame._utilityContext();
+    const handle = await context._adoptBackendNodeId(event.backendNodeId);
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
-    const fileChooser = new FileChooser(this._client, event);
+    const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
+    const fileChooser = new FileChooser(handle, multiple);
     for (const interceptor of interceptors)
       interceptor.call(null, fileChooser);
   }
 
   async waitForFileChooser(options: { timeout?: number; } = {}): Promise<FileChooser> {
-    if (this._fileChooserInterceptionIsDisabled)
-      throw new Error('File chooser handling does not work with multiple connections to the same page');
     const {
       timeout = this._timeoutSettings.timeout(),
     } = options;
@@ -732,13 +728,13 @@ export class ConsoleMessage {
 }
 
 export class FileChooser {
-  private _client: CDPSession;
+  private _element: ElementHandle;
   private _multiple: boolean;
   private _handled = false;
 
-  constructor(client: CDPSession, event: Protocol.Page.fileChooserOpenedPayload) {
-    this._client = client;
-    this._multiple = event.mode !== 'selectSingle';
+  constructor(element: ElementHandle, multiple: boolean) {
+    this._element = element;
+    this._multiple = multiple;
   }
 
   isMultiple(): boolean {
@@ -748,18 +744,11 @@ export class FileChooser {
   async accept(filePaths: string[]): Promise<any> {
     assert(!this._handled, 'Cannot accept FileChooser which is already handled!');
     this._handled = true;
-    const files = filePaths.map(filePath => path.resolve(filePath));
-    await this._client.send('Page.handleFileChooser', {
-      action: 'accept',
-      files,
-    });
+    await this._element.setInputFiles(...filePaths);
   }
 
   async cancel(): Promise<any> {
     assert(!this._handled, 'Cannot cancel FileChooser which is already handled!');
     this._handled = true;
-    await this._client.send('Page.handleFileChooser', {
-      action: 'cancel',
-    });
   }
 }

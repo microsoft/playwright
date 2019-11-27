@@ -7,7 +7,7 @@
     "node": ">=10.17.0"
   },
   "playwright": {
-    "chromium_revision": "718525",
+    "chromium_revision": "719491",
     "firefox_revision": "1004",
     "webkit_revision": "1001"
   },
