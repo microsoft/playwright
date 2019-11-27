@@ -55,7 +55,7 @@ export class LifecycleWatcher {
 
     this._frameManager = frameManager;
     this._frame = frame;
-    this._initialLoaderId = frame._loaderId;
+    this._initialLoaderId = frameManager._frameData(frame).loaderId;
     this._timeout = timeout;
     this._eventListeners = [
       helper.addEventListener(frameManager._client, CDPSessionEvents.Disconnected, () => this._terminate(new Error('Navigation failed because browser has disconnected!'))),
@@ -138,20 +138,9 @@ export class LifecycleWatcher {
   }
 
   _checkLifecycleComplete() {
-    // We expect navigation to commit.
-    if (!checkLifecycle(this._frame, this._expectedLifecycle))
-      return;
-    this._lifecycleCallback();
-    if (this._frame._loaderId === this._initialLoaderId && !this._hasSameDocumentNavigation)
-      return;
-    if (this._hasSameDocumentNavigation)
-      this._sameDocumentNavigationCompleteCallback();
-    if (this._frame._loaderId !== this._initialLoaderId)
-      this._newDocumentNavigationCompleteCallback();
-
-    function checkLifecycle(frame: Frame, expectedLifecycle: string[]): boolean {
+    const checkLifecycle = (frame: Frame, expectedLifecycle: string[]): boolean => {
       for (const event of expectedLifecycle) {
-        if (!frame._lifecycleEvents.has(event))
+        if (!this._frameManager._frameData(frame).lifecycleEvents.has(event))
           return false;
       }
       for (const child of frame.childFrames()) {
@@ -159,7 +148,18 @@ export class LifecycleWatcher {
           return false;
       }
       return true;
-    }
+    };
+
+    // We expect navigation to commit.
+    if (!checkLifecycle(this._frame, this._expectedLifecycle))
+      return;
+    this._lifecycleCallback();
+    if (this._frameManager._frameData(this._frame).loaderId === this._initialLoaderId && !this._hasSameDocumentNavigation)
+      return;
+    if (this._hasSameDocumentNavigation)
+      this._sameDocumentNavigationCompleteCallback();
+    if (this._frameManager._frameData(this._frame).loaderId !== this._initialLoaderId)
+      this._newDocumentNavigationCompleteCallback();
   }
 
   dispose() {

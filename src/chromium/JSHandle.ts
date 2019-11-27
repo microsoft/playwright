@@ -37,7 +37,7 @@ type Point = {
 export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
-    const frameManager = frame._frameManager;
+    const frameManager = frame._delegate as FrameManager;
     return new ElementHandle(context, context._client, remoteObject, frameManager.page(), frameManager);
   }
   return new JSHandle(context, context._client, remoteObject);

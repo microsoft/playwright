@@ -17,7 +17,7 @@
 
 import { CDPSession } from './Connection';
 import { Frame } from './Frame';
-import { assert, helper } from '../helper';
+import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage } from './protocolHelper';
 import { createJSHandle, ElementHandle, JSHandle } from './JSHandle';
 import { Protocol } from './protocol';
