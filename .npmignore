@@ -15,6 +15,7 @@ src
 node_modules
 .local-chromium
 .local-browser
+.local-webkit
 .dev_profile*
 .DS_Store
 *.swp

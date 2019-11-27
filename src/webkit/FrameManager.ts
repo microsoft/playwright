@@ -17,17 +17,17 @@
 
 import * as EventEmitter from 'events';
 import { TimeoutError } from '../Errors';
-import { Events } from './events';
+import * as frames from '../frames';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
+import * as js from '../javascript';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { TargetSession } from './Connection';
-import { JSHandle, ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
+import { Events } from './events';
+import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
 import { ElementHandle } from './JSHandle';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import * as frames from '../frames';
-import * as js from '../javascript';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
@@ -178,6 +178,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<E
         const data = this._frameData(frame);
         this._frames.delete(data.id);
         data.id = framePayload.id;
+        this._frames.set(data.id, frame);
       }
     } else if (isMainFrame) {
       // Initial frame navigation.
@@ -199,7 +200,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<E
     frame._navigated(framePayload.url, framePayload.name);
     for (const context of this._contextIdToContext.values()) {
       if (context.frame() === frame) {
-        (context._delegate as ExecutionContextDelegate)._dispose();
+        const delegate = context._delegate as ExecutionContextDelegate;
+        delegate._dispose();
+        this._contextIdToContext.delete(delegate._contextId);
         frame._contextDestroyed(context);
       }
     }
@@ -223,6 +226,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<E
   }
 
   _onExecutionContextCreated(contextPayload : Protocol.Runtime.ExecutionContextDescription) {
+    if (this._contextIdToContext.has(contextPayload.id))
+      return;
     if (!contextPayload.isPageContext)
       return;
     const frameId = contextPayload.frameId;

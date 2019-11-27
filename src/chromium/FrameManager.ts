@@ -16,17 +16,17 @@
  */
 
 import { EventEmitter } from 'events';
+import * as frames from '../frames';
 import { assert, debugError } from '../helper';
+import * as js from '../javascript';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
-import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate, ExecutionContext, JSHandle, toRemoteObject } from './ExecutionContext';
-import * as frames from '../frames';
-import * as js from '../javascript';
+import { EVALUATION_SCRIPT_URL, ExecutionContext, ExecutionContextDelegate, toRemoteObject } from './ExecutionContext';
+import { ElementHandle } from './JSHandle';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import { ElementHandle, createJSHandle } from './JSHandle';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

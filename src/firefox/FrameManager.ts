@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
-import { JugglerSession } from './Connection';
-import { Page } from './Page';
-import {RegisteredListener, helper, assert} from '../helper';
-import {TimeoutError} from '../Errors';
-import {EventEmitter} from 'events';
-import { JSHandle, ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
-import {NavigationWatchdog, NextNavigationWatchdog} from './NavigationWatchdog';
-import { ElementHandle } from './JSHandle';
-import { TimeoutSettings } from '../TimeoutSettings';
+import { EventEmitter } from 'events';
+import { TimeoutError } from '../Errors';
 import * as frames from '../frames';
+import { assert, helper, RegisteredListener } from '../helper';
 import * as js from '../javascript';
+import { TimeoutSettings } from '../TimeoutSettings';
+import { JugglerSession } from './Connection';
+import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
+import { ElementHandle } from './JSHandle';
+import { NavigationWatchdog, NextNavigationWatchdog } from './NavigationWatchdog';
+import { Page } from './Page';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
