@@ -97,20 +97,20 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe('FileChooser.accept', function() {
+  describe('Page.waitForFileChooser', function() {
     it('should accept single file', async({page, server}) => {
       await page.setContent(`<input type=file oninput='javascript:console.timeStamp()'>`);
-      const [chooser] = await Promise.all([
+      const [{ element }] = await Promise.all([
         page.waitForFileChooser(),
         page.click('input'),
       ]);
-      await chooser.accept([FILE_TO_UPLOAD]);
+      await element.setInputFiles(FILE_TO_UPLOAD);
       expect(await page.$eval('input', input => input.files.length)).toBe(1);
       expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
     });
     it('should be able to read selected file', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      page.waitForFileChooser().then(chooser => chooser.accept([FILE_TO_UPLOAD]));
+      page.waitForFileChooser().then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
       expect(await page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -122,13 +122,13 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should be able to reset selected files with empty file list', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      page.waitForFileChooser().then(chooser => chooser.accept([FILE_TO_UPLOAD]));
+      page.waitForFileChooser().then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
       expect(await page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
         return picker.files.length;
       })).toBe(1);
-      page.waitForFileChooser().then(chooser => chooser.accept([]));
+      page.waitForFileChooser().then(({element}) => element.setInputFiles());
       expect(await page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -137,84 +137,42 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should not accept multiple files for single-file input', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      const [chooser] = await Promise.all([
+      const [{ element }] = await Promise.all([
         page.waitForFileChooser(),
         page.click('input'),
       ]);
       let error = null;
-      await chooser.accept([
+      await element.setInputFiles(
         path.relative(process.cwd(), __dirname + '/assets/file-to-upload.txt'),
-        path.relative(process.cwd(), __dirname + '/assets/pptr.png'),
-      ]).catch(e => error = e);
+        path.relative(process.cwd(), __dirname + '/assets/pptr.png')).catch(e => error = e);
       expect(error).not.toBe(null);
     });
-    it('should fail when accepting file chooser twice', async({page, server}) => {
-      await page.setContent(`<input type=file>`);
-      const [fileChooser] = await Promise.all([
-        page.waitForFileChooser(),
-        page.$eval('input', input => input.click()),
-      ]);
-      await fileChooser.accept([]);
-      let error = null;
-      await fileChooser.accept([]).catch(e => error = e);
-      expect(error.message).toBe('Cannot accept FileChooser which is already handled!');
-    });
   });
 
-  describe('FileChooser.cancel', function() {
-    it('should cancel dialog', async({page, server}) => {
-      // Consider file chooser canceled if we can summon another one.
-      // There's no reliable way in WebPlatform to see that FileChooser was
-      // canceled.
-      await page.setContent(`<input type=file>`);
-      const [fileChooser1] = await Promise.all([
-        page.waitForFileChooser(),
-        page.$eval('input', input => input.click()),
-      ]);
-      await fileChooser1.cancel();
-      // If this resolves, than we successfully canceled file chooser.
-      await Promise.all([
-        page.waitForFileChooser(),
-        page.$eval('input', input => input.click()),
-      ]);
-    });
-    it('should fail when canceling file chooser twice', async({page, server}) => {
-      await page.setContent(`<input type=file>`);
-      const [fileChooser] = await Promise.all([
-        page.waitForFileChooser(),
-        page.$eval('input', input => input.click()),
-      ]);
-      await fileChooser.cancel();
-      let error = null;
-      await fileChooser.cancel().catch(e => error = e);
-      expect(error.message).toBe('Cannot cancel FileChooser which is already handled!');
-    });
-  });
-
-  describe('FileChooser.isMultiple', () => {
+  describe('Page.waitForFileChooser isMultiple', () => {
     it('should work for single file pick', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      const [chooser] = await Promise.all([
+      const [{ multiple }] = await Promise.all([
         page.waitForFileChooser(),
         page.click('input'),
       ]);
-      expect(chooser.isMultiple()).toBe(false);
+      expect(multiple).toBe(false);
     });
     it('should work for "multiple"', async({page, server}) => {
       await page.setContent(`<input multiple type=file>`);
-      const [chooser] = await Promise.all([
+      const [{ multiple }] = await Promise.all([
         page.waitForFileChooser(),
         page.click('input'),
       ]);
-      expect(chooser.isMultiple()).toBe(true);
+      expect(multiple).toBe(true);
     });
     it('should work for "webkitdirectory"', async({page, server}) => {
       await page.setContent(`<input multiple webkitdirectory type=file>`);
-      const [chooser] = await Promise.all([
+      const [{ multiple }] = await Promise.all([
         page.waitForFileChooser(),
         page.click('input'),
       ]);
-      expect(chooser.isMultiple()).toBe(true);
+      expect(multiple).toBe(true);
     });
   });
 };
