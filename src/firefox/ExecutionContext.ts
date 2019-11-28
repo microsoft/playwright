@@ -16,14 +16,14 @@
  */
 
 import {helper, debugError} from '../helper';
-import { createHandle, ElementHandle } from './JSHandle';
+import { createHandle } from './JSHandle';
 import * as js from '../javascript';
 import { JugglerSession } from './Connection';
 
-export type ExecutionContext = js.ExecutionContext<ElementHandle>;
-export type JSHandle = js.JSHandle<ElementHandle>;
+export type ExecutionContext = js.ExecutionContext;
+export type JSHandle = js.JSHandle;
 
-export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle> {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   _session: JugglerSession;
   _executionContextId: string;
 

@@ -18,17 +18,17 @@
 import { TargetSession } from './Connection';
 import { helper } from '../helper';
 import { valueFromRemoteObject, releaseObject } from './protocolHelper';
-import { createJSHandle, ElementHandle } from './JSHandle';
+import { createJSHandle } from './JSHandle';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export type ExecutionContext = js.ExecutionContext<ElementHandle>;
-export type JSHandle = js.JSHandle<ElementHandle>;
+export type ExecutionContext = js.ExecutionContext;
+export type JSHandle = js.JSHandle;
 
-export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle> {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   private _globalObjectId?: string;
   _session: TargetSession;
   _contextId: number;

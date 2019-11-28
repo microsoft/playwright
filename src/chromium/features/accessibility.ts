@@ -16,9 +16,9 @@
  */
 
 import { CDPSession } from '../Connection';
-import { ElementHandle } from '../JSHandle';
 import { Protocol } from '../protocol';
 import { toRemoteObject } from '../ExecutionContext';
+import * as dom from '../../dom';
 
 type SerializedAXNode = {
   role: string,
@@ -64,7 +64,7 @@ export class Accessibility {
 
   async snapshot(options: {
       interestingOnly?: boolean;
-      root?: ElementHandle | null;
+      root?: dom.ElementHandle | null;
     } = {}): Promise<SerializedAXNode> {
     const {
       interestingOnly = true,

@@ -22,7 +22,6 @@ import { FrameManager } from './FrameManager';
 import { assert, debugError, helper } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
-import { ElementHandle } from './JSHandle';
 
 export const NetworkManagerEvents = {
   Request: Symbol('Events.NetworkManager.Request'),
@@ -31,8 +30,8 @@ export const NetworkManagerEvents = {
   RequestFinished: Symbol('Events.NetworkManager.RequestFinished'),
 };
 
-export type Request = network.Request<ElementHandle>;
-export type Response = network.Response<ElementHandle>;
+export type Request = network.Request;
+export type Response = network.Response;
 
 export class NetworkManager extends EventEmitter {
   private _client: CDPSession;
@@ -269,7 +268,7 @@ export class NetworkManager extends EventEmitter {
 
 const interceptableRequestSymbol = Symbol('interceptableRequest');
 
-export function toInterceptableRequest(request: network.Request<ElementHandle>): InterceptableRequest {
+export function toInterceptableRequest(request: network.Request): InterceptableRequest {
   return (request as any)[interceptableRequestSymbol];
 }
 

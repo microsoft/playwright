@@ -18,17 +18,18 @@
 import { CDPSession } from './Connection';
 import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './protocolHelper';
-import { createJSHandle, ElementHandle } from './JSHandle';
+import { createJSHandle } from './JSHandle';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
+import * as dom from '../dom';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export type ExecutionContext = js.ExecutionContext<ElementHandle>;
-export type JSHandle = js.JSHandle<ElementHandle>;
+export type ExecutionContext = js.ExecutionContext;
+export type JSHandle = js.JSHandle;
 
-export class ExecutionContextDelegate implements js.ExecutionContextDelegate<ElementHandle> {
+export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   _client: CDPSession;
   _contextId: number;
 
@@ -140,7 +141,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate<Ele
       backendNodeId,
       executionContextId: this._contextId,
     });
-    return createJSHandle(context, object) as ElementHandle;
+    return createJSHandle(context, object) as dom.ElementHandle;
   }
 
   async getProperties(handle: JSHandle): Promise<Map<string, JSHandle>> {

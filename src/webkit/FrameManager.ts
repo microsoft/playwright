@@ -20,11 +20,11 @@ import { TimeoutError } from '../Errors';
 import * as frames from '../frames';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { TargetSession } from './Connection';
 import { Events } from './events';
 import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
-import { ElementHandle } from './JSHandle';
 import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
@@ -42,9 +42,9 @@ type FrameData = {
   id: string,
 };
 
-export type Frame = frames.Frame<ElementHandle>;
+export type Frame = frames.Frame;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate<ElementHandle> {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _session: TargetSession;
   _page: Page;
   _networkManager: NetworkManager;
@@ -277,7 +277,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate<E
     return watchDog.waitForNavigation();
   }
 
-  async adoptElementHandle(elementHandle: ElementHandle, context: ExecutionContext): Promise<ElementHandle> {
+  async adoptElementHandle(elementHandle: dom.ElementHandle, context: ExecutionContext): Promise<dom.ElementHandle> {
     assert(false, 'Multiple isolated worlds are not implemented');
     return elementHandle;
   }
