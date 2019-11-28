@@ -16,39 +16,29 @@
  */
 
 import * as fs from 'fs';
-import { debugError, helper } from '../helper';
+import { debugError, helper, assert } from '../helper';
 import * as input from '../input';
 import * as dom from '../dom';
 import * as frames from '../frames';
 import * as types from '../types';
 import { TargetSession } from './Connection';
-import { ExecutionContextDelegate, markJSHandle, toRemoteObject } from './ExecutionContext';
+import { toRemoteObject } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
-import { Protocol } from './protocol';
-import * as js from '../javascript';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
-export function createJSHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
-  const frame = context.frame();
-  if (remoteObject.subtype === 'node' && frame) {
-    const frameManager = frame._delegate as FrameManager;
-    const delegate = new DOMWorldDelegate((context._delegate as ExecutionContextDelegate)._session, frameManager);
-    const handle = new dom.ElementHandle(context, frameManager.page().keyboard, frameManager.page().mouse, delegate);
-    markJSHandle(handle, remoteObject);
-    return handle;
-  }
-  const handle = new js.JSHandle(context);
-  markJSHandle(handle, remoteObject);
-  return handle;
-}
-
-class DOMWorldDelegate implements dom.DOMWorldDelegate {
+export class DOMWorldDelegate implements dom.DOMWorldDelegate {
+  readonly keyboard: input.Keyboard;
+  readonly mouse: input.Mouse;
+  readonly frame: frames.Frame;
   private _client: TargetSession;
   private _frameManager: FrameManager;
 
-  constructor(client: TargetSession, frameManager: FrameManager) {
-    this._client = client;
+  constructor(frameManager: FrameManager, frame: frames.Frame) {
+    this.keyboard = frameManager.page().keyboard;
+    this.mouse = frameManager.page().mouse;
+    this.frame = frame;
+    this._client = frameManager._session;
     this._frameManager = frameManager;
   }
 
@@ -124,8 +114,8 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     // Filter out quads that have too small area to click into.
     const {clientWidth, clientHeight} = viewport;
     const quads = result.quads.map(fromProtocolQuad)
-      .map(quad => intersectQuadWithViewport(quad, clientWidth, clientHeight))
-      .filter(quad => computeQuadArea(quad) > 1);
+        .map(quad => intersectQuadWithViewport(quad, clientWidth, clientHeight))
+        .filter(quad => computeQuadArea(quad) > 1);
     if (!quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
     // Return the middle point of the first quad.
@@ -145,5 +135,10 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
     const objectId = toRemoteObject(handle).objectId;
     await this._client.send('DOM.setInputFiles', { objectId, files });
+  }
+
+  async adoptElementHandle(handle: dom.ElementHandle, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+    assert(false, 'Multiple isolated worlds are not implemented');
+    return handle;
   }
 }

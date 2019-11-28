@@ -16,14 +16,15 @@
  */
 
 import { EventEmitter } from 'events';
+import * as dom from '../dom';
 import * as frames from '../frames';
 import { assert, debugError } from '../helper';
 import * as js from '../javascript';
-import * as dom from '../dom';
 import * as network from '../network';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
-import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate, toRemoteObject } from './ExecutionContext';
+import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate } from './ExecutionContext';
+import { DOMWorldDelegate } from './JSHandle';
 import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager } from './NetworkManager';
 import { Page } from './Page';
@@ -178,13 +179,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       throw error;
   }
 
-  async adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext): Promise<dom.ElementHandle> {
-    const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: toRemoteObject(elementHandle).objectId,
-    });
-    return (context._delegate as ExecutionContextDelegate).adoptBackendNodeId(context, nodeInfo.node.backendNodeId);
-  }
-
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
     const frame = this._frames.get(event.frameId);
     if (!frame)
@@ -324,7 +318,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     const frame = this._frames.get(frameId) || null;
     if (contextPayload.auxData && contextPayload.auxData['type'] === 'isolated')
       this._isolatedWorlds.add(contextPayload.name);
-    const context: js.ExecutionContext = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload), frame);
+    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload));
+    if (frame)
+      context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
     if (frame) {
       if (contextPayload.auxData && !!contextPayload.auxData['isDefault'])
         frame._contextCreated('main', context);

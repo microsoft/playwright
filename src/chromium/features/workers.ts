@@ -21,8 +21,7 @@ import { Protocol } from '../protocol';
 import { Events } from '../events';
 import * as types from '../../types';
 import * as js from '../../javascript';
-import { ExecutionContextDelegate } from '../ExecutionContext';
-import { createJSHandle } from '../JSHandle';
+import { toHandle, ExecutionContextDelegate } from '../ExecutionContext';
 
 type AddToConsoleCallback = (type: string, args: js.JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
 type HandleExceptionCallback = (exceptionDetails: Protocol.Runtime.ExceptionDetails) => void;
@@ -68,8 +67,8 @@ export class Worker extends EventEmitter {
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
     let jsHandleFactory: (o: Protocol.Runtime.RemoteObject) => js.JSHandle;
     this._client.once('Runtime.executionContextCreated', async event => {
-      jsHandleFactory = remoteObject => createJSHandle(executionContext, remoteObject);
-      const executionContext = new js.ExecutionContext(new ExecutionContextDelegate(client, event.context), null);
+      jsHandleFactory = remoteObject => toHandle(executionContext, remoteObject);
+      const executionContext = new js.ExecutionContext(new ExecutionContextDelegate(client, event.context));
       this._executionContextCallback(executionContext);
     });
     // This might fail if the target is closed before we recieve all execution contexts.

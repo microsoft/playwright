@@ -29,6 +29,7 @@ import { ExecutionContextDelegate } from './ExecutionContext';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
+import { DOMWorldDelegate } from './JSHandle';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
@@ -235,8 +236,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     const frame = this._frames.get(frameId) || null;
     if (!frame)
       return;
-    const context: js.ExecutionContext = new js.ExecutionContext(new ExecutionContextDelegate(this._session, contextPayload), frame);
+    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, contextPayload));
     if (frame) {
+      context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
       frame._contextCreated('main', context);
       frame._contextCreated('utility', context);
     }
@@ -270,11 +272,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     // FIXME: this method only works for main frames.
     const watchDog = new NextNavigationWatchdog(this, frame, 10000);
     return watchDog.waitForNavigation();
-  }
-
-  async adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext): Promise<dom.ElementHandle> {
-    assert(false, 'Multiple isolated worlds are not implemented');
-    return elementHandle;
   }
 
   async setFrameContent(frame: frames.Frame, html: string, options: { timeout?: number; waitUntil?: string | Array<string>; } | undefined = {}) {
