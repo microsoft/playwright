@@ -21,10 +21,10 @@ import { Protocol } from '../protocol';
 import { Events } from '../events';
 import * as types from '../../types';
 import * as js from '../../javascript';
-import { JSHandle, ExecutionContext, ExecutionContextDelegate } from '../ExecutionContext';
+import { ExecutionContextDelegate } from '../ExecutionContext';
 import { createJSHandle } from '../JSHandle';
 
-type AddToConsoleCallback = (type: string, args: JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
+type AddToConsoleCallback = (type: string, args: js.JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
 type HandleExceptionCallback = (exceptionDetails: Protocol.Runtime.ExceptionDetails) => void;
 
 export class Workers extends EventEmitter {
@@ -58,15 +58,15 @@ export class Workers extends EventEmitter {
 export class Worker extends EventEmitter {
   private _client: CDPSession;
   private _url: string;
-  private _executionContextPromise: Promise<ExecutionContext>;
-  private _executionContextCallback: (value?: ExecutionContext) => void;
+  private _executionContextPromise: Promise<js.ExecutionContext>;
+  private _executionContextCallback: (value?: js.ExecutionContext) => void;
 
   constructor(client: CDPSession, url: string, addToConsole: AddToConsoleCallback, handleException: HandleExceptionCallback) {
     super();
     this._client = client;
     this._url = url;
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
-    let jsHandleFactory: (o: Protocol.Runtime.RemoteObject) => JSHandle;
+    let jsHandleFactory: (o: Protocol.Runtime.RemoteObject) => js.JSHandle;
     this._client.once('Runtime.executionContextCreated', async event => {
       jsHandleFactory = remoteObject => createJSHandle(executionContext, remoteObject);
       const executionContext = new js.ExecutionContext(new ExecutionContextDelegate(client, event.context), null);
@@ -83,15 +83,15 @@ export class Worker extends EventEmitter {
     return this._url;
   }
 
-  async executionContext(): Promise<ExecutionContext> {
+  async executionContext(): Promise<js.ExecutionContext> {
     return this._executionContextPromise;
   }
 
-  evaluate: types.Evaluate<JSHandle> = async (pageFunction, ...args) => {
+  evaluate: types.Evaluate = async (pageFunction, ...args) => {
     return (await this._executionContextPromise).evaluate(pageFunction, ...args as any);
   }
 
-  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
   }
 }

@@ -45,7 +45,6 @@ export type GotoOptions = NavigateOptions & {
 };
 
 export interface FrameDelegate {
-  timeoutSettings(): TimeoutSettings;
   navigateFrame(frame: Frame, url: string, options?: GotoOptions): Promise<network.Response | null>;
   waitForFrameNavigation(frame: Frame, options?: NavigateOptions): Promise<network.Response | null>;
   setFrameContent(frame: Frame, html: string, options?: NavigateOptions): Promise<void>;
@@ -54,6 +53,7 @@ export interface FrameDelegate {
 
 export class Frame {
   _delegate: FrameDelegate;
+  private _timeoutSettings: TimeoutSettings;
   private _parentFrame: Frame;
   private _url = '';
   private _detached = false;
@@ -61,8 +61,9 @@ export class Frame {
   private _childFrames = new Set<Frame>();
   private _name: string;
 
-  constructor(delegate: FrameDelegate, parentFrame: Frame | null) {
+  constructor(delegate: FrameDelegate, timeoutSettings: TimeoutSettings, parentFrame: Frame | null) {
     this._delegate = delegate;
+    this._timeoutSettings = timeoutSettings;
     this._parentFrame = parentFrame;
 
     this._worlds.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, waitTasks: new Set() });
@@ -98,12 +99,12 @@ export class Frame {
     return this._mainContext();
   }
 
-  evaluateHandle: types.EvaluateHandle<js.JSHandle> = async (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     const context = await this._mainContext();
     return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  evaluate: types.Evaluate<js.JSHandle> = async (pageFunction, ...args) => {
+  evaluate: types.Evaluate = async (pageFunction, ...args) => {
     const context = await this._mainContext();
     return context.evaluate(pageFunction, ...args as any);
   }
@@ -120,13 +121,13 @@ export class Frame {
     return document.$x(expression);
   }
 
-  $eval: types.$Eval<js.JSHandle> = async (selector, pageFunction, ...args) => {
+  $eval: types.$Eval = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval<js.JSHandle> = async (selector, pageFunction, ...args) => {
+  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const document = await context._document();
     return document.$$eval(selector, pageFunction, ...args as any);
@@ -390,7 +391,7 @@ export class Frame {
       visible?: boolean;
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<dom.ElementHandle | null> {
-    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._delegate.timeoutSettings().timeout(), ...options });
+    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
     const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
     if (!handle.asElement()) {
       await handle.dispose();
@@ -404,7 +405,7 @@ export class Frame {
       visible?: boolean;
       hidden?: boolean;
       timeout?: number; } | undefined): Promise<dom.ElementHandle | null> {
-    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._delegate.timeoutSettings().timeout(), ...options });
+    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
     const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
     if (!handle.asElement()) {
       await handle.dispose();
@@ -420,7 +421,7 @@ export class Frame {
     ...args): Promise<js.JSHandle> {
     const {
       polling = 'raf',
-      timeout = this._delegate.timeoutSettings().timeout(),
+      timeout = this._timeoutSettings.timeout(),
     } = options;
     const params: WaitTaskParams = {
       predicateBody: pageFunction,

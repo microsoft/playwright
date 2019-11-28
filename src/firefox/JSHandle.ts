@@ -19,9 +19,11 @@ import { assert, debugError } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import * as input from '../input';
+import * as types from '../types';
+import * as frames from '../frames';
 import { JugglerSession } from './Connection';
-import { Frame, FrameManager } from './FrameManager';
-import { ExecutionContext, markJSHandle, ExecutionContextDelegate, toPayload } from './ExecutionContext';
+import { FrameManager } from './FrameManager';
+import { markJSHandle, ExecutionContextDelegate, toPayload } from './ExecutionContext';
 
 class DOMWorldDelegate implements dom.DOMWorldDelegate {
   private _session: JugglerSession;
@@ -34,7 +36,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     this._frameId = frameId;
   }
 
-  async contentFrame(handle: dom.ElementHandle): Promise<Frame|null> {
+  async contentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const {frameId} = await this._session.send('Page.contentFrame', {
       frameId: this._frameId,
       objectId: toPayload(handle).objectId,
@@ -49,7 +51,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return this._frameManager._page._javascriptEnabled;
   }
 
-  async boundingBox(handle: dom.ElementHandle): Promise<dom.Rect | null> {
+  async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     return await this._session.send('Page.getBoundingBox', {
       frameId: this._frameId,
       objectId: toPayload(handle).objectId,
@@ -77,7 +79,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     }));
   }
 
-  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: dom.Point): Promise<dom.Point> {
+  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: types.Point): Promise<types.Point> {
     await handle._scrollIntoViewIfNeeded();
     if (!relativePoint)
       return this._clickablePoint(handle);
@@ -85,8 +87,8 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return { x: box.x + relativePoint.x, y: box.y + relativePoint.y };
   }
 
-  private async _clickablePoint(handle: dom.ElementHandle): Promise<dom.Point> {
-    type Quad = {p1: dom.Point, p2: dom.Point, p3: dom.Point, p4: dom.Point};
+  private async _clickablePoint(handle: dom.ElementHandle): Promise<types.Point> {
+    type Quad = {p1: types.Point, p2: types.Point, p3: types.Point, p4: types.Point};
 
     const computeQuadArea = (quad: Quad) => {
       // Compute sum of all directed areas of adjacent triangles
@@ -129,7 +131,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 }
 
-export function createHandle(context: ExecutionContext, result: any, exceptionDetails?: any) {
+export function createHandle(context: js.ExecutionContext, result: any, exceptionDetails?: any) {
   if (exceptionDetails) {
     if (exceptionDetails.value)
       throw new Error('Evaluation failed: ' + JSON.stringify(exceptionDetails.value));

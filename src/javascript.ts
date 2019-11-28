@@ -31,11 +31,11 @@ export class ExecutionContext {
     return this._frame;
   }
 
-  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
+  evaluate: types.Evaluate = (pageFunction, ...args) => {
     return this._delegate.evaluate(this, true /* returnByValue */, pageFunction, ...args);
   }
 
-  evaluateHandle: types.EvaluateHandle<JSHandle> = (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandle = (pageFunction, ...args) => {
     return this._delegate.evaluate(this, false /* returnByValue */, pageFunction, ...args);
   }
 
@@ -71,11 +71,11 @@ export class JSHandle {
     return this._context;
   }
 
-  evaluate: types.EvaluateOn<JSHandle> = (pageFunction, ...args) => {
+  evaluate: types.EvaluateOn = (pageFunction, ...args) => {
     return this._context.evaluate(pageFunction, this, ...args);
   }
 
-  evaluateHandle: types.EvaluateHandleOn<JSHandle> = (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandleOn = (pageFunction, ...args) => {
     return this._context.evaluateHandle(pageFunction, this, ...args);
   }
 

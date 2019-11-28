@@ -19,13 +19,14 @@ import { assert, debugError } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import * as input from '../input';
+import * as types from '../types';
+import * as frames from '../frames';
 import { CDPSession } from './Connection';
-import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
-import { JSHandle, ExecutionContext, ExecutionContextDelegate, markJSHandle, toRemoteObject } from './ExecutionContext';
+import { ExecutionContextDelegate, markJSHandle, toRemoteObject } from './ExecutionContext';
 
-export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): JSHandle {
+export function createJSHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
     const frameManager = frame._delegate as FrameManager;
@@ -49,7 +50,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     this._frameManager = frameManager;
   }
 
-  async contentFrame(handle: dom.ElementHandle): Promise<Frame|null> {
+  async contentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(handle).objectId
     });
@@ -68,7 +69,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     }).catch(error => debugError(error));
   }
 
-  async boundingBox(handle: dom.ElementHandle): Promise<dom.Rect | null> {
+  async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const result = await this._getBoxModel(handle);
     if (!result)
       return null;
@@ -121,7 +122,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return imageData;
   }
 
-  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: dom.Point): Promise<dom.Point> {
+  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: types.Point): Promise<types.Point> {
     await handle._scrollIntoViewIfNeeded();
     if (!relativePoint)
       return this._clickablePoint(handle);
@@ -142,8 +143,8 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return r.point;
   }
 
-  private async _clickablePoint(handle: dom.ElementHandle): Promise<dom.Point> {
-    const fromProtocolQuad = (quad: number[]): dom.Point[] => {
+  private async _clickablePoint(handle: dom.ElementHandle): Promise<types.Point> {
+    const fromProtocolQuad = (quad: number[]): types.Point[] => {
       return [
         {x: quad[0], y: quad[1]},
         {x: quad[2], y: quad[3]},
@@ -152,14 +153,14 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
       ];
     };
 
-    const intersectQuadWithViewport = (quad: dom.Point[], width: number, height: number): dom.Point[] => {
+    const intersectQuadWithViewport = (quad: types.Point[], width: number, height: number): types.Point[] => {
       return quad.map(point => ({
         x: Math.min(Math.max(point.x, 0), width),
         y: Math.min(Math.max(point.y, 0), height),
       }));
     };
 
-    const computeQuadArea = (quad: dom.Point[]) => {
+    const computeQuadArea = (quad: types.Point[]) => {
       // Compute sum of all directed areas of adjacent triangles
       // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
       let area = 0;
@@ -200,9 +201,9 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     };
   }
 
-  async _viewportPointAndScroll(handle: dom.ElementHandle, relativePoint: dom.Point): Promise<{point: dom.Point, scrollX: number, scrollY: number}> {
+  async _viewportPointAndScroll(handle: dom.ElementHandle, relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
     const model = await this._getBoxModel(handle);
-    let point: dom.Point;
+    let point: types.Point;
     if (!model) {
       point = relativePoint;
     } else {

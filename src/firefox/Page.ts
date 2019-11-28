@@ -1,3 +1,20 @@
+/**
+ * Copyright 2019 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as mime from 'mime';
@@ -10,15 +27,18 @@ import { Dialog } from './Dialog';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
-import { FrameManager, FrameManagerEvents, normalizeWaitUntil, Frame } from './FrameManager';
+import { FrameManager, FrameManagerEvents, normalizeWaitUntil } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { createHandle } from './JSHandle';
 import { NavigationWatchdog } from './NavigationWatchdog';
-import { NetworkManager, NetworkManagerEvents, Request, Response } from './NetworkManager';
+import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import * as input from '../input';
 import * as types from '../types';
 import * as dom from '../dom';
-import { JSHandle, toPayload, deserializeValue } from './ExecutionContext';
+import * as js from '../javascript';
+import * as network from '../network';
+import * as frames from '../frames';
+import { toPayload, deserializeValue } from './ExecutionContext';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -172,7 +192,7 @@ export class Page extends EventEmitter {
     return this._disconnectPromise;
   }
 
-  async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } | undefined = {}): Promise<Request> {
+  async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } | undefined = {}): Promise<network.Request> {
     const {
       timeout = this._timeoutSettings.timeout(),
     } = options;
@@ -185,7 +205,7 @@ export class Page extends EventEmitter {
     }, timeout, this._sessionClosePromise());
   }
 
-  async waitForResponse(urlOrPredicate: (string | Function), options: { timeout?: number; } | undefined = {}): Promise<Response> {
+  async waitForResponse(urlOrPredicate: (string | Function), options: { timeout?: number; } | undefined = {}): Promise<network.Response> {
     const {
       timeout = this._timeoutSettings.timeout(),
     } = options;
@@ -288,7 +308,7 @@ export class Page extends EventEmitter {
     this.emit(Events.Page.Dialog, new Dialog(this._session, params));
   }
 
-  mainFrame(): Frame {
+  mainFrame(): frames.Frame {
     return this._frameManager.mainFrame();
   }
 
@@ -420,7 +440,7 @@ export class Page extends EventEmitter {
     }
   }
 
-  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
+  evaluate: types.Evaluate = (pageFunction, ...args) => {
     return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
@@ -464,11 +484,11 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().hover(selector);
   }
 
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { polling?: string | number; timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}, ...args: Array<any>): Promise<JSHandle> {
+  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { polling?: string | number; timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}, ...args: Array<any>): Promise<js.JSHandle> {
     return this._frameManager.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
-  waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<JSHandle> {
+  waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<js.JSHandle> {
     return this._frameManager.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 
@@ -492,11 +512,11 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().$$(selector);
   }
 
-  $eval: types.$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+  $eval: types.$Eval = (selector, pageFunction, ...args) => {
     return this._frameManager.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+  $$eval: types.$$Eval = (selector, pageFunction, ...args) => {
     return this._frameManager.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
@@ -504,7 +524,7 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().$x(expression);
   }
 
-  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     return this._frameManager.mainFrame().evaluateHandle(pageFunction, ...args as any);
   }
 
@@ -564,10 +584,10 @@ export class Page extends EventEmitter {
 
 export class ConsoleMessage {
   private _type: string;
-  private _args: JSHandle[];
+  private _args: js.JSHandle[];
   private _location: any;
 
-  constructor(type: string, args: Array<JSHandle>, location) {
+  constructor(type: string, args: Array<js.JSHandle>, location) {
     this._type = type;
     this._args = args;
     this._location = location;
@@ -581,7 +601,7 @@ export class ConsoleMessage {
     return this._type;
   }
 
-  args(): Array<JSHandle> {
+  args(): Array<js.JSHandle> {
     return this._args;
   }
 

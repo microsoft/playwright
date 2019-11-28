@@ -17,10 +17,11 @@
 
 import { EventEmitter } from 'events';
 import { TargetSession } from './Connection';
-import { Frame, FrameManager } from './FrameManager';
+import { FrameManager } from './FrameManager';
 import { assert, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
+import * as frames from '../frames';
 
 export const NetworkManagerEvents = {
   Request: Symbol('Events.NetworkManager.Request'),
@@ -28,9 +29,6 @@ export const NetworkManagerEvents = {
   RequestFailed: Symbol('Events.NetworkManager.RequestFailed'),
   RequestFinished: Symbol('Events.NetworkManager.RequestFinished'),
 };
-
-export type Request = network.Request;
-export type Response = network.Response;
 
 export class NetworkManager extends EventEmitter {
   private _sesssion: TargetSession;
@@ -93,7 +91,7 @@ export class NetworkManager extends EventEmitter {
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
-    let redirectChain: Request[] = [];
+    let redirectChain: network.Request[] = [];
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
@@ -108,7 +106,7 @@ export class NetworkManager extends EventEmitter {
     this.emit(NetworkManagerEvents.Request, request.request);
   }
 
-  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): Response {
+  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
     const remoteAddress: network.RemoteAddress = { ip: '', port: 0 };
     const getResponseBody = async () => {
       const response = await this._sesssion.send('Network.getResponseBody', { requestId: request._requestId });
@@ -175,11 +173,11 @@ export function toInterceptableRequest(request: network.Request): InterceptableR
 }
 
 class InterceptableRequest {
-  readonly request: Request;
+  readonly request: network.Request;
   _requestId: string;
   _interceptionId: string;
 
-  constructor(frame: Frame | null, interceptionId: string, event: Protocol.Network.requestWillBeSentPayload, redirectChain: Request[]) {
+  constructor(frame: frames.Frame | null, interceptionId: string, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
     this._requestId = event.requestId;
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';

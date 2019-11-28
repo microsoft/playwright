@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { NetworkManager, Request, toInterceptableRequest } from '../NetworkManager';
+import { NetworkManager, toInterceptableRequest } from '../NetworkManager';
+import * as network from '../../network';
 
 export class Interception {
   private _networkManager: NetworkManager;
@@ -18,15 +19,15 @@ export class Interception {
     await this._networkManager.setRequestInterception(false);
   }
 
-  async continue(request: Request, overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
+  async continue(request: network.Request, overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
     return toInterceptableRequest(request).continue(overrides);
   }
 
-  async fulfill(request: Request, response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
+  async fulfill(request: network.Request, response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
     return toInterceptableRequest(request).fulfill(response);
   }
 
-  async abort(request: Request, errorCode: string = 'failed') {
+  async abort(request: network.Request, errorCode: string = 'failed') {
     return toInterceptableRequest(request).abort(errorCode);
   }
 

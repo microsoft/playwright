@@ -20,15 +20,16 @@ import { debugError, helper } from '../helper';
 import * as input from '../input';
 import * as dom from '../dom';
 import * as frames from '../frames';
+import * as types from '../types';
 import { TargetSession } from './Connection';
-import { ExecutionContext, ExecutionContextDelegate, markJSHandle, toRemoteObject } from './ExecutionContext';
+import { ExecutionContextDelegate, markJSHandle, toRemoteObject } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
-export function createJSHandle(context: ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
+export function createJSHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
   const frame = context.frame();
   if (remoteObject.subtype === 'node' && frame) {
     const frameManager = frame._delegate as FrameManager;
@@ -57,7 +58,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return this._frameManager.page()._javascriptEnabled;
   }
 
-  async boundingBox(handle: dom.ElementHandle): Promise<dom.Rect | null> {
+  async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     throw new Error('boundingBox() is not implemented');
   }
 
@@ -73,7 +74,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return buffer;
   }
 
-  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: dom.Point): Promise<dom.Point> {
+  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: types.Point): Promise<types.Point> {
     await handle._scrollIntoViewIfNeeded();
     if (!relativePoint)
       return this._clickablePoint(handle);
@@ -81,8 +82,8 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return { x: box.x + relativePoint.x, y: box.y + relativePoint.y };
   }
 
-  private async _clickablePoint(handle: dom.ElementHandle): Promise<dom.Point> {
-    const fromProtocolQuad = (quad: number[]): dom.Point[] => {
+  private async _clickablePoint(handle: dom.ElementHandle): Promise<types.Point> {
+    const fromProtocolQuad = (quad: number[]): types.Point[] => {
       return [
         {x: quad[0], y: quad[1]},
         {x: quad[2], y: quad[3]},
@@ -91,14 +92,14 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
       ];
     };
 
-    const intersectQuadWithViewport = (quad: dom.Point[], width: number, height: number): dom.Point[] => {
+    const intersectQuadWithViewport = (quad: types.Point[], width: number, height: number): types.Point[] => {
       return quad.map(point => ({
         x: Math.min(Math.max(point.x, 0), width),
         y: Math.min(Math.max(point.y, 0), height),
       }));
     };
 
-    const computeQuadArea = (quad: dom.Point[]) => {
+    const computeQuadArea = (quad: types.Point[]) => {
       // Compute sum of all directed areas of adjacent triangles
       // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
       let area = 0;
