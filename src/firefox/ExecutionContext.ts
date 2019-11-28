@@ -20,9 +20,6 @@ import { createHandle } from './JSHandle';
 import * as js from '../javascript';
 import { JugglerSession } from './Connection';
 
-export type ExecutionContext = js.ExecutionContext;
-export type JSHandle = js.JSHandle;
-
 export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   _session: JugglerSession;
   _executionContextId: string;
@@ -32,7 +29,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     this._executionContextId = executionContextId;
   }
 
-  async evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     if (returnByValue) {
       try {
         const handle = await this.evaluate(context, false /* returnByValue */, pageFunction, ...args as any);
@@ -113,7 +110,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     }
   }
 
-  async getProperties(handle: JSHandle): Promise<Map<string, JSHandle>> {
+  async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getObjectProperties', {
       executionContextId: this._executionContextId,
       objectId: toPayload(handle).objectId,
@@ -124,7 +121,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return result;
   }
 
-  async releaseHandle(handle: JSHandle): Promise<void> {
+  async releaseHandle(handle: js.JSHandle): Promise<void> {
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
       objectId: toPayload(handle).objectId,
@@ -135,7 +132,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     });
   }
 
-  async handleJSONValue(handle: JSHandle): Promise<any> {
+  async handleJSONValue(handle: js.JSHandle): Promise<any> {
     const payload = toPayload(handle);
     if (!payload.objectId)
       return deserializeValue(payload);
@@ -148,7 +145,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return deserializeValue(simpleValue.result);
   }
 
-  handleToString(handle: JSHandle): string {
+  handleToString(handle: js.JSHandle): string {
     const payload = toPayload(handle);
     if (payload.objectId)
       return 'JSHandle@' + (payload.subtype || payload.type);
@@ -162,11 +159,11 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
 
 const payloadSymbol = Symbol('payload');
 
-export function toPayload(handle: JSHandle): any {
+export function toPayload(handle: js.JSHandle): any {
   return (handle as any)[payloadSymbol];
 }
 
-export function markJSHandle(handle: JSHandle, payload: any) {
+export function markJSHandle(handle: js.JSHandle, payload: any) {
   (handle as any)[payloadSymbol] = payload;
 }
 

@@ -2,24 +2,21 @@
 // Licensed under the MIT license.
 
 import * as frames from './frames';
-import * as types from './types';
-import * as js from './javascript';
-import * as input from './input';
 import { assert, helper } from './helper';
 import Injected from './injected/injected';
+import * as input from './input';
+import * as js from './javascript';
+import * as types from './types';
 
-export type Rect = { x: number, y: number, width: number, height: number };
-export type Point = { x: number, y: number };
 type SelectorRoot = Element | ShadowRoot | Document;
 
 export interface DOMWorldDelegate {
   isJavascriptEnabled(): boolean;
   contentFrame(handle: ElementHandle): Promise<frames.Frame | null>;
-  boundingBox(handle: ElementHandle): Promise<Rect | null>;
+  boundingBox(handle: ElementHandle): Promise<types.Rect | null>;
   screenshot(handle: ElementHandle, options?: any): Promise<string | Buffer>;
-  ensurePointerActionPoint(handle: ElementHandle, relativePoint?: Point): Promise<Point>;
+  ensurePointerActionPoint(handle: ElementHandle, relativePoint?: types.Point): Promise<types.Point>;
   setInputFiles(handle: ElementHandle, files: input.FilePayload[]): Promise<void>;
-//    await this.evaluate(input.setFileInputFunction, );
 }
 
 export class ElementHandle extends js.JSHandle {
@@ -71,7 +68,7 @@ export class ElementHandle extends js.JSHandle {
       throw new Error(error);
   }
 
-  async _performPointerAction(action: (point: Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
     const point = await this._delegate.ensurePointerActionPoint(this, options ? options.relativePoint : undefined);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
@@ -141,7 +138,7 @@ export class ElementHandle extends js.JSHandle {
     await this._keyboard.press(key, options);
   }
 
-  async boundingBox(): Promise<Rect | null> {
+  async boundingBox(): Promise<types.Rect | null> {
     return this._delegate.boundingBox(this);
   }
 
@@ -177,7 +174,7 @@ export class ElementHandle extends js.JSHandle {
     return result;
   }
 
-  $eval: types.$Eval<js.JSHandle> = async (selector, pageFunction, ...args) => {
+  $eval: types.$Eval = async (selector, pageFunction, ...args) => {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -186,7 +183,7 @@ export class ElementHandle extends js.JSHandle {
     return result;
   }
 
-  $$eval: types.$$Eval<js.JSHandle> = async (selector, pageFunction, ...args) => {
+  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
     const arrayHandle = await this.evaluateHandle(
         (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
         selector, await this._context._injected()

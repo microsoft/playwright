@@ -26,9 +26,6 @@ import * as dom from '../dom';
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export type ExecutionContext = js.ExecutionContext;
-export type JSHandle = js.JSHandle;
-
 export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   _client: CDPSession;
   _contextId: number;
@@ -38,7 +35,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     this._contextId = contextPayload.id;
   }
 
-  async evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
+  async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
     const suffix = `//# sourceURL=${EVALUATION_SCRIPT_URL}`;
 
     if (helper.isString(pageFunction)) {
@@ -136,7 +133,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     }
   }
 
-  async adoptBackendNodeId(context: ExecutionContext, backendNodeId: Protocol.DOM.BackendNodeId) {
+  async adoptBackendNodeId(context: js.ExecutionContext, backendNodeId: Protocol.DOM.BackendNodeId) {
     const {object} = await this._client.send('DOM.resolveNode', {
       backendNodeId,
       executionContextId: this._contextId,
@@ -144,7 +141,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return createJSHandle(context, object) as dom.ElementHandle;
   }
 
-  async getProperties(handle: JSHandle): Promise<Map<string, JSHandle>> {
+  async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._client.send('Runtime.getProperties', {
       objectId: toRemoteObject(handle).objectId,
       ownProperties: true
@@ -158,11 +155,11 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return result;
   }
 
-  async releaseHandle(handle: JSHandle): Promise<void> {
+  async releaseHandle(handle: js.JSHandle): Promise<void> {
     await releaseObject(this._client, toRemoteObject(handle));
   }
 
-  async handleJSONValue(handle: JSHandle): Promise<any> {
+  async handleJSONValue(handle: js.JSHandle): Promise<any> {
     const remoteObject = toRemoteObject(handle);
     if (remoteObject.objectId) {
       const response = await this._client.send('Runtime.callFunctionOn', {
@@ -176,7 +173,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return valueFromRemoteObject(remoteObject);
   }
 
-  handleToString(handle: JSHandle): string {
+  handleToString(handle: js.JSHandle): string {
     const object = toRemoteObject(handle);
     if (object.objectId) {
       const type =  object.subtype || object.type;
@@ -188,10 +185,10 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
 
 const remoteObjectSymbol = Symbol('RemoteObject');
 
-export function toRemoteObject(handle: JSHandle): Protocol.Runtime.RemoteObject {
+export function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
   return (handle as any)[remoteObjectSymbol];
 }
 
-export function markJSHandle(handle: JSHandle, remoteObject: Protocol.Runtime.RemoteObject) {
+export function markJSHandle(handle: js.JSHandle, remoteObject: Protocol.Runtime.RemoteObject) {
   (handle as any)[remoteObjectSymbol] = remoteObject;
 }

@@ -17,18 +17,19 @@
 
 import { CDPSessionEvents } from './Connection';
 import { TimeoutError } from '../Errors';
-import { Frame } from './FrameManager';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { assert, helper, RegisteredListener } from '../helper';
-import { NetworkManagerEvents, Request, Response } from './NetworkManager';
+import { NetworkManagerEvents } from './NetworkManager';
+import * as frames from '../frames';
+import * as network from '../network';
 
 export class LifecycleWatcher {
   private _expectedLifecycle: string[];
   private _frameManager: FrameManager;
-  private _frame: Frame;
+  private _frame: frames.Frame;
   private _initialLoaderId: string;
   private _timeout: number;
-  private _navigationRequest: Request | null = null;
+  private _navigationRequest: network.Request | null = null;
   private _eventListeners: RegisteredListener[];
   private _sameDocumentNavigationPromise: Promise<Error | null>;
   private _sameDocumentNavigationCompleteCallback: () => void;
@@ -42,7 +43,7 @@ export class LifecycleWatcher {
   private _maximumTimer: NodeJS.Timer;
   private _hasSameDocumentNavigation: boolean;
 
-  constructor(frameManager: FrameManager, frame: Frame, waitUntil: string | string[], timeout: number) {
+  constructor(frameManager: FrameManager, frame: frames.Frame, waitUntil: string | string[], timeout: number) {
     if (Array.isArray(waitUntil))
       waitUntil = waitUntil.slice();
     else if (typeof waitUntil === 'string')
@@ -84,13 +85,13 @@ export class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
-  _onRequest(request: Request) {
+  _onRequest(request: network.Request) {
     if (request.frame() !== this._frame || !request.isNavigationRequest())
       return;
     this._navigationRequest = request;
   }
 
-  _onFrameDetached(frame: Frame) {
+  _onFrameDetached(frame: frames.Frame) {
     if (this._frame === frame) {
       this._terminationCallback.call(null, new Error('Navigating frame was detached'));
       return;
@@ -98,7 +99,7 @@ export class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
-  navigationResponse(): Response | null {
+  navigationResponse(): network.Response | null {
     return this._navigationRequest ? this._navigationRequest.response() : null;
   }
 
@@ -130,7 +131,7 @@ export class LifecycleWatcher {
         .then(() => new TimeoutError(errorMessage));
   }
 
-  _navigatedWithinDocument(frame: Frame) {
+  _navigatedWithinDocument(frame: frames.Frame) {
     if (frame !== this._frame)
       return;
     this._hasSameDocumentNavigation = true;
@@ -138,7 +139,7 @@ export class LifecycleWatcher {
   }
 
   _checkLifecycleComplete() {
-    const checkLifecycle = (frame: Frame, expectedLifecycle: string[]): boolean => {
+    const checkLifecycle = (frame: frames.Frame, expectedLifecycle: string[]): boolean => {
       for (const event of expectedLifecycle) {
         if (!this._frameManager._frameData(frame).lifecycleEvents.has(event))
           return false;

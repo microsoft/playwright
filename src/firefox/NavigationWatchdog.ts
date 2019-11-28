@@ -1,17 +1,35 @@
+/**
+ * Copyright 2019 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { helper, RegisteredListener } from '../helper';
 import { JugglerSessionEvents } from './Connection';
-import { Frame, FrameManagerEvents, FrameManager } from './FrameManager';
+import { FrameManagerEvents, FrameManager } from './FrameManager';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
+import * as frames from '../frames';
 
 export class NextNavigationWatchdog {
   private _frameManager: FrameManager;
-  private _navigatedFrame: Frame;
+  private _navigatedFrame: frames.Frame;
   private _promise: Promise<unknown>;
   private _resolveCallback: (value?: unknown) => void;
   private _navigation: {navigationId: number|null, url?: string} = null;
   private _eventListeners: RegisteredListener[];
 
-  constructor(frameManager: FrameManager, navigatedFrame: Frame) {
+  constructor(frameManager: FrameManager, navigatedFrame: frames.Frame) {
     this._frameManager = frameManager;
     this._navigatedFrame = navigatedFrame;
     this._promise = new Promise(x => this._resolveCallback = x);
@@ -55,7 +73,7 @@ export class NextNavigationWatchdog {
 
 export class NavigationWatchdog {
   private _frameManager: FrameManager;
-  private _navigatedFrame: Frame;
+  private _navigatedFrame: frames.Frame;
   private _targetNavigationId: any;
   private _firedEvents: any;
   private _targetURL: any;
@@ -64,7 +82,7 @@ export class NavigationWatchdog {
   private _navigationRequest: any;
   private _eventListeners: RegisteredListener[];
 
-  constructor(frameManager: FrameManager, navigatedFrame: Frame, networkManager: NetworkManager, targetNavigationId, targetURL, firedEvents) {
+  constructor(frameManager: FrameManager, navigatedFrame: frames.Frame, networkManager: NetworkManager, targetNavigationId, targetURL, firedEvents) {
     this._frameManager = frameManager;
     this._navigatedFrame = navigatedFrame;
     this._targetNavigationId = targetNavigationId;
@@ -100,7 +118,7 @@ export class NavigationWatchdog {
   }
 
   _checkNavigationComplete() {
-    const checkFiredEvents = (frame: Frame, firedEvents) => {
+    const checkFiredEvents = (frame: frames.Frame, firedEvents) => {
       for (const subframe of frame.childFrames()) {
         if (!checkFiredEvents(subframe, firedEvents))
           return false;

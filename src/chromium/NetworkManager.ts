@@ -17,11 +17,11 @@
 
 import { EventEmitter } from 'events';
 import { CDPSession } from './Connection';
-import { Frame } from './FrameManager';
 import { FrameManager } from './FrameManager';
 import { assert, debugError, helper } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
+import * as frames from '../frames';
 
 export const NetworkManagerEvents = {
   Request: Symbol('Events.NetworkManager.Request'),
@@ -29,9 +29,6 @@ export const NetworkManagerEvents = {
   RequestFailed: Symbol('Events.NetworkManager.RequestFailed'),
   RequestFinished: Symbol('Events.NetworkManager.RequestFinished'),
 };
-
-export type Request = network.Request;
-export type Response = network.Response;
 
 export class NetworkManager extends EventEmitter {
   private _client: CDPSession;
@@ -191,7 +188,7 @@ export class NetworkManager extends EventEmitter {
   }
 
   _onRequest(event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
-    let redirectChain: Request[] = [];
+    let redirectChain: network.Request[] = [];
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
@@ -206,7 +203,7 @@ export class NetworkManager extends EventEmitter {
     this.emit(NetworkManagerEvents.Request, request.request);
   }
 
-  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): Response {
+  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
     const remoteAddress: network.RemoteAddress = { ip: responsePayload.remoteIPAddress, port: responsePayload.remotePort };
     const getResponseBody = async () => {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
@@ -273,14 +270,14 @@ export function toInterceptableRequest(request: network.Request): InterceptableR
 }
 
 class InterceptableRequest {
-  readonly request: Request;
+  readonly request: network.Request;
   _requestId: string;
   _interceptionId: string;
   private _client: CDPSession;
   private _allowInterception: boolean;
   private _interceptionHandled = false;
 
-  constructor(client: CDPSession, frame: Frame | null, interceptionId: string, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: Request[]) {
+  constructor(client: CDPSession, frame: frames.Frame | null, interceptionId: string, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
     this._client = client;
     this._requestId = event.requestId;
     this._interceptionId = interceptionId;

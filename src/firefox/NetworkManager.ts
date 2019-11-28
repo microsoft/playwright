@@ -18,11 +18,9 @@
 import { EventEmitter } from 'events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { JugglerSession } from './Connection';
-import { FrameManager, Frame } from './FrameManager';
+import { FrameManager } from './FrameManager';
 import * as network from '../network';
-
-export type Request = network.Request;
-export type Response = network.Response;
+import * as frames from '../frames';
 
 export const NetworkManagerEvents = {
   RequestFailed: Symbol('NetworkManagerEvents.RequestFailed'),
@@ -78,7 +76,7 @@ export class NetworkManager extends EventEmitter {
     const frame = redirected ? redirected.request.frame() : (this._frameManager && event.frameId ? this._frameManager.frame(event.frameId) : null);
     if (!frame)
       return;
-    let redirectChain: Request[] = [];
+    let redirectChain: network.Request[] = [];
     if (redirected) {
       redirectChain = redirected.request._redirectChain;
       redirectChain.push(redirected.request);
@@ -170,13 +168,13 @@ export function toInterceptableRequest(request: network.Request): InterceptableR
 }
 
 class InterceptableRequest {
-  readonly request: Request;
+  readonly request: network.Request;
   _id: string;
   private _session: JugglerSession;
   private _suspended: boolean;
   private _interceptionHandled: boolean;
 
-  constructor(session: JugglerSession, frame: Frame, redirectChain: Request[], payload: any) {
+  constructor(session: JugglerSession, frame: frames.Frame, redirectChain: network.Request[], payload: any) {
     this._id = payload.requestId;
     this._session = session;
     this._suspended = payload.suspended;

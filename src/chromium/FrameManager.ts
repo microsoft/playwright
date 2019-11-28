@@ -20,11 +20,12 @@ import * as frames from '../frames';
 import { assert, debugError } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
+import * as network from '../network';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { CDPSession } from './Connection';
-import { EVALUATION_SCRIPT_URL, ExecutionContext, ExecutionContextDelegate, toRemoteObject } from './ExecutionContext';
+import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate, toRemoteObject } from './ExecutionContext';
 import { LifecycleWatcher } from './LifecycleWatcher';
-import { NetworkManager, Response } from './NetworkManager';
+import { NetworkManager } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 
@@ -45,17 +46,15 @@ type FrameData = {
   lifecycleEvents: Set<string>,
 };
 
-export type Frame = frames.Frame;
-
 export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
   _timeoutSettings: TimeoutSettings;
-  private _frames = new Map<string, Frame>();
-  private _contextIdToContext = new Map<number, ExecutionContext>();
+  private _frames = new Map<string, frames.Frame>();
+  private _contextIdToContext = new Map<number, js.ExecutionContext>();
   private _isolatedWorlds = new Set<string>();
-  private _mainFrame: Frame;
+  private _mainFrame: frames.Frame;
 
   constructor(client: CDPSession, page: Page, ignoreHTTPSErrors: boolean, timeoutSettings: TimeoutSettings) {
     super();
@@ -92,14 +91,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     return this._networkManager;
   }
 
-  _frameData(frame: Frame): FrameData {
+  _frameData(frame: frames.Frame): FrameData {
     return (frame as any)[frameDataSymbol];
   }
 
   async navigateFrame(
-    frame: Frame,
+    frame: frames.Frame,
     url: string,
-    options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } = {}): Promise<Response | null> {
+    options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } = {}): Promise<network.Response | null> {
     assertNoLegacyNavigationOptions(options);
     const {
       referer = this._networkManager.extraHTTPHeaders()['referer'],
@@ -136,9 +135,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   }
 
   async waitForFrameNavigation(
-    frame: Frame,
+    frame: frames.Frame,
     options: { timeout?: number; waitUntil?: string | string[]; } = {}
-  ): Promise<Response | null> {
+  ): Promise<network.Response | null> {
     assertNoLegacyNavigationOptions(options);
     const {
       waitUntil = ['load'],
@@ -156,7 +155,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     return watcher.navigationResponse();
   }
 
-  async setFrameContent(frame: Frame, html: string, options: frames.NavigateOptions = {}) {
+  async setFrameContent(frame: frames.Frame, html: string, options: frames.NavigateOptions = {}) {
     const {
       waitUntil = ['load'],
       timeout = this._timeoutSettings.navigationTimeout(),
@@ -179,11 +178,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       throw error;
   }
 
-  timeoutSettings(): TimeoutSettings {
-    return this._timeoutSettings;
-  }
-
-  async adoptElementHandle(elementHandle: dom.ElementHandle, context: ExecutionContext): Promise<dom.ElementHandle> {
+  async adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext): Promise<dom.ElementHandle> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(elementHandle).objectId,
     });
@@ -228,15 +223,15 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     return this._page;
   }
 
-  mainFrame(): Frame {
+  mainFrame(): frames.Frame {
     return this._mainFrame;
   }
 
-  frames(): Frame[] {
+  frames(): frames.Frame[] {
     return Array.from(this._frames.values());
   }
 
-  frame(frameId: string): Frame | null {
+  frame(frameId: string): frames.Frame | null {
     return this._frames.get(frameId) || null;
   }
 
@@ -245,7 +240,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new frames.Frame(this, parentFrame);
+    const frame = new frames.Frame(this, this._timeoutSettings, parentFrame);
     const data: FrameData = {
       id: frameId,
       loaderId: '',
@@ -276,7 +271,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
         data.id = framePayload.id;
       } else {
         // Initial main frame navigation.
-        frame = new frames.Frame(this, null);
+        frame = new frames.Frame(this, this._timeoutSettings, null);
         const data: FrameData = {
           id: framePayload.id,
           loaderId: '',
@@ -329,7 +324,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     const frame = this._frames.get(frameId) || null;
     if (contextPayload.auxData && contextPayload.auxData['type'] === 'isolated')
       this._isolatedWorlds.add(contextPayload.name);
-    const context: ExecutionContext = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload), frame);
+    const context: js.ExecutionContext = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload), frame);
     if (frame) {
       if (contextPayload.auxData && !!contextPayload.auxData['isDefault'])
         frame._contextCreated('main', context);
@@ -353,13 +348,13 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       this._onExecutionContextDestroyed(contextId);
   }
 
-  executionContextById(contextId: number): ExecutionContext {
+  executionContextById(contextId: number): js.ExecutionContext {
     const context = this._contextIdToContext.get(contextId);
     assert(context, 'INTERNAL ERROR: missing context with id = ' + contextId);
     return context;
   }
 
-  _removeFramesRecursively(frame: Frame) {
+  _removeFramesRecursively(frame: frames.Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
     frame._detach();

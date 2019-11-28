@@ -4,20 +4,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { assert, helper } from './helper';
+import * as types from './types';
 import * as keyboardLayout from './USKeyboardLayout';
+
 const readFileAsync = helper.promisify(fs.readFile);
 
 export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 export type Button = 'left' | 'right' | 'middle';
 
-type Point = {
-  x: number;
-  y: number;
-};
-
 export type PointerActionOptions = {
   modifiers?: Modifier[];
-  relativePoint?: Point;
+  relativePoint?: types.Point;
 };
 
 export type ClickOptions = PointerActionOptions & {

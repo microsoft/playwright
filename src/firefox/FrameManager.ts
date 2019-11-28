@@ -23,9 +23,10 @@ import * as js from '../javascript';
 import * as dom from '../dom';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { JugglerSession } from './Connection';
-import { ExecutionContext, ExecutionContextDelegate } from './ExecutionContext';
+import { ExecutionContextDelegate } from './ExecutionContext';
 import { NavigationWatchdog, NextNavigationWatchdog } from './NavigationWatchdog';
 import { Page } from './Page';
+import { NetworkManager } from './NetworkManager';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -42,16 +43,14 @@ type FrameData = {
   firedEvents: Set<string>,
 };
 
-export type Frame = frames.Frame;
-
 export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _session: JugglerSession;
   _page: Page;
-  _networkManager: any;
-  _timeoutSettings: any;
-  _mainFrame: Frame;
-  _frames: Map<string, Frame>;
-  _contextIdToContext: Map<string, ExecutionContext>;
+  _networkManager: NetworkManager;
+  _timeoutSettings: TimeoutSettings;
+  _mainFrame: frames.Frame;
+  _frames: Map<string, frames.Frame>;
+  _contextIdToContext: Map<string, js.ExecutionContext>;
   _eventListeners: RegisteredListener[];
 
   constructor(session: JugglerSession, page: Page, networkManager, timeoutSettings) {
@@ -98,24 +97,24 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       context.frame()._contextDestroyed(context);
   }
 
-  _frameData(frame: Frame): FrameData {
+  _frameData(frame: frames.Frame): FrameData {
     return (frame as any)[frameDataSymbol];
   }
 
-  frame(frameId: string): Frame {
+  frame(frameId: string): frames.Frame {
     return this._frames.get(frameId);
   }
 
-  mainFrame(): Frame {
+  mainFrame(): frames.Frame {
     return this._mainFrame;
   }
 
   frames() {
-    const frames: Array<Frame> = [];
+    const frames: Array<frames.Frame> = [];
     collect(this._mainFrame);
     return frames;
 
-    function collect(frame: Frame) {
+    function collect(frame: frames.Frame) {
       frames.push(frame);
       for (const subframe of frame.childFrames())
         collect(subframe);
@@ -139,7 +138,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
 
   _onFrameAttached(params) {
     const parentFrame = this._frames.get(params.parentFrameId) || null;
-    const frame = new frames.Frame(this, parentFrame);
+    const frame = new frames.Frame(this, this._timeoutSettings, parentFrame);
     const data: FrameData = {
       frameId: params.frameId,
       lastCommittedNavigationId: '',
@@ -176,16 +175,12 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     helper.removeEventListeners(this._eventListeners);
   }
 
-  timeoutSettings(): TimeoutSettings {
-    return this._timeoutSettings;
-  }
-
-  async adoptElementHandle(elementHandle: dom.ElementHandle, context: ExecutionContext): Promise<dom.ElementHandle> {
+  async adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext): Promise<dom.ElementHandle> {
     assert(false, 'Multiple isolated worlds are not implemented');
     return elementHandle;
   }
 
-  async waitForFrameNavigation(frame: Frame, options: { timeout?: number; waitUntil?: string | Array<string>; } = {}) {
+  async waitForFrameNavigation(frame: frames.Frame, options: { timeout?: number; waitUntil?: string | Array<string>; } = {}) {
     const {
       timeout = this._timeoutSettings.navigationTimeout(),
       waitUntil = ['load'],
@@ -230,7 +225,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     return watchDog.navigationResponse();
   }
 
-  async navigateFrame(frame: Frame, url: string, options: { timeout?: number; waitUntil?: string | Array<string>; referer?: string; } = {}) {
+  async navigateFrame(frame: frames.Frame, url: string, options: { timeout?: number; waitUntil?: string | Array<string>; referer?: string; } = {}) {
     const {
       timeout = this._timeoutSettings.navigationTimeout(),
       waitUntil = ['load'],
@@ -262,7 +257,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     return watchDog.navigationResponse();
   }
 
-  async setFrameContent(frame: Frame, html: string) {
+  async setFrameContent(frame: frames.Frame, html: string) {
     const context = await frame._utilityContext();
     await context.evaluate(html => {
       document.open();

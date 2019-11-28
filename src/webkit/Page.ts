@@ -24,11 +24,11 @@ import { TimeoutSettings } from '../TimeoutSettings';
 import { Browser, BrowserContext } from './Browser';
 import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
-import { Frame, FrameManager, FrameManagerEvents } from './FrameManager';
+import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
 import { createJSHandle } from './JSHandle';
-import { JSHandle, toRemoteObject } from './ExecutionContext';
-import { NetworkManagerEvents, Response } from './NetworkManager';
+import { toRemoteObject } from './ExecutionContext';
+import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { valueFromRemoteObject } from './protocolHelper';
 import { Target } from './Target';
@@ -36,6 +36,9 @@ import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
 import * as types from '../types';
 import * as dom from '../dom';
+import * as frames from '../frames';
+import * as js from '../javascript';
+import * as network from '../network';
 import { Dialog, DialogType } from './Dialog';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
@@ -195,7 +198,7 @@ export class Page extends EventEmitter {
     this.emit(Events.Page.Console, new ConsoleMessage(derivedType, formattedText, handles, location));
   }
 
-  mainFrame(): Frame {
+  mainFrame(): frames.Frame {
     return this._frameManager.mainFrame();
   }
 
@@ -203,7 +206,7 @@ export class Page extends EventEmitter {
     return this._keyboard;
   }
 
-  frames(): Frame[] {
+  frames(): frames.Frame[] {
     return this._frameManager.frames();
   }
 
@@ -224,16 +227,16 @@ export class Page extends EventEmitter {
     return this.mainFrame().$(selector);
   }
 
-  evaluateHandle: types.EvaluateHandle<JSHandle> = async (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     const context = await this.mainFrame().executionContext();
     return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  $eval: types.$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+  $eval: types.$Eval = (selector, pageFunction, ...args) => {
     return this.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval<JSHandle> = (selector, pageFunction, ...args) => {
+  $$eval: types.$$Eval = (selector, pageFunction, ...args) => {
     return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
@@ -273,11 +276,11 @@ export class Page extends EventEmitter {
     await this._frameManager.mainFrame().setContent(html, options);
   }
 
-  async goto(url: string, options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<Response | null> {
+  async goto(url: string, options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
     return await this._frameManager.mainFrame().goto(url, options);
   }
 
-  async reload(): Promise<Response | null> {
+  async reload(): Promise<network.Response | null> {
     const [response] = await Promise.all([
       this.waitForNavigation(),
       this._session.send('Page.reload')
@@ -285,7 +288,7 @@ export class Page extends EventEmitter {
     return response;
   }
 
-  async waitForNavigation(): Promise<Response | null> {
+  async waitForNavigation(): Promise<network.Response | null> {
     return await this._frameManager.mainFrame().waitForNavigation();
   }
 
@@ -350,7 +353,7 @@ export class Page extends EventEmitter {
     return this._viewport;
   }
 
-  evaluate: types.Evaluate<JSHandle> = (pageFunction, ...args) => {
+  evaluate: types.Evaluate = (pageFunction, ...args) => {
     return this._frameManager.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
@@ -505,7 +508,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().type(selector, text, options);
   }
 
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { visible?: boolean; hidden?: boolean; timeout?: number; polling?: string | number; } = {}, ...args: any[]): Promise<JSHandle> {
+  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { visible?: boolean; hidden?: boolean; timeout?: number; polling?: string | number; } = {}, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
@@ -520,7 +523,7 @@ export class Page extends EventEmitter {
   waitForFunction(pageFunction: Function, options: {
       polling?: string | number;
       timeout?: number; } = {},
-  ...args: any[]): Promise<JSHandle> {
+  ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 }
@@ -561,10 +564,10 @@ type ConsoleMessageLocation = {
 export class ConsoleMessage {
   private _type: string;
   private _text: string;
-  private _args: JSHandle[];
+  private _args: js.JSHandle[];
   private _location: any;
 
-  constructor(type: string, text: string, args: JSHandle[], location: ConsoleMessageLocation = {}) {
+  constructor(type: string, text: string, args: js.JSHandle[], location: ConsoleMessageLocation = {}) {
     this._type = type;
     this._text = text;
     this._args = args;
@@ -579,7 +582,7 @@ export class ConsoleMessage {
     return this._text;
   }
 
-  args(): JSHandle[] {
+  args(): js.JSHandle[] {
     return this._args;
   }
 
