@@ -34,7 +34,9 @@ export function createJSHandle(context: js.ExecutionContext, remoteObject: Proto
   if (remoteObject.subtype === 'node' && frame) {
     const frameManager = frame._delegate as FrameManager;
     const delegate = new DOMWorldDelegate((context._delegate as ExecutionContextDelegate)._session, frameManager);
-    return new dom.ElementHandle(context, frameManager.page().keyboard, frameManager.page().mouse, delegate);
+    const handle = new dom.ElementHandle(context, frameManager.page().keyboard, frameManager.page().mouse, delegate);
+    markJSHandle(handle, remoteObject);
+    return handle;
   }
   const handle = new js.JSHandle(context);
   markJSHandle(handle, remoteObject);
@@ -141,7 +143,7 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
-    const objectId = toRemoteObject(handle);
+    const objectId = toRemoteObject(handle).objectId;
     await this._client.send('DOM.setInputFiles', { objectId, files });
   }
 }
