@@ -16,8 +16,8 @@
  */
 
 import {helper, debugError} from '../helper';
-import { createHandle } from './JSHandle';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import { JugglerSession } from './Connection';
 
 export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
@@ -48,7 +48,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
         expression: pageFunction.trim(),
         executionContextId: this._executionContextId,
       }).catch(rewriteError);
-      return createHandle(context, payload.result, payload.exceptionDetails);
+      return toHandle(context, payload.result, payload.exceptionDetails);
     }
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
@@ -101,7 +101,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
       throw err;
     }
     const payload = await callFunctionPromise.catch(rewriteError);
-    return createHandle(context, payload.result, payload.exceptionDetails);
+    return toHandle(context, payload.result, payload.exceptionDetails);
 
     function rewriteError(error) {
       if (error.message.includes('Failed to find execution context with id'))
@@ -117,7 +117,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, createHandle(handle.executionContext(), property.value, null));
+      result.set(property.name, toHandle(handle.executionContext(), property.value, null));
     return result;
   }
 
@@ -163,8 +163,21 @@ export function toPayload(handle: js.JSHandle): any {
   return (handle as any)[payloadSymbol];
 }
 
-export function markJSHandle(handle: js.JSHandle, payload: any) {
-  (handle as any)[payloadSymbol] = payload;
+export function toHandle(context: js.ExecutionContext, result: any, exceptionDetails?: any) {
+  if (exceptionDetails) {
+    if (exceptionDetails.value)
+      throw new Error('Evaluation failed: ' + JSON.stringify(exceptionDetails.value));
+    else
+      throw new Error('Evaluation failed: ' + exceptionDetails.text + '\n' + exceptionDetails.stack);
+  }
+  if (result.subtype === 'node') {
+    const handle = new dom.ElementHandle(context);
+    (handle as any)[payloadSymbol] = result;
+    return handle;
+  }
+  const handle = new js.JSHandle(context);
+  (handle as any)[payloadSymbol] = result;
+  return handle;
 }
 
 export function deserializeValue({unserializableValue, value}) {

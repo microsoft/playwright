@@ -104,12 +104,14 @@ function checkSources(sources) {
   function parentClass(classNode) {
     for (const herigateClause of classNode.heritageClauses || []) {
       for (const heritageType of herigateClause.types) {
-        const parentClassName = heritageType.expression.escapedText;
-        return parentClassName;
+        let expression = heritageType.expression;
+        if (expression.kind === ts.SyntaxKind.PropertyAccessExpression)
+          expression = expression.name;
+        if (classNode.name.escapedText !== expression.escapedText)
+          return expression.escapedText;
       }
     }
     return null;
-
   }
 
   function serializeSymbol(symbol, circular = []) {

@@ -4,9 +4,6 @@
 import * as frames from './frames';
 import * as types from './types';
 import * as dom from './dom';
-import * as injectedSource from './generated/injectedSource';
-import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
-import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
@@ -17,18 +14,15 @@ export interface ExecutionContextDelegate {
 }
 
 export class ExecutionContext {
-  _delegate: ExecutionContextDelegate;
-  private _frame: frames.Frame;
-  private _injectedPromise: Promise<JSHandle> | null = null;
-  private _documentPromise: Promise<dom.ElementHandle> | null = null;
+  readonly _delegate: ExecutionContextDelegate;
+  _domWorld?: dom.DOMWorld;
 
-  constructor(delegate: ExecutionContextDelegate, frame: frames.Frame | null) {
+  constructor(delegate: ExecutionContextDelegate) {
     this._delegate = delegate;
-    this._frame = frame;
   }
 
   frame(): frames.Frame | null {
-    return this._frame;
+    return this._domWorld ? this._domWorld.delegate.frame : null;
   }
 
   evaluate: types.Evaluate = (pageFunction, ...args) => {
@@ -38,29 +32,10 @@ export class ExecutionContext {
   evaluateHandle: types.EvaluateHandle = (pageFunction, ...args) => {
     return this._delegate.evaluate(this, false /* returnByValue */, pageFunction, ...args);
   }
-
-  _injected(): Promise<JSHandle> {
-    if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
-      const source = `
-        new (${injectedSource.source})([
-          ${engineSources.join(',\n')}
-        ])
-      `;
-      this._injectedPromise = this.evaluateHandle(source);
-    }
-    return this._injectedPromise;
-  }
-
-  _document(): Promise<dom.ElementHandle> {
-    if (!this._documentPromise)
-      this._documentPromise = this.evaluateHandle('document').then(handle => handle.asElement()!);
-    return this._documentPromise;
-  }
 }
 
 export class JSHandle {
-  _context: ExecutionContext;
+  readonly _context: ExecutionContext;
   _disposed = false;
 
   constructor(context: ExecutionContext) {

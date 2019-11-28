@@ -16,7 +16,6 @@
  */
 
 import { assert, debugError } from '../helper';
-import * as js from '../javascript';
 import * as dom from '../dom';
 import * as input from '../input';
 import * as types from '../types';
@@ -24,29 +23,20 @@ import * as frames from '../frames';
 import { CDPSession } from './Connection';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
-import { ExecutionContextDelegate, markJSHandle, toRemoteObject } from './ExecutionContext';
+import { toRemoteObject, toHandle, ExecutionContextDelegate } from './ExecutionContext';
 
-export function createJSHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-  const frame = context.frame();
-  if (remoteObject.subtype === 'node' && frame) {
-    const frameManager = frame._delegate as FrameManager;
-    const page = frameManager.page();
-    const delegate = new DOMWorldDelegate((context._delegate as ExecutionContextDelegate)._client, frameManager);
-    const handle = new dom.ElementHandle(context, page.keyboard, page.mouse, delegate);
-    markJSHandle(handle, remoteObject);
-    return handle;
-  }
-  const handle = new js.JSHandle(context);
-  markJSHandle(handle, remoteObject);
-  return handle;
-}
-
-class DOMWorldDelegate implements dom.DOMWorldDelegate {
+export class DOMWorldDelegate implements dom.DOMWorldDelegate {
+  readonly keyboard: input.Keyboard;
+  readonly mouse: input.Mouse;
+  readonly frame: frames.Frame;
   private _client: CDPSession;
   private _frameManager: FrameManager;
 
-  constructor(client: CDPSession, frameManager: FrameManager) {
-    this._client = client;
+  constructor(frameManager: FrameManager, frame: frames.Frame) {
+    this.keyboard = frameManager.page().keyboard;
+    this.mouse = frameManager.page().mouse;
+    this.frame = frame;
+    this._client = frameManager._client;
     this._frameManager = frameManager;
   }
 
@@ -183,8 +173,8 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
     // Filter out quads that have too small area to click into.
     const { clientWidth, clientHeight } = layoutMetrics.layoutViewport;
     const quads = result.quads.map(fromProtocolQuad)
-      .map(quad => intersectQuadWithViewport(quad, clientWidth, clientHeight))
-      .filter(quad => computeQuadArea(quad) > 1);
+        .map(quad => intersectQuadWithViewport(quad, clientWidth, clientHeight))
+        .filter(quad => computeQuadArea(quad) > 1);
     if (!quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
     // Return the middle point of the first quad.
@@ -233,5 +223,20 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
     await handle.evaluate(input.setFileInputFunction, files);
+  }
+
+  async adoptElementHandle(handle: dom.ElementHandle, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+    const nodeInfo = await this._client.send('DOM.describeNode', {
+      objectId: toRemoteObject(handle).objectId,
+    });
+    return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to);
+  }
+
+  async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+    const {object} = await this._client.send('DOM.resolveNode', {
+      backendNodeId,
+      executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId,
+    });
+    return toHandle(to.context, object).asElement()!;
   }
 }

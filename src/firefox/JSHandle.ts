@@ -16,24 +16,29 @@
  */
 
 import { assert, debugError } from '../helper';
-import * as js from '../javascript';
 import * as dom from '../dom';
 import * as input from '../input';
 import * as types from '../types';
 import * as frames from '../frames';
 import { JugglerSession } from './Connection';
 import { FrameManager } from './FrameManager';
-import { markJSHandle, ExecutionContextDelegate, toPayload } from './ExecutionContext';
+import { toPayload } from './ExecutionContext';
 
-class DOMWorldDelegate implements dom.DOMWorldDelegate {
+export class DOMWorldDelegate implements dom.DOMWorldDelegate {
+  readonly keyboard: input.Keyboard;
+  readonly mouse: input.Mouse;
+  readonly frame: frames.Frame;
   private _session: JugglerSession;
   private _frameManager: FrameManager;
   private _frameId: string;
 
-  constructor(session: JugglerSession, frameManager: FrameManager, frameId: string) {
-    this._session = session;
+  constructor(frameManager: FrameManager, frame: frames.Frame) {
+    this.keyboard = frameManager._page.keyboard;
+    this.mouse = frameManager._page.mouse;
+    this.frame = frame;
+    this._session = frameManager._session;
     this._frameManager = frameManager;
-    this._frameId = frameId;
+    this._frameId = frameManager._frameData(frame).frameId;
   }
 
   async contentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
@@ -129,26 +134,9 @@ class DOMWorldDelegate implements dom.DOMWorldDelegate {
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
     await handle.evaluate(input.setFileInputFunction, files);
   }
-}
 
-export function createHandle(context: js.ExecutionContext, result: any, exceptionDetails?: any) {
-  if (exceptionDetails) {
-    if (exceptionDetails.value)
-      throw new Error('Evaluation failed: ' + JSON.stringify(exceptionDetails.value));
-    else
-      throw new Error('Evaluation failed: ' + exceptionDetails.text + '\n' + exceptionDetails.stack);
-  }
-  if (result.subtype === 'node') {
-    const frame = context.frame();
-    const frameManager = frame._delegate as FrameManager;
-    const frameId = frameManager._frameData(frame).frameId;
-    const session = (context._delegate as ExecutionContextDelegate)._session;
-    const delegate = new DOMWorldDelegate(session, frameManager, frameId);
-    const handle = new dom.ElementHandle(context, frameManager._page.keyboard, frameManager._page.mouse, delegate);
-    markJSHandle(handle, result);
+  async adoptElementHandle(handle: dom.ElementHandle, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+    assert(false, 'Multiple isolated worlds are not implemented');
     return handle;
   }
-  const handle = new js.JSHandle(context);
-  markJSHandle(handle, result);
-  return handle;
 }

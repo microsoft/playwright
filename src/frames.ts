@@ -48,7 +48,6 @@ export interface FrameDelegate {
   navigateFrame(frame: Frame, url: string, options?: GotoOptions): Promise<network.Response | null>;
   waitForFrameNavigation(frame: Frame, options?: NavigateOptions): Promise<network.Response | null>;
   setFrameContent(frame: Frame, html: string, options?: NavigateOptions): Promise<void>;
-  adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext): Promise<dom.ElementHandle>;
 }
 
 export class Frame {
@@ -89,10 +88,24 @@ export class Frame {
     return this._worlds.get('main').contextPromise;
   }
 
+  async _mainDOMWorld(): Promise<dom.DOMWorld> {
+    const context = await this._mainContext();
+    if (!context._domWorld)
+      throw new Error(`Execution Context does not belong to frame`);
+    return context._domWorld;
+  }
+
   _utilityContext(): Promise<js.ExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
     return this._worlds.get('utility').contextPromise;
+  }
+
+  async _utilityDOMWorld(): Promise<dom.DOMWorld> {
+    const context = await this._utilityContext();
+    if (!context._domWorld)
+      throw new Error(`Execution Context does not belong to frame`);
+    return context._domWorld;
   }
 
   executionContext(): Promise<js.ExecutionContext> {
@@ -110,32 +123,32 @@ export class Frame {
   }
 
   async $(selector: string): Promise<dom.ElementHandle | null> {
-    const context = await this._mainContext();
-    const document = await context._document();
+    const domWorld = await this._mainDOMWorld();
+    const document = await domWorld._document();
     return document.$(selector);
   }
 
   async $x(expression: string): Promise<dom.ElementHandle[]> {
-    const context = await this._mainContext();
-    const document = await context._document();
+    const domWorld = await this._mainDOMWorld();
+    const document = await domWorld._document();
     return document.$x(expression);
   }
 
   $eval: types.$Eval = async (selector, pageFunction, ...args) => {
-    const context = await this._mainContext();
-    const document = await context._document();
+    const domWorld = await this._mainDOMWorld();
+    const document = await domWorld._document();
     return document.$eval(selector, pageFunction, ...args as any);
   }
 
   $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
-    const context = await this._mainContext();
-    const document = await context._document();
+    const domWorld = await this._mainDOMWorld();
+    const document = await domWorld._document();
     return document.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<dom.ElementHandle[]> {
-    const context = await this._mainContext();
-    const document = await context._document();
+    const domWorld = await this._mainDOMWorld();
+    const document = await domWorld._document();
     return document.$$(selector);
   }
 
@@ -293,8 +306,8 @@ export class Frame {
   }
 
   async click(selector: string, options?: ClickOptions) {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.click(options);
@@ -302,8 +315,8 @@ export class Frame {
   }
 
   async dblclick(selector: string, options?: MultiClickOptions) {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.dblclick(options);
@@ -311,8 +324,8 @@ export class Frame {
   }
 
   async tripleclick(selector: string, options?: MultiClickOptions) {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.tripleclick(options);
@@ -320,8 +333,8 @@ export class Frame {
   }
 
   async fill(selector: string, value: string) {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.fill(value);
@@ -329,8 +342,8 @@ export class Frame {
   }
 
   async focus(selector: string) {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.focus();
@@ -338,8 +351,8 @@ export class Frame {
   }
 
   async hover(selector: string, options?: PointerActionOptions) {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.hover(options);
@@ -347,14 +360,13 @@ export class Frame {
   }
 
   async select(selector: string, ...values: (string | dom.ElementHandle | SelectOption)[]): Promise<string[]> {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
-    const utilityContext = await this._utilityContext();
     const adoptedValues = await Promise.all(values.map(async value => {
       if (value instanceof dom.ElementHandle)
-        return this._adoptElementHandle(value, utilityContext, false /* dispose */);
+        return domWorld.adoptElementHandle(value, false /* dispose */);
       return value;
     }));
     const result = await handle.select(...adoptedValues);
@@ -363,8 +375,8 @@ export class Frame {
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
-    const context = await this._utilityContext();
-    const document = await context._document();
+    const domWorld = await this._utilityDOMWorld();
+    const document = await domWorld._document();
     const handle = await document.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.type(text, options);
@@ -397,8 +409,8 @@ export class Frame {
       await handle.dispose();
       return null;
     }
-    const mainContext = await this._mainContext();
-    return this._adoptElementHandle(handle.asElement(), mainContext, true /* dispose */);
+    const mainDOMWorld = await this._mainDOMWorld();
+    return mainDOMWorld.adoptElementHandle(handle.asElement(), true /* dispose */);
   }
 
   async waitForXPath(xpath: string, options: {
@@ -411,8 +423,8 @@ export class Frame {
       await handle.dispose();
       return null;
     }
-    const mainContext = await this._mainContext();
-    return this._adoptElementHandle(handle.asElement(), mainContext, true /* dispose */);
+    const mainDOMWorld = await this._mainDOMWorld();
+    return mainDOMWorld.adoptElementHandle(handle.asElement(), true /* dispose */);
   }
 
   waitForFunction(
@@ -490,14 +502,5 @@ export class Frame {
       if (world.context === context)
         this._setContext(worldType, null);
     }
-  }
-
-  private async _adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext, dispose: boolean): Promise<dom.ElementHandle> {
-    if (elementHandle.executionContext() === context)
-      return elementHandle;
-    const handle = this._delegate.adoptElementHandle(elementHandle, context);
-    if (dispose)
-      await elementHandle.dispose();
-    return handle;
   }
 }

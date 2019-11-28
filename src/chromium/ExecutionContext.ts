@@ -18,7 +18,6 @@
 import { CDPSession } from './Connection';
 import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './protocolHelper';
-import { createJSHandle } from './JSHandle';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import * as dom from '../dom';
@@ -51,7 +50,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
       }).catch(rewriteError);
       if (exceptionDetails)
         throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? valueFromRemoteObject(remoteObject) : createJSHandle(context, remoteObject);
+      return returnByValue ? valueFromRemoteObject(remoteObject) : toHandle(context, remoteObject);
     }
 
     if (typeof pageFunction !== 'function')
@@ -92,7 +91,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     const { exceptionDetails, result: remoteObject } = await callFunctionOnPromise.catch(rewriteError);
     if (exceptionDetails)
       throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-    return returnByValue ? valueFromRemoteObject(remoteObject) : createJSHandle(context, remoteObject);
+    return returnByValue ? valueFromRemoteObject(remoteObject) : toHandle(context, remoteObject);
 
     function convertArgument(arg: any): any {
       if (typeof arg === 'bigint') // eslint-disable-line valid-typeof
@@ -133,14 +132,6 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     }
   }
 
-  async adoptBackendNodeId(context: js.ExecutionContext, backendNodeId: Protocol.DOM.BackendNodeId) {
-    const {object} = await this._client.send('DOM.resolveNode', {
-      backendNodeId,
-      executionContextId: this._contextId,
-    });
-    return createJSHandle(context, object) as dom.ElementHandle;
-  }
-
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._client.send('Runtime.getProperties', {
       objectId: toRemoteObject(handle).objectId,
@@ -150,7 +141,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     for (const property of response.result) {
       if (!property.enumerable)
         continue;
-      result.set(property.name, createJSHandle(handle.executionContext(), property.value));
+      result.set(property.name, toHandle(handle.executionContext(), property.value));
     }
     return result;
   }
@@ -189,6 +180,13 @@ export function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObje
   return (handle as any)[remoteObjectSymbol];
 }
 
-export function markJSHandle(handle: js.JSHandle, remoteObject: Protocol.Runtime.RemoteObject) {
+export function toHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+  if (remoteObject.subtype === 'node' && context.frame()) {
+    const handle = new dom.ElementHandle(context);
+    (handle as any)[remoteObjectSymbol] = remoteObject;
+    return handle;
+  }
+  const handle = new js.JSHandle(context);
   (handle as any)[remoteObjectSymbol] = remoteObject;
+  return handle;
 }

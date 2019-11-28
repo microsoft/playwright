@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as types from './types';
 import * as frames from './frames';
 
 export type NetworkCookie = {

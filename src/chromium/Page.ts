@@ -35,8 +35,7 @@ import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { createJSHandle } from './JSHandle';
-import { toRemoteObject } from './ExecutionContext';
+import { toHandle, toRemoteObject } from './ExecutionContext';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
@@ -48,7 +47,7 @@ import * as dom from '../dom';
 import * as frames from '../frames';
 import * as js from '../javascript';
 import * as network from '../network';
-import { ExecutionContextDelegate } from './ExecutionContext';
+import { DOMWorldDelegate } from './JSHandle';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -159,8 +158,8 @@ export class Page extends EventEmitter {
     if (!this._fileChooserInterceptors.size)
       return;
     const frame = this._frameManager.frame(event.frameId);
-    const context = await frame._utilityContext();
-    const handle = await (context._delegate as ExecutionContextDelegate).adoptBackendNodeId(context, event.backendNodeId);
+    const utilityWorld = await frame._utilityDOMWorld();
+    const handle = await (utilityWorld.delegate as DOMWorldDelegate).adoptBackendNodeId(event.backendNodeId, utilityWorld);
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
@@ -321,7 +320,7 @@ export class Page extends EventEmitter {
       return;
     }
     const context = this._frameManager.executionContextById(event.executionContextId);
-    const values = event.args.map(arg => createJSHandle(context, arg));
+    const values = event.args.map(arg => toHandle(context, arg));
     this._addConsoleMessage(event.type, values, event.stackTrace);
   }
 

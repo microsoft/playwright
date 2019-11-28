@@ -27,6 +27,7 @@ import { ExecutionContextDelegate } from './ExecutionContext';
 import { NavigationWatchdog, NextNavigationWatchdog } from './NavigationWatchdog';
 import { Page } from './Page';
 import { NetworkManager } from './NetworkManager';
+import { DOMWorldDelegate } from './JSHandle';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -80,8 +81,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _onExecutionContextCreated({executionContextId, auxData}) {
     const frameId = auxData ? auxData.frameId : null;
     const frame = this._frames.get(frameId) || null;
-    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, executionContextId), frame);
+    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, executionContextId));
     if (frame) {
+      context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
       frame._contextCreated('main', context);
       frame._contextCreated('utility', context);
     }
@@ -173,11 +175,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
 
   dispose() {
     helper.removeEventListeners(this._eventListeners);
-  }
-
-  async adoptElementHandle(elementHandle: dom.ElementHandle, context: js.ExecutionContext): Promise<dom.ElementHandle> {
-    assert(false, 'Multiple isolated worlds are not implemented');
-    return elementHandle;
   }
 
   async waitForFrameNavigation(frame: frames.Frame, options: { timeout?: number; waitUntil?: string | Array<string>; } = {}) {

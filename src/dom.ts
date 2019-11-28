@@ -7,28 +7,73 @@ import Injected from './injected/injected';
 import * as input from './input';
 import * as js from './javascript';
 import * as types from './types';
+import * as injectedSource from './generated/injectedSource';
+import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
+import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
 
 type SelectorRoot = Element | ShadowRoot | Document;
 
 export interface DOMWorldDelegate {
+  keyboard: input.Keyboard;
+  mouse: input.Mouse;
+  frame: frames.Frame;
   isJavascriptEnabled(): boolean;
   contentFrame(handle: ElementHandle): Promise<frames.Frame | null>;
   boundingBox(handle: ElementHandle): Promise<types.Rect | null>;
   screenshot(handle: ElementHandle, options?: any): Promise<string | Buffer>;
   ensurePointerActionPoint(handle: ElementHandle, relativePoint?: types.Point): Promise<types.Point>;
   setInputFiles(handle: ElementHandle, files: input.FilePayload[]): Promise<void>;
+  adoptElementHandle(handle: ElementHandle, to: DOMWorld): Promise<ElementHandle>;
+}
+
+export class DOMWorld {
+  readonly context: js.ExecutionContext;
+  readonly delegate: DOMWorldDelegate;
+
+  private _injectedPromise?: Promise<js.JSHandle>;
+  private _documentPromise?: Promise<ElementHandle>;
+
+  constructor(context: js.ExecutionContext, delegate: DOMWorldDelegate) {
+    this.context = context;
+    this.delegate = delegate;
+  }
+
+  injected(): Promise<js.JSHandle> {
+    if (!this._injectedPromise) {
+      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
+      const source = `
+        new (${injectedSource.source})([
+          ${engineSources.join(',\n')}
+        ])
+      `;
+      this._injectedPromise = this.context.evaluateHandle(source);
+    }
+    return this._injectedPromise;
+  }
+
+  _document(): Promise<ElementHandle> {
+    if (!this._documentPromise)
+      this._documentPromise = this.context.evaluateHandle('document').then(handle => handle.asElement()!);
+    return this._documentPromise;
+  }
+
+  async adoptElementHandle(handle: ElementHandle, dispose: boolean): Promise<ElementHandle> {
+    if (handle.executionContext() === this.context)
+      return handle;
+    const adopted = this.delegate.adoptElementHandle(handle, this);
+    if (dispose)
+      await handle.dispose();
+    return adopted;
+  }
 }
 
 export class ElementHandle extends js.JSHandle {
-  private _delegate: DOMWorldDelegate;
-  private _keyboard: input.Keyboard;
-  private _mouse: input.Mouse;
+  private readonly _world: DOMWorld;
 
-  constructor(context: js.ExecutionContext, keyboard: input.Keyboard, mouse: input.Mouse, delegate: DOMWorldDelegate) {
+  constructor(context: js.ExecutionContext) {
     super(context);
-    this._delegate = delegate;
-    this._keyboard = keyboard;
-    this._mouse = mouse;
+    assert(context._domWorld, 'Element handle should have a dom world');
+    this._world = context._domWorld;
   }
 
   asElement(): ElementHandle | null {
@@ -36,7 +81,7 @@ export class ElementHandle extends js.JSHandle {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    return this._delegate.contentFrame(this);
+    return this._world.delegate.contentFrame(this);
   }
 
   async _scrollIntoViewIfNeeded() {
@@ -63,35 +108,35 @@ export class ElementHandle extends js.JSHandle {
       if (visibleRatio !== 1.0)
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
       return false;
-    }, this._delegate.isJavascriptEnabled());
+    }, this._world.delegate.isJavascriptEnabled());
     if (error)
       throw new Error(error);
   }
 
   async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
-    const point = await this._delegate.ensurePointerActionPoint(this, options ? options.relativePoint : undefined);
+    const point = await this._world.delegate.ensurePointerActionPoint(this, options ? options.relativePoint : undefined);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
-      restoreModifiers = await this._keyboard._ensureModifiers(options.modifiers);
+      restoreModifiers = await this._world.delegate.keyboard._ensureModifiers(options.modifiers);
     await action(point);
     if (restoreModifiers)
-      await this._keyboard._ensureModifiers(restoreModifiers);
+      await this._world.delegate.keyboard._ensureModifiers(restoreModifiers);
   }
 
   hover(options?: input.PointerActionOptions): Promise<void> {
-    return this._performPointerAction(point => this._mouse.move(point.x, point.y), options);
+    return this._performPointerAction(point => this._world.delegate.mouse.move(point.x, point.y), options);
   }
 
   click(options?: input.ClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._mouse.click(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._world.delegate.mouse.click(point.x, point.y, options), options);
   }
 
   dblclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._mouse.dblclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._world.delegate.mouse.dblclick(point.x, point.y, options), options);
   }
 
   tripleclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._mouse.tripleclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._world.delegate.mouse.tripleclick(point.x, point.y, options), options);
   }
 
   async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
@@ -115,13 +160,13 @@ export class ElementHandle extends js.JSHandle {
     if (error)
       throw new Error(error);
     await this.focus();
-    await this._keyboard.sendCharacters(value);
+    await this._world.delegate.keyboard.sendCharacters(value);
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
     const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    await this._delegate.setInputFiles(this, await input.loadFiles(files));
+    await this._world.delegate.setInputFiles(this, await input.loadFiles(files));
   }
 
   async focus() {
@@ -130,26 +175,26 @@ export class ElementHandle extends js.JSHandle {
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {
     await this.focus();
-    await this._keyboard.type(text, options);
+    await this._world.delegate.keyboard.type(text, options);
   }
 
   async press(key: string, options: { delay?: number; text?: string; } | undefined) {
     await this.focus();
-    await this._keyboard.press(key, options);
+    await this._world.delegate.keyboard.press(key, options);
   }
 
   async boundingBox(): Promise<types.Rect | null> {
-    return this._delegate.boundingBox(this);
+    return this._world.delegate.boundingBox(this);
   }
 
   async screenshot(options: any = {}): Promise<string | Buffer> {
-    return this._delegate.screenshot(this, options);
+    return this._world.delegate.screenshot(this, options);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
     const handle = await this.evaluateHandle(
         (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
-        selector, await this._context._injected()
+        selector, await this._world.injected()
     );
     const element = handle.asElement();
     if (element)
@@ -161,7 +206,7 @@ export class ElementHandle extends js.JSHandle {
   async $$(selector: string): Promise<ElementHandle[]> {
     const arrayHandle = await this.evaluateHandle(
         (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
-        selector, await this._context._injected()
+        selector, await this._world.injected()
     );
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
@@ -186,7 +231,7 @@ export class ElementHandle extends js.JSHandle {
   $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
     const arrayHandle = await this.evaluateHandle(
         (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
-        selector, await this._context._injected()
+        selector, await this._world.injected()
     );
 
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
@@ -197,7 +242,7 @@ export class ElementHandle extends js.JSHandle {
   async $x(expression: string): Promise<ElementHandle[]> {
     const arrayHandle = await this.evaluateHandle(
         (root: SelectorRoot, expression: string, injected: Injected) => injected.querySelectorAll('xpath=' + expression, root),
-        expression, await this._context._injected()
+        expression, await this._world.injected()
     );
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();

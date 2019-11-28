@@ -26,8 +26,7 @@ import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
-import { createJSHandle } from './JSHandle';
-import { toRemoteObject } from './ExecutionContext';
+import { toHandle, toRemoteObject } from './ExecutionContext';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { valueFromRemoteObject } from './protocolHelper';
@@ -183,7 +182,7 @@ export class Page extends EventEmitter {
       } else {
         context = mainFrameContext;
       }
-      return createJSHandle(context, p);
+      return toHandle(context, p);
     });
     const textTokens = [];
     for (const handle of handles) {
@@ -462,7 +461,7 @@ export class Page extends EventEmitter {
     if (!this._fileChooserInterceptors.size)
       return;
     const context = await this._frameManager.frame(event.frameId)._utilityContext();
-    const handle = createJSHandle(context, event.element) as dom.ElementHandle;
+    const handle = toHandle(context, event.element) as dom.ElementHandle;
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
