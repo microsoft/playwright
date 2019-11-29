@@ -151,6 +151,33 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-padding-border.png');
     });
+    it('should capture full element when larger than viewport in parallel', async({page, server}) => {
+      await page.setViewport({width: 500, height: 500});
+
+      await page.setContent(`
+        something above
+        <style>
+        div.to-screenshot {
+          border: 1px solid blue;
+          width: 600px;
+          height: 600px;
+          margin-left: 50px;
+        }
+        ::-webkit-scrollbar{
+          display: none;
+        }
+        </style>
+        <div class="to-screenshot"></div>
+        <div class="to-screenshot"></div>
+        <div class="to-screenshot"></div>
+      `);
+      const elementHandles = await page.$$('div.to-screenshot');
+      const promises = elementHandles.map(handle => handle.screenshot());
+      const screenshots = await Promise.all(promises);
+      expect(screenshots[2]).toBeGolden('screenshot-element-larger-than-viewport.png');
+
+      expect(await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }))).toEqual({ w: 500, h: 500 });
+    });
     it('should capture full element when larger than viewport', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
 
@@ -167,6 +194,8 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
           display: none;
         }
         </style>
+        <div class="to-screenshot"></div>
+        <div class="to-screenshot"></div>
         <div class="to-screenshot"></div>
       `);
       const elementHandle = await page.$('div.to-screenshot');

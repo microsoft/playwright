@@ -22,7 +22,7 @@ import { Events } from './events';
 import { Worker } from './features/workers';
 import { Page, Viewport } from './Page';
 import { Protocol } from './protocol';
-import { TaskQueue } from './TaskQueue';
+import { Screenshotter } from './Screenshotter';
 
 export class Target {
   private _targetInfo: Protocol.Target.TargetInfo;
@@ -31,7 +31,7 @@ export class Target {
   _sessionFactory: () => Promise<CDPSession>;
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: Viewport;
-  private _screenshotTaskQueue: TaskQueue;
+  private _screenshotter: Screenshotter;
   private _pagePromise: Promise<Page> | null = null;
   private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
@@ -46,14 +46,14 @@ export class Target {
     sessionFactory: () => Promise<CDPSession>,
     ignoreHTTPSErrors: boolean,
     defaultViewport: Viewport | null,
-    screenshotTaskQueue: TaskQueue) {
+    screenshotter: Screenshotter) {
     this._targetInfo = targetInfo;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this._sessionFactory = sessionFactory;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._defaultViewport = defaultViewport;
-    this._screenshotTaskQueue = screenshotTaskQueue;
+    this._screenshotter = screenshotter;
     this._initializedPromise = new Promise(fulfill => this._initializedCallback = fulfill).then(async success => {
       if (!success)
         return false;
@@ -76,7 +76,7 @@ export class Target {
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory()
-          .then(client => Page.create(client, this, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotTaskQueue));
+          .then(client => Page.create(client, this, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotter));
     }
     return this._pagePromise;
   }

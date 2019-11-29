@@ -16,8 +16,6 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as mime from 'mime';
 import { assert, debugError, helper } from '../helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption, mediaTypes, mediaColorSchemes } from '../input';
 import { TimeoutSettings } from '../TimeoutSettings';
@@ -40,7 +38,6 @@ import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
 import { Target } from './Target';
-import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
 import * as types from '../types';
 import * as dom from '../dom';
@@ -48,8 +45,7 @@ import * as frames from '../frames';
 import * as js from '../javascript';
 import * as network from '../network';
 import { DOMWorldDelegate } from './JSHandle';
-
-const writeFileAsync = helper.promisify(fs.writeFile);
+import { Screenshotter, ScreenshotOptions } from './Screenshotter';
 
 export type Viewport = {
   width: number;
@@ -78,20 +74,20 @@ export class Page extends EventEmitter {
   private _pageBindings = new Map<string, Function>();
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
-  private _screenshotTaskQueue: TaskQueue;
+  _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   private _disconnectPromise: Promise<Error> | undefined;
   private _emulatedMediaType: string | undefined;
 
-  static async create(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
-    const page = new Page(client, target, ignoreHTTPSErrors, screenshotTaskQueue);
+  static async create(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean, defaultViewport: Viewport | null, screenshotter: Screenshotter): Promise<Page> {
+    const page = new Page(client, target, ignoreHTTPSErrors, screenshotter);
     await page._initialize();
     if (defaultViewport)
       await page.setViewport(defaultViewport);
     return page;
   }
 
-  constructor(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean, screenshotTaskQueue: TaskQueue) {
+  constructor(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean, screenshotter: Screenshotter) {
     super();
     this._client = client;
     this._target = target;
@@ -107,7 +103,7 @@ export class Page extends EventEmitter {
     this.overrides = new Overrides(client);
     this.interception = new Interception(this._frameManager.networkManager());
 
-    this._screenshotTaskQueue = screenshotTaskQueue;
+    this._screenshotter = screenshotter;
 
     client.on('Target.attachedToTarget', event => {
       if (event.targetInfo.type !== 'worker') {
@@ -526,84 +522,8 @@ export class Page extends EventEmitter {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
 
-  async screenshot(options: ScreenshotOptions = {}): Promise<Buffer | string> {
-    let screenshotType = null;
-    // options.type takes precedence over inferring the type from options.path
-    // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
-    if (options.type) {
-      assert(options.type === 'png' || options.type === 'jpeg', 'Unknown options.type value: ' + options.type);
-      screenshotType = options.type;
-    } else if (options.path) {
-      const mimeType = mime.getType(options.path);
-      if (mimeType === 'image/png')
-        screenshotType = 'png';
-      else if (mimeType === 'image/jpeg')
-        screenshotType = 'jpeg';
-      assert(screenshotType, 'Unsupported screenshot mime type: ' + mimeType);
-    }
-
-    if (!screenshotType)
-      screenshotType = 'png';
-
-    if (options.quality) {
-      assert(screenshotType === 'jpeg', 'options.quality is unsupported for the ' + screenshotType + ' screenshots');
-      assert(typeof options.quality === 'number', 'Expected options.quality to be a number but found ' + (typeof options.quality));
-      assert(Number.isInteger(options.quality), 'Expected options.quality to be an integer');
-      assert(options.quality >= 0 && options.quality <= 100, 'Expected options.quality to be between 0 and 100 (inclusive), got ' + options.quality);
-    }
-    assert(!options.clip || !options.fullPage, 'options.clip and options.fullPage are exclusive');
-    if (options.clip) {
-      assert(typeof options.clip.x === 'number', 'Expected options.clip.x to be a number but found ' + (typeof options.clip.x));
-      assert(typeof options.clip.y === 'number', 'Expected options.clip.y to be a number but found ' + (typeof options.clip.y));
-      assert(typeof options.clip.width === 'number', 'Expected options.clip.width to be a number but found ' + (typeof options.clip.width));
-      assert(typeof options.clip.height === 'number', 'Expected options.clip.height to be a number but found ' + (typeof options.clip.height));
-      assert(options.clip.width !== 0, 'Expected options.clip.width not to be 0.');
-      assert(options.clip.height !== 0, 'Expected options.clip.height not to be 0.');
-    }
-    return this._screenshotTaskQueue.postTask(this._screenshotTask.bind(this, screenshotType, options));
-  }
-
-  async _screenshotTask(format: 'png' | 'jpeg', options?: ScreenshotOptions): Promise<Buffer | string> {
-    await this._client.send('Target.activateTarget', {targetId: this._target._targetId});
-    let clip = options.clip ? processClip(options.clip) : undefined;
-
-    if (options.fullPage) {
-      const metrics = await this._client.send('Page.getLayoutMetrics');
-      const width = Math.ceil(metrics.contentSize.width);
-      const height = Math.ceil(metrics.contentSize.height);
-
-      // Overwrite clip for full page at all times.
-      clip = { x: 0, y: 0, width, height, scale: 1 };
-      const {
-        isMobile = false,
-        deviceScaleFactor = 1,
-        isLandscape = false
-      } = this._viewport || {};
-      const screenOrientation: Protocol.Emulation.ScreenOrientation = isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' };
-      await this._client.send('Emulation.setDeviceMetricsOverride', { mobile: isMobile, width, height, deviceScaleFactor, screenOrientation });
-    }
-    const shouldSetDefaultBackground = options.omitBackground && format === 'png';
-    if (shouldSetDefaultBackground)
-      await this._client.send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
-    const result = await this._client.send('Page.captureScreenshot', { format, quality: options.quality, clip });
-    if (shouldSetDefaultBackground)
-      await this._client.send('Emulation.setDefaultBackgroundColorOverride');
-
-    if (options.fullPage && this._viewport)
-      await this.setViewport(this._viewport);
-
-    const buffer = options.encoding === 'base64' ? result.data : Buffer.from(result.data, 'base64');
-    if (options.path)
-      await writeFileAsync(options.path, buffer);
-    return buffer;
-
-    function processClip(clip) {
-      const x = Math.round(clip.x);
-      const y = Math.round(clip.y);
-      const width = Math.round(clip.width + clip.x - x);
-      const height = Math.round(clip.height + clip.y - y);
-      return {x, y, width, height, scale: 1};
-    }
+  screenshot(options: ScreenshotOptions = {}): Promise<Buffer | string> {
+    return this._screenshotter.screenshotPage(this, options);
   }
 
   async title(): Promise<string> {
@@ -679,16 +599,6 @@ export class Page extends EventEmitter {
   ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
-}
-
-type ScreenshotOptions = {
-  type?: string,
-  path?: string,
-  fullPage?: boolean,
-  clip?: {x: number, y: number, width: number, height: number},
-  quality?: number,
-  omitBackground?: boolean,
-  encoding?: string,
 }
 
 type MediaFeature = {

@@ -1560,7 +1560,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 #### page.screenshot([options])
 - `options` <[Object]> Options object which might have the following properties:
   - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the image won't be saved to the disk.
-  - `type` <[string]> Specify screenshot type, can be either `jpeg` or `png`. Defaults to 'png'.
+  - `type` <"png"|"jpeg"> Specify screenshot type, defaults to 'png'.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page. Defaults to `false`.
   - `clip` <[Object]> An object which specifies clipping region of the page. Should have the following fields:
