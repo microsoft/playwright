@@ -32,12 +32,11 @@ import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import * as input from '../input';
 import * as types from '../types';
-import * as dom from '../dom';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import * as network from '../network';
 import * as frames from '../frames';
 import * as dialog from '../dialog';
-import { toHandle } from './ExecutionContext';
 import * as console from '../console';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
@@ -553,7 +552,7 @@ export class Page extends EventEmitter {
 
   _onConsole({type, args, executionContextId, location}) {
     const context = this._frameManager.executionContextById(executionContextId);
-    this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args.map(arg => toHandle(context, arg)), location));
+    this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args.map(arg => context._createHandle(arg)), location));
   }
 
   isClosed(): boolean {
@@ -577,7 +576,7 @@ export class Page extends EventEmitter {
     if (!this._fileChooserInterceptors.size)
       return;
     const context = this._frameManager.executionContextById(executionContextId);
-    const handle = toHandle(context, element) as dom.ElementHandle;
+    const handle = context._createHandle(element).asElement()!;
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);

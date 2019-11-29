@@ -17,7 +17,6 @@
 
 import {helper, debugError} from '../helper';
 import * as js from '../javascript';
-import * as dom from '../dom';
 import { JugglerSession } from './Connection';
 
 export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
@@ -48,7 +47,8 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
         expression: pageFunction.trim(),
         executionContextId: this._executionContextId,
       }).catch(rewriteError);
-      return toHandle(context, payload.result, payload.exceptionDetails);
+      checkException(payload.exceptionDetails);
+      return context._createHandle(payload.result);
     }
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
@@ -76,7 +76,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
           throw new Error('JSHandles can be evaluated only in the context they were created!');
         if (arg._disposed)
           throw new Error('JSHandle is disposed!');
-        return this._toProtocolValue(toPayload(arg));
+        return this._toCallArgument(arg._remoteObject);
       }
       if (Object.is(arg, Infinity))
         return {unserializableValue: 'Infinity'};
@@ -101,7 +101,8 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
       throw err;
     }
     const payload = await callFunctionPromise.catch(rewriteError);
-    return toHandle(context, payload.result, payload.exceptionDetails);
+    checkException(payload.exceptionDetails);
+    return context._createHandle(payload.result);
 
     function rewriteError(error) {
       if (error.message.includes('Failed to find execution context with id'))
@@ -113,18 +114,18 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getObjectProperties', {
       executionContextId: this._executionContextId,
-      objectId: toPayload(handle).objectId,
+      objectId: handle._remoteObject.objectId,
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, toHandle(handle.executionContext(), property.value, null));
+      result.set(property.name, handle.executionContext()._createHandle(property.value));
     return result;
   }
 
   async releaseHandle(handle: js.JSHandle): Promise<void> {
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
-      objectId: toPayload(handle).objectId,
+      objectId: handle._remoteObject.objectId,
     }).catch(error => {
       // Exceptions might happen in case of a page been navigated or closed.
       // Swallow these since they are harmless and we don't leak anything in this case.
@@ -133,51 +134,37 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   }
 
   async handleJSONValue(handle: js.JSHandle): Promise<any> {
-    const payload = toPayload(handle);
+    const payload = handle._remoteObject;
     if (!payload.objectId)
       return deserializeValue(payload);
     const simpleValue = await this._session.send('Runtime.callFunction', {
       executionContextId: this._executionContextId,
       returnByValue: true,
       functionDeclaration: (e => e).toString(),
-      args: [this._toProtocolValue(payload)],
+      args: [this._toCallArgument(payload)],
     });
     return deserializeValue(simpleValue.result);
   }
 
   handleToString(handle: js.JSHandle, includeType: boolean): string {
-    const payload = toPayload(handle);
+    const payload = handle._remoteObject;
     if (payload.objectId)
       return 'JSHandle@' + (payload.subtype || payload.type);
     return (includeType ? 'JSHandle:' : '') + deserializeValue(payload);
   }
 
-  private _toProtocolValue(payload: any): any {
+  private _toCallArgument(payload: any): any {
     return { value: payload.value, unserializableValue: payload.unserializableValue, objectId: payload.objectId };
   }
 }
 
-const payloadSymbol = Symbol('payload');
-
-export function toPayload(handle: js.JSHandle): any {
-  return (handle as any)[payloadSymbol];
-}
-
-export function toHandle(context: js.ExecutionContext, result: any, exceptionDetails?: any) {
+function checkException(exceptionDetails?: any) {
   if (exceptionDetails) {
     if (exceptionDetails.value)
       throw new Error('Evaluation failed: ' + JSON.stringify(exceptionDetails.value));
     else
       throw new Error('Evaluation failed: ' + exceptionDetails.text + '\n' + exceptionDetails.stack);
   }
-  if (result.subtype === 'node') {
-    const handle = new dom.ElementHandle(context);
-    (handle as any)[payloadSymbol] = result;
-    return handle;
-  }
-  const handle = new js.JSHandle(context);
-  (handle as any)[payloadSymbol] = result;
-  return handle;
 }
 
 export function deserializeValue({unserializableValue, value}) {

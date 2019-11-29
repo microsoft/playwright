@@ -32,16 +32,15 @@ import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { toHandle } from './ExecutionContext';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject } from './protocolHelper';
 import { Target } from './Target';
 import * as input from '../input';
 import * as types from '../types';
-import * as dom from '../dom';
 import * as frames from '../frames';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import * as network from '../network';
 import * as dialog from '../dialog';
 import * as console from '../console';
@@ -317,7 +316,7 @@ export class Page extends EventEmitter {
       return;
     }
     const context = this._frameManager.executionContextById(event.executionContextId);
-    const values = event.args.map(arg => toHandle(context, arg));
+    const values = event.args.map(arg => context._createHandle(arg));
     this._addConsoleMessage(event.type, values, event.stackTrace);
   }
 

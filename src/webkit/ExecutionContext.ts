@@ -20,7 +20,6 @@ import { helper } from '../helper';
 import { valueFromRemoteObject, releaseObject } from './protocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
-import * as dom from '../dom';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
@@ -78,7 +77,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
         if (response.wasThrown)
           throw new Error('Evaluation failed: ' + response.result.description);
         if (!returnByValue)
-          return toHandle(context, response.result);
+          return context._createHandle(response.result);
         if (response.result.objectId) {
           const serializeFunction = function() {
             try {
@@ -184,7 +183,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
       if (response.wasThrown)
         throw new Error('Evaluation failed: ' + response.result.description);
       if (!returnByValue)
-        return toHandle(context, response.result);
+        return context._createHandle(response.result);
       if (response.result.objectId) {
         const serializeFunction = function() {
           try {
@@ -281,7 +280,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     for (const property of response.properties) {
       if (!property.enumerable)
         continue;
-      result.set(property.name, toHandle(handle.executionContext(), property.value));
+      result.set(property.name, handle.executionContext()._createHandle(property.value));
     }
     return result;
   }
@@ -332,19 +331,6 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
 
 }
 
-const remoteObjectSymbol = Symbol('RemoteObject');
-
-export function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
-  return (handle as any)[remoteObjectSymbol];
-}
-
-export function toHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject) {
-  if (remoteObject.subtype === 'node' && context.frame()) {
-    const handle = new dom.ElementHandle(context);
-    (handle as any)[remoteObjectSymbol] = remoteObject;
-    return handle;
-  }
-  const handle = new js.JSHandle(context);
-  (handle as any)[remoteObjectSymbol] = remoteObject;
-  return handle;
+function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
+  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }

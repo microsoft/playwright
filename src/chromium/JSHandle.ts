@@ -23,8 +23,8 @@ import * as frames from '../frames';
 import { CDPSession } from './Connection';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
-import { toRemoteObject, toHandle, ExecutionContextDelegate } from './ExecutionContext';
 import { ScreenshotOptions } from './Screenshotter';
+import { ExecutionContextDelegate } from './ExecutionContext';
 
 export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   readonly keyboard: input.Keyboard;
@@ -52,6 +52,10 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
 
   isJavascriptEnabled(): boolean {
     return this._frameManager.page()._javascriptEnabled;
+  }
+
+  isElement(remoteObject: any): boolean {
+    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
   }
 
   private _getBoxModel(handle: dom.ElementHandle): Promise<void | Protocol.DOM.getBoxModelReturnValue> {
@@ -202,6 +206,10 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
       backendNodeId,
       executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId,
     });
-    return toHandle(to.context, object).asElement()!;
+    return to.context._createHandle(object).asElement()!;
   }
+}
+
+function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
+  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }

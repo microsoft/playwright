@@ -26,16 +26,15 @@ import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
-import { toHandle } from './ExecutionContext';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
 import * as types from '../types';
-import * as dom from '../dom';
 import * as frames from '../frames';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import * as network from '../network';
 import * as dialog from '../dialog';
 import * as console from '../console';
@@ -170,14 +169,14 @@ export class Page extends EventEmitter {
       derivedType = 'timeEnd';
     const mainFrameContext = await this.mainFrame().executionContext();
     const handles = (parameters || []).map(p => {
-      let context = null;
+      let context: js.ExecutionContext | null = null;
       if (p.objectId) {
         const objectId = JSON.parse(p.objectId);
         context = this._frameManager._contextIdToContext.get(objectId.injectedScriptId);
       } else {
         context = mainFrameContext;
       }
-      return toHandle(context, p);
+      return context._createHandle(p);
     });
     this.emit(Events.Page.Console, new console.ConsoleMessage(derivedType, handles.length ? undefined : text, handles, { url, lineNumber, columnNumber }));
   }
@@ -446,7 +445,7 @@ export class Page extends EventEmitter {
     if (!this._fileChooserInterceptors.size)
       return;
     const context = await this._frameManager.frame(event.frameId)._utilityContext();
-    const handle = toHandle(context, event.element) as dom.ElementHandle;
+    const handle = context._createHandle(event.element).asElement()!;
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);

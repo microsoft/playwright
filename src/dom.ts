@@ -2,22 +2,21 @@
 // Licensed under the MIT license.
 
 import * as frames from './frames';
-import { assert, helper } from './helper';
-import Injected from './injected/injected';
 import * as input from './input';
 import * as js from './javascript';
 import * as types from './types';
 import * as injectedSource from './generated/injectedSource';
 import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
-
-type SelectorRoot = Element | ShadowRoot | Document;
+import { assert, helper } from './helper';
+import Injected from './injected/injected';
 
 export interface DOMWorldDelegate {
   keyboard: input.Keyboard;
   mouse: input.Mouse;
   frame: frames.Frame;
   isJavascriptEnabled(): boolean;
+  isElement(remoteObject: any): boolean;
   contentFrame(handle: ElementHandle): Promise<frames.Frame | null>;
   boundingBox(handle: ElementHandle): Promise<types.Rect | null>;
   screenshot(handle: ElementHandle, options?: any): Promise<string | Buffer>;
@@ -36,6 +35,12 @@ export class DOMWorld {
   constructor(context: js.ExecutionContext, delegate: DOMWorldDelegate) {
     this.context = context;
     this.delegate = delegate;
+  }
+
+  _createHandle(remoteObject: any): ElementHandle | null {
+    if (this.delegate.isElement(remoteObject))
+      return new ElementHandle(this.context, remoteObject);
+    return null;
   }
 
   injected(): Promise<js.JSHandle> {
@@ -67,11 +72,13 @@ export class DOMWorld {
   }
 }
 
+type SelectorRoot = Element | ShadowRoot | Document;
+
 export class ElementHandle extends js.JSHandle {
   private readonly _world: DOMWorld;
 
-  constructor(context: js.ExecutionContext) {
-    super(context);
+  constructor(context: js.ExecutionContext, remoteObject: any) {
+    super(context, remoteObject);
     assert(context._domWorld, 'Element handle should have a dom world');
     this._world = context._domWorld;
   }
