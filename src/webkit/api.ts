@@ -12,4 +12,4 @@ export { Request, Response } from '../network';
 export { ConsoleMessage, Page } from './Page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';
-
+export { Dialog } from '../dialog';
