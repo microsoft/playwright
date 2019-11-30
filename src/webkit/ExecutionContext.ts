@@ -303,7 +303,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return valueFromRemoteObject(remoteObject);
   }
 
-  handleToString(handle: js.JSHandle): string {
+  handleToString(handle: js.JSHandle, includeType: boolean): string {
     const object = toRemoteObject(handle);
     if (object.objectId) {
       let type: string =  object.subtype || object.type;
@@ -312,7 +312,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
         type = 'promise';
       return 'JSHandle@' + type;
     }
-    return 'JSHandle:' + valueFromRemoteObject(object);
+    return (includeType ? 'JSHandle:' : '') + valueFromRemoteObject(object);
   }
 
   private _convertArgument(arg: js.JSHandle | any) : Protocol.Runtime.CallArgument {

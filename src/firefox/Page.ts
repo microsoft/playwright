@@ -36,8 +36,9 @@ import * as dom from '../dom';
 import * as js from '../javascript';
 import * as network from '../network';
 import * as frames from '../frames';
-import { toHandle, toPayload, deserializeValue } from './ExecutionContext';
 import * as dialog from '../dialog';
+import { toHandle } from './ExecutionContext';
+import * as console from '../console';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -552,7 +553,7 @@ export class Page extends EventEmitter {
 
   _onConsole({type, args, executionContextId, location}) {
     const context = this._frameManager.executionContextById(executionContextId);
-    this.emit(Events.Page.Console, new ConsoleMessage(type, args.map(arg => toHandle(context, arg)), location));
+    this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args.map(arg => toHandle(context, arg)), location));
   }
 
   isClosed(): boolean {
@@ -584,39 +585,6 @@ export class Page extends EventEmitter {
     for (const interceptor of interceptors)
       interceptor.call(null, fileChooser);
     this.emit(Events.Page.FileChooser, fileChooser);
-  }
-}
-
-export class ConsoleMessage {
-  private _type: string;
-  private _args: js.JSHandle[];
-  private _location: any;
-
-  constructor(type: string, args: Array<js.JSHandle>, location) {
-    this._type = type;
-    this._args = args;
-    this._location = location;
-  }
-
-  location() {
-    return this._location;
-  }
-
-  type(): string {
-    return this._type;
-  }
-
-  args(): Array<js.JSHandle> {
-    return this._args;
-  }
-
-  text(): string {
-    return this._args.map(arg => {
-      const payload = toPayload(arg);
-      if (payload.objectId)
-        return arg.toString();
-      return deserializeValue(payload);
-    }).join(' ');
   }
 }
 

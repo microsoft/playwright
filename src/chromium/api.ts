@@ -20,6 +20,7 @@ export { Worker, Workers } from './features/workers';
 export { Frame } from '../frames';
 export { Keyboard, Mouse } from '../input';
 export { Request, Response } from '../network';
-export { ConsoleMessage, Page } from './Page';
+export { Page } from './Page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';
+export { ConsoleMessage } from '../console';
