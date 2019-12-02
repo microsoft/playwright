@@ -32,14 +32,20 @@ export class ExecutionContext {
   evaluateHandle: types.EvaluateHandle = (pageFunction, ...args) => {
     return this._delegate.evaluate(this, false /* returnByValue */, pageFunction, ...args);
   }
+
+  _createHandle(remoteObject: any): JSHandle {
+    return (this._domWorld && this._domWorld._createHandle(remoteObject)) || new JSHandle(this, remoteObject);
+  }
 }
 
 export class JSHandle {
   readonly _context: ExecutionContext;
+  readonly _remoteObject: any;
   _disposed = false;
 
-  constructor(context: ExecutionContext) {
+  constructor(context: ExecutionContext, remoteObject: any) {
     this._context = context;
+    this._remoteObject = remoteObject;
   }
 
   executionContext(): ExecutionContext {

@@ -17,7 +17,6 @@
 
 import { CDPSession } from '../Connection';
 import { Protocol } from '../protocol';
-import { toRemoteObject } from '../ExecutionContext';
 import * as dom from '../../dom';
 
 type SerializedAXNode = {
@@ -73,7 +72,8 @@ export class Accessibility {
     const {nodes} = await this._client.send('Accessibility.getFullAXTree');
     let backendNodeId = null;
     if (root) {
-      const {node} = await this._client.send('DOM.describeNode', {objectId: toRemoteObject(root).objectId});
+      const remoteObject = root._remoteObject as Protocol.Runtime.RemoteObject;
+      const {node} = await this._client.send('DOM.describeNode', {objectId: remoteObject.objectId});
       backendNodeId = node.backendNodeId;
     }
     const defaultRoot = AXNode.createTree(nodes);

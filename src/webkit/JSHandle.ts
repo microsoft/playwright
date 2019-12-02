@@ -22,8 +22,8 @@ import * as dom from '../dom';
 import * as frames from '../frames';
 import * as types from '../types';
 import { TargetSession } from './Connection';
-import { toRemoteObject } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
+import { Protocol } from './protocol';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -48,6 +48,10 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
 
   isJavascriptEnabled(): boolean {
     return this._frameManager.page()._javascriptEnabled;
+  }
+
+  isElement(remoteObject: any): boolean {
+    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
   }
 
   async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
@@ -141,4 +145,8 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     assert(false, 'Multiple isolated worlds are not implemented');
     return handle;
   }
+}
+
+function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
+  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }

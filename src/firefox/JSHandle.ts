@@ -22,7 +22,6 @@ import * as types from '../types';
 import * as frames from '../frames';
 import { JugglerSession } from './Connection';
 import { FrameManager } from './FrameManager';
-import { toPayload } from './ExecutionContext';
 
 export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   readonly keyboard: input.Keyboard;
@@ -44,7 +43,7 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   async contentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const {frameId} = await this._session.send('Page.contentFrame', {
       frameId: this._frameId,
-      objectId: toPayload(handle).objectId,
+      objectId: toRemoteObject(handle).objectId,
     });
     if (!frameId)
       return null;
@@ -56,17 +55,21 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return this._frameManager._page._javascriptEnabled;
   }
 
+  isElement(remoteObject: any): boolean {
+    return remoteObject.subtype === 'node';
+  }
+
   async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     return await this._session.send('Page.getBoundingBox', {
       frameId: this._frameId,
-      objectId: toPayload(handle).objectId,
+      objectId: toRemoteObject(handle).objectId,
     });
   }
 
   async screenshot(handle: dom.ElementHandle, options: any = {}): Promise<string | Buffer> {
     const clip = await this._session.send('Page.getBoundingBox', {
       frameId: this._frameId,
-      objectId: toPayload(handle).objectId,
+      objectId: toRemoteObject(handle).objectId,
     });
     if (!clip)
       throw new Error('Node is either not visible or not an HTMLElement');
@@ -119,7 +122,7 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
 
     const result = await this._session.send('Page.getContentQuads', {
       frameId: this._frameId,
-      objectId: toPayload(handle).objectId,
+      objectId: toRemoteObject(handle).objectId,
     }).catch(debugError);
     if (!result || !result.quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
@@ -140,3 +143,8 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return handle;
   }
 }
+
+function toRemoteObject(handle: dom.ElementHandle): any {
+  return handle._remoteObject;
+}
+

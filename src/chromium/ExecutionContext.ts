@@ -20,7 +20,6 @@ import { helper } from '../helper';
 import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './protocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
-import * as dom from '../dom';
 
 export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
@@ -50,7 +49,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
       }).catch(rewriteError);
       if (exceptionDetails)
         throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-      return returnByValue ? valueFromRemoteObject(remoteObject) : toHandle(context, remoteObject);
+      return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
     }
 
     if (typeof pageFunction !== 'function')
@@ -91,7 +90,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     const { exceptionDetails, result: remoteObject } = await callFunctionOnPromise.catch(rewriteError);
     if (exceptionDetails)
       throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-    return returnByValue ? valueFromRemoteObject(remoteObject) : toHandle(context, remoteObject);
+    return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
 
     function convertArgument(arg: any): any {
       if (typeof arg === 'bigint') // eslint-disable-line valid-typeof
@@ -141,7 +140,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     for (const property of response.result) {
       if (!property.enumerable)
         continue;
-      result.set(property.name, toHandle(handle.executionContext(), property.value));
+      result.set(property.name, handle.executionContext()._createHandle(property.value));
     }
     return result;
   }
@@ -174,19 +173,6 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   }
 }
 
-const remoteObjectSymbol = Symbol('RemoteObject');
-
-export function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
-  return (handle as any)[remoteObjectSymbol];
-}
-
-export function toHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-  if (remoteObject.subtype === 'node' && context.frame()) {
-    const handle = new dom.ElementHandle(context);
-    (handle as any)[remoteObjectSymbol] = remoteObject;
-    return handle;
-  }
-  const handle = new js.JSHandle(context);
-  (handle as any)[remoteObjectSymbol] = remoteObject;
-  return handle;
+function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
+  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }
