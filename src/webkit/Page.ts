@@ -26,10 +26,9 @@ import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
-import { toHandle, toRemoteObject } from './ExecutionContext';
+import { toHandle } from './ExecutionContext';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
-import { valueFromRemoteObject } from './protocolHelper';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
@@ -39,6 +38,7 @@ import * as frames from '../frames';
 import * as js from '../javascript';
 import * as network from '../network';
 import * as dialog from '../dialog';
+import * as console from '../console';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -179,17 +179,7 @@ export class Page extends EventEmitter {
       }
       return toHandle(context, p);
     });
-    const textTokens = [];
-    for (const handle of handles) {
-      const remoteObject = toRemoteObject(handle);
-      if (remoteObject.objectId)
-        textTokens.push(handle.toString());
-      else
-        textTokens.push(valueFromRemoteObject(remoteObject));
-    }
-    const location = {url, lineNumber, columnNumber};
-    const formattedText = textTokens.length ? textTokens.join(' ') : text;
-    this.emit(Events.Page.Console, new ConsoleMessage(derivedType, formattedText, handles, location));
+    this.emit(Events.Page.Console, new console.ConsoleMessage(derivedType, handles.length ? undefined : text, handles, { url, lineNumber, columnNumber }));
   }
 
   mainFrame(): frames.Frame {
@@ -547,42 +537,6 @@ type ScreenshotOptions = {
   quality?: number,
   omitBackground?: boolean,
   encoding?: string,
-}
-
-type ConsoleMessageLocation = {
-  url?: string,
-  lineNumber?: number,
-  columnNumber?: number
-};
-
-export class ConsoleMessage {
-  private _type: string;
-  private _text: string;
-  private _args: js.JSHandle[];
-  private _location: any;
-
-  constructor(type: string, text: string, args: js.JSHandle[], location: ConsoleMessageLocation = {}) {
-    this._type = type;
-    this._text = text;
-    this._args = args;
-    this._location = location;
-  }
-
-  type(): string {
-    return this._type;
-  }
-
-  text(): string {
-    return this._text;
-  }
-
-  args(): js.JSHandle[] {
-    return this._args;
-  }
-
-  location(): object {
-    return this._location;
-  }
 }
 
 type FileChooser = {

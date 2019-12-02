@@ -164,13 +164,13 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return valueFromRemoteObject(remoteObject);
   }
 
-  handleToString(handle: js.JSHandle): string {
+  handleToString(handle: js.JSHandle, includeType: boolean): string {
     const object = toRemoteObject(handle);
     if (object.objectId) {
       const type =  object.subtype || object.type;
       return 'JSHandle@' + type;
     }
-    return 'JSHandle:' + valueFromRemoteObject(object);
+    return (includeType ? 'JSHandle:' : '') + valueFromRemoteObject(object);
   }
 }
 

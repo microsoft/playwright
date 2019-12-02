@@ -32,10 +32,10 @@ import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { toHandle, toRemoteObject } from './ExecutionContext';
+import { toHandle } from './ExecutionContext';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
-import { getExceptionMessage, releaseObject, valueFromRemoteObject } from './protocolHelper';
+import { getExceptionMessage, releaseObject } from './protocolHelper';
 import { Target } from './Target';
 import * as input from '../input';
 import * as types from '../types';
@@ -44,6 +44,7 @@ import * as frames from '../frames';
 import * as js from '../javascript';
 import * as network from '../network';
 import * as dialog from '../dialog';
+import * as console from '../console';
 import { DOMWorldDelegate } from './JSHandle';
 import { Screenshotter, ScreenshotOptions } from './Screenshotter';
 
@@ -199,7 +200,7 @@ export class Page extends EventEmitter {
     if (args)
       args.map(arg => releaseObject(this._client, arg));
     if (source !== 'worker')
-      this.emit(Events.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
+      this.emit(Events.Page.Console, new console.ConsoleMessage(level, text, [], {url, lineNumber}));
   }
 
   mainFrame(): frames.Frame {
@@ -357,21 +358,12 @@ export class Page extends EventEmitter {
       args.forEach(arg => arg.dispose());
       return;
     }
-    const textTokens = [];
-    for (const arg of args) {
-      const remoteObject = toRemoteObject(arg);
-      if (remoteObject.objectId)
-        textTokens.push(arg.toString());
-      else
-        textTokens.push(valueFromRemoteObject(remoteObject));
-    }
     const location = stackTrace && stackTrace.callFrames.length ? {
       url: stackTrace.callFrames[0].url,
       lineNumber: stackTrace.callFrames[0].lineNumber,
       columnNumber: stackTrace.callFrames[0].columnNumber,
     } : {};
-    const message = new ConsoleMessage(type, textTokens.join(' '), args, location);
-    this.emit(Events.Page.Console, message);
+    this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args, location));
   }
 
   _onDialog(event : Protocol.Page.javascriptDialogOpeningPayload) {
@@ -599,42 +591,6 @@ export class Page extends EventEmitter {
 type MediaFeature = {
   name: string,
   value: string
-}
-
-type ConsoleMessageLocation = {
-  url?: string,
-  lineNumber?: number,
-  columnNumber?: number
-};
-
-export class ConsoleMessage {
-  private _type: string;
-  private _text: string;
-  private _args: js.JSHandle[];
-  private _location: any;
-
-  constructor(type: string, text: string, args: js.JSHandle[], location: ConsoleMessageLocation = {}) {
-    this._type = type;
-    this._text = text;
-    this._args = args;
-    this._location = location;
-  }
-
-  type(): string {
-    return this._type;
-  }
-
-  text(): string {
-    return this._text;
-  }
-
-  args(): js.JSHandle[] {
-    return this._args;
-  }
-
-  location(): object {
-    return this._location;
-  }
 }
 
 type FileChooser = {

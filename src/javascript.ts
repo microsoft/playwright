@@ -9,7 +9,7 @@ export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
   getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(handle: JSHandle): Promise<void>;
-  handleToString(handle: JSHandle): string;
+  handleToString(handle: JSHandle, includeType: boolean): string;
   handleJSONValue(handle: JSHandle): Promise<any>;
 }
 
@@ -86,6 +86,6 @@ export class JSHandle {
   }
 
   toString(): string {
-    return this._context._delegate.handleToString(this);
+    return this._context._delegate.handleToString(this, true /* includeType */);
   }
 }

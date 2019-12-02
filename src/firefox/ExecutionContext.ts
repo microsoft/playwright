@@ -145,11 +145,11 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return deserializeValue(simpleValue.result);
   }
 
-  handleToString(handle: js.JSHandle): string {
+  handleToString(handle: js.JSHandle, includeType: boolean): string {
     const payload = toPayload(handle);
     if (payload.objectId)
       return 'JSHandle@' + (payload.subtype || payload.type);
-    return 'JSHandle:' + deserializeValue(payload);
+    return (includeType ? 'JSHandle:' : '') + deserializeValue(payload);
   }
 
   private _toProtocolValue(payload: any): any {
