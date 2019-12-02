@@ -15,21 +15,24 @@
  * limitations under the License.
  */
 
-import { CDPSession } from './Connection';
-import { assert } from '../helper';
+import { assert } from './helper';
+
+type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
+
+export type DialogType = 'alert' | 'beforeunload' | 'confirm' | 'prompt';
 
 export class Dialog {
-  private _client: CDPSession;
   private _type: string;
   private _message: string;
+  private _onHandle: OnHandle;
   private _handled = false;
   private _defaultValue: string;
 
-  constructor(client: CDPSession, type: string, message: string, defaultValue: (string | undefined) = '') {
-    this._client = client;
+  constructor(type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
     this._type = type;
     this._message = message;
-    this._defaultValue = defaultValue;
+    this._onHandle = onHandle;
+    this._defaultValue = defaultValue || '';
   }
 
   type(): string {
@@ -47,24 +50,12 @@ export class Dialog {
   async accept(promptText: string | undefined) {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
-    await this._client.send('Page.handleJavaScriptDialog', {
-      accept: true,
-      promptText: promptText
-    });
+    await this._onHandle(true, promptText);
   }
 
   async dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
-    await this._client.send('Page.handleJavaScriptDialog', {
-      accept: false
-    });
+    await this._onHandle(false);
   }
 }
-
-export const DialogType = {
-  Alert: 'alert',
-  BeforeUnload: 'beforeunload',
-  Confirm: 'confirm',
-  Prompt: 'prompt'
-};

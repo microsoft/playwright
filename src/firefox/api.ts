@@ -5,7 +5,7 @@ export { TimeoutError } from '../Errors';
 export { Keyboard, Mouse } from '../input';
 export { Browser, BrowserContext, Target } from './Browser';
 export { BrowserFetcher } from './BrowserFetcher';
-export { Dialog } from './Dialog';
+export { Dialog } from '../dialog';
 export { ExecutionContext, JSHandle } from '../javascript';
 export { Accessibility } from './features/accessibility';
 export { Interception } from './features/interception';

@@ -7,7 +7,7 @@ export { BrowserContext } from './BrowserContext';
 export { BrowserFetcher } from './BrowserFetcher';
 export { Chromium } from './features/chromium';
 export { CDPSession } from './Connection';
-export { Dialog } from './Dialog';
+export { Dialog } from '../dialog';
 export { ExecutionContext, JSHandle } from '../javascript';
 export { ElementHandle } from '../dom';
 export { Accessibility } from './features/accessibility';

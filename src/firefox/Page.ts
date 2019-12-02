@@ -23,7 +23,6 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
 import { BrowserContext, Target } from './Browser';
 import { JugglerSession, JugglerSessionEvents } from './Connection';
-import { Dialog } from './Dialog';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
@@ -38,6 +37,7 @@ import * as js from '../javascript';
 import * as network from '../network';
 import * as frames from '../frames';
 import { toHandle, toPayload, deserializeValue } from './ExecutionContext';
+import * as dialog from '../dialog';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -304,7 +304,13 @@ export class Page extends EventEmitter {
   }
 
   _onDialogOpened(params) {
-    this.emit(Events.Page.Dialog, new Dialog(this._session, params));
+    this.emit(Events.Page.Dialog, new dialog.Dialog(
+      params.type as dialog.DialogType,
+      params.message,
+      async (accept: boolean, promptText?: string) => {
+        await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(debugError);
+      },
+      params.defaultValue));
   }
 
   mainFrame(): frames.Frame {

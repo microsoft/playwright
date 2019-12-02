@@ -38,7 +38,7 @@ import * as dom from '../dom';
 import * as frames from '../frames';
 import * as js from '../javascript';
 import * as network from '../network';
-import { Dialog, DialogType } from './Dialog';
+import * as dialog from '../dialog';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
@@ -119,18 +119,13 @@ export class Page extends EventEmitter {
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    let dialogType = null;
-    if (event.type === 'alert')
-      dialogType = DialogType.Alert;
-    else if (event.type === 'confirm')
-      dialogType = DialogType.Confirm;
-    else if (event.type === 'prompt')
-      dialogType = DialogType.Prompt;
-    else if (event.type === 'beforeunload')
-      dialogType = DialogType.BeforeUnload;
-    assert(dialogType, 'Unknown javascript dialog type: ' + event.type);
-    const dialog = new Dialog(this._session, dialogType, event.message, event.defaultPrompt);
-    this.emit(Events.Page.Dialog, dialog);
+    this.emit(Events.Page.Dialog, new dialog.Dialog(
+      event.type as dialog.DialogType,
+      event.message,
+      async (accept: boolean, promptText?: string) => {
+        await this._session.send('Dialog.handleJavaScriptDialog', { accept, promptText });
+      },
+      event.defaultPrompt));
   }
 
   _setTarget(newTarget: Target) {
