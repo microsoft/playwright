@@ -25,25 +25,29 @@ export interface DOMWorldDelegate {
   adoptElementHandle(handle: ElementHandle, to: DOMWorld): Promise<ElementHandle>;
 }
 
+type SelectorRoot = Element | ShadowRoot | Document;
+
+type ResolvedSelector = { root?: ElementHandle, selector: string, disposeRoot?: boolean };
+type Selector = string | { root?: ElementHandle, selector: string };
+
 export class DOMWorld {
   readonly context: js.ExecutionContext;
   readonly delegate: DOMWorldDelegate;
 
   private _injectedPromise?: Promise<js.JSHandle>;
-  private _documentPromise?: Promise<ElementHandle>;
 
   constructor(context: js.ExecutionContext, delegate: DOMWorldDelegate) {
     this.context = context;
     this.delegate = delegate;
   }
 
-  _createHandle(remoteObject: any): ElementHandle | null {
+  createHandle(remoteObject: any): ElementHandle | null {
     if (this.delegate.isElement(remoteObject))
       return new ElementHandle(this.context, remoteObject);
     return null;
   }
 
-  injected(): Promise<js.JSHandle> {
+  private _injected(): Promise<js.JSHandle> {
     if (!this._injectedPromise) {
       const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
       const source = `
@@ -56,23 +60,90 @@ export class DOMWorld {
     return this._injectedPromise;
   }
 
-  _document(): Promise<ElementHandle> {
-    if (!this._documentPromise)
-      this._documentPromise = this.context.evaluateHandle('document').then(handle => handle.asElement()!);
-    return this._documentPromise;
+  async adoptElementHandle(handle: ElementHandle): Promise<ElementHandle> {
+    assert(handle.executionContext() !== this.context, 'Should not adopt to the same context');
+    return this.delegate.adoptElementHandle(handle, this);
   }
 
-  async adoptElementHandle(handle: ElementHandle, dispose: boolean): Promise<ElementHandle> {
-    if (handle.executionContext() === this.context)
-      return handle;
-    const adopted = this.delegate.adoptElementHandle(handle, this);
-    if (dispose)
+  private _normalizeSelector(selector: string): string {
+    const eqIndex = selector.indexOf('=');
+    if (eqIndex !== -1 && selector.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9]+$/))
+      return selector;
+    if (selector.startsWith('//'))
+      return 'xpath=' + selector;
+    return 'css=' + selector;
+  }
+
+  private async _resolveSelector(selector: Selector): Promise<ResolvedSelector> {
+    if (helper.isString(selector))
+      return { selector: this._normalizeSelector(selector) };
+    if (selector.root && selector.root.executionContext() !== this.context) {
+      const root = await this.adoptElementHandle(selector.root);
+      return { root, selector: this._normalizeSelector(selector.selector), disposeRoot: true };
+    }
+    return { root: selector.root, selector: this._normalizeSelector(selector.selector) };
+  }
+
+  private _selectorToString(selector: Selector): string {
+    if (typeof selector === 'string')
+      return selector;
+    return `:scope >> ${selector.selector}`;
+  }
+
+  async $(selector: Selector): Promise<ElementHandle | null> {
+    const resolved = await this._resolveSelector(selector);
+    const handle = await this.context.evaluateHandle(
+        (injected: Injected, selector: string, root: SelectorRoot | undefined) => injected.querySelector(selector, root || document),
+        await this._injected(), resolved.selector, resolved.root
+    );
+    if (resolved.disposeRoot)
+      await resolved.root.dispose();
+    if (!handle.asElement())
       await handle.dispose();
-    return adopted;
+    return handle.asElement();
+  }
+
+  async $$(selector: Selector): Promise<ElementHandle[]> {
+    const resolved = await this._resolveSelector(selector);
+    const arrayHandle = await this.context.evaluateHandle(
+        (injected: Injected, selector: string, root: SelectorRoot | undefined) => injected.querySelectorAll(selector, root || document),
+        await this._injected(), resolved.selector, resolved.root
+    );
+    if (resolved.disposeRoot)
+      await resolved.root.dispose();
+    const properties = await arrayHandle.getProperties();
+    await arrayHandle.dispose();
+    const result = [];
+    for (const property of properties.values()) {
+      const elementHandle = property.asElement();
+      if (elementHandle)
+        result.push(elementHandle);
+      else
+        await property.dispose();
+    }
+    return result;
+  }
+
+  $eval: types.$Eval<Selector> = async (selector, pageFunction, ...args) => {
+    const elementHandle = await this.$(selector);
+    if (!elementHandle)
+      throw new Error(`Error: failed to find element matching selector "${this._selectorToString(selector)}"`);
+    const result = await elementHandle.evaluate(pageFunction, ...args as any);
+    await elementHandle.dispose();
+    return result;
+  }
+
+  $$eval: types.$$Eval<Selector> = async (selector, pageFunction, ...args) => {
+    const resolved = await this._resolveSelector(selector);
+    const arrayHandle = await this.context.evaluateHandle(
+        (injected: Injected, selector: string, root: SelectorRoot | undefined) => injected.querySelectorAll(selector, root || document),
+        await this._injected(), resolved.selector, resolved.root
+    );
+    const result = await arrayHandle.evaluate(pageFunction, ...args as any);
+    await arrayHandle.dispose();
+    return result;
   }
 }
-
-type SelectorRoot = Element | ShadowRoot | Document;
 
 export class ElementHandle extends js.JSHandle {
   private readonly _world: DOMWorld;
@@ -198,68 +269,24 @@ export class ElementHandle extends js.JSHandle {
     return this._world.delegate.screenshot(this, options);
   }
 
-  async $(selector: string): Promise<ElementHandle | null> {
-    const handle = await this.evaluateHandle(
-        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelector('css=' + selector, root),
-        selector, await this._world.injected()
-    );
-    const element = handle.asElement();
-    if (element)
-      return element;
-    await handle.dispose();
-    return null;
+  $(selector: string): Promise<ElementHandle | null> {
+    return this._world.$({ root: this, selector });
   }
 
-  async $$(selector: string): Promise<ElementHandle[]> {
-    const arrayHandle = await this.evaluateHandle(
-        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
-        selector, await this._world.injected()
-    );
-    const properties = await arrayHandle.getProperties();
-    await arrayHandle.dispose();
-    const result = [];
-    for (const property of properties.values()) {
-      const elementHandle = property.asElement();
-      if (elementHandle)
-        result.push(elementHandle);
-    }
-    return result;
+  $$(selector: string): Promise<ElementHandle[]> {
+    return this._world.$$({ root: this, selector });
   }
 
-  $eval: types.$Eval = async (selector, pageFunction, ...args) => {
-    const elementHandle = await this.$(selector);
-    if (!elementHandle)
-      throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await elementHandle.evaluate(pageFunction, ...args as any);
-    await elementHandle.dispose();
-    return result;
+  $eval: types.$Eval = (selector, pageFunction, ...args) => {
+    return this._world.$eval({ root: this, selector }, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
-    const arrayHandle = await this.evaluateHandle(
-        (root: SelectorRoot, selector: string, injected: Injected) => injected.querySelectorAll('css=' + selector, root),
-        selector, await this._world.injected()
-    );
-
-    const result = await arrayHandle.evaluate(pageFunction, ...args as any);
-    await arrayHandle.dispose();
-    return result;
+  $$eval: types.$$Eval = (selector, pageFunction, ...args) => {
+    return this._world.$$eval({ root: this, selector }, pageFunction, ...args as any);
   }
 
-  async $x(expression: string): Promise<ElementHandle[]> {
-    const arrayHandle = await this.evaluateHandle(
-        (root: SelectorRoot, expression: string, injected: Injected) => injected.querySelectorAll('xpath=' + expression, root),
-        expression, await this._world.injected()
-    );
-    const properties = await arrayHandle.getProperties();
-    await arrayHandle.dispose();
-    const result = [];
-    for (const property of properties.values()) {
-      const elementHandle = property.asElement();
-      if (elementHandle)
-        result.push(elementHandle);
-    }
-    return result;
+  $x(expression: string): Promise<ElementHandle[]> {
+    return this._world.$$({ root: this, selector: 'xpath=' + expression });
   }
 
   isIntersectingViewport(): Promise<boolean> {

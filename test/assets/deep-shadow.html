@@ -1,0 +1,27 @@
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const outer = document.createElement('section');
+  document.body.appendChild(outer);
+
+  const root1 = document.createElement('div');
+  outer.appendChild(root1);
+  const shadowRoot1 = root1.attachShadow({mode: 'open'});
+  const span1 = document.createElement('span');
+  span1.textContent = 'Hello from root1';
+  shadowRoot1.appendChild(span1);
+
+  const root2 = document.createElement('div');
+  shadowRoot1.appendChild(root2);
+  const shadowRoot2 = root2.attachShadow({mode: 'open'});
+  const span2 = document.createElement('span');
+  span2.textContent = 'Hello from root2';
+  shadowRoot2.appendChild(span2);
+
+  const root3 = document.createElement('div');
+  shadowRoot1.appendChild(root3);
+  const shadowRoot3 = root3.attachShadow({mode: 'open'});
+  const span3 = document.createElement('span');
+  span3.textContent = 'Hello from root3';
+  shadowRoot3.appendChild(span3);
+});
+</script>
