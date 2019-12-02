@@ -1,6 +1,6 @@
-From 121a2630d6d47db4f113d0d063e717329b69ae4f Mon Sep 17 00:00:00 2001
+From dfe99d6941af0b7fad7b43e1806659ee9bb433eb Mon Sep 17 00:00:00 2001
 From: Pavel <pavel.feldman@gmail.com>
-Date: Tue, 26 Nov 2019 18:43:46 -0800
+Date: Mon, 2 Dec 2019 15:34:55 -0800
 Subject: [PATCH xserver] chore: bootstrap
 
 ---
@@ -11,7 +11,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../inspector/InspectorTarget.h               |   3 +
  .../inspector/agents/InspectorTargetAgent.cpp |  46 +-
  .../inspector/agents/InspectorTargetAgent.h   |   6 +-
- .../inspector/protocol/Browser.json           |  40 ++
+ .../inspector/protocol/Browser.json           | 106 ++++
  .../inspector/protocol/DOM.json               |  39 ++
  .../inspector/protocol/Dialog.json            |  36 ++
  .../inspector/protocol/Emulation.json         |  14 +
@@ -30,6 +30,10 @@ Subject: [PATCH xserver] chore: bootstrap
  .../WebCore/platform/PlatformKeyboardEvent.h  |   2 +
  .../platform/gtk/PlatformKeyboardEventGtk.cpp | 242 +++++++++
  .../libwpe/PlatformKeyboardEventLibWPE.cpp    | 240 +++++++++
+ .../soup/NetworkStorageSessionSoup.cpp        |   9 +-
+ .../WebKit/NetworkProcess/NetworkProcess.cpp  |  30 +-
+ Source/WebKit/NetworkProcess/NetworkProcess.h |   5 +
+ .../NetworkProcess/NetworkProcess.messages.in |   4 +
  Source/WebKit/Shared/API/c/wpe/WebKit.h       |   1 +
  Source/WebKit/Shared/NativeWebKeyboardEvent.h |   5 +
  Source/WebKit/Shared/NativeWebMouseEvent.h    |   4 +
@@ -42,8 +46,10 @@ Subject: [PATCH xserver] chore: bootstrap
  Source/WebKit/SourcesGTK.txt                  |   6 +
  Source/WebKit/SourcesWPE.txt                  |   6 +-
  Source/WebKit/UIProcess/API/C/WKPage.cpp      |   2 +
- .../UIProcess/API/Cocoa/_WKBrowserInspector.h |  23 +
- .../API/Cocoa/_WKBrowserInspector.mm          |  25 +
+ .../UIProcess/API/Cocoa/WKWebsiteDataStore.h  |   3 +-
+ .../UIProcess/API/Cocoa/WKWebsiteDataStore.mm |   6 +
+ .../UIProcess/API/Cocoa/_WKBrowserInspector.h |  33 ++
+ .../API/Cocoa/_WKBrowserInspector.mm          |  28 +
  .../API/glib/WebKitBrowserInspector.cpp       | 114 ++++
  .../API/glib/WebKitBrowserInspectorPrivate.h  |   9 +
  .../UIProcess/API/glib/WebKitWebContext.cpp   |   5 +
@@ -60,9 +66,9 @@ Subject: [PATCH xserver] chore: bootstrap
  .../UIProcess/BrowserInspectorTargetAgent.h   |  35 ++
  .../PopUpSOAuthorizationSession.h             |   4 +
  .../PopUpSOAuthorizationSession.mm            |   1 +
- .../UIProcess/InspectorBrowserAgent.cpp       |  74 +++
- .../WebKit/UIProcess/InspectorBrowserAgent.h  |  54 ++
- .../UIProcess/InspectorBrowserAgentClient.h   |  25 +
+ .../UIProcess/InspectorBrowserAgent.cpp       | 255 +++++++++
+ .../WebKit/UIProcess/InspectorBrowserAgent.h  |  63 +++
+ .../UIProcess/InspectorBrowserAgentClient.h   |  33 ++
  .../WebKit/UIProcess/InspectorDialogAgent.cpp |  62 +++
  .../WebKit/UIProcess/InspectorDialogAgent.h   |  48 ++
  .../WebKit/UIProcess/InspectorTargetProxy.cpp |  18 +-
@@ -80,7 +86,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../UIProcess/WebPageInspectorTargetProxy.h   |  45 ++
  Source/WebKit/UIProcess/WebPageProxy.cpp      |  20 +-
  Source/WebKit/UIProcess/WebPageProxy.h        |  13 +
- .../glib/InspectorBrowserAgentClientGLib.cpp  | 103 ++++
+ .../glib/InspectorBrowserAgentClientGLib.cpp  | 100 ++++
  .../glib/InspectorBrowserAgentClientGLib.h    |  36 ++
  .../UIProcess/gtk/InspectorDialogAgentGtk.cpp |  23 +
  .../gtk/WebPageInspectorEmulationAgentGtk.cpp |  35 ++
@@ -88,7 +94,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../gtk/WebPageInspectorTargetProxyGtk.cpp    |  22 +
  .../WebKit/UIProcess/ios/PageClientImplIOS.mm |   2 +
  .../mac/InspectorBrowserAgentClientMac.h      |  29 +
- .../mac/InspectorBrowserAgentClientMac.mm     |  68 +++
+ .../mac/InspectorBrowserAgentClientMac.mm     |  54 ++
  .../UIProcess/mac/InspectorDialogAgentMac.mm  |  15 +
  .../WebKit/UIProcess/mac/PageClientImplMac.mm |   5 +
  .../mac/WebPageInspectorEmulationAgentMac.mm  |  19 +
@@ -102,12 +108,12 @@ Subject: [PATCH xserver] chore: bootstrap
  .../WebPage/WebPageInspectorTarget.h          |   1 +
  Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
- Tools/MiniBrowser/mac/AppDelegate.h           |   4 +-
- Tools/MiniBrowser/mac/AppDelegate.m           |  25 +-
+ Tools/MiniBrowser/mac/AppDelegate.h           |   5 +-
+ Tools/MiniBrowser/mac/AppDelegate.m           |  62 ++-
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  17 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 103 files changed, 4107 insertions(+), 55 deletions(-)
+ 109 files changed, 4458 insertions(+), 59 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -469,10 +475,10 @@ index 38cb318986b..4287e05e559 100644
  };
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
-index 00000000000..bed4a3bfe6f
+index 00000000000..063e5e1346a
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
-@@ -0,0 +1,40 @@
+@@ -0,0 +1,106 @@
 +{
 +    "domain": "Browser",
 +    "availability": ["web"],
@@ -481,6 +487,44 @@ index 00000000000..bed4a3bfe6f
 +            "id": "ContextID",
 +            "type": "string",
 +            "description": "Id of Browser context."
++        },
++        {
++            "id": "CookieSameSitePolicy",
++            "type": "string",
++            "enum": ["None", "Lax", "Strict"],
++            "description": "Same-Site policy of a cookie."
++        },
++        {
++            "id": "Cookie",
++            "type": "object",
++            "description": "Cookie object",
++            "properties": [
++                { "name": "name", "type": "string", "description": "Cookie name." },
++                { "name": "value", "type": "string", "description": "Cookie value." },
++                { "name": "domain", "type": "string", "description": "Cookie domain." },
++                { "name": "path", "type": "string", "description": "Cookie path." },
++                { "name": "expires", "type": "number", "description": "Cookie expires." },
++                { "name": "httpOnly", "type": "boolean", "description": "True if cookie is http-only." },
++                { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
++                { "name": "session", "type": "boolean", "description": "True if cookie is session cookie." },
++                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
++            ]
++        },
++        {
++            "id": "SetCookieParam",
++            "type": "object",
++            "description": "Cookie object",
++            "properties": [
++                { "name": "name", "type": "string", "description": "Cookie name." },
++                { "name": "value", "type": "string", "description": "Cookie value." },
++                { "name": "domain", "type": "string", "description": "Cookie domain." },
++                { "name": "path", "type": "string", "description": "Cookie path." },
++                { "name": "expires", "type": "number", "optional": true, "description": "Cookie expires." },
++                { "name": "httpOnly", "type": "boolean", "optional": true, "description": "True if cookie is http-only." },
++                { "name": "secure", "type": "boolean", "optional": true, "description": "True if cookie is secure." },
++                { "name": "session", "type": "boolean", "optional": true, "description": "True if cookie is session cookie." },
++                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "optional": true, "description": "Cookie Same-Site policy." }
++            ]
 +        }
 +    ],
 +    "commands": [
@@ -509,6 +553,34 @@ index 00000000000..bed4a3bfe6f
 +            ],
 +            "returns": [
 +                { "name": "targetId", "type": "string", "description": "Unique identifier for the page target." }
++            ]
++        },
++        {
++            "name": "getAllCookies",
++            "description": "Returns all cookies in the given browser context.",
++            "async": true,
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ],
++            "returns": [
++                { "name": "cookies", "type": "array", "items": { "$ref": "Cookie" }, "description": "Cookies." }
++            ]
++        },
++        {
++            "name": "setCookies",
++            "description": "Sets cookies in the given browser context.",
++            "async": true,
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "cookies", "type": "array", "items": { "$ref": "SetCookieParam" }, "description": "Cookies." }
++            ]
++        },
++        {
++            "name": "deleteAllCookies",
++            "description": "Deletes cookies in the given browser context.",
++            "async": true,
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
 +            ]
 +        }
 +    ]
@@ -2439,6 +2511,112 @@ index cf46da15083..efbda20f28b 100644
  String PlatformKeyboardEvent::singleCharacterString(unsigned val)
  {
      switch (val) {
+diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
+index dfc490d2a0b..0bcd1d98ad8 100644
+--- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
++++ b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
+@@ -394,8 +394,13 @@ void NetworkStorageSession::getHostnamesWithCookies(HashSet<String>& hostnames)
+ 
+ Vector<Cookie> NetworkStorageSession::getAllCookies()
+ {
+-    // FIXME: Implement for WK2 to use.
+-    return { };
++    Vector<Cookie> cookies;
++    GUniquePtr<GSList> cookiesList(soup_cookie_jar_all_cookies(cookieStorage()));
++    for (GSList* item = cookiesList.get(); item; item = g_slist_next(item)) {
++        GUniquePtr<SoupCookie> soupCookie(static_cast<SoupCookie*>(item->data));
++        cookies.append(WebCore::Cookie(soupCookie.get()));
++    }
++    return cookies;
+ }
+ 
+ Vector<Cookie> NetworkStorageSession::getCookies(const URL& url)
+diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
+index 5f23cc66aa1..488c3c3bbae 100644
+--- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
++++ b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
+@@ -26,7 +26,6 @@
+ 
+ #include "config.h"
+ #include "NetworkProcess.h"
+-
+ #include "ArgumentCoders.h"
+ #include "Attachment.h"
+ #include "AuthenticationManager.h"
+@@ -580,6 +579,35 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
+     m_storageQuotaManagers.remove(sessionID);
+ }
+ 
++void NetworkProcess::getAllCookies(PAL::SessionID sessionID, CompletionHandler<void(Vector<WebCore::Cookie>&&)>&& completionHandler)
++{
++    if (auto* networkStorageSession = storageSession(sessionID)) {
++        completionHandler(networkStorageSession->getAllCookies());
++        return;
++    }
++    completionHandler({ });
++}
++
++void NetworkProcess::setCookies(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookies, CompletionHandler<void(bool)>&& completionHandler) {
++    if (auto* networkStorageSession = storageSession(sessionID)) {
++        for (auto cookie : cookies)
++            networkStorageSession->setCookie(cookie);
++        completionHandler(true);
++        return;
++    }
++    completionHandler(false);
++}
++
++void NetworkProcess::deleteAllCookies(PAL::SessionID sessionID, CompletionHandler<void(bool)>&& completionHandler)
++{
++    if (auto* networkStorageSession = storageSession(sessionID)) {
++        networkStorageSession->deleteAllCookies();
++        completionHandler(true);
++        return;
++    }
++    completionHandler(false);
++}
++
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
+ void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
+ {
+diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
+index f62f01d380f..e33439eb278 100644
+--- a/Source/WebKit/NetworkProcess/NetworkProcess.h
++++ b/Source/WebKit/NetworkProcess/NetworkProcess.h
+@@ -74,6 +74,7 @@ class SessionID;
+ 
+ namespace WebCore {
+ class CertificateInfo;
++struct Cookie;
+ class CurlProxySettings;
+ class DownloadID;
+ class ProtectionSpace;
+@@ -200,6 +201,10 @@ public:
+ 
+     void addWebsiteDataStore(WebsiteDataStoreParameters&&);
+ 
++    void getAllCookies(PAL::SessionID, CompletionHandler<void(Vector<WebCore::Cookie>&&)>&&);
++    void setCookies(PAL::SessionID, Vector<WebCore::Cookie>, CompletionHandler<void(bool)>&&);
++    void deleteAllCookies(PAL::SessionID, CompletionHandler<void(bool)>&&);
++
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
+     void clearPrevalentResource(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
+     void clearUserInteraction(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
+diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
+index 3677677480b..2873e1c0f59 100644
+--- a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
++++ b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
+@@ -79,6 +79,10 @@ messages -> NetworkProcess LegacyReceiver {
+     PrepareToSuspend(bool isSuspensionImminent) -> () Async
+     ProcessDidResume()
+ 
++    GetAllCookies(PAL::SessionID sessionID) -> (Vector<WebCore::Cookie> cookies) Async
++    SetCookies(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookies) -> (bool success) Async
++    DeleteAllCookies(PAL::SessionID sessionID) -> (bool success) Async
++
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
+     ClearPrevalentResource(PAL::SessionID sessionID, WebCore::RegistrableDomain resourceDomain) -> () Async
+     ClearUserInteraction(PAL::SessionID sessionID, WebCore::RegistrableDomain resourceDomain) -> () Async
 diff --git a/Source/WebKit/Shared/API/c/wpe/WebKit.h b/Source/WebKit/Shared/API/c/wpe/WebKit.h
 index 898e30b370d..74945e06fac 100644
 --- a/Source/WebKit/Shared/API/c/wpe/WebKit.h
@@ -2720,28 +2898,83 @@ index 19e273187ae..47e63871466 100644
              m_client.didNotHandleKeyEvent(toAPI(page), event.nativeEvent(), m_client.base.clientInfo);
          }
  
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.h b/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.h
+index 726c4972aa0..c67f4087977 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.h
++++ b/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.h
+@@ -24,7 +24,6 @@
+  */
+ 
+ #import <WebKit/WKFoundation.h>
+-
+ #import <WebKit/WKWebsiteDataRecord.h>
+ 
+ NS_ASSUME_NONNULL_BEGIN
+@@ -78,6 +77,8 @@ WK_CLASS_AVAILABLE(macos(10.11), ios(9.0))
+ /*! @abstract Returns the cookie store representing HTTP cookies in this website data store. */
+ @property (nonatomic, readonly) WKHTTPCookieStore *httpCookieStore WK_API_AVAILABLE(macos(10.13), ios(11.0));
+ 
++- (uint64_t)sessionID;
++
+ @end
+ 
+ NS_ASSUME_NONNULL_END
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.mm b/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.mm
+index 48467b7a833..eaca62adb3c 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.mm
++++ b/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.mm
+@@ -43,6 +43,7 @@
+ #import "_WKWebsiteDataStoreDelegate.h"
+ #import <WebCore/Credential.h>
+ #import <WebCore/RegistrationDatabase.h>
++#import <pal/SessionID.h>
+ #import <wtf/BlockPtr.h>
+ #import <wtf/URL.h>
+ #import <wtf/WeakObjCPtr.h>
+@@ -183,6 +184,11 @@ static WallTime toSystemClockTime(NSDate *date)
+     });
+ }
+ 
++- (uint64_t) sessionID
++{
++    return _websiteDataStore->sessionID().toUInt64();
++}
++
+ static Vector<WebKit::WebsiteDataRecord> toWebsiteDataRecords(NSArray *dataRecords)
+ {
+     Vector<WebKit::WebsiteDataRecord> result;
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 new file mode 100644
-index 00000000000..15c5c4d3fb2
+index 00000000000..aebcbc62682
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
-@@ -0,0 +1,23 @@
+@@ -0,0 +1,33 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
 +#import <WebKit/WKFoundation.h>
++#import <WebKit/WKProcessPool.h>
++#import <WebKit/WKWebsiteDataStore.h>
 +#import <Foundation/Foundation.h>
 +
 +NS_ASSUME_NONNULL_BEGIN
 +
 +@class WKWebView;
 +
++WK_CLASS_AVAILABLE(macos(10.14.0))
++@interface _WKBrowserContext : NSObject
++@property (nonatomic, strong) WKWebsiteDataStore *dataStore;
++@property (nonatomic, strong) WKProcessPool *processPool;
++@end
++
 +@protocol _WKBrowserInspectorDelegate <NSObject>
-+- (WKWebView *)createNewPage;
++- (WKWebView *)createNewPage:(uint64_t)sessionID;
++- (_WKBrowserContext *)createBrowserContext;
++- (void)deleteBrowserContext:(uint64_t)sessionID;
 +- (void)quit;
 +@end
 +
-+WK_CLASS_AVAILABLE(macos(10.15.0))
++WK_CLASS_AVAILABLE(macos(10.14.0))
 +@interface _WKBrowserInspector : NSObject
 ++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate;
 +@end
@@ -2751,10 +2984,10 @@ index 00000000000..15c5c4d3fb2
 +
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 new file mode 100644
-index 00000000000..e41af8b7deb
+index 00000000000..d9497d2c862
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,28 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -2763,7 +2996,7 @@ index 00000000000..e41af8b7deb
 +
 +#include "BrowserInspectorPipe.h"
 +#include "InspectorBrowserAgentClientMac.h"
-+#include "WebKit2Initialize.h"
++#include "WebsiteDataStore.h"
 +
 +#import "WKWebView.h"
 +
@@ -2774,11 +3007,14 @@ index 00000000000..e41af8b7deb
 ++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate
 +{
 +#if ENABLE(REMOTE_INSPECTOR)
-+  InitializeWebKit2();
++  WebsiteDataStore::defaultDataStore();
 +  initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientMac>(delegate));
 +#endif
 +}
 +
++@end
++
++@implementation _WKBrowserContext
 +@end
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 new file mode 100644
@@ -3480,10 +3716,10 @@ index 0f18038de98..82a96677940 100644
  #import "WKWebViewConfigurationPrivate.h"
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 00000000000..7bf4924200d
+index 00000000000..556be919504
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,255 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3493,15 +3729,53 @@ index 00000000000..7bf4924200d
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "InspectorBrowserAgentClient.h"
++#include "NetworkProcessMessages.h"
++#include "NetworkProcessProxy.h"
 +#include "WebPageInspectorTarget.h"
 +#include "WebPageProxy.h"
++#include "WebProcessPool.h"
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +#include <pal/SessionID.h>
++#include <wtf/HashMap.h>
 +#include <wtf/HexNumber.h>
++
 +
 +using namespace Inspector;
 +
 +namespace WebKit {
++
++namespace {
++
++Inspector::Protocol::Browser::CookieSameSitePolicy cookieSameSitePolicy(WebCore::Cookie::SameSitePolicy policy)
++{
++    switch (policy) {
++    case WebCore::Cookie::SameSitePolicy::None:
++        return Inspector::Protocol::Browser::CookieSameSitePolicy::None;
++    case WebCore::Cookie::SameSitePolicy::Lax:
++        return Inspector::Protocol::Browser::CookieSameSitePolicy::Lax;
++    case WebCore::Cookie::SameSitePolicy::Strict:
++        return Inspector::Protocol::Browser::CookieSameSitePolicy::Strict;
++    }
++    ASSERT_NOT_REACHED();
++    return Inspector::Protocol::Browser::CookieSameSitePolicy::None;
++}
++
++Ref<Inspector::Protocol::Browser::Cookie> buildObjectForCookie(const WebCore::Cookie& cookie)
++{
++    return Inspector::Protocol::Browser::Cookie::create()
++        .setName(cookie.name)
++        .setValue(cookie.value)
++        .setDomain(cookie.domain)
++        .setPath(cookie.path)
++        .setExpires(cookie.expires)
++        .setHttpOnly(cookie.httpOnly)
++        .setSecure(cookie.secure)
++        .setSession(cookie.session)
++        .setSameSite(cookieSameSitePolicy(cookie.sameSite))
++        .release();
++}
++
++}  // namespace
 +
 +InspectorBrowserAgent::InspectorBrowserAgent(Inspector::BackendDispatcher& backendDispatcher, InspectorBrowserAgentClient* client)
 +    : InspectorAgentBase("Browser"_s)
@@ -3520,32 +3794,157 @@ index 00000000000..7bf4924200d
 +{
 +}
 +
-+void InspectorBrowserAgent::close(ErrorString& error)
++void InspectorBrowserAgent::close(ErrorString& errorString)
 +{
 +    if (m_client == nullptr) {
-+        error = "no platform delegate to close browser";
++        errorString = "no platform delegate to close browser";
 +    } else {
 +        m_client->closeAllWindows();
 +    }
 +}
 +
-+void InspectorBrowserAgent::createContext(ErrorString& error, String* browserContextID)
++void InspectorBrowserAgent::createContext(ErrorString& errorString, String* browserContextID)
 +{
-+    m_client->createBrowserContext(error, browserContextID);
++    BrowserContext browserContext = m_client->createBrowserContext(errorString);
++    if (!errorString.isEmpty())
++        return;
++    browserContext.processPool->setPrimaryDataStore(*browserContext.dataStore);
++    browserContext.processPool->ensureNetworkProcess(browserContext.dataStore.get());
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    *browserContextID = toBrowserContextIDProtocolString(sessionID);
++    m_browserContexts.set(*browserContextID, browserContext);
 +}
 +
-+void InspectorBrowserAgent::deleteContext(ErrorString& error, const String& browserContextID)
++void InspectorBrowserAgent::deleteContext(ErrorString& errorString, const String& browserContextID)
 +{
-+    m_client->deleteBrowserContext(error, browserContextID);
-+}
-+
-+void InspectorBrowserAgent::createPage(ErrorString& error, const String* browserContextID, String* targetID)
-+{
-+    RefPtr<WebPageProxy> page = m_client->createPage(error, browserContextID);
-+    if (page == nullptr)
++    BrowserContext browserContext = lookupBrowserContext(errorString, &browserContextID);
++    if (!errorString.isEmpty())
 +        return;
 +
++    Vector<WebPageProxy*> pages;
++    for (auto& process : browserContext.processPool->processes()) {
++        for (auto* page : process->pages())
++            pages.append(page);
++    }
++
++    for (auto* page : pages)
++        page->closePage(false);
++
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    m_client->deleteBrowserContext(errorString, sessionID);
++    m_browserContexts.remove(browserContextID);
++}
++
++void InspectorBrowserAgent::createPage(ErrorString& errorString, const String* browserContextID, String* targetID)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    RefPtr<WebPageProxy> page = m_client->createPage(errorString, sessionID);
++    if (page == nullptr)
++        return;
 +    *targetID = WebPageInspectorTarget::toTargetID(page->webPageID());
++}
++
++void InspectorBrowserAgent::getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&& callback) {
++    String errorString;
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
++        return;
++    }
++
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
++    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::GetAllCookies(sessionID),
++        [callback = WTFMove(callback)](Vector<WebCore::Cookie> allCookies) {
++            if (!callback->isActive())
++                return;
++            auto cookies = JSON::ArrayOf<Inspector::Protocol::Browser::Cookie>::create();
++            for (const auto& cookie : allCookies)
++                cookies->addItem(buildObjectForCookie(cookie));
++            callback->sendSuccess(WTFMove(cookies));
++        }, 0);
++}
++
++void InspectorBrowserAgent::setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&& callback) {
++    String errorString;
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
++        return;
++    }
++
++    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++
++    Vector<WebCore::Cookie> cookies;
++    for (unsigned i = 0; i < in_cookies.length(); ++i) {
++        RefPtr<JSON::Value> item = in_cookies.get(i);
++        RefPtr<JSON::Object> obj;
++        if (!item->asObject(obj)) {
++            errorString = "Invalid cookie payload format"_s;
++            return;
++        }
++
++        WebCore::Cookie cookie;
++        if (!obj->getString("name", cookie.name) ||
++            !obj->getString("value", cookie.value) ||
++            !obj->getString("domain", cookie.domain) ||
++            !obj->getString("path", cookie.path)) {
++            errorString = "Invalid file payload format"_s;
++            return;
++        }
++
++        obj->getDouble("expires", cookie.expires);
++        obj->getBoolean("httpOnly", cookie.httpOnly);
++        obj->getBoolean("secure", cookie.secure);
++        obj->getBoolean("session", cookie.session);
++        String sameSite;
++        if (obj->getString("sameSite", sameSite)) {
++            if (sameSite == "None")
++                cookie.sameSite = WebCore::Cookie::SameSitePolicy::None;
++            if (sameSite == "Lax")
++                cookie.sameSite = WebCore::Cookie::SameSitePolicy::Lax;
++            if (sameSite == "Strict")
++                cookie.sameSite = WebCore::Cookie::SameSitePolicy::Strict;
++        }
++        cookies.append(WTFMove(cookie));
++    }
++
++    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::SetCookies(sessionID, WTFMove(cookies)),
++        [callback = WTFMove(callback)](bool success) {
++            if (!callback->isActive())
++                return;
++
++            if (success)
++                callback->sendSuccess();
++            else
++                callback->sendFailure("Internal error: no network storage"_s);
++            callback->sendSuccess();
++        }, 0);
++}
++
++void InspectorBrowserAgent::deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&& callback) {
++    String errorString;
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
++        return;
++    }
++
++    NetworkProcessProxy* networkProcess = browserContext.processPool->networkProcess();
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    networkProcess->sendWithAsyncReply(Messages::NetworkProcess::DeleteAllCookies(sessionID),
++        [callback = WTFMove(callback)](bool success) {
++            if (!callback->isActive())
++                return;
++            if (success)
++                callback->sendSuccess();
++            else
++                callback->sendFailure("Internal error: no network storage"_s);
++        }, 0);
 +}
 +
 +String InspectorBrowserAgent::toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
@@ -3555,15 +3954,33 @@ index 00000000000..7bf4924200d
 +    return builder.toString();
 +}
 +
++BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID) {
++    if (!browserContextID) {
++        for (auto& pool : WebProcessPool::allProcessPools()) {
++            BrowserContext context;
++            context.processPool = pool;
++            context.dataStore = pool->websiteDataStore();
++            return context;
++        }
++        errorString = "No default context"_s;
++        return BrowserContext();
++    }
++
++    BrowserContext browserContext = m_browserContexts.get(*browserContextID);
++    if (!browserContext.processPool)
++        errorString = "Could not find browser context for given id"_s;
++    return browserContext;
++}
++
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 00000000000..6ad7680760d
+index 00000000000..a0d439f661f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,63 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3571,8 +3988,11 @@ index 00000000000..6ad7680760d
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
++#include "InspectorBrowserAgentClient.h"
 +#include <JavaScriptCore/InspectorAgentBase.h>
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
++#include <wtf/HashMap.h>
++#include <pal/SessionID.h>
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
 +
@@ -3588,8 +4008,8 @@ index 00000000000..6ad7680760d
 +
 +namespace WebKit {
 +
-+class InspectorBrowserAgentClient;
-+class WebPageInspectorController;
++class NetworkProcess;
++class WebProcessPool;
 +
 +class InspectorBrowserAgent final : public Inspector::InspectorAgentBase, public Inspector::BrowserBackendDispatcherHandler {
 +    WTF_MAKE_NONCOPYABLE(InspectorBrowserAgent);
@@ -3608,11 +4028,17 @@ index 00000000000..6ad7680760d
 +    void deleteContext(Inspector::ErrorString&, const String& browserContextID) override;
 +    void createPage(Inspector::ErrorString&, const String* browserContextID, String* targetId) override;
 +
++    void getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&&) override;
++    void setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&&) override;
++    void deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&&) override;
++
 +    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
 +
 +private:
++    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
 +    Ref<Inspector::BrowserBackendDispatcher> m_backendDispatcher;
 +    InspectorBrowserAgentClient* m_client;
++    HashMap<String, BrowserContext> m_browserContexts;
 +};
 +
 +} // namespace WebKit
@@ -3620,10 +4046,10 @@ index 00000000000..6ad7680760d
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
 new file mode 100644
-index 00000000000..82ed894a569
+index 00000000000..866db590d59
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,33 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3631,19 +4057,27 @@ index 00000000000..82ed894a569
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
++#include <pal/SessionID.h>
 +#include <wtf/Forward.h>
 +
 +namespace WebKit {
 +
++class WebsiteDataStore;
 +class WebPageProxy;
++class WebProcessPool;
++
++struct BrowserContext {
++    RefPtr<WebsiteDataStore> dataStore;
++    RefPtr<WebProcessPool> processPool;
++};
 +
 +class InspectorBrowserAgentClient {
 +public:
 +    virtual ~InspectorBrowserAgentClient() = default;
-+    virtual RefPtr<WebKit::WebPageProxy> createPage(WTF::String& error, const WTF::String* browserContextID) = 0;
++    virtual RefPtr<WebKit::WebPageProxy> createPage(WTF::String& error, PAL::SessionID) = 0;
 +    virtual void closeAllWindows() = 0;
-+    virtual void createBrowserContext(WTF::String& error, WTF::String* browserContextID) = 0;
-+    virtual void deleteBrowserContext(WTF::String& error, const WTF::String& browserContextID) = 0;
++    virtual BrowserContext createBrowserContext(WTF::String& error) = 0;
++    virtual void deleteBrowserContext(WTF::String& error, PAL::SessionID) = 0;
 +};
 +
 +} // namespace WebKit
@@ -4910,10 +5344,10 @@ index 488ac80306d..700b332f427 100644
  
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
-index 00000000000..d6373d3bb20
+index 00000000000..b1f5236ca0a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,100 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4960,11 +5394,11 @@ index 00000000000..d6373d3bb20
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientGlib::createPage(WTF::String& error, const WTF::String* browserContextID)
++RefPtr<WebPageProxy> InspectorBrowserAgentClientGlib::createPage(WTF::String& error, PAL::SessionID sessionID)
 +{
 +    WebKitWebContext* context = webkit_web_context_get_default();
-+    if (browserContextID != nullptr) {
-+        context = m_idToContext.get(*browserContextID);
++    if (sessionID) {
++        context = m_idToContext.get(sessionID);
 +        if (context == nullptr) {
 +            error = "Context with provided id not found";
 +            return nullptr;
@@ -4990,28 +5424,25 @@ index 00000000000..d6373d3bb20
 +    return websiteDataStore.sessionID();
 +}
 +
-+void InspectorBrowserAgentClientGlib::createBrowserContext(WTF::String& error, WTF::String* browserContextID)
++BrowserContext InspectorBrowserAgentClientGlib::createBrowserContext(WTF::String& error)
 +{
-+    GRefPtr<WebKitWebsiteDataManager> manager = adoptGRef(webkit_website_data_manager_new_ephemeral());
-+    GRefPtr<WebKitWebContext> context = adoptGRef(WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager.get(), "process-swap-on-cross-site-navigation-enabled", true, nullptr)));
++    BrowserContext browserContext;
++    GRefPtr<WebKitWebsiteDataManager> data_manager = adoptGRef(webkit_website_data_manager_new_ephemeral());
++    GRefPtr<WebKitWebContext> context = adoptGRef(WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", data_manager.get(), "process-swap-on-cross-site-navigation-enabled", true, nullptr)));
 +    if (!context) {
 +        error = "Failed to create GLib ephemeral context";
-+        return;
++        return browserContext;
 +    }
++    browserContext.processPool = &webkitWebContextGetProcessPool(context.get());
++    browserContext.dataStore = &webkitWebsiteDataManagerGetDataStore(data_manager.get());
 +    PAL::SessionID sessionID = sessionIDFromContext(context.get());
-+    String id = InspectorBrowserAgent::toBrowserContextIDProtocolString(sessionID);
-+    m_idToContext.set(id, WTFMove(context));
-+    *browserContextID = id;
++    m_idToContext.set(sessionID, WTFMove(context));
++    return browserContext;
 +}
 +
-+void InspectorBrowserAgentClientGlib::deleteBrowserContext(WTF::String& error, const WTF::String& browserContextID)
++void InspectorBrowserAgentClientGlib::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
 +{
-+    GRefPtr<WebKitWebContext> context = m_idToContext.take(browserContextID);
-+    if (context == nullptr) {
-+        error = "Context with provided id not found";
-+        return;
-+    }
-+    closeAllPages(sessionIDFromContext(context.get()));
++    m_idToContext.remove(sessionID);
 +}
 +
 +} // namespace WebKit
@@ -5019,7 +5450,7 @@ index 00000000000..d6373d3bb20
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
 new file mode 100644
-index 00000000000..88227c220f2
+index 00000000000..37a5e7ad390
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
 @@ -0,0 +1,36 @@
@@ -5045,15 +5476,15 @@ index 00000000000..88227c220f2
 +    InspectorBrowserAgentClientGlib();
 +    ~InspectorBrowserAgentClientGlib() override = default;
 +
-+    RefPtr<WebPageProxy> createPage(WTF::String& error, const WTF::String* browserContextID) override;
++    RefPtr<WebPageProxy> createPage(WTF::String& error, PAL::SessionID) override;
 +    void closeAllWindows() override;
-+    void createBrowserContext(WTF::String& error, WTF::String* browserContextID) override;
-+    void deleteBrowserContext(WTF::String& error, const WTF::String& browserContextID) override;
++    BrowserContext createBrowserContext(WTF::String& error) override;
++    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +
 +private:
-+    WebKitWebContext* findContext(WTF::String& error, const WTF::String& browserContextID);
++    WebKitWebContext* findContext(WTF::String& error, PAL::SessionID);
 +
-+    HashMap<String, GRefPtr<WebKitWebContext>> m_idToContext;
++    HashMap<PAL::SessionID, GRefPtr<WebKitWebContext>> m_idToContext;
 +};
 +
 +} // namespace API
@@ -5263,7 +5694,7 @@ index e139968d4f0..98093c684db 100644
  
 diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
 new file mode 100644
-index 00000000000..30599d83dfb
+index 00000000000..03aff71e9f9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
 @@ -0,0 +1,29 @@
@@ -5285,10 +5716,10 @@ index 00000000000..30599d83dfb
 +    InspectorBrowserAgentClientMac(_WKBrowserInspectorDelegate* delegate);
 +    ~InspectorBrowserAgentClientMac() override = default;
 +
-+    RefPtr<WebPageProxy> createPage(WTF::String& error, const WTF::String* browserContextID) override;
++    RefPtr<WebPageProxy> createPage(WTF::String& error, PAL::SessionID) override;
 +    void closeAllWindows() override;
-+    void createBrowserContext(WTF::String& error, WTF::String* browserContextID) override;
-+    void deleteBrowserContext(WTF::String& error, const WTF::String& browserContextID) override;
++    BrowserContext createBrowserContext(WTF::String& error) override;
++    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +  private:
 +
 +    _WKBrowserInspectorDelegate* delegate_;
@@ -5298,10 +5729,10 @@ index 00000000000..30599d83dfb
 +} // namespace API
 diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
 new file mode 100644
-index 00000000000..4812cb4ad58
+index 00000000000..e3062b3651f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
-@@ -0,0 +1,68 @@
+@@ -0,0 +1,54 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5312,43 +5743,27 @@ index 00000000000..4812cb4ad58
 +#import <wtf/text/WTFString.h>
 +#import "WebPageProxy.h"
 +#import "WebProcessPool.h"
++#import "WebsiteDataStore.h"
 +#import "_WKBrowserInspector.h"
++#import "WKProcessPoolInternal.h"
++#import "WKWebsiteDataStoreInternal.h"
 +#import "WKWebView.h"
 +#import "WKWebViewInternal.h"
 +
 +namespace WebKit {
-+
-+/*
-+static Vector<WebPageProxy*> collectPages(Optional<PAL::SessionID> sessionID)
-+{
-+    Vector<WebPageProxy*> result;
-+    for (WebProcessPool* pool : WebProcessPool::allProcessPools()) {
-+        for (auto& process : pool->processes()) {
-+            for (auto* page : process->pages()) {
-+                if (!sessionID || page->sessionID() == sessionID)
-+                    result.append(page);
-+            }
-+        }
-+    }
-+    return result;
-+}
-+
-+static void closeAllPages(Optional<PAL::SessionID> sessionID)
-+{
-+    Vector<WebPageProxy*> pages = collectPages(sessionID);
-+    for (auto* page : pages)
-+        page->closePage(false);
-+}
-+*/
 +
 +InspectorBrowserAgentClientMac::InspectorBrowserAgentClientMac(_WKBrowserInspectorDelegate* delegate)
 +  : delegate_(delegate)
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientMac::createPage(WTF::String& error, const WTF::String* browserContextID)
++RefPtr<WebPageProxy> InspectorBrowserAgentClientMac::createPage(WTF::String& error, PAL::SessionID sessionID)
 +{
-+    WKWebView *webView = [delegate_ createNewPage];
++    WKWebView *webView = [delegate_ createNewPage:sessionID.toUInt64()];
++    if (!webView) {
++        error = "Internal error: can't create page in given context"_s;
++        return nil;
++    }
 +    return [webView _page];
 +}
 +
@@ -5357,16 +5772,18 @@ index 00000000000..4812cb4ad58
 +    [delegate_ quit];
 +}
 +
-+void InspectorBrowserAgentClientMac::createBrowserContext(WTF::String& error, WTF::String* browserContextID)
++BrowserContext InspectorBrowserAgentClientMac::createBrowserContext(WTF::String& error)
 +{
-+    error = "Failed to create Mac ephemeral context";
-+    fprintf(stderr, "InspectorBrowserAgentClientMac::createBrowserContext - NOT IMPLEMENTED\n");
++    _WKBrowserContext* wkBrowserContext = [[delegate_ createBrowserContext] autorelease];
++    BrowserContext browserContext;
++    browserContext.processPool = &static_cast<WebProcessPool&>([[wkBrowserContext processPool] _apiObject]);
++    browserContext.dataStore = &static_cast<WebsiteDataStore&>([[wkBrowserContext dataStore] _apiObject]);
++    return browserContext;
 +}
 +
-+void InspectorBrowserAgentClientMac::deleteBrowserContext(WTF::String& error, const WTF::String& browserContextID)
++void InspectorBrowserAgentClientMac::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
 +{
-+    error = "Context with provided id not found";
-+    fprintf(stderr, "InspectorBrowserAgentClientMac::deleteBrowserContext - NOT IMPLEMENTED\n");
++    [delegate_ deleteBrowserContext:sessionID.toUInt64()];
 +}
 +
 +} // namespace WebKit
@@ -5939,10 +6356,10 @@ index 4c5147dcd38..c04110b8033 100644
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
          GEnumClass *enumClass = g_type_class_ref(WEBKIT_TYPE_COOKIE_ACCEPT_POLICY);
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.h b/Tools/MiniBrowser/mac/AppDelegate.h
-index 45ef1a6424e..928486be325 100644
+index 45ef1a6424e..eaa1cc9f61d 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.h
 +++ b/Tools/MiniBrowser/mac/AppDelegate.h
-@@ -23,9 +23,11 @@
+@@ -23,10 +23,13 @@
   * THE POSSIBILITY OF SUCH DAMAGE.
   */
  
@@ -5953,14 +6370,19 @@ index 45ef1a6424e..928486be325 100644
 -@interface BrowserAppDelegate : NSObject <NSApplicationDelegate> {
 +@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, _WKBrowserInspectorDelegate> {
      NSMutableSet *_browserWindowControllers;
++    NSMutableSet *_browserContexts;
      ExtensionManagerWindowController *_extensionManagerWindowController;
  
+     IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..46c39768156 100644
+index b6af4ef724f..d5a0adba191 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
-@@ -61,7 +61,9 @@ - (id)init
+@@ -59,9 +59,12 @@ - (id)init
+     self = [super init];
+     if (self) {
          _browserWindowControllers = [[NSMutableSet alloc] init];
++        _browserContexts = [[NSMutableSet alloc] init];
          _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
      }
 -
@@ -5970,7 +6392,7 @@ index b6af4ef724f..46c39768156 100644
      return self;
  }
  
-@@ -158,9 +160,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
+@@ -158,9 +161,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
      }
  
      if (!useWebKit2)
@@ -5982,20 +6404,56 @@ index b6af4ef724f..46c39768156 100644
  
      if (makeEditable)
          controller.editable = YES;
-@@ -345,4 +347,21 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +348,57 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
 +#pragma mark WKBrowserInspectorDelegate
 +
-+- (WKWebView *)createNewPage
++- (WKWebView *)createNewPage:(uint64_t)sessionID
 +{
-+    WK2BrowserWindowController *controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:defaultConfiguration()] autorelease];
-+    [_browserWindowControllers addObject:controller];
++    WK2BrowserWindowController *controller = nil;
++    for (_WKBrowserContext *browserContext in _browserContexts) {
++        if ([[browserContext dataStore] sessionID] != sessionID)
++            continue;
++        WKWebViewConfiguration *privateConfiguraton = [[defaultConfiguration() copy] autorelease];
++        privateConfiguraton.websiteDataStore = [browserContext dataStore];
++        privateConfiguraton.processPool = [browserContext processPool];
++        controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:privateConfiguraton] autorelease];
++        break;
++    }
++    if (!controller) {
++        // Default context.
++        controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:defaultConfiguration()] autorelease];
++    }
++    if (!controller) {
++        return nil;
++    }
 +
-+    [[controller window] makeKeyAndOrderFront:self];
++    [[controller window] makeKeyAndOrderFront:nil];
++    [_browserWindowControllers addObject:controller];
 +    [controller loadURLString:[SettingsController shared].defaultURL];
 +    return [controller webView];
++}
++
++- (_WKBrowserContext *)createBrowserContext
++{
++    _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
++    _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
++    browserContext.dataStore = [WKWebsiteDataStore nonPersistentDataStore];
++    browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
++    [_browserContexts addObject:browserContext];
++    return browserContext;
++}
++
++- (void)deleteBrowserContext:(uint64_t)sessionID
++{
++    for (_WKBrowserContext *browserContext in _browserContexts) {
++        if ([[browserContext dataStore] sessionID] != sessionID)
++            continue;
++        [_browserContexts removeObject:browserContext];
++        return;
++    }
 +}
 +
 +- (void)quit
