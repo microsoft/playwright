@@ -23,15 +23,15 @@ import { BrowserContext } from './BrowserContext';
 import { Connection, ConnectionEvents, CDPSession } from './Connection';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
-import { TaskQueue } from './TaskQueue';
 import { Protocol } from './protocol';
 import { Chromium } from './features/chromium';
+import { Screenshotter } from './Screenshotter';
 
 export class Browser extends EventEmitter {
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: Viewport;
   private _process: childProcess.ChildProcess;
-  private _screenshotTaskQueue = new TaskQueue();
+  private _screenshotter = new Screenshotter();
   private _connection: Connection;
   _client: CDPSession;
   private _closeCallback: () => Promise<void>;
@@ -107,7 +107,7 @@ export class Browser extends EventEmitter {
     const {browserContextId} = targetInfo;
     const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId) : this._defaultContext;
 
-    const target = new Target(targetInfo, context, () => this._connection.createSession(targetInfo), this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotTaskQueue);
+    const target = new Target(targetInfo, context, () => this._connection.createSession(targetInfo), this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotter);
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(event.targetInfo.targetId, target);
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert, debugError } from '../helper';
+import { debugError } from '../helper';
 import * as dom from '../dom';
 import * as input from '../input';
 import * as types from '../types';
@@ -24,6 +24,7 @@ import { CDPSession } from './Connection';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
 import { toRemoteObject, toHandle, ExecutionContextDelegate } from './ExecutionContext';
+import { ScreenshotOptions } from './Screenshotter';
 
 export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   readonly keyboard: input.Keyboard;
@@ -71,45 +72,9 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return {x, y, width, height};
   }
 
-  async screenshot(handle: dom.ElementHandle, options: any = {}): Promise<string | Buffer> {
-    let needsViewportReset = false;
-
-    let boundingBox = await this.boundingBox(handle);
-    assert(boundingBox, 'Node is either not visible or not an HTMLElement');
-
-    const viewport = this._frameManager.page().viewport();
-
-    if (viewport && (boundingBox.width > viewport.width || boundingBox.height > viewport.height)) {
-      const newViewport = {
-        width: Math.max(viewport.width, Math.ceil(boundingBox.width)),
-        height: Math.max(viewport.height, Math.ceil(boundingBox.height)),
-      };
-      await this._frameManager.page().setViewport(Object.assign({}, viewport, newViewport));
-
-      needsViewportReset = true;
-    }
-
-    await handle._scrollIntoViewIfNeeded();
-
-    boundingBox = await this.boundingBox(handle);
-    assert(boundingBox, 'Node is either not visible or not an HTMLElement');
-    assert(boundingBox.width !== 0, 'Node has 0 width.');
-    assert(boundingBox.height !== 0, 'Node has 0 height.');
-
-    const { layoutViewport: { pageX, pageY } } = await this._client.send('Page.getLayoutMetrics');
-
-    const clip = Object.assign({}, boundingBox);
-    clip.x += pageX;
-    clip.y += pageY;
-
-    const imageData = await this._frameManager.page().screenshot(Object.assign({}, {
-      clip
-    }, options));
-
-    if (needsViewportReset)
-      await this._frameManager.page().setViewport(viewport);
-
-    return imageData;
+  screenshot(handle: dom.ElementHandle, options: ScreenshotOptions = {}): Promise<string | Buffer> {
+    const page = this._frameManager.page();
+    return page._screenshotter.screenshotElement(page, handle, options);
   }
 
   async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: types.Point): Promise<types.Point> {
