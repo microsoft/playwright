@@ -121,6 +121,15 @@ export class Launcher {
         }
     );
 
+    if (!firefoxProcess.pid) {
+      let reject;
+      const result = new Promise((f, r) => reject = r);
+      firefoxProcess.once('error', error => {
+        reject(new Error('Failed to launch browser: ' + error));
+      });
+      return result as Promise<Browser>;
+    }
+
     if (dumpio) {
       firefoxProcess.stderr.pipe(process.stderr);
       firefoxProcess.stdout.pipe(process.stdout);

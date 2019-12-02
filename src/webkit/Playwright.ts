@@ -48,6 +48,10 @@ export class Playwright {
     return Errors;
   }
 
+  defaultArgs(options: any | undefined): string[] {
+    return this._launcher.defaultArgs(options);
+  }
+
   createBrowserFetcher(options: BrowserFetcherOptions | undefined): BrowserFetcher {
     return new BrowserFetcher(this._projectRoot, options);
   }

@@ -101,7 +101,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         }
       });
     });
-    describe.skip(WEBKIT)('Playwright.launch', function() {
+    describe('Playwright.launch', function() {
       it('should reject all promises when browser is closed', async() => {
         const browser = await playwright.launch(defaultBrowserOptions);
         const page = await browser.newPage();
@@ -117,7 +117,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
-      it('userDataDir option', async({server}) => {
+      it.skip(WEBKIT)('userDataDir option', async({server}) => {
         const userDataDir = await mkdtempAsync(TMP_FOLDER);
         const options = Object.assign({userDataDir}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
@@ -129,7 +129,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
         await rmAsync(userDataDir).catch(e => {});
       });
-      it('userDataDir argument', async({server}) => {
+      it.skip(WEBKIT)('userDataDir argument', async({server}) => {
         const userDataDir = await mkdtempAsync(TMP_FOLDER);
         const options = Object.assign({}, defaultBrowserOptions);
         if (CHROME || WEBKIT) {
@@ -151,7 +151,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
         await rmAsync(userDataDir).catch(e => {});
       });
-      it('userDataDir option should restore state', async({server}) => {
+      it.skip(WEBKIT)('userDataDir option should restore state', async({server}) => {
         const userDataDir = await mkdtempAsync(TMP_FOLDER);
         const options = Object.assign({userDataDir}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
@@ -187,11 +187,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         await rmAsync(userDataDir).catch(e => {});
       });
       it('should return the default arguments', async() => {
-        if (CHROME || WEBKIT) {
+        if (CHROME) {
           expect(playwright.defaultArgs()).toContain('--no-first-run');
           expect(playwright.defaultArgs()).toContain('--headless');
           expect(playwright.defaultArgs({headless: false})).not.toContain('--headless');
           expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain('--user-data-dir=foo');
+        } else if (WEBKIT) {
+          expect(playwright.defaultArgs().length).toBe(0);
         } else {
           expect(playwright.defaultArgs({browser: 'firefox'})).toContain('-headless');
           expect(playwright.defaultArgs({browser: 'firefox', headless: false})).not.toContain('-headless');
@@ -208,7 +210,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         await page.close();
         await browser.close();
       });
-      it('should filter out ignored default arguments', async() => {
+      it.skip(WEBKIT)('should filter out ignored default arguments', async() => {
         // Make sure we launch with `--enable-automation` by default.
         const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
         const browser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
@@ -221,13 +223,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
         await browser.close();
       });
-      it.skip(FFOX)('should have default URL when launching browser', async function() {
+      it.skip(FFOX || WEBKIT)('should have default URL when launching browser', async function() {
         const browser = await playwright.launch(defaultBrowserOptions);
         const pages = (await browser.pages()).map(page => page.url());
         expect(pages).toEqual(['about:blank']);
         await browser.close();
       });
-      it.skip(FFOX)('should have custom URL when launching browser', async function({server}) {
+      it.skip(FFOX || WEBKIT)('should have custom URL when launching browser', async function({server}) {
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = [server.EMPTY_PAGE].concat(options.args || []);
         const browser = await playwright.launch(options);
@@ -239,7 +241,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         expect(page.url()).toBe(server.EMPTY_PAGE);
         await browser.close();
       });
-      it('should set the default viewport', async() => {
+      it.skip(WEBKIT)('should set the default viewport', async() => {
         const options = Object.assign({}, defaultBrowserOptions, {
           defaultViewport: {
             width: 456,
@@ -360,7 +362,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.skip(WEBKIT)('Top-level requires', function() {
+  describe('Top-level requires', function() {
     it('should require top-level Errors', async() => {
       const Errors = require(path.join(utils.projectRoot(), '/Errors'));
       expect(Errors.TimeoutError).toBe(playwright.errors.TimeoutError);

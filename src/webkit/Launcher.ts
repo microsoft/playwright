@@ -22,6 +22,8 @@ import { Connection } from './Connection';
 import { Viewport } from './Page';
 import { PipeTransport } from './PipeTransport';
 
+const DEFAULT_ARGS = [
+];
 
 export class Launcher {
   private _projectRoot: string;
@@ -32,8 +34,18 @@ export class Launcher {
     this._preferredRevision = preferredRevision;
   }
 
+  defaultArgs(options: any = {}) {
+    const {
+      args = [],
+    } = options;
+    const webkitArguments = [...DEFAULT_ARGS];
+    webkitArguments.push(...args);
+    return webkitArguments;
+  }
+
   async launch(options: LauncherLaunchOptions = {}): Promise<Browser> {
     const {
+      ignoreDefaultArgs = false,
       args = [],
       dumpio = false,
       executablePath = null,
@@ -45,7 +57,12 @@ export class Launcher {
       slowMo = 0
     } = options;
 
-    const webkitArguments = args.slice();
+    const webkitArguments = [];
+    if (!ignoreDefaultArgs)
+      webkitArguments.push(...this.defaultArgs(options));
+    else
+      webkitArguments.push(...args);
+
     let webkitExecutable = executablePath;
     if (!executablePath) {
       const {missingText, executablePath} = this._resolveExecutablePath();
@@ -72,6 +89,15 @@ export class Launcher {
           stdio
         }
     );
+
+    if (!webkitProcess.pid) {
+      let reject;
+      const result = new Promise((f, r) => reject = r);
+      webkitProcess.once('error', error => {
+        reject(new Error('Failed to launch browser: ' + error));
+      });
+      return result as Promise<Browser>;
+    }
 
     if (dumpio) {
       webkitProcess.stderr.pipe(process.stderr);
@@ -147,6 +173,7 @@ export class Launcher {
 }
 
 export type LauncherLaunchOptions = {
+  ignoreDefaultArgs?: boolean,
   args?: string[],
   executablePath?: string,
   handleSIGINT?: boolean,
