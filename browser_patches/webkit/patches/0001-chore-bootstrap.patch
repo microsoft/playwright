@@ -1,7 +1,7 @@
-From 1210fc83d555e54e1a5ed2d8e95ed1e756f22151 Mon Sep 17 00:00:00 2001
-From: Yury Semikhatsky <yurys@chromium.org>
-Date: Tue, 3 Dec 2019 10:10:23 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From de7109a425b2e772a67a8c1497038d678163ef04 Mon Sep 17 00:00:00 2001
+From: Pavel Feldman <pavel.feldman@gmail.com>
+Date: Tue, 3 Dec 2019 14:08:27 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -108,12 +108,12 @@ Subject: [PATCH xserver] chore: bootstrap
  .../WebPage/WebPageInspectorTarget.h          |   1 +
  Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
- Tools/MiniBrowser/mac/AppDelegate.h           |   5 +-
- Tools/MiniBrowser/mac/AppDelegate.m           |  62 ++-
+ Tools/MiniBrowser/mac/AppDelegate.h           |   7 +-
+ Tools/MiniBrowser/mac/AppDelegate.m           | 134 ++++-
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  17 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 109 files changed, 4474 insertions(+), 59 deletions(-)
+ 109 files changed, 4545 insertions(+), 62 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -6372,10 +6372,10 @@ index 4c5147dcd38..c04110b8033 100644
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
          GEnumClass *enumClass = g_type_class_ref(WEBKIT_TYPE_COOKIE_ACCEPT_POLICY);
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.h b/Tools/MiniBrowser/mac/AppDelegate.h
-index 45ef1a6424e..eaa1cc9f61d 100644
+index 45ef1a6424e..1c9532ce74c 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.h
 +++ b/Tools/MiniBrowser/mac/AppDelegate.h
-@@ -23,10 +23,13 @@
+@@ -23,10 +23,15 @@
   * THE POSSIBILITY OF SUCH DAMAGE.
   */
  
@@ -6386,29 +6386,79 @@ index 45ef1a6424e..eaa1cc9f61d 100644
 -@interface BrowserAppDelegate : NSObject <NSApplicationDelegate> {
 +@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, _WKBrowserInspectorDelegate> {
      NSMutableSet *_browserWindowControllers;
++    NSMutableSet *_headlessWindows;
 +    NSMutableSet *_browserContexts;
++    bool _headless;
      ExtensionManagerWindowController *_extensionManagerWindowController;
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..d5a0adba191 100644
+index b6af4ef724f..1f197b4fd89 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
-@@ -59,9 +59,12 @@ - (id)init
+@@ -34,6 +34,7 @@
+ #import <WebKit/WKUserContentControllerPrivate.h>
+ #import <WebKit/WKWebViewConfigurationPrivate.h>
+ #import <WebKit/WKWebsiteDataStorePrivate.h>
++#import <WebKit/WebNSURLExtras.h>
+ #import <WebKit/WebKit.h>
+ #import <WebKit/_WKExperimentalFeature.h>
+ #import <WebKit/_WKInternalDebugFeature.h>
+@@ -52,16 +53,40 @@ @interface NSApplication (TouchBar)
+ @property (getter=isAutomaticCustomizeTouchBarMenuItemEnabled) BOOL automaticCustomizeTouchBarMenuItemEnabled;
+ @end
+ 
++enum {
++    _NSBackingStoreUnbuffered = 3
++};
++
++NSString* const ActivityReason = @"Batch headless process";
++const NSActivityOptions ActivityOptions =
++    (NSActivityUserInitiatedAllowingIdleSystemSleep |
++     NSActivityLatencyCritical) &
++    ~(NSActivitySuddenTerminationDisabled |
++    NSActivityAutomaticTerminationDisabled);
++
+ @implementation BrowserAppDelegate
+ 
+ - (id)init
+ {
      self = [super init];
-     if (self) {
-         _browserWindowControllers = [[NSMutableSet alloc] init];
-+        _browserContexts = [[NSMutableSet alloc] init];
+-    if (self) {
+-        _browserWindowControllers = [[NSMutableSet alloc] init];
++    if (!self)
++        return nil;
++
++    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
++    _headless = [arguments containsObject: @"--headless"];
++    _browserContexts = [[NSMutableSet alloc] init];
++
++    if (_headless) {
++        _headlessWindows = [[NSMutableSet alloc] init];
++        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
++        [[NSProcessInfo processInfo] beginActivityWithOptions:ActivityOptions
++                                                       reason:ActivityReason];
++    } else {
          _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
++        _browserWindowControllers = [[NSMutableSet alloc] init];
      }
 -
-+    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
 +    if ([arguments containsObject: @"--inspector-pipe"])
-+      [_WKBrowserInspector initializeRemoteInspectorPipe:self];
++        [_WKBrowserInspector initializeRemoteInspectorPipe:self];
      return self;
  }
  
-@@ -158,9 +161,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
+@@ -145,6 +170,9 @@ - (void)awakeFromNib
+ 
+ - (BrowserWindowController *)createBrowserWindowController:(id)sender
+ {
++    if (_headless)
++        return nil;
++
+     BrowserWindowController *controller = nil;
+     BOOL useWebKit2 = NO;
+     BOOL makeEditable = NO;
+@@ -158,9 +186,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
      }
  
      if (!useWebKit2)
@@ -6420,36 +6470,118 @@ index b6af4ef724f..d5a0adba191 100644
  
      if (makeEditable)
          controller.editable = YES;
-@@ -345,4 +348,57 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -185,6 +213,9 @@ - (IBAction)newWindow:(id)sender
+ 
+ - (IBAction)newPrivateWindow:(id)sender
+ {
++    if (_headless)
++        return;
++
+     WKWebViewConfiguration *privateConfiguraton = [defaultConfiguration() copy];
+     privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
+ 
+@@ -209,11 +240,20 @@ - (IBAction)newEditorWindow:(id)sender
+ 
+ - (void)browserWindowWillClose:(NSWindow *)window
+ {
+-    [_browserWindowControllers removeObject:window.windowController];
++    if (_headless) {
++        [_headlessWindows removeObject:window];
++    } else {
++        [_browserWindowControllers removeObject:window.windowController];
++    }
+ }
+ 
+ - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+ {
++    if (_headless) {
++        [self createNewPage:0];
++        return;
++    }
++
+     WebHistory *webHistory = [[WebHistory alloc] init];
+     [WebHistory setOptionalSharedHistory:webHistory];
+     [webHistory release];
+@@ -255,6 +295,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+ 
+ - (IBAction)openDocument:(id)sender
+ {
++    if (_headless)
++        return;
++
+     BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
+ 
+     if (browserWindowController) {
+@@ -284,6 +327,9 @@ - (IBAction)openDocument:(id)sender
+ 
+ - (void)didChangeSettings
+ {
++    if (_headless)
++        return;
++
+     [self _updateNewWindowKeyEquivalents];
+ 
+     // Let all of the BrowserWindowControllers know that a setting changed, so they can attempt to dynamically update.
+@@ -312,6 +358,8 @@ - (void)_updateNewWindowKeyEquivalents
+ 
+ - (IBAction)showExtensionsManager:(id)sender
+ {
++    if (_headless)
++        return;
+     [_extensionManagerWindowController showWindow:sender];
+ }
+ 
+@@ -345,4 +393,78 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
 +#pragma mark WKBrowserInspectorDelegate
 +
-+- (WKWebView *)createNewPage:(uint64_t)sessionID
++- (WKWebViewConfiguration *) sessionConfiguration:(uint64_t)sessionID
 +{
-+    WK2BrowserWindowController *controller = nil;
 +    for (_WKBrowserContext *browserContext in _browserContexts) {
 +        if ([[browserContext dataStore] sessionID] != sessionID)
 +            continue;
-+        WKWebViewConfiguration *privateConfiguraton = [[defaultConfiguration() copy] autorelease];
-+        privateConfiguraton.websiteDataStore = [browserContext dataStore];
-+        privateConfiguraton.processPool = [browserContext processPool];
-+        controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:privateConfiguraton] autorelease];
-+        break;
++        WKWebViewConfiguration *configuration = [[defaultConfiguration() copy] autorelease];
++        configuration.websiteDataStore = [browserContext dataStore];
++        configuration.processPool = [browserContext processPool];
++        return configuration;
 +    }
-+    if (!controller) {
-+        // Default context.
-+        controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:defaultConfiguration()] autorelease];
-+    }
-+    if (!controller) {
-+        return nil;
-+    }
++    return defaultConfiguration();
++}
 +
++- (WKWebView *)createNewPage:(uint64_t)sessionID
++{
++    if (_headless)
++        return [self createHeadlessPage:sessionID];
++
++    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
++    WK2BrowserWindowController *controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:configuration] autorelease];
++    if (!controller)
++        return nil;
 +    [[controller window] makeKeyAndOrderFront:nil];
 +    [_browserWindowControllers addObject:controller];
 +    [controller loadURLString:[SettingsController shared].defaultURL];
 +    return [controller webView];
++}
++
++- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
++{
++    NSRect rect = NSMakeRect(0, 0, 1024, 768);
++    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
++    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
++    NSWindow* window = [[[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES] autorelease];
++
++    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
++    WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
++    if (!webView)
++        return nil;
++
++    [window.contentView addSubview:webView];
++    NSURL *url = [NSURL _webkit_URLWithUserTypedString:@"about:blank"];
++    [webView loadRequest:[NSURLRequest requestWithURL:url]];
++    [_headlessWindows addObject:window];
++    return webView;
 +}
 +
 +- (_WKBrowserContext *)createBrowserContext
@@ -6604,5 +6736,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.24.0
 
