@@ -9,8 +9,8 @@ type PageFunctionOn<On, Args extends any[], R = any> = string | ((on: On, ...arg
 
 export type Evaluate = <Args extends any[], R>(pageFunction: PageFunction<Args, R>, ...args: Boxed<Args>) => Promise<R>;
 export type EvaluateHandle = <Args extends any[]>(pageFunction: PageFunction<Args>, ...args: Boxed<Args>) => Promise<js.JSHandle>;
-export type $Eval = <Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type $$Eval = <Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>) => Promise<R>;
+export type $Eval<S = string> = <Args extends any[], R>(selector: S, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>) => Promise<R>;
+export type $$Eval<S = string> = <Args extends any[], R>(selector: S, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>) => Promise<R>;
 export type EvaluateOn = <Args extends any[], R>(pageFunction: PageFunctionOn<any, Args, R>, ...args: Boxed<Args>) => Promise<R>;
 export type EvaluateHandleOn = <Args extends any[]>(pageFunction: PageFunctionOn<any, Args>, ...args: Boxed<Args>) => Promise<js.JSHandle>;
 

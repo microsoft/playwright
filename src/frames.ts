@@ -124,32 +124,27 @@ export class Frame {
 
   async $(selector: string): Promise<dom.ElementHandle | null> {
     const domWorld = await this._mainDOMWorld();
-    const document = await domWorld._document();
-    return document.$(selector);
+    return domWorld.$(selector);
   }
 
   async $x(expression: string): Promise<dom.ElementHandle[]> {
     const domWorld = await this._mainDOMWorld();
-    const document = await domWorld._document();
-    return document.$x(expression);
+    return domWorld.$$('xpath=' + expression);
   }
 
   $eval: types.$Eval = async (selector, pageFunction, ...args) => {
     const domWorld = await this._mainDOMWorld();
-    const document = await domWorld._document();
-    return document.$eval(selector, pageFunction, ...args as any);
+    return domWorld.$eval(selector, pageFunction, ...args as any);
   }
 
   $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
     const domWorld = await this._mainDOMWorld();
-    const document = await domWorld._document();
-    return document.$$eval(selector, pageFunction, ...args as any);
+    return domWorld.$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string): Promise<dom.ElementHandle[]> {
     const domWorld = await this._mainDOMWorld();
-    const document = await domWorld._document();
-    return document.$$(selector);
+    return domWorld.$$(selector);
   }
 
   async content(): Promise<string> {
@@ -307,8 +302,7 @@ export class Frame {
 
   async click(selector: string, options?: ClickOptions) {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.click(options);
     await handle.dispose();
@@ -316,8 +310,7 @@ export class Frame {
 
   async dblclick(selector: string, options?: MultiClickOptions) {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.dblclick(options);
     await handle.dispose();
@@ -325,8 +318,7 @@ export class Frame {
 
   async tripleclick(selector: string, options?: MultiClickOptions) {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.tripleclick(options);
     await handle.dispose();
@@ -334,8 +326,7 @@ export class Frame {
 
   async fill(selector: string, value: string) {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.fill(value);
     await handle.dispose();
@@ -343,8 +334,7 @@ export class Frame {
 
   async focus(selector: string) {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.focus();
     await handle.dispose();
@@ -352,8 +342,7 @@ export class Frame {
 
   async hover(selector: string, options?: PointerActionOptions) {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.hover(options);
     await handle.dispose();
@@ -361,23 +350,26 @@ export class Frame {
 
   async select(selector: string, ...values: (string | dom.ElementHandle | SelectOption)[]): Promise<string[]> {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
+    const toDispose: Promise<dom.ElementHandle>[] = [];
     const adoptedValues = await Promise.all(values.map(async value => {
-      if (value instanceof dom.ElementHandle)
-        return domWorld.adoptElementHandle(value, false /* dispose */);
+      if (value instanceof dom.ElementHandle && value.executionContext() !== domWorld.context) {
+        const adopted = domWorld.adoptElementHandle(value);
+        toDispose.push(adopted);
+        return adopted;
+      }
       return value;
     }));
     const result = await handle.select(...adoptedValues);
     await handle.dispose();
+    await Promise.all(toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose())));
     return result;
   }
 
   async type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
     const domWorld = await this._utilityDOMWorld();
-    const document = await domWorld._document();
-    const handle = await document.$(selector);
+    const handle = await domWorld.$(selector);
     assert(handle, 'No node found for selector: ' + selector);
     await handle.type(text, options);
     await handle.dispose();
@@ -410,7 +402,11 @@ export class Frame {
       return null;
     }
     const mainDOMWorld = await this._mainDOMWorld();
-    return mainDOMWorld.adoptElementHandle(handle.asElement(), true /* dispose */);
+    if (handle.executionContext() === mainDOMWorld.context)
+      return handle.asElement();
+    const adopted = await mainDOMWorld.adoptElementHandle(handle.asElement());
+    await handle.dispose();
+    return adopted;
   }
 
   async waitForXPath(xpath: string, options: {
@@ -424,7 +420,11 @@ export class Frame {
       return null;
     }
     const mainDOMWorld = await this._mainDOMWorld();
-    return mainDOMWorld.adoptElementHandle(handle.asElement(), true /* dispose */);
+    if (handle.executionContext() === mainDOMWorld.context)
+      return handle.asElement();
+    const adopted = await mainDOMWorld.adoptElementHandle(handle.asElement());
+    await handle.dispose();
+    return adopted;
   }
 
   waitForFunction(

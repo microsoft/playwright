@@ -20,7 +20,17 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Page.$eval', function() {
-    it('should work', async({page, server}) => {
+    it('should work with css selector', async({page, server}) => {
+      await page.setContent('<section id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('css=section', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
+    it('should work with xpath selector', async({page, server}) => {
+      await page.setContent('<section id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('xpath=/html/body/section', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
+    it('should auto-detect css selector', async({page, server}) => {
       await page.setContent('<section id="testAttribute">43543</section>');
       const idAttribute = await page.$eval('section', e => e.id);
       expect(idAttribute).toBe('testAttribute');
@@ -41,25 +51,93 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       await page.$eval('section', e => e.id).catch(e => error = e);
       expect(error.message).toContain('failed to find element matching selector "section"');
     });
+    it('should support >> syntax', async({page, server}) => {
+      await page.setContent('<section><div>hello</div></section>');
+      const text = await page.$eval('css=section >> css=div', (e, suffix) => e.textContent + suffix, ' world!');
+      expect(text).toBe('hello world!');
+    });
+    it('should support >> syntax with different engines', async({page, server}) => {
+      await page.setContent('<section><div>hello</div></section>');
+      const text = await page.$eval('xpath=/html/body/section >> css=div', (e, suffix) => e.textContent + suffix, ' world!');
+      expect(text).toBe('hello world!');
+    });
+    it('should support spaces with >> syntax', async({page, server}) => {
+      await page.goto(server.PREFIX + '/deep-shadow.html');
+      const text = await page.$eval(' css = div >>css=div>>css   = span  ', e => e.textContent);
+      expect(text).toBe('Hello from root2');
+    });
+    it('should enter shadow roots with >> syntax', async({page, server}) => {
+      await page.goto(server.PREFIX + '/deep-shadow.html');
+      const text1 = await page.$eval('css=div >> css=span', e => e.textContent);
+      expect(text1).toBe('Hello from root1');
+      const text2 = await page.$eval('css=div >> css=*:nth-child(2) >> css=span', e => e.textContent);
+      expect(text2).toBe('Hello from root2');
+      const nonExisting = await page.$('css=div div >> css=span');
+      expect(nonExisting).not.toBeTruthy();
+      const text3 = await page.$eval('css=section div >> css=span', e => e.textContent);
+      expect(text3).toBe('Hello from root1');
+      const text4 = await page.$eval('xpath=/html/body/section/div >> css=div >> css=span', e => e.textContent);
+      expect(text4).toBe('Hello from root2');
+    });
   });
 
   describe('Page.$$eval', function() {
-    it('should work', async({page, server}) => {
+    it('should work with css selector', async({page, server}) => {
+      await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
+      const divsCount = await page.$$eval('css=div', divs => divs.length);
+      expect(divsCount).toBe(3);
+    });
+    it('should work with xpath selector', async({page, server}) => {
+      await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
+      const divsCount = await page.$$eval('xpath=/html/body/div', divs => divs.length);
+      expect(divsCount).toBe(3);
+    });
+    it('should auto-detect css selector', async({page, server}) => {
       await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
       const divsCount = await page.$$eval('div', divs => divs.length);
       expect(divsCount).toBe(3);
+    });
+    it('should support >> syntax', async({page, server}) => {
+      await page.setContent('<div><span>hello</span></div><div>beautiful</div><div><span>wo</span><span>rld!</span></div><span>Not this one</span>');
+      const spansCount = await page.$$eval('css=div >> css=span', spans => spans.length);
+      expect(spansCount).toBe(3);
+    });
+    it('should enter shadow roots with >> syntax', async({page, server}) => {
+      await page.goto(server.PREFIX + '/deep-shadow.html');
+      const spansCount = await page.$$eval('css=div >> css=div >> css=span', spans => spans.length);
+      expect(spansCount).toBe(2);
     });
   });
 
   describe('Page.$', function() {
     it('should query existing element', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const element = await page.$('section');
+      const element = await page.$('css=section');
+      expect(element).toBeTruthy();
+    });
+    it('should query existing element with xpath', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const element = await page.$('xpath=/html/body/section');
       expect(element).toBeTruthy();
     });
     it('should return null for non-existing element', async({page, server}) => {
       const element = await page.$('non-existing-element');
       expect(element).toBe(null);
+    });
+    it('should auto-detect xpath selector', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const element = await page.$('//html/body/section');
+      expect(element).toBeTruthy();
+    });
+    it('should auto-detect css selector', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const element = await page.$('section');
+      expect(element).toBeTruthy();
+    });
+    it('should support >> syntax', async({page, server}) => {
+      await page.setContent('<section><div>test</div></section>');
+      const element = await page.$('css=section >> css=div');
+      expect(element).toBeTruthy();
     });
   });
 
@@ -136,7 +214,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       await page.setContent(htmlContent);
       const elementHandle = await page.$('#myId');
       const errorMessage = await elementHandle.$eval('.a', node => node.innerText).catch(error => error.message);
-      expect(errorMessage).toBe(`Error: failed to find element matching selector ".a"`);
+      expect(errorMessage).toBe(`Error: failed to find element matching selector ":scope >> .a"`);
     });
   });
   describe('ElementHandle.$$eval', function() {

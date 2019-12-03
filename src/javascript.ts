@@ -34,7 +34,7 @@ export class ExecutionContext {
   }
 
   _createHandle(remoteObject: any): JSHandle {
-    return (this._domWorld && this._domWorld._createHandle(remoteObject)) || new JSHandle(this, remoteObject);
+    return (this._domWorld && this._domWorld.createHandle(remoteObject)) || new JSHandle(this, remoteObject);
   }
 }
 
