@@ -18,7 +18,7 @@
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { assert, helper, RegisteredListener } from '../helper';
-import { filterCookies, NetworkCookie } from '../network';
+import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
 import { Connection } from './Connection';
 import { Events } from './events';
 import { Page, Viewport } from './Page';
@@ -35,6 +35,8 @@ export class Browser extends EventEmitter {
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
   private _eventListeners: RegisteredListener[];
+  _waitForFirstTarget: Promise<void>;
+  private _waitForFirstTargetCallback: () => void;
 
   static async create(
     connection: Connection,
@@ -71,6 +73,7 @@ export class Browser extends EventEmitter {
 
     // Taking multiple screenshots in parallel doesn't work well, so we serialize them.
     this._screenshotTaskQueue = new TaskQueue();
+    this._waitForFirstTarget = new Promise(f => this._waitForFirstTargetCallback = f);
   }
 
   async userAgent(): Promise<string> {
@@ -115,7 +118,7 @@ export class Browser extends EventEmitter {
   }
 
   async _createPageInContext(browserContextId?: string): Promise<Page> {
-    const {targetId} = await this._connection.send('Browser.createPage', {browserContextId});
+    const { targetId } = await this._connection.send('Browser.createPage', { browserContextId });
     const target = this._targets.get(targetId);
     return await target.page();
   }
@@ -173,6 +176,7 @@ export class Browser extends EventEmitter {
     this._targets.set(targetInfo.targetId, target);
     this.emit(Events.Browser.TargetCreated, target);
     context.emit(Events.BrowserContext.TargetCreated, target);
+    this._waitForFirstTargetCallback();
   }
 
   _onTargetDestroyed({targetId}) {
@@ -232,6 +236,7 @@ export class BrowserContext extends EventEmitter {
   }
 
   async pages(): Promise<Page[]> {
+    await this._browser._waitForFirstTarget;
     const pages = await Promise.all(
         this.targets()
             .filter(target => target.type() === 'page')
@@ -258,28 +263,20 @@ export class BrowserContext extends EventEmitter {
   }
 
   async cookies(...urls: string[]): Promise<NetworkCookie[]> {
-    const page = (await this.pages())[0];
-    const response = await page._session.send('Page.getCookies');
-    const cookies = response.cookies.map(cookie => {
-      // Webkit returns 0 for a cookie without an expiration
-      if (cookie.expires === 0)
-        cookie.expires = -1;
-      return cookie;
-    });
-    return filterCookies(cookies, urls);
+    const { cookies } = await this._browser._connection.send('Browser.getAllCookies', { browserContextId: this._id });
+    return filterCookies(cookies.map((c: NetworkCookie) => ({
+      ...c,
+      expires: c.expires === 0 ? -1 : c.expires
+    })), urls);
+  }
+
+  async setCookies(cookies: SetNetworkCookieParam[]) {
+    cookies = rewriteCookies(cookies);
+    const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined }));
+    await this._browser._connection.send('Browser.setCookies', { cookies: cc, browserContextId: this._id });
   }
 
   async clearCookies() {
-    const page = (await this.pages())[0];
-    const response = await page._session.send('Page.getCookies');
-    const promises = [];
-    for (const cookie of response.cookies) {
-      const item = {
-        cookieName: cookie.name,
-        url: (cookie.secure ? 'https://' : 'http://') + cookie.domain + cookie.path
-      };
-      promises.push(page._session.send('Page.deleteCookie', item));
-    }
-    await Promise.all(promises);
+    await this._browser._connection.send('Browser.deleteAllCookies', { browserContextId: this._id });
   }
 }
