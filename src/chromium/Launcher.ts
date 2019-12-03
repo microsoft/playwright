@@ -137,6 +137,15 @@ export class Launcher {
         }
     );
 
+    if (!chromeProcess.pid) {
+      let reject;
+      const result = new Promise((f, r) => reject = r);
+      chromeProcess.once('error', error => {
+        reject(new Error('Failed to launch browser: ' + error));
+      });
+      return result as Promise<Browser>;
+    }
+
     if (dumpio) {
       chromeProcess.stderr.pipe(process.stderr);
       chromeProcess.stdout.pipe(process.stdout);
