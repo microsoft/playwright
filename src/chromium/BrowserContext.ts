@@ -17,7 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { assert } from '../helper';
-import { NetworkCookie, SetNetworkCookieParam, filterCookies } from '../network';
+import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
 import { Browser } from './Browser';
 import { CDPSession } from './Connection';
 import { Permissions } from './features/permissions';
@@ -68,7 +68,10 @@ export class BrowserContext extends EventEmitter {
 
   async cookies(...urls: string[]): Promise<NetworkCookie[]> {
     const { cookies } = await this._browser._client.send('Storage.getCookies', { browserContextId: this._id || undefined });
-    return filterCookies(cookies.map(c => ({ sameSite: 'None', ...c })), urls);
+    return filterCookies(cookies.map(c => {
+      const copy = { sameSite: 'None', ...c, size: undefined } as NetworkCookie;
+      return copy;
+    }), urls);
   }
 
   async clearCookies() {
@@ -76,13 +79,8 @@ export class BrowserContext extends EventEmitter {
   }
 
   async setCookies(cookies: SetNetworkCookieParam[]) {
-    const items = cookies.map(cookie => {
-      const item = Object.assign({}, cookie);
-      assert(item.url !== 'about:blank', `Blank page can not have cookie "${item.name}"`);
-      assert(!String.prototype.startsWith.call(item.url || '', 'data:'), `Data URL page can not have cookie "${item.name}"`);
-      return item;
-    });
-    await this._browser._client.send('Storage.setCookies', { cookies: items, browserContextId: this._id || undefined });
+    cookies = rewriteCookies(cookies);
+    await this._browser._client.send('Storage.setCookies', { cookies, browserContextId: this._id || undefined });
   }
 
   async close() {

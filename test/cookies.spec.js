@@ -21,7 +21,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
 
   describe('BrowserContext.cookies', function() {
     it('should return no cookies in pristine browser context', async({context, page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
       expect(await context.cookies()).toEqual([]);
     });
     it('should get a cookie', async({context, page, server}) => {
@@ -35,7 +34,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: 'localhost',
         path: '/',
         expires: -1,
-        size: 16,
         httpOnly: false,
         secure: false,
         session: true,
@@ -44,7 +42,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
     it('should properly report httpOnly cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
-        res.setHeader('Set-Cookie', ';HttpOnly; Path=/');
+        res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/');
         res.end();
       });
       await page.goto(server.EMPTY_PAGE);
@@ -52,9 +50,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(cookies.length).toBe(1);
       expect(cookies[0].httpOnly).toBe(true);
     });
-    it.skip(WEBKIT)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
+    it.skip(WEBKIT && process.platform === 'linux')('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
-        res.setHeader('Set-Cookie', ';SameSite=Strict');
+        res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
         res.end();
       });
       await page.goto(server.EMPTY_PAGE);
@@ -62,9 +60,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(cookies.length).toBe(1);
       expect(cookies[0].sameSite).toBe('Strict');
     });
-    it.skip(WEBKIT)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
+    it.skip(WEBKIT && process.platform === 'linux')('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
-        res.setHeader('Set-Cookie', ';SameSite=Lax');
+        res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
         res.end();
       });
       await page.goto(server.EMPTY_PAGE);
@@ -87,7 +85,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           domain: 'localhost',
           path: '/',
           expires: -1,
-          size: 12,
           httpOnly: false,
           secure: false,
           session: true,
@@ -99,7 +96,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           domain: 'localhost',
           path: '/',
           expires: -1,
-          size: 16,
           httpOnly: false,
           secure: false,
           session: true,
@@ -107,7 +103,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         },
       ]);
     });
-    it.skip(WEBKIT)('should get cookies from multiple urls', async({context}) => {
+    it('should get cookies from multiple urls', async({context}) => {
       await context.setCookies([{
         url: 'https://foo.com',
         name: 'doggo',
@@ -129,7 +125,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: 'baz.com',
         path: '/',
         expires: -1,
-        size: 11,
         httpOnly: false,
         secure: true,
         session: true,
@@ -140,7 +135,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: 'foo.com',
         path: '/',
         expires: -1,
-        size: 10,
         httpOnly: false,
         secure: true,
         session: true,
@@ -149,7 +143,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(WEBKIT)('BrowserContext.setCookies', function() {
+  describe('BrowserContext.setCookies', function() {
     it('should work', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.setCookies([{
@@ -216,7 +210,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: 'localhost',
         path: '/',
         expires: -1,
-        size: 14,
         httpOnly: false,
         secure: false,
         session: true,
@@ -237,7 +230,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: 'localhost',
         path: '/grid.html',
         expires: -1,
-        size: 14,
         httpOnly: false,
         secure: false,
         session: true,
@@ -308,14 +300,13 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: 'www.example.com',
         path: '/',
         expires: -1,
-        size: 18,
         httpOnly: false,
         secure: true,
         session: true,
         sameSite: 'None',
       }]);
     });
-    it('should set cookies from a frame', async({context, page, server}) => {
+    it.skip(WEBKIT)('should set cookies from a frame', async({context, page, server}) => {
       await page.goto(server.PREFIX + '/grid.html');
       await context.setCookies([
         {url: server.PREFIX, name: 'localhost-cookie', value: 'best'},
@@ -330,6 +321,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         iframe.src = src;
         return promise;
       }, server.CROSS_PROCESS_PREFIX);
+
       expect(await page.evaluate('document.cookie')).toBe('localhost-cookie=best');
       expect(await page.frames()[1].evaluate('document.cookie')).toBe('127-cookie=worst');
 
@@ -339,7 +331,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: 'localhost',
         path: '/',
         expires: -1,
-        size: 20,
         httpOnly: false,
         secure: false,
         session: true,
@@ -352,7 +343,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         domain: '127.0.0.1',
         path: '/',
         expires: -1,
-        size: 15,
         httpOnly: false,
         secure: false,
         session: true,
@@ -361,8 +351,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(WEBKIT)('BrowserContext.setCookies', function() {
-    it.skip(WEBKIT)('should clear cookies', async({context, page, server}) => {
+  describe('BrowserContext.setCookies', function() {
+    it('should clear cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.setCookies([{
         url: server.EMPTY_PAGE,

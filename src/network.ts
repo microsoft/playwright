@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import * as frames from './frames';
+import { assert } from './helper';
 
 export type NetworkCookie = {
   name: string,
@@ -9,7 +10,6 @@ export type NetworkCookie = {
   domain: string,
   path: string,
   expires: number,
-  size: number,
   httpOnly: boolean,
   secure: boolean,
   session: boolean,
@@ -44,6 +44,26 @@ export function filterCookies(cookies: NetworkCookie[], urls: string[]) {
       return true;
     }
     return false;
+  });
+}
+
+export function rewriteCookies(cookies: SetNetworkCookieParam[]): SetNetworkCookieParam[] {
+  return cookies.map(c => {
+    assert(c.name, "Cookie should have a name");
+    assert(c.value, "Cookie should have a value");
+    assert(c.url || (c.domain && c.path), "Cookie should have a url or a domain/path pair");
+    assert(!(c.url && c.domain), "Cookie should have either url or domain");
+    assert(!(c.url && c.path), "Cookie should have either url or domain");
+    const copy = {...c};
+    if (copy.url) {
+      assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
+      assert(!copy.url.startsWith('data:'), `Data URL page can not have cookie "${c.name}"`);
+      const url = new URL(copy.url);
+      copy.domain = url.hostname;
+      copy.path = url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
+      copy.secure = url.protocol === 'https:';
+    }
+    return copy;
   });
 }
 

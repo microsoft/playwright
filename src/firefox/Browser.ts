@@ -17,7 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { assert, helper, RegisteredListener } from '../helper';
-import { filterCookies, NetworkCookie, SetNetworkCookieParam } from '../network';
+import { filterCookies, NetworkCookie, SetNetworkCookieParam, rewriteCookies } from '../network';
 import { Connection, ConnectionEvents } from './Connection';
 import { Events } from './events';
 import { Permissions } from './features/permissions';
@@ -304,11 +304,7 @@ export class BrowserContext extends EventEmitter {
   }
 
   async setCookies(cookies: SetNetworkCookieParam[]) {
-    cookies.forEach(cookie => {
-      const item = Object.assign({}, cookie);
-      assert(item.url !== 'about:blank', `Blank page can not have cookie "${item.name}"`);
-      assert(!String.prototype.startsWith.call(item.url || '', 'data:'), `Data URL page can not have cookie "${item.name}"`);
-    });
+    cookies = rewriteCookies(cookies);
     await this._connection.send('Browser.setCookies', {
       browserContextId: this._browserContextId || undefined,
       cookies
