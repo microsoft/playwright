@@ -22,8 +22,8 @@ import * as dom from './dom';
 import * as network from './network';
 import { helper, assert } from './helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from './input';
-import { WaitTaskParams, WaitTask } from './waitTask';
 import { TimeoutSettings } from './TimeoutSettings';
+import { TimeoutError } from './Errors';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
@@ -32,7 +32,7 @@ type World = {
   contextPromise: Promise<js.ExecutionContext>;
   contextResolveCallback: (c: js.ExecutionContext) => void;
   context: js.ExecutionContext | null;
-  waitTasks: Set<WaitTask>;
+  rerunnableTasks: Set<RerunnableTask>;
 };
 
 export type NavigateOptions = {
@@ -65,8 +65,8 @@ export class Frame {
     this._timeoutSettings = timeoutSettings;
     this._parentFrame = parentFrame;
 
-    this._worlds.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, waitTasks: new Set() });
-    this._worlds.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, waitTasks: new Set() });
+    this._worlds.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
+    this._worlds.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
     this._setContext('main', null);
     this._setContext('utility', null);
 
@@ -386,8 +386,9 @@ export class Frame {
   }
 
   async waitForSelector(selector: string, options: dom.WaitForSelectorOptions = {}): Promise<dom.ElementHandle | null> {
-    const params = dom.waitForSelectorTask(selector, { timeout: this._timeoutSettings.timeout(), ...options });
-    const handle = await this._scheduleWaitTask(params, 'utility');
+    const task = dom.waitForSelectorTask(selector, { timeout: this._timeoutSettings.timeout(), ...options });
+    const title = `selector "${selector}"${options.hidden ? ' to be hidden' : ''}`;
+    const handle = await this._scheduleRerunnableTask(task, 'utility', options.timeout, title);
     if (!handle.asElement()) {
       await handle.dispose();
       return null;
@@ -404,22 +405,10 @@ export class Frame {
     return this.waitForSelector('xpath=' + xpath, options);
   }
 
-  waitForFunction(
-    pageFunction: Function | string,
-    options: { polling?: string | number; timeout?: number; } = {},
-    ...args): Promise<js.JSHandle> {
-    const {
-      polling = 'raf',
-      timeout = this._timeoutSettings.timeout(),
-    } = options;
-    const params: WaitTaskParams = {
-      predicateBody: pageFunction,
-      title: 'function',
-      polling,
-      timeout,
-      args
-    };
-    return this._scheduleWaitTask(params, 'main');
+  waitForFunction(pageFunction: Function | string, options: dom.WaitForFunctionOptions = {}, ...args: any[]): Promise<js.JSHandle> {
+    options = { timeout: this._timeoutSettings.timeout(), ...options };
+    const task = dom.waitForFunctionTask(pageFunction, options, ...args);
+    return this._scheduleRerunnableTask(task, 'main', options.timeout);
   }
 
   async title(): Promise<string> {
@@ -435,30 +424,31 @@ export class Frame {
   _detach() {
     this._detached = true;
     for (const world of this._worlds.values()) {
-      for (const waitTask of world.waitTasks)
-        waitTask.terminate(new Error('waitForFunction failed: frame got detached.'));
+      for (const rerunnableTask of world.rerunnableTasks)
+        rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
     }
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
     this._parentFrame = null;
   }
 
-  private _scheduleWaitTask(params: WaitTaskParams, worldType: WorldType): Promise<js.JSHandle> {
+  private _scheduleRerunnableTask(task: dom.Task, worldType: WorldType, timeout?: number, title?: string): Promise<js.JSHandle> {
     const world = this._worlds.get(worldType);
-    const task = new WaitTask(params, () => world.waitTasks.delete(task));
-    world.waitTasks.add(task);
+    const rerunnableTask = new RerunnableTask(world, task, timeout, title);
+    world.rerunnableTasks.add(rerunnableTask);
     if (world.context)
-      task.rerun(world.context);
-    return task.promise;
+      rerunnableTask.rerun(world.context._domWorld);
+    return rerunnableTask.promise;
   }
 
   private _setContext(worldType: WorldType, context: js.ExecutionContext | null) {
     const world = this._worlds.get(worldType);
     world.context = context;
     if (context) {
+      assert(context._domWorld, 'Frame context must have a dom world');
       world.contextResolveCallback.call(null, context);
-      for (const waitTask of world.waitTasks)
-        waitTask.rerun(context);
+      for (const rerunnableTask of world.rerunnableTasks)
+        rerunnableTask.rerun(context._domWorld);
     } else {
       world.contextPromise = new Promise(fulfill => {
         world.contextResolveCallback = fulfill;
@@ -480,5 +470,85 @@ export class Frame {
       if (world.context === context)
         this._setContext(worldType, null);
     }
+  }
+}
+
+class RerunnableTask {
+  readonly promise: Promise<js.JSHandle>;
+  private _world: World;
+  private _task: dom.Task;
+  private _runCount: number;
+  private _resolve: (result: js.JSHandle) => void;
+  private _reject: (reason: Error) => void;
+  private _timeoutTimer: NodeJS.Timer;
+  private _terminated: boolean;
+
+  constructor(world: World, task: dom.Task, timeout?: number, title?: string) {
+    this._world = world;
+    this._task = task;
+    this._runCount = 0;
+    this.promise = new Promise<js.JSHandle>((resolve, reject) => {
+      this._resolve = resolve;
+      this._reject = reject;
+    });
+    // Since page navigation requires us to re-install the pageScript, we should track
+    // timeout on our end.
+    if (timeout) {
+      const timeoutError = new TimeoutError(`waiting for ${title || 'function'} failed: timeout ${timeout}ms exceeded`);
+      this._timeoutTimer = setTimeout(() => this.terminate(timeoutError), timeout);
+    }
+  }
+
+  terminate(error: Error) {
+    this._terminated = true;
+    this._reject(error);
+    this._doCleanup();
+  }
+
+  async rerun(domWorld: dom.DOMWorld) {
+    const runCount = ++this._runCount;
+    let success: js.JSHandle | null = null;
+    let error = null;
+    try {
+      success = await this._task(domWorld);
+    } catch (e) {
+      error = e;
+    }
+
+    if (this._terminated || runCount !== this._runCount) {
+      if (success)
+        await success.dispose();
+      return;
+    }
+
+    // Ignore timeouts in pageScript - we track timeouts ourselves.
+    // If execution context has been already destroyed, `context.evaluate` will
+    // throw an error - ignore this predicate run altogether.
+    if (!error && await domWorld.context.evaluate(s => !s, success).catch(e => true)) {
+      await success.dispose();
+      return;
+    }
+
+    // When the page is navigated, the promise is rejected.
+    // We will try again in the new execution context.
+    if (error && error.message.includes('Execution context was destroyed'))
+      return;
+
+    // We could have tried to evaluate in a context which was already
+    // destroyed.
+    if (error && error.message.includes('Cannot find context with specified id'))
+      return;
+
+    if (error)
+      this._reject(error);
+    else
+      this._resolve(success);
+
+    this._doCleanup();
+  }
+
+  _doCleanup() {
+    clearTimeout(this._timeoutTimer);
+    this._world.rerunnableTasks.delete(this);
   }
 }

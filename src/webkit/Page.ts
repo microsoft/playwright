@@ -503,10 +503,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitForXPath(xpath, options);
   }
 
-  waitForFunction(pageFunction: Function, options: {
-      polling?: string | number;
-      timeout?: number; } = {},
-  ...args: any[]): Promise<js.JSHandle> {
+  waitForFunction(pageFunction: Function | string, options: dom.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 }

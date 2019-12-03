@@ -493,7 +493,7 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
-  waitForFunction(pageFunction: Function | string, options: { polling?: string | number; timeout?: number; } | undefined = {}, ...args): Promise<js.JSHandle> {
+  waitForFunction(pageFunction: Function | string, options: dom.WaitForFunctionOptions, ...args): Promise<js.JSHandle> {
     return this._frameManager.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 

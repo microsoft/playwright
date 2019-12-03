@@ -56,8 +56,10 @@ class MDOutline {
         const type = findType(str);
         const properties = [];
         const comment = str.substring(str.indexOf('<') + type.length + 2).trim();
-        // Strings have enum values instead of properties
-        if (type !== 'string' && type !== 'string|number' && type !== 'string|Array<string>' && type !== 'Array<string>') {
+        const hasNonEnumProperties = type.split('|').some(part => {
+          return part !== 'string' && part !== 'number' && part !== 'Array<string>' && !(part[0] === '"' && part[part.length - 1] === '"');
+        });
+        if (hasNonEnumProperties) {
           for (const childElement of element.querySelectorAll(':scope > ul > li')) {
             const property = parseProperty(childElement);
             property.required = property.comment.includes('***required***');

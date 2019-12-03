@@ -160,7 +160,7 @@ function checkSources(sources) {
         properties = type.getProperties().map(property => serializeSymbol(property, nextCircular));
       return new Documentation.Type('Object', properties);
     }
-    if (type.isUnion() && (typeName.includes('|') || type.types.every(type => type.isStringLiteral()))) {
+    if (type.isUnion() && (typeName.includes('|') || type.types.every(type => type.isStringLiteral() || type.intrinsicName === 'number'))) {
       const types = type.types.map(type => serializeType(type, circular));
       const name = types.map(type => type.name).join('|');
       const properties = [].concat(...types.map(type => type.properties));
