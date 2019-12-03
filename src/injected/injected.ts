@@ -81,6 +81,82 @@ class Injected {
     append();
     return result;
   }
+
+  pollMutation(predicate: Function, timeout: number, ...args: any[]): Promise<any> {
+    let timedOut = false;
+    if (timeout)
+      setTimeout(() => timedOut = true, timeout);
+
+    const success = predicate.apply(null, args);
+    if (success)
+      return Promise.resolve(success);
+
+    let fulfill;
+    const result = new Promise(x => fulfill = x);
+    const observer = new MutationObserver(mutations => {
+      if (timedOut) {
+        observer.disconnect();
+        fulfill();
+      }
+      const success = predicate.apply(null, args);
+      if (success) {
+        observer.disconnect();
+        fulfill(success);
+      }
+    });
+    observer.observe(document, {
+      childList: true,
+      subtree: true,
+      attributes: true
+    });
+    return result;
+  }
+
+  pollRaf(predicate: Function, timeout: number, ...args: any[]): Promise<any> {
+    let timedOut = false;
+    if (timeout)
+      setTimeout(() => timedOut = true, timeout);
+
+    let fulfill;
+    const result = new Promise(x => fulfill = x);
+    onRaf();
+    return result;
+
+    function onRaf() {
+      if (timedOut) {
+        fulfill();
+        return;
+      }
+      const success = predicate.apply(null, args);
+      if (success)
+        fulfill(success);
+      else
+        requestAnimationFrame(onRaf);
+    }
+  }
+
+  pollInterval(pollInterval: number, predicate: Function, timeout: number, ...args: any[]): Promise<any> {
+    let timedOut = false;
+    if (timeout)
+      setTimeout(() => timedOut = true, timeout);
+
+    let fulfill;
+    const result = new Promise(x => fulfill = x);
+    onTimeout();
+    return result;
+
+    function onTimeout() {
+      if (timedOut) {
+        fulfill();
+        return;
+      }
+      const success = predicate.apply(null, args);
+      if (success)
+        fulfill(success);
+      else
+        setTimeout(onTimeout, pollInterval);
+    }
+  }
 }
 
 export default Injected;

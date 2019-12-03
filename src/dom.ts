@@ -10,7 +10,6 @@ import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
 import { assert, helper } from './helper';
 import Injected from './injected/injected';
-import { WaitTaskParams } from './waitTask';
 
 export interface DOMWorldDelegate {
   keyboard: input.Keyboard;
@@ -307,36 +306,57 @@ function selectorToString(selector: Selector): string {
   return `:scope >> ${selector.selector}`;
 }
 
+export type Task = (domWorld: DOMWorld) => Promise<js.JSHandle>;
+
+export type Polling = 'raf' | 'mutation' | number;
+export type WaitForFunctionOptions = { polling?: Polling, timeout?: number };
+
+export function waitForFunctionTask(pageFunction: Function | string, options: WaitForFunctionOptions, ...args: any[]) {
+  const { polling = 'raf' } = options;
+  if (helper.isString(polling))
+    assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
+  else if (helper.isNumber(polling))
+    assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
+  else
+    throw new Error('Unknown polling options: ' + polling);
+  const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(...args)';
+
+  return async (domWorld: DOMWorld) => domWorld.context.evaluateHandle((injected: Injected, predicateBody: string, polling: Polling, timeout: number, ...args) => {
+    const predicate = new Function('...args', predicateBody);
+    if (polling === 'raf')
+      return injected.pollRaf(predicate, timeout, ...args);
+    if (polling === 'mutation')
+      return injected.pollMutation(predicate, timeout, ...args);
+    return injected.pollInterval(polling, predicate, timeout, ...args);
+  }, await domWorld.injected(), predicateBody, polling, options.timeout, ...args);
+}
+
 export type WaitForSelectorOptions = { visible?: boolean, hidden?: boolean, timeout?: number };
 
-export function waitForSelectorTask(selector: string, options: WaitForSelectorOptions): WaitTaskParams {
-  const { visible: waitForVisible = false, hidden: waitForHidden = false, timeout } = options;
-  const polling = waitForVisible || waitForHidden ? 'raf' : 'mutation';
-  const title = `selector "${selector}"${waitForHidden ? ' to be hidden' : ''}`;
-  const params: WaitTaskParams = {
-    predicateBody: predicate,
-    title,
-    polling,
-    timeout,
-    args: [normalizeSelector(selector), waitForVisible, waitForHidden],
-    passInjected: true
-  };
-  return params;
+export function waitForSelectorTask(selector: string, options: WaitForSelectorOptions): Task {
+  const { visible: waitForVisible = false, hidden: waitForHidden = false } = options;
+  selector = normalizeSelector(selector);
 
-  function predicate(injected: Injected, selector: string, waitForVisible: boolean, waitForHidden: boolean): (Node | boolean) | null {
-    const element = injected.querySelector(selector, document);
-    if (!element)
-      return waitForHidden;
-    if (!waitForVisible && !waitForHidden)
-      return element;
-    const style = window.getComputedStyle(element);
-    const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
-    const success = (waitForVisible === isVisible || waitForHidden === !isVisible);
-    return success ? element : null;
+  return async (domWorld: DOMWorld) => domWorld.context.evaluateHandle((injected: Injected, selector: string, waitForVisible: boolean, waitForHidden: boolean, timeout: number) => {
+    if (waitForVisible || waitForHidden)
+      return injected.pollRaf(predicate, timeout);
+    return injected.pollMutation(predicate, timeout);
 
-    function hasVisibleBoundingBox(): boolean {
-      const rect = element.getBoundingClientRect();
-      return !!(rect.top || rect.bottom || rect.width || rect.height);
+    function predicate(): Element | boolean {
+      const element = injected.querySelector(selector, document);
+      if (!element)
+        return waitForHidden;
+      if (!waitForVisible && !waitForHidden)
+        return element;
+      const style = window.getComputedStyle(element);
+      const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
+      const success = (waitForVisible === isVisible || waitForHidden === !isVisible);
+      return success ? element : false;
+
+      function hasVisibleBoundingBox(): boolean {
+        const rect = element.getBoundingClientRect();
+        return !!(rect.top || rect.bottom || rect.width || rect.height);
+      }
     }
-  }
+  }, await domWorld.injected(), selector, waitForVisible, waitForHidden, options.timeout);
 }

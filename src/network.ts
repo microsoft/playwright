@@ -3,7 +3,6 @@
 
 import * as frames from './frames';
 import { assert } from './helper';
-import { NetworkManager } from './chromium/NetworkManager';
 
 export type NetworkCookie = {
   name: string,
@@ -50,11 +49,11 @@ export function filterCookies(cookies: NetworkCookie[], urls: string[]): Network
 
 export function rewriteCookies(cookies: SetNetworkCookieParam[]): SetNetworkCookieParam[] {
   return cookies.map(c => {
-    assert(c.name, "Cookie should have a name");
-    assert(c.value, "Cookie should have a value");
-    assert(c.url || (c.domain && c.path), "Cookie should have a url or a domain/path pair");
-    assert(!(c.url && c.domain), "Cookie should have either url or domain");
-    assert(!(c.url && c.path), "Cookie should have either url or domain");
+    assert(c.name, 'Cookie should have a name');
+    assert(c.value, 'Cookie should have a value');
+    assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
+    assert(!(c.url && c.domain), 'Cookie should have either url or domain');
+    assert(!(c.url && c.path), 'Cookie should have either url or domain');
     const copy = {...c};
     if (copy.url) {
       assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
