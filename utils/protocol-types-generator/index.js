@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const StreamZip = require('node-stream-zip');
 const vm = require('vm');
+const os = require('os');
 
 async function generateChromeProtocol(revision) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.d.ts');
@@ -120,7 +121,10 @@ async function generateFirefoxProtocol(revision) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'firefox', 'protocol.d.ts');
   if (revision.local && fs.existsSync(outputPath))
     return;
-  const zip = new StreamZip({file: path.join(revision.executablePath, '..', 'omni.ja'), storeEntries: true});
+  const omnija = os.platform() === 'darwin' ?
+    path.join(revision.executablePath, '..', '..', 'Resources', 'omni.ja') :
+    path.join(revision.executablePath, '..', 'omni.ja');
+  const zip = new StreamZip({file: omnija, storeEntries: true});
   // @ts-ignore
   await new Promise(x => zip.on('ready', x));
   const data = zip.entryDataSync(zip.entry('chrome/juggler/content/protocol/Protocol.js'))

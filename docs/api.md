@@ -310,6 +310,9 @@
   * [coverage.stopCSSCoverage()](#coveragestopcsscoverage)
   * [coverage.stopJSCoverage()](#coveragestopjscoverage)
 - [class: TimeoutError](#class-timeouterror)
+- [class: Selector](#class-selector)
+  * [selector.selector](#selectorselector)
+  * [selector.visible](#selectorvisible)
 <!-- GEN:stop -->
 
 ### Overview
@@ -1049,7 +1052,7 @@ Emitted when a request finishes successfully.
 Emitted when a [response] is received.
 
 #### page.$(selector)
-- `selector` <[string]> A [selector] to query page for
+- `selector` <[string]|[Selector]> A [selector] to query page for
 - returns: <[Promise]<?[ElementHandle]>>
 
 The method runs `document.querySelector` within the page. If no element matches the selector, the return value resolves to `null`.
@@ -1057,7 +1060,7 @@ The method runs `document.querySelector` within the page. If no element matches 
 Shortcut for [page.mainFrame().$(selector)](#frameselector).
 
 #### page.$$(selector)
-- `selector` <[string]> A [selector] to query page for
+- `selector` <[string]|[Selector]> A [selector] to query page for
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
 The method runs `document.querySelectorAll` within the page. If no elements match the selector, the return value resolves to `[]`.
@@ -1065,7 +1068,7 @@ The method runs `document.querySelectorAll` within the page. If no elements matc
 Shortcut for [page.mainFrame().$$(selector)](#frameselector-1).
 
 #### page.$$eval(selector, pageFunction[, ...args])
-- `selector` <[string]> A [selector] to query page for
+- `selector` <[string]|[Selector]> A [selector] to query page for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -1080,7 +1083,7 @@ const divsCounts = await page.$$eval('div', divs => divs.length);
 ```
 
 #### page.$eval(selector, pageFunction[, ...args])
-- `selector` <[string]> A [selector] to query page for
+- `selector` <[string]|[Selector]> A [selector] to query page for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -1145,7 +1148,7 @@ Get the browser the page belongs to.
 Get the browser context that the page belongs to.
 
 #### page.click(selector[, options])
-- `selector` <[string]> A [selector] to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
+- `selector` <[string]|[Selector]> A [selector] to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `clickCount` <[number]> defaults to 1. See [UIEvent.detail].
@@ -1192,7 +1195,7 @@ Gets the full HTML contents of the page, including the doctype.
 - returns: <[Coverage]>
 
 #### page.dblclick(selector[, options])
-- `selector` <[string]> A [selector] to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
+- `selector` <[string]|[Selector]> A [selector] to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -1431,7 +1434,7 @@ const fs = require('fs');
 ```
 
 #### page.fill(selector, value)
-- `selector` <[string]> A [selector] to query page for.
+- `selector` <[string]|[Selector]> A [selector] to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
@@ -1441,7 +1444,7 @@ If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matchi
 Shortcut for [page.mainFrame().fill()](#framefillselector-value)
 
 #### page.focus(selector)
-- `selector` <[string]> A [selector] of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
+- `selector` <[string]|[Selector]> A [selector] of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector` and focuses it.
@@ -1506,7 +1509,7 @@ Navigate to the next page in history.
 Shortcut for [page.mainFrame().goto(url, options)](#framegotourl-options)
 
 #### page.hover(selector[, options])
-- `selector` <[string]> A [selector] to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
+- `selector` <[string]|[Selector]> A [selector] to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
 - `options` <[Object]>
   - `relativePoint` <[Object]> A point to hover relative to the top-left corner of element padding box. If not specified, hovers over some visible point of the element.
     - x <[number]>
@@ -1575,7 +1578,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 > **NOTE** Screenshots take at least 1/6 second on OS X. See https://crbug.com/741689 for discussion.
 
 #### page.select(selector, ...values)
-- `selector` <[string]> A [selector] to query page for.
+- `selector` <[string]|[Selector]> A [selector] to query page for.
 - `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
@@ -1714,7 +1717,7 @@ await page.goto('https://example.com');
 Shortcut for [page.mainFrame().title()](#frametitle).
 
 #### page.tripleclick(selector[, options])
-- `selector` <[string]> A [selector] to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
+- `selector` <[string]|[Selector]> A [selector] to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -1734,7 +1737,7 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 Shortcut for [page.mainFrame().tripleclick(selector[, options])](#frametripleclickselector-options).
 
 #### page.type(selector, text[, options])
-- `selector` <[string]> A [selector] of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
+- `selector` <[string]|[Selector]> A [selector] of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
@@ -1907,10 +1910,8 @@ return finalResponse.ok();
 ```
 
 #### page.waitForSelector(selector[, options])
-- `selector` <[string]> A [selector] of an element to wait for
+- `selector` <[string]|[Selector]> A [selector] of an element to wait for
 - `options` <[Object]> Optional waiting parameters
-  - `visible` <[boolean]> wait for element to be present in DOM and to be visible, i.e. to not have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
-  - `hidden` <[boolean]> wait for element to not be found in the DOM or to be hidden, i.e. have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
@@ -1940,8 +1941,6 @@ Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitf
 #### page.waitForXPath(xpath[, options])
 - `xpath` <[string]> A [xpath] of an element to wait for
 - `options` <[Object]> Optional waiting parameters
-  - `visible` <[boolean]> wait for element to be present in DOM and to be visible, i.e. to not have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
-  - `hidden` <[boolean]> wait for element to not be found in the DOM or to be hidden, i.e. have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by xpath string is added to DOM. Resolves to `null` if waiting for `hidden: true` and xpath is not found in DOM.
 
@@ -2503,19 +2502,19 @@ An example of getting text from an iframe element:
 ```
 
 #### frame.$(selector)
-- `selector` <[string]> A [selector] to query frame for
+- `selector` <[string]|[Selector]> A [selector] to query frame for
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves to ElementHandle pointing to the frame element.
 
 The method queries frame for the selector. If there's no such element within the frame, the method will resolve to `null`.
 
 #### frame.$$(selector)
-- `selector` <[string]> A [selector] to query frame for
+- `selector` <[string]|[Selector]> A [selector] to query frame for
 - returns: <[Promise]<[Array]<[ElementHandle]>>> Promise which resolves to ElementHandles pointing to the frame elements.
 
 The method runs `document.querySelectorAll` within the frame. If no elements match the selector, the return value resolves to `[]`.
 
 #### frame.$$eval(selector, pageFunction[, ...args])
-- `selector` <[string]> A [selector] to query frame for
+- `selector` <[string]|[Selector]> A [selector] to query frame for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -2530,7 +2529,7 @@ const divsCounts = await frame.$$eval('div', divs => divs.length);
 ```
 
 #### frame.$eval(selector, pageFunction[, ...args])
-- `selector` <[string]> A [selector] to query frame for
+- `selector` <[string]|[Selector]> A [selector] to query frame for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -2575,7 +2574,7 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 - returns: <[Array]<[Frame]>>
 
 #### frame.click(selector[, options])
-- `selector` <[string]> A [selector] to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
+- `selector` <[string]|[Selector]> A [selector] to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `clickCount` <[number]> defaults to 1. See [UIEvent.detail].
@@ -2604,7 +2603,7 @@ const [response] = await Promise.all([
 Gets the full HTML contents of the frame, including the doctype.
 
 #### frame.dblclick(selector[, options])
-- `selector` <[string]> A [selector] to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
+- `selector` <[string]|[Selector]> A [selector] to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -2685,7 +2684,7 @@ await resultHandle.dispose();
 Returns promise that resolves to the frame's default execution context.
 
 #### frame.fill(selector, value)
-- `selector` <[string]> A [selector] to query page for.
+- `selector` <[string]|[Selector]> A [selector] to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
@@ -2693,7 +2692,7 @@ This method focuses the element and triggers an `input` event after filling.
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
 
 #### frame.focus(selector)
-- `selector` <[string]> A [selector] of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
+- `selector` <[string]|[Selector]> A [selector] of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector` and focuses it.
@@ -2726,7 +2725,7 @@ If there's no element matching `selector`, the method throws an error.
 
 
 #### frame.hover(selector[, options])
-- `selector` <[string]> A [selector] to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
+- `selector` <[string]|[Selector]> A [selector] to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
 - `options` <[Object]>
   - `relativePoint` <[Object]> A point to hover relative to the top-left corner of element padding box. If not specified, hovers over some visible point of the element.
     - x <[number]>
@@ -2755,7 +2754,7 @@ If the name is empty, returns the id attribute instead.
 - returns: <?[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
 
 #### frame.select(selector, ...values)
-- `selector` <[string]> A [selector] to query frame for.
+- `selector` <[string]|[Selector]> A [selector] to query frame for.
 - `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
@@ -2794,7 +2793,7 @@ frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 - returns: <[Promise]<[string]>> The page's title.
 
 #### frame.tripleclick(selector[, options])
-- `selector` <[string]> A [selector] to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
+- `selector` <[string]|[Selector]> A [selector] to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -2812,7 +2811,7 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 > **NOTE** `frame.tripleclick()` dispatches three `click` events and a single `dblclick` event.
 
 #### frame.type(selector, text[, options])
-- `selector` <[string]> A [selector] of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
+- `selector` <[string]|[Selector]> A [selector] of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
@@ -2916,10 +2915,8 @@ const [response] = await Promise.all([
 
 
 #### frame.waitForSelector(selector[, options])
-- `selector` <[string]> A [selector] of an element to wait for
+- `selector` <[string]|[Selector]> A [selector] of an element to wait for
 - `options` <[Object]> Optional waiting parameters
-  - `visible` <[boolean]> wait for element to be present in DOM and to be visible, i.e. to not have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
-  - `hidden` <[boolean]> wait for element to not be found in the DOM or to be hidden, i.e. have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
@@ -2948,8 +2945,6 @@ const playwright = require('playwright');
 #### frame.waitForXPath(xpath[, options])
 - `xpath` <[string]> A [xpath] of an element to wait for
 - `options` <[Object]> Optional waiting parameters
-  - `visible` <[boolean]> wait for element to be present in DOM and to be visible, i.e. to not have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
-  - `hidden` <[boolean]> wait for element to not be found in the DOM or to be hidden, i.e. have `display: none` or `visibility: hidden` CSS properties. Defaults to `false`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by xpath string is added to DOM. Resolves to `null` if waiting for `hidden: true` and xpath is not found in DOM.
 
@@ -3281,19 +3276,19 @@ ElementHandle prevents DOM element from garbage collection unless the handle is 
 ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalselector-pagefunction-args) and [`page.evaluate()`](#pageevaluatepagefunction-args) methods.
 
 #### elementHandle.$(selector)
-- `selector` <[string]> A [selector] to query element for
+- `selector` <[string]|[Selector]> A [selector] to query element for
 - returns: <[Promise]<?[ElementHandle]>>
 
 The method runs `element.querySelector` within the page. If no element matches the selector, the return value resolves to `null`.
 
 #### elementHandle.$$(selector)
-- `selector` <[string]> A [selector] to query element for
+- `selector` <[string]|[Selector]> A [selector] to query element for
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
 The method runs `element.querySelectorAll` within the page. If no elements match the selector, the return value resolves to `[]`.
 
 #### elementHandle.$$eval(selector, pageFunction[, ...args])
-- `selector` <[string]> A [selector] to query page for
+- `selector` <[string]|[Selector]> A [selector] to query page for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -3315,7 +3310,7 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
 ```
 
 #### elementHandle.$eval(selector, pageFunction[, ...args])
-- `selector` <[string]> A [selector] to query page for
+- `selector` <[string]|[Selector]> A [selector] to query page for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -3843,6 +3838,59 @@ reported.
 
 TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options) or [playwright.launch([options])](#playwrightlaunchoptions).
 
+### class: Selector
+
+Selector describes an element in the page. It can be used to obtain `ElementHandle` (see [page.$()](#pageselector) for example) or shortcut element operations to avoid intermediate handle (see [page.click()](#pageclickselector-options) for example).
+
+All methods accepting selector also accept a string shorthand which is equivalent to `{selector: 'string'}`.
+
+#### selector.selector
+- returns: <[string]> Selector in the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported selector engines (currently, either `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
+
+For convenience, selectors in the wrong format are heuristically converted to the right format:
+- selector starting with `//` is assumed to be `xpath=selector`;
+- otherwise selector is assumed to be `css=selector`.
+
+```js
+// queries 'div' css selector
+const handle = await page.$('css=div');
+
+// queries '//html/body/div' xpath selector
+const handle = await page.$('xpath=//html/body/div');
+
+// queries 'span' css selector inside the result of '//html/body/div' xpath selector
+const handle = await page.$('xpath=//html/body/div >> css=span');
+
+// converted to 'css=div'
+const handle = await page.$('div');
+
+// converted to 'xpath=//html/body/div'
+const handle = await page.$('//html/body/div');
+
+// queries 'span' css selector inside the div handle
+const handle = await divHandle.$('css=span');
+```
+
+#### selector.visible
+- returns: <[boolean]> Optional visibility to check for. If `true`, only visible elements match. If `false`, only non-visible elements match. If `undefined`, all elements match.
+
+Note that elements are first queried by `selector`, and only after that are checked for visiblity. In particular, [page.$()](#pageselector) will not skip to the first visible element, but instead return `null` if the first matching element is not visible.
+
+Element is defined visible if it does not have `visibility: hidden` CSS property and it's bounding box is not empty.
+
+```js
+// queries 'div', and only returns it when visible
+const handle = await page.$({selector: 'css=div', visible: true});
+
+// queries 'div', and only returns it when non-visible
+const handle = await page.$({selector: 'css=div', visible: false});
+
+// queries 'div', and returns it no matter the visibility
+const handle = await page.$({selector: 'css=div'});
+
+// returns all visible 'div' elements
+const handles = await page.$$({selector: 'css=div', visible: true});
+```
 
 
 [AXNode]: #accessibilitysnapshotoptions "AXNode"
@@ -3876,6 +3924,7 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [Request]: #class-request  "Request"
 [Response]: #class-response  "Response"
+[Selector]: #class-selector "Selector"
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [Target]: #class-target "Target"
 [TimeoutError]: #class-timeouterror "TimeoutError"

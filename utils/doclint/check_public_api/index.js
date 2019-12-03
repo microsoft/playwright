@@ -114,8 +114,10 @@ function checkSorting(doc) {
 function filterJSDocumentation(jsSources, jsDocumentation) {
   const apijs = jsSources.find(source => source.name() === 'api.ts');
   let includedClasses = null;
-  if (apijs)
+  if (apijs) {
     includedClasses = new Set(Object.keys(require(path.join(apijs.filePath(), '..', '..', 'lib', 'api.js')).Chromium));
+    includedClasses.add('Selector');
+  }
   // Filter private classes and methods.
   const classes = [];
   for (const cls of jsDocumentation.classesArray) {

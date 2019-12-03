@@ -35,6 +35,19 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const idAttribute = await page.$eval('section', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
+    it('should respect visibility', async({page, server}) => {
+      let error = null;
+      await page.setContent('<section id="testAttribute" style="display: none">43543</section>');
+      await page.$eval({selector: 'css=section', visible: true}, e => e.id).catch(e => error = e);
+      expect(error.message).toContain('failed to find element matching selector "[visible] css=section"');
+      expect(await page.$eval({selector: 'css=section', visible: false}, e => e.id)).toBe('testAttribute');
+
+      error = null;
+      await page.setContent('<section id="testAttribute">43543</section>');
+      await page.$eval({selector: 'css=section', visible: false}, e => e.id).catch(e => error = e);
+      expect(error.message).toContain('failed to find element matching selector "[hidden] css=section"');
+      expect(await page.$eval({selector: 'css=section', visible: true}, e => e.id)).toBe('testAttribute');
+    });
     it('should accept arguments', async({page, server}) => {
       await page.setContent('<section>hello</section>');
       const text = await page.$eval('section', (e, suffix) => e.textContent + suffix, ' world!');
@@ -107,6 +120,12 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const spansCount = await page.$$eval('css=div >> css=div >> css=span', spans => spans.length);
       expect(spansCount).toBe(2);
     });
+    it('should respect visibility', async({page, server}) => {
+      await page.setContent('<section style="display: none">1</section><section style="display: none">2</section><section>3</section>');
+      expect(await page.$$eval({selector: 'css=section', visible: true}, x => x.length)).toBe(1);
+      expect(await page.$$eval({selector: 'css=section', visible: false}, x => x.length)).toBe(2);
+      expect(await page.$$eval({selector: 'css=section'}, x => x.length)).toBe(3);
+    });
   });
 
   describe('Page.$', function() {
@@ -139,6 +158,17 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const element = await page.$('css=section >> css=div');
       expect(element).toBeTruthy();
     });
+    it('should respect visibility', async({page, server}) => {
+      await page.setContent('<section id="testAttribute">43543</section>');
+      expect(await page.$({selector: 'css=section', visible: true})).toBeTruthy();
+      expect(await page.$({selector: 'css=section', visible: false})).not.toBeTruthy();
+      expect(await page.$({selector: 'css=section'})).toBeTruthy();
+
+      await page.setContent('<section id="testAttribute" style="display: none">43543</section>');
+      expect(await page.$({selector: 'css=section', visible: true})).not.toBeTruthy();
+      expect(await page.$({selector: 'css=section', visible: false})).toBeTruthy();
+      expect(await page.$({selector: 'css=section'})).toBeTruthy();
+    });
   });
 
   describe('Page.$$', function() {
@@ -153,6 +183,12 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       await page.goto(server.EMPTY_PAGE);
       const elements = await page.$$('div');
       expect(elements.length).toBe(0);
+    });
+    it('should respect visibility', async({page, server}) => {
+      await page.setContent('<section style="display: none">1</section><section style="display: none">2</section><section>3</section>');
+      expect((await page.$$({selector: 'css=section', visible: true})).length).toBe(1);
+      expect((await page.$$({selector: 'css=section', visible: false})).length).toBe(2);
+      expect((await page.$$({selector: 'css=section'})).length).toBe(3);
     });
   });
 
@@ -192,6 +228,22 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const second = await html.$('.third');
       expect(second).toBe(null);
     });
+
+    it('should respect visibility', async({page, server}) => {
+      await page.goto(server.PREFIX + '/playground.html');
+      await page.setContent('<html><body><div class="second"><div class="inner" style="display:none">A</div></div></body></html>');
+      const second = await page.$('html .second');
+
+      let inner = await second.$({selector: '.inner', visible: true});
+      expect(inner).not.toBeTruthy();
+
+      inner = await second.$({selector: '.inner', visible: false});
+      expect(await inner.evaluate(e => e.textContent)).toBe('A');
+
+      await inner.evaluate(e => e.style.display = 'block');
+      inner = await second.$({selector: '.inner', visible: true});
+      expect(await inner.evaluate(e => e.textContent)).toBe('A');
+    });
   });
   describe('ElementHandle.$eval', function() {
     it('should work', async({page, server}) => {
@@ -214,7 +266,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       await page.setContent(htmlContent);
       const elementHandle = await page.$('#myId');
       const errorMessage = await elementHandle.$eval('.a', node => node.innerText).catch(error => error.message);
-      expect(errorMessage).toBe(`Error: failed to find element matching selector ":scope >> .a"`);
+      expect(errorMessage).toBe(`Error: failed to find element matching selector ".a"`);
     });
   });
   describe('ElementHandle.$$eval', function() {

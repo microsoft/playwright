@@ -206,7 +206,7 @@ export class Page extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async $(selector: string): Promise<dom.ElementHandle | null> {
+  async $(selector: string | types.Selector): Promise<dom.ElementHandle | null> {
     return this.mainFrame().$(selector);
   }
 
@@ -223,7 +223,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$(selector: string): Promise<dom.ElementHandle[]> {
+  async $$(selector: string | types.Selector): Promise<dom.ElementHandle[]> {
     return this.mainFrame().$$(selector);
   }
 
@@ -466,35 +466,35 @@ export class Page extends EventEmitter {
     return this._mouse;
   }
 
-  click(selector: string, options?: ClickOptions) {
+  click(selector: string | types.Selector, options?: ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string, options?: MultiClickOptions) {
+  dblclick(selector: string | types.Selector, options?: MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string, options?: MultiClickOptions) {
+  tripleclick(selector: string | types.Selector, options?: MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  hover(selector: string) {
+  hover(selector: string | types.Selector) {
     return this.mainFrame().hover(selector);
   }
 
-  fill(selector: string, value: string) {
+  fill(selector: string | types.Selector, value: string) {
     return this.mainFrame().fill(selector, value);
   }
 
-  focus(selector: string) {
+  focus(selector: string | types.Selector) {
     return this.mainFrame().focus(selector);
   }
 
-  select(selector: string, ...values: string[]): Promise<string[]> {
+  select(selector: string | types.Selector, ...values: string[]): Promise<string[]> {
     return this.mainFrame().select(selector, ...values);
   }
 
-  type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
+  type(selector: string | types.Selector, text: string, options: { delay: (number | undefined); } | undefined) {
     return this.mainFrame().type(selector, text, options);
   }
 
@@ -502,15 +502,15 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
-  waitForSelector(selector: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } = {}): Promise<dom.ElementHandle | null> {
+  waitForSelector(selector: string | types.Selector, options?: types.TimeoutOptions): Promise<dom.ElementHandle | null> {
     return this.mainFrame().waitForSelector(selector, options);
   }
 
-  waitForXPath(xpath: string, options: { visible?: boolean; hidden?: boolean; timeout?: number; } = {}): Promise<dom.ElementHandle | null> {
+  waitForXPath(xpath: string, options?: types.TimeoutOptions): Promise<dom.ElementHandle | null> {
     return this.mainFrame().waitForXPath(xpath, options);
   }
 
-  waitForFunction(pageFunction: Function | string, options: dom.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
+  waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 }

@@ -118,7 +118,7 @@ export class Page extends EventEmitter {
   }
 
   async emulateMedia(options: {
-      type?: ""|"screen"|"print",
+      type?: ''|'screen'|'print',
       colorScheme?: 'dark' | 'light' | 'no-preference' }) {
     assert(!options.type || input.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
     assert(!options.colorScheme || input.mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
@@ -457,35 +457,35 @@ export class Page extends EventEmitter {
     return this.mainFrame().addStyleTag(options);
   }
 
-  click(selector: string, options?: input.ClickOptions) {
+  click(selector: string | types.Selector, options?: input.ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string, options?: input.MultiClickOptions) {
+  dblclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string, options?: input.MultiClickOptions) {
+  tripleclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  fill(selector: string, value: string) {
+  fill(selector: string | types.Selector, value: string) {
     return this.mainFrame().fill(selector, value);
   }
 
-  select(selector: string, ...values: Array<string>): Promise<Array<string>> {
+  select(selector: string | types.Selector, ...values: Array<string>): Promise<Array<string>> {
     return this._frameManager.mainFrame().select(selector, ...values);
   }
 
-  type(selector: string, text: string, options: { delay: (number | undefined); } | undefined) {
+  type(selector: string | types.Selector, text: string, options: { delay: (number | undefined); } | undefined) {
     return this._frameManager.mainFrame().type(selector, text, options);
   }
 
-  focus(selector: string) {
+  focus(selector: string | types.Selector) {
     return this._frameManager.mainFrame().focus(selector);
   }
 
-  hover(selector: string) {
+  hover(selector: string | types.Selector) {
     return this._frameManager.mainFrame().hover(selector);
   }
 
@@ -493,15 +493,15 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
-  waitForFunction(pageFunction: Function | string, options: dom.WaitForFunctionOptions, ...args): Promise<js.JSHandle> {
+  waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args): Promise<js.JSHandle> {
     return this._frameManager.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 
-  waitForSelector(selector: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<dom.ElementHandle> {
+  waitForSelector(selector: string | types.Selector, options?: types.TimeoutOptions): Promise<dom.ElementHandle> {
     return this._frameManager.mainFrame().waitForSelector(selector, options);
   }
 
-  waitForXPath(xpath: string, options: { timeout?: number; visible?: boolean; hidden?: boolean; } | undefined = {}): Promise<dom.ElementHandle> {
+  waitForXPath(xpath: string, options?: types.TimeoutOptions): Promise<dom.ElementHandle> {
     return this._frameManager.mainFrame().waitForXPath(xpath, options);
   }
 
@@ -509,11 +509,11 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame().title();
   }
 
-  $(selector: string): Promise<dom.ElementHandle | null> {
+  $(selector: string | types.Selector): Promise<dom.ElementHandle | null> {
     return this._frameManager.mainFrame().$(selector);
   }
 
-  $$(selector: string): Promise<Array<dom.ElementHandle>> {
+  $$(selector: string | types.Selector): Promise<Array<dom.ElementHandle>> {
     return this._frameManager.mainFrame().$$(selector);
   }
 
