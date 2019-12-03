@@ -48,9 +48,9 @@ fi
 
 # we will use this just for beauty.
 if [[ $# == 2 ]]; then
-  echo "WARNING: using custom checkout path $CHECKOUT_PATH"
+  echo "WARNING: using custom checkout path $2"
   CHECKOUT_PATH=$2
-  FRIENDLY_CHECKOUT_PATH="<custom_checkout>"
+  FRIENDLY_CHECKOUT_PATH="<custom_checkout ( $2 )>"
 fi
 
 # if there's no checkout folder - bail out.
@@ -84,7 +84,7 @@ else
 fi
 
 # Check if git repo is dirty.
-if [[ -n $(git status -s) ]]; then
+if [[ -n $(git status -s --untracked-files=no) ]]; then
   echo "ERROR: $FRIENDLY_CHECKOUT_PATH has dirty GIT state - aborting export."
   exit 1
 else
