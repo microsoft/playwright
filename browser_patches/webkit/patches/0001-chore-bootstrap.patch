@@ -1,6 +1,6 @@
-From dfe99d6941af0b7fad7b43e1806659ee9bb433eb Mon Sep 17 00:00:00 2001
-From: Pavel <pavel.feldman@gmail.com>
-Date: Mon, 2 Dec 2019 15:34:55 -0800
+From 1210fc83d555e54e1a5ed2d8e95ed1e756f22151 Mon Sep 17 00:00:00 2001
+From: Yury Semikhatsky <yurys@chromium.org>
+Date: Tue, 3 Dec 2019 10:10:23 -0800
 Subject: [PATCH xserver] chore: bootstrap
 
 ---
@@ -14,7 +14,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../inspector/protocol/Browser.json           | 106 ++++
  .../inspector/protocol/DOM.json               |  39 ++
  .../inspector/protocol/Dialog.json            |  36 ++
- .../inspector/protocol/Emulation.json         |  14 +
+ .../inspector/protocol/Emulation.json         |  21 +
  .../inspector/protocol/Input.json             | 160 ++++++
  .../inspector/protocol/Page.json              |  82 ++-
  .../inspector/protocol/Target.json            |  18 +-
@@ -78,8 +78,8 @@ Subject: [PATCH xserver] chore: bootstrap
  .../AuthenticatorManager.cpp                  |   1 +
  .../UIProcess/WebPageInspectorController.cpp  |  56 +-
  .../UIProcess/WebPageInspectorController.h    |   8 +
- .../WebPageInspectorEmulationAgent.cpp        |  39 ++
- .../WebPageInspectorEmulationAgent.h          |  41 ++
+ .../WebPageInspectorEmulationAgent.cpp        |  47 ++
+ .../WebPageInspectorEmulationAgent.h          |  42 ++
  .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 +++++++++
  .../UIProcess/WebPageInspectorInputAgent.h    |  54 ++
  .../UIProcess/WebPageInspectorTargetProxy.cpp | 109 ++++
@@ -113,7 +113,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  17 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 109 files changed, 4458 insertions(+), 59 deletions(-)
+ 109 files changed, 4474 insertions(+), 59 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -686,10 +686,10 @@ index 00000000000..79edea03fed
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
-index 00000000000..168e3f2b93d
+index 00000000000..af0f39e5249
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,21 @@
 +{
 +    "domain": "Emulation",
 +    "availability": ["web"],
@@ -700,6 +700,13 @@ index 00000000000..168e3f2b93d
 +            "parameters": [
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" }
++            ]
++        },
++        {
++            "name": "setJavaScriptEnabled",
++            "description": "Allows to disable script execution for the page.",
++            "parameters": [
++                { "name": "enabled", "type": "boolean" }
 +            ]
 +        }
 +    ]
@@ -4639,10 +4646,10 @@ index 828bc3ccc7e..40a333b7004 100644
      void setIndicating(bool);
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 00000000000..0a2663a0ed8
+index 00000000000..e903413c95d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,47 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4650,6 +4657,7 @@ index 00000000000..0a2663a0ed8
 +#include "WebPageInspectorEmulationAgent.h"
 +
 +#include "WebPageProxy.h"
++#include "WebPreferences.h"
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +
 +
@@ -4681,13 +4689,20 @@ index 00000000000..0a2663a0ed8
 +    platformSetSize(error, in_width, in_height);
 +}
 +
++void WebPageInspectorEmulationAgent::setJavaScriptEnabled(ErrorString&, bool enabled)
++{
++    auto copy = m_page.preferences().copy();
++    copy->setJavaScriptEnabled(enabled);
++    m_page.setPreferences(copy);
++}
++
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 00000000000..37bf050881a
+index 00000000000..b02753590b3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,42 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4720,6 +4735,7 @@ index 00000000000..37bf050881a
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
 +    void setDeviceMetricsOverride(Inspector::ErrorString&, int in_width, int in_height) override;
++    void setJavaScriptEnabled(Inspector::ErrorString&, bool enabled) override;
 +
 +private:
 +    void platformSetSize(String& error, int width, int height);
