@@ -294,7 +294,11 @@ export class BrowserContext extends EventEmitter {
     const { cookies } = await this._connection.send('Browser.getCookies', {
       browserContextId: this._browserContextId || undefined
     });
-    return filterCookies(cookies, urls);
+    return filterCookies(cookies, urls).map(c => {
+      const copy: any = { ... c };
+      delete copy.size;
+      return copy as NetworkCookie;
+    });
   }
 
   async clearCookies() {

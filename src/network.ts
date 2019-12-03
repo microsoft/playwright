@@ -3,6 +3,7 @@
 
 import * as frames from './frames';
 import { assert } from './helper';
+import { NetworkManager } from './chromium/NetworkManager';
 
 export type NetworkCookie = {
   name: string,
@@ -28,7 +29,7 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export function filterCookies(cookies: NetworkCookie[], urls: string[]) {
+export function filterCookies(cookies: NetworkCookie[], urls: string[]): NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
   return cookies.filter(c => {

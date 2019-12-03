@@ -69,8 +69,9 @@ export class BrowserContext extends EventEmitter {
   async cookies(...urls: string[]): Promise<NetworkCookie[]> {
     const { cookies } = await this._browser._client.send('Storage.getCookies', { browserContextId: this._id || undefined });
     return filterCookies(cookies.map(c => {
-      const copy = { sameSite: 'None', ...c, size: undefined } as NetworkCookie;
-      return copy;
+      const copy: any = { sameSite: 'None', ...c };
+      delete copy.size;
+      return copy as NetworkCookie;
     }), urls);
   }
 
