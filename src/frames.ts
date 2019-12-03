@@ -493,8 +493,9 @@ export class Frame {
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
     // We can use either.
-    if (!world.context)
-      this._setContext(worldType, context);
+    if (world.context)
+      this._setContext(worldType, null);
+    this._setContext(worldType, context);
   }
 
   _contextDestroyed(context: js.ExecutionContext) {

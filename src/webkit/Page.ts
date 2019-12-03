@@ -348,6 +348,13 @@ export class Page extends EventEmitter {
     await this._session.send('Page.setBootstrapScript', { source });
   }
 
+  async setJavaScriptEnabled(enabled: boolean) {
+    if (this._javascriptEnabled === enabled)
+      return;
+    this._javascriptEnabled = enabled;
+    await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
+  }
+
   async setCacheEnabled(enabled: boolean = true) {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
