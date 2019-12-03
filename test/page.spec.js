@@ -831,12 +831,15 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   });
 
   describe('Page.setJavaScriptEnabled', function() {
-    it.skip(WEBKIT)('should work', async({page, server}) => {
+    it('should work', async({page, server}) => {
       await page.setJavaScriptEnabled(false);
       await page.goto('data:text/html, <script>var something = "forbidden"</script>');
       let error = null;
       await page.evaluate('something').catch(e => error = e);
-      expect(error.message).toContain('something is not defined');
+      if (WEBKIT)
+        expect(error.message).toContain('Can\'t find variable: something');
+      else
+        expect(error.message).toContain('something is not defined');
 
       await page.setJavaScriptEnabled(true);
       await page.goto('data:text/html, <script>var something = "forbidden"</script>');
