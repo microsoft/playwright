@@ -24,6 +24,7 @@ import { Events } from './events';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
+import { Protocol } from './protocol';
 
 export class Browser extends EventEmitter {
   _defaultViewport: Viewport;
@@ -272,7 +273,7 @@ export class BrowserContext extends EventEmitter {
 
   async setCookies(cookies: SetNetworkCookieParam[]) {
     cookies = rewriteCookies(cookies);
-    const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined }));
+    const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
     await this._browser._connection.send('Browser.setCookies', { cookies: cc, browserContextId: this._id });
   }
 

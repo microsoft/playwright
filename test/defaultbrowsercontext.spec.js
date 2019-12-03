@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.addTests = function ({ testRunner, expect, defaultBrowserOptions, playwright }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -40,14 +40,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         domain: 'localhost',
         path: '/',
         expires: -1,
-        size: 16,
         httpOnly: false,
         secure: false,
         session: true,
         sameSite: 'None',
       }]);
     });
-    it.skip(WEBKIT)('context.setCookies() should work', async({page, server}) => {
+    it('context.setCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.browserContext().setCookies([{
         url: server.EMPTY_PAGE,
@@ -61,14 +60,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         domain: 'localhost',
         path: '/',
         expires: -1,
-        size: 16,
         httpOnly: false,
         secure: false,
         session: true,
         sameSite: 'None',
       }]);
     });
-    it.skip(WEBKIT)('context.clearCookies() should work', async({page, server}) => {
+    it('context.clearCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.browserContext().setCookies([{
         url: server.EMPTY_PAGE,
