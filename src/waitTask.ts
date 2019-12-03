@@ -4,6 +4,7 @@
 import { assert, helper } from './helper';
 import * as js from './javascript';
 import { TimeoutError } from './Errors';
+import Injected from './injected/injected';
 
 export type WaitTaskParams = {
   // TODO: ensure types.
@@ -12,6 +13,7 @@ export type WaitTaskParams = {
   polling: string | number;
   timeout: number;
   args: any[];
+  passInjected?: boolean;
 };
 
 export class WaitTask {
@@ -61,7 +63,8 @@ export class WaitTask {
     let success: js.JSHandle | null = null;
     let error = null;
     try {
-      success = await context.evaluateHandle(waitForPredicatePageFunction, this._params.predicateBody, this._params.polling, this._params.timeout, ...this._params.args);
+      assert(context._domWorld, 'Wait task requires a dom world');
+      success = await context.evaluateHandle(waitForPredicatePageFunction, await context._domWorld.injected(), this._params.predicateBody, this._params.polling, this._params.timeout, !!this._params.passInjected, ...this._params.args);
     } catch (e) {
       error = e;
     }
@@ -104,44 +107,9 @@ export class WaitTask {
   }
 }
 
-export function waitForSelectorOrXPath(
-  selectorOrXPath: string,
-  isXPath: boolean,
-  options: { visible?: boolean, hidden?: boolean, timeout: number }): WaitTaskParams {
-  const { visible: waitForVisible = false, hidden: waitForHidden = false, timeout } = options;
-  const polling = waitForVisible || waitForHidden ? 'raf' : 'mutation';
-  const title = `${isXPath ? 'XPath' : 'selector'} "${selectorOrXPath}"${waitForHidden ? ' to be hidden' : ''}`;
-  const params: WaitTaskParams = {
-    predicateBody: predicate,
-    title,
-    polling,
-    timeout,
-    args: [selectorOrXPath, isXPath, waitForVisible, waitForHidden]
-  };
-  return params;
-
-  function predicate(selectorOrXPath: string, isXPath: boolean, waitForVisible: boolean, waitForHidden: boolean): (Node | boolean) | null {
-    const node = isXPath
-      ? document.evaluate(selectorOrXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-      : document.querySelector(selectorOrXPath);
-    if (!node)
-      return waitForHidden;
-    if (!waitForVisible && !waitForHidden)
-      return node;
-    const element = (node.nodeType === Node.TEXT_NODE ? node.parentElement : node) as Element;
-    const style = window.getComputedStyle(element);
-    const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
-    const success = (waitForVisible === isVisible || waitForHidden === !isVisible);
-    return success ? node : null;
-
-    function hasVisibleBoundingBox(): boolean {
-      const rect = element.getBoundingClientRect();
-      return !!(rect.top || rect.bottom || rect.width || rect.height);
-    }
-  }
-}
-
-async function waitForPredicatePageFunction(predicateBody: string, polling: string | number, timeout: number, ...args): Promise<any> {
+async function waitForPredicatePageFunction(injected: Injected, predicateBody: string, polling: string | number, timeout: number, passInjected: boolean, ...args): Promise<any> {
+  if (passInjected)
+    args = [injected, ...args];
   const predicate = new Function('...args', predicateBody);
   let timedOut = false;
   if (timeout)

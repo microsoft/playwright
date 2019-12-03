@@ -22,7 +22,7 @@ import * as dom from './dom';
 import * as network from './network';
 import { helper, assert } from './helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from './input';
-import { waitForSelectorOrXPath, WaitTaskParams, WaitTask } from './waitTask';
+import { WaitTaskParams, WaitTask } from './waitTask';
 import { TimeoutSettings } from './TimeoutSettings';
 
 const readFileAsync = helper.promisify(fs.readFile);
@@ -376,14 +376,8 @@ export class Frame {
   }
 
   waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle | null> {
-    const xPathPattern = '//';
-
-    if (helper.isString(selectorOrFunctionOrTimeout)) {
-      const string = selectorOrFunctionOrTimeout as string;
-      if (string.startsWith(xPathPattern))
-        return this.waitForXPath(string, options) as any;
-      return this.waitForSelector(string, options) as any;
-    }
+    if (helper.isString(selectorOrFunctionOrTimeout))
+      return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout as number));
     if (typeof selectorOrFunctionOrTimeout === 'function')
@@ -391,12 +385,9 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  async waitForSelector(selector: string, options: {
-      visible?: boolean;
-      hidden?: boolean;
-      timeout?: number; } | undefined): Promise<dom.ElementHandle | null> {
-    const params = waitForSelectorOrXPath(selector, false /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
-    const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
+  async waitForSelector(selector: string, options: dom.WaitForSelectorOptions = {}): Promise<dom.ElementHandle | null> {
+    const params = dom.waitForSelectorTask(selector, { timeout: this._timeoutSettings.timeout(), ...options });
+    const handle = await this._scheduleWaitTask(params, 'utility');
     if (!handle.asElement()) {
       await handle.dispose();
       return null;
@@ -409,22 +400,8 @@ export class Frame {
     return adopted;
   }
 
-  async waitForXPath(xpath: string, options: {
-      visible?: boolean;
-      hidden?: boolean;
-      timeout?: number; } | undefined): Promise<dom.ElementHandle | null> {
-    const params = waitForSelectorOrXPath(xpath, true /* isXPath */, { timeout: this._timeoutSettings.timeout(), ...options });
-    const handle = await this._scheduleWaitTask(params, this._worlds.get('utility'));
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    const mainDOMWorld = await this._mainDOMWorld();
-    if (handle.executionContext() === mainDOMWorld.context)
-      return handle.asElement();
-    const adopted = await mainDOMWorld.adoptElementHandle(handle.asElement());
-    await handle.dispose();
-    return adopted;
+  async waitForXPath(xpath: string, options: dom.WaitForSelectorOptions = {}): Promise<dom.ElementHandle | null> {
+    return this.waitForSelector('xpath=' + xpath, options);
   }
 
   waitForFunction(
@@ -442,7 +419,7 @@ export class Frame {
       timeout,
       args
     };
-    return this._scheduleWaitTask(params, this._worlds.get('main'));
+    return this._scheduleWaitTask(params, 'main');
   }
 
   async title(): Promise<string> {
@@ -466,7 +443,8 @@ export class Frame {
     this._parentFrame = null;
   }
 
-  private _scheduleWaitTask(params: WaitTaskParams, world: World): Promise<js.JSHandle> {
+  private _scheduleWaitTask(params: WaitTaskParams, worldType: WorldType): Promise<js.JSHandle> {
+    const world = this._worlds.get(worldType);
     const task = new WaitTask(params, () => world.waitTasks.delete(task));
     world.waitTasks.add(task);
     if (world.context)

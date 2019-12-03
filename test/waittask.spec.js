@@ -90,16 +90,15 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
       });
     });
     it('should poll on interval', async({page, server}) => {
-      let success = false;
-      const startTime = Date.now();
       const polling = 100;
-      const watchdog = page.waitForFunction(() => window.__FOO === 'hit', {polling})
-          .then(() => success = true);
-      await page.evaluate(() => window.__FOO = 'hit');
-      expect(success).toBe(false);
-      await page.evaluate(() => document.body.appendChild(document.createElement('div')));
-      await watchdog;
-      expect(Date.now() - startTime).not.toBeLessThan(polling / 2);
+      const timeDelta = await page.waitForFunction(() => {
+        if (!window.__startTime) {
+          window.__startTime = Date.now();
+          return false;
+        }
+        return Date.now() - window.__startTime;
+      }, {polling});
+      expect(timeDelta).not.toBeLessThan(polling);
     });
     it('should poll on mutation', async({page, server}) => {
       let success = false;
@@ -377,6 +376,18 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
       await page.waitForSelector('.zombo', {timeout: 10}).catch(e => error = e);
       expect(error.stack).toContain('waittask.spec.js');
     });
+
+    it('should support >> selector syntax', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const frame = page.mainFrame();
+      const watchdog = frame.waitForSelector('css=div >> css=span');
+      await frame.evaluate(addElement, 'br');
+      await frame.evaluate(addElement, 'div');
+      await frame.evaluate(() => document.querySelector('div').appendChild(document.createElement('span')));
+      const eHandle = await watchdog;
+      const tagName = await eHandle.getProperty('tagName').then(e => e.jsonValue());
+      expect(tagName).toBe('SPAN');
+    });
   });
 
   describe('Frame.waitForXPath', function() {
@@ -391,7 +402,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
       let error = null;
       await page.waitForXPath('//div', {timeout: 10}).catch(e => error = e);
       expect(error).toBeTruthy();
-      expect(error.message).toContain('waiting for XPath "//div" failed: timeout');
+      expect(error.message).toContain('waiting for selector "xpath=//div" failed: timeout');
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should run in specified frame', async({page, server}) => {
@@ -429,11 +440,6 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
       const waitForXPath = page.waitForXPath('//*[@class="zombo"]');
       await page.setContent(`<div class='zombo'>anything</div>`);
       expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('anything');
-    });
-    it('should allow you to select a text node', async({page, server}) => {
-      await page.setContent(`<div>some text</div>`);
-      const text = await page.waitForXPath('//div/text()');
-      expect(await (await text.getProperty('nodeType')).jsonValue()).toBe(3 /* Node.TEXT_NODE */);
     });
     it('should allow you to select an element with single slash', async({page, server}) => {
       await page.setContent(`<div>some text</div>`);
