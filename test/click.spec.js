@@ -306,5 +306,14 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('button');
       expect(await page.evaluate(() => shiftKey)).toBe(false);
     });
+    it.skip(CHROME)('should click an offscreen element when scroll-behavior is smooth', async({page}) => {
+      await page.setContent(`
+        <div style="border: 1px solid black; height: 500px; overflow: auto; width: 500px; scroll-behavior: smooth">
+        <button style="margin-top: 2000px" onClick="window.clicked = true">hi</button>
+        </div>
+      `);
+      await page.click('button');
+      expect(await page.evaluate('window.clicked')).toBe(true);
+    });
   });
 };
