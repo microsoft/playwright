@@ -344,9 +344,8 @@ export function waitForFunctionTask(pageFunction: Function | string, options: ty
   }, await domWorld.injected(), predicateBody, polling, options.timeout, ...args);
 }
 
-export function waitForSelectorTask(selector: string | ScopedSelector, timeout: number): Task {
+export function waitForSelectorTask(selector: string | types.Selector, timeout: number): Task {
   return async (domWorld: DOMWorld) => {
-    // TODO: we should not be able to adopt selector scope from a different document - handle this case.
     const resolved = await domWorld.resolveSelector(selector);
     return domWorld.context.evaluateHandle((injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined, timeout: number) => {
       if (visible !== undefined)

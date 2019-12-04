@@ -202,11 +202,13 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 
   async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.DOMWorld): Promise<dom.ElementHandle> {
-    const {object} = await this._client.send('DOM.resolveNode', {
+    const result = await this._client.send('DOM.resolveNode', {
       backendNodeId,
       executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId,
-    });
-    return to.context._createHandle(object).asElement()!;
+    }).catch(debugError);
+    if (!result)
+      throw new Error('Unable to adopt element handle from a different document');
+    return to.context._createHandle(result.object).asElement()!;
   }
 }
 
