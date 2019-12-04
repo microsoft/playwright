@@ -1,6 +1,6 @@
-From 5fb8a37423017465d53a97bef9a5d499c75c5a63 Mon Sep 17 00:00:00 2001
+From dccbfbc3866ce83b995c6c1977579878573a6394 Mon Sep 17 00:00:00 2001
 From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Tue, 3 Dec 2019 17:07:22 -0800
+Date: Wed, 4 Dec 2019 09:38:53 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
@@ -19,12 +19,13 @@ Subject: [PATCH] chore: bootstrap
  .../inspector/protocol/Page.json              |  82 ++-
  .../inspector/protocol/Target.json            |  18 +-
  Source/WebCore/html/FileInputType.cpp         |   6 +
- .../inspector/InspectorInstrumentation.cpp    |  12 +
+ .../inspector/InspectorInstrumentation.cpp    |  14 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
  .../inspector/agents/InspectorDOMAgent.cpp    | 103 ++++
  .../inspector/agents/InspectorDOMAgent.h      |   2 +
- .../inspector/agents/InspectorPageAgent.cpp   | 495 +++++++++++++++++-
+ .../inspector/agents/InspectorPageAgent.cpp   | 496 +++++++++++++++++-
  .../inspector/agents/InspectorPageAgent.h     |  16 +-
+ .../agents/page/PageRuntimeAgent.cpp          |  14 +-
  Source/WebCore/loader/FrameLoader.cpp         |   1 +
  Source/WebCore/page/History.cpp               |   1 +
  .../WebCore/platform/PlatformKeyboardEvent.h  |   2 +
@@ -113,7 +114,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  17 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 109 files changed, 4548 insertions(+), 62 deletions(-)
+ 110 files changed, 4557 insertions(+), 70 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -1058,9 +1059,18 @@ index 4e41fd3f807..1f7be602cb2 100644
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index cb6ed9f6c84..95154bc9140 100644
+index cb6ed9f6c84..458def75277 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
+@@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
+ 
+ void InspectorInstrumentation::didClearWindowObjectInWorldImpl(InstrumentingAgents& instrumentingAgents, Frame& frame, DOMWrapperWorld& world)
+ {
+-    if (&world != &mainThreadNormalWorld())
++    if (!world.isNormal())
+         return;
+ 
+     if (auto* pageDebuggerAgent = instrumentingAgents.pageDebuggerAgent())
 @@ -783,6 +783,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
@@ -1319,7 +1329,7 @@ index 51639abeb84..16080f2c017 100644
      // InspectorInstrumentation
      int identifierForNode(Node&);
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..62236cbccd7 100644
+index f2e228b7f74..d6d0c38f6b7 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,7 @@
@@ -1392,7 +1402,15 @@ index f2e228b7f74..62236cbccd7 100644
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -761,6 +770,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -691,6 +700,7 @@ void InspectorPageAgent::loadEventFired()
+ 
+ void InspectorPageAgent::frameNavigated(Frame& frame)
+ {
++    mainWorldExecState(&frame);
+     m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
+ }
+ 
+@@ -761,6 +771,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1405,7 +1423,7 @@ index f2e228b7f74..62236cbccd7 100644
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -815,6 +830,25 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -815,6 +831,25 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1431,7 +1449,7 @@ index f2e228b7f74..62236cbccd7 100644
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1020,455 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1021,455 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -1961,6 +1979,41 @@ index 4fd8c0b1016..50712625607 100644
  };
  
  } // namespace WebCore
+diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
+index 8c4a104da04..3dc08926a75 100644
+--- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
++++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
+@@ -70,14 +70,12 @@ PageRuntimeAgent::~PageRuntimeAgent() = default;
+ 
+ void PageRuntimeAgent::enable(ErrorString& errorString)
+ {
+-    bool enabled = m_instrumentingAgents.pageRuntimeAgent() == this;
++    if (m_instrumentingAgents.pageRuntimeAgent() == this)
++        return;
++    reportExecutionContextCreation();
+ 
+     InspectorRuntimeAgent::enable(errorString);
+-
+     m_instrumentingAgents.setPageRuntimeAgent(this);
+-
+-    if (!enabled)
+-        reportExecutionContextCreation();
+ }
+ 
+ void PageRuntimeAgent::disable(ErrorString& errorString)
+@@ -142,8 +140,10 @@ void PageRuntimeAgent::reportExecutionContextCreation()
+         frame->script().collectIsolatedContexts(isolatedContexts);
+         if (isolatedContexts.isEmpty())
+             continue;
+-        for (auto& context : isolatedContexts)
+-            notifyContextCreated(frameId, context.first, context.second, false);
++        for (auto& context : isolatedContexts) {
++            if (scriptState != context.first)
++                notifyContextCreated(frameId, context.first, context.second, false);
++        }
+         isolatedContexts.clear();
+     }
+ }
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
 index 9b4211b4212..5881bd624df 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
