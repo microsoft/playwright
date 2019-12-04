@@ -1119,6 +1119,27 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.fill('textarea', 123).catch(e => error = e);
       expect(error.message).toContain('Value must be string.');
     });
+    it('should respect selector visibilty', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.fill({selector: 'input', visible: true}, 'some value');
+      expect(await page.evaluate(() => result)).toBe('some value');
+
+      let error = null;
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.fill({selector: 'input', visible: false}, 'some value').catch(e => error = e);
+      expect(error.message).toBe('No node found for selector: [hidden] input');
+
+      error = null;
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.$eval('input', i => i.style.display = 'none');
+      await page.fill({selector: 'input', visible: true}, 'some value').catch(e => error = e);
+      expect(error.message).toBe('No node found for selector: [visible] input');
+
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.$eval('input', i => i.style.display = 'none');
+      await page.fill({selector: 'input', visible: false}, 'some value');
+      expect(await page.evaluate(() => result)).toBe('');
+    });
   });
 
   // FIXME: WebKit shouldn't send targetDestroyed on PSON so that we could

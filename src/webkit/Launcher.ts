@@ -78,7 +78,7 @@ export class Launcher {
       stdio = ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'];
     webkitArguments.push('--inspector-pipe');
     if (options.headless !== false)
-        webkitArguments.push('--headless');
+      webkitArguments.push('--headless');
     const webkitProcess = childProcess.spawn(
         webkitExecutable,
         webkitArguments,

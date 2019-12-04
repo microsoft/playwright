@@ -10,6 +10,7 @@ import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
 import { assert, helper } from './helper';
 import Injected from './injected/injected';
+import { SelectorRoot } from './injected/selectorEngine';
 
 export interface DOMWorldDelegate {
   keyboard: input.Keyboard;
@@ -25,10 +26,8 @@ export interface DOMWorldDelegate {
   adoptElementHandle(handle: ElementHandle, to: DOMWorld): Promise<ElementHandle>;
 }
 
-type SelectorRoot = Element | ShadowRoot | Document;
-
-type ResolvedSelector = { root?: ElementHandle, selector: string, disposeRoot?: boolean };
-type Selector = string | { root?: ElementHandle, selector: string };
+export type ScopedSelector = types.Selector & { scope?: ElementHandle };
+type ResolvedSelector = { scope?: ElementHandle, selector: string, visible?: boolean, disposeScope?: boolean };
 
 export class DOMWorld {
   readonly context: js.ExecutionContext;
@@ -65,37 +64,47 @@ export class DOMWorld {
     return this.delegate.adoptElementHandle(handle, this);
   }
 
-  private async _resolveSelector(selector: Selector): Promise<ResolvedSelector> {
+  async resolveSelector(selector: string | ScopedSelector): Promise<ResolvedSelector> {
     if (helper.isString(selector))
       return { selector: normalizeSelector(selector) };
-    if (selector.root && selector.root.executionContext() !== this.context) {
-      const root = await this.adoptElementHandle(selector.root);
-      return { root, selector: normalizeSelector(selector.selector), disposeRoot: true };
+    if (selector.scope && selector.scope.executionContext() !== this.context) {
+      const scope = await this.adoptElementHandle(selector.scope);
+      return { scope, selector: normalizeSelector(selector.selector), disposeScope: true, visible: selector.visible };
     }
-    return { root: selector.root, selector: normalizeSelector(selector.selector) };
+    return { scope: selector.scope, selector: normalizeSelector(selector.selector), visible: selector.visible };
   }
 
-  async $(selector: Selector): Promise<ElementHandle | null> {
-    const resolved = await this._resolveSelector(selector);
+  async $(selector: string | ScopedSelector): Promise<ElementHandle | null> {
+    const resolved = await this.resolveSelector(selector);
     const handle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, root: SelectorRoot | undefined) => injected.querySelector(selector, root || document),
-        await this.injected(), resolved.selector, resolved.root
+        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
+          const element = injected.querySelector(selector, scope || document);
+          if (visible === undefined || !element)
+            return element;
+          return injected.isVisible(element) === visible ? element : undefined;
+        },
+        await this.injected(), resolved.selector, resolved.scope, resolved.visible
     );
-    if (resolved.disposeRoot)
-      await resolved.root.dispose();
+    if (resolved.disposeScope)
+      await resolved.scope.dispose();
     if (!handle.asElement())
       await handle.dispose();
     return handle.asElement();
   }
 
-  async $$(selector: Selector): Promise<ElementHandle[]> {
-    const resolved = await this._resolveSelector(selector);
+  async $$(selector: string | ScopedSelector): Promise<ElementHandle[]> {
+    const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, root: SelectorRoot | undefined) => injected.querySelectorAll(selector, root || document),
-        await this.injected(), resolved.selector, resolved.root
+        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
+          const elements = injected.querySelectorAll(selector, scope || document);
+          if (visible !== undefined)
+            return elements.filter(element => injected.isVisible(element) === visible);
+          return elements;
+        },
+        await this.injected(), resolved.selector, resolved.scope, resolved.visible
     );
-    if (resolved.disposeRoot)
-      await resolved.root.dispose();
+    if (resolved.disposeScope)
+      await resolved.scope.dispose();
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
     const result = [];
@@ -109,20 +118,25 @@ export class DOMWorld {
     return result;
   }
 
-  $eval: types.$Eval<Selector> = async (selector, pageFunction, ...args) => {
+  $eval: types.$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
     const elementHandle = await this.$(selector);
     if (!elementHandle)
-      throw new Error(`Error: failed to find element matching selector "${selectorToString(selector)}"`);
+      throw new Error(`Error: failed to find element matching selector "${types.selectorToString(selector)}"`);
     const result = await elementHandle.evaluate(pageFunction, ...args as any);
     await elementHandle.dispose();
     return result;
   }
 
-  $$eval: types.$$Eval<Selector> = async (selector, pageFunction, ...args) => {
-    const resolved = await this._resolveSelector(selector);
+  $$eval: types.$$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
+    const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, root: SelectorRoot | undefined) => injected.querySelectorAll(selector, root || document),
-        await this.injected(), resolved.selector, resolved.root
+        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
+          const elements = injected.querySelectorAll(selector, scope || document);
+          if (visible !== undefined)
+            return elements.filter(element => injected.isVisible(element) === visible);
+          return elements;
+        },
+        await this.injected(), resolved.selector, resolved.scope, resolved.visible
     );
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
     await arrayHandle.dispose();
@@ -223,6 +237,7 @@ export class ElementHandle extends js.JSHandle {
     if (error)
       throw new Error(error);
     await this.focus();
+    // TODO: we should check that focus() succeeded.
     await this._world.delegate.keyboard.sendCharacters(value);
   }
 
@@ -254,24 +269,31 @@ export class ElementHandle extends js.JSHandle {
     return this._world.delegate.screenshot(this, options);
   }
 
-  $(selector: string): Promise<ElementHandle | null> {
-    return this._world.$({ root: this, selector });
+  private _scopedSelector(selector: string | types.Selector): string | ScopedSelector {
+    selector = types.clearSelector(selector);
+    if (helper.isString(selector))
+      selector = { selector };
+    return { scope: this, selector: selector.selector, visible: selector.visible };
   }
 
-  $$(selector: string): Promise<ElementHandle[]> {
-    return this._world.$$({ root: this, selector });
+  $(selector: string | types.Selector): Promise<ElementHandle | null> {
+    return this._world.$(this._scopedSelector(selector));
   }
 
-  $eval: types.$Eval = (selector, pageFunction, ...args) => {
-    return this._world.$eval({ root: this, selector }, pageFunction, ...args as any);
+  $$(selector: string | types.Selector): Promise<ElementHandle[]> {
+    return this._world.$$(this._scopedSelector(selector));
   }
 
-  $$eval: types.$$Eval = (selector, pageFunction, ...args) => {
-    return this._world.$$eval({ root: this, selector }, pageFunction, ...args as any);
+  $eval: types.$Eval<string | types.Selector> = (selector, pageFunction, ...args) => {
+    return this._world.$eval(this._scopedSelector(selector), pageFunction, ...args as any);
+  }
+
+  $$eval: types.$$Eval<string | types.Selector> = (selector, pageFunction, ...args) => {
+    return this._world.$$eval(this._scopedSelector(selector), pageFunction, ...args as any);
   }
 
   $x(expression: string): Promise<ElementHandle[]> {
-    return this._world.$$({ root: this, selector: 'xpath=' + expression });
+    return this._world.$$({ scope: this, selector: 'xpath=' + expression });
   }
 
   isIntersectingViewport(): Promise<boolean> {
@@ -300,18 +322,9 @@ function normalizeSelector(selector: string): string {
   return 'css=' + selector;
 }
 
-function selectorToString(selector: Selector): string {
-  if (typeof selector === 'string')
-    return selector;
-  return `:scope >> ${selector.selector}`;
-}
-
 export type Task = (domWorld: DOMWorld) => Promise<js.JSHandle>;
 
-export type Polling = 'raf' | 'mutation' | number;
-export type WaitForFunctionOptions = { polling?: Polling, timeout?: number };
-
-export function waitForFunctionTask(pageFunction: Function | string, options: WaitForFunctionOptions, ...args: any[]) {
+export function waitForFunctionTask(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]) {
   const { polling = 'raf' } = options;
   if (helper.isString(polling))
     assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
@@ -321,7 +334,7 @@ export function waitForFunctionTask(pageFunction: Function | string, options: Wa
     throw new Error('Unknown polling options: ' + polling);
   const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(...args)';
 
-  return async (domWorld: DOMWorld) => domWorld.context.evaluateHandle((injected: Injected, predicateBody: string, polling: Polling, timeout: number, ...args) => {
+  return async (domWorld: DOMWorld) => domWorld.context.evaluateHandle((injected: Injected, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
     const predicate = new Function('...args', predicateBody);
     if (polling === 'raf')
       return injected.pollRaf(predicate, timeout, ...args);
@@ -331,32 +344,23 @@ export function waitForFunctionTask(pageFunction: Function | string, options: Wa
   }, await domWorld.injected(), predicateBody, polling, options.timeout, ...args);
 }
 
-export type WaitForSelectorOptions = { visible?: boolean, hidden?: boolean, timeout?: number };
+export function waitForSelectorTask(selector: string | ScopedSelector, timeout: number): Task {
+  return async (domWorld: DOMWorld) => {
+    // TODO: we should not be able to adopt selector scope from a different document - handle this case.
+    const resolved = await domWorld.resolveSelector(selector);
+    return domWorld.context.evaluateHandle((injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined, timeout: number) => {
+      if (visible !== undefined)
+        return injected.pollRaf(predicate, timeout);
+      return injected.pollMutation(predicate, timeout);
 
-export function waitForSelectorTask(selector: string, options: WaitForSelectorOptions): Task {
-  const { visible: waitForVisible = false, hidden: waitForHidden = false } = options;
-  selector = normalizeSelector(selector);
-
-  return async (domWorld: DOMWorld) => domWorld.context.evaluateHandle((injected: Injected, selector: string, waitForVisible: boolean, waitForHidden: boolean, timeout: number) => {
-    if (waitForVisible || waitForHidden)
-      return injected.pollRaf(predicate, timeout);
-    return injected.pollMutation(predicate, timeout);
-
-    function predicate(): Element | boolean {
-      const element = injected.querySelector(selector, document);
-      if (!element)
-        return waitForHidden;
-      if (!waitForVisible && !waitForHidden)
-        return element;
-      const style = window.getComputedStyle(element);
-      const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();
-      const success = (waitForVisible === isVisible || waitForHidden === !isVisible);
-      return success ? element : false;
-
-      function hasVisibleBoundingBox(): boolean {
-        const rect = element.getBoundingClientRect();
-        return !!(rect.top || rect.bottom || rect.width || rect.height);
+      function predicate(): Element | boolean {
+        const element = injected.querySelector(selector, scope || document);
+        if (!element)
+          return visible === false;
+        if (visible === undefined)
+          return element;
+        return injected.isVisible(element) === visible ? element : false;
       }
-    }
-  }, await domWorld.injected(), selector, waitForVisible, waitForHidden, options.timeout);
+    }, await domWorld.injected(), resolved.selector, resolved.scope, resolved.visible, timeout);
+  };
 }

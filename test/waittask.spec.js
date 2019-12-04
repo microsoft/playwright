@@ -289,7 +289,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
     });
     it('should wait for visible', async({page, server}) => {
       let divFound = false;
-      const waitForSelector = page.waitForSelector('div', {visible: true}).then(() => divFound = true);
+      const waitForSelector = page.waitForSelector({selector: 'div', visible: true}).then(() => divFound = true);
       await page.setContent(`<div style='display: none; visibility: hidden;'>1</div>`);
       expect(divFound).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
@@ -300,7 +300,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
     });
     it('should wait for visible recursively', async({page, server}) => {
       let divVisible = false;
-      const waitForSelector = page.waitForSelector('div#inner', {visible: true}).then(() => divVisible = true);
+      const waitForSelector = page.waitForSelector({selector: 'div#inner', visible: true}).then(() => divVisible = true);
       await page.setContent(`<div style='display: none; visibility: hidden;'><div id="inner">hi</div></div>`);
       expect(divVisible).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
@@ -312,7 +312,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
     it('hidden should wait for visibility: hidden', async({page, server}) => {
       let divHidden = false;
       await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', {hidden: true}).then(() => divHidden = true);
+      const waitForSelector = page.waitForSelector({selector: 'div', visible: false}).then(() => divHidden = true);
       await page.waitForSelector('div'); // do a round trip
       expect(divHidden).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.setProperty('visibility', 'hidden'));
@@ -322,7 +322,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
     it('hidden should wait for display: none', async({page, server}) => {
       let divHidden = false;
       await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', {hidden: true}).then(() => divHidden = true);
+      const waitForSelector = page.waitForSelector({selector: 'div', visible: false}).then(() => divHidden = true);
       await page.waitForSelector('div'); // do a round trip
       expect(divHidden).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.setProperty('display', 'none'));
@@ -332,7 +332,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
     it('hidden should wait for removal', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let divRemoved = false;
-      const waitForSelector = page.waitForSelector('div', {hidden: true}).then(() => divRemoved = true);
+      const waitForSelector = page.waitForSelector({selector: 'div', visible: false}).then(() => divRemoved = true);
       await page.waitForSelector('div'); // do a round trip
       expect(divRemoved).toBe(false);
       await page.evaluate(() => document.querySelector('div').remove());
@@ -340,7 +340,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
       expect(divRemoved).toBe(true);
     });
     it('should return null if waiting to hide non-existing element', async({page, server}) => {
-      const handle = await page.waitForSelector('non-existing', { hidden: true });
+      const handle = await page.waitForSelector({selector: 'non-existing', visible: false });
       expect(handle).toBe(null);
     });
     it('should respect timeout', async({page, server}) => {
@@ -353,9 +353,9 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
     it('should have an error message specifically for awaiting an element to be hidden', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let error = null;
-      await page.waitForSelector('div', {hidden: true, timeout: 10}).catch(e => error = e);
+      await page.waitForSelector({selector: 'div', visible: false}, {timeout: 10}).catch(e => error = e);
       expect(error).toBeTruthy();
-      expect(error.message).toContain('waiting for selector "div" to be hidden failed: timeout');
+      expect(error.message).toContain('waiting for selector "[hidden] div" failed: timeout');
     });
 
     it('should respond to node attribute mutation', async({page, server}) => {
@@ -425,16 +425,6 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
       await waitPromise;
       expect(waitError).toBeTruthy();
       expect(waitError.message).toContain('waitForFunction failed: frame got detached.');
-    });
-    it('hidden should wait for display: none', async({page, server}) => {
-      let divHidden = false;
-      await page.setContent(`<div style='display: block;'></div>`);
-      const waitForXPath = page.waitForXPath('//div', {hidden: true}).then(() => divHidden = true);
-      await page.waitForXPath('//div'); // do a round trip
-      expect(divHidden).toBe(false);
-      await page.evaluate(() => document.querySelector('div').style.setProperty('display', 'none'));
-      expect(await waitForXPath).toBe(true);
-      expect(divHidden).toBe(true);
     });
     it('should return the element handle', async({page, server}) => {
       const waitForXPath = page.waitForXPath('//*[@class="zombo"]');

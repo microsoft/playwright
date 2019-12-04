@@ -154,6 +154,15 @@ function checkSources(sources) {
       typeName = 'Object';
     const nextCircular = [typeName].concat(circular);
 
+    if (typeName === 'Selector') {
+      if (!excludeClasses.has(typeName)) {
+        const properties = type.getProperties().map(property => serializeSymbol(property, nextCircular));
+        classes.push(new Documentation.Class(typeName, properties));
+        excludeClasses.add(typeName);
+      }
+      return new Documentation.Type(typeName, []);
+    }
+
     if (isRegularObject(type)) {
       let properties = undefined;
       if (!circular.includes(typeName))
