@@ -1,6 +1,6 @@
-From de7109a425b2e772a67a8c1497038d678163ef04 Mon Sep 17 00:00:00 2001
+From 5fb8a37423017465d53a97bef9a5d499c75c5a63 Mon Sep 17 00:00:00 2001
 From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Tue, 3 Dec 2019 14:08:27 -0800
+Date: Tue, 3 Dec 2019 17:07:22 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
@@ -97,7 +97,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/InspectorBrowserAgentClientMac.mm     |  54 ++
  .../UIProcess/mac/InspectorDialogAgentMac.mm  |  15 +
  .../WebKit/UIProcess/mac/PageClientImplMac.mm |   5 +
- .../mac/WebPageInspectorEmulationAgentMac.mm  |  19 +
+ .../mac/WebPageInspectorEmulationAgentMac.mm  |  21 +
  .../mac/WebPageInspectorInputAgentMac.mm      |  14 +
  .../mac/WebPageInspectorTargetProxyMac.mm     |  18 +
  .../wpe/WebPageInspectorEmulationAgentWPE.cpp |  18 +
@@ -109,11 +109,11 @@ Subject: [PATCH] chore: bootstrap
  Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
  Tools/MiniBrowser/mac/AppDelegate.h           |   7 +-
- Tools/MiniBrowser/mac/AppDelegate.m           | 134 ++++-
+ Tools/MiniBrowser/mac/AppDelegate.m           | 135 ++++-
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  17 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 109 files changed, 4545 insertions(+), 62 deletions(-)
+ 109 files changed, 4548 insertions(+), 62 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -5849,26 +5849,28 @@ index 22653d74398..bf27558fdfd 100644
  
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
 new file mode 100644
-index 00000000000..1a864e20400
+index 00000000000..d364ca6d955
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,21 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
-+#include "config.h"
-+#include "WebPageInspectorEmulationAgent.h"
++#import "config.h"
++#import "WebPageInspectorEmulationAgent.h"
 +
-+#include "WebPageProxy.h"
++#import "WebPageProxy.h"
 +
 +namespace WebKit {
++
 +void WebPageInspectorEmulationAgent::platformSetSize(String& error, int width, int height)
 +{
 +    NSWindow* window = m_page.platformWindow();
-+    NSRect frame = [window frame];
-+    frame.origin.y += frame.size.height;
-+    frame.origin.y -= height;
-+    frame.size = NSMakeSize(width, height);
++    NSRect windowRect = [window frame];
++    NSRect viewRect = window.contentLayoutRect;
++    windowRect.size.width += width - viewRect.size.width;
++    windowRect.size.height += height - viewRect.size.height;
++    [window setFrame:windowRect display:YES animate:NO];
 +}
 +
 +} // namespace WebKit
@@ -6393,7 +6395,7 @@ index 45ef1a6424e..1c9532ce74c 100644
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..1f197b4fd89 100644
+index b6af4ef724f..15e30097e7d 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
 @@ -34,6 +34,7 @@
@@ -6531,7 +6533,7 @@ index b6af4ef724f..1f197b4fd89 100644
      [_extensionManagerWindowController showWindow:sender];
  }
  
-@@ -345,4 +393,78 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +393,79 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
@@ -6577,6 +6579,7 @@ index b6af4ef724f..1f197b4fd89 100644
 +    if (!webView)
 +        return nil;
 +
++    webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 +    [window.contentView addSubview:webView];
 +    NSURL *url = [NSURL _webkit_URLWithUserTypedString:@"about:blank"];
 +    [webView loadRequest:[NSURLRequest requestWithURL:url]];
