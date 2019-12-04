@@ -1,7 +1,7 @@
-From dccbfbc3866ce83b995c6c1977579878573a6394 Mon Sep 17 00:00:00 2001
-From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Wed, 4 Dec 2019 09:38:53 -0800
-Subject: [PATCH] chore: bootstrap
+From 8fe53f423f30e66c05f2964778be96f7d1dd555f Mon Sep 17 00:00:00 2001
+From: Pavel <pavel.feldman@gmail.com>
+Date: Wed, 4 Dec 2019 11:30:04 -0800
+Subject: [PATCH xserver] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -44,16 +44,21 @@ Subject: [PATCH] chore: bootstrap
  .../Shared/gtk/NativeWebMouseEventGtk.cpp     |   4 +-
  Source/WebKit/Sources.txt                     |   9 +
  Source/WebKit/SourcesCocoa.txt                |   1 +
- Source/WebKit/SourcesGTK.txt                  |   6 +
+ Source/WebKit/SourcesGTK.txt                  |   5 +
  Source/WebKit/SourcesWPE.txt                  |   6 +-
- Source/WebKit/UIProcess/API/C/WKPage.cpp      |   2 +
+ Source/WebKit/UIProcess/API/APIUIClient.h     |   1 +
+ Source/WebKit/UIProcess/API/C/WKPage.cpp      |   4 +
+ .../WebKit/UIProcess/API/Cocoa/WKUIDelegate.h |   7 +
  .../UIProcess/API/Cocoa/WKWebsiteDataStore.h  |   3 +-
  .../UIProcess/API/Cocoa/WKWebsiteDataStore.mm |   6 +
  .../UIProcess/API/Cocoa/_WKBrowserInspector.h |  33 ++
  .../API/Cocoa/_WKBrowserInspector.mm          |  28 +
  .../API/glib/WebKitBrowserInspector.cpp       | 114 ++++
  .../API/glib/WebKitBrowserInspectorPrivate.h  |   9 +
+ .../UIProcess/API/glib/WebKitUIClient.cpp     |   4 +
  .../UIProcess/API/glib/WebKitWebContext.cpp   |   5 +
+ .../UIProcess/API/glib/WebKitWebView.cpp      |   9 +
+ .../UIProcess/API/glib/WebKitWebViewPrivate.h |   1 +
  .../UIProcess/API/gtk/PageClientImpl.cpp      |   2 +
  .../API/gtk/WebKitBrowserInspector.h          |  57 ++
  Source/WebKit/UIProcess/API/gtk/webkit2.h     |   1 +
@@ -67,10 +72,12 @@ Subject: [PATCH] chore: bootstrap
  .../UIProcess/BrowserInspectorTargetAgent.h   |  35 ++
  .../PopUpSOAuthorizationSession.h             |   4 +
  .../PopUpSOAuthorizationSession.mm            |   1 +
+ Source/WebKit/UIProcess/Cocoa/UIDelegate.h    |   2 +
+ Source/WebKit/UIProcess/Cocoa/UIDelegate.mm   |  10 +
  .../UIProcess/InspectorBrowserAgent.cpp       | 255 +++++++++
  .../WebKit/UIProcess/InspectorBrowserAgent.h  |  63 +++
  .../UIProcess/InspectorBrowserAgentClient.h   |  33 ++
- .../WebKit/UIProcess/InspectorDialogAgent.cpp |  62 +++
+ .../WebKit/UIProcess/InspectorDialogAgent.cpp |  64 +++
  .../WebKit/UIProcess/InspectorDialogAgent.h   |  48 ++
  .../WebKit/UIProcess/InspectorTargetProxy.cpp |  18 +-
  .../WebKit/UIProcess/InspectorTargetProxy.h   |  11 +-
@@ -89,14 +96,12 @@ Subject: [PATCH] chore: bootstrap
  Source/WebKit/UIProcess/WebPageProxy.h        |  13 +
  .../glib/InspectorBrowserAgentClientGLib.cpp  | 100 ++++
  .../glib/InspectorBrowserAgentClientGLib.h    |  36 ++
- .../UIProcess/gtk/InspectorDialogAgentGtk.cpp |  23 +
  .../gtk/WebPageInspectorEmulationAgentGtk.cpp |  35 ++
  .../gtk/WebPageInspectorInputAgentGtk.cpp     |  85 +++
  .../gtk/WebPageInspectorTargetProxyGtk.cpp    |  22 +
  .../WebKit/UIProcess/ios/PageClientImplIOS.mm |   2 +
  .../mac/InspectorBrowserAgentClientMac.h      |  29 +
  .../mac/InspectorBrowserAgentClientMac.mm     |  54 ++
- .../UIProcess/mac/InspectorDialogAgentMac.mm  |  15 +
  .../WebKit/UIProcess/mac/PageClientImplMac.mm |   5 +
  .../mac/WebPageInspectorEmulationAgentMac.mm  |  21 +
  .../mac/WebPageInspectorInputAgentMac.mm      |  14 +
@@ -104,17 +109,17 @@ Subject: [PATCH] chore: bootstrap
  .../wpe/WebPageInspectorEmulationAgentWPE.cpp |  18 +
  .../wpe/WebPageInspectorInputAgentWPE.cpp     |  76 +++
  .../wpe/WebPageInspectorTargetProxyWPE.cpp    |  18 +
- .../WebKit/WebKit.xcodeproj/project.pbxproj   |  63 ++-
+ .../WebKit/WebKit.xcodeproj/project.pbxproj   |  59 ++-
  .../WebPage/WebPageInspectorTarget.cpp        |   7 +
  .../WebPage/WebPageInspectorTarget.h          |   1 +
  Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
- Tools/MiniBrowser/mac/AppDelegate.h           |   7 +-
- Tools/MiniBrowser/mac/AppDelegate.m           | 135 ++++-
+ Tools/MiniBrowser/mac/AppDelegate.h           |  14 +-
+ Tools/MiniBrowser/mac/AppDelegate.m           | 187 ++++++-
  .../mac/WK2BrowserWindowController.h          |   3 +
- .../mac/WK2BrowserWindowController.m          |  17 +-
+ .../mac/WK2BrowserWindowController.m          |  35 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 110 files changed, 4557 insertions(+), 70 deletions(-)
+ 115 files changed, 4627 insertions(+), 72 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -146,13 +151,11 @@ Subject: [PATCH] chore: bootstrap
  create mode 100644 Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
  create mode 100644 Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
  create mode 100644 Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
- create mode 100644 Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
  create mode 100644 Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
  create mode 100644 Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
- create mode 100644 Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm
  create mode 100644 Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
  create mode 100644 Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
  create mode 100644 Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
@@ -2877,7 +2880,7 @@ index 63c4dfa10ab..c9a7dcf3dea 100644
  UIProcess/API/Cocoa/_WKContextMenuElementInfo.mm
  UIProcess/API/Cocoa/_WKCustomHeaderFields.mm @no-unify
 diff --git a/Source/WebKit/SourcesGTK.txt b/Source/WebKit/SourcesGTK.txt
-index 1a05e334343..646a1377cef 100644
+index 1a05e334343..33e6d47f028 100644
 --- a/Source/WebKit/SourcesGTK.txt
 +++ b/Source/WebKit/SourcesGTK.txt
 @@ -128,6 +128,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -2896,15 +2899,7 @@ index 1a05e334343..646a1377cef 100644
  UIProcess/glib/RemoteInspectorClient.cpp
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
-@@ -238,6 +240,7 @@ UIProcess/gtk/AcceleratedBackingStoreX11.cpp @no-unify
- UIProcess/gtk/DragAndDropHandler.cpp
- UIProcess/gtk/GestureController.cpp
- UIProcess/gtk/HardwareAccelerationManager.cpp
-+UIProcess/gtk/InspectorDialogAgentGtk.cpp
- UIProcess/gtk/InputMethodFilter.cpp
- UIProcess/gtk/KeyBindingTranslator.cpp
- UIProcess/gtk/PointerLockManager.cpp @no-unify
-@@ -252,6 +255,9 @@ UIProcess/gtk/WebColorPickerGtk.cpp
+@@ -252,6 +254,9 @@ UIProcess/gtk/WebColorPickerGtk.cpp
  UIProcess/gtk/WebContextMenuProxyGtk.cpp
  UIProcess/gtk/WebDataListSuggestionsDropdownGtk.cpp
  UIProcess/gtk/WebInspectorProxyGtk.cpp
@@ -2945,11 +2940,32 @@ index 3d200fa60e9..ced6b04bfd2 100644
  UIProcess/wpe/WebPasteboardProxyWPE.cpp
  UIProcess/wpe/WebPreferencesWPE.cpp
  
+diff --git a/Source/WebKit/UIProcess/API/APIUIClient.h b/Source/WebKit/UIProcess/API/APIUIClient.h
+index 54513035b26..2d3200e4f6e 100644
+--- a/Source/WebKit/UIProcess/API/APIUIClient.h
++++ b/Source/WebKit/UIProcess/API/APIUIClient.h
+@@ -97,6 +97,7 @@ public:
+     virtual void runJavaScriptAlert(WebKit::WebPageProxy&, const WTF::String&, WebKit::WebFrameProxy*, WebCore::SecurityOriginData&&, Function<void()>&& completionHandler) { completionHandler(); }
+     virtual void runJavaScriptConfirm(WebKit::WebPageProxy&, const WTF::String&, WebKit::WebFrameProxy*, WebCore::SecurityOriginData&&, Function<void(bool)>&& completionHandler) { completionHandler(false); }
+     virtual void runJavaScriptPrompt(WebKit::WebPageProxy&, const WTF::String&, const WTF::String&, WebKit::WebFrameProxy*, WebCore::SecurityOriginData&&, Function<void(const WTF::String&)>&& completionHandler) { completionHandler(WTF::String()); }
++    virtual void handleJavaScriptDialog(WebKit::WebPageProxy&, bool, const WTF::String&) { }
+ 
+     virtual void setStatusText(WebKit::WebPageProxy*, const WTF::String&) { }
+     virtual void mouseDidMoveOverElement(WebKit::WebPageProxy&, const WebKit::WebHitTestResultData&, OptionSet<WebKit::WebEvent::Modifier>, Object*) { }
 diff --git a/Source/WebKit/UIProcess/API/C/WKPage.cpp b/Source/WebKit/UIProcess/API/C/WKPage.cpp
-index 19e273187ae..47e63871466 100644
+index 19e273187ae..14b3ef74afb 100644
 --- a/Source/WebKit/UIProcess/API/C/WKPage.cpp
 +++ b/Source/WebKit/UIProcess/API/C/WKPage.cpp
-@@ -1734,6 +1734,8 @@ void WKPageSetPageUIClient(WKPageRef pageRef, const WKPageUIClientBase* wkClient
+@@ -1674,6 +1674,8 @@ void WKPageSetPageUIClient(WKPageRef pageRef, const WKPageUIClientBase* wkClient
+             completionHandler(String());
+         }
+ 
++        void handleJavaScriptDialog(WebPageProxy&, bool, const String&) final { }
++
+         void setStatusText(WebPageProxy* page, const String& text) final
+         {
+             if (!m_client.setStatusText)
+@@ -1734,6 +1736,8 @@ void WKPageSetPageUIClient(WKPageRef pageRef, const WKPageUIClientBase* wkClient
          {
              if (!m_client.didNotHandleKeyEvent)
                  return;
@@ -2958,6 +2974,24 @@ index 19e273187ae..47e63871466 100644
              m_client.didNotHandleKeyEvent(toAPI(page), event.nativeEvent(), m_client.base.clientInfo);
          }
  
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h b/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
+index cad87f3ef2a..66145a38463 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
++++ b/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
+@@ -123,6 +123,13 @@ NS_ASSUME_NONNULL_BEGIN
+  */
+ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(nullable NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString * _Nullable result))completionHandler;
+ 
++/*! @abstract Handle a JavaScript dialog.
++ @param webView The web view invoking the delegate method.
++ @param accept Whether to accept the dialog.
++ @param value Value to use for prompt dialog.
++ */
++- (void)webView:(WKWebView *)webView handleJavaScriptDialog:(BOOL)accept value:(nullable NSString *)value;
++
+ #if TARGET_OS_IPHONE
+ 
+ /*! @abstract Allows your app to determine whether or not the given element should show a preview.
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.h b/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.h
 index 726c4972aa0..c67f4087977 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/WKWebsiteDataStore.h
@@ -3211,6 +3245,21 @@ index 00000000000..ab6b7621d10
 +#include "WebPageProxy.h"
 +
 +WebKit::WebPageProxy* webkitBrowserInspectorCreateNewPageInContext(WebKitWebContext*);
+diff --git a/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp b/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
+index 47801342ea6..ef163b6615a 100644
+--- a/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
++++ b/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
+@@ -90,6 +90,10 @@ private:
+     {
+         webkitWebViewRunJavaScriptPrompt(m_webView, message.utf8(), defaultValue.utf8(), WTFMove(completionHandler));
+     }
++    void handleJavaScriptDialog(WebPageProxy&, bool accept, const String& value) final
++    {
++        webkitWebViewHandleJavaScriptDialog(m_webView, accept, value);
++    }
+ 
+     bool canRunBeforeUnloadConfirmPanel() const final { return true; }
+ 
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 index 126bccf1314..a095db63bc5 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
@@ -3227,6 +3276,38 @@ index 126bccf1314..a095db63bc5 100644
      priv->processPool = WebProcessPool::create(configuration);
      priv->processPool->setPrimaryDataStore(webkitWebsiteDataManagerGetDataStore(priv->websiteDataManager.get()));
      priv->processPool->setUserMessageHandler([webContext](UserMessage&& message, CompletionHandler<void(UserMessage&&)>&& completionHandler) {
+diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
+index d21c782eded..c42842b14a7 100644
+--- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
++++ b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
+@@ -2379,6 +2379,15 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
+     webkit_script_dialog_unref(webView->priv->currentScriptDialog);
+ }
+ 
++void webkitWebViewHandleJavaScriptDialog(WebKitWebView* webView, bool accept, const String& value) {
++    if (!value.isNull())
++        webkitWebViewSetCurrentScriptDialogUserInput(webView, value);
++    if (accept)
++        webkitWebViewAcceptCurrentScriptDialog(webView);
++    else
++        webkitWebViewDismissCurrentScriptDialog(webView);
++}
++
+ bool webkitWebViewIsShowingScriptDialog(WebKitWebView* webView)
+ {
+     if (!webView->priv->currentScriptDialog)
+diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebViewPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitWebViewPrivate.h
+index a5f99b325dd..9ab1efc678b 100644
+--- a/Source/WebKit/UIProcess/API/glib/WebKitWebViewPrivate.h
++++ b/Source/WebKit/UIProcess/API/glib/WebKitWebViewPrivate.h
+@@ -58,6 +58,7 @@ void webkitWebViewRunJavaScriptAlert(WebKitWebView*, const CString& message, Fun
+ void webkitWebViewRunJavaScriptConfirm(WebKitWebView*, const CString& message, Function<void(bool)>&& completionHandler);
+ void webkitWebViewRunJavaScriptPrompt(WebKitWebView*, const CString& message, const CString& defaultText, Function<void(const String&)>&& completionHandler);
+ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView*, const CString& message, Function<void(bool)>&& completionHandler);
++void webkitWebViewHandleJavaScriptDialog(WebKitWebView*, bool accept, const String& value);
+ bool webkitWebViewIsShowingScriptDialog(WebKitWebView*);
+ bool webkitWebViewIsScriptDialogRunning(WebKitWebView*, WebKitScriptDialog*);
+ String webkitWebViewGetCurrentScriptDialogMessage(WebKitWebView*);
 diff --git a/Source/WebKit/UIProcess/API/gtk/PageClientImpl.cpp b/Source/WebKit/UIProcess/API/gtk/PageClientImpl.cpp
 index 00b7c6bbc46..c3a6cf416e1 100644
 --- a/Source/WebKit/UIProcess/API/gtk/PageClientImpl.cpp
@@ -3774,6 +3855,54 @@ index 0f18038de98..82a96677940 100644
  #import "WKNavigationDelegatePrivate.h"
  #import "WKUIDelegate.h"
  #import "WKWebViewConfigurationPrivate.h"
+diff --git a/Source/WebKit/UIProcess/Cocoa/UIDelegate.h b/Source/WebKit/UIProcess/Cocoa/UIDelegate.h
+index c9498f99107..d9ab65cc0d3 100644
+--- a/Source/WebKit/UIProcess/Cocoa/UIDelegate.h
++++ b/Source/WebKit/UIProcess/Cocoa/UIDelegate.h
+@@ -91,6 +91,7 @@ private:
+         void runJavaScriptAlert(WebPageProxy&, const WTF::String&, WebFrameProxy*, WebCore::SecurityOriginData&&, Function<void()>&& completionHandler) final;
+         void runJavaScriptConfirm(WebPageProxy&, const WTF::String&, WebFrameProxy*, WebCore::SecurityOriginData&&, Function<void(bool)>&& completionHandler) final;
+         void runJavaScriptPrompt(WebPageProxy&, const WTF::String&, const WTF::String&, WebFrameProxy*, WebCore::SecurityOriginData&&, Function<void(const WTF::String&)>&&) final;
++        void handleJavaScriptDialog(WebKit::WebPageProxy&, bool accept, const WTF::String&) final;
+         void presentStorageAccessConfirmDialog(const WTF::String& requestingDomain, const WTF::String& currentDomain, CompletionHandler<void(bool)>&&);
+         void requestStorageAccessConfirm(WebPageProxy&, WebFrameProxy*, const WebCore::RegistrableDomain& requestingDomain, const WebCore::RegistrableDomain& currentDomain, CompletionHandler<void(bool)>&&) final;
+         void decidePolicyForGeolocationPermissionRequest(WebPageProxy&, WebFrameProxy&, API::SecurityOrigin&, Function<void(bool)>&) final;
+@@ -171,6 +172,7 @@ private:
+         bool webViewRunJavaScriptAlertPanelWithMessageInitiatedByFrameCompletionHandler : 1;
+         bool webViewRunJavaScriptConfirmPanelWithMessageInitiatedByFrameCompletionHandler : 1;
+         bool webViewRunJavaScriptTextInputPanelWithPromptDefaultTextInitiatedByFrameCompletionHandler : 1;
++        bool webViewHandleJavaScriptDialogValue : 1;
+         bool webViewRequestStorageAccessPanelUnderFirstPartyCompletionHandler : 1;
+         bool webViewRunBeforeUnloadConfirmPanelWithMessageInitiatedByFrameCompletionHandler : 1;
+         bool webViewRequestGeolocationPermissionForFrameDecisionHandler : 1;
+diff --git a/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm b/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm
+index 83990d9e81e..732566829b3 100644
+--- a/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm
++++ b/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm
+@@ -104,6 +104,7 @@ void UIDelegate::setDelegate(id <WKUIDelegate> delegate)
+     m_delegateMethods.webViewRunJavaScriptAlertPanelWithMessageInitiatedByFrameCompletionHandler = [delegate respondsToSelector:@selector(webView:runJavaScriptAlertPanelWithMessage:initiatedByFrame:completionHandler:)];
+     m_delegateMethods.webViewRunJavaScriptConfirmPanelWithMessageInitiatedByFrameCompletionHandler = [delegate respondsToSelector:@selector(webView:runJavaScriptConfirmPanelWithMessage:initiatedByFrame:completionHandler:)];
+     m_delegateMethods.webViewRunJavaScriptTextInputPanelWithPromptDefaultTextInitiatedByFrameCompletionHandler = [delegate respondsToSelector:@selector(webView:runJavaScriptTextInputPanelWithPrompt:defaultText:initiatedByFrame:completionHandler:)];
++    m_delegateMethods.webViewHandleJavaScriptDialogValue = [delegate respondsToSelector:@selector(webView:handleJavaScriptDialog:value:)];
+     m_delegateMethods.webViewRequestStorageAccessPanelUnderFirstPartyCompletionHandler = [delegate respondsToSelector:@selector(_webView:requestStorageAccessPanelForDomain:underCurrentDomain:completionHandler:)];
+     m_delegateMethods.webViewRunBeforeUnloadConfirmPanelWithMessageInitiatedByFrameCompletionHandler = [delegate respondsToSelector:@selector(_webView:runBeforeUnloadConfirmPanelWithMessage:initiatedByFrame:completionHandler:)];
+     m_delegateMethods.webViewRequestGeolocationPermissionForFrameDecisionHandler = [delegate respondsToSelector:@selector(_webView:requestGeolocationPermissionForFrame:decisionHandler:)];
+@@ -341,6 +342,15 @@ void UIDelegate::UIClient::runJavaScriptPrompt(WebPageProxy&, const WTF::String&
+     }).get()];
+ }
+ 
++void UIDelegate::UIClient::handleJavaScriptDialog(WebKit::WebPageProxy&, bool accept, const WTF::String& value) {
++    if (!m_uiDelegate.m_delegateMethods.webViewHandleJavaScriptDialogValue)
++        return;
++    auto delegate = m_uiDelegate.m_delegate.get();
++    if (!delegate)
++        return;
++    [delegate webView:m_uiDelegate.m_webView handleJavaScriptDialog:accept value:value];
++}
++
+ void UIDelegate::UIClient::requestStorageAccessConfirm(WebPageProxy&, WebFrameProxy*, const WebCore::RegistrableDomain& requestingDomain, const WebCore::RegistrableDomain& currentDomain, CompletionHandler<void(bool)>&& completionHandler)
+ {
+     auto delegate = m_uiDelegate.m_delegate.get();
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
 index 00000000000..556be919504
@@ -4145,10 +4274,10 @@ index 00000000000..866db590d59
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorDialogAgent.cpp b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
 new file mode 100644
-index 00000000000..62eecef3b98
+index 00000000000..121b5969d4a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,64 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4156,6 +4285,7 @@ index 00000000000..62eecef3b98
 +#include "InspectorDialogAgent.h"
 +
 +#include "APINavigation.h"
++#include "APIUIClient.h"
 +#include "WebPageProxy.h"
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +
@@ -4202,8 +4332,9 @@ index 00000000000..62eecef3b98
 +    m_page.setInspectorDialogAgent(nullptr);
 +}
 +
-+void InspectorDialogAgent::handleJavaScriptDialog(Inspector::ErrorString& errorString, bool accept, const String* promptText) {
-+    platformHandleJavaScriptDialog(accept, promptText);
++void InspectorDialogAgent::handleJavaScriptDialog(Inspector::ErrorString& errorString, bool accept, const String* value)
++{
++    m_page.uiClient().handleJavaScriptDialog(m_page, accept, value ? *value : String());
 +}
 +
 +void InspectorDialogAgent::javascriptDialogOpening(const String& type, const String& message, const String* defaultValue) {
@@ -5559,35 +5690,6 @@ index 00000000000..37a5e7ad390
 +} // namespace API
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp
-new file mode 100644
-index 00000000000..82c48662f40
---- /dev/null
-+++ b/Source/WebKit/UIProcess/gtk/InspectorDialogAgentGtk.cpp
-@@ -0,0 +1,23 @@
-+// Copyright (c) Microsoft Corporation.
-+// Licensed under the MIT license.
-+
-+#include "config.h"
-+#include "InspectorDialogAgent.h"
-+
-+#include "WebKitWebViewPrivate.h"
-+#include <gtk/gtk.h>
-+
-+namespace WebKit {
-+
-+void InspectorDialogAgent::platformHandleJavaScriptDialog(bool accept, const String* promptText)
-+{
-+    WebKitWebView* webView = WEBKIT_WEB_VIEW(m_page.viewWidget());
-+    if (promptText)
-+        webkitWebViewSetCurrentScriptDialogUserInput(webView, *promptText);
-+    if (accept)
-+        webkitWebViewAcceptCurrentScriptDialog(webView);
-+    else
-+        webkitWebViewDismissCurrentScriptDialog(webView);
-+}
-+
-+} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 new file mode 100644
 index 00000000000..e8a29bebe24
@@ -5856,27 +5958,6 @@ index 00000000000..e3062b3651f
 +}
 +
 +} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm b/Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm
-new file mode 100644
-index 00000000000..c51c64d3530
---- /dev/null
-+++ b/Source/WebKit/UIProcess/mac/InspectorDialogAgentMac.mm
-@@ -0,0 +1,15 @@
-+// Copyright (c) Microsoft Corporation.
-+// Licensed under the MIT license.
-+
-+#import "config.h"
-+#import "InspectorDialogAgent.h"
-+
-+namespace WebKit {
-+
-+
-+void InspectorDialogAgent::platformHandleJavaScriptDialog(bool accept, const String* promptText)
-+{
-+  fprintf(stderr, "NOT IMPLEMENTED InspectorDialogAgent::platformHandleJavaScriptDialog");
-+}
-+
-+} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 index 22653d74398..bf27558fdfd 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
@@ -6102,10 +6183,10 @@ index 00000000000..74dace1cc7c
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index 5cb81ccc202..66ed2a11716 100644
+index 5cb81ccc202..2bf6772abb6 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-@@ -1667,6 +1667,21 @@
+@@ -1667,6 +1667,20 @@
  		CEE4AE2B1A5DCF430002F49B /* UIKitSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = CEE4AE2A1A5DCF430002F49B /* UIKitSPI.h */; };
  		D3B9484711FF4B6500032B39 /* WebPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484311FF4B6500032B39 /* WebPopupMenu.h */; };
  		D3B9484911FF4B6500032B39 /* WebSearchPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */; };
@@ -6118,7 +6199,6 @@ index 5cb81ccc202..66ed2a11716 100644
 +		D71A94432371F67E002C4D9E /* WebPageInspectorInputAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */; };
 +		D71A944A2372290B002C4D9E /* _WKBrowserInspector.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94492372290B002C4D9E /* _WKBrowserInspector.h */; settings = {ATTRIBUTES = (Private, ); }; };
 +		D71A944C237239FB002C4D9E /* BrowserInspectorPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */; };
-+		D76D6886238CC2D3008D314B /* InspectorDialogAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D76D6885238CC2D3008D314B /* InspectorDialogAgentMac.mm */; };
 +		D76D6888238DBD81008D314B /* InspectorDialogAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D76D6887238DBD80008D314B /* InspectorDialogAgent.h */; };
 +		D79902B1236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */; };
 +		D79902B2236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */; };
@@ -6127,7 +6207,7 @@ index 5cb81ccc202..66ed2a11716 100644
  		E105FE5418D7B9DE008F57A8 /* EditingRange.h in Headers */ = {isa = PBXBuildFile; fileRef = E105FE5318D7B9DE008F57A8 /* EditingRange.h */; };
  		E11D35AE16B63D1B006D23D7 /* com.apple.WebProcess.sb in Resources */ = {isa = PBXBuildFile; fileRef = E1967E37150AB5E200C73169 /* com.apple.WebProcess.sb */; };
  		E14A954A16E016A40068DE82 /* NetworkProcessPlatformStrategies.h in Headers */ = {isa = PBXBuildFile; fileRef = E14A954816E016A40068DE82 /* NetworkProcessPlatformStrategies.h */; };
-@@ -4704,6 +4719,22 @@
+@@ -4704,6 +4718,21 @@
  		D3B9484311FF4B6500032B39 /* WebPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPopupMenu.h; sourceTree = "<group>"; };
  		D3B9484411FF4B6500032B39 /* WebSearchPopupMenu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebSearchPopupMenu.cpp; sourceTree = "<group>"; };
  		D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebSearchPopupMenu.h; sourceTree = "<group>"; };
@@ -6141,7 +6221,6 @@ index 5cb81ccc202..66ed2a11716 100644
 +		D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorInputAgent.h; sourceTree = "<group>"; };
 +		D71A94492372290B002C4D9E /* _WKBrowserInspector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _WKBrowserInspector.h; sourceTree = "<group>"; };
 +		D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserInspectorPipe.h; sourceTree = "<group>"; };
-+		D76D6885238CC2D3008D314B /* InspectorDialogAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorDialogAgentMac.mm; sourceTree = "<group>"; };
 +		D76D6887238DBD80008D314B /* InspectorDialogAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorDialogAgent.h; sourceTree = "<group>"; };
 +		D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorEmulationAgentMac.mm; sourceTree = "<group>"; };
 +		D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorTargetProxyMac.mm; sourceTree = "<group>"; };
@@ -6150,7 +6229,7 @@ index 5cb81ccc202..66ed2a11716 100644
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
  		DF58C6351371ACA000F9A37C /* NativeWebWheelEventMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NativeWebWheelEventMac.mm; sourceTree = "<group>"; };
  		E105FE5318D7B9DE008F57A8 /* EditingRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditingRange.h; sourceTree = "<group>"; };
-@@ -6305,6 +6336,7 @@
+@@ -6305,6 +6334,7 @@
  		37C4C08318149C2A003688B9 /* Cocoa */ = {
  			isa = PBXGroup;
  			children = (
@@ -6158,7 +6237,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				1A43E826188F38E2009E4D30 /* Deprecated */,
  				37A5E01218BBF937000A081E /* _WKActivatedElementInfo.h */,
  				37A5E01118BBF937000A081E /* _WKActivatedElementInfo.mm */,
-@@ -7783,6 +7815,14 @@
+@@ -7783,6 +7813,14 @@
  		BC032DC310F438260058C15A /* UIProcess */ = {
  			isa = PBXGroup;
  			children = (
@@ -6173,7 +6252,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
-@@ -8060,6 +8100,7 @@
+@@ -8060,6 +8098,7 @@
  		BC0C376610F807660076D7CB /* C */ = {
  			isa = PBXGroup;
  			children = (
@@ -6181,20 +6260,19 @@ index 5cb81ccc202..66ed2a11716 100644
  				5123CF18133D25E60056F800 /* cg */,
  				6EE849C41368D9040038D481 /* mac */,
  				BCB63477116BF10600603215 /* WebKit2_C.h */,
-@@ -8655,6 +8696,12 @@
+@@ -8655,6 +8694,11 @@
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
 +				D7EB04E62372A73B00F744CE /* InspectorBrowserAgentClientMac.mm */,
 +				D71A94302370E025002C4D9E /* InspectorBrowserAgentClientMac.h */,
-+				D76D6885238CC2D3008D314B /* InspectorDialogAgentMac.mm */,
 +				D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */,
 +				D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */,
 +				D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */,
  				B878B613133428DC006888E9 /* CorrectionPanel.h */,
  				B878B614133428DC006888E9 /* CorrectionPanel.mm */,
  				C1817362205844A900DFDA65 /* DisplayLink.cpp */,
-@@ -9334,6 +9381,7 @@
+@@ -9334,6 +9378,7 @@
  				510F59101DDE296900412FF5 /* _WKIconLoadingDelegate.h in Headers */,
  				37A64E5518F38E3C00EB30F1 /* _WKInputDelegate.h in Headers */,
  				5CAFDE452130846300B1F7E1 /* _WKInspector.h in Headers */,
@@ -6202,7 +6280,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				5CAFDE472130846A00B1F7E1 /* _WKInspectorInternal.h in Headers */,
  				9979CA58237F49F10039EC05 /* _WKInspectorPrivate.h in Headers */,
  				A5C0F0AB2000658200536536 /* _WKInspectorWindow.h in Headers */,
-@@ -9447,6 +9495,7 @@
+@@ -9447,6 +9492,7 @@
  				7C89D2981A6753B2003A5FDE /* APIPageConfiguration.h in Headers */,
  				1AC1336C18565C7A00F3EC05 /* APIPageHandle.h in Headers */,
  				1AFDD3151891B54000153970 /* APIPolicyClient.h in Headers */,
@@ -6210,7 +6288,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				7CE4D2201A4914CA00C7F152 /* APIProcessPoolConfiguration.h in Headers */,
  				F634445612A885C8000612D8 /* APISecurityOrigin.h in Headers */,
  				1AFDE6621954E9B100C48FFA /* APISessionState.h in Headers */,
-@@ -9566,6 +9615,7 @@
+@@ -9566,6 +9612,7 @@
  				BC06F43A12DBCCFB002D78DE /* GeolocationPermissionRequestProxy.h in Headers */,
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
@@ -6218,7 +6296,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
-@@ -9689,8 +9739,10 @@
+@@ -9689,8 +9736,10 @@
  				41DC45961E3D6E2200B11F51 /* NetworkRTCProvider.h in Headers */,
  				413075AB1DE85F330039EC69 /* NetworkRTCSocket.h in Headers */,
  				5C20CBA01BB1ECD800895BB1 /* NetworkSession.h in Headers */,
@@ -6229,7 +6307,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				570DAAC22303730300E8FC04 /* NfcConnection.h in Headers */,
  				570DAAAE23026F5C00E8FC04 /* NfcService.h in Headers */,
  				31A2EC5614899C0900810D71 /* NotificationPermissionRequest.h in Headers */,
-@@ -9772,6 +9824,7 @@
+@@ -9772,6 +9821,7 @@
  				CD2865EE2255562000606AC7 /* ProcessTaskStateObserver.h in Headers */,
  				463FD4821EB94EC000A2982C /* ProcessTerminationReason.h in Headers */,
  				86E67A251910B9D100004AB7 /* ProcessThrottler.h in Headers */,
@@ -6237,7 +6315,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				83048AE61ACA45DC0082C832 /* ProcessThrottlerClient.h in Headers */,
  				A1E688701F6E2BAB007006A6 /* QuarantineSPI.h in Headers */,
  				57FD318222B3515E008D0E8B /* RedirectSOAuthorizationSession.h in Headers */,
-@@ -9820,7 +9873,6 @@
+@@ -9820,7 +9870,6 @@
  				511F8A7B138B460900A95F44 /* SecItemShimLibrary.h in Headers */,
  				E18E690C169B563F009B6670 /* SecItemShimProxy.h in Headers */,
  				E18E6918169B667B009B6670 /* SecItemShimProxyMessages.h in Headers */,
@@ -6245,7 +6323,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				570AB8F320AE3BD700B8BE87 /* SecKeyProxyStore.h in Headers */,
  				514D9F5719119D35000063A7 /* ServicesController.h in Headers */,
  				1AFDE65A1954A42B00C48FFA /* SessionState.h in Headers */,
-@@ -9934,6 +9986,7 @@
+@@ -9934,6 +9983,7 @@
  				F430E94422473DFF005FE053 /* WebContentMode.h in Headers */,
  				31A505FA1680025500A930EB /* WebContextClient.h in Headers */,
  				BC09B8F9147460F7005F5625 /* WebContextConnectionClient.h in Headers */,
@@ -6253,7 +6331,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				BCDE059B11CDA8AE00E41AF1 /* WebContextInjectedBundleClient.h in Headers */,
  				51871B5C127CB89D00F76232 /* WebContextMenu.h in Headers */,
  				BC032D7710F4378D0058C15A /* WebContextMenuClient.h in Headers */,
-@@ -10167,6 +10220,7 @@
+@@ -10167,6 +10217,7 @@
  				BCD25F1711D6BDE100169B0E /* WKBundleFrame.h in Headers */,
  				BCF049E611FE20F600F86A58 /* WKBundleFramePrivate.h in Headers */,
  				BC49862F124D18C100D834E1 /* WKBundleHitTestResult.h in Headers */,
@@ -6261,7 +6339,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				BC204EF211C83EC8008F3375 /* WKBundleInitialize.h in Headers */,
  				65B86F1E12F11DE300B7DD8A /* WKBundleInspector.h in Headers */,
  				1A8B66B41BC45B010082DF77 /* WKBundleMac.h in Headers */,
-@@ -10215,6 +10269,7 @@
+@@ -10215,6 +10266,7 @@
  				5C795D71229F3757003FF1C4 /* WKContextMenuElementInfoPrivate.h in Headers */,
  				51A555F6128C6C47009ABCEC /* WKContextMenuItem.h in Headers */,
  				51A55601128C6D92009ABCEC /* WKContextMenuItemTypes.h in Headers */,
@@ -6269,7 +6347,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				A1EA02381DABFF7E0096021F /* WKContextMenuListener.h in Headers */,
  				BCC938E11180DE440085E5FE /* WKContextPrivate.h in Headers */,
  				9FB5F395169E6A80002C25BF /* WKContextPrivateMac.h in Headers */,
-@@ -10363,6 +10418,7 @@
+@@ -10363,6 +10415,7 @@
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
@@ -6277,7 +6355,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
-@@ -11318,6 +11374,7 @@
+@@ -11318,6 +11371,7 @@
  				2D92A781212B6A7100F493FD /* MessageReceiverMap.cpp in Sources */,
  				2D92A782212B6A7100F493FD /* MessageSender.cpp in Sources */,
  				2D92A77A212B6A6100F493FD /* Module.cpp in Sources */,
@@ -6285,7 +6363,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
  				2D913443212CF9F000128AFD /* NetscapeBrowserFuncs.cpp in Sources */,
  				2D913444212CF9F000128AFD /* NetscapePlugin.cpp in Sources */,
-@@ -11342,6 +11399,7 @@
+@@ -11342,6 +11396,7 @@
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
@@ -6293,7 +6371,7 @@ index 5cb81ccc202..66ed2a11716 100644
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
-@@ -11381,11 +11439,13 @@
+@@ -11381,11 +11436,13 @@
  				A1ADAFB62368E6A8009CB776 /* SharedMemory.cpp in Sources */,
  				2DE6943D18BD2A68005C15E5 /* SmartMagnificationControllerMessageReceiver.cpp in Sources */,
  				1A334DED16DE8F88006A8E38 /* StorageAreaMapMessageReceiver.cpp in Sources */,
@@ -6307,14 +6385,6 @@ index 5cb81ccc202..66ed2a11716 100644
  				2D11B7532126A282006F8878 /* UnifiedSource2-mm.mm in Sources */,
  				2D11B7562126A282006F8878 /* UnifiedSource3.cpp in Sources */,
  				2D11B7552126A282006F8878 /* UnifiedSource3-mm.mm in Sources */,
-@@ -11452,6 +11512,7 @@
- 				2D11B7942126A283006F8878 /* UnifiedSource34.cpp in Sources */,
- 				2D11B7932126A283006F8878 /* UnifiedSource34-mm.mm in Sources */,
- 				2D11B7962126A283006F8878 /* UnifiedSource35.cpp in Sources */,
-+				D76D6886238CC2D3008D314B /* InspectorDialogAgentMac.mm in Sources */,
- 				2D11B7952126A283006F8878 /* UnifiedSource35-mm.mm in Sources */,
- 				2D11B7982126A283006F8878 /* UnifiedSource36.cpp in Sources */,
- 				2D11B7972126A283006F8878 /* UnifiedSource36-mm.mm in Sources */,
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
 index a70f6fd5209..f02e5c774a4 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
@@ -6427,10 +6497,10 @@ index 4c5147dcd38..c04110b8033 100644
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
          GEnumClass *enumClass = g_type_class_ref(WEBKIT_TYPE_COOKIE_ACCEPT_POLICY);
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.h b/Tools/MiniBrowser/mac/AppDelegate.h
-index 45ef1a6424e..1c9532ce74c 100644
+index 45ef1a6424e..6e015fcb8bc 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.h
 +++ b/Tools/MiniBrowser/mac/AppDelegate.h
-@@ -23,10 +23,15 @@
+@@ -23,10 +23,22 @@
   * THE POSSIBILITY OF SUCH DAMAGE.
   */
  
@@ -6439,16 +6509,23 @@ index 45ef1a6424e..1c9532ce74c 100644
  @class ExtensionManagerWindowController;
  
 -@interface BrowserAppDelegate : NSObject <NSApplicationDelegate> {
-+@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, _WKBrowserInspectorDelegate> {
++WK_CLASS_AVAILABLE(macos(10.14.0))
++@interface WebViewDialog : NSObject
++@property (nonatomic, strong) WKWebView *webView;
++@property (nonatomic, copy) void (^completionHandler)(BOOL accept, NSString* value);
++@end
++
++@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate> {
      NSMutableSet *_browserWindowControllers;
 +    NSMutableSet *_headlessWindows;
 +    NSMutableSet *_browserContexts;
 +    bool _headless;
++    NSMutableSet *_dialogs;
      ExtensionManagerWindowController *_extensionManagerWindowController;
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..15e30097e7d 100644
+index b6af4ef724f..54157dc246a 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
 @@ -34,6 +34,7 @@
@@ -6459,10 +6536,13 @@ index b6af4ef724f..15e30097e7d 100644
  #import <WebKit/WebKit.h>
  #import <WebKit/_WKExperimentalFeature.h>
  #import <WebKit/_WKInternalDebugFeature.h>
-@@ -52,16 +53,40 @@ @interface NSApplication (TouchBar)
+@@ -52,16 +53,44 @@ @interface NSApplication (TouchBar)
  @property (getter=isAutomaticCustomizeTouchBarMenuItemEnabled) BOOL automaticCustomizeTouchBarMenuItemEnabled;
  @end
  
++@implementation WebViewDialog
++@end
++
 +enum {
 +    _NSBackingStoreUnbuffered = 3
 +};
@@ -6493,6 +6573,7 @@ index b6af4ef724f..15e30097e7d 100644
 +        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
 +        [[NSProcessInfo processInfo] beginActivityWithOptions:ActivityOptions
 +                                                       reason:ActivityReason];
++        _dialogs = [[NSMutableSet alloc] init];
 +    } else {
          _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
 +        _browserWindowControllers = [[NSMutableSet alloc] init];
@@ -6503,7 +6584,25 @@ index b6af4ef724f..15e30097e7d 100644
      return self;
  }
  
-@@ -145,6 +170,9 @@ - (void)awakeFromNib
+@@ -88,7 +117,7 @@ - (void)awakeFromNib
+         configuration.networkCacheSpeculativeValidationEnabled = YES;
+         dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
+     }
+-    
++
+     return dataStore;
+ }
+ 
+@@ -109,7 +138,7 @@ - (void)awakeFromNib
+             processConfiguration.usesSingleWebProcess = YES;
+         if ([SettingsController shared].processSwapOnWindowOpenWithOpenerEnabled)
+             processConfiguration.processSwapsOnWindowOpenWithOpener = true;
+-        
++
+         configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
+ 
+         NSArray<_WKExperimentalFeature *> *experimentalFeatures = [WKPreferences _experimentalFeatures];
+@@ -145,6 +174,9 @@ - (void)awakeFromNib
  
  - (BrowserWindowController *)createBrowserWindowController:(id)sender
  {
@@ -6513,7 +6612,7 @@ index b6af4ef724f..15e30097e7d 100644
      BrowserWindowController *controller = nil;
      BOOL useWebKit2 = NO;
      BOOL makeEditable = NO;
-@@ -158,9 +186,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
+@@ -158,9 +190,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
      }
  
      if (!useWebKit2)
@@ -6525,7 +6624,7 @@ index b6af4ef724f..15e30097e7d 100644
  
      if (makeEditable)
          controller.editable = YES;
-@@ -185,6 +213,9 @@ - (IBAction)newWindow:(id)sender
+@@ -185,6 +217,9 @@ - (IBAction)newWindow:(id)sender
  
  - (IBAction)newPrivateWindow:(id)sender
  {
@@ -6535,7 +6634,7 @@ index b6af4ef724f..15e30097e7d 100644
      WKWebViewConfiguration *privateConfiguraton = [defaultConfiguration() copy];
      privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
  
-@@ -209,11 +240,20 @@ - (IBAction)newEditorWindow:(id)sender
+@@ -209,11 +244,20 @@ - (IBAction)newEditorWindow:(id)sender
  
  - (void)browserWindowWillClose:(NSWindow *)window
  {
@@ -6557,7 +6656,7 @@ index b6af4ef724f..15e30097e7d 100644
      WebHistory *webHistory = [[WebHistory alloc] init];
      [WebHistory setOptionalSharedHistory:webHistory];
      [webHistory release];
-@@ -255,6 +295,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+@@ -255,6 +299,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
  
  - (IBAction)openDocument:(id)sender
  {
@@ -6567,7 +6666,7 @@ index b6af4ef724f..15e30097e7d 100644
      BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
  
      if (browserWindowController) {
-@@ -284,6 +327,9 @@ - (IBAction)openDocument:(id)sender
+@@ -284,6 +331,9 @@ - (IBAction)openDocument:(id)sender
  
  - (void)didChangeSettings
  {
@@ -6577,7 +6676,7 @@ index b6af4ef724f..15e30097e7d 100644
      [self _updateNewWindowKeyEquivalents];
  
      // Let all of the BrowserWindowControllers know that a setting changed, so they can attempt to dynamically update.
-@@ -312,6 +358,8 @@ - (void)_updateNewWindowKeyEquivalents
+@@ -312,6 +362,8 @@ - (void)_updateNewWindowKeyEquivalents
  
  - (IBAction)showExtensionsManager:(id)sender
  {
@@ -6586,7 +6685,7 @@ index b6af4ef724f..15e30097e7d 100644
      [_extensionManagerWindowController showWindow:sender];
  }
  
-@@ -345,4 +393,79 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +397,123 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
@@ -6637,6 +6736,7 @@ index b6af4ef724f..15e30097e7d 100644
 +    NSURL *url = [NSURL _webkit_URLWithUserTypedString:@"about:blank"];
 +    [webView loadRequest:[NSURLRequest requestWithURL:url]];
 +    [_headlessWindows addObject:window];
++    webView.UIDelegate = self;
 +    return webView;
 +}
 +
@@ -6665,6 +6765,49 @@ index b6af4ef724f..15e30097e7d 100644
 +    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
 +}
 +
++- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler();
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler(accept);
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *result))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler(accept && value ? value : nil);
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)webView:(WKWebView *)webView handleJavaScriptDialog:(BOOL)accept value:(NSString *)value
++{
++    for (WebViewDialog *dialog in _dialogs) {
++        if (dialog.webView != webView)
++            continue;
++        dialog.completionHandler(accept, value);
++        break;
++    }
++}
++
  @end
 diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.h b/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
 index 6f0949b0f4a..e774433031a 100644
@@ -6683,10 +6826,18 @@ index 6f0949b0f4a..e774433031a 100644
  
  @end
 diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-index 0063266ed33..1ae92eb2683 100644
+index 0063266ed33..7d6b8d6f05f 100644
 --- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
 +++ b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-@@ -105,7 +105,7 @@ - (void)awakeFromNib
+@@ -72,6 +72,7 @@ @implementation WK2BrowserWindowController {
+     WKWebView *_webView;
+     BOOL _zoomTextOnly;
+     BOOL _isPrivateBrowsingWindow;
++    NSAlert* _alert;
+ 
+     BOOL _useShrinkToFit;
+ 
+@@ -105,7 +106,7 @@ - (void)awakeFromNib
      // telling WebKit to load every icon referenced by the page.
      if ([[SettingsController shared] loadsAllSiteIcons])
          _webView._iconLoadingDelegate = self;
@@ -6695,7 +6846,15 @@ index 0063266ed33..1ae92eb2683 100644
      _webView._observedRenderingProgressEvents = _WKRenderingProgressEventFirstLayout
          | _WKRenderingProgressEventFirstVisuallyNonEmptyLayout
          | _WKRenderingProgressEventFirstPaintWithSignificantArea
-@@ -139,14 +139,10 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
+@@ -113,6 +114,7 @@ - (void)awakeFromNib
+         | _WKRenderingProgressEventFirstPaintAfterSuppressedIncrementalRendering;
+ 
+     _zoomTextOnly = NO;
++    _alert = nil;
+ 
+     _webView._usePlatformFindUI = NO;
+ 
+@@ -139,14 +141,10 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
  
  - (void)dealloc
  {
@@ -6710,7 +6869,7 @@ index 0063266ed33..1ae92eb2683 100644
      [_webView release];
      [_configuration release];
  
-@@ -372,9 +368,15 @@ - (BOOL)windowShouldClose:(id)sender
+@@ -372,9 +370,15 @@ - (BOOL)windowShouldClose:(id)sender
  - (void)windowWillClose:(NSNotification *)notification
  {
      [(BrowserAppDelegate *)[[NSApplication sharedApplication] delegate] browserWindowWillClose:self.window];
@@ -6726,7 +6885,57 @@ index 0063266ed33..1ae92eb2683 100644
  #define DefaultMinimumZoomFactor (.5)
  #define DefaultMaximumZoomFactor (3.0)
  #define DefaultZoomFactorRatio (1.2)
-@@ -848,4 +850,9 @@ - (IBAction)saveAsWebArchive:(id)sender
+@@ -512,9 +516,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
+     [alert setInformativeText:message];
+     [alert addButtonWithTitle:@"OK"];
+ 
++    _alert = alert;
+     [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
+         completionHandler();
+         [alert release];
++        _alert = nil;
+     }];
+ }
+ 
+@@ -528,9 +534,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
+     [alert addButtonWithTitle:@"OK"];
+     [alert addButtonWithTitle:@"Cancel"];
+ 
++    _alert = alert;
+     [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
+         completionHandler(response == NSAlertFirstButtonReturn);
+         [alert release];
++        _alert = nil;
+     }];
+ }
+ 
+@@ -548,13 +556,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
+     [input setStringValue:defaultText];
+     [alert setAccessoryView:input];
+     
++    _alert = alert;
+     [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
+         [input validateEditing];
+         completionHandler(response == NSAlertFirstButtonReturn ? [input stringValue] : nil);
+         [alert release];
++        _alert = nil;
+     }];
+ }
+ 
++- (void)webView:(WKWebView *)webView handleJavaScriptDialog:(BOOL)accept value:(NSString *)value
++{
++    if (!_alert)
++        return;
++    NSTextField* input = (NSTextField*)_alert.accessoryView;
++    if (accept && input && value)
++        [input setStringValue:value];
++    [self.window endSheet:_alert.window returnCode: accept ? NSAlertFirstButtonReturn : NSModalResponseCancel];
++}
++
+ #if __has_feature(objc_generics)
+ - (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> * URLs))completionHandler
+ #else
+@@ -848,4 +868,9 @@ - (IBAction)saveAsWebArchive:(id)sender
      }];
  }
  
@@ -6792,5 +7001,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.24.0
+2.17.1
 
