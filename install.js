@@ -26,7 +26,7 @@ try {
 }
 
 (async function() {
-  const {generateWebKitProtocol, generateChromeProtocol} = require('./utils/protocol-types-generator/') ;
+  const {generateWebKitProtocol, generateFirefoxProtocol, generateChromeProtocol} = require('./utils/protocol-types-generator/') ;
   try {
     const chromeRevision = await downloadBrowser('chromium', require('./chromium').createBrowserFetcher());
     await generateChromeProtocol(chromeRevision);
@@ -35,7 +35,8 @@ try {
   }
 
   try {
-    await downloadBrowser('firefox', require('./firefox').createBrowserFetcher());
+    const firefoxRevision = await downloadBrowser('firefox', require('./firefox').createBrowserFetcher());
+    await generateFirefoxProtocol(firefoxRevision);
   } catch (e) {
     console.warn(e.message);
   }

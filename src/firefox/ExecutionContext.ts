@@ -18,6 +18,7 @@
 import {helper, debugError} from '../helper';
 import * as js from '../javascript';
 import { JugglerSession } from './Connection';
+import { Protocol } from './protocol';
 
 export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   _session: JugglerSession;
@@ -104,7 +105,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     checkException(payload.exceptionDetails);
     return context._createHandle(payload.result);
 
-    function rewriteError(error) {
+    function rewriteError(error) : never {
       if (error.message.includes('Failed to find execution context with id'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
       throw error;
@@ -167,7 +168,7 @@ function checkException(exceptionDetails?: any) {
   }
 }
 
-export function deserializeValue({unserializableValue, value}) {
+export function deserializeValue({unserializableValue, value}: Protocol.RemoteObject) {
   if (unserializableValue === 'Infinity')
     return Infinity;
   if (unserializableValue === '-Infinity')

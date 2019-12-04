@@ -19,6 +19,7 @@ import {assert} from '../helper';
 import {EventEmitter} from 'events';
 import * as debug from 'debug';
 import { ConnectionTransport } from '../ConnectionTransport';
+import { Protocol } from './protocol';
 const debugProtocol = debug('playwright:protocol');
 
 export const ConnectionEvents = {
@@ -144,6 +145,12 @@ export class JugglerSession extends EventEmitter {
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _targetType: string;
   private _sessionId: string;
+  on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+
   constructor(connection: Connection, targetType: string, sessionId: string) {
     super();
     this._callbacks = new Map();
@@ -152,7 +159,10 @@ export class JugglerSession extends EventEmitter {
     this._sessionId = sessionId;
   }
 
-  send(method: string, params: any = {}): Promise<any> {
+  send<T extends keyof Protocol.CommandParameters>(
+    method: T,
+    params?: Protocol.CommandParameters[T]
+  ): Promise<Protocol.CommandReturnValues[T]> {
     if (!this._connection)
       return Promise.reject(new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`));
     const id = this._connection._rawSend({sessionId: this._sessionId, method, params});
