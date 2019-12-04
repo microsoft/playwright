@@ -97,7 +97,7 @@ module.exports.addTests = function({testRunner, expect, CHROME, FFOX, WEBKIT}) {
       else if (FFOX)
         expect(error.message).toContain('Object is not serializable');
     });
-    fit('should work with tricky values', async({page, server}) => {
+    it('should work with tricky values', async({page, server}) => {
       const aHandle = await page.evaluateHandle(() => ({a: 1}));
       const json = await aHandle.jsonValue();
       expect(json).toEqual({a: 1});
