@@ -283,14 +283,30 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
 
-    it.skip(FFOX || WEBKIT)('should click the button with relative point', async({page, server}) => {
+    it('should click the button with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.click('button', { relativePoint: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
       expect(await page.evaluate(() => offsetX)).toBe(20);
       expect(await page.evaluate(() => offsetY)).toBe(10);
     });
-    it.skip(FFOX || WEBKIT)('should click a very large button with relative point', async({page, server}) => {
+    it('should click the button with px border with relative point', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', button => button.style.borderWidth = '2px');
+      await page.click('button', { relativePoint: { x: 20, y: 10 } });
+      expect(await page.evaluate(() => result)).toBe('Clicked');
+      expect(await page.evaluate(() => offsetX)).toBe(20);
+      expect(await page.evaluate(() => offsetY)).toBe(10);
+    });
+    it('should click the button with em border with relative point', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', button => button.style.borderWidth = '2em');
+      await page.click('button', { relativePoint: { x: 20, y: 10 } });
+      expect(await page.evaluate(() => result)).toBe('Clicked');
+      expect(await page.evaluate(() => offsetX)).toBe(20);
+      expect(await page.evaluate(() => offsetY)).toBe(10);
+    });
+    it('should click a very large button with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.height = button.style.width = '2000px');
       await page.click('button', { relativePoint: { x: 1900, y: 1910 } });

@@ -17,6 +17,7 @@ export type EvaluateHandleOn = <Args extends any[]>(pageFunction: PageFunctionOn
 
 export type Rect = { x: number, y: number, width: number, height: number };
 export type Point = { x: number, y: number };
+export type Quad = [ Point, Point, Point, Point ];
 
 export type TimeoutOptions = { timeout?: number };
 

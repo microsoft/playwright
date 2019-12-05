@@ -8,7 +8,7 @@ import * as types from './types';
 import * as injectedSource from './generated/injectedSource';
 import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
-import { assert, helper } from './helper';
+import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 import { SelectorRoot } from './injected/selectorEngine';
 
@@ -19,9 +19,10 @@ export interface DOMWorldDelegate {
   isJavascriptEnabled(): boolean;
   isElement(remoteObject: any): boolean;
   contentFrame(handle: ElementHandle): Promise<frames.Frame | null>;
+  contentQuads(handle: ElementHandle): Promise<types.Quad[] | null>;
+  layoutViewport(): Promise<{ width: number, height: number }>;
   boundingBox(handle: ElementHandle): Promise<types.Rect | null>;
   screenshot(handle: ElementHandle, options?: any): Promise<string | Buffer>;
-  ensurePointerActionPoint(handle: ElementHandle, relativePoint?: types.Point): Promise<types.Point>;
   setInputFiles(handle: ElementHandle, files: input.FilePayload[]): Promise<void>;
   adoptElementHandle(handle: ElementHandle, to: DOMWorld): Promise<ElementHandle>;
 }
@@ -190,8 +191,101 @@ export class ElementHandle extends js.JSHandle {
       throw new Error(error);
   }
 
+  private async _ensurePointerActionPoint(relativePoint?: types.Point): Promise<types.Point> {
+    await this._scrollIntoViewIfNeeded();
+    if (!relativePoint)
+      return this._clickablePoint();
+    let r = await this._viewportPointAndScroll(relativePoint);
+    if (r.scrollX || r.scrollY) {
+      const error = await this.evaluate((element, scrollX, scrollY) => {
+        if (!element.ownerDocument || !element.ownerDocument.defaultView)
+          return 'Node does not have a containing window';
+        element.ownerDocument.defaultView.scrollBy(scrollX, scrollY);
+        return false;
+      }, r.scrollX, r.scrollY);
+      if (error)
+        throw new Error(error);
+      r = await this._viewportPointAndScroll(relativePoint);
+      if (r.scrollX || r.scrollY)
+        throw new Error('Failed to scroll relative point into viewport');
+    }
+    return r.point;
+  }
+
+  private async _clickablePoint(): Promise<types.Point> {
+    const intersectQuadWithViewport = (quad: types.Quad): types.Quad => {
+      return quad.map(point => ({
+        x: Math.min(Math.max(point.x, 0), metrics.width),
+        y: Math.min(Math.max(point.y, 0), metrics.height),
+      })) as types.Quad;
+    };
+
+    const computeQuadArea = (quad: types.Quad) => {
+      // Compute sum of all directed areas of adjacent triangles
+      // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
+      let area = 0;
+      for (let i = 0; i < quad.length; ++i) {
+        const p1 = quad[i];
+        const p2 = quad[(i + 1) % quad.length];
+        area += (p1.x * p2.y - p2.x * p1.y) / 2;
+      }
+      return Math.abs(area);
+    };
+
+    const [quads, metrics] = await Promise.all([
+      this._world.delegate.contentQuads(this),
+      this._world.delegate.layoutViewport(),
+    ]);
+    if (!quads || !quads.length)
+      throw new Error('Node is either not visible or not an HTMLElement');
+
+    const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 1);
+    if (!filtered.length)
+      throw new Error('Node is either not visible or not an HTMLElement');
+    // Return the middle point of the first quad.
+    const result = { x: 0, y: 0 };
+    for (const point of filtered[0]) {
+      result.x += point.x / 4;
+      result.y += point.y / 4;
+    }
+    return result;
+  }
+
+  private async _viewportPointAndScroll(relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
+    const [box, border] = await Promise.all([
+      this.boundingBox(),
+      this.evaluate((e: Element) => {
+        const style = e.ownerDocument.defaultView.getComputedStyle(e);
+        return { x: parseInt(style.borderLeftWidth, 10), y: parseInt(style.borderTopWidth, 10) };
+      }).catch(debugError),
+    ]);
+    const point = { x: relativePoint.x, y: relativePoint.y };
+    if (box) {
+      point.x += box.x;
+      point.y += box.y;
+    }
+    if (border) {
+      // Make point relative to the padding box to align with offsetX/offsetY.
+      point.x += border.x;
+      point.y += border.y;
+    }
+    const metrics = await this._world.delegate.layoutViewport();
+    // Give one extra pixel to avoid any issues on viewport edge.
+    let scrollX = 0;
+    if (point.x < 1)
+      scrollX = point.x - 1;
+    if (point.x > metrics.width - 1)
+      scrollX = point.x - metrics.width + 1;
+    let scrollY = 0;
+    if (point.y < 1)
+      scrollY = point.y - 1;
+    if (point.y > metrics.height - 1)
+      scrollY = point.y - metrics.height + 1;
+    return { point, scrollX, scrollY };
+  }
+
   async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
-    const point = await this._world.delegate.ensurePointerActionPoint(this, options ? options.relativePoint : undefined);
+    const point = await this._ensurePointerActionPoint(options ? options.relativePoint : undefined);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
       restoreModifiers = await this._world.delegate.keyboard._ensureModifiers(options.modifiers);
