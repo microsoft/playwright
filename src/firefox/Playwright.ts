@@ -25,11 +25,13 @@ import {download, RevisionInfo} from '../download';
 export class Playwright {
   private _projectRoot: string;
   private _launcher: Launcher;
+  readonly _revision: string;
   downloadBrowser: (options?: { onProgress?: (downloadedBytes: number, totalBytes: number) => void; }) => Promise<RevisionInfo>;
 
   constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
     this._launcher = new Launcher(projectRoot, preferredRevision);
+    this._revision = preferredRevision;
     this.downloadBrowser = download.bind(null, this.createBrowserFetcher(), preferredRevision, 'Chromium');
   }
 
