@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { helper, RegisteredListener } from '../helper';
+import { RegisteredListener } from '../helper';
 import { Browser, BrowserContext } from './Browser';
 import { Page } from './Page';
 import { Protocol } from './protocol';

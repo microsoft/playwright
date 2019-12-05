@@ -90,7 +90,7 @@ export class NetworkManager extends EventEmitter {
     });
   }
 
-  _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
+  _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
     let redirectChain: network.Request[] = [];
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
@@ -101,7 +101,7 @@ export class NetworkManager extends EventEmitter {
       }
     }
     const frame = event.frameId && this._frameManager ? this._frameManager.frame(event.frameId) : null;
-    const request = new InterceptableRequest(frame, interceptionId, event, redirectChain);
+    const request = new InterceptableRequest(frame, undefined, event, redirectChain);
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEvents.Request, request.request);
   }

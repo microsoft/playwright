@@ -20,14 +20,17 @@ import { ConnectionTransport } from '../ConnectionTransport';
 import { DeviceDescriptors } from '../DeviceDescriptors';
 import * as Errors from '../Errors';
 import { Launcher } from './Launcher';
+import {download, RevisionInfo} from '../download';
 
 export class Playwright {
   private _projectRoot: string;
   private _launcher: Launcher;
+  downloadBrowser: (options?: { onProgress?: (downloadedBytes: number, totalBytes: number) => void; }) => Promise<RevisionInfo>;
 
   constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
     this._launcher = new Launcher(projectRoot, preferredRevision);
+    this.downloadBrowser = download.bind(null, this.createBrowserFetcher(), preferredRevision, 'Chromium');
   }
 
   launch(options: any): Promise<Browser> {
@@ -60,7 +63,7 @@ export class Playwright {
     return this._launcher.defaultArgs(options);
   }
 
-  createBrowserFetcher(options: any | undefined): BrowserFetcher {
+  createBrowserFetcher(options?: any | undefined): BrowserFetcher {
     return new BrowserFetcher(this._projectRoot, { browser: 'firefox', ...options });
   }
 }

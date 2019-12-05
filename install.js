@@ -22,48 +22,32 @@ try {
     stdio: 'ignore'
   });
 } catch (e) {
-  console.warn('Build failed');
 }
 
 (async function() {
   const {generateWebKitProtocol, generateFirefoxProtocol, generateChromeProtocol} = require('./utils/protocol-types-generator/') ;
   try {
-    const chromeRevision = await downloadBrowser('chromium', require('./chromium').createBrowserFetcher());
+    const chromeRevision = await downloadBrowser('chromium', require('./chromium'));
     await generateChromeProtocol(chromeRevision);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
-    const firefoxRevision = await downloadBrowser('firefox', require('./firefox').createBrowserFetcher());
+    const firefoxRevision = await downloadBrowser('firefox', require('./firefox'));
     await generateFirefoxProtocol(firefoxRevision);
   } catch (e) {
     console.warn(e.message);
   }
   try {
-    const webkitRevision = await downloadBrowser('webkit', require('./webkit').createBrowserFetcher());
+    const webkitRevision = await downloadBrowser('webkit', require('./webkit'));
     await generateWebKitProtocol(webkitRevision);
   } catch (e) {
     console.warn(e.message);
   }
 })();
-function getRevision(browser) {
-  if (browser === 'chromium')
-    return require('./package.json').playwright.chromium_revision;
-  if (browser === 'firefox')
-    return require('./package.json').playwright.firefox_revision;
-  if (browser === 'webkit')
-    return require('./package.json').playwright.webkit_revision;
-}
-async function downloadBrowser(browser, browserFetcher) {
-  const revision = getRevision(browser);
 
-  const revisionInfo = browserFetcher.revisionInfo(revision);
-
-  // Do nothing if the revision is already downloaded.
-  if (revisionInfo.local)
-    return revisionInfo;
-
+async function downloadBrowser(browser, playwright) {
   let progressBar = null;
   let lastDownloadedBytes = 0;
   function onProgress(downloadedBytes, totalBytes) {
@@ -81,8 +65,12 @@ async function downloadBrowser(browser, browserFetcher) {
     progressBar.tick(delta);
   }
 
-  await browserFetcher.download(revisionInfo.revision, onProgress);
+  const revisionInfo = await playwright.downloadBrowser({onProgress});
+  // Do nothing if the revision is already downloaded.
+  if (revisionInfo.local)
+    return revisionInfo;
   logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
+  const browserFetcher = playwright.createBrowserFetcher();
   const localRevisions = await browserFetcher.localRevisions();
   // Remove previous chromium revisions.
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => browserFetcher.remove(revision));
@@ -93,7 +81,6 @@ async function downloadBrowser(browser, browserFetcher) {
   }
   return revisionInfo;
 }
-
 
 function toMegabytes(bytes) {
   const mb = bytes / 1024 / 1024;
