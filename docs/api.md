@@ -446,8 +446,6 @@ const iPhone = playwright.devices['iPhone 6'];
 
 Downloads the default browser that Playwright controls. The browser is usually around 100mb.
 
-> **NOTE** Depending on your terminal, the progress bar might not appear.
-
 #### playwright.errors
 - returns: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].

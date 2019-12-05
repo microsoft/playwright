@@ -8,7 +8,9 @@ export async function download(
   revision: string,
   browserName: string,
   {onProgress}: {onProgress?: (downloadedBytes: number, totalBytes: number) => void} = {}) : Promise<RevisionInfo> {
-  return await browserFetcher.download(revision, onProgress);
+  const revisionInfo = browserFetcher.revisionInfo(revision);
+  await browserFetcher.download(revision, onProgress);
+  return revisionInfo;
 }
 
 export type RevisionInfo = {
