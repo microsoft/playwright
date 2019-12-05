@@ -85,7 +85,7 @@ export class Screenshotter {
   }
 
   private async _screenshot(page: Page, format: 'png' | 'jpeg', options: ScreenshotOptions): Promise<Buffer | string> {
-    await page._client.send('Target.activateTarget', {targetId: page.target()._targetId});
+    await page._client.send('Target.activateTarget', {targetId: page._target._targetId});
     let clip = options.clip ? processClip(options.clip) : undefined;
     const viewport = page.viewport();
 

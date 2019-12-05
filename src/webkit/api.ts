@@ -11,6 +11,5 @@ export { Mouse, Keyboard } from '../input';
 export { Request, Response } from '../network';
 export { Page } from './Page';
 export { Playwright } from './Playwright';
-export { Target } from './Target';
 export { Dialog } from '../dialog';
 export { ConsoleMessage } from '../console';

@@ -42,25 +42,6 @@ export class Target {
     this._pagePromise = null;
     this._url = url;
     this._isClosedPromise = new Promise(fulfill => this._closedCallback = fulfill);
-    if (type === 'page') {
-      const session = this._browserContext.browser()._connection.session(this._targetId);
-      this._eventListeners = [
-        // FIXME: we could use Page.frameStartedLoading if it had url info.
-        helper.addEventListener(session, 'Page.frameNavigated', this._onFrameNavigated.bind(this)),
-      ];
-    }
-  }
-
-  async _onFrameNavigated(params: Protocol.Page.frameNavigatedPayload) {
-    // Check if main frame, get url from the event.
-    // Skip child frames.
-    if (params.frame.parentId)
-      return;
-    const url = params.frame.url;
-    if (this._url !== url) {
-      this._url = url;
-      this.browser()._onTargetChanged(this);
-    }
   }
 
   async page(): Promise<Page | null> {

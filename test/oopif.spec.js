@@ -57,5 +57,5 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
  * @param {!Playwright.BrowserContext} context
  */
 function oopifs(context) {
-  return context.targets().filter(target => target._targetInfo.type === 'iframe');
+  return context.browser().chromium.targets().filter(target => target._targetInfo.type === 'iframe');
 }

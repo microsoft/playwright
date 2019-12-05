@@ -291,10 +291,6 @@ export class Page extends EventEmitter {
     return this._target.browser();
   }
 
-  target() {
-    return this._target;
-  }
-
   url() {
     return this._frameManager.mainFrame().url();
   }

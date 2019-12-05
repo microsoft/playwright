@@ -184,7 +184,7 @@ export class Launcher {
         connection = new Connection('', transport, slowMo);
       }
       const browser = await Browser.create(connection, [], ignoreHTTPSErrors, defaultViewport, chromeProcess, gracefullyCloseChrome);
-      await browser.waitForTarget(t => t.type() === 'page');
+      await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
       killChrome();

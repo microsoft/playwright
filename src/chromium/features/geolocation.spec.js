@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-const utils = require('../../../test/utils');
-const {waitEvent} = utils;
-
 module.exports.addTests = function ({ testRunner, expect }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;

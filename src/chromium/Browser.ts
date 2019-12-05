@@ -32,7 +32,7 @@ export class Browser extends EventEmitter {
   private _defaultViewport: Viewport;
   private _process: childProcess.ChildProcess;
   private _screenshotter = new Screenshotter();
-  private _connection: Connection;
+  _connection: Connection;
   _client: CDPSession;
   private _closeCallback: () => Promise<void>;
   private _defaultContext: BrowserContext;
@@ -66,7 +66,7 @@ export class Browser extends EventEmitter {
     this._defaultViewport = defaultViewport;
     this._process = process;
     this._closeCallback = closeCallback || (() => Promise.resolve());
-    this.chromium = new Chromium(this._connection, this._client);
+    this.chromium = new Chromium(this);
 
     this._defaultContext = new BrowserContext(this._client, this, null);
     for (const contextId of contextIds)
@@ -111,10 +111,8 @@ export class Browser extends EventEmitter {
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(event.targetInfo.targetId, target);
 
-    if (await target._initializedPromise) {
-      this.emit(Events.Browser.TargetCreated, target);
-      context.emit(Events.BrowserContext.TargetCreated, target);
-    }
+    if (await target._initializedPromise)
+      this.chromium.emit(Events.Chromium.TargetCreated, target);
   }
 
   async _targetDestroyed(event: { targetId: string; }) {
@@ -122,10 +120,8 @@ export class Browser extends EventEmitter {
     target._initializedCallback(false);
     this._targets.delete(event.targetId);
     target._closedCallback();
-    if (await target._initializedPromise) {
-      this.emit(Events.Browser.TargetDestroyed, target);
-      target.browserContext().emit(Events.BrowserContext.TargetDestroyed, target);
-    }
+    if (await target._initializedPromise)
+      this.chromium.emit(Events.Chromium.TargetDestroyed, target);
   }
 
   _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
@@ -134,10 +130,8 @@ export class Browser extends EventEmitter {
     const previousURL = target.url();
     const wasInitialized = target._isInitialized;
     target._targetInfoChanged(event.targetInfo);
-    if (wasInitialized && previousURL !== target.url()) {
-      this.emit(Events.Browser.TargetChanged, target);
-      target.browserContext().emit(Events.BrowserContext.TargetChanged, target);
-    }
+    if (wasInitialized && previousURL !== target.url())
+      this.chromium.emit(Events.Chromium.TargetChanged, target);
   }
 
   async newPage(): Promise<Page> {
@@ -156,28 +150,28 @@ export class Browser extends EventEmitter {
     await this._client.send('Target.closeTarget', { targetId: target._targetId });
   }
 
-  targets(): Target[] {
+  _allTargets(): Target[] {
     return Array.from(this._targets.values()).filter(target => target._isInitialized);
   }
 
-  async waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
+  async _waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
     const {
       timeout = 30000
     } = options;
-    const existingTarget = this.targets().find(predicate);
+    const existingTarget = this._allTargets().find(predicate);
     if (existingTarget)
       return existingTarget;
     let resolve;
     const targetPromise = new Promise<Target>(x => resolve = x);
-    this.on(Events.Browser.TargetCreated, check);
-    this.on(Events.Browser.TargetChanged, check);
+    this.chromium.on(Events.Chromium.TargetCreated, check);
+    this.chromium.on(Events.Chromium.TargetChanged, check);
     try {
       if (!timeout)
         return await targetPromise;
       return await helper.waitWithTimeout(targetPromise, 'target', timeout);
     } finally {
-      this.removeListener(Events.Browser.TargetCreated, check);
-      this.removeListener(Events.Browser.TargetChanged, check);
+      this.chromium.removeListener(Events.Chromium.TargetCreated, check);
+      this.chromium.removeListener(Events.Chromium.TargetChanged, check);
     }
 
     function check(target: Target) {

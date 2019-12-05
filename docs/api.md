@@ -28,9 +28,6 @@
   * [browserFetcher.revisionInfo(revision)](#browserfetcherrevisioninforevision)
 - [class: Browser](#class-browser)
   * [event: 'disconnected'](#event-disconnected)
-  * [event: 'targetchanged'](#event-targetchanged)
-  * [event: 'targetcreated'](#event-targetcreated)
-  * [event: 'targetdestroyed'](#event-targetdestroyed)
   * [browser.browserContexts()](#browserbrowsercontexts)
   * [browser.chromium](#browserchromium)
   * [browser.close()](#browserclose)
@@ -41,14 +38,9 @@
   * [browser.newPage()](#browsernewpage)
   * [browser.pages()](#browserpages)
   * [browser.process()](#browserprocess)
-  * [browser.targets()](#browsertargets)
   * [browser.userAgent()](#browseruseragent)
   * [browser.version()](#browserversion)
-  * [browser.waitForTarget(predicate[, options])](#browserwaitfortargetpredicate-options)
 - [class: BrowserContext](#class-browsercontext)
-  * [event: 'targetchanged'](#event-targetchanged-1)
-  * [event: 'targetcreated'](#event-targetcreated-1)
-  * [event: 'targetdestroyed'](#event-targetdestroyed-1)
   * [browserContext.browser()](#browsercontextbrowser)
   * [browserContext.clearCookies()](#browsercontextclearcookies)
   * [browserContext.close()](#browsercontextclose)
@@ -58,8 +50,6 @@
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.permissions](#browsercontextpermissions)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
-  * [browserContext.targets()](#browsercontexttargets)
-  * [browserContext.waitForTarget(predicate[, options])](#browsercontextwaitfortargetpredicate-options)
 - [class: Overrides](#class-overrides)
   * [overrides.setGeolocation(options)](#overridessetgeolocationoptions)
   * [overrides.setTimezone(timezoneId)](#overridessettimezonetimezoneid)
@@ -129,7 +119,6 @@
   * [page.setJavaScriptEnabled(enabled)](#pagesetjavascriptenabledenabled)
   * [page.setUserAgent(userAgent)](#pagesetuseragentuseragent)
   * [page.setViewport(viewport)](#pagesetviewportviewport)
-  * [page.target()](#pagetarget)
   * [page.title()](#pagetitle)
   * [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
   * [page.type(selector, text[, options])](#pagetypeselector-text-options)
@@ -171,11 +160,16 @@
 - [class: PDF](#class-pdf)
   * [pdf.generate([options])](#pdfgenerateoptions)
 - [class: Chromium](#class-chromium)
-  * [chromium.createBrowserCDPSession()](#chromiumcreatebrowsercdpsession)
-  * [chromium.createCDPSession(target)](#chromiumcreatecdpsessiontarget)
+  * [event: 'targetchanged'](#event-targetchanged)
+  * [event: 'targetcreated'](#event-targetcreated)
+  * [event: 'targetdestroyed'](#event-targetdestroyed)
+  * [chromium.browserTarget()](#chromiumbrowsertarget)
+  * [chromium.pageTarget(page)](#chromiumpagetargetpage)
   * [chromium.serviceWorker(target)](#chromiumserviceworkertarget)
   * [chromium.startTracing(page, [options])](#chromiumstarttracingpage-options)
   * [chromium.stopTracing()](#chromiumstoptracing)
+  * [chromium.targets(context)](#chromiumtargetscontext)
+  * [chromium.waitForTarget(predicate[, options])](#chromiumwaitfortargetpredicate-options)
   * [chromium.wsEndpoint()](#chromiumwsendpoint)
 - [class: Dialog](#class-dialog)
   * [dialog.accept([promptText])](#dialogacceptprompttext)
@@ -297,6 +291,7 @@
 - [class: Target](#class-target)
   * [target.browser()](#targetbrowser)
   * [target.browserContext()](#targetbrowsercontext)
+  * [target.createCDPSession()](#targetcreatecdpsession)
   * [target.opener()](#targetopener)
   * [target.page()](#targetpage)
   * [target.type()](#targettype)
@@ -353,7 +348,7 @@ const playwright = require('playwright');
       `--load-extension=${pathToExtension}`
     ]
   });
-  const targets = await browser.targets();
+  const targets = await browser.chromium.targets();
   const backgroundPageTarget = targets.find(target => target.type() === 'background_page');
   const backgroundPage = await backgroundPageTarget.page();
   // Test the background page as you would any other page.
@@ -601,28 +596,6 @@ Emitted when Playwright gets disconnected from the Chromium instance. This might
 - Chromium is closed or crashed
 - The [`browser.disconnect`](#browserdisconnect) method was called
 
-#### event: 'targetchanged'
-- <[Target]>
-
-Emitted when the url of a target changes.
-
-> **NOTE** This includes target changes in incognito browser contexts.
-
-
-#### event: 'targetcreated'
-- <[Target]>
-
-Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browser.newPage`](#browsernewpage).
-
-> **NOTE** This includes target creations in incognito browser contexts.
-
-#### event: 'targetdestroyed'
-- <[Target]>
-
-Emitted when a target is destroyed, for example when a page is closed.
-
-> **NOTE** This includes target destructions in incognito browser contexts.
-
 #### browser.browserContexts()
 - returns: <[Array]<[BrowserContext]>>
 
@@ -683,12 +656,6 @@ the method will return an array with all the pages in all browser contexts.
 #### browser.process()
 - returns: <?[ChildProcess]> Spawned browser process. Returns `null` if the browser instance was created with [`playwright.connect`](#playwrightconnectoptions) method.
 
-#### browser.targets()
-- returns: <[Array]<[Target]>>
-
-An array of all active targets inside the Browser. In case of multiple browser contexts,
-the method will return an array with all the targets in all browser contexts.
-
 #### browser.userAgent()
 - returns: <[Promise]<[string]>> Promise which resolves to the browser's original user agent.
 
@@ -698,20 +665,6 @@ the method will return an array with all the targets in all browser contexts.
 - returns: <[Promise]<[string]>> For headless Chromium, this is similar to `HeadlessChrome/61.0.3153.0`. For non-headless, this is similar to `Chrome/61.0.3153.0`.
 
 > **NOTE** the format of browser.version() might change with future releases of Chromium.
-
-#### browser.waitForTarget(predicate[, options])
-- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
-- `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
-- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
-
-This searches for a target in all browser contexts.
-
-An example of finding a target for a page opened via `window.open`:
-```js
-await page.evaluate(() => window.open('https://www.example.com/'));
-const newWindowTarget = await browser.waitForTarget(target => target.url() === 'https://www.example.com/');
-```
 
 ### class: BrowserContext
 
@@ -736,21 +689,6 @@ await page.goto('https://example.com');
 // Dispose context once it's no longer needed.
 await context.close();
 ```
-
-#### event: 'targetchanged'
-- <[Target]>
-
-Emitted when the url of a target inside the browser context changes.
-
-#### event: 'targetcreated'
-- <[Target]>
-
-Emitted when a new target is created inside the browser context, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
-
-#### event: 'targetdestroyed'
-- <[Target]>
-
-Emitted when a target inside the browser context is destroyed, for example when a page is closed.
 
 #### browserContext.browser()
 - returns: <[Browser]>
@@ -823,25 +761,6 @@ An array of all pages inside the browser context.
 
 ```js
 await browserContext.setCookies([cookieObject1, cookieObject2]);
-```
-
-#### browserContext.targets()
-- returns: <[Array]<[Target]>>
-
-An array of all active targets inside the browser context.
-
-#### browserContext.waitForTarget(predicate[, options])
-- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
-- `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
-- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
-
-This searches for a target in this specific browser context.
-
-An example of finding a target for a page opened via `window.open`:
-```js
-await page.evaluate(() => window.open('https://www.example.com/'));
-const newWindowTarget = await browserContext.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
 ### class: Overrides
@@ -1708,9 +1627,6 @@ await page.setViewport({
 await page.goto('https://example.com');
 ```
 
-#### page.target()
-- returns: <[Target]> a target this page was created from.
-
 #### page.title()
 - returns: <[Promise]<[string]>> The page's title.
 
@@ -2368,16 +2284,36 @@ await page.goto('https://www.google.com');
 await page.chromium.stopTracing();
 ```
 
-#### chromium.createBrowserCDPSession()
-- returns: <[Promise]<[CDPSession]>>
+#### event: 'targetchanged'
+- <[Target]>
 
-Creates a Chrome Devtools Protocol session attached to the browser.
+Emitted when the url of a target changes.
 
-#### chromium.createCDPSession(target)
-- `target` <[Target]> Target to return CDP connection for.
-- returns: <[Promise]<[CDPSession]>>
+> **NOTE** This includes target changes in incognito browser contexts.
 
-Creates a Chrome Devtools Protocol session attached to the target.
+
+#### event: 'targetcreated'
+- <[Target]>
+
+Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browser.newPage`](#browsernewpage).
+
+> **NOTE** This includes target creations in incognito browser contexts.
+
+#### event: 'targetdestroyed'
+- <[Target]>
+
+Emitted when a target is destroyed, for example when a page is closed.
+
+> **NOTE** This includes target destructions in incognito browser contexts.
+
+#### chromium.browserTarget()
+- returns: <[Target]>
+
+Returns browser target.
+
+#### chromium.pageTarget(page)
+- `page` <[Page]> Page to return target for.
+- returns: <[Target]> a target given page was created from.
 
 #### chromium.serviceWorker(target)
 - `target` <[Target]> Target to treat as a service worker
@@ -2397,6 +2333,27 @@ Only one trace can be active at a time per browser.
 
 #### chromium.stopTracing()
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
+
+#### chromium.targets(context)
+- `context` <[BrowserContext]> Optional, if specified, only targets from this context are returned.
+- returns: <[Array]<[Target]>>
+
+An array of all active targets inside the Browser. In case of multiple browser contexts,
+the method will return an array with all the targets in all browser contexts.
+
+#### chromium.waitForTarget(predicate[, options])
+- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
+- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
+
+This searches for a target in all browser contexts.
+
+An example of finding a target for a page opened via `window.open`:
+```js
+await page.evaluate(() => window.open('https://www.example.com/'));
+const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
+```
 
 #### chromium.wsEndpoint()
 - returns: <[string]> Browser websocket url.
@@ -3712,6 +3669,11 @@ Get the browser the target belongs to.
 
 The browser context the target belongs to.
 
+#### target.createCDPSession()
+- returns: <[Promise]<[CDPSession]>>
+
+Creates a Chrome Devtools Protocol session attached to the target.
+
 #### target.opener()
 - returns: <?[Target]>
 
@@ -3743,7 +3705,7 @@ Useful links:
 - Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
 
 ```js
-const client = await page.chromium.createCDPSession(target);
+const client = await page.chromium.pageTarget(page).createCDPSession();
 await client.send('Animation.enable');
 client.on('Animation.animationCreated', () => console.log('Animation created!'));
 const response = await client.send('Animation.getPlaybackRate');

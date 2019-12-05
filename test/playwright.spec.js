@@ -153,7 +153,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       // FIXME: screenshot tests will fail when running in parallel (maybe)
       require('./screenshot.spec.js').addTests(testOptions);
       require('./queryselector.spec.js').addTests(testOptions);
-      require('./target.spec.js').addTests(testOptions);
       require('./waittask.spec.js').addTests(testOptions);
       if (CHROME) {
         require('./CDPSession.spec.js').addTests(testOptions);
@@ -162,6 +161,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
         require('./chromiumonly.spec.js').addPageTests(testOptions);
         require('../src/chromium/features/geolocation.spec.js').addTests(testOptions);
         require('../src/chromium/features/pdf.spec.js').addTests(testOptions);
+        require('../src/chromium/features/chromium.spec.js').addTests(testOptions);
       }
     });
 

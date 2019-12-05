@@ -28,7 +28,7 @@ export class Target {
   private _targetInfo: Protocol.Target.TargetInfo;
   private _browserContext: BrowserContext;
   _targetId: string;
-  _sessionFactory: () => Promise<CDPSession>;
+  private _sessionFactory: () => Promise<CDPSession>;
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: Viewport;
   private _screenshotter: Screenshotter;
@@ -116,6 +116,10 @@ export class Target {
     if (!openerId)
       return null;
     return this.browser()._targets.get(openerId);
+  }
+
+  createCDPSession(): Promise<CDPSession> {
+    return this._sessionFactory();
   }
 
   _targetInfoChanged(targetInfo: Protocol.Target.TargetInfo) {

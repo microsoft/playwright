@@ -14,31 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { EventEmitter } from 'events';
 import { assert } from '../../helper';
+import { Browser } from '../Browser';
+import { BrowserContext } from '../BrowserContext';
 import { CDPSession, Connection } from '../Connection';
 import { Page } from '../Page';
 import { readProtocolStream } from '../protocolHelper';
 import { Target } from '../Target';
 import { Worker } from './workers';
 
-export class Chromium {
+export class Chromium extends EventEmitter {
   private _connection: Connection;
   private _client: CDPSession;
   private _recording = false;
   private _path = '';
   private _tracingClient: CDPSession | undefined;
+  private _browser: Browser;
 
-  constructor(connection: Connection, client: CDPSession) {
-    this._connection = connection;
-    this._client = client;
+  constructor(browser: Browser) {
+    super();
+    this._connection = browser._connection;
+    this._client = browser._client;
+    this._browser = browser;
   }
 
-  createBrowserCDPSession(): Promise<CDPSession> {
-    return this._connection.createBrowserSession();
-  }
-
-  createCDPSession(target: Target): Promise<CDPSession> {
-    return target._sessionFactory();
+  browserTarget(): Target {
+    return [...this._browser._targets.values()].find(t => t.type() === 'browser');
   }
 
   serviceWorker(target: Target): Promise<Worker | null> {
@@ -82,6 +84,19 @@ export class Chromium {
     await this._tracingClient.send('Tracing.end');
     this._recording = false;
     return contentPromise;
+  }
+
+  targets(context?: BrowserContext): Target[] {
+    const targets = this._browser._allTargets();
+    return context ? targets.filter(t => t.browserContext() === context) : targets;
+  }
+
+  pageTarget(page: Page): Target {
+    return page._target;
+  }
+
+  waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
+    return this._browser._waitForTarget(predicate, options);
   }
 
   wsEndpoint(): string {
