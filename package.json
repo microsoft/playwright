@@ -1,6 +1,6 @@
 {
   "name": "playwright",
-  "version": "0.9.1",
+  "version": "0.9.1-post",
   "description": "A high-level API to control web browsers",
   "repository": "github:Microsoft/playwright",
   "engines": {
