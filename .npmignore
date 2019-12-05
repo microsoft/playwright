@@ -1,48 +1,13 @@
-.appveyor.yml
-.gitattributes
+**/*
 
-# no longer generated, but old checkouts might still have it
-node6
+# include sources from lib except for injected
+!lib/**/*.js
+lib/injected/
 
-# exclude all tests
-test
-utils/node6-transform
-
-# exclude source files
-src
-
-# repeats from .gitignore
-node_modules
-.local-chromium
-.local-browser
-.local-webkit
-.dev_profile*
-.DS_Store
-*.swp
-*.pyc
-.vscode
-package-lock.json
-/node6/test
-/node6/utils
-/test
-/utils
-/docs
-yarn.lock
-
-# other
-/.ci
-/examples
-.appveyour.yml
-.cirrus.yml
-.editorconfig
-.eslintignore
-.eslintrc.js
-.travis.yml
-README.md
-tsconfig.json
-
-# exclude types, see https://github.com/GoogleChrome/puppeteer/issues/3878
-/index.d.ts
-
-# install.js only does stuff for development
-/install.js
+# include root helpers
+!chromium.js
+!DeviceDescriptors.js
+!Errors.js
+!firefox.js
+!index.js
+!webkit.js

@@ -21,3 +21,4 @@ yarn.lock
 /utils/browser/playwright-web.js
 /index.d.ts
 lib/
+playwright-*.tgz

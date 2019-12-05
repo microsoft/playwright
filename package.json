@@ -1,11 +1,12 @@
 {
   "name": "playwright",
   "version": "0.9.0-post",
-  "description": "A high-level API to control headless Chrome over the DevTools Protocol",
+  "description": "A high-level API to control web browsers",
   "repository": "github:Microsoft/playwright",
   "engines": {
     "node": ">=10.17.0"
   },
+  "main": "index.js",
   "playwright": {
     "chromium_revision": "719491",
     "firefox_revision": "1004",
@@ -18,7 +19,7 @@
     "debug-unit": "node --inspect-brk test/test.js",
     "test-doclint": "node utils/doclint/check_public_api/test/test.js && node utils/doclint/preprocessor/test.js",
     "test": "npm run lint --silent && npm run coverage && npm run test-doclint && npm run test-types && node utils/testrunner/test/test.js",
-    "install": "node install.js",
+    "prepare": "node install.js",
     "lint": "([ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src) && npm run tsc && npm run doc",
     "doc": "node utils/doclint/cli.js",
     "coverage": "cross-env COVERAGE=true npm run unit",
@@ -30,8 +31,10 @@
     "test-types": "node utils/doclint/generate_types && npx -p typescript@2.1 tsc -p utils/doclint/generate_types/test/",
     "unit-bundle": "node utils/browser/test.js"
   },
-  "author": "The Chromium Authors",
-  "license": "Apache-2.0",
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "MIT",
   "dependencies": {
     "debug": "^4.1.0",
     "extract-zip": "^1.6.6",
