@@ -63,6 +63,41 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
         expect(error.message).toContain('Failed to fetch browser webSocket url from');
         originalBrowser.close();
       });
+      it('userDataDir option should restore state', async({server}) => {
+        const userDataDir = await mkdtempAsync(TMP_FOLDER);
+        const options = Object.assign({userDataDir}, defaultBrowserOptions);
+        const browser = await playwright.launch(options);
+        const page = await browser.newPage();
+        await page.goto(server.EMPTY_PAGE);
+        await page.evaluate(() => localStorage.hey = 'hello');
+        await browser.close();
+
+        const browser2 = await playwright.launch(options);
+        const page2 = await browser2.newPage();
+        await page2.goto(server.EMPTY_PAGE);
+        expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
+        await browser2.close();
+        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+        await rmAsync(userDataDir).catch(e => {});
+      });
+      // This mysteriously fails on Windows on AppVeyor. See https://github.com/GoogleChrome/puppeteer/issues/4111
+      it('userDataDir option should restore cookies', async({server}) => {
+        const userDataDir = await mkdtempAsync(TMP_FOLDER);
+        const options = Object.assign({userDataDir}, defaultBrowserOptions);
+        const browser = await playwright.launch(options);
+        const page = await browser.newPage();
+        await page.goto(server.EMPTY_PAGE);
+        await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
+        await browser.close();
+
+        const browser2 = await playwright.launch(options);
+        const page2 = await browser2.newPage();
+        await page2.goto(server.EMPTY_PAGE);
+        expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
+        await browser2.close();
+        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+        await rmAsync(userDataDir).catch(e => {});
+      });
     });
 
     describe('Playwright.launch |pipe| option', function() {
