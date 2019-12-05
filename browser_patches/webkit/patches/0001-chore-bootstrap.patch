@@ -1,7 +1,7 @@
-From dc4cde6bbc1555621af1037bcf2b4aa34ae8eff4 Mon Sep 17 00:00:00 2001
-From: Pavel <pavel.feldman@gmail.com>
-Date: Wed, 4 Dec 2019 17:03:33 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From 75af8eb6e1f3c2a4021f60efcfc8f3a9970d8eae Mon Sep 17 00:00:00 2001
+From: Andrey Lushnikov <lushnikov@chromium.org>
+Date: Wed, 4 Dec 2019 17:53:49 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -2718,20 +2718,20 @@ index 6f4e29b7c65..9dd287efc40 100644
      enum class HandledByInputMethod : bool { No, Yes };
      NativeWebKeyboardEvent(::WebEvent *, HandledByInputMethod);
 diff --git a/Source/WebKit/Shared/NativeWebMouseEvent.h b/Source/WebKit/Shared/NativeWebMouseEvent.h
-index 0fa557e9faa..81f2394a690 100644
+index 0fa557e9faa..db299d91de3 100644
 --- a/Source/WebKit/Shared/NativeWebMouseEvent.h
 +++ b/Source/WebKit/Shared/NativeWebMouseEvent.h
-@@ -61,6 +61,10 @@ public:
- #elif PLATFORM(GTK)
-     NativeWebMouseEvent(const NativeWebMouseEvent&);
-     NativeWebMouseEvent(GdkEvent*, int, Optional<WebCore::IntPoint>);
+@@ -56,6 +56,10 @@ namespace WebKit {
+ 
+ class NativeWebMouseEvent : public WebMouseEvent {
+ public:
 +    NativeWebMouseEvent(Type type, Button button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier> modifiers, WallTime timestamp)
 +        : WebMouseEvent(type, button, buttons, position, globalPosition, deltaX, deltaY, deltaZ, clickCount, modifiers, timestamp)
 +    {
 +    }
- #elif PLATFORM(IOS_FAMILY)
-     NativeWebMouseEvent(::WebEvent *);
-     NativeWebMouseEvent(Type, Button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier>, WallTime timestamp, double force);
+ #if USE(APPKIT)
+     NativeWebMouseEvent(NSEvent *, NSEvent *lastPressureEvent, NSView *);
+ #elif PLATFORM(GTK)
 diff --git a/Source/WebKit/Shared/WebEvent.h b/Source/WebKit/Shared/WebEvent.h
 index c36100cf5c4..216402f0a24 100644
 --- a/Source/WebKit/Shared/WebEvent.h
@@ -4933,7 +4933,7 @@ index 00000000000..b02753590b3
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 00000000000..3083ca03e8c
+index 00000000000..6bd5242c9c2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 @@ -0,0 +1,235 @@
@@ -5148,7 +5148,7 @@ index 00000000000..3083ca03e8c
 +    m_inputObserver->addMouseCallback(WTFMove(callback));
 +#if PLATFORM(WPE)
 +    platformDispatchMouseEvent(type, in_x, in_y, button, modifiers);
-+#elif PLATFORM(GTK)
++#elif PLATFORM(GTK) || PLATFORM(MAC)
 +    WallTime timestamp = WallTime::now();
 +    NativeWebMouseEvent event(
 +        type,
@@ -7032,5 +7032,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.22.1
 
