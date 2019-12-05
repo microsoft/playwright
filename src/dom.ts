@@ -23,10 +23,10 @@ export interface DOMWorldDelegate {
   screenshot(handle: ElementHandle, options?: any): Promise<string | Buffer>;
   ensurePointerActionPoint(handle: ElementHandle, relativePoint?: types.Point): Promise<types.Point>;
   setInputFiles(handle: ElementHandle, files: input.FilePayload[]): Promise<void>;
-  adoptElementHandle(handle: ElementHandle, to: DOMWorld): Promise<ElementHandle>;
+  adoptElementHandle<T extends Node>(handle: ElementHandle<T>, to: DOMWorld): Promise<ElementHandle<T>>;
 }
 
-export type ScopedSelector = types.Selector & { scope?: ElementHandle };
+type ScopedSelector = types.Selector & { scope?: ElementHandle };
 type ResolvedSelector = { scope?: ElementHandle, selector: string, visible?: boolean, disposeScope?: boolean };
 
 export class DOMWorld {
@@ -59,7 +59,7 @@ export class DOMWorld {
     return this._injectedPromise;
   }
 
-  async adoptElementHandle(handle: ElementHandle): Promise<ElementHandle> {
+  async adoptElementHandle<T extends Node>(handle: ElementHandle<T>): Promise<ElementHandle<T>> {
     assert(handle.executionContext() !== this.context, 'Should not adopt to the same context');
     return this.delegate.adoptElementHandle(handle, this);
   }
@@ -74,11 +74,11 @@ export class DOMWorld {
     return { scope: selector.scope, selector: normalizeSelector(selector.selector), visible: selector.visible };
   }
 
-  async $(selector: string | ScopedSelector): Promise<ElementHandle | null> {
+  async $(selector: string | ScopedSelector): Promise<ElementHandle<Element> | null> {
     const resolved = await this.resolveSelector(selector);
     const handle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
-          const element = injected.querySelector(selector, scope || document);
+        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
+          const element = injected.querySelector(selector, scope as SelectorRoot || document);
           if (visible === undefined || !element)
             return element;
           return injected.isVisible(element) === visible ? element : undefined;
@@ -92,11 +92,11 @@ export class DOMWorld {
     return handle.asElement();
   }
 
-  async $$(selector: string | ScopedSelector): Promise<ElementHandle[]> {
+  async $$(selector: string | ScopedSelector): Promise<ElementHandle<Element>[]> {
     const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
-          const elements = injected.querySelectorAll(selector, scope || document);
+        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
+          const elements = injected.querySelectorAll(selector, scope as SelectorRoot || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
           return elements;
@@ -130,8 +130,8 @@ export class DOMWorld {
   $$eval: types.$$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
     const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
-          const elements = injected.querySelectorAll(selector, scope || document);
+        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
+          const elements = injected.querySelectorAll(selector, scope as SelectorRoot || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
           return elements;
@@ -144,7 +144,7 @@ export class DOMWorld {
   }
 }
 
-export class ElementHandle extends js.JSHandle {
+export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private readonly _world: DOMWorld;
 
   constructor(context: js.ExecutionContext, remoteObject: any) {
@@ -153,7 +153,7 @@ export class ElementHandle extends js.JSHandle {
     this._world = context._domWorld;
   }
 
-  asElement(): ElementHandle | null {
+  asElement(): ElementHandle<T> | null {
     return this;
   }
 
@@ -162,13 +162,15 @@ export class ElementHandle extends js.JSHandle {
   }
 
   async _scrollIntoViewIfNeeded() {
-    const error = await this.evaluate(async (element, pageJavascriptEnabled) => {
-      if (!element.isConnected)
+    const error = await this.evaluate(async (node: Node, pageJavascriptEnabled: boolean) => {
+      if (!node.isConnected)
         return 'Node is detached from document';
-      if (element.nodeType !== Node.ELEMENT_NODE)
+      if (node.nodeType !== Node.ELEMENT_NODE)
         return 'Node is not of type HTMLElement';
+      const element = node as Element;
       // force-scroll if page's javascript is disabled.
       if (!pageJavascriptEnabled) {
+        //@ts-ignore because only Chromium still supports 'instant'
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
         return false;
       }
@@ -182,8 +184,10 @@ export class ElementHandle extends js.JSHandle {
         // there are rafs.
         requestAnimationFrame(() => {});
       });
-      if (visibleRatio !== 1.0)
+      if (visibleRatio !== 1.0) {
+        //@ts-ignore because only Chromium still supports 'instant'
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
+      }
       return false;
     }, this._world.delegate.isJavascriptEnabled());
     if (error)
@@ -242,13 +246,13 @@ export class ElementHandle extends js.JSHandle {
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
-    const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
+    const multiple = await this.evaluate((element: Node) => !!(element as HTMLInputElement).multiple);
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
     await this._world.delegate.setInputFiles(this, await input.loadFiles(files));
   }
 
   async focus() {
-    await this.evaluate(element => element.focus());
+    await this.evaluate((element: Node) => (element as HTMLElement).focus());
   }
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {
@@ -280,7 +284,7 @@ export class ElementHandle extends js.JSHandle {
     return this._world.$(this._scopedSelector(selector));
   }
 
-  $$(selector: string | types.Selector): Promise<ElementHandle[]> {
+  $$(selector: string | types.Selector): Promise<ElementHandle<Element>[]> {
     return this._world.$$(this._scopedSelector(selector));
   }
 
@@ -292,12 +296,15 @@ export class ElementHandle extends js.JSHandle {
     return this._world.$$eval(this._scopedSelector(selector), pageFunction, ...args as any);
   }
 
-  $x(expression: string): Promise<ElementHandle[]> {
+  $x(expression: string): Promise<ElementHandle<Element>[]> {
     return this._world.$$({ scope: this, selector: 'xpath=' + expression });
   }
 
   isIntersectingViewport(): Promise<boolean> {
-    return this.evaluate(async element => {
+    return this.evaluate(async (node: Node) => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        throw new Error('Node is not of type HTMLElement');
+      const element = node as Element;
       const visibleRatio = await new Promise(resolve => {
         const observer = new IntersectionObserver(entries => {
           resolve(entries[0].intersectionRatio);
@@ -348,7 +355,7 @@ export function waitForSelectorTask(selector: string | ScopedSelector, timeout: 
   return async (domWorld: DOMWorld) => {
     // TODO: we should not be able to adopt selector scope from a different document - handle this case.
     const resolved = await domWorld.resolveSelector(selector);
-    return domWorld.context.evaluateHandle((injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined, timeout: number) => {
+    return domWorld.context.evaluateHandle((injected: Injected, selector: string, scope: Node | undefined, visible: boolean | undefined, timeout: number) => {
       if (visible !== undefined)
         return injected.pollRaf(predicate, timeout);
       return injected.pollMutation(predicate, timeout);

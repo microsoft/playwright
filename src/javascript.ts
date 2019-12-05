@@ -38,7 +38,7 @@ export class ExecutionContext {
   }
 }
 
-export class JSHandle {
+export class JSHandle<T = any> {
   readonly _context: ExecutionContext;
   readonly _remoteObject: any;
   _disposed = false;
@@ -52,11 +52,11 @@ export class JSHandle {
     return this._context;
   }
 
-  evaluate: types.EvaluateOn = (pageFunction, ...args) => {
+  evaluate: types.EvaluateOn<T> = (pageFunction, ...args) => {
     return this._context.evaluate(pageFunction, this, ...args);
   }
 
-  evaluateHandle: types.EvaluateHandleOn = (pageFunction, ...args) => {
+  evaluateHandle: types.EvaluateHandleOn<T> = (pageFunction, ...args) => {
     return this._context.evaluateHandle(pageFunction, this, ...args);
   }
 
@@ -76,7 +76,7 @@ export class JSHandle {
     return this._context._delegate.getProperties(this);
   }
 
-  jsonValue(): Promise<any> {
+  jsonValue(): Promise<T> {
     return this._context._delegate.handleJSONValue(this);
   }
 

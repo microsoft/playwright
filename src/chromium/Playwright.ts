@@ -30,7 +30,7 @@ export class Playwright {
     this._launcher = new Launcher(projectRoot, preferredRevision);
   }
 
-  launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) | undefined): Promise<Browser> {
+  launch(options?: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) | undefined): Promise<Browser> {
     return this._launcher.launch(options);
   }
 

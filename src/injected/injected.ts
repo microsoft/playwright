@@ -17,9 +17,11 @@ class Injected {
       this.engines.set(engine.name, engine);
   }
 
-  querySelector(selector: string, root: SelectorRoot): Element | undefined {
+  querySelector(selector: string, root: Node): Element | undefined {
     const parsed = this._parseSelector(selector);
-    let element = root;
+    if (!root["querySelector"])
+      throw new Error('Node is not queryable.');
+    let element = root as SelectorRoot;
     for (const { engine, selector } of parsed) {
       const next = engine.query((element as Element).shadowRoot || element, selector);
       if (!next)

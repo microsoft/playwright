@@ -194,11 +194,11 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     await handle.evaluate(input.setFileInputFunction, files);
   }
 
-  async adoptElementHandle(handle: dom.ElementHandle, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(handle).objectId,
     });
-    return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to);
+    return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
   }
 
   async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.DOMWorld): Promise<dom.ElementHandle> {

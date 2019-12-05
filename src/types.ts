@@ -3,17 +3,21 @@
 
 import * as js from './javascript';
 import { helper } from './helper';
+import * as dom from './dom';
 
-type Boxed<Args extends any[]> = { [Index in keyof Args]: Args[Index] | js.JSHandle };
+type Boxed<Args extends any[]> = { [Index in keyof Args]: Args[Index] | js.JSHandle<Args[Index]> };
 type PageFunction<Args extends any[], R = any> = string | ((...args: Args) => R | Promise<R>);
 type PageFunctionOn<On, Args extends any[], R = any> = string | ((on: On, ...args: Args) => R | Promise<R>);
 
+type Handle<T> = T extends Node ? dom.ElementHandle<T> : js.JSHandle<T>;
+type ElementForSelector<T> = T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element; 
+
 export type Evaluate = <Args extends any[], R>(pageFunction: PageFunction<Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type EvaluateHandle = <Args extends any[]>(pageFunction: PageFunction<Args>, ...args: Boxed<Args>) => Promise<js.JSHandle>;
-export type $Eval<S = string | Selector> = <Args extends any[], R>(selector: S, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type $$Eval<S = string | Selector> = <Args extends any[], R>(selector: S, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type EvaluateOn = <Args extends any[], R>(pageFunction: PageFunctionOn<any, Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type EvaluateHandleOn = <Args extends any[]>(pageFunction: PageFunctionOn<any, Args>, ...args: Boxed<Args>) => Promise<js.JSHandle>;
+export type EvaluateHandle = <Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>) => Promise<Handle<R>>;
+export type $Eval<O = string | Selector> = <Args extends any[], R, S extends O>(selector: S, pageFunction: PageFunctionOn<ElementForSelector<S>, Args, R>, ...args: Boxed<Args>) => Promise<R>;
+export type $$Eval<O = string | Selector> = <Args extends any[], R, S extends O>(selector: S, pageFunction: PageFunctionOn<ElementForSelector<S>[], Args, R>, ...args: Boxed<Args>) => Promise<R>;
+export type EvaluateOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<R>;
+export type EvaluateHandleOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<Handle<R>>;
 
 export type Rect = { x: number, y: number, width: number, height: number };
 export type Point = { x: number, y: number };

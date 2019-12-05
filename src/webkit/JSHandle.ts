@@ -141,7 +141,7 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     await this._client.send('DOM.setInputFiles', { objectId, files });
   }
 
-  async adoptElementHandle(handle: dom.ElementHandle, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
     assert(false, 'Multiple isolated worlds are not implemented');
     return handle;
   }

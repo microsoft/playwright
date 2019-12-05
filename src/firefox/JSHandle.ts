@@ -22,6 +22,7 @@ import * as types from '../types';
 import * as frames from '../frames';
 import { JugglerSession } from './Connection';
 import { FrameManager } from './FrameManager';
+import { Protocol } from './protocol';
 
 export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   readonly keyboard: input.Keyboard;
@@ -138,13 +139,13 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     await handle.evaluate(input.setFileInputFunction, files);
   }
 
-  async adoptElementHandle(handle: dom.ElementHandle, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
     assert(false, 'Multiple isolated worlds are not implemented');
     return handle;
   }
 }
 
-function toRemoteObject(handle: dom.ElementHandle): any {
+function toRemoteObject(handle: dom.ElementHandle): Protocol.RemoteObject {
   return handle._remoteObject;
 }
 
