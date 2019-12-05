@@ -58,14 +58,10 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
   }
 
-  private _getBoxModel(handle: dom.ElementHandle): Promise<void | Protocol.DOM.getBoxModelReturnValue> {
-    return this._client.send('DOM.getBoxModel', {
-      objectId: toRemoteObject(handle).objectId
-    }).catch(error => debugError(error));
-  }
-
   async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
-    const result = await this._getBoxModel(handle);
+    const result = await this._client.send('DOM.getBoxModel', {
+      objectId: toRemoteObject(handle).objectId
+    }).catch(debugError);
     if (!result)
       return null;
     const quad = result.model.border;
@@ -76,118 +72,28 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return {x, y, width, height};
   }
 
+  async contentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+    const result = await this._client.send('DOM.getContentQuads', {
+      objectId: toRemoteObject(handle).objectId
+    }).catch(debugError);
+    if (!result)
+      return null;
+    return result.quads.map(quad => [
+      { x: quad[0], y: quad[1] },
+      { x: quad[2], y: quad[3] },
+      { x: quad[4], y: quad[5] },
+      { x: quad[6], y: quad[7] }
+    ]);
+  }
+
+  async layoutViewport(): Promise<{ width: number, height: number }> {
+    const layoutMetrics = await this._client.send('Page.getLayoutMetrics');
+    return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
+  }
+
   screenshot(handle: dom.ElementHandle, options: ScreenshotOptions = {}): Promise<string | Buffer> {
     const page = this._frameManager.page();
     return page._screenshotter.screenshotElement(page, handle, options);
-  }
-
-  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: types.Point): Promise<types.Point> {
-    await handle._scrollIntoViewIfNeeded();
-    if (!relativePoint)
-      return this._clickablePoint(handle);
-    let r = await this._viewportPointAndScroll(handle, relativePoint);
-    if (r.scrollX || r.scrollY) {
-      const error = await handle.evaluate((element, scrollX, scrollY) => {
-        if (!element.ownerDocument || !element.ownerDocument.defaultView)
-          return 'Node does not have a containing window';
-        element.ownerDocument.defaultView.scrollBy(scrollX, scrollY);
-        return false;
-      }, r.scrollX, r.scrollY);
-      if (error)
-        throw new Error(error);
-      r = await this._viewportPointAndScroll(handle, relativePoint);
-      if (r.scrollX || r.scrollY)
-        throw new Error('Failed to scroll relative point into viewport');
-    }
-    return r.point;
-  }
-
-  private async _clickablePoint(handle: dom.ElementHandle): Promise<types.Point> {
-    const fromProtocolQuad = (quad: number[]): types.Point[] => {
-      return [
-        {x: quad[0], y: quad[1]},
-        {x: quad[2], y: quad[3]},
-        {x: quad[4], y: quad[5]},
-        {x: quad[6], y: quad[7]}
-      ];
-    };
-
-    const intersectQuadWithViewport = (quad: types.Point[], width: number, height: number): types.Point[] => {
-      return quad.map(point => ({
-        x: Math.min(Math.max(point.x, 0), width),
-        y: Math.min(Math.max(point.y, 0), height),
-      }));
-    };
-
-    const computeQuadArea = (quad: types.Point[]) => {
-      // Compute sum of all directed areas of adjacent triangles
-      // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
-      let area = 0;
-      for (let i = 0; i < quad.length; ++i) {
-        const p1 = quad[i];
-        const p2 = quad[(i + 1) % quad.length];
-        area += (p1.x * p2.y - p2.x * p1.y) / 2;
-      }
-      return Math.abs(area);
-    };
-
-    const [result, layoutMetrics] = await Promise.all([
-      this._client.send('DOM.getContentQuads', {
-        objectId: toRemoteObject(handle).objectId
-      }).catch(debugError),
-      this._client.send('Page.getLayoutMetrics'),
-    ]);
-    if (!result || !result.quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    // Filter out quads that have too small area to click into.
-    const { clientWidth, clientHeight } = layoutMetrics.layoutViewport;
-    const quads = result.quads.map(fromProtocolQuad)
-        .map(quad => intersectQuadWithViewport(quad, clientWidth, clientHeight))
-        .filter(quad => computeQuadArea(quad) > 1);
-    if (!quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    // Return the middle point of the first quad.
-    const quad = quads[0];
-    let x = 0;
-    let y = 0;
-    for (const point of quad) {
-      x += point.x;
-      y += point.y;
-    }
-    return {
-      x: x / 4,
-      y: y / 4
-    };
-  }
-
-  async _viewportPointAndScroll(handle: dom.ElementHandle, relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
-    const model = await this._getBoxModel(handle);
-    let point: types.Point;
-    if (!model) {
-      point = relativePoint;
-    } else {
-      // Use padding quad to be compatible with offsetX/offsetY properties.
-      const quad = model.model.padding;
-      const x = Math.min(quad[0], quad[2], quad[4], quad[6]);
-      const y = Math.min(quad[1], quad[3], quad[5], quad[7]);
-      point = {
-        x: x + relativePoint.x,
-        y: y + relativePoint.y,
-      };
-    }
-    const metrics = await this._client.send('Page.getLayoutMetrics');
-    // Give one extra pixel to avoid any issues on viewport edge.
-    let scrollX = 0;
-    if (point.x < 1)
-      scrollX = point.x - 1;
-    if (point.x > metrics.layoutViewport.clientWidth - 1)
-      scrollX = point.x - metrics.layoutViewport.clientWidth + 1;
-    let scrollY = 0;
-    if (point.y < 1)
-      scrollY = point.y - 1;
-    if (point.y > metrics.layoutViewport.clientHeight - 1)
-      scrollY = point.y - metrics.layoutViewport.clientHeight + 1;
-    return { point, scrollX, scrollY };
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {

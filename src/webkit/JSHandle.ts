@@ -55,7 +55,40 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 
   async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
-    throw new Error('boundingBox() is not implemented');
+    const quads = await this.contentQuads(handle);
+    if (!quads || !quads.length)
+      return null;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const quad of quads) {
+      for (const point of quad) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+      }
+    }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
+
+  async contentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+    const result = await this._client.send('DOM.getContentQuads', {
+      objectId: toRemoteObject(handle).objectId
+    }).catch(debugError);
+    if (!result)
+      return null;
+    return result.quads.map(quad => [
+      { x: quad[0], y: quad[1] },
+      { x: quad[2], y: quad[3] },
+      { x: quad[4], y: quad[5] },
+      { x: quad[6], y: quad[7] }
+    ]);
+  }
+
+  async layoutViewport(): Promise<{ width: number, height: number }> {
+    return this._frameManager._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
   async screenshot(handle: dom.ElementHandle, options: any = {}): Promise<string | Buffer> {
@@ -68,72 +101,6 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     if (options.path)
       await writeFileAsync(options.path, buffer);
     return buffer;
-  }
-
-  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: types.Point): Promise<types.Point> {
-    await handle._scrollIntoViewIfNeeded();
-    if (!relativePoint)
-      return this._clickablePoint(handle);
-    const box = await this.boundingBox(handle);
-    return { x: box.x + relativePoint.x, y: box.y + relativePoint.y };
-  }
-
-  private async _clickablePoint(handle: dom.ElementHandle): Promise<types.Point> {
-    const fromProtocolQuad = (quad: number[]): types.Point[] => {
-      return [
-        {x: quad[0], y: quad[1]},
-        {x: quad[2], y: quad[3]},
-        {x: quad[4], y: quad[5]},
-        {x: quad[6], y: quad[7]}
-      ];
-    };
-
-    const intersectQuadWithViewport = (quad: types.Point[], width: number, height: number): types.Point[] => {
-      return quad.map(point => ({
-        x: Math.min(Math.max(point.x, 0), width),
-        y: Math.min(Math.max(point.y, 0), height),
-      }));
-    };
-
-    const computeQuadArea = (quad: types.Point[]) => {
-      // Compute sum of all directed areas of adjacent triangles
-      // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
-      let area = 0;
-      for (let i = 0; i < quad.length; ++i) {
-        const p1 = quad[i];
-        const p2 = quad[(i + 1) % quad.length];
-        area += (p1.x * p2.y - p2.x * p1.y) / 2;
-      }
-      return Math.abs(area);
-    };
-
-    const [result, viewport] = await Promise.all([
-      this._client.send('DOM.getContentQuads', {
-        objectId: toRemoteObject(handle).objectId
-      }).catch(debugError),
-      handle.evaluate(() => ({ clientWidth: innerWidth, clientHeight: innerHeight })),
-    ]);
-    if (!result || !result.quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    // Filter out quads that have too small area to click into.
-    const {clientWidth, clientHeight} = viewport;
-    const quads = result.quads.map(fromProtocolQuad)
-        .map(quad => intersectQuadWithViewport(quad, clientWidth, clientHeight))
-        .filter(quad => computeQuadArea(quad) > 1);
-    if (!quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    // Return the middle point of the first quad.
-    const quad = quads[0];
-    let x = 0;
-    let y = 0;
-    for (const point of quad) {
-      x += point.x;
-      y += point.y;
-    }
-    return {
-      x: x / 4,
-      y: y / 4
-    };
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {

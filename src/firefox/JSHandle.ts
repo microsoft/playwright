@@ -60,10 +60,36 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 
   async boundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
-    return await this._session.send('Page.getBoundingBox', {
+    const quads = await this.contentQuads(handle);
+    if (!quads || !quads.length)
+      return null;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const quad of quads) {
+      for (const point of quad) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+      }
+    }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
+
+  async contentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+    const result = await this._session.send('Page.getContentQuads', {
       frameId: this._frameId,
       objectId: toRemoteObject(handle).objectId,
-    });
+    }).catch(debugError);
+    if (!result)
+      return null;
+    return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);
+  }
+
+  async layoutViewport(): Promise<{ width: number, height: number }> {
+    return this._frameManager._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
   async screenshot(handle: dom.ElementHandle, options: any = {}): Promise<string | Buffer> {
@@ -85,53 +111,6 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
         height: clip.height,
       },
     }));
-  }
-
-  async ensurePointerActionPoint(handle: dom.ElementHandle, relativePoint?: types.Point): Promise<types.Point> {
-    await handle._scrollIntoViewIfNeeded();
-    if (!relativePoint)
-      return this._clickablePoint(handle);
-    const box = await this.boundingBox(handle);
-    return { x: box.x + relativePoint.x, y: box.y + relativePoint.y };
-  }
-
-  private async _clickablePoint(handle: dom.ElementHandle): Promise<types.Point> {
-    type Quad = {p1: types.Point, p2: types.Point, p3: types.Point, p4: types.Point};
-
-    const computeQuadArea = (quad: Quad) => {
-      // Compute sum of all directed areas of adjacent triangles
-      // https://en.wikipedia.org/wiki/Polygon#Simple_polygons
-      let area = 0;
-      const points = [quad.p1, quad.p2, quad.p3, quad.p4];
-      for (let i = 0; i < points.length; ++i) {
-        const p1 = points[i];
-        const p2 = points[(i + 1) % points.length];
-        area += (p1.x * p2.y - p2.x * p1.y) / 2;
-      }
-      return Math.abs(area);
-    };
-
-    const computeQuadCenter = (quad: Quad) => {
-      let x = 0, y = 0;
-      for (const point of [quad.p1, quad.p2, quad.p3, quad.p4]) {
-        x += point.x;
-        y += point.y;
-      }
-      return {x: x / 4, y: y / 4};
-    };
-
-    const result = await this._session.send('Page.getContentQuads', {
-      frameId: this._frameId,
-      objectId: toRemoteObject(handle).objectId,
-    }).catch(debugError);
-    if (!result || !result.quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    // Filter out quads that have too small area to click into.
-    const quads = result.quads.filter(quad => computeQuadArea(quad) > 1);
-    if (!quads.length)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    // Return the middle point of the first quad.
-    return computeQuadCenter(quads[0]);
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {

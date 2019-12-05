@@ -175,7 +175,7 @@ function checkSources(sources) {
       const properties = [].concat(...types.map(type => type.properties));
       return new Documentation.Type(name.replace(/false\|true/g, 'boolean'), properties);
     }
-    if (type.typeArguments) {
+    if (type.typeArguments && type.symbol) {
       const properties = [];
       const innerTypeNames = [];
       for (const typeArgument of type.typeArguments) {
