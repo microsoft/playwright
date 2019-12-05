@@ -53,7 +53,7 @@ async function downloadBrowser(browser, playwright) {
   function onProgress(downloadedBytes, totalBytes) {
     if (!progressBar) {
       const ProgressBar = require('progress');
-      progressBar = new ProgressBar(`Downloading ${browser} ${revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
+      progressBar = new ProgressBar(`Downloading ${browser} ${playwright._revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
         complete: '=',
         incomplete: ' ',
         width: 20,
