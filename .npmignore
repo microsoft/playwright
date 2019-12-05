@@ -1,14 +1,20 @@
+# this ignores everything by default, except for package.json and LICENSE and README.md
+# see https://docs.npmjs.com/misc/developers
 **/*
 
-# include sources from lib except for injected
+# include sources from lib except for injected, but not map files
 !lib/**/*.js
 # Injected files are included via lib/generated, see src/injected/README.md
 lib/injected/
 
-# include root helpers
+# root for "playwright" package
+!index.js
+
+# specific browsers
 !chromium.js
+!firefox.js
+!webkit.js
+
+# Dgozman says to remove these
 !DeviceDescriptors.js
 !Errors.js
-!firefox.js
-!index.js
-!webkit.js
