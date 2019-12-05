@@ -1,10 +1,11 @@
 language: node_js
-dist: trusty
+dist: bionic
 addons:
   apt:
     packages:
       # This is required to run new chrome on old trusty
-      - libnss3
+      # - libnss3
+      # This is required to run webkit
       - libwoff1
       - libopus0
       - libwebp6
