@@ -466,7 +466,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       response = await page.goForward();
       expect(response).toBe(null);
     });
-    it.skip(WEBKIT)('should work with HistoryAPI', async({page, server}) => {
+    it('should work with HistoryAPI', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         history.pushState({}, '', '/first.html');

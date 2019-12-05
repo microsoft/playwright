@@ -267,6 +267,24 @@ export class Page extends EventEmitter {
     return response;
   }
 
+  async goBack(): Promise<network.Response | null> {
+    return await this._go('Page.goBack');
+  }
+
+  async goForward(): Promise<network.Response | null> {
+    return await this._go('Page.goForward');
+  }
+
+  async _go<T extends keyof Protocol.CommandParameters>(command: T): Promise<network.Response | null> {
+    const [response, error] = await Promise.all([
+      this.waitForNavigation(),
+      this._session.send(command).then(() => null).catch(e => e),
+    ]);
+    if (error)
+      return null;
+    return response;
+  }
+
   async waitForNavigation(): Promise<network.Response | null> {
     return await this._frameManager.mainFrame().waitForNavigation();
   }
