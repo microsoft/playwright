@@ -36,17 +36,7 @@ export class Browser extends EventEmitter {
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
   private _eventListeners: RegisteredListener[];
-  _waitForFirstTarget: Promise<void>;
-  private _waitForFirstTargetCallback: () => void;
-
-  static async create(
-    connection: Connection,
-    defaultViewport: Viewport | null,
-    process: childProcess.ChildProcess | null,
-    closeCallback?: (() => Promise<void>)) {
-    const browser = new Browser(connection, defaultViewport, process, closeCallback);
-    return browser;
-  }
+  private _privateEvents = new EventEmitter();
 
   constructor(
     connection: Connection,
@@ -74,7 +64,6 @@ export class Browser extends EventEmitter {
 
     // Taking multiple screenshots in parallel doesn't work well, so we serialize them.
     this._screenshotTaskQueue = new TaskQueue();
-    this._waitForFirstTarget = new Promise(f => this._waitForFirstTargetCallback = f);
   }
 
   async userAgent(): Promise<string> {
@@ -128,7 +117,7 @@ export class Browser extends EventEmitter {
     return Array.from(this._targets.values());
   }
 
-  async waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
+  async _waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
     const {
       timeout = 30000
     } = options;
@@ -137,15 +126,13 @@ export class Browser extends EventEmitter {
       return existingTarget;
     let resolve;
     const targetPromise = new Promise<Target>(x => resolve = x);
-    this.on(Events.Browser.TargetCreated, check);
-    this.on(Events.Browser.TargetChanged, check);
+    this._privateEvents.on(BrowserEvents.TargetCreated, check);
     try {
       if (!timeout)
         return await targetPromise;
       return await helper.waitWithTimeout(targetPromise, 'target', timeout);
     } finally {
-      this.removeListener(Events.Browser.TargetCreated, check);
-      this.removeListener(Events.Browser.TargetChanged, check);
+      this._privateEvents.removeListener(BrowserEvents.TargetCreated, check);
     }
 
     function check(target: Target) {
@@ -175,17 +162,13 @@ export class Browser extends EventEmitter {
       context =  this._defaultContext;
     const target = new Target(targetInfo, context);
     this._targets.set(targetInfo.targetId, target);
-    this.emit(Events.Browser.TargetCreated, target);
-    context.emit(Events.BrowserContext.TargetCreated, target);
-    this._waitForFirstTargetCallback();
+    this._privateEvents.emit(BrowserEvents.TargetCreated, target);
   }
 
   _onTargetDestroyed({targetId}) {
     const target = this._targets.get(targetId);
     this._targets.delete(targetId);
     target._closedCallback();
-    this.emit(Events.Browser.TargetDestroyed, target);
-    target.browserContext().emit(Events.BrowserContext.TargetDestroyed, target);
   }
 
   async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {
@@ -197,11 +180,6 @@ export class Browser extends EventEmitter {
     const newSession = this._connection.session(newTargetId);
     page._swapTargetOnNavigation(newSession, newTarget);
     newTarget._pagePromise = oldTarget._pagePromise;
-  }
-
-  _onTargetChanged(target: Target) {
-    this.emit(Events.BrowserContext.TargetChanged, target);
-    target.browserContext().emit(Events.BrowserContext.TargetChanged, target);
   }
 
   disconnect() {
@@ -218,28 +196,22 @@ export class Browser extends EventEmitter {
   }
 }
 
-export class BrowserContext extends EventEmitter {
+export class BrowserContext {
   private _browser: Browser;
   _id: string;
 
   constructor(browser: Browser, contextId?: string) {
-    super();
     this._browser = browser;
     this._id = contextId;
   }
 
-  targets(): Target[] {
+  _targets(): Target[] {
     return this._browser.targets().filter(target => target.browserContext() === this);
   }
 
-  waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined): Promise<Target> {
-    return this._browser.waitForTarget(target => target.browserContext() === this && predicate(target), options);
-  }
-
   async pages(): Promise<Page[]> {
-    await this._browser._waitForFirstTarget;
     const pages = await Promise.all(
-        this.targets()
+        this._targets()
             .filter(target => target.type() === 'page')
             .map(target => target.page())
     );
@@ -281,3 +253,8 @@ export class BrowserContext extends EventEmitter {
     await this._browser._connection.send('Browser.deleteAllCookies', { browserContextId: this._id });
   }
 }
+
+const BrowserEvents = {
+  TargetCreated: Symbol('BrowserEvents.TargetCreated'),
+  TargetDestroyed: Symbol('BrowserEvents.TargetDestroyed'),
+};

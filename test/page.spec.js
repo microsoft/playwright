@@ -289,9 +289,8 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
         // 3. After that, remove the iframe.
         frame.remove();
       });
-      const popupTarget = page.browserContext().targets().find(target => target !== page.target());
       // 4. Connect to the popup and make sure it doesn't throw.
-      await popupTarget.page();
+      await page.browserContext().pages();
     });
   });
 
@@ -1145,8 +1144,8 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   // FIXME: WebKit shouldn't send targetDestroyed on PSON so that we could
   // convert target destroy events into close.
   describe('Page.Events.Close', function() {
-    it.skip(WEBKIT)('should work with window.close', async function({ page, context, server }) {
-      const newPagePromise = new Promise(fulfill => context.once('targetcreated', target => fulfill(target.page())));
+    it.skip(WEBKIT)('should work with window.close', async function({ browser, page, context, server }) {
+      const newPagePromise = new Promise(fulfill => browser.chromium.once('targetcreated', target => fulfill(target.page())));
       await page.evaluate(() => window['newPage'] = window.open('about:blank'));
       const newPage = await newPagePromise;
       const closedPromise = new Promise(x => newPage.on('close', x));

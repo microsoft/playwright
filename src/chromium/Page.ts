@@ -59,7 +59,7 @@ export type Viewport = {
 export class Page extends EventEmitter {
   private _closed = false;
   _client: CDPSession;
-  private _target: Target;
+  _target: Target;
   private _keyboard: input.Keyboard;
   private _mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
@@ -176,10 +176,6 @@ export class Page extends EventEmitter {
       this._fileChooserInterceptors.delete(callback);
       throw e;
     });
-  }
-
-  target(): Target {
-    return this._target;
   }
 
   browser(): Browser {

@@ -67,7 +67,7 @@ describe('Playwright-Web', () => {
   });
   it('should work over exposed DevTools protocol', async({browser, page, serverConfig}) => {
     // Expose devtools protocol binding into page.
-    const session = await browser.chromium.createBrowserCDPSession();
+    const session = await browser.chromium.browserTarget().createCDPSession();
     const pageInfo = (await session.send('Target.getTargets')).targetInfos.find(info => info.attached);
     await session.send('Target.exposeDevToolsProtocol', {targetId: pageInfo.targetId});
     await session.detach();

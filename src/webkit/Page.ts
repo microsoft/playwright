@@ -144,10 +144,6 @@ export class Page extends EventEmitter {
     await this._initialize().catch(e => debugError('failed to enable agents after swap: ' + e));
   }
 
-  target(): Target {
-    return this._target;
-  }
-
   browser(): Browser {
     return this._target.browser();
   }
@@ -255,11 +251,11 @@ export class Page extends EventEmitter {
     return await this._frameManager.mainFrame().content();
   }
 
-  async setContent(html: string, options: { timeout?: number; waitUntil?: string | string[]; } | undefined) {
+  async setContent(html: string, options: { timeout?: number; waitUntil?: string | string[]; } = {}) {
     await this._frameManager.mainFrame().setContent(html, options);
   }
 
-  async goto(url: string, options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
+  async goto(url: string, options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } = {}): Promise<network.Response | null> {
     return await this._frameManager.mainFrame().goto(url, options);
   }
 
@@ -494,11 +490,11 @@ export class Page extends EventEmitter {
     return this.mainFrame().select(selector, ...values);
   }
 
-  type(selector: string | types.Selector, text: string, options: { delay: (number | undefined); } | undefined) {
+  type(selector: string | types.Selector, text: string, options?: { delay: (number | undefined); }) {
     return this.mainFrame().type(selector, text, options);
   }
 
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { visible?: boolean; hidden?: boolean; timeout?: number; polling?: string | number; } = {}, ...args: any[]): Promise<js.JSHandle> {
+  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: { visible?: boolean; hidden?: boolean; timeout?: number; polling?: string | number; }, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
@@ -510,7 +506,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitForXPath(xpath, options);
   }
 
-  waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
+  waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+const utils = require('./utils');
+
 module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOptions, playwright}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
@@ -94,6 +96,57 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
       });
     });
   });
+
+  describe('Browser target events', function() {
+    it('should work', async({server}) => {
+      const browser = await playwright.launch(defaultBrowserOptions);
+      const events = [];
+      browser.chromium.on('targetcreated', () => events.push('CREATED'));
+      browser.chromium.on('targetchanged', () => events.push('CHANGED'));
+      browser.chromium.on('targetdestroyed', () => events.push('DESTROYED'));
+      const page = await browser.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.close();
+      expect(events).toEqual(['CREATED', 'CHANGED', 'DESTROYED']);
+      await browser.close();
+    });
+  });
+
+  describe('Browser.Events.disconnected', function() {
+    it('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async() => {
+      const originalBrowser = await playwright.launch(defaultBrowserOptions);
+      const browserWSEndpoint = originalBrowser.chromium.wsEndpoint();
+      const remoteBrowser1 = await playwright.connect({browserWSEndpoint});
+      const remoteBrowser2 = await playwright.connect({browserWSEndpoint});
+
+      let disconnectedOriginal = 0;
+      let disconnectedRemote1 = 0;
+      let disconnectedRemote2 = 0;
+      originalBrowser.on('disconnected', () => ++disconnectedOriginal);
+      remoteBrowser1.on('disconnected', () => ++disconnectedRemote1);
+      remoteBrowser2.on('disconnected', () => ++disconnectedRemote2);
+
+      await Promise.all([
+        utils.waitEvent(remoteBrowser2, 'disconnected'),
+        remoteBrowser2.disconnect(),
+      ]);
+
+      expect(disconnectedOriginal).toBe(0);
+      expect(disconnectedRemote1).toBe(0);
+      expect(disconnectedRemote2).toBe(1);
+
+      await Promise.all([
+        utils.waitEvent(remoteBrowser1, 'disconnected'),
+        utils.waitEvent(originalBrowser, 'disconnected'),
+        originalBrowser.close(),
+      ]);
+
+      expect(disconnectedOriginal).toBe(1);
+      expect(disconnectedRemote1).toBe(1);
+      expect(disconnectedRemote2).toBe(1);
+    });
+  });
+
 };
 
 module.exports.addPageTests = function({testRunner, expect}) {

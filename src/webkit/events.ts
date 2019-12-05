@@ -33,15 +33,6 @@ export const Events = {
   },
 
   Browser: {
-    TargetCreated: 'targetcreated',
-    TargetDestroyed: 'targetdestroyed',
-    TargetChanged: 'targetchanged',
     Disconnected: 'disconnected'
-  },
-
-  BrowserContext: {
-    TargetCreated: 'targetcreated',
-    TargetDestroyed: 'targetdestroyed',
-    TargetChanged: 'targetchanged',
   },
 };

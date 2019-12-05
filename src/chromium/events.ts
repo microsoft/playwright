@@ -37,13 +37,10 @@ export const Events = {
   },
 
   Browser: {
-    TargetCreated: 'targetcreated',
-    TargetDestroyed: 'targetdestroyed',
-    TargetChanged: 'targetchanged',
     Disconnected: 'disconnected'
   },
 
-  BrowserContext: {
+  Chromium: {
     TargetCreated: 'targetcreated',
     TargetDestroyed: 'targetdestroyed',
     TargetChanged: 'targetchanged',

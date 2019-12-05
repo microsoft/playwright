@@ -105,23 +105,21 @@ export class Browser extends EventEmitter {
     return this._process;
   }
 
-  async waitForTarget(predicate: (target: Target) => boolean, options: { timeout?: number; } = {}): Promise<Target> {
+  async _waitForTarget(predicate: (target: Target) => boolean, options: { timeout?: number; } = {}): Promise<Target> {
     const {
       timeout = 30000
     } = options;
-    const existingTarget = this.targets().find(predicate);
+    const existingTarget = this._allTargets().find(predicate);
     if (existingTarget)
       return existingTarget;
     let resolve;
     const targetPromise = new Promise<Target>(x => resolve = x);
-    this.on(Events.Browser.TargetCreated, check);
     this.on('targetchanged', check);
     try {
       if (!timeout)
         return await targetPromise;
       return await helper.waitWithTimeout(targetPromise, 'target', timeout);
     } finally {
-      this.removeListener(Events.Browser.TargetCreated, check);
       this.removeListener('targetchanged', check);
     }
 
@@ -148,7 +146,7 @@ export class Browser extends EventEmitter {
     return await Promise.all(pageTargets.map(target => target.page()));
   }
 
-  targets() {
+  _allTargets() {
     return Array.from(this._targets.values());
   }
 
@@ -163,23 +161,17 @@ export class Browser extends EventEmitter {
         openerPage.emit(Events.Page.Popup, popupPage);
       }
     }
-    this.emit(Events.Browser.TargetCreated, target);
-    context.emit(Events.BrowserContext.TargetCreated, target);
   }
 
   _onTargetDestroyed({targetId}) {
     const target = this._targets.get(targetId);
     this._targets.delete(targetId);
     target._closedCallback();
-    this.emit(Events.Browser.TargetDestroyed, target);
-    target.browserContext().emit(Events.BrowserContext.TargetDestroyed, target);
   }
 
   _onTargetInfoChanged({targetId, url}) {
     const target = this._targets.get(targetId);
     target._url = url;
-    this.emit(Events.Browser.TargetChanged, target);
-    target.browserContext().emit(Events.BrowserContext.TargetChanged, target);
   }
 
   async close() {
@@ -243,39 +235,31 @@ export class Target {
   }
 }
 
-export class BrowserContext extends EventEmitter {
+export class BrowserContext {
   _connection: Connection;
   _browser: Browser;
   _browserContextId: string;
   readonly permissions: Permissions;
 
   constructor(connection: Connection, browser: Browser, browserContextId: string | null) {
-    super();
     this._connection = connection;
     this._browser = browser;
     this._browserContextId = browserContextId;
     this.permissions = new Permissions(connection, browserContextId);
   }
 
-  targets(): Array<Target> {
-    return this._browser.targets().filter(target => target.browserContext() === this);
+  _targets(): Array<Target> {
+    return this._browser._allTargets().filter(target => target.browserContext() === this);
   }
-
 
   async pages(): Promise<Array<Page>> {
     const pages = await Promise.all(
-        this.targets()
+        this._targets()
             .filter(target => target.type() === 'page')
             .map(target => target.page())
     );
     return pages.filter(page => !!page);
   }
-
-
-  waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined): Promise<Target> {
-    return this._browser.waitForTarget(target => target.browserContext() === this && predicate(target), options);
-  }
-
 
   isIncognito(): boolean {
     return !!this._browserContextId;

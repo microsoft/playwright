@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import { assert } from '../helper';
 import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
 import { Browser } from './Browser';
@@ -24,30 +23,25 @@ import { Permissions } from './features/permissions';
 import { Page } from './Page';
 import { Target } from './Target';
 
-export class BrowserContext extends EventEmitter {
+export class BrowserContext {
   readonly permissions: Permissions;
 
   private _browser: Browser;
   private _id: string;
 
   constructor(client: CDPSession, browser: Browser, contextId: string | null) {
-    super();
     this._browser = browser;
     this._id = contextId;
     this.permissions = new Permissions(client, contextId);
   }
 
-  targets(): Target[] {
-    return this._browser.targets().filter(target => target.browserContext() === this);
-  }
-
-  waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined): Promise<Target> {
-    return this._browser.waitForTarget(target => target.browserContext() === this && predicate(target), options);
+  _targets(): Target[] {
+    return this._browser._allTargets().filter(target => target.browserContext() === this);
   }
 
   async pages(): Promise<Page[]> {
     const pages = await Promise.all(
-        this.targets()
+        this._targets()
             .filter(target => target.type() === 'page')
             .map(target => target.page())
     );

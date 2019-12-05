@@ -165,7 +165,7 @@ export class Launcher {
       const browser = await Browser.create(connection, defaultViewport, firefoxProcess, gracefullyCloseFirefox);
       if (ignoreHTTPSErrors)
         await connection.send('Browser.setIgnoreHTTPSErrors', {enabled: true});
-      await browser.waitForTarget(t => t.type() === 'page');
+      await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
       killFirefox();
