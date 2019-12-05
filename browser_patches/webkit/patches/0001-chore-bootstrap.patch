@@ -1,7 +1,7 @@
-From fff7f80ad5fc612dcaf3744d5e21f630a4a0d1cf Mon Sep 17 00:00:00 2001
-From: Yury Semikhatsky <yurys@chromium.org>
-Date: Wed, 4 Dec 2019 18:10:25 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From c71917697866e90900049e7b08979fdb23b63958 Mon Sep 17 00:00:00 2001
+From: Pavel Feldman <pavel.feldman@gmail.com>
+Date: Wed, 4 Dec 2019 23:24:50 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -116,12 +116,12 @@ Subject: [PATCH xserver] chore: bootstrap
  Tools/MiniBrowser/gtk/BrowserWindow.h         |   2 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
  Tools/MiniBrowser/mac/AppDelegate.h           |  14 +-
- Tools/MiniBrowser/mac/AppDelegate.m           | 187 ++++++-
+ Tools/MiniBrowser/mac/AppDelegate.m           | 192 ++++++-
  Tools/MiniBrowser/mac/SettingsController.m    |   2 +-
  .../mac/WK2BrowserWindowController.h          |   3 +
- .../mac/WK2BrowserWindowController.m          |  35 +-
+ .../mac/WK2BrowserWindowController.m          |  37 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 117 files changed, 4655 insertions(+), 74 deletions(-)
+ 117 files changed, 4663 insertions(+), 73 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -6570,7 +6570,7 @@ index 45ef1a6424e..6e015fcb8bc 100644
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..54157dc246a 100644
+index b6af4ef724f..5df2a69d79a 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
 @@ -34,6 +34,7 @@
@@ -6679,17 +6679,7 @@ index b6af4ef724f..54157dc246a 100644
      WKWebViewConfiguration *privateConfiguraton = [defaultConfiguration() copy];
      privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
  
-@@ -209,11 +244,20 @@ - (IBAction)newEditorWindow:(id)sender
- 
- - (void)browserWindowWillClose:(NSWindow *)window
- {
--    [_browserWindowControllers removeObject:window.windowController];
-+    if (_headless) {
-+        [_headlessWindows removeObject:window];
-+    } else {
-+        [_browserWindowControllers removeObject:window.windowController];
-+    }
- }
+@@ -214,6 +249,11 @@ - (void)browserWindowWillClose:(NSWindow *)window
  
  - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
  {
@@ -6701,7 +6691,7 @@ index b6af4ef724f..54157dc246a 100644
      WebHistory *webHistory = [[WebHistory alloc] init];
      [WebHistory setOptionalSharedHistory:webHistory];
      [webHistory release];
-@@ -255,6 +299,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+@@ -255,6 +295,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
  
  - (IBAction)openDocument:(id)sender
  {
@@ -6711,7 +6701,7 @@ index b6af4ef724f..54157dc246a 100644
      BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
  
      if (browserWindowController) {
-@@ -284,6 +331,9 @@ - (IBAction)openDocument:(id)sender
+@@ -284,6 +327,9 @@ - (IBAction)openDocument:(id)sender
  
  - (void)didChangeSettings
  {
@@ -6721,7 +6711,7 @@ index b6af4ef724f..54157dc246a 100644
      [self _updateNewWindowKeyEquivalents];
  
      // Let all of the BrowserWindowControllers know that a setting changed, so they can attempt to dynamically update.
-@@ -312,6 +362,8 @@ - (void)_updateNewWindowKeyEquivalents
+@@ -312,6 +358,8 @@ - (void)_updateNewWindowKeyEquivalents
  
  - (IBAction)showExtensionsManager:(id)sender
  {
@@ -6730,7 +6720,7 @@ index b6af4ef724f..54157dc246a 100644
      [_extensionManagerWindowController showWindow:sender];
  }
  
-@@ -345,4 +397,123 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +393,134 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
@@ -6769,7 +6759,7 @@ index b6af4ef724f..54157dc246a 100644
 +    NSRect rect = NSMakeRect(0, 0, 1024, 768);
 +    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
 +    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
-+    NSWindow* window = [[[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES] autorelease];
++    NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
 +
 +    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
 +    WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
@@ -6782,7 +6772,7 @@ index b6af4ef724f..54157dc246a 100644
 +    [webView loadRequest:[NSURLRequest requestWithURL:url]];
 +    [_headlessWindows addObject:window];
 +    webView.UIDelegate = self;
-+    return webView;
++    return [webView autorelease];
 +}
 +
 +- (_WKBrowserContext *)createBrowserContext
@@ -6808,6 +6798,17 @@ index b6af4ef724f..54157dc246a 100644
 +- (void)quit
 +{
 +    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
++}
++
++- (void)webViewDidClose:(WKWebView *)webView {
++    for (NSWindow *window in _headlessWindows) {
++        if (webView.window != window)
++            continue;
++        [webView removeFromSuperview];
++        [window close];
++        [_headlessWindows removeObject:window];
++        break;
++    }
 +}
 +
 +- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
@@ -6884,7 +6885,7 @@ index 6f0949b0f4a..e774433031a 100644
  
  @end
 diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-index 0063266ed33..7d6b8d6f05f 100644
+index 0063266ed33..346c3fe3704 100644
 --- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
 +++ b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
 @@ -72,6 +72,7 @@ @implementation WK2BrowserWindowController {
@@ -6895,7 +6896,16 @@ index 0063266ed33..7d6b8d6f05f 100644
  
      BOOL _useShrinkToFit;
  
-@@ -105,7 +106,7 @@ - (void)awakeFromNib
+@@ -82,6 +83,8 @@ @implementation WK2BrowserWindowController {
+ 
+ - (void)awakeFromNib
+ {
++    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
++
+     _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
+     [self didChangeSettings];
+ 
+@@ -105,7 +108,7 @@ - (void)awakeFromNib
      // telling WebKit to load every icon referenced by the page.
      if ([[SettingsController shared] loadsAllSiteIcons])
          _webView._iconLoadingDelegate = self;
@@ -6904,7 +6914,7 @@ index 0063266ed33..7d6b8d6f05f 100644
      _webView._observedRenderingProgressEvents = _WKRenderingProgressEventFirstLayout
          | _WKRenderingProgressEventFirstVisuallyNonEmptyLayout
          | _WKRenderingProgressEventFirstPaintWithSignificantArea
-@@ -113,6 +114,7 @@ - (void)awakeFromNib
+@@ -113,6 +116,7 @@ - (void)awakeFromNib
          | _WKRenderingProgressEventFirstPaintAfterSuppressedIncrementalRendering;
  
      _zoomTextOnly = NO;
@@ -6912,7 +6922,7 @@ index 0063266ed33..7d6b8d6f05f 100644
  
      _webView._usePlatformFindUI = NO;
  
-@@ -139,14 +141,10 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
+@@ -139,14 +143,10 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
  
  - (void)dealloc
  {
@@ -6927,7 +6937,7 @@ index 0063266ed33..7d6b8d6f05f 100644
      [_webView release];
      [_configuration release];
  
-@@ -372,9 +370,15 @@ - (BOOL)windowShouldClose:(id)sender
+@@ -372,9 +372,15 @@ - (BOOL)windowShouldClose:(id)sender
  - (void)windowWillClose:(NSNotification *)notification
  {
      [(BrowserAppDelegate *)[[NSApplication sharedApplication] delegate] browserWindowWillClose:self.window];
@@ -6943,7 +6953,7 @@ index 0063266ed33..7d6b8d6f05f 100644
  #define DefaultMinimumZoomFactor (.5)
  #define DefaultMaximumZoomFactor (3.0)
  #define DefaultZoomFactorRatio (1.2)
-@@ -512,9 +516,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
+@@ -512,9 +518,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
      [alert setInformativeText:message];
      [alert addButtonWithTitle:@"OK"];
  
@@ -6955,7 +6965,7 @@ index 0063266ed33..7d6b8d6f05f 100644
      }];
  }
  
-@@ -528,9 +534,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
+@@ -528,9 +536,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
      [alert addButtonWithTitle:@"OK"];
      [alert addButtonWithTitle:@"Cancel"];
  
@@ -6967,7 +6977,7 @@ index 0063266ed33..7d6b8d6f05f 100644
      }];
  }
  
-@@ -548,13 +556,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
+@@ -548,13 +558,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
      [input setStringValue:defaultText];
      [alert setAccessoryView:input];
      
@@ -6993,7 +7003,7 @@ index 0063266ed33..7d6b8d6f05f 100644
  #if __has_feature(objc_generics)
  - (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> * URLs))completionHandler
  #else
-@@ -848,4 +868,9 @@ - (IBAction)saveAsWebArchive:(id)sender
+@@ -848,4 +870,9 @@ - (IBAction)saveAsWebArchive:(id)sender
      }];
  }
  
@@ -7059,5 +7069,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.24.0
 
