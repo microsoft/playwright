@@ -1,7 +1,7 @@
-From 75af8eb6e1f3c2a4021f60efcfc8f3a9970d8eae Mon Sep 17 00:00:00 2001
-From: Andrey Lushnikov <lushnikov@chromium.org>
-Date: Wed, 4 Dec 2019 17:53:49 -0800
-Subject: [PATCH] chore: bootstrap
+From fff7f80ad5fc612dcaf3744d5e21f630a4a0d1cf Mon Sep 17 00:00:00 2001
+From: Yury Semikhatsky <yurys@chromium.org>
+Date: Wed, 4 Dec 2019 18:10:25 -0800
+Subject: [PATCH xserver] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -16,15 +16,15 @@ Subject: [PATCH] chore: bootstrap
  .../inspector/protocol/Dialog.json            |  36 ++
  .../inspector/protocol/Emulation.json         |  21 +
  .../inspector/protocol/Input.json             | 160 ++++++
- .../inspector/protocol/Page.json              |  82 ++-
+ .../inspector/protocol/Page.json              |  90 +++-
  .../inspector/protocol/Target.json            |  18 +-
  Source/WebCore/html/FileInputType.cpp         |   6 +
  .../inspector/InspectorInstrumentation.cpp    |  14 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
  .../inspector/agents/InspectorDOMAgent.cpp    | 103 ++++
  .../inspector/agents/InspectorDOMAgent.h      |   2 +
- .../inspector/agents/InspectorPageAgent.cpp   | 496 +++++++++++++++++-
- .../inspector/agents/InspectorPageAgent.h     |  16 +-
+ .../inspector/agents/InspectorPageAgent.cpp   | 509 +++++++++++++++++-
+ .../inspector/agents/InspectorPageAgent.h     |  18 +-
  .../agents/page/PageRuntimeAgent.cpp          |  14 +-
  Source/WebCore/loader/FrameLoader.cpp         |   1 +
  Source/WebCore/page/History.cpp               |   1 +
@@ -88,7 +88,7 @@ Subject: [PATCH] chore: bootstrap
  .../UIProcess/WebPageInspectorController.h    |   8 +
  .../WebPageInspectorEmulationAgent.cpp        |  47 ++
  .../WebPageInspectorEmulationAgent.h          |  42 ++
- .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 +++++++++
+ .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 ++++++++
  .../UIProcess/WebPageInspectorInputAgent.h    |  54 ++
  .../UIProcess/WebPageInspectorTargetProxy.cpp | 109 ++++
  .../UIProcess/WebPageInspectorTargetProxy.h   |  45 ++
@@ -109,7 +109,7 @@ Subject: [PATCH] chore: bootstrap
  .../wpe/WebPageInspectorEmulationAgentWPE.cpp |  18 +
  .../wpe/WebPageInspectorInputAgentWPE.cpp     |  76 +++
  .../wpe/WebPageInspectorTargetProxyWPE.cpp    |  18 +
- .../WebKit/WebKit.xcodeproj/project.pbxproj   |  59 ++-
+ .../WebKit/WebKit.xcodeproj/project.pbxproj   |  59 +-
  .../WebPage/WebPageInspectorTarget.cpp        |   7 +
  .../WebPage/WebPageInspectorTarget.h          |   1 +
  Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
@@ -121,7 +121,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  35 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 117 files changed, 4632 insertions(+), 74 deletions(-)
+ 117 files changed, 4655 insertions(+), 74 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -884,7 +884,7 @@ index 00000000000..79bbe73b0df
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8..b01d36e5e86 100644
+index 367d1f235a8..b2ed9177528 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -928,7 +928,19 @@ index 367d1f235a8..b01d36e5e86 100644
          }
      ],
      "commands": [
-@@ -131,7 +165,8 @@
+@@ -127,11 +161,20 @@
+                 { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
+             ]
+         },
++        {
++            "name": "goBack",
++            "description": "Goes back in the history."
++        },
++        {
++            "name": "goForward",
++            "description": "Goes forward in the history."
++        },
+         {
              "name": "navigate",
              "description": "Navigates current page to the given URL.",
              "parameters": [
@@ -938,7 +950,7 @@ index 367d1f235a8..b01d36e5e86 100644
              ]
          },
          {
-@@ -288,6 +323,27 @@
+@@ -288,6 +331,27 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -966,7 +978,7 @@ index 367d1f235a8..b01d36e5e86 100644
          }
      ],
      "events": [
-@@ -346,12 +402,36 @@
+@@ -346,12 +410,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1334,18 +1346,19 @@ index 51639abeb84..16080f2c017 100644
      // InspectorInstrumentation
      int identifierForNode(Node&);
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..d6d0c38f6b7 100644
+index f2e228b7f74..1e6ef4eec98 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-@@ -32,6 +32,7 @@
+@@ -32,6 +32,8 @@
  #include "config.h"
  #include "InspectorPageAgent.h"
  
 +#include "AXObjectCache.h"
++#include "BackForwardController.h"
  #include "CachedResource.h"
  #include "CachedResourceLoader.h"
  #include "Cookie.h"
-@@ -39,12 +40,14 @@
+@@ -39,12 +41,14 @@
  #include "CustomHeaderFields.h"
  #include "Document.h"
  #include "DocumentLoader.h"
@@ -1360,7 +1373,7 @@ index f2e228b7f74..d6d0c38f6b7 100644
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -59,13 +62,16 @@
+@@ -59,13 +63,16 @@
  #include "RenderTheme.h"
  #include "ScriptController.h"
  #include "ScriptSourceCode.h"
@@ -1377,7 +1390,7 @@ index f2e228b7f74..d6d0c38f6b7 100644
  #include <JavaScriptCore/RegularExpression.h>
  #include <wtf/ListHashSet.h>
  #include <wtf/Stopwatch.h>
-@@ -337,6 +343,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -337,6 +344,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -1385,11 +1398,23 @@ index f2e228b7f74..d6d0c38f6b7 100644
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -412,14 +419,16 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -412,14 +420,28 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
 -void InspectorPageAgent::navigate(ErrorString&, const String& url)
++void InspectorPageAgent::goBack(ErrorString& errorString)
++{
++    if (!m_inspectedPage.backForward().goBack())
++        errorString = "Failed to go back"_s;
++}
++
++void InspectorPageAgent::goForward(ErrorString& errorString)
++{
++    if (!m_inspectedPage.backForward().goForward())
++        errorString = "Failed to go forward"_s;
++}
++
 +void InspectorPageAgent::navigate(ErrorString& errorString, const String& url, const String* frameId)
  {
      UserGestureIndicator indicator { ProcessingUserGesture };
@@ -1407,7 +1432,7 @@ index f2e228b7f74..d6d0c38f6b7 100644
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -691,6 +700,7 @@ void InspectorPageAgent::loadEventFired()
+@@ -691,6 +713,7 @@ void InspectorPageAgent::loadEventFired()
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
  {
@@ -1415,7 +1440,7 @@ index f2e228b7f74..d6d0c38f6b7 100644
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
-@@ -761,6 +771,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -761,6 +784,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1428,7 +1453,7 @@ index f2e228b7f74..d6d0c38f6b7 100644
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -815,6 +831,25 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -815,6 +844,25 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1454,7 +1479,7 @@ index f2e228b7f74..d6d0c38f6b7 100644
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1021,455 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1034,455 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -1911,7 +1936,7 @@ index f2e228b7f74..d6d0c38f6b7 100644
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..50712625607 100644
+index 4fd8c0b1016..eb18b0fc48e 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -1930,16 +1955,18 @@ index 4fd8c0b1016..50712625607 100644
  class InspectorClient;
  class InspectorOverlay;
  class Page;
-@@ -96,7 +101,7 @@ public:
+@@ -96,7 +101,9 @@ public:
      void enable(ErrorString&) override;
      void disable(ErrorString&) override;
      void reload(ErrorString&, const bool* optionalReloadFromOrigin, const bool* optionalRevalidateAllResources) override;
 -    void navigate(ErrorString&, const String& url) override;
++    void goBack(ErrorString&) override;
++    void goForward(ErrorString&) override;
 +    void navigate(ErrorString&, const String& url, const String* frameId) override;
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -113,8 +118,11 @@ public:
+@@ -113,8 +120,11 @@ public:
      void getCompositingBordersVisible(ErrorString&, bool* out_param) override;
      void setCompositingBordersVisible(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
@@ -1952,7 +1979,7 @@ index 4fd8c0b1016..50712625607 100644
  
      // InspectorInstrumentation
      void domContentEventFired();
-@@ -126,6 +134,7 @@ public:
+@@ -126,6 +136,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -1960,7 +1987,7 @@ index 4fd8c0b1016..50712625607 100644
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,6 +143,7 @@ public:
+@@ -134,6 +145,7 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -1968,7 +1995,7 @@ index 4fd8c0b1016..50712625607 100644
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -153,6 +163,7 @@ private:
+@@ -153,6 +165,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -1976,7 +2003,7 @@ index 4fd8c0b1016..50712625607 100644
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -165,6 +176,7 @@ private:
+@@ -165,6 +178,7 @@ private:
      String m_bootstrapScript;
      bool m_isFirstLayoutAfterOnLoad { false };
      bool m_showPaintRects { false };
@@ -7032,5 +7059,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.22.1
+2.17.1
 
