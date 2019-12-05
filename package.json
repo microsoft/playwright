@@ -18,7 +18,7 @@
     "wunit": "cross-env BROWSER=webkit node test/test.js",
     "debug-unit": "node --inspect-brk test/test.js",
     "test-doclint": "node utils/doclint/check_public_api/test/test.js && node utils/doclint/preprocessor/test.js",
-    "test": "npm run lint --silent && npm run coverage && npm run test-doclint && npm run test-types && node utils/testrunner/test/test.js",
+    "test": "npm run lint --silent && npm run coverage && npm run test-doclint && node utils/testrunner/test/test.js",
     "prepare": "node install.js",
     "lint": "([ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src) && npm run tsc && npm run doc",
     "doc": "node utils/doclint/cli.js",
@@ -28,7 +28,6 @@
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
     "apply-next-version": "node utils/apply_next_version.js",
     "bundle": "npx browserify -r ./index.js:playwright -o utils/browser/playwright-web.js",
-    "test-types": "node utils/doclint/generate_types && npx -p typescript@2.1 tsc -p utils/doclint/generate_types/test/",
     "unit-bundle": "node utils/browser/test.js"
   },
   "author": {
