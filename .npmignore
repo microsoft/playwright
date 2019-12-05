@@ -2,6 +2,7 @@
 
 # include sources from lib except for injected
 !lib/**/*.js
+# Injected files are included via lib/generated, see src/injected/README.md
 lib/injected/
 
 # include root helpers
