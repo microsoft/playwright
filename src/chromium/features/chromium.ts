@@ -92,7 +92,7 @@ export class Chromium extends EventEmitter {
   }
 
   pageTarget(page: Page): Target {
-    return page._target;
+    return Target.fromPage(page);
   }
 
   waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {

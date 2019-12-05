@@ -20,6 +20,8 @@ import { Browser, BrowserContext } from './Browser';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 
+const targetSymbol = Symbol('target');
+
 export class Target {
   private _browserContext: BrowserContext;
   _targetId: string;
@@ -28,10 +30,12 @@ export class Target {
   private _url: string;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
-  _isClosedPromise: Promise<void>;
-  _closedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
   _eventListeners: RegisteredListener[];
+
+  static fromPage(page: Page): Target {
+    return (page as any)[targetSymbol];
+  }
 
   constructor(targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
     const {targetId, url, type} = targetInfo;
@@ -41,13 +45,24 @@ export class Target {
     /** @type {?Promise<!Page>} */
     this._pagePromise = null;
     this._url = url;
-    this._isClosedPromise = new Promise(fulfill => this._closedCallback = fulfill);
+  }
+
+  _didClose() {
+    if (this._pagePromise)
+      this._pagePromise.then(page => page._didClose());
+  }
+
+  _adoptPage(page: Page) {
+    (page as any)[targetSymbol] = this;
   }
 
   async page(): Promise<Page | null> {
     if (this._type === 'page' && !this._pagePromise) {
       const session = this.browser()._connection.session(this._targetId);
-      this._pagePromise = Page.create(session, this, this.browser()._defaultViewport, this.browser()._screenshotTaskQueue);
+      this._pagePromise = Page.create(session, this._browserContext, this.browser()._defaultViewport, this.browser()._screenshotTaskQueue).then(page => {
+        this._adoptPage(page);
+        return page;
+      });
     }
     return this._pagePromise;
   }

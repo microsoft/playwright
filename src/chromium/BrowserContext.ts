@@ -21,7 +21,6 @@ import { Browser } from './Browser';
 import { CDPSession } from './Connection';
 import { Permissions } from './features/permissions';
 import { Page } from './Page';
-import { Target } from './Target';
 
 export class BrowserContext {
   readonly permissions: Permissions;
@@ -35,17 +34,8 @@ export class BrowserContext {
     this.permissions = new Permissions(client, contextId);
   }
 
-  _targets(): Target[] {
-    return this._browser._allTargets().filter(target => target.browserContext() === this);
-  }
-
-  async pages(): Promise<Page[]> {
-    const pages = await Promise.all(
-        this._targets()
-            .filter(target => target.type() === 'page')
-            .map(target => target.page())
-    );
-    return pages.filter(page => !!page);
+  pages(): Promise<Page[]> {
+    return this._browser._pages(this);
   }
 
   isIncognito(): boolean {

@@ -91,7 +91,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     ];
   }
 
-  async _swapTargetOnNavigation(newSession) {
+  async _swapSessionOnNavigation(newSession) {
     helper.removeEventListeners(this._sessionListeners);
     this.disconnectFromTarget();
     this._session = newSession;

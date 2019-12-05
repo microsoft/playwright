@@ -21,7 +21,7 @@ import * as mime from 'mime';
 import { TimeoutError } from '../Errors';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
-import { BrowserContext, Target } from './Browser';
+import { BrowserContext } from './Browser';
 import { JugglerSession, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
@@ -44,12 +44,14 @@ const writeFileAsync = helper.promisify(fs.writeFile);
 export class Page extends EventEmitter {
   private _timeoutSettings: TimeoutSettings;
   private _session: JugglerSession;
-  private _target: Target;
+  private _browserContext: BrowserContext;
   private _keyboard: input.Keyboard;
   private _mouse: input.Mouse;
   readonly accessibility: Accessibility;
   readonly interception: Interception;
   private _closed: boolean;
+  private _closedCallback: () => void;
+  private _closedPromise: Promise<void>;
   private _pageBindings: Map<string, Function>;
   private _networkManager: NetworkManager;
   _frameManager: FrameManager;
@@ -59,8 +61,8 @@ export class Page extends EventEmitter {
   private _disconnectPromise: Promise<Error>;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  static async create(session: JugglerSession, target: Target, defaultViewport: Viewport | null) {
-    const page = new Page(session, target);
+  static async create(session: JugglerSession, browserContext: BrowserContext, defaultViewport: Viewport | null) {
+    const page = new Page(session, browserContext);
     await Promise.all([
       session.send('Runtime.enable'),
       session.send('Network.enable'),
@@ -73,15 +75,16 @@ export class Page extends EventEmitter {
     return page;
   }
 
-  constructor(session: JugglerSession, target: Target) {
+  constructor(session: JugglerSession, browserContext: BrowserContext) {
     super();
     this._timeoutSettings = new TimeoutSettings();
     this._session = session;
-    this._target = target;
+    this._browserContext = browserContext;
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
     this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
     this.accessibility = new Accessibility(session);
     this._closed = false;
+    this._closedPromise = new Promise(f => this._closedCallback = f);
     this._pageBindings = new Map();
     this._networkManager = new NetworkManager(session);
     this._frameManager = new FrameManager(session, this, this._networkManager, this._timeoutSettings);
@@ -104,13 +107,16 @@ export class Page extends EventEmitter {
       helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this.emit(Events.Page.RequestFailed, request)),
     ];
     this._viewport = null;
-    this._target._isClosedPromise.then(() => {
-      this._closed = true;
-      this._frameManager.dispose();
-      this._networkManager.dispose();
-      helper.removeEventListeners(this._eventListeners);
-      this.emit(Events.Page.Close);
-    });
+  }
+
+  _didClose() {
+    assert(!this._closed, 'Page closed twice');
+    this._closed = true;
+    this._frameManager.dispose();
+    this._networkManager.dispose();
+    helper.removeEventListeners(this._eventListeners);
+    this.emit(Events.Page.Close);
+    this._closedCallback();
   }
 
   async setExtraHTTPHeaders(headers) {
@@ -250,7 +256,7 @@ export class Page extends EventEmitter {
   }
 
   browserContext(): BrowserContext {
-    return this._target.browserContext();
+    return this._browserContext;
   }
 
   _onUncaughtError(params) {
@@ -288,7 +294,7 @@ export class Page extends EventEmitter {
   }
 
   browser() {
-    return this._target.browser();
+    return this._browserContext.browser();
   }
 
   url() {
@@ -535,7 +541,7 @@ export class Page extends EventEmitter {
     } = options;
     await this._session.send('Page.close', { runBeforeUnload });
     if (!runBeforeUnload)
-      await this._target._isClosedPromise;
+      await this._closedPromise;
   }
 
   async content() {
