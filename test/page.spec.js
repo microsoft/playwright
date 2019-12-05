@@ -1133,11 +1133,42 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.$eval('input', i => i.style.display = 'none');
       await page.fill({selector: 'input', visible: true}, 'some value').catch(e => error = e);
       expect(error.message).toBe('No node found for selector: [visible] input');
+    });
+    it('should throw on disabled and readonly elements', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.$eval('input', i => i.disabled = true);
+      const disabledError = await page.fill('input', 'some value').catch(e => e);
+      expect(disabledError.message).toBe('Cannot fill a disabled input.');
 
       await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.$eval('textarea', i => i.readOnly = true);
+      const readonlyError = await page.fill('textarea', 'some value').catch(e => e);
+      expect(readonlyError.message).toBe('Cannot fill a readonly textarea.');
+    });
+    it('should throw on hidden and invisible elements', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.display = 'none');
-      await page.fill({selector: 'input', visible: false}, 'some value');
-      expect(await page.evaluate(() => result)).toBe('');
+      const invisibleError = await page.fill('input', 'some value').catch(e => e);
+      expect(invisibleError.message).toBe('Element is not visible');
+
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.$eval('input', i => i.style.visibility = 'hidden');
+      const hiddenError = await page.fill('input', 'some value').catch(e => e);
+      expect(hiddenError.message).toBe('Element is hidden');
+    });
+    it('should be able to fill the body', async({page}) => {
+      await page.setContent(`<body contentEditable="true"></body>`);
+      await page.fill('body', 'some value');
+      expect(await page.evaluate(() => document.body.textContent)).toBe('some value');
+    });
+    it('should be able to fill when focus is in the wrong frame', async({page}) => {
+      await page.setContent(`
+        <div contentEditable="true"></div>
+        <iframe></iframe>
+      `);
+      await page.focus('iframe');
+      await page.fill('div', 'some value');
+      expect(await page.$eval('div', d => d.textContent)).toBe('some value');
     });
   });
 

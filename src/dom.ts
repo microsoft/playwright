@@ -330,8 +330,6 @@ export class ElementHandle extends js.JSHandle {
     const error = await this.evaluate(input.fillFunction);
     if (error)
       throw new Error(error);
-    await this.focus();
-    // TODO: we should check that focus() succeeded.
     await this._world.delegate.keyboard.sendCharacters(value);
   }
 
