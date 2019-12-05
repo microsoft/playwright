@@ -23,7 +23,6 @@ import * as frames from '../frames';
 import { CDPSession } from './Connection';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
-import { ScreenshotOptions } from './Screenshotter';
 import { ExecutionContextDelegate } from './ExecutionContext';
 
 export class DOMWorldDelegate implements dom.DOMWorldDelegate {
@@ -91,7 +90,7 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
   }
 
-  screenshot(handle: dom.ElementHandle, options: ScreenshotOptions = {}): Promise<string | Buffer> {
+  screenshot(handle: dom.ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer> {
     const page = this._frameManager.page();
     return page._screenshotter.screenshotElement(page, handle, options);
   }

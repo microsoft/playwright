@@ -22,7 +22,7 @@ export interface DOMWorldDelegate {
   contentQuads(handle: ElementHandle): Promise<types.Quad[] | null>;
   layoutViewport(): Promise<{ width: number, height: number }>;
   boundingBox(handle: ElementHandle): Promise<types.Rect | null>;
-  screenshot(handle: ElementHandle, options?: any): Promise<string | Buffer>;
+  screenshot(handle: ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer>;
   setInputFiles(handle: ElementHandle, files: input.FilePayload[]): Promise<void>;
   adoptElementHandle(handle: ElementHandle, to: DOMWorld): Promise<ElementHandle>;
 }
@@ -359,7 +359,7 @@ export class ElementHandle extends js.JSHandle {
     return this._world.delegate.boundingBox(this);
   }
 
-  async screenshot(options: any = {}): Promise<string | Buffer> {
+  async screenshot(options?: types.ScreenshotOptions): Promise<string | Buffer> {
     return this._world.delegate.screenshot(this, options);
   }
 

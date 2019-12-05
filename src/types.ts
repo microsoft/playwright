@@ -38,3 +38,13 @@ export function clearSelector(selector: string | Selector): string | Selector {
     return selector;
   return { selector: selector.selector, visible: selector.visible };
 }
+
+export type ScreenshotOptions = {
+  type?: 'png' | 'jpeg',
+  path?: string,
+  fullPage?: boolean,
+  clip?: Rect,
+  quality?: number,
+  omitBackground?: boolean,
+  encoding?: string,
+};

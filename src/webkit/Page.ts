@@ -16,8 +16,6 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as mime from 'mime';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions } from '../input';
 import { TimeoutSettings } from '../TimeoutSettings';
@@ -28,7 +26,7 @@ import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
-import { TaskQueue } from './TaskQueue';
+import { Screenshotter } from './Screenshotter';
 import * as input from '../input';
 import * as types from '../types';
 import * as frames from '../frames';
@@ -37,8 +35,6 @@ import * as dom from '../dom';
 import * as network from '../network';
 import * as dialog from '../dialog';
 import * as console from '../console';
-
-const writeFileAsync = helper.promisify(fs.writeFile);
 
 export type Viewport = {
   width: number;
@@ -58,22 +54,22 @@ export class Page extends EventEmitter {
   private _bootstrapScripts: string[] = [];
   _javascriptEnabled = true;
   private _viewport: Viewport | null = null;
-  private _screenshotTaskQueue: TaskQueue;
+  _screenshotter: Screenshotter;
   private _workers = new Map<string, Worker>();
   private _disconnectPromise: Promise<Error> | undefined;
   private _sessionListeners: RegisteredListener[] = [];
   private _emulatedMediaType: string | undefined;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  static async create(session: TargetSession, browserContext: BrowserContext, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
-    const page = new Page(session, browserContext, screenshotTaskQueue);
+  static async create(session: TargetSession, browserContext: BrowserContext, defaultViewport: Viewport | null, screenshotter: Screenshotter): Promise<Page> {
+    const page = new Page(session, browserContext, screenshotter);
     await page._initialize();
     if (defaultViewport)
       await page.setViewport(defaultViewport);
     return page;
   }
 
-  constructor(session: TargetSession, browserContext: BrowserContext, screenshotTaskQueue: TaskQueue) {
+  constructor(session: TargetSession, browserContext: BrowserContext, screenshotter: Screenshotter) {
     super();
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
@@ -81,7 +77,7 @@ export class Page extends EventEmitter {
     this._timeoutSettings = new TimeoutSettings();
     this._frameManager = new FrameManager(session, this, this._timeoutSettings);
 
-    this._screenshotTaskQueue = screenshotTaskQueue;
+    this._screenshotter = screenshotter;
 
     this._setSession(session);
     this._browserContext = browserContext;
@@ -371,63 +367,8 @@ export class Page extends EventEmitter {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
 
-  async screenshot(options: ScreenshotOptions = {}): Promise<Buffer | string> {
-    let screenshotType = null;
-    // options.type takes precedence over inferring the type from options.path
-    // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
-    if (options.type) {
-      assert(options.type === 'png', 'Unknown options.type value: ' + options.type);
-      screenshotType = options.type;
-    } else if (options.path) {
-      const mimeType = mime.getType(options.path);
-      if (mimeType === 'image/png')
-        screenshotType = 'png';
-      assert(screenshotType, 'Unsupported screenshot mime type: ' + mimeType);
-    }
-
-    if (!screenshotType)
-      screenshotType = 'png';
-
-    if (options.quality)
-      assert(screenshotType === 'jpeg', 'options.quality is unsupported for the ' + screenshotType + ' screenshots');
-    assert(!options.clip || !options.fullPage, 'options.clip and options.fullPage are exclusive');
-    if (options.clip) {
-      assert(typeof options.clip.x === 'number', 'Expected options.clip.x to be a number but found ' + (typeof options.clip.x));
-      assert(typeof options.clip.y === 'number', 'Expected options.clip.y to be a number but found ' + (typeof options.clip.y));
-      assert(typeof options.clip.width === 'number', 'Expected options.clip.width to be a number but found ' + (typeof options.clip.width));
-      assert(typeof options.clip.height === 'number', 'Expected options.clip.height to be a number but found ' + (typeof options.clip.height));
-      assert(options.clip.width !== 0, 'Expected options.clip.width not to be 0.');
-      assert(options.clip.height !== 0, 'Expected options.clip.height not to be 0.');
-    }
-    return this._screenshotTaskQueue.postTask(this._screenshotTask.bind(this, options));
-  }
-
-  async _screenshotTask(options?: ScreenshotOptions): Promise<Buffer | string> {
-    const params: Protocol.Page.snapshotRectParameters = { x: 0, y: 0, width: 800, height: 600, coordinateSystem: 'Page' };
-    if (options.fullPage) {
-      const pageSize = await this.evaluate(() =>
-        ({
-          width: document.body.scrollWidth,
-          height: document.body.scrollHeight
-        }));
-      Object.assign(params, pageSize);
-    } else if (options.clip) {
-      Object.assign(params, options.clip);
-    } else if (this._viewport) {
-      Object.assign(params, this._viewport);
-    }
-    const [, result] = await Promise.all([
-      this.browser()._activatePage(this),
-      this._session.send('Page.snapshotRect', params),
-    ]).catch(e => {
-      debugError('Failed to take screenshot: ' + e);
-      throw e;
-    });
-    const prefix = 'data:image/png;base64,';
-    const buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
-    if (options.path)
-      await writeFileAsync(options.path, buffer);
-    return buffer;
+  screenshot(options?: types.ScreenshotOptions): Promise<Buffer | string> {
+    return this._screenshotter.screenshotPage(this, options);
   }
 
   async title(): Promise<string> {
@@ -538,16 +479,6 @@ type Metrics = {
   TaskDuration?: number,
   JSHeapUsedSize?: number,
   JSHeapTotalSize?: number,
-}
-
-type ScreenshotOptions = {
-  type?: string,
-  path?: string,
-  fullPage?: boolean,
-  clip?: {x: number, y: number, width: number, height: number},
-  quality?: number,
-  omitBackground?: boolean,
-  encoding?: string,
 }
 
 type FileChooser = {

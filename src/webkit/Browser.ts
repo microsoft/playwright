@@ -22,13 +22,13 @@ import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } f
 import { Connection } from './Connection';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
-import { TaskQueue } from './TaskQueue';
+import { Screenshotter } from './Screenshotter';
 import { Protocol } from './protocol';
 
 export class Browser extends EventEmitter {
   _defaultViewport: Viewport;
   private _process: childProcess.ChildProcess;
-  _screenshotTaskQueue = new TaskQueue();
+  _screenshotter = new Screenshotter();
   _connection: Connection;
   private _closeCallback: () => Promise<void>;
   private _defaultContext: BrowserContext;
@@ -62,7 +62,7 @@ export class Browser extends EventEmitter {
     ];
 
     // Taking multiple screenshots in parallel doesn't work well, so we serialize them.
-    this._screenshotTaskQueue = new TaskQueue();
+    this._screenshotter = new Screenshotter();
   }
 
   async userAgent(): Promise<string> {
