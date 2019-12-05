@@ -1,48 +1,20 @@
-.appveyor.yml
-.gitattributes
+# this ignores everything by default, except for package.json and LICENSE and README.md
+# see https://docs.npmjs.com/misc/developers
+**/*
 
-# no longer generated, but old checkouts might still have it
-node6
+# include sources from lib except for injected, but not map files
+!lib/**/*.js
+# Injected files are included via lib/generated, see src/injected/README.md
+lib/injected/
 
-# exclude all tests
-test
-utils/node6-transform
+# root for "playwright" package
+!index.js
 
-# exclude source files
-src
+# specific browsers
+!chromium.js
+!firefox.js
+!webkit.js
 
-# repeats from .gitignore
-node_modules
-.local-chromium
-.local-browser
-.local-webkit
-.dev_profile*
-.DS_Store
-*.swp
-*.pyc
-.vscode
-package-lock.json
-/node6/test
-/node6/utils
-/test
-/utils
-/docs
-yarn.lock
-
-# other
-/.ci
-/examples
-.appveyour.yml
-.cirrus.yml
-.editorconfig
-.eslintignore
-.eslintrc.js
-.travis.yml
-README.md
-tsconfig.json
-
-# exclude types, see https://github.com/GoogleChrome/puppeteer/issues/3878
-/index.d.ts
-
-# install.js only does stuff for development
-/install.js
+# Dgozman says to remove these
+!DeviceDescriptors.js
+!Errors.js
