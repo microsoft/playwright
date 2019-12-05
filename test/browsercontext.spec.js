@@ -16,7 +16,7 @@
 
 const utils = require('./utils');
 
-module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.addTests = function({testRunner, expect}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -40,7 +40,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await context.close();
       expect(browser.browserContexts().length).toBe(1);
     });
-    it.skip(WEBKIT)('should close all belonging targets once closing context', async function({browser, server}) {
+    it('should close all belonging targets once closing context', async function({browser, server}) {
       expect((await browser.pages()).length).toBe(1);
 
       const context = await browser.createIncognitoBrowserContext();
@@ -62,28 +62,12 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(popupTarget.browserContext()).toBe(context);
       await context.close();
     });
-    it.skip(WEBKIT)('should fire target events', async function({browser, server}) {
-      const context = await browser.createIncognitoBrowserContext();
-      const events = [];
-      browser.chromium.on('targetcreated', target => events.push('CREATED: ' + target.url()));
-      browser.chromium.on('targetchanged', target => events.push('CHANGED: ' + target.url()));
-      browser.chromium.on('targetdestroyed', target => events.push('DESTROYED: ' + target.url()));
-      const page = await context.newPage();
-      await page.goto(server.EMPTY_PAGE);
-      await page.close();
-      expect(events).toEqual([
-        'CREATED: about:blank',
-        `CHANGED: ${server.EMPTY_PAGE}`,
-        `DESTROYED: ${server.EMPTY_PAGE}`
-      ]);
-      await context.close();
-    });
     it('should isolate localStorage and cookies', async function({browser, server}) {
       // Create two incognito contexts.
       const context1 = await browser.createIncognitoBrowserContext();
       const context2 = await browser.createIncognitoBrowserContext();
-      expect(browser.chromium.targets(context1).length).toBe(0);
-      expect(browser.chromium.targets(context2).length).toBe(0);
+      expect((await context1.pages()).length).toBe(0);
+      expect((await context2.pages()).length).toBe(0);
 
       // Create a page in first incognito context.
       const page1 = await context1.newPage();
@@ -93,8 +77,8 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
         document.cookie = 'name=page1';
       });
 
-      expect(browser.chromium.targets(context1).length).toBe(1);
-      expect(browser.chromium.targets(context2).length).toBe(0);
+      expect((await context1.pages()).length).toBe(1);
+      expect((await context2.pages()).length).toBe(0);
 
       // Create a page in second incognito context.
       const page2 = await context2.newPage();
@@ -104,10 +88,10 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
         document.cookie = 'name=page2';
       });
 
-      expect(browser.chromium.targets(context1).length).toBe(1);
-      expect(browser.chromium.targets(context1)[0]).toBe(browser.chromium.pageTarget(page1));
-      expect(browser.chromium.targets(context2).length).toBe(1);
-      expect(browser.chromium.targets(context2)[0]).toBe(browser.chromium.pageTarget(page2));
+      expect((await context1.pages()).length).toBe(1);
+      expect((await context2.pages()).length).toBe(1);
+      expect((await context1.pages())[0]).toBe(page1);
+      expect((await context2.pages())[0]).toBe(page2);
 
       // Make sure pages don't share localstorage or cookies.
       expect(await page1.evaluate(() => localStorage.getItem('name'))).toBe('page1');

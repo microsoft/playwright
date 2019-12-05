@@ -1145,7 +1145,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   // convert target destroy events into close.
   describe('Page.Events.Close', function() {
     it.skip(WEBKIT)('should work with window.close', async function({ browser, page, context, server }) {
-      const newPagePromise = new Promise(fulfill => browser.chromium.once('targetcreated', target => fulfill(target.page())));
+      const newPagePromise = new Promise(f => page.once('popup', f));
       await page.evaluate(() => window['newPage'] = window.open('about:blank'));
       const newPage = await newPagePromise;
       const closedPromise = new Promise(x => newPage.on('close', x));

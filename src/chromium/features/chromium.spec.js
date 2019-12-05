@@ -210,5 +210,21 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       }).catch(e => error = e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
+    it('should fire target events', async function({browser, server}) {
+      const context = await browser.createIncognitoBrowserContext();
+      const events = [];
+      browser.chromium.on('targetcreated', target => events.push('CREATED: ' + target.url()));
+      browser.chromium.on('targetchanged', target => events.push('CHANGED: ' + target.url()));
+      browser.chromium.on('targetdestroyed', target => events.push('DESTROYED: ' + target.url()));
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.close();
+      expect(events).toEqual([
+        'CREATED: about:blank',
+        `CHANGED: ${server.EMPTY_PAGE}`,
+        `DESTROYED: ${server.EMPTY_PAGE}`
+      ]);
+      await context.close();
+    });
   });
 };
