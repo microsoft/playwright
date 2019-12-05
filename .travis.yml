@@ -5,7 +5,6 @@ addons:
     packages:
       # This is required to run new chrome on old trusty
       - libnss3
-      # These are required to run webkit
       - libwoff1
       - libopus0
       - libwebp6
