@@ -301,6 +301,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it('should click the button with em border with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '2em');
+      await page.$eval('button', button => button.style.fontSize = '12px');
       await page.click('button', { relativePoint: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
       expect(await page.evaluate(() => offsetX)).toBe(20);

@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+const {waitEvent} = require('./utils');
+const util = require('util');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const rmAsync = util.promisify(require('rimraf'));
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+
+const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
 module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOptions, playwright}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -162,7 +170,7 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
       remoteBrowser2.on('disconnected', () => ++disconnectedRemote2);
 
       await Promise.all([
-        utils.waitEvent(remoteBrowser2, 'disconnected'),
+        waitEvent(remoteBrowser2, 'disconnected'),
         remoteBrowser2.disconnect(),
       ]);
 
@@ -171,8 +179,8 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
       expect(disconnectedRemote2).toBe(1);
 
       await Promise.all([
-        utils.waitEvent(remoteBrowser1, 'disconnected'),
-        utils.waitEvent(originalBrowser, 'disconnected'),
+        waitEvent(remoteBrowser1, 'disconnected'),
+        waitEvent(originalBrowser, 'disconnected'),
         originalBrowser.close(),
       ]);
 
