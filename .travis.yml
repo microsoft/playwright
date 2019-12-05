@@ -16,33 +16,10 @@ before_install:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
 script:
-  - 'if [ "$NODE8" = "true" ]; then npm run lint; fi'
-  - 'if [ "$NODE8" = "true" ]; then npm run coverage; fi'
-  - 'if [ "$FIREFOX" = "true" ]; then npm run funit; fi'
-  - 'if [ "$NODE8" = "true" ]; then npm run test-doclint; fi'
-  - 'if [ "$NODE8" = "true" ]; then npm run test-types; fi'
-  - 'if [ "$NODE8" = "true" ]; then npm run bundle; fi'
-  - 'if [ "$NODE8" = "true" ]; then npm run unit-bundle; fi'
+  - "npm run build"
+  - "npm run unit"
+  - "npm run funit"
+  - "npm run wunit"
 jobs:
   include:
-    - node_js: "8.16.0"
-      env:
-        - NODE8=true
-        - FLAKINESS_DASHBOARD_NAME="Travis Chromium (node8 + linux)"
-        - FLAKINESS_DASHBOARD_BUILD_URL="${TRAVIS_JOB_WEB_URL}"
-    - node_js: "8.16.0"
-      env:
-        - FIREFOX=true
-        - FLAKINESS_DASHBOARD_NAME="Travis Firefox (node8 + linux)"
-        - FLAKINESS_DASHBOARD_BUILD_URL="${TRAVIS_JOB_WEB_URL}"
-before_deploy: "npm run apply-next-version"
-deploy:
-  provider: npm
-  email: aslushnikov@gmail.com
-  api_key:
-    secure: Ng8o2KwJf90XCBNgUKK3jRZnwtdBSJatjYNmZBERJEqBWFTadFAp1NdhxZaqjnuG8aFYaH5bRJdL+EQBYUksVCbrv/gcaXeEFkwsfPfVX1QXGqu7NnZmtme2hbxppLQ7dEJ8hz2Z9K4vehqVOxmLabxvoupOumxEQMLCphVHh2FOmsm/S5JrRZqZ4V9k76eIc0/PiyfXNMdx5WTZjHbIRDIHRy9nqOXjFp2Rx3PMa3uU2fS8mTshYEYs151TA6e6VdHjqmBwEQC/M5tXbDlLCMNUr4JBtLTcL4OipNYjzkwD1N2xYlbSRqtvqqF4ifdvFhoI65a31GinlMC7Z/SH1Zy+d+/z3Mo7D63eYcsJVnsg9OYxTFy2piUntr0JqTBHtQoe/CvGxJmkcVt+H6YSkcBibSG9s9tG3qpAD5wBCFqqOYnfClX+YZziEd+Hngd9inxAf87qdvgVIZ5tPD2dygtE+te2/qoEHtvccv/HuS8MxNj5iKwlP7JaBPM6uAkazYqZP2R99I2ph9gNOEVuQLtk+3+OIdb8HWrEKUrJBgKhdKY1dvcKYElI+D8NRlyzrr6BnZfudACuAt2EtfKpfJ3mL+iRMFdBJ3ntLt93xBrB+j4z3pD0iWZcg1g3I742PFzQEHzyd/DDTP1yRTUoJeQWwoQRJyNO1m6Qk4wx77c=
-  on:
-    branch: master
-    condition: "$NODE8 = true"
-  skip_cleanup: true
-  tag: next
+    - node_js: "10.17.0"
