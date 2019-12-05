@@ -1,6 +1,6 @@
-From 8fe53f423f30e66c05f2964778be96f7d1dd555f Mon Sep 17 00:00:00 2001
+From dc4cde6bbc1555621af1037bcf2b4aa34ae8eff4 Mon Sep 17 00:00:00 2001
 From: Pavel <pavel.feldman@gmail.com>
-Date: Wed, 4 Dec 2019 11:30:04 -0800
+Date: Wed, 4 Dec 2019 17:03:33 -0800
 Subject: [PATCH xserver] chore: bootstrap
 
 ---
@@ -94,7 +94,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../UIProcess/WebPageInspectorTargetProxy.h   |  45 ++
  Source/WebKit/UIProcess/WebPageProxy.cpp      |  20 +-
  Source/WebKit/UIProcess/WebPageProxy.h        |  13 +
- .../glib/InspectorBrowserAgentClientGLib.cpp  | 100 ++++
+ .../glib/InspectorBrowserAgentClientGLib.cpp  | 103 ++++
  .../glib/InspectorBrowserAgentClientGLib.h    |  36 ++
  .../gtk/WebPageInspectorEmulationAgentGtk.cpp |  35 ++
  .../gtk/WebPageInspectorInputAgentGtk.cpp     |  85 +++
@@ -113,13 +113,15 @@ Subject: [PATCH xserver] chore: bootstrap
  .../WebPage/WebPageInspectorTarget.cpp        |   7 +
  .../WebPage/WebPageInspectorTarget.h          |   1 +
  Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
+ Tools/MiniBrowser/gtk/BrowserWindow.h         |   2 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
  Tools/MiniBrowser/mac/AppDelegate.h           |  14 +-
  Tools/MiniBrowser/mac/AppDelegate.m           | 187 ++++++-
+ Tools/MiniBrowser/mac/SettingsController.m    |   2 +-
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  35 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 115 files changed, 4627 insertions(+), 72 deletions(-)
+ 117 files changed, 4632 insertions(+), 74 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -5544,10 +5546,10 @@ index 488ac80306d..700b332f427 100644
  
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
-index 00000000000..b1f5236ca0a
+index 00000000000..2c7c9f07daf
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,103 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5596,14 +5598,17 @@ index 00000000000..b1f5236ca0a
 +
 +RefPtr<WebPageProxy> InspectorBrowserAgentClientGlib::createPage(WTF::String& error, PAL::SessionID sessionID)
 +{
-+    WebKitWebContext* context = webkit_web_context_get_default();
-+    if (sessionID) {
-+        context = m_idToContext.get(sessionID);
-+        if (context == nullptr) {
-+            error = "Context with provided id not found";
-+            return nullptr;
-+        }
++    WebKitWebContext* context;
++    if (!sessionID || webkitWebContextGetProcessPool(webkit_web_context_get_default()).websiteDataStore()->sessionID() == sessionID)
++      context = webkit_web_context_get_default();
++    else
++      context = m_idToContext.get(sessionID);
++
++    if (context == nullptr) {
++        error = "Context with provided id not found";
++        return nullptr;
 +    }
++
 +    RefPtr<WebPageProxy> page = webkitBrowserInspectorCreateNewPageInContext(context);
 +    if (page == nullptr)
 +        error = "Failed to create new page in the context";
@@ -6436,6 +6441,19 @@ index 0c92cd9b030..0ed5b37c4d5 100644
  
      auto& memoryCache = MemoryCache::singleton();
      memoryCache.setCapacities(cacheMinDeadCapacity, cacheMaxDeadCapacity, cacheTotalCapacity);
+diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.h b/Tools/MiniBrowser/gtk/BrowserWindow.h
+index 1570d65effb..456f96cf589 100644
+--- a/Tools/MiniBrowser/gtk/BrowserWindow.h
++++ b/Tools/MiniBrowser/gtk/BrowserWindow.h
+@@ -37,7 +37,7 @@ G_BEGIN_DECLS
+ #define BROWSER_IS_WINDOW(obj)         (G_TYPE_CHECK_INSTANCE_TYPE((obj), BROWSER_TYPE_WINDOW))
+ #define BROWSER_IS_WINDOW_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass),  BROWSER_TYPE_WINDOW))
+ #define BROWSER_WINDOW_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS((obj),  BROWSER_TYPE_WINDOW, BrowserWindowClass))
+-#define BROWSER_DEFAULT_URL            "http://www.webkitgtk.org/"
++#define BROWSER_DEFAULT_URL            "about:blank"
+ #define BROWSER_ABOUT_SCHEME           "minibrowser-about"
+ 
+ typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
 index 4c5147dcd38..c04110b8033 100644
 --- a/Tools/MiniBrowser/gtk/main.c
@@ -6809,6 +6827,19 @@ index b6af4ef724f..54157dc246a 100644
 +}
 +
  @end
+diff --git a/Tools/MiniBrowser/mac/SettingsController.m b/Tools/MiniBrowser/mac/SettingsController.m
+index 4a3a65505cd..2e48e0a52bb 100644
+--- a/Tools/MiniBrowser/mac/SettingsController.m
++++ b/Tools/MiniBrowser/mac/SettingsController.m
+@@ -31,7 +31,7 @@
+ #import <WebKit/_WKExperimentalFeature.h>
+ #import <WebKit/_WKInternalDebugFeature.h>
+ 
+-static NSString * const defaultURL = @"http://www.webkit.org/";
++static NSString * const defaultURL = @"about:blank";
+ static NSString * const DefaultURLPreferenceKey = @"DefaultURL";
+ 
+ static NSString * const UseWebKit2ByDefaultPreferenceKey = @"UseWebKit2ByDefault";
 diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.h b/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
 index 6f0949b0f4a..e774433031a 100644
 --- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
