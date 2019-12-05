@@ -99,12 +99,9 @@ export class Connection extends EventEmitter {
   _dispatchTargetMessageToSession(object: {method: string, params: any}) {
     if (object.method === 'Target.targetCreated') {
       const {targetId, type} = object.params.targetInfo;
-      // FIXME: this is a workaround for cross-origin navigation in WebKit.
-      // console.log(`[${targetId}] ${object.method}`);
       const session = new TargetSession(this, type, targetId);
       this._sessions.set(targetId, session);
     } else if (object.method === 'Target.targetDestroyed') {
-      // console.log(`[${object.params.targetId}] ${object.method}`);
       const session = this._sessions.get(object.params.targetId);
       if (session) {
         // FIXME: this is a workaround for cross-origin navigation in WebKit.
@@ -161,8 +158,6 @@ export class TargetSession extends EventEmitter {
   private _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private _targetType: string;
   private _sessionId: string;
-  private _out = [];
-  private _in = [];
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -189,7 +184,6 @@ export class TargetSession extends EventEmitter {
       params
     };
     debugWrappedMessage('SEND ► ' + JSON.stringify(messageObj, null, 2));
-    this._out.push(messageObj);
     // Serialize message before adding callback in case JSON throws.
     const message = JSON.stringify(messageObj);
     const result = new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
@@ -210,7 +204,6 @@ export class TargetSession extends EventEmitter {
   _dispatchMessageFromTarget(message: string) {
     const object = JSON.parse(message);
     debugWrappedMessage('◀ RECV ' + JSON.stringify(object, null, 2));
-    this._in.push(object);
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id);
       this._callbacks.delete(object.id);
@@ -220,7 +213,6 @@ export class TargetSession extends EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      // console.log(`[${this._sessionId}] ${object.method}`);
       this.emit(object.method, object.params);
     }
   }
