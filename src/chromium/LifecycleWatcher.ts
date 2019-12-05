@@ -39,7 +39,7 @@ export class LifecycleWatcher {
   private _newDocumentNavigationCompleteCallback: () => void;
   private _timeoutPromise: Promise<Error>;
   private _terminationPromise: Promise<Error | null>;
-  private _terminationCallback: () => void;
+  private _terminationCallback: (err: Error | null) => void;
   private _maximumTimer: NodeJS.Timer;
   private _hasSameDocumentNavigation: boolean;
 

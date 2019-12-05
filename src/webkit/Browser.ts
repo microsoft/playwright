@@ -20,7 +20,6 @@ import { EventEmitter } from 'events';
 import { assert, helper, RegisteredListener } from '../helper';
 import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
 import { Connection } from './Connection';
-import { Events } from './events';
 import { Page, Viewport } from './Page';
 import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';

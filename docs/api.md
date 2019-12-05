@@ -16,6 +16,7 @@
   * [playwright.createBrowserFetcher([options])](#playwrightcreatebrowserfetcheroptions)
   * [playwright.defaultArgs([options])](#playwrightdefaultargsoptions)
   * [playwright.devices](#playwrightdevices)
+  * [playwright.downloadBrowser([options])](#playwrightdownloadbrowseroptions)
   * [playwright.errors](#playwrighterrors)
   * [playwright.executablePath()](#playwrightexecutablepath)
   * [playwright.launch([options])](#playwrightlaunchoptions)
@@ -430,6 +431,22 @@ const iPhone = playwright.devices['iPhone 6'];
 ```
 
 > **NOTE** The old way (Playwright versions <= v1.14.0) devices can be obtained with `require('playwright/DeviceDescriptors')`.
+
+#### playwright.downloadBrowser([options])
+- `options` <[Object]>
+  - `onProgress` <[function]([number], [number])> A function that will be called with two arguments:
+    - `downloadedBytes` <[number]> how many bytes have been downloaded
+    - `totalBytes` <[number]> how large is the total download.
+- returns: <[Promise]<[Object]>> Resolves with revision information when the revision is downloaded and extracted
+  - `revision` <[string]> the revision the info was created from
+  - `folderPath` <[string]> path to the extracted revision folder
+  - `executablePath` <[string]> path to the revision executable
+  - `url` <[string]> URL this revision can be downloaded from
+  - `local` <[boolean]> whether the revision is locally available on disk
+
+Downloads the default browser that Playwright controls. The browser is usually around 100mb.
+
+> **NOTE** Depending on your terminal, the progress bar might not appear.
 
 #### playwright.errors
 - returns: <[Object]>
