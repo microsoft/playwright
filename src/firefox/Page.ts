@@ -16,8 +16,6 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as mime from 'mime';
 import { TimeoutError } from '../Errors';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { TimeoutSettings } from '../TimeoutSettings';
@@ -38,8 +36,7 @@ import * as network from '../network';
 import * as frames from '../frames';
 import * as dialog from '../dialog';
 import * as console from '../console';
-
-const writeFileAsync = helper.promisify(fs.writeFile);
+import { Screenshotter } from './Screenshotter';
 
 export class Page extends EventEmitter {
   private _timeoutSettings: TimeoutSettings;
@@ -60,6 +57,7 @@ export class Page extends EventEmitter {
   private _viewport: Viewport;
   private _disconnectPromise: Promise<Error>;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
+  _screenshotter: Screenshotter;
 
   static async create(session: JugglerSession, browserContext: BrowserContext, defaultViewport: Viewport | null) {
     const page = new Page(session, browserContext);
@@ -107,6 +105,7 @@ export class Page extends EventEmitter {
       helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this.emit(Events.Page.RequestFailed, request)),
     ];
     this._viewport = null;
+    this._screenshotter = new Screenshotter(session);
   }
 
   _didClose() {
@@ -425,26 +424,8 @@ export class Page extends EventEmitter {
     return watchDog.navigationResponse();
   }
 
-  async screenshot(options: { fullPage?: boolean; clip?: { width: number; height: number; x: number; y: number; }; encoding?: string; path?: string; } = {}): Promise<string | Buffer> {
-    const {data} = await this._session.send('Page.screenshot', {
-      mimeType: getScreenshotMimeType(options),
-      fullPage: options.fullPage,
-      clip: processClip(options.clip),
-    });
-    const buffer = options.encoding === 'base64' ? data : Buffer.from(data, 'base64');
-    if (options.path)
-      await writeFileAsync(options.path, buffer);
-    return buffer;
-
-    function processClip(clip) {
-      if (!clip)
-        return undefined;
-      const x = Math.round(clip.x);
-      const y = Math.round(clip.y);
-      const width = Math.round(clip.width + clip.x - x);
-      const height = Math.round(clip.height + clip.y - y);
-      return {x, y, width, height};
-    }
+  screenshot(options?: types.ScreenshotOptions): Promise<string | Buffer> {
+    return this._screenshotter.screenshotPage(this, options);
   }
 
   evaluate: types.Evaluate = (pageFunction, ...args) => {
@@ -587,25 +568,6 @@ export class Page extends EventEmitter {
       interceptor.call(null, fileChooser);
     this.emit(Events.Page.FileChooser, fileChooser);
   }
-}
-
-function getScreenshotMimeType(options) {
-  // options.type takes precedence over inferring the type from options.path
-  // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
-  if (options.type) {
-    if (options.type === 'png')
-      return 'image/png';
-    if (options.type === 'jpeg')
-      return 'image/jpeg';
-    throw new Error('Unknown options.type value: ' + options.type);
-  }
-  if (options.path) {
-    const fileType = mime.getType(options.path);
-    if (fileType === 'image/png' || fileType === 'image/jpeg')
-      return fileType;
-    throw new Error('Unsupported screenshot mime type: ' + fileType);
-  }
-  return 'image/png';
 }
 
 export type Viewport = {

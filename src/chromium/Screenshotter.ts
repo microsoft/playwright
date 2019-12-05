@@ -18,32 +18,22 @@
 import * as fs from 'fs';
 import { Page } from './Page';
 import { assert, helper } from '../helper';
-import * as mime from 'mime';
 import { Protocol } from './protocol';
 import * as dom from '../dom';
+import * as types from '../types';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
-
-export type ScreenshotOptions = {
-  type?: 'png' | 'jpeg',
-  path?: string,
-  fullPage?: boolean,
-  clip?: {x: number, y: number, width: number, height: number},
-  quality?: number,
-  omitBackground?: boolean,
-  encoding?: string,
-}
 
 export class Screenshotter {
   private _queue = new TaskQueue();
 
-  async screenshotPage(page: Page, options: ScreenshotOptions = {}): Promise<Buffer | string> {
-    const format = this._format(options);
+  async screenshotPage(page: Page, options: types.ScreenshotOptions = {}): Promise<Buffer | string> {
+    const format = helper.validateScreeshotOptions(options);
     return this._queue.postTask(() => this._screenshot(page, format, options));
   }
 
-  async screenshotElement(page: Page, handle: dom.ElementHandle, options: ScreenshotOptions = {}): Promise<string | Buffer> {
-    const format = this._format(options);
+  async screenshotElement(page: Page, handle: dom.ElementHandle, options: types.ScreenshotOptions = {}): Promise<string | Buffer> {
+    const format = helper.validateScreeshotOptions(options);
     return this._queue.postTask(async () => {
       let needsViewportReset = false;
 
@@ -84,7 +74,7 @@ export class Screenshotter {
     });
   }
 
-  private async _screenshot(page: Page, format: 'png' | 'jpeg', options: ScreenshotOptions): Promise<Buffer | string> {
+  private async _screenshot(page: Page, format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<Buffer | string> {
     await page.browser()._activatePage(page);
     let clip = options.clip ? processClip(options.clip) : undefined;
     const viewport = page.viewport();
@@ -126,43 +116,6 @@ export class Screenshotter {
       const height = Math.round(clip.height + clip.y - y);
       return {x, y, width, height, scale: 1};
     }
-  }
-
-  private _format(options: ScreenshotOptions): 'png' | 'jpeg' {
-    let format: 'png' | 'jpeg' | null = null;
-    // options.type takes precedence over inferring the type from options.path
-    // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
-    if (options.type) {
-      assert(options.type === 'png' || options.type === 'jpeg', 'Unknown options.type value: ' + options.type);
-      format = options.type;
-    } else if (options.path) {
-      const mimeType = mime.getType(options.path);
-      if (mimeType === 'image/png')
-        format = 'png';
-      else if (mimeType === 'image/jpeg')
-        format = 'jpeg';
-      assert(format, 'Unsupported screenshot mime type: ' + mimeType);
-    }
-
-    if (!format)
-      format = 'png';
-
-    if (options.quality) {
-      assert(format === 'jpeg', 'options.quality is unsupported for the ' + format + ' screenshots');
-      assert(typeof options.quality === 'number', 'Expected options.quality to be a number but found ' + (typeof options.quality));
-      assert(Number.isInteger(options.quality), 'Expected options.quality to be an integer');
-      assert(options.quality >= 0 && options.quality <= 100, 'Expected options.quality to be between 0 and 100 (inclusive), got ' + options.quality);
-    }
-    assert(!options.clip || !options.fullPage, 'options.clip and options.fullPage are exclusive');
-    if (options.clip) {
-      assert(typeof options.clip.x === 'number', 'Expected options.clip.x to be a number but found ' + (typeof options.clip.x));
-      assert(typeof options.clip.y === 'number', 'Expected options.clip.y to be a number but found ' + (typeof options.clip.y));
-      assert(typeof options.clip.width === 'number', 'Expected options.clip.width to be a number but found ' + (typeof options.clip.width));
-      assert(typeof options.clip.height === 'number', 'Expected options.clip.height to be a number but found ' + (typeof options.clip.height));
-      assert(options.clip.width !== 0, 'Expected options.clip.width not to be 0.');
-      assert(options.clip.height !== 0, 'Expected options.clip.height not to be 0.');
-    }
-    return format;
   }
 }
 

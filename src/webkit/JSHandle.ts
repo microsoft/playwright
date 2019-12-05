@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import { debugError, helper, assert } from '../helper';
+import { debugError, assert } from '../helper';
 import * as input from '../input';
 import * as dom from '../dom';
 import * as frames from '../frames';
@@ -24,8 +23,6 @@ import * as types from '../types';
 import { TargetSession } from './Connection';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
-
-const writeFileAsync = helper.promisify(fs.writeFile);
 
 export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   readonly keyboard: input.Keyboard;
@@ -91,16 +88,9 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return this._frameManager._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
-  async screenshot(handle: dom.ElementHandle, options: any = {}): Promise<string | Buffer> {
-    const objectId = toRemoteObject(handle).objectId;
-    this._client.send('DOM.getDocument');
-    const {nodeId} = await this._client.send('DOM.requestNode', {objectId});
-    const result = await this._client.send('Page.snapshotNode', {nodeId});
-    const prefix = 'data:image/png;base64,';
-    const buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
-    if (options.path)
-      await writeFileAsync(options.path, buffer);
-    return buffer;
+  screenshot(handle: dom.ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer> {
+    const page = this._frameManager._page;
+    return page._screenshotter.screenshotElement(page, handle, options);
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {

@@ -92,25 +92,9 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return this._frameManager._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
-  async screenshot(handle: dom.ElementHandle, options: any = {}): Promise<string | Buffer> {
-    const clip = await this._session.send('Page.getBoundingBox', {
-      frameId: this._frameId,
-      objectId: toRemoteObject(handle).objectId,
-    });
-    if (!clip)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    assert(clip.width, 'Node has 0 width.');
-    assert(clip.height, 'Node has 0 height.');
-    await handle._scrollIntoViewIfNeeded();
-
-    return await this._frameManager._page.screenshot(Object.assign({}, options, {
-      clip: {
-        x: clip.x,
-        y: clip.y,
-        width: clip.width,
-        height: clip.height,
-      },
-    }));
+  async screenshot(handle: dom.ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer> {
+    const page = this._frameManager._page;
+    return page._screenshotter.screenshotElement(page, handle, options);
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {

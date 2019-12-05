@@ -44,7 +44,7 @@ import * as network from '../network';
 import * as dialog from '../dialog';
 import * as console from '../console';
 import { DOMWorldDelegate } from './JSHandle';
-import { Screenshotter, ScreenshotOptions } from './Screenshotter';
+import { Screenshotter } from './Screenshotter';
 
 export type Viewport = {
   width: number;
@@ -509,7 +509,7 @@ export class Page extends EventEmitter {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
 
-  screenshot(options: ScreenshotOptions = {}): Promise<Buffer | string> {
+  screenshot(options?: types.ScreenshotOptions): Promise<Buffer | string> {
     return this._screenshotter.screenshotPage(this, options);
   }
 
