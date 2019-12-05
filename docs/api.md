@@ -1,5 +1,5 @@
 
-# Playwright API <!-- GEN:version -->Tip-Of-Tree<!-- GEN:stop-->
+# Playwright API <!-- GEN:version -->v0.9.1<!-- GEN:stop-->
 <!-- GEN:empty-if-release --><!-- GEN:stop -->
 
 - API Translations: [中文|Chinese](https://zhaoqize.github.io/playwright-api-zh_CN/#/)
