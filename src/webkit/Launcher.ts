@@ -78,7 +78,7 @@ export class Launcher {
       stdio = ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'];
     webkitArguments.push('--inspector-pipe');
     // Headless options is only implemented on Mac at the moment.
-    if (process.platform === 'darwin' && options.headless !== false)
+    if (options.headless !== false)
       webkitArguments.push('--headless');
     const webkitProcess = childProcess.spawn(
         webkitExecutable,

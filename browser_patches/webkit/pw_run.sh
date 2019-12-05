@@ -31,7 +31,18 @@ function runLinux() {
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1
   fi
-  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LD_PATH $MINIBROWSER "$@"
+
+  newargs=""
+  for arg in "$@"; do
+    if [[ "$arg" == "--headless" ]]; then
+      if which xvfb-run > /dev/null; then
+          MINIBROWSER="xvfb-run $MINIBROWSER"
+      fi
+    else
+      newargs="$newarg$arg"
+    fi
+  done
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LD_PATH $MINIBROWSER "$newargs"
 }
 
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
