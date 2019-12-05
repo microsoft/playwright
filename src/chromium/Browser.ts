@@ -119,7 +119,7 @@ export class Browser extends EventEmitter {
     const target = this._targets.get(event.targetId);
     target._initializedCallback(false);
     this._targets.delete(event.targetId);
-    target._closedCallback();
+    target._didClose();
     if (await target._initializedPromise)
       this.chromium.emit(Events.Chromium.TargetDestroyed, target);
   }
@@ -146,12 +146,22 @@ export class Browser extends EventEmitter {
     return page;
   }
 
-  async _closeTarget(target: Target) {
-    await this._client.send('Target.closeTarget', { targetId: target._targetId });
+  async _closePage(page: Page) {
+    await this._client.send('Target.closeTarget', { targetId: Target.fromPage(page)._targetId });
   }
 
   _allTargets(): Target[] {
     return Array.from(this._targets.values()).filter(target => target._isInitialized);
+  }
+
+  async _pages(context: BrowserContext): Promise<Page[]> {
+    const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
+    const pages = await Promise.all(targets.map(target => target.page()));
+    return pages.filter(page => !!page);
+  }
+
+  async _activatePage(page: Page) {
+    await page._client.send('Target.activateTarget', {targetId: Target.fromPage(page)._targetId});
   }
 
   async _waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {

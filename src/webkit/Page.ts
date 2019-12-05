@@ -28,7 +28,6 @@ import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
-import { Target } from './Target';
 import { TaskQueue } from './TaskQueue';
 import * as input from '../input';
 import * as types from '../types';
@@ -48,8 +47,10 @@ export type Viewport = {
 
 export class Page extends EventEmitter {
   private _closed = false;
+  private _closedCallback: () => void;
+  private _closedPromise: Promise<void>;
   _session: TargetSession;
-  private _target: Target;
+  private _browserContext: BrowserContext;
   private _keyboard: input.Keyboard;
   private _mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
@@ -64,16 +65,17 @@ export class Page extends EventEmitter {
   private _emulatedMediaType: string | undefined;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  static async create(session: TargetSession, target: Target, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
-    const page = new Page(session, target, screenshotTaskQueue);
+  static async create(session: TargetSession, browserContext: BrowserContext, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
+    const page = new Page(session, browserContext, screenshotTaskQueue);
     await page._initialize();
     if (defaultViewport)
       await page.setViewport(defaultViewport);
     return page;
   }
 
-  constructor(session: TargetSession, target: Target, screenshotTaskQueue: TaskQueue) {
+  constructor(session: TargetSession, browserContext: BrowserContext, screenshotTaskQueue: TaskQueue) {
     super();
+    this._closedPromise = new Promise(f => this._closedCallback = f);
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
     this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
@@ -82,7 +84,7 @@ export class Page extends EventEmitter {
     this._screenshotTaskQueue = screenshotTaskQueue;
 
     this._setSession(session);
-    this._setTarget(target);
+    this._browserContext = browserContext;
 
     this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
     this._frameManager.on(FrameManagerEvents.FrameDetached, event => this.emit(Events.Page.FrameDetached, event));
@@ -93,6 +95,13 @@ export class Page extends EventEmitter {
     networkManager.on(NetworkManagerEvents.Response, event => this.emit(Events.Page.Response, event));
     networkManager.on(NetworkManagerEvents.RequestFailed, event => this.emit(Events.Page.RequestFailed, event));
     networkManager.on(NetworkManagerEvents.RequestFinished, event => this.emit(Events.Page.RequestFinished, event));
+  }
+
+  _didClose() {
+    assert(!this._closed, 'Page closed twice');
+    this._closed = true;
+    this.emit(Events.Page.Close);
+    this._closedCallback();
   }
 
   async _initialize() {
@@ -127,29 +136,18 @@ export class Page extends EventEmitter {
       event.defaultPrompt));
   }
 
-  _setTarget(newTarget: Target) {
-    this._target = newTarget;
-    this._target._isClosedPromise.then(() => {
-      if (this._target !== newTarget)
-        return;
-      this.emit(Events.Page.Close);
-      this._closed = true;
-    });
-  }
-
-  async _swapTargetOnNavigation(newSession : TargetSession, newTarget : Target) {
+  async _swapSessionOnNavigation(newSession: TargetSession) {
     this._setSession(newSession);
-    this._setTarget(newTarget);
-    await this._frameManager._swapTargetOnNavigation(newSession);
+    await this._frameManager._swapSessionOnNavigation(newSession);
     await this._initialize().catch(e => debugError('failed to enable agents after swap: ' + e));
   }
 
   browser(): Browser {
-    return this._target.browser();
+    return this._browserContext.browser();
   }
 
   browserContext(): BrowserContext {
-    return this._target.browserContext();
+    return this._browserContext;
   }
 
   _onTargetCrashed() {
@@ -419,7 +417,7 @@ export class Page extends EventEmitter {
       Object.assign(params, this._viewport);
     }
     const [, result] = await Promise.all([
-      this._session._connection.send('Target.activate', { targetId: this._target._targetId }),
+      this.browser()._activatePage(this),
       this._session.send('Page.snapshotRect', params),
     ]).catch(e => {
       debugError('Failed to take screenshot: ' + e);
@@ -437,12 +435,8 @@ export class Page extends EventEmitter {
   }
 
   async close() {
-    this.browser()._connection.send('Target.close', {
-      targetId: this._target._targetId
-    }).catch(e => {
-      debugError(e);
-    });
-    await this._target._isClosedPromise;
+    this.browser()._closePage(this);
+    await this._closedPromise;
   }
 
   isClosed(): boolean {

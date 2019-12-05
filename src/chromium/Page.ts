@@ -35,7 +35,6 @@ import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject } from './protocolHelper';
-import { Target } from './Target';
 import * as input from '../input';
 import * as types from '../types';
 import * as frames from '../frames';
@@ -58,8 +57,10 @@ export type Viewport = {
 
 export class Page extends EventEmitter {
   private _closed = false;
+  private _closedCallback: () => void;
+  private _closedPromise: Promise<void>;
   _client: CDPSession;
-  _target: Target;
+  private _browserContext: BrowserContext;
   private _keyboard: input.Keyboard;
   private _mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
@@ -79,18 +80,19 @@ export class Page extends EventEmitter {
   private _disconnectPromise: Promise<Error> | undefined;
   private _emulatedMediaType: string | undefined;
 
-  static async create(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean, defaultViewport: Viewport | null, screenshotter: Screenshotter): Promise<Page> {
-    const page = new Page(client, target, ignoreHTTPSErrors, screenshotter);
+  static async create(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean, defaultViewport: Viewport | null, screenshotter: Screenshotter): Promise<Page> {
+    const page = new Page(client, browserContext, ignoreHTTPSErrors, screenshotter);
     await page._initialize();
     if (defaultViewport)
       await page.setViewport(defaultViewport);
     return page;
   }
 
-  constructor(client: CDPSession, target: Target, ignoreHTTPSErrors: boolean, screenshotter: Screenshotter) {
+  constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean, screenshotter: Screenshotter) {
     super();
     this._client = client;
-    this._target = target;
+    this._closedPromise = new Promise(f => this._closedCallback = f);
+    this._browserContext = browserContext;
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(client));
     this._mouse = new input.Mouse(new RawMouseImpl(client), this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
@@ -134,10 +136,13 @@ export class Page extends EventEmitter {
     client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
     client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
     client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
-    this._target._isClosedPromise.then(() => {
-      this.emit(Events.Page.Close);
-      this._closed = true;
-    });
+  }
+
+  _didClose() {
+    assert(!this._closed, 'Page closed twice');
+    this._closed = true;
+    this.emit(Events.Page.Close);
+    this._closedCallback();
   }
 
   async _initialize() {
@@ -179,11 +184,11 @@ export class Page extends EventEmitter {
   }
 
   browser(): Browser {
-    return this._target.browser();
+    return this._browserContext.browser();
   }
 
   browserContext(): BrowserContext {
-    return this._target.browserContext();
+    return this._browserContext;
   }
 
   _onTargetCrashed() {
@@ -518,8 +523,8 @@ export class Page extends EventEmitter {
     if (runBeforeUnload) {
       await this._client.send('Page.close');
     } else {
-      await this.browser()._closeTarget(this._target);
-      await this._target._isClosedPromise;
+      await this.browser()._closePage(this);
+      await this._closedPromise;
     }
   }
 

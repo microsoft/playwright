@@ -17,7 +17,7 @@
 
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener, debugError } from '../helper';
 import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
 import { Connection } from './Connection';
 import { Page, Viewport } from './Page';
@@ -167,7 +167,23 @@ export class Browser extends EventEmitter {
   _onTargetDestroyed({targetId}) {
     const target = this._targets.get(targetId);
     this._targets.delete(targetId);
-    target._closedCallback();
+    target._didClose();
+  }
+
+  _closePage(page: Page) {
+    this._connection.send('Target.close', {
+      targetId: Target.fromPage(page)._targetId
+    }).catch(debugError);
+  }
+
+  async _pages(context: BrowserContext): Promise<Page[]> {
+    const targets = this.targets().filter(target => target.browserContext() === context && target.type() === 'page');
+    const pages = await Promise.all(targets.map(target => target.page()));
+    return pages.filter(page => !!page);
+  }
+
+  async _activatePage(page: Page): Promise<void> {
+    await this._connection.send('Target.activate', { targetId: Target.fromPage(page)._targetId });
   }
 
   async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {
@@ -177,8 +193,12 @@ export class Browser extends EventEmitter {
     const page = await oldTarget._pagePromise;
     const newTarget = this._targets.get(newTargetId);
     const newSession = this._connection.session(newTargetId);
-    page._swapTargetOnNavigation(newSession, newTarget);
+    page._swapSessionOnNavigation(newSession);
     newTarget._pagePromise = oldTarget._pagePromise;
+    newTarget._adoptPage(page);
+    // Old target should not be accessed by anyone. Reset page promise so that
+    // old target does not close the page on connection reset.
+    oldTarget._pagePromise = null;
   }
 
   disconnect() {
@@ -204,17 +224,8 @@ export class BrowserContext {
     this._id = contextId;
   }
 
-  _targets(): Target[] {
-    return this._browser.targets().filter(target => target.browserContext() === this);
-  }
-
-  async pages(): Promise<Page[]> {
-    const pages = await Promise.all(
-        this._targets()
-            .filter(target => target.type() === 'page')
-            .map(target => target.page())
-    );
-    return pages.filter(page => !!page);
+  pages(): Promise<Page[]> {
+    return this._browser._pages(this);
   }
 
   isIncognito(): boolean {

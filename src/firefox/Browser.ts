@@ -150,6 +150,12 @@ export class Browser extends EventEmitter {
     return Array.from(this._targets.values());
   }
 
+  async _pages(context: BrowserContext): Promise<Page[]> {
+    const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
+    const pages = await Promise.all(targets.map(target => target.page()));
+    return pages.filter(page => !!page);
+  }
+
   async _onTargetCreated({targetId, url, browserContextId, openerId, type}) {
     const context = browserContextId ? this._contexts.get(browserContextId) : this._defaultContext;
     const target = new Target(this._connection, this, context, targetId, type, url, openerId);
@@ -166,7 +172,7 @@ export class Browser extends EventEmitter {
   _onTargetDestroyed({targetId}) {
     const target = this._targets.get(targetId);
     this._targets.delete(targetId);
-    target._closedCallback();
+    target._didClose();
   }
 
   _onTargetInfoChanged({targetId, url}) {
@@ -189,8 +195,6 @@ export class Target {
   private _type: 'page' | 'browser';
   _url: string;
   private _openerId: string;
-  _isClosedPromise: Promise<unknown>;
-  _closedCallback: (value?: unknown) => void;
 
   constructor(connection: any, browser: Browser, context: BrowserContext, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
     this._browser = browser;
@@ -200,9 +204,12 @@ export class Target {
     this._type = type;
     this._url = url;
     this._openerId = openerId;
-    this._isClosedPromise = new Promise(fulfill => this._closedCallback = fulfill);
   }
 
+  _didClose() {
+    if (this._pagePromise)
+      this._pagePromise.then(page => page._didClose());
+  }
 
   opener(): Target | null {
     return this._openerId ? this._browser._targets.get(this._openerId) : null;
@@ -225,7 +232,7 @@ export class Target {
   async page() {
     if (this._type === 'page' && !this._pagePromise) {
       const session = await this._connection.createSession(this._targetId);
-      this._pagePromise = Page.create(session, this, this._browser._defaultViewport);
+      this._pagePromise = Page.create(session, this._context, this._browser._defaultViewport);
     }
     return this._pagePromise;
   }
@@ -248,17 +255,8 @@ export class BrowserContext {
     this.permissions = new Permissions(connection, browserContextId);
   }
 
-  _targets(): Array<Target> {
-    return this._browser._allTargets().filter(target => target.browserContext() === this);
-  }
-
-  async pages(): Promise<Array<Page>> {
-    const pages = await Promise.all(
-        this._targets()
-            .filter(target => target.type() === 'page')
-            .map(target => target.page())
-    );
-    return pages.filter(page => !!page);
+  pages(): Promise<Page[]> {
+    return this._browser._pages(this);
   }
 
   isIncognito(): boolean {

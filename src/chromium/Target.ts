@@ -24,6 +24,8 @@ import { Page, Viewport } from './Page';
 import { Protocol } from './protocol';
 import { Screenshotter } from './Screenshotter';
 
+const targetSymbol = Symbol('target');
+
 export class Target {
   private _targetInfo: Protocol.Target.TargetInfo;
   private _browserContext: BrowserContext;
@@ -36,9 +38,11 @@ export class Target {
   private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
-  _isClosedPromise: Promise<void>;
-  _closedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
+
+  static fromPage(page: Page): Target {
+    return (page as any)[targetSymbol];
+  }
 
   constructor(
     targetInfo: Protocol.Target.TargetInfo,
@@ -67,16 +71,23 @@ export class Target {
       openerPage.emit(Events.Page.Popup, popupPage);
       return true;
     });
-    this._isClosedPromise = new Promise(fulfill => this._closedCallback = fulfill);
     this._isInitialized = this._targetInfo.type !== 'page' || this._targetInfo.url !== '';
     if (this._isInitialized)
       this._initializedCallback(true);
   }
 
+  _didClose() {
+    if (this._pagePromise)
+      this._pagePromise.then(page => page._didClose());
+  }
+
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
-      this._pagePromise = this._sessionFactory()
-          .then(client => Page.create(client, this, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotter));
+      this._pagePromise = this._sessionFactory().then(async client => {
+        const page = await Page.create(client, this._browserContext, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotter);
+        page[targetSymbol] = this;
+        return page;
+      });
     }
     return this._pagePromise;
   }
