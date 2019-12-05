@@ -1,6 +1,6 @@
-From b33decbe420d2874925adee8e4dd36bc9255072c Mon Sep 17 00:00:00 2001
-From: Andrey Lushnikov <lushnikov@chromium.org>
-Date: Thu, 5 Dec 2019 13:50:00 -0800
+From 058f2450a6d88f65e939bf61b9b54a15ac0cbfd6 Mon Sep 17 00:00:00 2001
+From: Pavel Feldman <pavel.feldman@gmail.com>
+Date: Thu, 5 Dec 2019 14:38:40 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
@@ -14,23 +14,24 @@ Subject: [PATCH] chore: bootstrap
  .../inspector/protocol/Browser.json           | 106 ++++
  .../inspector/protocol/DOM.json               |  39 ++
  .../inspector/protocol/Dialog.json            |  36 ++
- .../inspector/protocol/Emulation.json         |  21 +
+ .../inspector/protocol/Emulation.json         |  22 +
  .../inspector/protocol/Input.json             | 160 ++++++
- .../inspector/protocol/Page.json              |  90 +++-
+ .../inspector/protocol/Page.json              |  97 +++-
  .../inspector/protocol/Target.json            |  20 +-
  Source/WebCore/html/FileInputType.cpp         |   6 +
  .../inspector/InspectorInstrumentation.cpp    |  14 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
- .../inspector/agents/InspectorDOMAgent.cpp    | 103 ++++
- .../inspector/agents/InspectorDOMAgent.h      |   2 +
- .../inspector/agents/InspectorPageAgent.cpp   | 509 +++++++++++++++++-
- .../inspector/agents/InspectorPageAgent.h     |  18 +-
+ .../inspector/agents/InspectorDOMAgent.cpp    | 108 +++-
+ .../inspector/agents/InspectorDOMAgent.h      |   4 +
+ .../agents/InspectorDOMStorageAgent.h         |   1 +
+ .../inspector/agents/InspectorPageAgent.cpp   | 523 +++++++++++++++++-
+ .../inspector/agents/InspectorPageAgent.h     |  19 +-
  .../agents/page/PageRuntimeAgent.cpp          |  14 +-
  Source/WebCore/loader/FrameLoader.cpp         |   1 +
  Source/WebCore/page/History.cpp               |   1 +
  .../WebCore/platform/PlatformKeyboardEvent.h  |   2 +
- .../platform/gtk/PlatformKeyboardEventGtk.cpp | 242 +++++++++
- .../libwpe/PlatformKeyboardEventLibWPE.cpp    | 240 +++++++++
+ .../platform/gtk/PlatformKeyboardEventGtk.cpp | 242 ++++++++
+ .../libwpe/PlatformKeyboardEventLibWPE.cpp    | 240 ++++++++
  .../soup/NetworkStorageSessionSoup.cpp        |   9 +-
  .../WebKit/NetworkProcess/NetworkProcess.cpp  |  30 +-
  Source/WebKit/NetworkProcess/NetworkProcess.h |   5 +
@@ -87,7 +88,7 @@ Subject: [PATCH] chore: bootstrap
  .../Mock/MockAuthenticatorManager.cpp         |   4 +-
  .../UIProcess/WebPageInspectorController.cpp  |  56 +-
  .../UIProcess/WebPageInspectorController.h    |   8 +
- .../WebPageInspectorEmulationAgent.cpp        |  47 ++
+ .../WebPageInspectorEmulationAgent.cpp        |  48 ++
  .../WebPageInspectorEmulationAgent.h          |  42 ++
  .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 ++++++++
  .../UIProcess/WebPageInspectorInputAgent.h    |  54 ++
@@ -106,7 +107,7 @@ Subject: [PATCH] chore: bootstrap
  .../WebKit/UIProcess/mac/PageClientImplMac.mm |   5 +
  .../mac/WebPageInspectorEmulationAgentMac.mm  |  21 +
  .../mac/WebPageInspectorInputAgentMac.mm      |  14 +
- .../mac/WebPageInspectorTargetProxyMac.mm     |  18 +
+ .../mac/WebPageInspectorTargetProxyMac.mm     |  20 +
  .../wpe/WebPageInspectorEmulationAgentWPE.cpp |  18 +
  .../wpe/WebPageInspectorInputAgentWPE.cpp     |  76 +++
  .../wpe/WebPageInspectorTargetProxyWPE.cpp    |  18 +
@@ -122,7 +123,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  37 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 118 files changed, 4678 insertions(+), 75 deletions(-)
+ 119 files changed, 4710 insertions(+), 77 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -695,10 +696,10 @@ index 00000000000..79edea03fed
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
-index 00000000000..af0f39e5249
+index 00000000000..759390956ea
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,22 @@
 +{
 +    "domain": "Emulation",
 +    "availability": ["web"],
@@ -708,7 +709,8 @@ index 00000000000..af0f39e5249
 +            "description": "Overrides device metrics with provided values.",
 +            "parameters": [
 +                { "name": "width", "type": "integer" },
-+                { "name": "height", "type": "integer" }
++                { "name": "height", "type": "integer" },
++                { "name": "deviceScaleFactor", "type": "number" }
 +            ]
 +        },
 +        {
@@ -887,7 +889,7 @@ index 00000000000..79bbe73b0df
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8..b2ed9177528 100644
+index 367d1f235a8..d7fa0aa81c5 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -953,7 +955,7 @@ index 367d1f235a8..b2ed9177528 100644
              ]
          },
          {
-@@ -288,6 +331,27 @@
+@@ -288,6 +331,34 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -978,10 +980,17 @@ index 367d1f235a8..b2ed9177528 100644
 +            "parameters": [
 +                { "name": "enabled", "type": "boolean", "description": "True to enable." }
 +            ]
++        },
++        {
++            "name": "setDefaultBackgroundColorOverride",
++            "description": "Sets or clears an override of the default background color of the frame. This override is used if the content does not specify one.",
++            "parameters": [
++                { "name": "color", "$ref": "DOM.RGBAColor", "optional": true, "description": "RGBA of the default background color. If not specified, any existing override will be cleared." }
++            ]
          }
      ],
      "events": [
-@@ -346,12 +410,36 @@
+@@ -346,12 +417,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1194,7 +1203,7 @@ index 6698431f316..486a6781d81 100644
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index aecc79bc0ca..57ce50c1f94 100644
+index aecc79bc0ca..a5e1de17d9e 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -1228,7 +1237,26 @@ index aecc79bc0ca..57ce50c1f94 100644
  #include "StaticNodeList.h"
  #include "StyleProperties.h"
  #include "StyleResolver.h"
-@@ -1475,6 +1481,61 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -128,7 +134,8 @@ using namespace HTMLNames;
+ static const size_t maxTextSize = 10000;
+ static const UChar ellipsisUChar[] = { 0x2026, 0 };
+ 
+-static Color parseColor(const JSON::Object* colorObject)
++// static
++Color InspectorDOMAgent::parseColor(const JSON::Object* colorObject)
+ {
+     if (!colorObject)
+         return Color::transparent;
+@@ -157,7 +164,7 @@ static Color parseConfigColor(const String& fieldName, const JSON::Object* confi
+     RefPtr<JSON::Object> colorObject;
+     configObject->getObject(fieldName, colorObject);
+ 
+-    return parseColor(colorObject.get());
++    return InspectorDOMAgent::parseColor(colorObject.get());
+ }
+ 
+ static bool parseQuad(const JSON::Array& quadArray, FloatQuad* quad)
+@@ -1475,6 +1482,61 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
@@ -1290,7 +1318,7 @@ index aecc79bc0ca..57ce50c1f94 100644
  void InspectorDOMAgent::resolveNode(ErrorString& errorString, int nodeId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result)
  {
      String objectGroupName = objectGroup ? *objectGroup : emptyString();
-@@ -2686,4 +2747,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+@@ -2686,4 +2748,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
@@ -1338,10 +1366,26 @@ index aecc79bc0ca..57ce50c1f94 100644
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 51639abeb84..16080f2c017 100644
+index 51639abeb84..0ed9a1d80d5 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-@@ -148,6 +148,8 @@ public:
+@@ -54,6 +54,7 @@ namespace WebCore {
+ 
+ class AXCoreObject;
+ class CharacterData;
++class Color;
+ class DOMEditor;
+ class Document;
+ class Element;
+@@ -88,6 +89,7 @@ public:
+     static String toErrorString(Exception&&);
+ 
+     static String documentURLString(Document*);
++    static Color parseColor(const JSON::Object*);
+ 
+     // We represent embedded doms as a part of the same hierarchy. Hence we treat children of frame owners differently.
+     // We also skip whitespace text nodes conditionally. Following methods encapsulate these specifics.
+@@ -148,6 +150,8 @@ public:
      void focus(ErrorString&, int nodeId) override;
      void setInspectedNode(ErrorString&, int nodeId) override;
      void setAllowEditingUserAgentShadowTrees(ErrorString&, bool allow) final;
@@ -1350,8 +1394,20 @@ index 51639abeb84..16080f2c017 100644
  
      // InspectorInstrumentation
      int identifierForNode(Node&);
+diff --git a/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h b/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
+index b578660fbb3..a7c968bc9f8 100644
+--- a/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
++++ b/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
+@@ -40,6 +40,7 @@ class DOMStorageFrontendDispatcher;
+ 
+ namespace WebCore {
+ 
++class Color;
+ class Frame;
+ class Page;
+ class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..1e6ef4eec98 100644
+index f2e228b7f74..f31341803b7 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1484,7 +1540,7 @@ index f2e228b7f74..1e6ef4eec98 100644
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1034,455 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1034,469 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -1939,9 +1995,23 @@ index f2e228b7f74..1e6ef4eec98 100644
 +    m_interceptFileChooserDialog = enabled;
 +}
 +
++void InspectorPageAgent::setDefaultBackgroundColorOverride(ErrorString& errorString, const JSON::Object* color)
++{
++    FrameView* view = m_inspectedPage.mainFrame().view();
++    if (!view) {
++        errorString = "Internal error: No frame view to set color two"_s;
++        return;
++    }
++    if (!color) {
++        view->updateBackgroundRecursively(Optional<Color>());
++        return;
++    }
++    view->updateBackgroundRecursively(InspectorDOMAgent::parseColor(color));
++}
++
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..eb18b0fc48e 100644
+index 4fd8c0b1016..1c12c0a4e54 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -1971,7 +2041,7 @@ index 4fd8c0b1016..eb18b0fc48e 100644
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -113,8 +120,11 @@ public:
+@@ -113,8 +120,12 @@ public:
      void getCompositingBordersVisible(ErrorString&, bool* out_param) override;
      void setCompositingBordersVisible(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
@@ -1981,10 +2051,11 @@ index 4fd8c0b1016..eb18b0fc48e 100644
 +    void insertText(ErrorString&, const String& text) override;
 +    void accessibilitySnapshot(ErrorString&, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) override;
 +    void setInterceptFileChooserDialog(ErrorString&, bool enabled) override;
++    void setDefaultBackgroundColorOverride(ErrorString&, const JSON::Object*) override;
  
      // InspectorInstrumentation
      void domContentEventFired();
-@@ -126,6 +136,7 @@ public:
+@@ -126,6 +137,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -1992,7 +2063,7 @@ index 4fd8c0b1016..eb18b0fc48e 100644
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,6 +145,7 @@ public:
+@@ -134,6 +146,7 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -2000,7 +2071,7 @@ index 4fd8c0b1016..eb18b0fc48e 100644
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -153,6 +165,7 @@ private:
+@@ -153,6 +166,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -2008,7 +2079,7 @@ index 4fd8c0b1016..eb18b0fc48e 100644
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -165,6 +178,7 @@ private:
+@@ -165,6 +179,7 @@ private:
      String m_bootstrapScript;
      bool m_isFirstLayoutAfterOnLoad { false };
      bool m_showPaintRects { false };
@@ -4892,10 +4963,10 @@ index 78caedf0c0c..40f08285590 100644
      void setIndicating(bool);
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 00000000000..e903413c95d
+index 00000000000..f10c1651e64
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,48 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4930,9 +5001,10 @@ index 00000000000..e903413c95d
 +{
 +}
 +
-+void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(ErrorString& error, int in_width, int in_height)
++void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(ErrorString& error, int in_width, int in_height, double in_deviceScaleFactor)
 +{
 +    platformSetSize(error, in_width, in_height);
++    m_page.setCustomDeviceScaleFactor(in_deviceScaleFactor);
 +}
 +
 +void WebPageInspectorEmulationAgent::setJavaScriptEnabled(ErrorString&, bool enabled)
@@ -4945,7 +5017,7 @@ index 00000000000..e903413c95d
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 00000000000..b02753590b3
+index 00000000000..0025b0be853
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 @@ -0,0 +1,42 @@
@@ -4980,7 +5052,7 @@ index 00000000000..b02753590b3
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
-+    void setDeviceMetricsOverride(Inspector::ErrorString&, int in_width, int in_height) override;
++    void setDeviceMetricsOverride(Inspector::ErrorString&, int in_width, int in_height, double in_deviceScaleFactor) override;
 +    void setJavaScriptEnabled(Inspector::ErrorString&, bool enabled) override;
 +
 +private:
@@ -6095,15 +6167,16 @@ index 00000000000..7ce9b71b0fb
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
 new file mode 100644
-index 00000000000..06a7e286abf
+index 00000000000..2061f6d129b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,20 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
-+#include "config.h"
-+#include "WebPageInspectorTargetProxy.h"
++#import "config.h"
++#import "WebPageInspectorTargetProxy.h"
++#import "WebPageProxy.h"
 +
 +#if PLATFORM(MAC)
 +
@@ -6111,7 +6184,8 @@ index 00000000000..06a7e286abf
 +
 +void WebPageInspectorTargetProxy::platformActivate(String& error) const
 +{
-+    error = "Not Implemented";
++    NSWindow* window = m_page.platformWindow();
++    [window makeKeyAndOrderFront:nil];
 +}
 +
 +} // namespace WebKit
@@ -7094,5 +7168,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.22.1
+2.24.0
 
