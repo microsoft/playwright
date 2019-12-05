@@ -49,7 +49,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       else
         expect(dumpioData).toContain('Juggler listening on ws://');
     });
-    it('should close the browser when the node process closes', async({ server }) => {
+    it.skip(FFOX)('should close the browser when the node process closes', async({ server }) => {
       const {spawn, execSync} = require('child_process');
       const options = Object.assign({}, defaultBrowserOptions, {
         // Disable DUMPIO to cleanly read stdout.

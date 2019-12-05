@@ -151,7 +151,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-padding-border.png');
     });
-    it('should capture full element when larger than viewport in parallel', async({page, server}) => {
+    it.skip(WEBKIT)('should capture full element when larger than viewport in parallel', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
 
       await page.setContent(`

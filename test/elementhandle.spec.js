@@ -29,7 +29,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const box = await elementHandle.boundingBox();
       expect(box).toEqual({ x: 100, y: 50, width: 50, height: 50 });
     });
-    it('should handle nested frames', async({page, server}) => {
+    it.skip(FFOX)('should handle nested frames', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.goto(server.PREFIX + '/frames/nested-frames.html');
       const nestedFrame = page.frames().find(frame => frame.name() === 'dos');

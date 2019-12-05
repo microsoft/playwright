@@ -33,7 +33,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.keyboard.type(text);
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe(text);
     });
-    it('should press the metaKey', async({page, server}) => {
+    it.skip(WEBKIT)('should press the metaKey', async({page, server}) => {
       await page.goto(server.PREFIX + '/empty.html');
       await page.evaluate(() => {
         window.keyPromise = new Promise(resolve => document.addEventListener('keydown', event => resolve(event.key)));
@@ -82,7 +82,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.keyboard.sendCharacters('a');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨a');
     });
-    it.skip(FFOX)('should report shiftKey', async({page, server}) => {
+    it.skip(FFOX || WEBKIT)('should report shiftKey', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');
       const keyboard = page.keyboard;
       const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
@@ -102,7 +102,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         expect(await page.evaluate(() => getResult())).toBe('Keyup: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' []');
       }
     });
-    it('should report multiple modifiers', async({page, server}) => {
+    it.skip(WEBKIT)('should report multiple modifiers', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');
       const keyboard = page.keyboard;
       await keyboard.down('Control');
@@ -118,7 +118,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await keyboard.up('Alt');
       expect(await page.evaluate(() => getResult())).toBe('Keyup: Alt AltLeft 18 []');
     });
-    it('should send proper codes while typing', async({page, server}) => {
+    it.skip(WEBKIT)('should send proper codes while typing', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');
       await page.keyboard.type('!');
       expect(await page.evaluate(() => getResult())).toBe(
@@ -131,7 +131,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
             'Keypress: ^ Digit6 94 94 []',
             'Keyup: ^ Digit6 54 []'].join('\n'));
     });
-    it('should send proper codes while typing with shift', async({page, server}) => {
+    it.skip(WEBKIT)('should send proper codes while typing with shift', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');
       const keyboard = page.keyboard;
       await keyboard.down('Shift');
@@ -143,7 +143,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
             'Keyup: ~ Backquote 192 [Shift]'].join('\n'));
       await keyboard.up('Shift');
     });
-    it('should not type canceled events', async({page, server}) => {
+    it.skip(WEBKIT)('should not type canceled events', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
       await page.evaluate(() => {
@@ -184,7 +184,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.keyboard.type(text);
       expect(await page.evaluate('result')).toBe(text);
     });
-    it('should specify location', async({page, server}) => {
+    it.skip(WEBKIT)('should specify location', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.evaluate(() => {
         window.addEventListener('keydown', event => window.keyLocation = event.location, true);
@@ -226,7 +226,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await textarea.type('👹 Tokyo street Japan 🇯🇵');
       expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
     });
-    it('should press the meta key', async({page}) => {
+    it.skip(WEBKIT)('should press the meta key', async({page}) => {
       await page.evaluate(() => {
         window.result = null;
         document.addEventListener('keydown', event => {
