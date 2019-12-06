@@ -3,7 +3,7 @@
 
 import * as js from './javascript';
 
-type ConsoleMessageLocation = {
+export type ConsoleMessageLocation = {
   url?: string,
   lineNumber?: number,
   columnNumber?: number,

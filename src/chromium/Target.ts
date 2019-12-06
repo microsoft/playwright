@@ -18,11 +18,12 @@
 import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
-import { CDPSession } from './Connection';
+import { CDPSession, CDPSessionEvents } from './Connection';
 import { Events } from './events';
 import { Worker } from './features/workers';
 import { Page } from './Page';
 import { Protocol } from './protocol';
+import { debugError } from '../helper';
 
 const targetSymbol = Symbol('target');
 
@@ -83,6 +84,14 @@ export class Target {
       this._pagePromise = this._sessionFactory().then(async client => {
         const page = await Page.create(client, this._browserContext, this._ignoreHTTPSErrors, this._defaultViewport);
         page[targetSymbol] = this;
+        client.once(CDPSessionEvents.Disconnected, () => page._didDisconnect());
+        client.on('Target.attachedToTarget', event => {
+          if (event.targetInfo.type !== 'worker') {
+            // If we don't detach from service workers, they will never die.
+            client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
+          }
+        });
+        await client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true});
         return page;
       });
     }

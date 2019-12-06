@@ -29,6 +29,10 @@ import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
+import { Events } from './events';
+import { toConsoleMessageLocation, exceptionToError, releaseObject } from './protocolHelper';
+import * as dialog from '../dialog';
+import * as console from '../console';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -64,15 +68,24 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     this._networkManager = new NetworkManager(client, ignoreHTTPSErrors, this);
     this._timeoutSettings = timeoutSettings;
 
+    this._client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
+    this._client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
+    this._client.on('Page.domContentEventFired', event => page.emit(Events.Page.DOMContentLoaded));
+    this._client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
     this._client.on('Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId));
-    this._client.on('Page.frameNavigated', event => this._onFrameNavigated(event.frame));
-    this._client.on('Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url));
     this._client.on('Page.frameDetached', event => this._onFrameDetached(event.frameId));
+    this._client.on('Page.frameNavigated', event => this._onFrameNavigated(event.frame));
     this._client.on('Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId));
+    this._client.on('Page.javascriptDialogOpening', event => this._onDialog(event));
+    this._client.on('Page.lifecycleEvent', event => this._onLifecycleEvent(event));
+    this._client.on('Page.loadEventFired', event => page.emit(Events.Page.Load));
+    this._client.on('Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url));
+    this._client.on('Runtime.bindingCalled', event => this._onBindingCalled(event));
+    this._client.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
+    this._client.on('Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails));
     this._client.on('Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context));
     this._client.on('Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId));
     this._client.on('Runtime.executionContextsCleared', event => this._onExecutionContextsCleared());
-    this._client.on('Page.lifecycleEvent', event => this._onLifecycleEvent(event));
   }
 
   async initialize() {
@@ -82,6 +95,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     ]);
     this._handleFrameTree(frameTree);
     await Promise.all([
+      this._client.send('Log.enable', {}),
+      this._client.send('Page.setInterceptFileChooserDialog', {enabled: true}),
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._networkManager.initialize(),
@@ -356,6 +371,72 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     frame._detach();
     this._frames.delete(this._frameData(frame).id);
     this.emit(FrameManagerEvents.FrameDetached, frame);
+  }
+
+  async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
+    if (event.executionContextId === 0) {
+      // DevTools protocol stores the last 1000 console messages. These
+      // messages are always reported even for removed execution contexts. In
+      // this case, they are marked with executionContextId = 0 and are
+      // reported upon enabling Runtime agent.
+      //
+      // Ignore these messages since:
+      // - there's no execution context we can use to operate with message
+      //   arguments
+      // - these messages are reported before Playwright clients can subscribe
+      //   to the 'console'
+      //   page event.
+      //
+      // @see https://github.com/GoogleChrome/puppeteer/issues/3865
+      return;
+    }
+    const context = this.executionContextById(event.executionContextId);
+    const values = event.args.map(arg => context._createHandle(arg));
+    this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
+  }
+
+  async _exposeBinding(name: string, bindingFunction: string) {
+    await this._client.send('Runtime.addBinding', {name: name});
+    await this._client.send('Page.addScriptToEvaluateOnNewDocument', {source: bindingFunction});
+    await Promise.all(this.frames().map(frame => frame.evaluate(bindingFunction).catch(debugError)));
+  }
+
+  _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
+    const context = this.executionContextById(event.executionContextId);
+    this._page._onBindingCalled(event.payload, context);
+  }
+
+  _onDialog(event : Protocol.Page.javascriptDialogOpeningPayload) {
+    this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+      event.type as dialog.DialogType,
+      event.message,
+      async (accept: boolean, promptText?: string) => {
+        await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
+      },
+      event.defaultPrompt));
+  }
+
+  _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
+    this._page.emit(Events.Page.PageError, exceptionToError(exceptionDetails));
+  }
+
+  _onTargetCrashed() {
+    this._page.emit('error', new Error('Page crashed!'));
+  }
+
+  _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
+    const {level, text, args, source, url, lineNumber} = event.entry;
+    if (args)
+      args.map(arg => releaseObject(this._client, arg));
+    if (source !== 'worker')
+      this._page.emit(Events.Page.Console, new console.ConsoleMessage(level, text, [], {url, lineNumber}));
+  }
+
+  async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
+    const frame = this.frame(event.frameId);
+    const utilityWorld = await frame._utilityDOMWorld();
+    const handle = await (utilityWorld.delegate as DOMWorldDelegate).adoptBackendNodeId(event.backendNodeId, utilityWorld);
+    this._page._onFileChooserOpened(handle);
   }
 }
 
