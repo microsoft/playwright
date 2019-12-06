@@ -78,7 +78,7 @@ export class DOMWorld {
     const resolved = await this.resolveSelector(selector);
     const handle = await this.context.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
-          const element = injected.querySelector(selector, scope as SelectorRoot || document);
+          const element = injected.querySelector(selector, scope || document);
           if (visible === undefined || !element)
             return element;
           return injected.isVisible(element) === visible ? element : undefined;
@@ -96,7 +96,7 @@ export class DOMWorld {
     const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
-          const elements = injected.querySelectorAll(selector, scope as SelectorRoot || document);
+          const elements = injected.querySelectorAll(selector, scope || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
           return elements;
@@ -131,7 +131,7 @@ export class DOMWorld {
     const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
-          const elements = injected.querySelectorAll(selector, scope as SelectorRoot || document);
+          const elements = injected.querySelectorAll(selector, scope || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
           return elements;
@@ -246,13 +246,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
-    const multiple = await this.evaluate((element: Node) => !!(element as HTMLInputElement).multiple);
+    const multiple = await this.evaluate((node: Node) => {
+      if (node.nodeType !== Node.ELEMENT_NODE || (node as Element).tagName !== 'INPUT')
+        throw new Error('Node is not an HTMLInputElement');
+      const input = node as HTMLInputElement;
+      return input.multiple;
+    });
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
     await this._world.delegate.setInputFiles(this, await input.loadFiles(files));
   }
 
   async focus() {
-    await this.evaluate((element: Node) => (element as HTMLElement).focus());
+    const errorMessage = await this.evaluate((element: Node) => {
+      if (!element['focus'])
+        return 'Node is not an HTML or SVG element.';
+      (element as HTMLElement|SVGElement).focus();
+      return false;
+    });
+    if (errorMessage)
+      throw new Error(errorMessage);
   }
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {

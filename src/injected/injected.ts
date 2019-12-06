@@ -31,9 +31,11 @@ class Injected {
     return element as Element;
   }
 
-  querySelectorAll(selector: string, root: SelectorRoot): Element[] {
+  querySelectorAll(selector: string, root: Node): Element[] {
     const parsed = this._parseSelector(selector);
-    let set = new Set<SelectorRoot>([ root ]);
+    if (!root["querySelectorAll"])
+      throw new Error('Node is not queryable.');
+    let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
     for (const { engine, selector } of parsed) {
       const newSet = new Set<Element>();
       for (const prev of set) {
