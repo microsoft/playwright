@@ -17,7 +17,6 @@
 
 import { EventEmitter } from 'events';
 import * as console from '../console';
-import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { TimeoutError } from '../Errors';
 import * as frames from '../frames';
@@ -29,7 +28,7 @@ import { Screenshotter } from '../screenshotter';
 import { TimeoutSettings } from '../TimeoutSettings';
 import * as types from '../types';
 import { BrowserContext } from './Browser';
-import { JugglerSession, JugglerSessionEvents } from './Connection';
+import { JugglerSession } from './Connection';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
@@ -50,13 +49,15 @@ export class Page extends EventEmitter {
   private _closed: boolean;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
+  private _disconnected = false;
+  private _disconnectedCallback: (e: Error) => void;
+  private _disconnectedPromise: Promise<Error>;
   private _pageBindings: Map<string, Function>;
   private _networkManager: NetworkManager;
   _frameManager: FrameManager;
   _javascriptEnabled = true;
   private _eventListeners: RegisteredListener[];
   private _viewport: types.Viewport;
-  private _disconnectPromise: Promise<Error>;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   _screenshotter: Screenshotter;
 
@@ -84,17 +85,13 @@ export class Page extends EventEmitter {
     this.accessibility = new Accessibility(session);
     this._closed = false;
     this._closedPromise = new Promise(f => this._closedCallback = f);
+    this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._pageBindings = new Map();
     this._networkManager = new NetworkManager(session);
     this._frameManager = new FrameManager(session, this, this._networkManager, this._timeoutSettings);
     this._networkManager.setFrameManager(this._frameManager);
     this.interception = new Interception(this._networkManager);
     this._eventListeners = [
-      helper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
-      helper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
-      helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
-      helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
-      helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
       helper.addEventListener(this._frameManager, FrameManagerEvents.Load, () => this.emit(Events.Page.Load)),
       helper.addEventListener(this._frameManager, FrameManagerEvents.DOMContentLoaded, () => this.emit(Events.Page.DOMContentLoaded)),
       helper.addEventListener(this._frameManager, FrameManagerEvents.FrameAttached, frame => this.emit(Events.Page.FrameAttached, frame)),
@@ -119,6 +116,12 @@ export class Page extends EventEmitter {
     this._closedCallback();
   }
 
+  _didDisconnect() {
+    assert(!this._disconnected, 'Page disconnected twice');
+    this._disconnected = true;
+    this._disconnectedCallback(new Error('Target closed'));
+  }
+
   async setExtraHTTPHeaders(headers) {
     await this._networkManager.setExtraHTTPHeaders(headers);
   }
@@ -135,11 +138,7 @@ export class Page extends EventEmitter {
     if (this._pageBindings.has(name))
       throw new Error(`Failed to add page binding with name ${name}: window['${name}'] already exists!`);
     this._pageBindings.set(name, playwrightFunction);
-
-    const expression = helper.evaluationString(addPageBinding, name);
-    await this._session.send('Page.addBinding', {name: name});
-    await this._session.send('Page.addScriptToEvaluateOnNewDocument', {script: expression});
-    await Promise.all(this.frames().map(frame => frame.evaluate(expression).catch(debugError)));
+    await this._frameManager._exposeBinding(name, helper.evaluationString(addPageBinding, name));
 
     function addPageBinding(bindingName: string) {
       const binding: (string) => void = window[bindingName];
@@ -159,8 +158,8 @@ export class Page extends EventEmitter {
     }
   }
 
-  async _onBindingCalled(event: any) {
-    const {name, seq, args} = JSON.parse(event.payload);
+  async _onBindingCalled(payload: string, context: js.ExecutionContext) {
+    const {name, seq, args} = JSON.parse(payload);
     let expression = null;
     try {
       const result = await this._pageBindings.get(name)(...args);
@@ -171,7 +170,7 @@ export class Page extends EventEmitter {
       else
         expression = helper.evaluationString(deliverErrorValue, name, seq, error);
     }
-    this._session.send('Runtime.evaluate', { expression, executionContextId: event.executionContextId }).catch(debugError);
+    context.evaluate(expression).catch(debugError);
 
     function deliverResult(name: string, seq: number, result: any) {
       window[name]['callbacks'].get(seq).resolve(result);
@@ -191,12 +190,6 @@ export class Page extends EventEmitter {
     }
   }
 
-  _sessionClosePromise() {
-    if (!this._disconnectPromise)
-      this._disconnectPromise = new Promise<Error>(fulfill => this._session.once(JugglerSessionEvents.Disconnected, () => fulfill(new Error('Target closed'))));
-    return this._disconnectPromise;
-  }
-
   async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } | undefined = {}): Promise<network.Request> {
     const {
       timeout = this._timeoutSettings.timeout(),
@@ -207,7 +200,7 @@ export class Page extends EventEmitter {
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(request));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
   async waitForResponse(urlOrPredicate: (string | Function), options: { timeout?: number; } | undefined = {}): Promise<network.Response> {
@@ -220,7 +213,7 @@ export class Page extends EventEmitter {
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(response));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
   setDefaultNavigationTimeout(timeout: number) {
@@ -257,12 +250,6 @@ export class Page extends EventEmitter {
 
   browserContext(): BrowserContext {
     return this._browserContext;
-  }
-
-  _onUncaughtError(params) {
-    const error = new Error(params.message);
-    error.stack = params.stack;
-    this.emit(Events.Page.PageError, error);
   }
 
   viewport() {
@@ -303,16 +290,6 @@ export class Page extends EventEmitter {
 
   frames() {
     return this._frameManager.frames();
-  }
-
-  _onDialogOpened(params) {
-    this.emit(Events.Page.Dialog, new dialog.Dialog(
-      params.type as dialog.DialogType,
-      params.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(debugError);
-      },
-      params.defaultValue));
   }
 
   mainFrame(): frames.Frame {
@@ -518,6 +495,7 @@ export class Page extends EventEmitter {
   }
 
   async close(options: any = {}) {
+    assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
     const {
       runBeforeUnload = false,
     } = options;
@@ -534,9 +512,12 @@ export class Page extends EventEmitter {
     return await this._frameManager.mainFrame().setContent(html);
   }
 
-  _onConsole({type, args, executionContextId, location}) {
-    const context = this._frameManager.executionContextById(executionContextId);
-    this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args.map(arg => context._createHandle(arg)), location));
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation) {
+    if (!this.listenerCount(Events.Page.Console)) {
+      args.forEach(arg => arg.dispose());
+      return;
+    }
+    this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args, location));
   }
 
   isClosed(): boolean {
@@ -556,11 +537,11 @@ export class Page extends EventEmitter {
     });
   }
 
-  async _onFileChooserOpened({executionContextId, element}) {
-    if (!this._fileChooserInterceptors.size)
+  async _onFileChooserOpened(handle: dom.ElementHandle) {
+    if (!this._fileChooserInterceptors.size) {
+      await handle.dispose();
       return;
-    const context = this._frameManager.executionContextById(executionContextId);
-    const handle = context._createHandle(element).asElement()!;
+    }
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);

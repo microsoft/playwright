@@ -30,7 +30,6 @@ import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import { CDPSession } from './Connection';
-import { EmulationManager } from './EmulationManager';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Coverage } from './features/coverage';
@@ -42,6 +41,7 @@ import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
 import { NetworkManagerEvents } from './NetworkManager';
 import { CRScreenshotDelegate } from './Screenshotter';
+import { Protocol } from './protocol';
 
 export class Page extends EventEmitter {
   private _closed = false;
@@ -56,7 +56,6 @@ export class Page extends EventEmitter {
   readonly mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _frameManager: FrameManager;
-  private _emulationManager: EmulationManager;
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
   readonly overrides: Overrides;
@@ -89,7 +88,6 @@ export class Page extends EventEmitter {
     this._timeoutSettings = new TimeoutSettings();
     this.accessibility = new Accessibility(client);
     this._frameManager = new FrameManager(client, this, ignoreHTTPSErrors, this._timeoutSettings);
-    this._emulationManager = new EmulationManager(client);
     this.coverage = new Coverage(client);
     this.pdf = new PDF(client);
     this.workers = new Workers(client, this._addConsoleMessage.bind(this), error => this.emit(Events.Page.PageError, error));
@@ -381,9 +379,25 @@ export class Page extends EventEmitter {
   }
 
   async setViewport(viewport: types.Viewport) {
-    const needsReload = await this._emulationManager.emulateViewport(viewport);
+    const {
+      width,
+      height,
+      isMobile = false,
+      deviceScaleFactor = 1,
+      hasTouch = false,
+      isLandscape = false,
+    } = viewport;
+    const screenOrientation: Protocol.Emulation.ScreenOrientation = isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' };
+    await Promise.all([
+      this._client.send('Emulation.setDeviceMetricsOverride', { mobile: isMobile, width, height, deviceScaleFactor, screenOrientation }),
+      this._client.send('Emulation.setTouchEmulationEnabled', {
+        enabled: hasTouch
+      })
+    ]);
+    const oldIsMobile = this._viewport ? !!this._viewport.isMobile : false;
+    const oldHasTouch = this._viewport ? !!this._viewport.hasTouch : false;
     this._viewport = viewport;
-    if (needsReload)
+    if (oldIsMobile !== isMobile || oldHasTouch !== hasTouch)
       await this.reload();
   }
 
