@@ -52,7 +52,6 @@ const frameDataSymbol = Symbol('frameData');
 type FrameData = {
   frameId: string,
   lastCommittedNavigationId: string,
-  firedEvents: Set<string>,
 };
 
 export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
@@ -163,7 +162,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame._navigated(params.url, params.name);
     const data = this._frameData(frame);
     data.lastCommittedNavigationId = params.navigationId;
-    data.firedEvents.clear();
+    frame._firedLifecycleEvents.clear();
     this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(CommonEvents.Page.FrameNavigated, frame);
   }
@@ -181,7 +180,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const data: FrameData = {
       frameId: params.frameId,
       lastCommittedNavigationId: '',
-      firedEvents: new Set(),
     };
     frame[frameDataSymbol] = data;
     if (!parentFrame) {
@@ -203,12 +201,16 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
 
   _onEventFired({frameId, name}) {
     const frame = this._frames.get(frameId);
-    this._frameData(frame).firedEvents.add(name.toLowerCase());
-    if (frame === this._mainFrame) {
-      if (name === 'load') {
+    if (name === 'load') {
+      frame._firedLifecycleEvents.add('load');
+      if (frame === this._mainFrame) {
         this.emit(FrameManagerEvents.Load);
         this._page.emit(CommonEvents.Page.Load);
-      } else if (name === 'DOMContentLoaded') {
+      }
+    }
+    if (name === 'DOMContentLoaded') {
+      frame._firedLifecycleEvents.add('domcontentloaded');
+      if (frame === this._mainFrame) {
         this.emit(FrameManagerEvents.DOMContentLoaded);
         this._page.emit(CommonEvents.Page.DOMContentLoaded);
       }
@@ -261,7 +263,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}) {
     const {
       timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = ['load'],
+      waitUntil = (['load'] as frames.LifecycleEvent[]),
     } = options;
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
 
@@ -306,7 +308,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}) {
     const {
       timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = ['load'],
+      waitUntil = (['load'] as frames.LifecycleEvent[]),
       referer,
     } = options;
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
@@ -388,7 +390,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   private async _go(action: () => Promise<{ navigationId: string | null, navigationURL: string | null }>, options: frames.NavigateOptions = {}) {
     const {
       timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = ['load'],
+      waitUntil = (['load'] as frames.LifecycleEvent[]),
     } = options;
     const frame = this.mainFrame();
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
@@ -434,7 +436,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   }
 }
 
-export function normalizeWaitUntil(waitUntil) {
+export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[]): frames.LifecycleEvent[] {
   if (!Array.isArray(waitUntil))
     waitUntil = [waitUntil];
   for (const condition of waitUntil) {

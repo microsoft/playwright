@@ -26,7 +26,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);
     });
-    it.skip(WEBKIT)('should work with anchor navigation', async({page, server}) => {
+    it('should work with anchor navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);
       await page.goto(server.EMPTY_PAGE + '#foo');
@@ -72,7 +72,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'domcontentloaded'});
       expect(response.status()).toBe(200);
     });
-    it.skip(WEBKIT)('should work when page calls history API in beforeunload', async({page, server}) => {
+    it('should work when page calls history API in beforeunload', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         window.addEventListener('beforeunload', () => history.replaceState(null, 'initial', window.location.href), false);
@@ -80,23 +80,23 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.PREFIX + '/grid.html');
       expect(response.status()).toBe(200);
     });
-    it.skip(FFOX || WEBKIT)('should navigate to empty page with networkidle0', async({page, server}) => {
+    xit('should navigate to empty page with networkidle0', async({page, server}) => {
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0'});
       expect(response.status()).toBe(200);
     });
-    it.skip(FFOX || WEBKIT)('should navigate to empty page with networkidle2', async({page, server}) => {
+    xit('should navigate to empty page with networkidle2', async({page, server}) => {
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2'});
       expect(response.status()).toBe(200);
     });
     it.skip(WEBKIT)('should fail when navigating to bad url', async({page, server}) => {
       let error = null;
       await page.goto('asdfasdf').catch(e => error = e);
+      // FIXME: shows dialog in WebKit.
       if (CHROME || WEBKIT)
         expect(error.message).toContain('Cannot navigate to invalid URL');
       else
         expect(error.message).toContain('Invalid url');
     });
-    // FIXME: shows dialog in WebKit.
     it.skip(WEBKIT)('should fail when navigating to bad SSL', async({page, httpsServer}) => {
       // Make sure that network events do not emit 'undefined'.
       // @see https://crbug.com/750469
@@ -105,23 +105,24 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       page.on('requestfailed', request => expect(request).toBeTruthy());
       let error = null;
       await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
+      // FIXME: shows dialog in WebKit.
       if (CHROME || WEBKIT)
         expect(error.message).toContain('net::ERR_CERT_AUTHORITY_INVALID');
       else
         expect(error.message).toContain('SSL_ERROR_UNKNOWN');
     });
-    // FIXME: shows dialog in WebKit.
     it.skip(WEBKIT)('should fail when navigating to bad SSL after redirects', async({page, server, httpsServer}) => {
       server.setRedirect('/redirect/1.html', '/redirect/2.html');
       server.setRedirect('/redirect/2.html', '/empty.html');
       let error = null;
       await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
+      // FIXME: shows dialog in WebKit.
       if (CHROME || WEBKIT)
         expect(error.message).toContain('net::ERR_CERT_AUTHORITY_INVALID');
       else
         expect(error.message).toContain('SSL_ERROR_UNKNOWN');
     });
-    it.skip(FFOX || WEBKIT)('should throw if networkidle is passed as an option', async({page, server}) => {
+    xit('should throw if networkidle is passed as an option', async({page, server}) => {
       let error = null;
       await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle'}).catch(err => error = err);
       expect(error.message).toContain('"networkidle" option is no longer supported');
@@ -203,7 +204,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(response.ok()).toBe(true);
       expect(response.url()).toBe(server.EMPTY_PAGE);
     });
-    it.skip(FFOX || WEBKIT)('should wait for network idle to succeed navigation', async({page, server}) => {
+    xit('should wait for network idle to succeed navigation', async({page, server}) => {
       let responses = [];
       // Hold on to a bunch of requests without answering.
       server.setRoute('/fetch-request-a.js', (req, res) => responses.push(res));
@@ -270,6 +271,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(warning).toBe(null);
     });
     it.skip(WEBKIT)('should not leak listeners during bad navigation', async({page, server}) => {
+      // FIXME: shows dialog in webkit.
       let warning = null;
       const warningHandler = w => warning = w;
       process.on('warning', warningHandler);
@@ -347,7 +349,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(response.ok()).toBe(true);
       expect(response.url()).toContain('grid.html');
     });
-    it.skip(WEBKIT)('should work with both domcontentloaded and load', async({page, server}) => {
+    it('should work with both domcontentloaded and load', async({page, server}) => {
       let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
       const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
@@ -436,11 +438,14 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it.skip(WEBKIT)('should work when subframe issues window.stop()', async({page, server}) => {
       server.setRoute('/frames/style.css', (req, res) => {});
       const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
-      const frame = await utils.waitEvent(page, 'frameattached');
+      let frame;
       await new Promise(fulfill => {
-        page.on('framenavigated', f => {
-          if (f === frame)
-            fulfill();
+        page.once('frameattached', attached => {
+          frame = attached;
+          page.on('framenavigated', f => {
+            if (f === frame)
+              fulfill();
+          });
         });
       });
       await Promise.all([
@@ -484,7 +489,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   describe('Frame.goto', function() {
-    it.skip(WEBKIT)('should navigate subframes', async({page, server}) => {
+    it('should navigate subframes', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       expect(page.frames()[0].url()).toContain('/frames/one-frame.html');
       expect(page.frames()[1].url()).toContain('/frames/frame.html');
@@ -493,7 +498,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(response.ok()).toBe(true);
       expect(response.frame()).toBe(page.frames()[1]);
     });
-    it.skip(WEBKIT)('should reject when frame detaches', async({page, server}) => {
+    it('should reject when frame detaches', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
 
       server.setRoute('/empty.html', () => {});
@@ -534,7 +539,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   describe('Frame.waitForNavigation', function() {
-    it.skip(WEBKIT)('should work', async({page, server}) => {
+    it('should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = page.frames()[1];
       const [response] = await Promise.all([
@@ -546,7 +551,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(response.frame()).toBe(frame);
       expect(page.url()).toContain('/frames/one-frame.html');
     });
-    it.skip(WEBKIT)('should fail when frame detaches', async({page, server}) => {
+    it('should fail when frame detaches', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = page.frames()[1];
 

@@ -22,7 +22,7 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import * as network from '../network';
-import { TargetSession } from './Connection';
+import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { Events as CommonEvents } from '../events';
 import { ExecutionContextDelegate } from './ExecutionContext';
@@ -43,11 +43,13 @@ export const FrameManagerEvents = {
   FrameAttached: Symbol('FrameAttached'),
   FrameDetached: Symbol('FrameDetached'),
   FrameNavigated: Symbol('FrameNavigated'),
+  LifecycleEvent: Symbol('LifecycleEvent'),
 };
 
 const frameDataSymbol = Symbol('frameData');
 type FrameData = {
   id: string,
+  loaderId: string,
 };
 
 export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
@@ -121,6 +123,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       helper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
       helper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
       helper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
+      helper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
+      helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this._page.emit(Events.Page.Load)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
@@ -146,6 +150,29 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
+    const hasDOMContentLoaded = frame._firedLifecycleEvents.has('domcontentloaded');
+    const hasLoad = frame._firedLifecycleEvents.has('load');
+    frame._firedLifecycleEvents.add('domcontentloaded');
+    frame._firedLifecycleEvents.add('load');
+    this.emit(FrameManagerEvents.LifecycleEvent, frame);
+    if (frame === this.mainFrame() && !hasDOMContentLoaded)
+      this._page.emit(CommonEvents.Page.DOMContentLoaded);
+    if (frame === this.mainFrame() && !hasLoad)
+      this._page.emit(CommonEvents.Page.Load);
+  }
+
+  _onLifecycleEvent(frameId: string, event: frames.LifecycleEvent) {
+    const frame = this._frames.get(frameId);
+    if (!frame)
+      return;
+    frame._firedLifecycleEvents.add(event);
+    this.emit(FrameManagerEvents.LifecycleEvent, frame);
+    if (frame === this.mainFrame()) {
+      if (event === 'load')
+        this._page.emit(CommonEvents.Page.Load);
+      if (event === 'domcontentloaded')
+        this._page.emit(CommonEvents.Page.DOMContentLoaded);
+    }
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
@@ -187,6 +214,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const frame = new frames.Frame(this, this._page._timeoutSettings, parentFrame);
     const data: FrameData = {
       id: frameId,
+      loaderId: '',
     };
     frame[frameDataSymbol] = data;
     this._frames.set(frameId, frame);
@@ -215,6 +243,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       frame = new frames.Frame(this, this._page._timeoutSettings, null);
       const data: FrameData = {
         id: framePayload.id,
+        loaderId: framePayload.loaderId,
       };
       frame[frameDataSymbol] = data;
       this._frames.set(framePayload.id, frame);
@@ -228,6 +257,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
 
     // Update frame payload.
     frame._navigated(framePayload.url, framePayload.name);
+    frame._firedLifecycleEvents.clear();
+    const data = this._frameData(frame);
+    data.loaderId = framePayload.loaderId;
+
     for (const context of this._contextIdToContext.values()) {
       if (context.frame() === frame) {
         const delegate = context._delegate as ExecutionContextDelegate;
@@ -292,30 +325,60 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this._page.emit(CommonEvents.Page.FrameDetached, frame);
   }
 
-  async navigateFrame(frame: frames.Frame, url: string, options: { referer?: string; timeout?: number; waitUntil?: string | Array<string>; } | undefined = {}): Promise<network.Response | null> {
+  async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
     const {
       timeout = this._page._timeoutSettings.navigationTimeout(),
+      waitUntil = (['load'] as frames.LifecycleEvent[])
     } = options;
-    const watchDog = new NextNavigationWatchdog(this, frame, timeout);
-    await this._session.send('Page.navigate', {url});
-    return watchDog.waitForNavigation();
+    const watchDog = new NextNavigationWatchdog(this, frame, waitUntil, timeout);
+    await this._session.send('Page.navigate', {url, frameId: this._frameData(frame).id});
+    const error = await Promise.race([
+      watchDog.timeoutOrTerminationPromise(),
+      watchDog.newDocumentNavigationPromise(),
+      watchDog.sameDocumentNavigationPromise(),
+    ]);
+    watchDog.dispose();
+    if (error)
+      throw error;
+    return watchDog.navigationResponse();
   }
 
-  async waitForFrameNavigation(frame: frames.Frame, options?: frames.NavigateOptions): Promise<network.Response | null> {
-    // FIXME: this method only works for main frames.
-    const watchDog = new NextNavigationWatchdog(this, frame, 10000);
-    return watchDog.waitForNavigation();
+  async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}): Promise<network.Response | null> {
+    const {
+      timeout = this._page._timeoutSettings.navigationTimeout(),
+      waitUntil = (['load'] as frames.LifecycleEvent[])
+    } = options;
+    const watchDog = new NextNavigationWatchdog(this, frame, waitUntil, timeout);
+    const error = await Promise.race([
+      watchDog.timeoutOrTerminationPromise(),
+      watchDog.newDocumentNavigationPromise(),
+      watchDog.sameDocumentNavigationPromise(),
+    ]);
+    watchDog.dispose();
+    if (error)
+      throw error;
+    return watchDog.navigationResponse();
   }
 
-  async setFrameContent(frame: frames.Frame, html: string, options: { timeout?: number; waitUntil?: string | Array<string>; } | undefined = {}) {
+  async setFrameContent(frame: frames.Frame, html: string, options: frames.NavigateOptions = {}) {
     // We rely upon the fact that document.open() will trigger Page.loadEventFired.
-    const watchDog = new NextNavigationWatchdog(this, frame, 1000);
+    const {
+      timeout = this._page._timeoutSettings.navigationTimeout(),
+      waitUntil = (['load'] as frames.LifecycleEvent[])
+    } = options;
+    const watchDog = new NextNavigationWatchdog(this, frame, waitUntil, timeout);
     await frame.evaluate(html => {
       document.open();
       document.write(html);
       document.close();
     }, html);
-    await watchDog.waitForNavigation();
+    const error = await Promise.race([
+      watchDog.timeoutOrTerminationPromise(),
+      watchDog.lifecyclePromise(),
+    ]);
+    watchDog.dispose();
+    if (error)
+      throw error;
   }
 
   async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
@@ -441,52 +504,90 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
 class NextNavigationWatchdog {
   _frameManager: FrameManager;
   _frame: frames.Frame;
-  _newDocumentNavigationPromise: Promise<unknown>;
+  _newDocumentNavigationPromise: Promise<Error | null>;
   _newDocumentNavigationCallback: (value?: unknown) => void;
-  _sameDocumentNavigationPromise: Promise<unknown>;
+  _sameDocumentNavigationPromise: Promise<Error | null>;
   _sameDocumentNavigationCallback: (value?: unknown) => void;
+  private _lifecyclePromise: Promise<void>;
+  private _lifecycleCallback: () => void;
+  private _terminationPromise: Promise<Error | null>;
+  private _terminationCallback: (err: Error | null) => void;
   _navigationRequest: any;
   _eventListeners: RegisteredListener[];
-  _timeoutPromise: Promise<unknown>;
+  _timeoutPromise: Promise<Error | null>;
   _timeoutId: NodeJS.Timer;
+  _hasSameDocumentNavigation = false;
+  _expectedLifecycle: frames.LifecycleEvent[];
+  _initialLoaderId: string;
+  _disconnectedListener: RegisteredListener;
 
-  constructor(frameManager: FrameManager, frame: frames.Frame, timeout) {
+  constructor(frameManager: FrameManager, frame: frames.Frame, waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[], timeout) {
+    if (Array.isArray(waitUntil))
+      waitUntil = waitUntil.slice();
+    else if (typeof waitUntil === 'string')
+      waitUntil = [waitUntil];
+    this._expectedLifecycle = waitUntil.slice();
     this._frameManager = frameManager;
     this._frame = frame;
+    this._initialLoaderId = frameManager._frameData(frame).loaderId;
     this._newDocumentNavigationPromise = new Promise(fulfill => {
       this._newDocumentNavigationCallback = fulfill;
     });
     this._sameDocumentNavigationPromise = new Promise(fulfill => {
       this._sameDocumentNavigationCallback = fulfill;
     });
+    this._lifecyclePromise = new Promise(fulfill => {
+      this._lifecycleCallback = fulfill;
+    });
     /** @type {?Request} */
     this._navigationRequest = null;
     this._eventListeners = [
-      helper.addEventListener(frameManager._page, Events.Page.Load, event => this._newDocumentNavigationCallback()),
+      helper.addEventListener(frameManager, FrameManagerEvents.LifecycleEvent, frame => this._onLifecycleEvent(frame)),
+      helper.addEventListener(frameManager, FrameManagerEvents.FrameNavigated, frame => this._onLifecycleEvent(frame)),
       helper.addEventListener(frameManager, FrameManagerEvents.FrameNavigatedWithinDocument, frame => this._onSameDocumentNavigation(frame)),
       helper.addEventListener(frameManager, FrameManagerEvents.TargetSwappedOnNavigation, event => this._onTargetReconnected()),
+      helper.addEventListener(frameManager, FrameManagerEvents.FrameDetached, frame => this._onFrameDetached(frame)),
       helper.addEventListener(frameManager.networkManager(), NetworkManagerEvents.Request, this._onRequest.bind(this)),
     ];
+    this._registerDisconnectedListener();
     const timeoutError = new TimeoutError('Navigation Timeout Exceeded: ' + timeout + 'ms');
     let timeoutCallback;
     this._timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
     this._timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
+    this._terminationPromise = new Promise(fulfill => {
+      this._terminationCallback = fulfill;
+    });
   }
 
-  async waitForNavigation() {
-    const error = await Promise.race([
-      this._timeoutPromise,
-      this._newDocumentNavigationPromise,
-      this._sameDocumentNavigationPromise
-    ]);
-    // TODO: handle exceptions
-    this.dispose();
-    if (error)
-      throw error;
-    return this.navigationResponse();
+  sameDocumentNavigationPromise(): Promise<Error | null> {
+    return this._sameDocumentNavigationPromise;
+  }
+
+  newDocumentNavigationPromise(): Promise<Error | null> {
+    return this._newDocumentNavigationPromise;
+  }
+
+  lifecyclePromise(): Promise<any> {
+    return this._lifecyclePromise;
+  }
+
+  timeoutOrTerminationPromise(): Promise<Error | null> {
+    return Promise.race([this._timeoutPromise, this._terminationPromise]);
+  }
+
+  _registerDisconnectedListener() {
+    if (this._disconnectedListener)
+       helper.removeEventListeners([this._disconnectedListener]);
+    const session = this._frameManager._session;
+    this._disconnectedListener = helper.addEventListener(this._frameManager._session, TargetSessionEvents.Disconnected, () => {
+      // Session may change on swap out, check that it's current.
+      if (session === this._frameManager._session)
+        this._terminationCallback(new Error('Navigation failed because browser has disconnected!'));
+    });
   }
 
   async _onTargetReconnected() {
+    this._registerDisconnectedListener();
     // In case web process change we migh have missed load event. Check current ready
     // state to mitigate that.
     try {
@@ -504,9 +605,50 @@ class NextNavigationWatchdog {
     }
   }
 
+  _onLifecycleEvent(frame: frames.Frame) {
+    this._checkLifecycle();
+  }
+
   _onSameDocumentNavigation(frame) {
     if (this._frame === frame)
+      this._hasSameDocumentNavigation = true;
+    this._checkLifecycle();
+  }
+
+  _checkLifecycle() {
+    const checkLifecycle = (frame: frames.Frame, expectedLifecycle: frames.LifecycleEvent[]): boolean => {
+      for (const event of expectedLifecycle) {
+        if (!frame._firedLifecycleEvents.has(event))
+          return false;
+      }
+      for (const child of frame.childFrames()) {
+        if (!checkLifecycle(child, expectedLifecycle))
+          return false;
+      }
+      return true;
+    };
+
+    if (this._frame.isDetached()) {
+      this._newDocumentNavigationCallback(new Error('Navigating frame was detached'));
+      this._sameDocumentNavigationCallback(new Error('Navigating frame was detached'));
+      return;
+    }
+
+    if (!checkLifecycle(this._frame, this._expectedLifecycle))
+      return;
+    this._lifecycleCallback();
+    if (this._hasSameDocumentNavigation)
       this._sameDocumentNavigationCallback();
+    if (this._frameManager._frameData(this._frame).loaderId !== this._initialLoaderId)
+      this._newDocumentNavigationCallback();
+  }
+
+  _onFrameDetached(frame: frames.Frame) {
+    if (this._frame === frame) {
+      this._terminationCallback.call(null, new Error('Navigating frame was detached'));
+      return;
+    }
+    this._checkLifecycle();
   }
 
   _onRequest(request: network.Request) {
@@ -520,6 +662,7 @@ class NextNavigationWatchdog {
   }
 
   dispose() {
+    // TODO: handle exceptions
     helper.removeEventListeners(this._eventListeners);
     clearTimeout(this._timeoutId);
   }

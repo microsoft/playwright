@@ -60,7 +60,6 @@ const frameDataSymbol = Symbol('frameData');
 type FrameData = {
   id: string,
   loaderId: string,
-  lifecycleEvents: Set<string>,
 };
 
 export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
@@ -142,14 +141,11 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     return (frame as any)[frameDataSymbol];
   }
 
-  async navigateFrame(
-    frame: frames.Frame,
-    url: string,
-    options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } = {}): Promise<network.Response | null> {
+  async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
     assertNoLegacyNavigationOptions(options);
     const {
       referer = this._networkManager.extraHTTPHeaders()['referer'],
-      waitUntil = ['load'],
+      waitUntil = (['load'] as frames.LifecycleEvent[]),
       timeout = this._page._timeoutSettings.navigationTimeout(),
     } = options;
 
@@ -181,13 +177,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     }
   }
 
-  async waitForFrameNavigation(
-    frame: frames.Frame,
-    options: { timeout?: number; waitUntil?: string | string[]; } = {}
-  ): Promise<network.Response | null> {
+  async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}): Promise<network.Response | null> {
     assertNoLegacyNavigationOptions(options);
     const {
-      waitUntil = ['load'],
+      waitUntil = (['load'] as frames.LifecycleEvent[]),
       timeout = this._page._timeoutSettings.navigationTimeout(),
     } = options;
     const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
@@ -204,7 +197,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
 
   async setFrameContent(frame: frames.Frame, html: string, options: frames.NavigateOptions = {}) {
     const {
-      waitUntil = ['load'],
+      waitUntil = (['load'] as frames.LifecycleEvent[]),
       timeout = this._page._timeoutSettings.navigationTimeout(),
     } = options;
     const context = await frame._utilityContext();
@@ -232,9 +225,12 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const data = this._frameData(frame);
     if (event.name === 'init') {
       data.loaderId = event.loaderId;
-      data.lifecycleEvents.clear();
+      frame._firedLifecycleEvents.clear();
     }
-    data.lifecycleEvents.add(event.name);
+    if (event.name === 'load')
+      frame._firedLifecycleEvents.add('load');
+    else if (event.name === 'DOMContentLoaded')
+      frame._firedLifecycleEvents.add('domcontentloaded');
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
@@ -242,9 +238,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    const data = this._frameData(frame);
-    data.lifecycleEvents.add('DOMContentLoaded');
-    data.lifecycleEvents.add('load');
+    frame._firedLifecycleEvents.add('domcontentloaded');
+    frame._firedLifecycleEvents.add('load');
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
@@ -284,7 +279,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const data: FrameData = {
       id: frameId,
       loaderId: '',
-      lifecycleEvents: new Set(),
     };
     frame[frameDataSymbol] = data;
     this._frames.set(frameId, frame);
@@ -316,7 +310,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
         const data: FrameData = {
           id: framePayload.id,
           loaderId: '',
-          lifecycleEvents: new Set(),
         };
         frame[frameDataSymbol] = data;
       }
