@@ -1,6 +1,6 @@
-From 058f2450a6d88f65e939bf61b9b54a15ac0cbfd6 Mon Sep 17 00:00:00 2001
+From ce5a6f85786584191480f777a95958c0ab151484 Mon Sep 17 00:00:00 2001
 From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Thu, 5 Dec 2019 14:38:40 -0800
+Date: Thu, 5 Dec 2019 17:54:56 -0800
 Subject: [PATCH] chore: bootstrap
 
 ---
@@ -21,7 +21,7 @@ Subject: [PATCH] chore: bootstrap
  Source/WebCore/html/FileInputType.cpp         |   6 +
  .../inspector/InspectorInstrumentation.cpp    |  14 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
- .../inspector/agents/InspectorDOMAgent.cpp    | 108 +++-
+ .../inspector/agents/InspectorDOMAgent.cpp    | 113 +++-
  .../inspector/agents/InspectorDOMAgent.h      |   4 +
  .../agents/InspectorDOMStorageAgent.h         |   1 +
  .../inspector/agents/InspectorPageAgent.cpp   | 523 +++++++++++++++++-
@@ -123,7 +123,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  37 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 119 files changed, 4710 insertions(+), 77 deletions(-)
+ 119 files changed, 4715 insertions(+), 77 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -1203,7 +1203,7 @@ index 6698431f316..486a6781d81 100644
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index aecc79bc0ca..a5e1de17d9e 100644
+index aecc79bc0ca..71f8863378b 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -1256,16 +1256,21 @@ index aecc79bc0ca..a5e1de17d9e 100644
  }
  
  static bool parseQuad(const JSON::Array& quadArray, FloatQuad* quad)
-@@ -1475,6 +1482,61 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -1475,6 +1482,66 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
-+static void frameQuadToViewport(const FrameView* containingView, FloatQuad& quad)
++static FloatPoint contentsToRootView(FrameView& containingView, const FloatPoint& point)
 +{
-+    quad.setP1(containingView->contentsToRootView(quad.p1()));
-+    quad.setP2(containingView->contentsToRootView(quad.p2()));
-+    quad.setP3(containingView->contentsToRootView(quad.p3()));
-+    quad.setP4(containingView->contentsToRootView(quad.p4()));
++    return containingView.convertToRootView(point - toFloatSize(containingView.documentScrollPositionRelativeToViewOrigin()));
++}
++
++static void frameQuadToViewport(FrameView& containingView, FloatQuad& quad)
++{
++    quad.setP1(contentsToRootView(containingView, quad.p1()));
++    quad.setP2(contentsToRootView(containingView, quad.p2()));
++    quad.setP3(contentsToRootView(containingView, quad.p3()));
++    quad.setP4(contentsToRootView(containingView, quad.p4()));
 +}
 +
 +static RefPtr<Inspector::Protocol::DOM::Quad> buildObjectForQuad(const FloatQuad& quad)
@@ -1294,31 +1299,31 @@ index aecc79bc0ca..a5e1de17d9e 100644
 +{
 +    Node* node = nodeForObjectId(objectId);
 +    if (!node) {
-+        error = "Node not found";
++        error = "Node not found"_s;
 +        return;
 +    }
 +    RenderObject* renderer = node->renderer();
 +    if (!renderer) {
-+        error = "Node doesn't have renderer";
++        error = "Node doesn't have renderer"_s;
 +        return;
 +    }
 +    Frame* containingFrame = renderer->document().frame();
-+    if (!containingFrame) {
-+        error = "No containing frame";
++    FrameView* containingView = containingFrame ? containingFrame->view() : nullptr;
++    if (!containingView) {
++        error = "Internal error: no containing view"_s;
 +        return;
 +    }
-+    FrameView* containingView = containingFrame->view();
 +    Vector<FloatQuad> quads;
 +    renderer->absoluteQuads(quads);
 +    for (auto& quad : quads)
-+        frameQuadToViewport(containingView, quad);
++        frameQuadToViewport(*containingView, quad);
 +    out_quads = buildArrayOfQuads(quads);
 +}
 +
  void InspectorDOMAgent::resolveNode(ErrorString& errorString, int nodeId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result)
  {
      String objectGroupName = objectGroup ? *objectGroup : emptyString();
-@@ -2686,4 +2748,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+@@ -2686,4 +2753,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
