@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 import * as chromium from './chromium';
 import * as firefox from './firefox';
 import * as webkit from './webkit';
