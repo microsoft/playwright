@@ -266,12 +266,14 @@ export class Page extends EventEmitter {
   }
 
   async _go<T extends keyof Protocol.CommandParameters>(command: T): Promise<network.Response | null> {
-    const [response, error] = await Promise.all([
+    const [response] = await Promise.all([
       this.waitForNavigation(),
-      this._session.send(command).then(() => null).catch(e => e),
-    ]);
-    if (error)
-      return null;
+      this._session.send(command).then(() => null),
+    ]).catch(error => {
+      if (error instanceof Error && error.message.includes(`Protocol error (${command}): Failed to go`))
+        return [null];
+      throw error;
+    });
     return response;
   }
 

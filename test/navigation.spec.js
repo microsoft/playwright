@@ -451,7 +451,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   describe('Page.goBack', function() {
-    it.skip(WEBKIT)('should work', async({page, server}) => {
+    it('should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.goto(server.PREFIX + '/grid.html');
 
