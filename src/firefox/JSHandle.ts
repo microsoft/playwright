@@ -93,9 +93,9 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return this._frameManager._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
-  async screenshot(handle: dom.ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer> {
+  async screenshot(handle: dom.ElementHandle, options?: types.ElementScreenshotOptions): Promise<Buffer> {
     const page = this._frameManager._page;
-    return page._screenshotter.screenshotElement(page, handle, options);
+    return page._screenshotter.screenshotElement(handle, options);
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {

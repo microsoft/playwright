@@ -20,15 +20,14 @@ import { EventEmitter } from 'events';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
 import { Connection } from './Connection';
-import { Page, Viewport } from './Page';
+import { Page } from './Page';
 import { Target } from './Target';
-import { Screenshotter } from './Screenshotter';
 import { Protocol } from './protocol';
+import * as types from '../types';
 
 export class Browser extends EventEmitter {
-  _defaultViewport: Viewport;
+  _defaultViewport: types.Viewport;
   private _process: childProcess.ChildProcess;
-  _screenshotter = new Screenshotter();
   _connection: Connection;
   private _closeCallback: () => Promise<void>;
   private _defaultContext: BrowserContext;
@@ -39,7 +38,7 @@ export class Browser extends EventEmitter {
 
   constructor(
     connection: Connection,
-    defaultViewport: Viewport | null,
+    defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     super();
@@ -60,9 +59,6 @@ export class Browser extends EventEmitter {
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._connection, 'Target.didCommitProvisionalTarget', this._onProvisionalTargetCommitted.bind(this)),
     ];
-
-    // Taking multiple screenshots in parallel doesn't work well, so we serialize them.
-    this._screenshotter = new Screenshotter();
   }
 
   async userAgent(): Promise<string> {

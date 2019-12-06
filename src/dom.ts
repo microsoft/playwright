@@ -10,7 +10,6 @@ import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
-import { SelectorRoot } from './injected/selectorEngine';
 
 export interface DOMWorldDelegate {
   keyboard: input.Keyboard;
@@ -146,7 +145,7 @@ export class DOMWorld {
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
-  private readonly _world: DOMWorld;
+  readonly _world: DOMWorld;
 
   constructor(context: js.ExecutionContext, remoteObject: any) {
     super(context, remoteObject);
@@ -258,8 +257,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _viewportPointAndScroll(relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this.evaluate((e: Element) => {
-        const style = e.ownerDocument.defaultView.getComputedStyle(e);
+      this.evaluate((node: Node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE)
+          return { x: 0, y: 0 };
+        const style = node.ownerDocument.defaultView.getComputedStyle(node as Element);
         return { x: parseInt(style.borderLeftWidth, 10), y: parseInt(style.borderTopWidth, 10) };
       }).catch(debugError),
     ]);

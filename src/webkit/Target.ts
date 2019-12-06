@@ -59,7 +59,7 @@ export class Target {
   async page(): Promise<Page | null> {
     if (this._type === 'page' && !this._pagePromise) {
       const session = this.browser()._connection.session(this._targetId);
-      this._pagePromise = Page.create(session, this._browserContext, this.browser()._defaultViewport, this.browser()._screenshotter).then(page => {
+      this._pagePromise = Page.create(session, this._browserContext, this.browser()._defaultViewport).then(page => {
         this._adoptPage(page);
         return page;
       });

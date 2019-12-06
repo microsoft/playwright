@@ -16,9 +16,18 @@
  */
 
 import { EventEmitter } from 'events';
+import * as console from '../console';
+import * as dialog from '../dialog';
+import * as dom from '../dom';
+import * as frames from '../frames';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
+import * as input from '../input';
 import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions } from '../input';
+import * as js from '../javascript';
+import * as network from '../network';
+import { Screenshotter } from '../screenshotter';
 import { TimeoutSettings } from '../TimeoutSettings';
+import * as types from '../types';
 import { Browser, BrowserContext } from './Browser';
 import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
@@ -26,20 +35,7 @@ import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
-import { Screenshotter } from './Screenshotter';
-import * as input from '../input';
-import * as types from '../types';
-import * as frames from '../frames';
-import * as js from '../javascript';
-import * as dom from '../dom';
-import * as network from '../network';
-import * as dialog from '../dialog';
-import * as console from '../console';
-
-export type Viewport = {
-  width: number;
-  height: number;
-}
+import { WKScreenshotDelegate } from './Screenshotter';
 
 export class Page extends EventEmitter {
   private _closed = false;
@@ -53,7 +49,7 @@ export class Page extends EventEmitter {
   private _frameManager: FrameManager;
   private _bootstrapScripts: string[] = [];
   _javascriptEnabled = true;
-  private _viewport: Viewport | null = null;
+  private _viewport: types.Viewport | null = null;
   _screenshotter: Screenshotter;
   private _workers = new Map<string, Worker>();
   private _disconnectPromise: Promise<Error> | undefined;
@@ -61,15 +57,15 @@ export class Page extends EventEmitter {
   private _emulatedMediaType: string | undefined;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  static async create(session: TargetSession, browserContext: BrowserContext, defaultViewport: Viewport | null, screenshotter: Screenshotter): Promise<Page> {
-    const page = new Page(session, browserContext, screenshotter);
+  static async create(session: TargetSession, browserContext: BrowserContext, defaultViewport: types.Viewport | null): Promise<Page> {
+    const page = new Page(session, browserContext);
     await page._initialize();
     if (defaultViewport)
       await page.setViewport(defaultViewport);
     return page;
   }
 
-  constructor(session: TargetSession, browserContext: BrowserContext, screenshotter: Screenshotter) {
+  constructor(session: TargetSession, browserContext: BrowserContext) {
     super();
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
@@ -77,7 +73,7 @@ export class Page extends EventEmitter {
     this._timeoutSettings = new TimeoutSettings();
     this._frameManager = new FrameManager(session, this, this._timeoutSettings);
 
-    this._screenshotter = screenshotter;
+    this._screenshotter = new Screenshotter(this, new WKScreenshotDelegate(session), browserContext.browser());
 
     this._setSession(session);
     this._browserContext = browserContext;
@@ -315,7 +311,7 @@ export class Page extends EventEmitter {
     }, timeout, this._sessionClosePromise());
   }
 
-  async emulate(options: { viewport: Viewport; userAgent: string; }) {
+  async emulate(options: { viewport: types.Viewport; userAgent: string; }) {
     await Promise.all([
       this.setViewport(options.viewport),
       this.setUserAgent(options.userAgent)
@@ -333,14 +329,14 @@ export class Page extends EventEmitter {
     this._emulatedMediaType = options.type;
   }
 
-  async setViewport(viewport: Viewport) {
+  async setViewport(viewport: types.Viewport) {
     this._viewport = viewport;
     const width = viewport.width;
     const height = viewport.height;
-    await this._session.send('Emulation.setDeviceMetricsOverride', { width, height });
+    await this._session.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
   }
 
-  viewport(): Viewport | null {
+  viewport(): types.Viewport | null {
     return this._viewport;
   }
 
@@ -367,8 +363,8 @@ export class Page extends EventEmitter {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
 
-  screenshot(options?: types.ScreenshotOptions): Promise<Buffer | string> {
-    return this._screenshotter.screenshotPage(this, options);
+  screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
+    return this._screenshotter.screenshotPage(options);
   }
 
   async title(): Promise<string> {
@@ -462,23 +458,6 @@ export class Page extends EventEmitter {
   waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
-}
-
-
-type Metrics = {
-  Timestamp?: number,
-  Documents?: number,
-  Frames?: number,
-  JSEventListeners?: number,
-  Nodes?: number,
-  LayoutCount?: number,
-  RecalcStyleCount?: number,
-  LayoutDuration?: number,
-  RecalcStyleDuration?: number,
-  ScriptDuration?: number,
-  TaskDuration?: number,
-  JSHeapUsedSize?: number,
-  JSHeapTotalSize?: number,
 }
 
 type FileChooser = {

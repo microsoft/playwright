@@ -1,83 +1,40 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as fs from 'fs';
-import { Page } from './Page';
-import { assert, helper, debugError } from '../helper';
-import { Protocol } from './protocol';
+import * as jpeg from 'jpeg-js';
+import { PNG } from 'pngjs';
 import * as dom from '../dom';
+import { ScreenshotterDelegate } from '../screenshotter';
 import * as types from '../types';
+import { TargetSession } from './Connection';
 
-const writeFileAsync = helper.promisify(fs.writeFile);
+export class WKScreenshotDelegate implements ScreenshotterDelegate {
+  private _session: TargetSession;
 
-export class Screenshotter {
-  private _queue = new TaskQueue();
-
-  async screenshotPage(page: Page, options: types.ScreenshotOptions = {}): Promise<Buffer | string> {
-    const format = helper.validateScreeshotOptions(options);
-    assert(format === 'png', 'Only png format is supported');
-    return this._queue.postTask(async () => {
-      const params: Protocol.Page.snapshotRectParameters = { x: 0, y: 0, width: 800, height: 600, coordinateSystem: 'Page' };
-      if (options.fullPage) {
-        const pageSize = await page.evaluate(() =>
-          ({
-            width: document.body.scrollWidth,
-            height: document.body.scrollHeight
-          }));
-        Object.assign(params, pageSize);
-      } else if (options.clip) {
-        Object.assign(params, options.clip);
-      } else if (page.viewport()) {
-        Object.assign(params, page.viewport());
-      }
-      const [, result] = await Promise.all([
-        page.browser()._activatePage(page),
-        page._session.send('Page.snapshotRect', params),
-      ]).catch(e => {
-        debugError('Failed to take screenshot: ' + e);
-        throw e;
-      });
-      const prefix = 'data:image/png;base64,';
-      const buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
-      if (options.path)
-        await writeFileAsync(options.path, buffer);
-      return buffer;
-    });
+  constructor(session: TargetSession) {
+    this._session = session;
   }
 
-  async screenshotElement(page: Page, handle: dom.ElementHandle, options: types.ScreenshotOptions = {}): Promise<string | Buffer> {
-    const format = helper.validateScreeshotOptions(options);
-    assert(format === 'png', 'Only png format is supported');
-    return this._queue.postTask(async () => {
-      const objectId = (handle._remoteObject as Protocol.Runtime.RemoteObject).objectId;
-      page._session.send('DOM.getDocument');
-      const {nodeId} = await page._session.send('DOM.requestNode', {objectId});
-      const [, result] = await Promise.all([
-        page.browser()._activatePage(page),
-        page._session.send('Page.snapshotNode', {nodeId})
-      ]).catch(e => {
-        debugError('Failed to take screenshot: ' + e);
-        throw e;
-      });
-      const prefix = 'data:image/png;base64,';
-      const buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
-      if (options.path)
-        await writeFileAsync(options.path, buffer);
-      return buffer;
-    });
-  }
-}
-
-class TaskQueue {
-  private _chain: Promise<any>;
-
-  constructor() {
-    this._chain = Promise.resolve();
+  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | undefined> {
+    return handle.boundingBox();
   }
 
-  postTask(task: () => any): Promise<any> {
-    const result = this._chain.then(task);
-    this._chain = result.catch(() => {});
-    return result;
+  canCaptureOutsideViewport(): boolean {
+    return false;
+  }
+
+  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
+    // TODO: line below crashes, sort it out.
+    this._session.send('Page.setDefaultBackgroundColorOverride', { color });
+  }
+
+  async screenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport ): Promise<Buffer> {
+    const rect = options.clip || { x: 0, y: 0, width: viewport.width, height: viewport.height };
+    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
+    const prefix = 'data:image/png;base64,';
+    let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
+    if (format === 'jpeg')
+      buffer = jpeg.encode(PNG.sync.read(buffer)).data;
+    return buffer;
   }
 }
