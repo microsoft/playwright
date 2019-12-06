@@ -105,7 +105,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
         expect(screenshots[i]).toBeGolden(`grid-cell-${i}.png`);
       await Promise.all(pages.map(page => page.close()));
     });
-    it.skip(FFOX || WEBKIT)('should allow transparency', async({page, server}) => {
+    it.skip(FFOX)('should allow transparency', async({page, server}) => {
       await page.setViewport({ width: 50, height: 150 });
       await page.setContent(`
         <style>

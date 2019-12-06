@@ -170,7 +170,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const element = node as Element;
       // force-scroll if page's javascript is disabled.
       if (!pageJavascriptEnabled) {
-        //@ts-ignore because only Chromium still supports 'instant'
+        // @ts-ignore because only Chromium still supports 'instant'
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
         return false;
       }
@@ -185,7 +185,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         requestAnimationFrame(() => {});
       });
       if (visibleRatio !== 1.0) {
-        //@ts-ignore because only Chromium still supports 'instant'
+        // @ts-ignore because only Chromium still supports 'instant'
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
       }
       return false;
@@ -376,7 +376,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._world.delegate.boundingBox(this);
   }
 
-  async screenshot(options?: types.ScreenshotOptions): Promise<string | Buffer> {
+  async screenshot(options?: types.ElementScreenshotOptions): Promise<string | Buffer> {
     return this._world.delegate.screenshot(this, options);
   }
 

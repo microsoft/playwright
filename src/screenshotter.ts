@@ -24,13 +24,13 @@ import * as types from './types';
 const writeFileAsync = helper.promisify(fs.writeFile);
 
 export interface Page {
-  viewport(): types.Viewport;
+  viewport(): types.Viewport | null;
   setViewport(v: types.Viewport): Promise<void>;
   evaluate(f: () => any): Promise<types.Rect>;
 }
 
 export interface ScreenshotterDelegate {
-  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | undefined>;
+  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
   canCaptureOutsideViewport(): boolean;
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
   screenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer>;
@@ -57,17 +57,17 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       let overridenViewport: types.Viewport | undefined;
       const viewport = this._page.viewport();
-      if (options.fullPage && !this._delegate.canCaptureOutsideViewport()) {
+      if (viewport && options.fullPage && !this._delegate.canCaptureOutsideViewport()) {
         const fullPage = await this._page.evaluate(() => ({
           width: Math.max(
-            document.body.scrollWidth, document.documentElement.scrollWidth,
-            document.body.offsetWidth, document.documentElement.offsetWidth,
-            document.body.clientWidth, document.documentElement.clientWidth
+              document.body.scrollWidth, document.documentElement.scrollWidth,
+              document.body.offsetWidth, document.documentElement.offsetWidth,
+              document.body.clientWidth, document.documentElement.clientWidth
           ),
           height: Math.max(
-            document.body.scrollHeight, document.documentElement.scrollHeight,
-            document.body.offsetHeight, document.documentElement.offsetHeight,
-            document.body.clientHeight, document.documentElement.clientHeight
+              document.body.scrollHeight, document.documentElement.scrollHeight,
+              document.body.offsetHeight, document.documentElement.offsetHeight,
+              document.body.clientHeight, document.documentElement.clientHeight
           )
         }));
         overridenViewport = { ...viewport, ...fullPage };
@@ -101,12 +101,12 @@ export class Screenshotter {
         if (boundingBox.width > viewport.width || boundingBox.height > viewport.height) {
           overridenViewport = {
             ...viewport,
-            width: Math.max(viewport.width, Math.ceil(boundingBox.width)),
-            height: Math.max(viewport.height, Math.ceil(boundingBox.height)),          
+            width: Math.max(viewport.width, boundingBox.width),
+            height: Math.max(viewport.height, boundingBox.height),
           };
           await this._page.setViewport(overridenViewport);
         }
-  
+
         await handle._scrollIntoViewIfNeeded();
         boundingBox = enclosingIntRect(await this._delegate.getBoundingBox(handle));
       }
@@ -129,7 +129,7 @@ export class Screenshotter {
       await this._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
     const buffer = await this._delegate.screenshot(format, options, viewport);
     if (shouldSetDefaultBackground)
-    await this._delegate.setBackgroundColor();
+      await this._delegate.setBackgroundColor();
     if (options.path)
       await writeFileAsync(options.path, buffer);
     return buffer;
@@ -152,9 +152,9 @@ class TaskQueue {
   }
 }
 
-function trimClipToViewport(viewport: types.Viewport, clip: types.Rect | undefined): types.Rect | undefined {
-  if (!clip)
-    return;
+function trimClipToViewport(viewport: types.Viewport | null, clip: types.Rect | null): types.Rect | null {
+  if (!clip || !viewport)
+    return clip;
   const p1 = { x: Math.min(clip.x, viewport.width), y: Math.min(clip.y, viewport.height) };
   const p2 = { x: Math.min(clip.x + clip.width, viewport.width), y: Math.min(clip.y + clip.height, viewport.height) };
   const result = { x: p1.x, y: p1.y, width: p2.x - p1.x, height: p2.y - p1.y };
@@ -200,14 +200,9 @@ function validateScreeshotOptions(options: types.ScreenshotOptions): 'png' | 'jp
 }
 
 function enclosingIntRect(rect: types.Rect): types.Rect {
-  const x = rect.x | 0;
-  const y = rect.y | 0;
-  const x2 = Math.ceil(((rect.x + rect.width) * 100 | 0) / 100);
-  const y2 = Math.ceil(((rect.y + rect.height) * 100 | 0) / 100);
-  return {
-    x,
-    y,
-    width: x2 - x,
-    height: y2 - y
-  };
+  const x = Math.floor(rect.x + 1e-3);
+  const y = Math.floor(rect.y + 1e-3);
+  const x2 = Math.ceil(rect.x + rect.width - 1e-3);
+  const y2 = Math.ceil(rect.y + rect.height - 1e-3);
+  return { x, y, width: x2 - x, height: y2 - y };
 }

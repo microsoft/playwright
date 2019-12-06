@@ -15,7 +15,7 @@ export class WKScreenshotDelegate implements ScreenshotterDelegate {
     this._session = session;
   }
 
-  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | undefined> {
+  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
     return handle.boundingBox();
   }
 
@@ -28,7 +28,7 @@ export class WKScreenshotDelegate implements ScreenshotterDelegate {
     this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async screenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport ): Promise<Buffer> {
+  async screenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer> {
     const rect = options.clip || { x: 0, y: 0, width: viewport.width, height: viewport.height };
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
     const prefix = 'data:image/png;base64,';

@@ -16,7 +16,7 @@ export class FFScreenshotDelegate implements ScreenshotterDelegate {
     this._frameManager = frameManager;
   }
 
-  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | undefined> {
+  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
     const frameId = this._frameManager._frameData(handle.executionContext().frame()).frameId;
     return this._session.send('Page.getBoundingBox', {
       frameId,

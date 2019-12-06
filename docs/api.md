@@ -3459,11 +3459,6 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
   - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the image won't be saved to the disk.
   - `type` <"png"|"jpeg"> Specify screenshot type, defaults to 'png'.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
-  - `clip` <[Object]> Passed clip value is ignored and instead set to the element's bounding box.
-    - `x` <[number]>
-    - `y` <[number]>
-    - `width` <[number]>
-    - `height` <[number]>
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Defaults to `false`.
 - returns: <[Promise]<|[Buffer]>> Promise which resolves to buffer with the captured screenshot.
 

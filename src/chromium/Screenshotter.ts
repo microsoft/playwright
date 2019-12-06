@@ -14,7 +14,7 @@ export class CRScreenshotDelegate implements ScreenshotterDelegate {
   }
 
 
-  async getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | undefined> {
+  async getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
     const rect = await handle.boundingBox();
     if (!rect)
       return rect;

@@ -19,7 +19,7 @@ class Injected {
 
   querySelector(selector: string, root: Node): Element | undefined {
     const parsed = this._parseSelector(selector);
-    if (!root["querySelector"])
+    if (!root['querySelector'])
       throw new Error('Node is not queryable.');
     let element = root as SelectorRoot;
     for (const { engine, selector } of parsed) {
@@ -33,7 +33,7 @@ class Injected {
 
   querySelectorAll(selector: string, root: Node): Element[] {
     const parsed = this._parseSelector(selector);
-    if (!root["querySelectorAll"])
+    if (!root['querySelectorAll'])
       throw new Error('Node is not queryable.');
     let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
     for (const { engine, selector } of parsed) {
