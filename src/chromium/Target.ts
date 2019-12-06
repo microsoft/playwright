@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
+import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import { CDPSession } from './Connection';
 import { Events } from './events';
 import { Worker } from './features/workers';
-import { Page, Viewport } from './Page';
+import { Page } from './Page';
 import { Protocol } from './protocol';
-import { Screenshotter } from './Screenshotter';
 
 const targetSymbol = Symbol('target');
 
@@ -32,8 +32,7 @@ export class Target {
   _targetId: string;
   private _sessionFactory: () => Promise<CDPSession>;
   private _ignoreHTTPSErrors: boolean;
-  private _defaultViewport: Viewport;
-  private _screenshotter: Screenshotter;
+  private _defaultViewport: types.Viewport;
   private _pagePromise: Promise<Page> | null = null;
   private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
@@ -49,15 +48,13 @@ export class Target {
     browserContext: BrowserContext,
     sessionFactory: () => Promise<CDPSession>,
     ignoreHTTPSErrors: boolean,
-    defaultViewport: Viewport | null,
-    screenshotter: Screenshotter) {
+    defaultViewport: types.Viewport | null) {
     this._targetInfo = targetInfo;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this._sessionFactory = sessionFactory;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._defaultViewport = defaultViewport;
-    this._screenshotter = screenshotter;
     this._initializedPromise = new Promise(fulfill => this._initializedCallback = fulfill).then(async success => {
       if (!success)
         return false;
@@ -84,7 +81,7 @@ export class Target {
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory().then(async client => {
-        const page = await Page.create(client, this._browserContext, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotter);
+        const page = await Page.create(client, this._browserContext, this._ignoreHTTPSErrors, this._defaultViewport);
         page[targetSymbol] = this;
         return page;
       });

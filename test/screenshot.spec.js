@@ -39,20 +39,33 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       });
       expect(screenshot).toBeGolden('screenshot-clip-rect.png');
     });
-    it.skip(FFOX)('should clip elements to the viewport', async({page, server}) => {
+    it('should clip elements to the viewport', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot({
         clip: {
           x: 50,
-          y: 600,
-          width: 100,
+          y: 450,
+          width: 1000,
           height: 100
         }
       });
       expect(screenshot).toBeGolden('screenshot-offscreen-clip.png');
     });
-    it.skip(WEBKIT)('should run in parallel', async({page, server}) => {
+    it('should throw on clip outside the viewport', async({page, server}) => {
+      await page.setViewport({width: 500, height: 500});
+      await page.goto(server.PREFIX + '/grid.html');
+      const screenshotError = await page.screenshot({
+        clip: {
+          x: 50,
+          y: 650,
+          width: 100,
+          height: 100
+        }
+      }).catch(error => error);
+      expect(screenshotError.message).toBe('Clipped area is either empty or outside the viewport');
+    });
+    it('should run in parallel', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const promises = [];
@@ -92,13 +105,21 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
         expect(screenshots[i]).toBeGolden(`grid-cell-${i}.png`);
       await Promise.all(pages.map(page => page.close()));
     });
-    it.skip(FFOX)('should allow transparency', async({page, server}) => {
-      await page.setViewport({ width: 100, height: 100 });
-      await page.goto(server.EMPTY_PAGE);
+    it.skip(FFOX || WEBKIT)('should allow transparency', async({page, server}) => {
+      await page.setViewport({ width: 50, height: 150 });
+      await page.setContent(`
+        <style>
+          body { margin: 0 }
+          div { width: 50px; height: 50px; }
+        </style>
+        <div style="background:black"></div>
+        <div style="background:white"></div>
+        <div style="background:transparent"></div>
+      `);
       const screenshot = await page.screenshot({omitBackground: true});
       expect(screenshot).toBeGolden('transparent.png');
     });
-    it.skip(FFOX || WEBKIT)('should render white background on jpeg file', async({page, server}) => {
+    it('should render white background on jpeg file', async({page, server}) => {
       await page.setViewport({ width: 100, height: 100 });
       await page.goto(server.EMPTY_PAGE);
       const screenshot = await page.screenshot({omitBackground: true, type: 'jpeg'});
@@ -137,7 +158,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     it('should take into account padding and border', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.setContent(`
-        something above
+        <div style="height: 14px">oooo</div>
         <style>div {
           border: 2px solid blue;
           background: green;
@@ -145,9 +166,9 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
           height: 50px;
         }
         </style>
-        <div></div>
+        <div id="d"></div>
       `);
-      const elementHandle = await page.$('div');
+      const elementHandle = await page.$('div#d');
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-padding-border.png');
     });
@@ -155,7 +176,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       await page.setViewport({width: 500, height: 500});
 
       await page.setContent(`
-        something above
+        <div style="height: 14px">oooo</div>
         <style>
         div.to-screenshot {
           border: 1px solid blue;
@@ -182,7 +203,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       await page.setViewport({width: 500, height: 500});
 
       await page.setContent(`
-        something above
+        <div style="height: 14px">oooo</div>
         <style>
         div.to-screenshot {
           border: 1px solid blue;
@@ -207,7 +228,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     it('should scroll element into view', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.setContent(`
-        something above
+        <div style="height: 14px">oooo</div>
         <style>div.above {
           border: 2px solid blue;
           background: red;
@@ -227,7 +248,7 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-scrolled-into-view.png');
     });
-    it.skip(WEBKIT)('should work with a rotated element', async({page, server}) => {
+    it('should work with a rotated element', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.setContent(`<div style="position:absolute;
                                         top: 100px;
@@ -240,14 +261,14 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-rotate.png');
     });
-    it.skip(WEBKIT)('should fail to screenshot a detached element', async({page, server}) => {
+    it('should fail to screenshot a detached element', async({page, server}) => {
       await page.setContent('<h1>remove this</h1>');
       const elementHandle = await page.$('h1');
       await page.evaluate(element => element.remove(), elementHandle);
       const screenshotError = await elementHandle.screenshot().catch(error => error);
       expect(screenshotError.message).toBe('Node is either not visible or not an HTMLElement');
     });
-    it.skip(WEBKIT)('should not hang with zero width/height element', async({page, server}) => {
+    it('should not hang with zero width/height element', async({page, server}) => {
       await page.setContent('<div style="width: 50px; height: 0"></div>');
       const div = await page.$('div');
       const error = await div.screenshot().catch(e => e);

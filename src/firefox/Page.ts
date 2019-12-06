@@ -16,27 +16,28 @@
  */
 
 import { EventEmitter } from 'events';
+import * as console from '../console';
+import * as dialog from '../dialog';
+import * as dom from '../dom';
 import { TimeoutError } from '../Errors';
+import * as frames from '../frames';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
+import * as input from '../input';
+import * as js from '../javascript';
+import * as network from '../network';
+import { Screenshotter } from '../screenshotter';
 import { TimeoutSettings } from '../TimeoutSettings';
+import * as types from '../types';
 import { BrowserContext } from './Browser';
 import { JugglerSession, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Interception } from './features/interception';
 import { FrameManager, FrameManagerEvents, normalizeWaitUntil } from './FrameManager';
-import { RawMouseImpl, RawKeyboardImpl } from './Input';
+import { RawKeyboardImpl, RawMouseImpl } from './Input';
 import { NavigationWatchdog } from './NavigationWatchdog';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
-import * as input from '../input';
-import * as types from '../types';
-import * as js from '../javascript';
-import * as dom from '../dom';
-import * as network from '../network';
-import * as frames from '../frames';
-import * as dialog from '../dialog';
-import * as console from '../console';
-import { Screenshotter } from './Screenshotter';
+import { FFScreenshotDelegate } from './Screenshotter';
 
 export class Page extends EventEmitter {
   private _timeoutSettings: TimeoutSettings;
@@ -54,12 +55,12 @@ export class Page extends EventEmitter {
   _frameManager: FrameManager;
   _javascriptEnabled = true;
   private _eventListeners: RegisteredListener[];
-  private _viewport: Viewport;
+  private _viewport: types.Viewport;
   private _disconnectPromise: Promise<Error>;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   _screenshotter: Screenshotter;
 
-  static async create(session: JugglerSession, browserContext: BrowserContext, defaultViewport: Viewport | null) {
+  static async create(session: JugglerSession, browserContext: BrowserContext, defaultViewport: types.Viewport | null) {
     const page = new Page(session, browserContext);
     await Promise.all([
       session.send('Runtime.enable'),
@@ -105,7 +106,7 @@ export class Page extends EventEmitter {
       helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this.emit(Events.Page.RequestFailed, request)),
     ];
     this._viewport = null;
-    this._screenshotter = new Screenshotter(session);
+    this._screenshotter = new Screenshotter(this, new FFScreenshotDelegate(session, this._frameManager), browserContext.browser());
   }
 
   _didClose() {
@@ -247,7 +248,7 @@ export class Page extends EventEmitter {
     await this._session.send('Page.setCacheDisabled', {cacheDisabled: !enabled});
   }
 
-  async emulate(options: { viewport: Viewport; userAgent: string; }) {
+  async emulate(options: { viewport: types.Viewport; userAgent: string; }) {
     await Promise.all([
       this.setViewport(options.viewport),
       this.setUserAgent(options.userAgent),
@@ -268,7 +269,7 @@ export class Page extends EventEmitter {
     return this._viewport;
   }
 
-  async setViewport(viewport: Viewport) {
+  async setViewport(viewport: types.Viewport) {
     const {
       width,
       height,
@@ -280,8 +281,8 @@ export class Page extends EventEmitter {
     await this._session.send('Page.setViewport', {
       viewport: { width, height, isMobile, deviceScaleFactor, hasTouch, isLandscape },
     });
-    const oldIsMobile = this._viewport ? this._viewport.isMobile : false;
-    const oldHasTouch = this._viewport ? this._viewport.hasTouch : false;
+    const oldIsMobile = this._viewport ? !!this._viewport.isMobile : false;
+    const oldHasTouch = this._viewport ? !!this._viewport.hasTouch : false;
     this._viewport = viewport;
     if (oldIsMobile !== isMobile || oldHasTouch !== hasTouch)
       await this.reload();
@@ -424,8 +425,8 @@ export class Page extends EventEmitter {
     return watchDog.navigationResponse();
   }
 
-  screenshot(options?: types.ScreenshotOptions): Promise<string | Buffer> {
-    return this._screenshotter.screenshotPage(this, options);
+  screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
+    return this._screenshotter.screenshotPage(options);
   }
 
   evaluate: types.Evaluate = (pageFunction, ...args) => {
@@ -568,15 +569,6 @@ export class Page extends EventEmitter {
       interceptor.call(null, fileChooser);
     this.emit(Events.Page.FileChooser, fileChooser);
   }
-}
-
-export type Viewport = {
-  width: number;
-  height: number;
-  deviceScaleFactor?: number;
-  isMobile?: boolean;
-  isLandscape?: boolean;
-  hasTouch?: boolean;
 }
 
 type FileChooser = {

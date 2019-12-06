@@ -16,9 +16,18 @@
  */
 
 import { EventEmitter } from 'events';
+import * as console from '../console';
+import * as dialog from '../dialog';
+import * as dom from '../dom';
+import * as frames from '../frames';
 import { assert, debugError, helper } from '../helper';
-import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption, mediaTypes, mediaColorSchemes } from '../input';
+import * as input from '../input';
+import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
+import * as js from '../javascript';
+import * as network from '../network';
+import { Screenshotter } from '../screenshotter';
 import { TimeoutSettings } from '../TimeoutSettings';
+import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import { CDPSession, CDPSessionEvents } from './Connection';
@@ -26,34 +35,17 @@ import { EmulationManager } from './EmulationManager';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
 import { Coverage } from './features/coverage';
-import { Overrides } from './features/overrides';
 import { Interception } from './features/interception';
+import { Overrides } from './features/overrides';
 import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
-import { RawMouseImpl, RawKeyboardImpl } from './Input';
+import { RawKeyboardImpl, RawMouseImpl } from './Input';
+import { DOMWorldDelegate } from './JSHandle';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
 import { getExceptionMessage, releaseObject } from './protocolHelper';
-import * as input from '../input';
-import * as types from '../types';
-import * as frames from '../frames';
-import * as js from '../javascript';
-import * as dom from '../dom';
-import * as network from '../network';
-import * as dialog from '../dialog';
-import * as console from '../console';
-import { DOMWorldDelegate } from './JSHandle';
-import { Screenshotter } from './Screenshotter';
-
-export type Viewport = {
-  width: number;
-  height: number;
-  deviceScaleFactor?: number;
-  isMobile?: boolean;
-  isLandscape?: boolean;
-  hasTouch?: boolean;
-}
+import { CRScreenshotDelegate } from './Screenshotter';
 
 export class Page extends EventEmitter {
   private _closed = false;
@@ -74,21 +66,21 @@ export class Page extends EventEmitter {
   readonly workers: Workers;
   private _pageBindings = new Map<string, Function>();
   _javascriptEnabled = true;
-  private _viewport: Viewport | null = null;
+  private _viewport: types.Viewport | null = null;
   _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   private _disconnectPromise: Promise<Error> | undefined;
   private _emulatedMediaType: string | undefined;
 
-  static async create(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean, defaultViewport: Viewport | null, screenshotter: Screenshotter): Promise<Page> {
-    const page = new Page(client, browserContext, ignoreHTTPSErrors, screenshotter);
+  static async create(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean, defaultViewport: types.Viewport | null): Promise<Page> {
+    const page = new Page(client, browserContext, ignoreHTTPSErrors);
     await page._initialize();
     if (defaultViewport)
       await page.setViewport(defaultViewport);
     return page;
   }
 
-  constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean, screenshotter: Screenshotter) {
+  constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
     super();
     this._client = client;
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -104,8 +96,7 @@ export class Page extends EventEmitter {
     this.workers = new Workers(client, this._addConsoleMessage.bind(this), this._handleException.bind(this));
     this.overrides = new Overrides(client);
     this.interception = new Interception(this._frameManager.networkManager());
-
-    this._screenshotter = screenshotter;
+    this._screenshotter = new Screenshotter(this, new CRScreenshotDelegate(this._client), browserContext.browser());
 
     client.on('Target.attachedToTarget', event => {
       if (event.targetInfo.type !== 'worker') {
@@ -456,7 +447,7 @@ export class Page extends EventEmitter {
     return response;
   }
 
-  async emulate(options: { viewport: Viewport; userAgent: string; }) {
+  async emulate(options: { viewport: types.Viewport; userAgent: string; }) {
     await Promise.all([
       this.setViewport(options.viewport),
       this.setUserAgent(options.userAgent)
@@ -485,14 +476,14 @@ export class Page extends EventEmitter {
     this._emulatedMediaType = options.type;
   }
 
-  async setViewport(viewport: Viewport) {
+  async setViewport(viewport: types.Viewport) {
     const needsReload = await this._emulationManager.emulateViewport(viewport);
     this._viewport = viewport;
     if (needsReload)
       await this.reload();
   }
 
-  viewport(): Viewport | null {
+  viewport(): types.Viewport | null {
     return this._viewport;
   }
 
@@ -509,8 +500,8 @@ export class Page extends EventEmitter {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
 
-  screenshot(options?: types.ScreenshotOptions): Promise<Buffer | string> {
-    return this._screenshotter.screenshotPage(this, options);
+  screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
+    return this._screenshotter.screenshotPage(options);
   }
 
   async title(): Promise<string> {
@@ -583,11 +574,6 @@ export class Page extends EventEmitter {
   waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
-}
-
-type MediaFeature = {
-  name: string,
-  value: string
 }
 
 type FileChooser = {

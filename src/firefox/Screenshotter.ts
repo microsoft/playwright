@@ -1,64 +1,42 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as fs from 'fs';
-import { Page } from './Page';
-import { assert, helper } from '../helper';
-import * as dom from '../dom';
+import { ScreenshotterDelegate } from '../screenshotter';
 import * as types from '../types';
+import * as dom from '../dom';
 import { JugglerSession } from './Connection';
+import { FrameManager } from './FrameManager';
 
-const writeFileAsync = helper.promisify(fs.writeFile);
-
-export class Screenshotter {
+export class FFScreenshotDelegate implements ScreenshotterDelegate {
   private _session: JugglerSession;
+  private _frameManager: FrameManager;
 
-  constructor(session: JugglerSession) {
+  constructor(session: JugglerSession, frameManager: FrameManager) {
     this._session = session;
+    this._frameManager = frameManager;
   }
 
-  async screenshotPage(page: Page, options: types.ScreenshotOptions = {}): Promise<Buffer | string> {
-    const format = helper.validateScreeshotOptions(options);
-    const {data} = await this._session.send('Page.screenshot', {
-      mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
-      fullPage: options.fullPage,
-      clip: processClip(options.clip),
-    });
-    const buffer = options.encoding === 'base64' ? data : Buffer.from(data, 'base64');
-    if (options.path)
-      await writeFileAsync(options.path, buffer);
-    return buffer;
-
-    function processClip(clip) {
-      if (!clip)
-        return undefined;
-      const x = Math.round(clip.x);
-      const y = Math.round(clip.y);
-      const width = Math.round(clip.width + clip.x - x);
-      const height = Math.round(clip.height + clip.y - y);
-      return {x, y, width, height};
-    }
-  }
-
-  async screenshotElement(page: Page, handle: dom.ElementHandle, options: types.ScreenshotOptions = {}): Promise<string | Buffer> {
-    const frameId = page._frameManager._frameData(handle.executionContext().frame()).frameId;
-    const clip = await this._session.send('Page.getBoundingBox', {
+  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | undefined> {
+    const frameId = this._frameManager._frameData(handle.executionContext().frame()).frameId;
+    return this._session.send('Page.getBoundingBox', {
       frameId,
       objectId: handle._remoteObject.objectId,
     });
-    if (!clip)
-      throw new Error('Node is either not visible or not an HTMLElement');
-    assert(clip.width, 'Node has 0 width.');
-    assert(clip.height, 'Node has 0 height.');
-    await handle._scrollIntoViewIfNeeded();
-    return this.screenshotPage(page, {
-      ...options,
-      clip: {
-        x: clip.x,
-        y: clip.y,
-        width: clip.width,
-        height: clip.height,
-      },
+  }
+
+  canCaptureOutsideViewport(): boolean {
+    return true;
+  }
+
+  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
+  }
+
+  async screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<Buffer> {
+    const { data } = await this._session.send('Page.screenshot', {
+      mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
+      fullPage: options.fullPage,
+      clip: options.clip,
     });
+    return Buffer.from(data, 'base64');
   }
 }

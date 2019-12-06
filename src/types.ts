@@ -43,12 +43,23 @@ export function clearSelector(selector: string | Selector): string | Selector {
   return { selector: selector.selector, visible: selector.visible };
 }
 
-export type ScreenshotOptions = {
+export type ElementScreenshotOptions = {
   type?: 'png' | 'jpeg',
   path?: string,
-  fullPage?: boolean,
-  clip?: Rect,
   quality?: number,
   omitBackground?: boolean,
-  encoding?: string,
 };
+
+export type ScreenshotOptions = ElementScreenshotOptions & {
+  fullPage?: boolean,
+  clip?: Rect,
+};
+
+export type Viewport = {
+  width: number;
+  height: number;
+  deviceScaleFactor?: number;
+  isMobile?: boolean;
+  isLandscape?: boolean;
+  hasTouch?: boolean;
+}

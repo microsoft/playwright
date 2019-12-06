@@ -21,11 +21,12 @@ import { filterCookies, NetworkCookie, SetNetworkCookieParam, rewriteCookies } f
 import { Connection, ConnectionEvents } from './Connection';
 import { Events } from './events';
 import { Permissions } from './features/permissions';
-import { Page, Viewport } from './Page';
+import { Page } from './Page';
+import * as types from '../types';
 
 export class Browser extends EventEmitter {
   private _connection: Connection;
-  _defaultViewport: Viewport;
+  _defaultViewport: types.Viewport;
   private _process: import('child_process').ChildProcess;
   private _closeCallback: () => void;
   _targets: Map<string, Target>;
@@ -33,14 +34,14 @@ export class Browser extends EventEmitter {
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
 
-  static async create(connection: Connection, defaultViewport: Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
+  static async create(connection: Connection, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
     const {browserContextIds} = await connection.send('Target.getBrowserContexts');
     const browser = new Browser(connection, browserContextIds, defaultViewport, process, closeCallback);
     await connection.send('Target.enable');
     return browser;
   }
 
-  constructor(connection: Connection, browserContextIds: Array<string>, defaultViewport: Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
+  constructor(connection: Connection, browserContextIds: Array<string>, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
     super();
     this._connection = connection;
     this._defaultViewport = defaultViewport;

@@ -19,7 +19,7 @@ import { debugError, helper } from '../helper';
 import { Browser } from './Browser';
 import { BrowserFetcher } from './BrowserFetcher';
 import { Connection } from './Connection';
-import { Viewport } from './Page';
+import * as types from '../types';
 import { PipeTransport } from './PipeTransport';
 
 const DEFAULT_ARGS = [
@@ -186,6 +186,6 @@ export type LauncherLaunchOptions = {
   headless?: boolean,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
-  defaultViewport?: Viewport | null,
+  defaultViewport?: types.Viewport | null,
   slowMo?: number,
 };

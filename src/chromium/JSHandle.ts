@@ -90,9 +90,9 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
   }
 
-  screenshot(handle: dom.ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer> {
+  screenshot(handle: dom.ElementHandle, options?: types.ElementScreenshotOptions): Promise<Buffer> {
     const page = this._frameManager.page();
-    return page._screenshotter.screenshotElement(page, handle, options);
+    return page._screenshotter.screenshotElement(handle, options);
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {

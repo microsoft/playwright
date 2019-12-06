@@ -28,7 +28,7 @@ import { BrowserFetcher } from './BrowserFetcher';
 import { Connection } from './Connection';
 import { TimeoutError } from '../Errors';
 import { assert, debugError, helper } from '../helper';
-import { Viewport } from './Page';
+import * as types from '../types';
 import { PipeTransport } from './PipeTransport';
 import { WebSocketTransport } from './WebSocketTransport';
 import { ConnectionTransport } from '../ConnectionTransport';
@@ -392,6 +392,6 @@ export type LauncherLaunchOptions = {
 
 export type LauncherBrowserOptions = {
    ignoreHTTPSErrors?: boolean,
-   defaultViewport?: Viewport | null,
+   defaultViewport?: types.Viewport | null,
    slowMo?: number,
 };

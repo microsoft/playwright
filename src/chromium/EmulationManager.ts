@@ -16,8 +16,8 @@
  */
 
 import { CDPSession } from './Connection';
-import { Viewport } from './Page';
 import { Protocol } from './protocol';
+import * as types from '../types';
 
 export class EmulationManager {
   private _client: CDPSession;
@@ -28,7 +28,7 @@ export class EmulationManager {
     this._client = client;
   }
 
-  async emulateViewport(viewport: Viewport): Promise<boolean> {
+  async emulateViewport(viewport: types.Viewport): Promise<boolean> {
     const mobile = viewport.isMobile || false;
     const width = viewport.width;
     const height = viewport.height;
