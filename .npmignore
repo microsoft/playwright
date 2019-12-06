@@ -6,6 +6,9 @@
 !lib/**/*.js
 # Injected files are included via lib/generated, see src/injected/README.md
 lib/injected/
+#types
+!lib/**/*.d.ts
+!index.d.ts
 
 # root for "playwright" package
 !index.js

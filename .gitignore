@@ -15,10 +15,9 @@ package-lock.json
 yarn.lock
 /node6
 /src/generated/*
-/src/chromium/protocol.d.ts
-/src/firefox/protocol.d.ts
-/src/webkit/protocol.d.ts
+/src/chromium/protocol.ts
+/src/firefox/protocol.ts
+/src/webkit/protocol.ts
 /utils/browser/playwright-web.js
-/index.d.ts
 lib/
 playwright-*.tgz

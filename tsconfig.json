@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
     "target": "ESNext",
     "module": "commonjs",
     "lib": ["esnext", "dom"],
     "sourceMap": true,
     "rootDir": "./src",
     "outDir": "./lib",
-    "strictBindCallApply": true
+    "strictBindCallApply": true,
+    "declaration": true
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts"],
