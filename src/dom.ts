@@ -258,8 +258,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _viewportPointAndScroll(relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this.evaluate((e: Element) => {
-        const style = e.ownerDocument.defaultView.getComputedStyle(e);
+      this.evaluate((e: Node) => {
+        const style = e.ownerDocument.defaultView.getComputedStyle(e as Element);
         return { x: parseInt(style.borderLeftWidth, 10), y: parseInt(style.borderTopWidth, 10) };
       }).catch(debugError),
     ]);
