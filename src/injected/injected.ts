@@ -17,9 +17,11 @@ class Injected {
       this.engines.set(engine.name, engine);
   }
 
-  querySelector(selector: string, root: SelectorRoot): Element | undefined {
+  querySelector(selector: string, root: Node): Element | undefined {
     const parsed = this._parseSelector(selector);
-    let element = root;
+    if (!root["querySelector"])
+      throw new Error('Node is not queryable.');
+    let element = root as SelectorRoot;
     for (const { engine, selector } of parsed) {
       const next = engine.query((element as Element).shadowRoot || element, selector);
       if (!next)
@@ -29,9 +31,11 @@ class Injected {
     return element as Element;
   }
 
-  querySelectorAll(selector: string, root: SelectorRoot): Element[] {
+  querySelectorAll(selector: string, root: Node): Element[] {
     const parsed = this._parseSelector(selector);
-    let set = new Set<SelectorRoot>([ root ]);
+    if (!root["querySelectorAll"])
+      throw new Error('Node is not queryable.');
+    let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
     for (const { engine, selector } of parsed) {
       const newSet = new Set<Element>();
       for (const prev of set) {

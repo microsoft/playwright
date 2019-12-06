@@ -223,7 +223,7 @@ export class Page extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async $(selector: string | types.Selector): Promise<dom.ElementHandle | null> {
+  async $(selector: string | types.Selector): Promise<dom.ElementHandle<Element> | null> {
     return this.mainFrame().$(selector);
   }
 
@@ -240,11 +240,11 @@ export class Page extends EventEmitter {
     return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$(selector: string | types.Selector): Promise<dom.ElementHandle[]> {
+  async $$(selector: string | types.Selector): Promise<dom.ElementHandle<Element>[]> {
     return this.mainFrame().$$(selector);
   }
 
-  async $x(expression: string): Promise<dom.ElementHandle[]> {
+  async $x(expression: string): Promise<dom.ElementHandle<Element>[]> {
     return this.mainFrame().$x(expression);
   }
 

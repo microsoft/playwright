@@ -35,7 +35,7 @@ export class Playwright {
     this.downloadBrowser = download.bind(null, this.createBrowserFetcher(), preferredRevision, 'Chromium');
   }
 
-  launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) | undefined): Promise<Browser> {
+  launch(options?: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) | undefined): Promise<Browser> {
     return this._launcher.launch(options);
   }
 
