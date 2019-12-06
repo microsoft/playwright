@@ -35,7 +35,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const nestedFrame = page.frames().find(frame => frame.name() === 'dos');
       const elementHandle = await nestedFrame.$('div');
       const box = await elementHandle.boundingBox();
-      expect(box).toEqual({ x: 28, y: 276, width: 264, height: 18 });
+      expect(box).toEqual({ x: 24, y: 224, width: 268, height: 18 });
     });
     it('should return null for invisible elements', async({page, server}) => {
       await page.setContent('<div style="display:none">hi</div>');
