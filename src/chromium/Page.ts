@@ -17,7 +17,6 @@
 
 import { EventEmitter } from 'events';
 import * as console from '../console';
-import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
 import { assert, debugError, helper } from '../helper';
@@ -30,7 +29,7 @@ import { TimeoutSettings } from '../TimeoutSettings';
 import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
-import { CDPSession, CDPSessionEvents } from './Connection';
+import { CDPSession } from './Connection';
 import { EmulationManager } from './EmulationManager';
 import { Events } from './events';
 import { Accessibility } from './features/accessibility';
@@ -41,20 +40,20 @@ import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
-import { DOMWorldDelegate } from './JSHandle';
 import { NetworkManagerEvents } from './NetworkManager';
-import { Protocol } from './protocol';
-import { getExceptionMessage, releaseObject } from './protocolHelper';
 import { CRScreenshotDelegate } from './Screenshotter';
 
 export class Page extends EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
+  private _disconnected = false;
+  private _disconnectedCallback: (e: Error) => void;
+  private _disconnectedPromise: Promise<Error>;
   _client: CDPSession;
   private _browserContext: BrowserContext;
-  private _keyboard: input.Keyboard;
-  private _mouse: input.Mouse;
+  readonly keyboard: input.Keyboard;
+  readonly mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _frameManager: FrameManager;
   private _emulationManager: EmulationManager;
@@ -69,12 +68,11 @@ export class Page extends EventEmitter {
   private _viewport: types.Viewport | null = null;
   _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
-  private _disconnectPromise: Promise<Error> | undefined;
   private _emulatedMediaType: string | undefined;
 
   static async create(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean, defaultViewport: types.Viewport | null): Promise<Page> {
     const page = new Page(client, browserContext, ignoreHTTPSErrors);
-    await page._initialize();
+    await page._frameManager.initialize();
     if (defaultViewport)
       await page.setViewport(defaultViewport);
     return page;
@@ -84,29 +82,20 @@ export class Page extends EventEmitter {
     super();
     this._client = client;
     this._closedPromise = new Promise(f => this._closedCallback = f);
+    this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
-    this._keyboard = new input.Keyboard(new RawKeyboardImpl(client));
-    this._mouse = new input.Mouse(new RawMouseImpl(client), this._keyboard);
+    this.keyboard = new input.Keyboard(new RawKeyboardImpl(client));
+    this.mouse = new input.Mouse(new RawMouseImpl(client), this.keyboard);
     this._timeoutSettings = new TimeoutSettings();
     this.accessibility = new Accessibility(client);
     this._frameManager = new FrameManager(client, this, ignoreHTTPSErrors, this._timeoutSettings);
     this._emulationManager = new EmulationManager(client);
     this.coverage = new Coverage(client);
     this.pdf = new PDF(client);
-    this.workers = new Workers(client, this._addConsoleMessage.bind(this), this._handleException.bind(this));
+    this.workers = new Workers(client, this._addConsoleMessage.bind(this), error => this.emit(Events.Page.PageError, error));
     this.overrides = new Overrides(client);
     this.interception = new Interception(this._frameManager.networkManager());
     this._screenshotter = new Screenshotter(this, new CRScreenshotDelegate(this._client), browserContext.browser());
-
-    client.on('Target.attachedToTarget', event => {
-      if (event.targetInfo.type !== 'worker') {
-        // If we don't detach from service workers, they will never die.
-        client.send('Target.detachFromTarget', {
-          sessionId: event.sessionId
-        }).catch(debugError);
-        return;
-      }
-    });
 
     this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
     this._frameManager.on(FrameManagerEvents.FrameDetached, event => this.emit(Events.Page.FrameDetached, event));
@@ -117,16 +106,6 @@ export class Page extends EventEmitter {
     networkManager.on(NetworkManagerEvents.Response, event => this.emit(Events.Page.Response, event));
     networkManager.on(NetworkManagerEvents.RequestFailed, event => this.emit(Events.Page.RequestFailed, event));
     networkManager.on(NetworkManagerEvents.RequestFinished, event => this.emit(Events.Page.RequestFinished, event));
-
-    client.on('Page.domContentEventFired', event => this.emit(Events.Page.DOMContentLoaded));
-    client.on('Page.loadEventFired', event => this.emit(Events.Page.Load));
-    client.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
-    client.on('Runtime.bindingCalled', event => this._onBindingCalled(event));
-    client.on('Page.javascriptDialogOpening', event => this._onDialog(event));
-    client.on('Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails));
-    client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
-    client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
-    client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
   }
 
   _didClose() {
@@ -136,22 +115,17 @@ export class Page extends EventEmitter {
     this._closedCallback();
   }
 
-  async _initialize() {
-    await Promise.all([
-      this._frameManager.initialize(),
-      this._client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true}),
-      this._client.send('Performance.enable', {}),
-      this._client.send('Log.enable', {}),
-      this._client.send('Page.setInterceptFileChooserDialog', {enabled: true})
-    ]);
+  _didDisconnect() {
+    assert(!this._disconnected, 'Page disconnected twice');
+    this._disconnected = true;
+    this._disconnectedCallback(new Error('Target closed'));
   }
 
-  async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
-    if (!this._fileChooserInterceptors.size)
+  async _onFileChooserOpened(handle: dom.ElementHandle) {
+    if (!this._fileChooserInterceptors.size) {
+      await handle.dispose();
       return;
-    const frame = this._frameManager.frame(event.frameId);
-    const utilityWorld = await frame._utilityDOMWorld();
-    const handle = await (utilityWorld.delegate as DOMWorldDelegate).adoptBackendNodeId(event.backendNodeId, utilityWorld);
+    }
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
@@ -182,24 +156,8 @@ export class Page extends EventEmitter {
     return this._browserContext;
   }
 
-  _onTargetCrashed() {
-    this.emit('error', new Error('Page crashed!'));
-  }
-
-  _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
-    const {level, text, args, source, url, lineNumber} = event.entry;
-    if (args)
-      args.map(arg => releaseObject(this._client, arg));
-    if (source !== 'worker')
-      this.emit(Events.Page.Console, new console.ConsoleMessage(level, text, [], {url, lineNumber}));
-  }
-
   mainFrame(): frames.Frame {
     return this._frameManager.mainFrame();
-  }
-
-  get keyboard(): input.Keyboard {
-    return this._keyboard;
   }
 
   frames(): frames.Frame[] {
@@ -251,11 +209,7 @@ export class Page extends EventEmitter {
     if (this._pageBindings.has(name))
       throw new Error(`Failed to add page binding with name ${name}: window['${name}'] already exists!`);
     this._pageBindings.set(name, playwrightFunction);
-
-    const expression = helper.evaluationString(addPageBinding, name);
-    await this._client.send('Runtime.addBinding', {name: name});
-    await this._client.send('Page.addScriptToEvaluateOnNewDocument', {source: expression});
-    await Promise.all(this.frames().map(frame => frame.evaluate(expression).catch(debugError)));
+    await this._frameManager._exposeBinding(name, helper.evaluationString(addPageBinding, name));
 
     function addPageBinding(bindingName: string) {
       const binding = window[bindingName];
@@ -283,37 +237,8 @@ export class Page extends EventEmitter {
     return this._frameManager.networkManager().setUserAgent(userAgent);
   }
 
-  _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    const message = getExceptionMessage(exceptionDetails);
-    const err = new Error(message);
-    err.stack = ''; // Don't report clientside error with a node stack attached
-    this.emit(Events.Page.PageError, err);
-  }
-
-  async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
-    if (event.executionContextId === 0) {
-      // DevTools protocol stores the last 1000 console messages. These
-      // messages are always reported even for removed execution contexts. In
-      // this case, they are marked with executionContextId = 0 and are
-      // reported upon enabling Runtime agent.
-      //
-      // Ignore these messages since:
-      // - there's no execution context we can use to operate with message
-      //   arguments
-      // - these messages are reported before Playwright clients can subscribe
-      //   to the 'console'
-      //   page event.
-      //
-      // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-      return;
-    }
-    const context = this._frameManager.executionContextById(event.executionContextId);
-    const values = event.args.map(arg => context._createHandle(arg));
-    this._addConsoleMessage(event.type, values, event.stackTrace);
-  }
-
-  async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
-    const {name, seq, args} = JSON.parse(event.payload);
+  async _onBindingCalled(payload: string, context: js.ExecutionContext) {
+    const {name, seq, args} = JSON.parse(payload);
     let expression = null;
     try {
       const result = await this._pageBindings.get(name)(...args);
@@ -324,7 +249,7 @@ export class Page extends EventEmitter {
       else
         expression = helper.evaluationString(deliverErrorValue, name, seq, error);
     }
-    this._client.send('Runtime.evaluate', { expression, contextId: event.executionContextId }).catch(debugError);
+    context.evaluate(expression).catch(debugError);
 
     function deliverResult(name: string, seq: number, result: any) {
       window[name]['callbacks'].get(seq).resolve(result);
@@ -344,27 +269,12 @@ export class Page extends EventEmitter {
     }
   }
 
-  _addConsoleMessage(type: string, args: js.JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) {
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation) {
     if (!this.listenerCount(Events.Page.Console)) {
       args.forEach(arg => arg.dispose());
       return;
     }
-    const location = stackTrace && stackTrace.callFrames.length ? {
-      url: stackTrace.callFrames[0].url,
-      lineNumber: stackTrace.callFrames[0].lineNumber,
-      columnNumber: stackTrace.callFrames[0].columnNumber,
-    } : {};
     this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args, location));
-  }
-
-  _onDialog(event : Protocol.Page.javascriptDialogOpeningPayload) {
-    this.emit(Events.Page.Dialog, new dialog.Dialog(
-      event.type as dialog.DialogType,
-      event.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
-      },
-      event.defaultPrompt));
   }
 
   url(): string {
@@ -372,15 +282,15 @@ export class Page extends EventEmitter {
   }
 
   async content(): Promise<string> {
-    return await this._frameManager.mainFrame().content();
+    return await this.mainFrame().content();
   }
 
   async setContent(html: string, options: { timeout?: number; waitUntil?: string | string[]; } | undefined) {
-    await this._frameManager.mainFrame().setContent(html, options);
+    await this.mainFrame().setContent(html, options);
   }
 
   async goto(url: string, options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
-    return await this._frameManager.mainFrame().goto(url, options);
+    return await this.mainFrame().goto(url, options);
   }
 
   async reload(options: { timeout?: number; waitUntil?: string | string[]; } = {}): Promise<network.Response | null> {
@@ -392,39 +302,33 @@ export class Page extends EventEmitter {
   }
 
   async waitForNavigation(options: { timeout?: number; waitUntil?: string | string[]; } = {}): Promise<network.Response | null> {
-    return await this._frameManager.mainFrame().waitForNavigation(options);
-  }
-
-  _sessionClosePromise() {
-    if (!this._disconnectPromise)
-      this._disconnectPromise = new Promise(fulfill => this._client.once(CDPSessionEvents.Disconnected, () => fulfill(new Error('Target closed'))));
-    return this._disconnectPromise;
+    return await this.mainFrame().waitForNavigation(options);
   }
 
   async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<Request> {
     const {
       timeout = this._timeoutSettings.timeout(),
     } = options;
-    return helper.waitForEvent(this._frameManager.networkManager(), NetworkManagerEvents.Request, request => {
+    return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
       if (helper.isString(urlOrPredicate))
         return (urlOrPredicate === request.url());
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(request));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
   async waitForResponse(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<network.Response> {
     const {
       timeout = this._timeoutSettings.timeout(),
     } = options;
-    return helper.waitForEvent(this._frameManager.networkManager(), NetworkManagerEvents.Response, response => {
+    return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
       if (helper.isString(urlOrPredicate))
         return (urlOrPredicate === response.url());
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(response));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
   async goBack(options: { timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
@@ -488,7 +392,7 @@ export class Page extends EventEmitter {
   }
 
   evaluate: types.Evaluate = (pageFunction, ...args) => {
-    return this._frameManager.mainFrame().evaluate(pageFunction, ...args as any);
+    return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
   async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
@@ -509,7 +413,7 @@ export class Page extends EventEmitter {
   }
 
   async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
-    assert(!!this._client._connection, 'Protocol error: Connection closed. Most likely the page has been closed.');
+    assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
     const runBeforeUnload = !!options.runBeforeUnload;
     if (runBeforeUnload) {
       await this._client.send('Page.close');
@@ -521,10 +425,6 @@ export class Page extends EventEmitter {
 
   isClosed(): boolean {
     return this._closed;
-  }
-
-  get mouse(): input.Mouse {
-    return this._mouse;
   }
 
   click(selector: string | types.Selector, options?: ClickOptions) {
