@@ -1,7 +1,7 @@
-From ce5a6f85786584191480f777a95958c0ab151484 Mon Sep 17 00:00:00 2001
-From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Thu, 5 Dec 2019 17:54:56 -0800
-Subject: [PATCH] chore: bootstrap
+From 6923883815bdcda2f0ded5e4e24b2a014b07bfef Mon Sep 17 00:00:00 2001
+From: Joel Einbinder <joel.einbinder@gmail.com>
+Date: Fri, 6 Dec 2019 14:52:16 -0800
+Subject: [PATCH xserver] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -13,7 +13,7 @@ Subject: [PATCH] chore: bootstrap
  .../inspector/agents/InspectorTargetAgent.h   |   6 +-
  .../inspector/protocol/Browser.json           | 106 ++++
  .../inspector/protocol/DOM.json               |  39 ++
- .../inspector/protocol/Dialog.json            |  36 ++
+ .../inspector/protocol/Dialog.json            |  43 ++
  .../inspector/protocol/Emulation.json         |  22 +
  .../inspector/protocol/Input.json             | 160 ++++++
  .../inspector/protocol/Page.json              |  97 +++-
@@ -78,8 +78,8 @@ Subject: [PATCH] chore: bootstrap
  .../UIProcess/InspectorBrowserAgent.cpp       | 255 +++++++++
  .../WebKit/UIProcess/InspectorBrowserAgent.h  |  63 +++
  .../UIProcess/InspectorBrowserAgentClient.h   |  33 ++
- .../WebKit/UIProcess/InspectorDialogAgent.cpp |  64 +++
- .../WebKit/UIProcess/InspectorDialogAgent.h   |  48 ++
+ .../WebKit/UIProcess/InspectorDialogAgent.cpp |  79 +++
+ .../WebKit/UIProcess/InspectorDialogAgent.h   |  49 ++
  .../WebKit/UIProcess/InspectorTargetProxy.cpp |  18 +-
  .../WebKit/UIProcess/InspectorTargetProxy.h   |  11 +-
  .../WebKit/UIProcess/RemoteInspectorPipe.cpp  | 132 +++++
@@ -94,8 +94,8 @@ Subject: [PATCH] chore: bootstrap
  .../UIProcess/WebPageInspectorInputAgent.h    |  54 ++
  .../UIProcess/WebPageInspectorTargetProxy.cpp | 109 ++++
  .../UIProcess/WebPageInspectorTargetProxy.h   |  45 ++
- Source/WebKit/UIProcess/WebPageProxy.cpp      |  20 +-
- Source/WebKit/UIProcess/WebPageProxy.h        |  13 +
+ Source/WebKit/UIProcess/WebPageProxy.cpp      |  47 +-
+ Source/WebKit/UIProcess/WebPageProxy.h        |  16 +
  .../glib/InspectorBrowserAgentClientGLib.cpp  | 103 ++++
  .../glib/InspectorBrowserAgentClientGLib.h    |  36 ++
  .../gtk/WebPageInspectorEmulationAgentGtk.cpp |  35 ++
@@ -123,7 +123,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  37 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 119 files changed, 4715 insertions(+), 77 deletions(-)
+ 119 files changed, 4767 insertions(+), 78 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -654,10 +654,10 @@ index 38cb48bedf2..c8da2a4f10f 100644
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Dialog.json b/Source/JavaScriptCore/inspector/protocol/Dialog.json
 new file mode 100644
-index 00000000000..79edea03fed
+index 00000000000..56ba4b7b214
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Dialog.json
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,43 @@
 +{
 +    "domain": "Dialog",
 +    "description": "Actions and events related to alert boxes.",
@@ -690,6 +690,13 @@ index 00000000000..79edea03fed
 +                { "name": "type", "type": "string", "description": "Dialog type."},
 +                { "name": "message", "type": "string", "description": "Message that will be displayed by the dialog."},
 +                { "name": "defaultPrompt", "optional": true, "type": "string", "description": "Default dialog prompt."}
++            ]
++        },
++        {
++            "name": "pageOpened",
++            "description": "Fired when the page causes a new page to be opened.",
++            "parameters": [
++                { "name": "targetId", "type": "string", "description": "ID of the page that was opened."}
 +            ]
 +        }
 +    ]
@@ -4396,10 +4403,10 @@ index 00000000000..866db590d59
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorDialogAgent.cpp b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
 new file mode 100644
-index 00000000000..121b5969d4a
+index 00000000000..d9b25e10843
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,79 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4409,6 +4416,7 @@ index 00000000000..121b5969d4a
 +#include "APINavigation.h"
 +#include "APIUIClient.h"
 +#include "WebPageProxy.h"
++#include "WebProcessPool.h"
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +
 +
@@ -4445,6 +4453,14 @@ index 00000000000..121b5969d4a
 +        return;
 +    }
 +    m_page.setInspectorDialogAgent(this);
++    for (auto* pool : WebProcessPool::allProcessPools()) {
++        for (auto& process : pool->processes()) {
++            for (auto* page : process->pages()) {
++                if (page->openerPageID() == m_page.webPageID())
++                    pageOpened(page);
++            }
++        }
++    }
 +}
 +
 +void InspectorDialogAgent::disable(Inspector::ErrorString&)
@@ -4463,13 +4479,19 @@ index 00000000000..121b5969d4a
 +    m_frontendDispatcher->javascriptDialogOpening(type, message, defaultValue);
 +}
 +
++void InspectorDialogAgent::pageOpened(WebPageProxy* page) {
++    WebCore::PageIdentifier identifier = page->webPageID();
++    String targetId = WebPageInspectorTarget::toTargetID(identifier);
++    m_frontendDispatcher->pageOpened(targetId);
++}
++
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorDialogAgent.h b/Source/WebKit/UIProcess/InspectorDialogAgent.h
 new file mode 100644
-index 00000000000..203c203a0e2
+index 00000000000..0214cb0c9c2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorDialogAgent.h
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,49 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4509,6 +4531,7 @@ index 00000000000..203c203a0e2
 +    void handleJavaScriptDialog(Inspector::ErrorString& errorString, bool accept, const String* promptText) override;
 +
 +    void javascriptDialogOpening(const String& type, const String& message, const String* defaultValue = nullptr);
++    void pageOpened(WebPageProxy* page);
 +
 +private:
 +    void platformHandleJavaScriptDialog(bool accept, const String* promptText);
@@ -5536,7 +5559,7 @@ index 00000000000..0655b5ea376
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 35cd3ac33fc..05f3cc29314 100644
+index 35cd3ac33fc..8c207045a18 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -868,6 +868,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -5547,7 +5570,37 @@ index 35cd3ac33fc..05f3cc29314 100644
  }
  
  void WebPageProxy::didAttachToRunningProcess()
-@@ -1623,6 +1624,11 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
+@@ -1086,6 +1087,29 @@ bool WebPageProxy::tryClose()
+     return false;
+ }
+ 
++WebPageProxy* webPageForId(WebCore::PageIdentifier pageId) {
++    for (auto* pool : WebProcessPool::allProcessPools()) {
++        for (auto& process : pool->processes()) {
++            for (auto* page : process->pages()) {
++                if (page->webPageID() == pageId)
++                    return page;
++            }
++        }
++    }
++    return nullptr;
++}
++
++void WebPageProxy::setOpenerPageID(Optional<WebCore::PageIdentifier> pageId) {
++    m_openerPageID = pageId;
++    if (!pageId)
++        return;
++    WebPageProxy* opener = webPageForId(*pageId);
++    if (!opener || !opener->m_inspectorDialogAgent)
++        return;
++    if (opener->m_inspectorDialogAgent)
++        opener->m_inspectorDialogAgent->pageOpened(this);
++}
++
+ void WebPageProxy::maybeInitializeSandboxExtensionHandle(WebProcessProxy& process, const URL& url, const URL& resourceDirectoryURL, SandboxExtension::Handle& sandboxExtensionHandle, bool checkAssumedReadAccessToResourceURL)
+ {
+     if (!url.isLocalFile())
+@@ -1623,6 +1647,11 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
      m_process->processPool().sendToNetworkingProcess(Messages::NetworkProcess::SetSessionIsControlledByAutomation(m_websiteDataStore->sessionID(), m_controlledByAutomation));
  }
  
@@ -5559,7 +5612,26 @@ index 35cd3ac33fc..05f3cc29314 100644
  void WebPageProxy::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      m_inspectorController->createInspectorTarget(targetId, type);
-@@ -5339,6 +5345,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
+@@ -5253,15 +5282,17 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, Optio
+     MESSAGE_CHECK(m_process, m_process->webFrame(*originatingFrameInfoData.frameID));
+ 
+     auto* originatingPage = m_process->webPage(*originatingPageID);
++    auto openerId = originatingPage->webPageID();
+     auto originatingFrameInfo = API::FrameInfo::create(WTFMove(originatingFrameInfoData), originatingPage);
+     auto mainFrameURL = m_mainFrame ? m_mainFrame->url() : URL();
+-    auto completionHandler = [this, protectedThis = makeRef(*this), mainFrameURL, request, reply = WTFMove(reply)] (RefPtr<WebPageProxy> newPage) mutable {
++    auto completionHandler = [this, protectedThis = makeRef(*this), mainFrameURL, request, reply = WTFMove(reply), openerId] (RefPtr<WebPageProxy> newPage) mutable {
+         if (!newPage) {
+             reply(WTF::nullopt, WTF::nullopt);
+             return;
+         }
+ 
+         newPage->setOpenedByDOM();
++        newPage->setOpenerPageID(openerId);
+ 
+         reply(newPage->webPageID(), newPage->creationParameters(m_process, *newPage->drawingArea()));
+ 
+@@ -5339,6 +5370,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -5568,7 +5640,7 @@ index 35cd3ac33fc..05f3cc29314 100644
      m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
  
-@@ -5358,6 +5366,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
+@@ -5358,6 +5391,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -5577,7 +5649,7 @@ index 35cd3ac33fc..05f3cc29314 100644
  
      m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5377,6 +5387,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
+@@ -5377,6 +5412,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -5586,7 +5658,7 @@ index 35cd3ac33fc..05f3cc29314 100644
  
      m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5536,6 +5548,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
+@@ -5536,6 +5573,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
              return;
          }
      }
@@ -5595,7 +5667,7 @@ index 35cd3ac33fc..05f3cc29314 100644
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer.
      m_process->responsivenessTimer().stop();
-@@ -6558,6 +6572,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6558,6 +6597,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              pageClient().didFinishProcessingAllPendingMouseEvents();
@@ -5604,7 +5676,7 @@ index 35cd3ac33fc..05f3cc29314 100644
          }
  
          break;
-@@ -6584,7 +6600,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6584,7 +6625,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -5612,7 +5684,7 @@ index 35cd3ac33fc..05f3cc29314 100644
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -6604,7 +6619,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6604,7 +6644,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -5620,7 +5692,7 @@ index 35cd3ac33fc..05f3cc29314 100644
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -6613,6 +6627,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6613,6 +6652,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -5630,7 +5702,7 @@ index 35cd3ac33fc..05f3cc29314 100644
          break;
      }
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 10947ff0dbb..c1a42229051 100644
+index 10947ff0dbb..96f5af09d1b 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -35,6 +35,7 @@
@@ -5665,7 +5737,24 @@ index 10947ff0dbb..c1a42229051 100644
      void initializeWebPage();
      void setDrawingArea(std::unique_ptr<DrawingAreaProxy>&&);
  
-@@ -2234,6 +2245,7 @@ private:
+@@ -546,6 +557,8 @@ public:
+ 
+     void setOpenedByDOM() { m_openedByDOM = true; }
+     bool openedByDOM() const { return m_openedByDOM; }
++    void setOpenerPageID(Optional<WebCore::PageIdentifier> pageId);
++    Optional<WebCore::PageIdentifier> openerPageID() { return m_openerPageID; }
+ 
+     bool hasCommittedAnyProvisionalLoads() const { return m_hasCommittedAnyProvisionalLoads; }
+ 
+@@ -2181,6 +2194,7 @@ private:
+ 
+     const Identifier m_identifier;
+     WebCore::PageIdentifier m_webPageID;
++    Optional<WebCore::PageIdentifier> m_openerPageID;
+     WeakPtr<PageClient> m_pageClient;
+     Ref<API::PageConfiguration> m_configuration;
+ 
+@@ -2234,6 +2248,7 @@ private:
      bool m_treatsSHA1CertificatesAsInsecure { true };
  
      RefPtr<WebInspectorProxy> m_inspector;
@@ -5673,7 +5762,7 @@ index 10947ff0dbb..c1a42229051 100644
  
  #if ENABLE(FULLSCREEN_API)
      std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
-@@ -2582,6 +2594,7 @@ private:
+@@ -2582,6 +2597,7 @@ private:
  #if ENABLE(REMOTE_INSPECTOR)
      std::unique_ptr<WebPageDebuggable> m_inspectorDebuggable;
  #endif
@@ -7173,5 +7262,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.24.0
+2.17.1
 
