@@ -134,7 +134,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     });
   }
 
-  async handleJSONValue(handle: js.JSHandle): Promise<any> {
+  async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
     const payload = handle._remoteObject;
     if (!payload.objectId)
       return deserializeValue(payload);

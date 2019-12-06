@@ -10,7 +10,7 @@ export interface ExecutionContextDelegate {
   getProperties(handle: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(handle: JSHandle): Promise<void>;
   handleToString(handle: JSHandle, includeType: boolean): string;
-  handleJSONValue(handle: JSHandle): Promise<any>;
+  handleJSONValue<T>(handle: JSHandle<T>): Promise<T>;
 }
 
 export class ExecutionContext {
