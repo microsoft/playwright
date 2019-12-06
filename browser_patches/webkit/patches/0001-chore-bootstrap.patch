@@ -1,7 +1,7 @@
-From ce5a6f85786584191480f777a95958c0ab151484 Mon Sep 17 00:00:00 2001
-From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Thu, 5 Dec 2019 17:54:56 -0800
-Subject: [PATCH] chore: bootstrap
+From 258bf57fe5f9414b12ac70f4f3400eabb688dd8c Mon Sep 17 00:00:00 2001
+From: Yury Semikhatsky <yurys@chromium.org>
+Date: Fri, 6 Dec 2019 15:23:31 -0800
+Subject: [PATCH xserver] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -86,8 +86,8 @@ Subject: [PATCH] chore: bootstrap
  Source/WebKit/UIProcess/RemoteInspectorPipe.h |  43 ++
  .../AuthenticatorManager.cpp                  |   1 +
  .../Mock/MockAuthenticatorManager.cpp         |   4 +-
- .../UIProcess/WebPageInspectorController.cpp  |  56 +-
- .../UIProcess/WebPageInspectorController.h    |   8 +
+ .../UIProcess/WebPageInspectorController.cpp  |  67 ++-
+ .../UIProcess/WebPageInspectorController.h    |   9 +
  .../WebPageInspectorEmulationAgent.cpp        |  48 ++
  .../WebPageInspectorEmulationAgent.h          |  42 ++
  .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 ++++++++
@@ -114,7 +114,6 @@ Subject: [PATCH] chore: bootstrap
  .../WebKit/WebKit.xcodeproj/project.pbxproj   |  58 ++
  .../WebPage/WebPageInspectorTarget.cpp        |   7 +
  .../WebPage/WebPageInspectorTarget.h          |   1 +
- Source/WebKit/WebProcess/WebProcess.cpp       |   3 +-
  Tools/MiniBrowser/gtk/BrowserWindow.h         |   2 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
  Tools/MiniBrowser/mac/AppDelegate.h           |  14 +-
@@ -123,7 +122,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  37 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 119 files changed, 4715 insertions(+), 77 deletions(-)
+ 118 files changed, 4725 insertions(+), 76 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -4823,10 +4822,10 @@ index 2c4f9ddabf0..ae9e0b80708 100644
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf7163..e4ae2ad50b5 100644
+index 1ee28bf7163..a97d8b02630 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-@@ -26,9 +26,11 @@
+@@ -26,10 +26,13 @@
  #include "config.h"
  #include "WebPageInspectorController.h"
  
@@ -4836,9 +4835,11 @@ index 1ee28bf7163..e4ae2ad50b5 100644
  #include "WebPageInspectorTarget.h"
 +#include "WebPageInspectorTargetProxy.h"
  #include "WebPageProxy.h"
++#include "WebPreferences.h"
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
-@@ -46,26 +48,59 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+ #include <JavaScriptCore/InspectorBackendDispatchers.h>
+@@ -46,26 +49,59 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -4899,7 +4900,17 @@ index 1ee28bf7163..e4ae2ad50b5 100644
      disconnectAllFrontends();
  
      m_agents.discardValues();
-@@ -134,6 +169,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -80,6 +116,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+ {
+     bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
+ 
++    if (connectingFirstFrontend)
++        disableBackForwardCache();
++
+     m_frontendRouter->connectFrontend(frontendChannel);
+ 
+     if (connectingFirstFrontend)
+@@ -134,6 +173,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -4916,7 +4927,7 @@ index 1ee28bf7163..e4ae2ad50b5 100644
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -150,7 +195,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,7 +199,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
  
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
@@ -4930,7 +4941,7 @@ index 1ee28bf7163..e4ae2ad50b5 100644
  }
  
  void WebPageInspectorController::destroyInspectorTarget(const String& targetId)
-@@ -186,7 +236,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +240,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -4939,8 +4950,20 @@ index 1ee28bf7163..e4ae2ad50b5 100644
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
+@@ -218,4 +272,11 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+     m_targets.set(target->identifier(), WTFMove(target));
+ }
+ 
++void WebPageInspectorController::disableBackForwardCache()
++{
++    // Navigation to cached pages doesn't fire some of the events (e.g. execution context created)
++    // that inspector depends on. So we disable the cache when front-end connects.
++    m_page.preferences().setUsesBackForwardCache(false);
++}
++
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0c..40f08285590 100644
+index 78caedf0c0c..0d1b2a78e65 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
 @@ -48,7 +48,13 @@ public:
@@ -4966,6 +4989,14 @@ index 78caedf0c0c..40f08285590 100644
  
  #if ENABLE(REMOTE_INSPECTOR)
      void setIndicating(bool);
+@@ -75,6 +83,7 @@ public:
+ 
+ private:
+     void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
++    void disableBackForwardCache();
+ 
+     WebPageProxy& m_page;
+     Ref<Inspector::FrontendRouter> m_frontendRouter;
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
 index 00000000000..f10c1651e64
@@ -6558,20 +6589,6 @@ index 6cbd7fad5ff..176c46f186b 100644
  
      void connect(Inspector::FrontendChannel::ConnectionType) override;
      void disconnect() override;
-diff --git a/Source/WebKit/WebProcess/WebProcess.cpp b/Source/WebKit/WebProcess/WebProcess.cpp
-index bc66e49ccde..a16dd94b7be 100644
---- a/Source/WebKit/WebProcess/WebProcess.cpp
-+++ b/Source/WebKit/WebProcess/WebProcess.cpp
-@@ -634,7 +634,8 @@ void WebProcess::setCacheModel(CacheModel cacheModel)
-     unsigned cacheMaxDeadCapacity = 0;
-     Seconds deadDecodedDataDeletionInterval;
-     unsigned backForwardCacheSize = 0;
--    calculateMemoryCacheSizes(cacheModel, cacheTotalCapacity, cacheMinDeadCapacity, cacheMaxDeadCapacity, deadDecodedDataDeletionInterval, backForwardCacheSize);
-+    // FIXME(yurys): forcefully disable cache becaus it swallows Runtime.executionContextCreated events on goBack navigation.
-+    // calculateMemoryCacheSizes(cacheModel, cacheTotalCapacity, cacheMinDeadCapacity, cacheMaxDeadCapacity, deadDecodedDataDeletionInterval, backForwardCacheSize);
- 
-     auto& memoryCache = MemoryCache::singleton();
-     memoryCache.setCapacities(cacheMinDeadCapacity, cacheMaxDeadCapacity, cacheTotalCapacity);
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.h b/Tools/MiniBrowser/gtk/BrowserWindow.h
 index 1570d65effb..456f96cf589 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.h
@@ -7173,5 +7190,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.24.0
+2.17.1
 
