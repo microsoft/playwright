@@ -275,17 +275,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       point.y += border.y;
     }
     const metrics = await this._world.delegate.layoutViewport();
-    // Give one extra pixel to avoid any issues on viewport edge.
+    // Give 6 (six) extra pixels to avoid any issues on viewport edge.
     let scrollX = 0;
-    if (point.x < 1)
-      scrollX = point.x - 1;
-    if (point.x > metrics.width - 1)
-      scrollX = point.x - metrics.width + 1;
+    if (point.x < 6)
+      scrollX = point.x - 6;
+    if (point.x > metrics.width - 6)
+      scrollX = point.x - metrics.width + 6;
     let scrollY = 0;
-    if (point.y < 1)
-      scrollY = point.y - 1;
-    if (point.y > metrics.height - 1)
-      scrollY = point.y - metrics.height + 1;
+    if (point.y < 6)
+      scrollY = point.y - 6;
+    if (point.y > metrics.height - 6)
+      scrollY = point.y - metrics.height + 6;
     return { point, scrollX, scrollY };
   }
 

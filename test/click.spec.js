@@ -78,7 +78,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       ]);
       expect(page.url()).toBe(server.PREFIX + '/wrappedlink.html#clicked');
     });
-    it.skip(FFOX)('should click when one of inline box children is outside of viewport', async({page, server}) => {
+    it('should click when one of inline box children is outside of viewport', async({page, server}) => {
       await page.setContent(`
         <style>
         i {
@@ -272,7 +272,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await frame.click('button');
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
-    it.skip(WEBKIT)('should click the button with deviceScaleFactor set', async({page, server}) => {
+    it('should click the button with deviceScaleFactor set', async({page, server}) => {
       await page.setViewport({width: 400, height: 400, deviceScaleFactor: 5});
       expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
       await page.setContent('<div style="width:100px;height:100px">spacer</div>');
@@ -282,21 +282,14 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await button.click();
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
-
-    it('should click the button with relative point', async({page, server}) => {
-      await page.goto(server.PREFIX + '/input/button.html');
-      await page.click('button', { relativePoint: { x: 20, y: 10 } });
-      expect(await page.evaluate(() => result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(20);
-      expect(await page.evaluate(() => offsetY)).toBe(10);
-    });
     it('should click the button with px border with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '2px');
       await page.click('button', { relativePoint: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(20);
-      expect(await page.evaluate(() => offsetY)).toBe(10);
+      // Safari reports border-relative offsetX/offsetY.
+      expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 20 + 2 : 20);
+      expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 10 + 2: 10);
     });
     it('should click the button with em border with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -304,16 +297,18 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.$eval('button', button => button.style.fontSize = '12px');
       await page.click('button', { relativePoint: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(20);
-      expect(await page.evaluate(() => offsetY)).toBe(10);
+      // Safari reports border-relative offsetX/offsetY.
+      expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 12 * 2 + 20 : 20);
+      expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 12 * 2 + 10 : 10);
     });
     it('should click a very large button with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.height = button.style.width = '2000px');
       await page.click('button', { relativePoint: { x: 1900, y: 1910 } });
       expect(await page.evaluate(() => window.result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(1900);
-      expect(await page.evaluate(() => offsetY)).toBe(1910);
+      // Safari reports border-relative offsetX/offsetY.
+      expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 2 + 1900 : 1900);
+      expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 2 + 1910 : 1910);
     });
     xit('should click a button in scrolling container with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -333,7 +328,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(await page.evaluate(() => offsetY)).toBe(1910);
     });
 
-    it.skip(FFOX || WEBKIT)('should update modifiers correctly', async({page, server}) => {
+    it('should update modifiers correctly', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.click('button', { modifiers: ['Shift'] });
       expect(await page.evaluate(() => shiftKey)).toBe(true);
