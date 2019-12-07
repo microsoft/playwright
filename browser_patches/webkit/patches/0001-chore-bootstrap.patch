@@ -1,7 +1,7 @@
-From 258bf57fe5f9414b12ac70f4f3400eabb688dd8c Mon Sep 17 00:00:00 2001
-From: Yury Semikhatsky <yurys@chromium.org>
-Date: Fri, 6 Dec 2019 15:23:31 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From 91d5f54f0fb4fb797022457d3a55f853a432af2b Mon Sep 17 00:00:00 2001
+From: Dmitry Gozman <dgozman@gmail.com>
+Date: Sat, 7 Dec 2019 10:22:51 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -16,16 +16,16 @@ Subject: [PATCH xserver] chore: bootstrap
  .../inspector/protocol/Dialog.json            |  36 ++
  .../inspector/protocol/Emulation.json         |  22 +
  .../inspector/protocol/Input.json             | 160 ++++++
- .../inspector/protocol/Page.json              |  97 +++-
+ .../inspector/protocol/Page.json              | 103 +++-
  .../inspector/protocol/Target.json            |  20 +-
  Source/WebCore/html/FileInputType.cpp         |   6 +
- .../inspector/InspectorInstrumentation.cpp    |  14 +-
+ .../inspector/InspectorInstrumentation.cpp    |  23 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
  .../inspector/agents/InspectorDOMAgent.cpp    | 113 +++-
  .../inspector/agents/InspectorDOMAgent.h      |   4 +
  .../agents/InspectorDOMStorageAgent.h         |   1 +
- .../inspector/agents/InspectorPageAgent.cpp   | 523 +++++++++++++++++-
- .../inspector/agents/InspectorPageAgent.h     |  19 +-
+ .../inspector/agents/InspectorPageAgent.cpp   | 534 +++++++++++++++++-
+ .../inspector/agents/InspectorPageAgent.h     |  23 +-
  .../agents/page/PageRuntimeAgent.cpp          |  14 +-
  Source/WebCore/loader/FrameLoader.cpp         |   1 +
  Source/WebCore/page/History.cpp               |   1 +
@@ -69,7 +69,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../UIProcess/BrowserInspectorController.h    |  47 ++
  .../WebKit/UIProcess/BrowserInspectorPipe.cpp |  35 ++
  .../WebKit/UIProcess/BrowserInspectorPipe.h   |  16 +
- .../UIProcess/BrowserInspectorTargetAgent.cpp |  93 ++++
+ .../UIProcess/BrowserInspectorTargetAgent.cpp |  93 +++
  .../UIProcess/BrowserInspectorTargetAgent.h   |  37 ++
  .../PopUpSOAuthorizationSession.h             |   4 +
  .../PopUpSOAuthorizationSession.mm            |   1 +
@@ -104,7 +104,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../WebKit/UIProcess/ios/PageClientImplIOS.mm |   2 +
  .../mac/InspectorBrowserAgentClientMac.h      |  29 +
  .../mac/InspectorBrowserAgentClientMac.mm     |  54 ++
- .../WebKit/UIProcess/mac/PageClientImplMac.mm |   5 +
+ .../WebKit/UIProcess/mac/PageClientImplMac.mm |   9 +-
  .../mac/WebPageInspectorEmulationAgentMac.mm  |  21 +
  .../mac/WebPageInspectorInputAgentMac.mm      |  14 +
  .../mac/WebPageInspectorTargetProxyMac.mm     |  20 +
@@ -117,12 +117,12 @@ Subject: [PATCH xserver] chore: bootstrap
  Tools/MiniBrowser/gtk/BrowserWindow.h         |   2 +-
  Tools/MiniBrowser/gtk/main.c                  |  28 +
  Tools/MiniBrowser/mac/AppDelegate.h           |  14 +-
- Tools/MiniBrowser/mac/AppDelegate.m           | 192 ++++++-
+ Tools/MiniBrowser/mac/AppDelegate.m           | 199 ++++++-
  Tools/MiniBrowser/mac/SettingsController.m    |   2 +-
  .../mac/WK2BrowserWindowController.h          |   3 +
- .../mac/WK2BrowserWindowController.m          |  37 +-
+ .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 118 files changed, 4725 insertions(+), 76 deletions(-)
+ 118 files changed, 4750 insertions(+), 93 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -888,7 +888,7 @@ index 00000000000..79bbe73b0df
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8..d7fa0aa81c5 100644
+index 367d1f235a8..6800d524cc9 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -954,7 +954,7 @@ index 367d1f235a8..d7fa0aa81c5 100644
              ]
          },
          {
-@@ -288,6 +331,34 @@
+@@ -288,19 +331,49 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -989,7 +989,24 @@ index 367d1f235a8..d7fa0aa81c5 100644
          }
      ],
      "events": [
-@@ -346,12 +417,36 @@
+         {
+             "name": "domContentEventFired",
+             "parameters": [
+-                { "name": "timestamp", "type": "number" }
++                { "name": "timestamp", "type": "number" },
++                { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has fired DOMContentLoaded event." }
+             ]
+         },
+         {
+             "name": "loadEventFired",
+             "parameters": [
+-                { "name": "timestamp", "type": "number" }
++              { "name": "timestamp", "type": "number" },
++              { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has fired load event." }
+             ]
+         },
+         {
+@@ -346,12 +419,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1089,7 +1106,7 @@ index 4e41fd3f807..1f7be602cb2 100644
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index cb6ed9f6c84..458def75277 100644
+index cb6ed9f6c84..4402d67463d 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1101,7 +1118,31 @@ index cb6ed9f6c84..458def75277 100644
          return;
  
      if (auto* pageDebuggerAgent = instrumentingAgents.pageDebuggerAgent())
-@@ -783,6 +783,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
+@@ -656,20 +656,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
+ 
+ void InspectorInstrumentation::domContentLoadedEventFiredImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
+ {
+-    if (!frame.isMainFrame())
+-        return;
+-
+     if (InspectorPageAgent* pageAgent = instrumentingAgents.inspectorPageAgent())
+-        pageAgent->domContentEventFired();
++        pageAgent->domContentEventFired(frame);
+ }
+ 
+ void InspectorInstrumentation::loadEventFiredImpl(InstrumentingAgents& instrumentingAgents, Frame* frame)
+ {
+-    if (!frame || !frame->isMainFrame())
++    if (!frame)
+         return;
+ 
+     if (InspectorPageAgent* pageAgent = instrumentingAgents.inspectorPageAgent())
+-        pageAgent->loadEventFired();
++        pageAgent->loadEventFired(*frame);
+ }
+ 
+ void InspectorInstrumentation::frameDetachedFromParentImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
+@@ -783,6 +780,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
  
@@ -1114,7 +1155,7 @@ index cb6ed9f6c84..458def75277 100644
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1251,6 +1257,12 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1251,6 +1254,12 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -1411,7 +1452,7 @@ index b578660fbb3..a7c968bc9f8 100644
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..f31341803b7 100644
+index f2e228b7f74..3484cb0d9cd 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1497,7 +1538,26 @@ index f2e228b7f74..f31341803b7 100644
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -691,6 +713,7 @@ void InspectorPageAgent::loadEventFired()
+@@ -678,19 +700,21 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+     m_overlay->setShowPaintRects(show);
+ }
+ 
+-void InspectorPageAgent::domContentEventFired()
++void InspectorPageAgent::domContentEventFired(Frame& frame)
+ {
+-    m_isFirstLayoutAfterOnLoad = true;
+-    m_frontendDispatcher->domContentEventFired(timestamp());
++    if (frame.isMainFrame())
++        m_isFirstLayoutAfterOnLoad = true;
++    m_frontendDispatcher->domContentEventFired(timestamp(), frameId(&frame));
+ }
+ 
+-void InspectorPageAgent::loadEventFired()
++void InspectorPageAgent::loadEventFired(Frame& frame)
+ {
+-    m_frontendDispatcher->loadEventFired(timestamp());
++    m_frontendDispatcher->loadEventFired(timestamp(), frameId(&frame));
+ }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
  {
@@ -1505,7 +1565,7 @@ index f2e228b7f74..f31341803b7 100644
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
-@@ -761,6 +784,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -761,6 +785,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1518,7 +1578,7 @@ index f2e228b7f74..f31341803b7 100644
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -815,6 +844,25 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -815,6 +845,25 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1544,7 +1604,7 @@ index f2e228b7f74..f31341803b7 100644
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1034,469 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1035,469 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -1927,7 +1987,7 @@ index f2e228b7f74..f31341803b7 100644
 +                axNode->setPressed(Inspector::Protocol::Page::AXNode::Pressed::Mixed);
 +                break;
 +        }
-+    }            
++    }
 +    unsigned level = axObject->hierarchicalLevel() ? axObject->hierarchicalLevel() : axObject->headingLevel();
 +    if (level)
 +        axNode->setLevel(level);
@@ -1943,11 +2003,11 @@ index f2e228b7f74..f31341803b7 100644
 +    String invalidValue = axObject->invalidStatus();
 +    if (invalidValue != "false") {
 +        if (invalidValue == "grammar")
-+            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::Grammar); 
++            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::Grammar);
 +        else if (invalidValue == "spelling")
-+            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::Spelling); 
++            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::Spelling);
 +        else // Future versions of ARIA may allow additional truthy values. Ex. format, order, or size.
-+            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::True); 
++            axNode->setInvalid(Inspector::Protocol::Page::AXNode::Invalid::True);
 +    }
 +    switch (axObject->orientation()) {
 +        case AccessibilityOrientation::Undefined:
@@ -2015,7 +2075,7 @@ index f2e228b7f74..f31341803b7 100644
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..1c12c0a4e54 100644
+index 4fd8c0b1016..17a92a83f4c 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2045,7 +2105,7 @@ index 4fd8c0b1016..1c12c0a4e54 100644
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -113,8 +120,12 @@ public:
+@@ -113,12 +120,16 @@ public:
      void getCompositingBordersVisible(ErrorString&, bool* out_param) override;
      void setCompositingBordersVisible(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
@@ -2058,7 +2118,13 @@ index 4fd8c0b1016..1c12c0a4e54 100644
 +    void setDefaultBackgroundColorOverride(ErrorString&, const JSON::Object*) override;
  
      // InspectorInstrumentation
-     void domContentEventFired();
+-    void domContentEventFired();
+-    void loadEventFired();
++    void domContentEventFired(Frame&);
++    void loadEventFired(Frame&);
+     void frameNavigated(Frame&);
+     void frameDetached(Frame&);
+     void loaderDetachedFromFrame(DocumentLoader&);
 @@ -126,6 +137,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
@@ -6132,9 +6198,20 @@ index 00000000000..e3062b3651f
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index 22653d74398..bf27558fdfd 100644
+index 22653d74398..15b24ee8197 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
+@@ -205,8 +205,8 @@ bool PageClientImpl::isViewVisible()
+     if (!activeViewWindow)
+         return false;
+ 
+-    if (!activeViewWindow.isVisible)
+-        return false;
++    // if (!activeViewWindow.isVisible)
++    //     return false;
+ 
+     if (activeView.isHiddenOrHasHiddenAncestor)
+         return false;
 @@ -455,6 +455,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
@@ -6691,18 +6768,20 @@ index 45ef1a6424e..6e015fcb8bc 100644
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..5df2a69d79a 100644
+index b6af4ef724f..c63c8d354cf 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
-@@ -34,6 +34,7 @@
+@@ -33,7 +33,9 @@
+ #import <WebKit/WKProcessPoolPrivate.h>
  #import <WebKit/WKUserContentControllerPrivate.h>
  #import <WebKit/WKWebViewConfigurationPrivate.h>
++#import <WebKit/WKWebViewPrivate.h>
  #import <WebKit/WKWebsiteDataStorePrivate.h>
 +#import <WebKit/WebNSURLExtras.h>
  #import <WebKit/WebKit.h>
  #import <WebKit/_WKExperimentalFeature.h>
  #import <WebKit/_WKInternalDebugFeature.h>
-@@ -52,16 +53,44 @@ @interface NSApplication (TouchBar)
+@@ -52,16 +54,44 @@ @interface NSApplication (TouchBar)
  @property (getter=isAutomaticCustomizeTouchBarMenuItemEnabled) BOOL automaticCustomizeTouchBarMenuItemEnabled;
  @end
  
@@ -6750,7 +6829,7 @@ index b6af4ef724f..5df2a69d79a 100644
      return self;
  }
  
-@@ -88,7 +117,7 @@ - (void)awakeFromNib
+@@ -88,7 +118,7 @@ - (void)awakeFromNib
          configuration.networkCacheSpeculativeValidationEnabled = YES;
          dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
      }
@@ -6759,7 +6838,18 @@ index b6af4ef724f..5df2a69d79a 100644
      return dataStore;
  }
  
-@@ -109,7 +138,7 @@ - (void)awakeFromNib
+@@ -103,13 +133,18 @@ - (void)awakeFromNib
+         configuration.preferences._developerExtrasEnabled = YES;
+         configuration.preferences._mediaDevicesEnabled = YES;
+         configuration.preferences._mockCaptureDevicesEnabled = YES;
++        configuration.preferences._hiddenPageDOMTimerThrottlingEnabled = NO;
++        configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
++        configuration.preferences._pageVisibilityBasedProcessSuppressionEnabled = NO;
++        configuration.preferences._domTimersThrottlingEnabled = NO;
++        configuration.preferences._requestAnimationFrameEnabled = YES;
+ 
+         _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
+         if ([SettingsController shared].perWindowWebProcessesDisabled)
              processConfiguration.usesSingleWebProcess = YES;
          if ([SettingsController shared].processSwapOnWindowOpenWithOpenerEnabled)
              processConfiguration.processSwapsOnWindowOpenWithOpener = true;
@@ -6768,7 +6858,7 @@ index b6af4ef724f..5df2a69d79a 100644
          configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
  
          NSArray<_WKExperimentalFeature *> *experimentalFeatures = [WKPreferences _experimentalFeatures];
-@@ -145,6 +174,9 @@ - (void)awakeFromNib
+@@ -145,6 +180,9 @@ - (void)awakeFromNib
  
  - (BrowserWindowController *)createBrowserWindowController:(id)sender
  {
@@ -6778,7 +6868,7 @@ index b6af4ef724f..5df2a69d79a 100644
      BrowserWindowController *controller = nil;
      BOOL useWebKit2 = NO;
      BOOL makeEditable = NO;
-@@ -158,9 +190,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
+@@ -158,9 +196,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
      }
  
      if (!useWebKit2)
@@ -6790,7 +6880,7 @@ index b6af4ef724f..5df2a69d79a 100644
  
      if (makeEditable)
          controller.editable = YES;
-@@ -185,6 +217,9 @@ - (IBAction)newWindow:(id)sender
+@@ -185,6 +223,9 @@ - (IBAction)newWindow:(id)sender
  
  - (IBAction)newPrivateWindow:(id)sender
  {
@@ -6800,7 +6890,7 @@ index b6af4ef724f..5df2a69d79a 100644
      WKWebViewConfiguration *privateConfiguraton = [defaultConfiguration() copy];
      privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
  
-@@ -214,6 +249,11 @@ - (void)browserWindowWillClose:(NSWindow *)window
+@@ -214,6 +255,11 @@ - (void)browserWindowWillClose:(NSWindow *)window
  
  - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
  {
@@ -6812,7 +6902,7 @@ index b6af4ef724f..5df2a69d79a 100644
      WebHistory *webHistory = [[WebHistory alloc] init];
      [WebHistory setOptionalSharedHistory:webHistory];
      [webHistory release];
-@@ -255,6 +295,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+@@ -255,6 +301,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
  
  - (IBAction)openDocument:(id)sender
  {
@@ -6822,7 +6912,7 @@ index b6af4ef724f..5df2a69d79a 100644
      BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
  
      if (browserWindowController) {
-@@ -284,6 +327,9 @@ - (IBAction)openDocument:(id)sender
+@@ -284,6 +333,9 @@ - (IBAction)openDocument:(id)sender
  
  - (void)didChangeSettings
  {
@@ -6832,7 +6922,7 @@ index b6af4ef724f..5df2a69d79a 100644
      [self _updateNewWindowKeyEquivalents];
  
      // Let all of the BrowserWindowControllers know that a setting changed, so they can attempt to dynamically update.
-@@ -312,6 +358,8 @@ - (void)_updateNewWindowKeyEquivalents
+@@ -312,6 +364,8 @@ - (void)_updateNewWindowKeyEquivalents
  
  - (IBAction)showExtensionsManager:(id)sender
  {
@@ -6841,7 +6931,7 @@ index b6af4ef724f..5df2a69d79a 100644
      [_extensionManagerWindowController showWindow:sender];
  }
  
-@@ -345,4 +393,134 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +399,135 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
@@ -6884,6 +6974,7 @@ index b6af4ef724f..5df2a69d79a 100644
 +
 +    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
 +    WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
++    webView._windowOcclusionDetectionEnabled = NO;
 +    if (!webView)
 +        return nil;
 +
@@ -7006,7 +7097,7 @@ index 6f0949b0f4a..e774433031a 100644
  
  @end
 diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-index 0063266ed33..346c3fe3704 100644
+index 0063266ed33..a884647b11f 100644
 --- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
 +++ b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
 @@ -72,6 +72,7 @@ @implementation WK2BrowserWindowController {
@@ -7017,16 +7108,18 @@ index 0063266ed33..346c3fe3704 100644
  
      BOOL _useShrinkToFit;
  
-@@ -82,6 +83,8 @@ @implementation WK2BrowserWindowController {
+@@ -82,7 +83,10 @@ @implementation WK2BrowserWindowController {
  
  - (void)awakeFromNib
  {
 +    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
 +
      _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
++    _webView._windowOcclusionDetectionEnabled = NO;
      [self didChangeSettings];
  
-@@ -105,7 +108,7 @@ - (void)awakeFromNib
+     _webView.allowsMagnification = YES;
+@@ -105,7 +109,7 @@ - (void)awakeFromNib
      // telling WebKit to load every icon referenced by the page.
      if ([[SettingsController shared] loadsAllSiteIcons])
          _webView._iconLoadingDelegate = self;
@@ -7035,7 +7128,7 @@ index 0063266ed33..346c3fe3704 100644
      _webView._observedRenderingProgressEvents = _WKRenderingProgressEventFirstLayout
          | _WKRenderingProgressEventFirstVisuallyNonEmptyLayout
          | _WKRenderingProgressEventFirstPaintWithSignificantArea
-@@ -113,6 +116,7 @@ - (void)awakeFromNib
+@@ -113,6 +117,7 @@ - (void)awakeFromNib
          | _WKRenderingProgressEventFirstPaintAfterSuppressedIncrementalRendering;
  
      _zoomTextOnly = NO;
@@ -7043,7 +7136,7 @@ index 0063266ed33..346c3fe3704 100644
  
      _webView._usePlatformFindUI = NO;
  
-@@ -139,14 +143,10 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
+@@ -139,14 +144,10 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
  
  - (void)dealloc
  {
@@ -7058,7 +7151,7 @@ index 0063266ed33..346c3fe3704 100644
      [_webView release];
      [_configuration release];
  
-@@ -372,9 +372,15 @@ - (BOOL)windowShouldClose:(id)sender
+@@ -372,9 +373,15 @@ - (BOOL)windowShouldClose:(id)sender
  - (void)windowWillClose:(NSNotification *)notification
  {
      [(BrowserAppDelegate *)[[NSApplication sharedApplication] delegate] browserWindowWillClose:self.window];
@@ -7074,7 +7167,7 @@ index 0063266ed33..346c3fe3704 100644
  #define DefaultMinimumZoomFactor (.5)
  #define DefaultMaximumZoomFactor (3.0)
  #define DefaultZoomFactorRatio (1.2)
-@@ -512,9 +518,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
+@@ -512,9 +519,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
      [alert setInformativeText:message];
      [alert addButtonWithTitle:@"OK"];
  
@@ -7086,7 +7179,7 @@ index 0063266ed33..346c3fe3704 100644
      }];
  }
  
-@@ -528,9 +536,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
+@@ -528,9 +537,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
      [alert addButtonWithTitle:@"OK"];
      [alert addButtonWithTitle:@"Cancel"];
  
@@ -7098,7 +7191,7 @@ index 0063266ed33..346c3fe3704 100644
      }];
  }
  
-@@ -548,13 +558,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
+@@ -548,13 +559,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
      [input setStringValue:defaultText];
      [alert setAccessoryView:input];
      
@@ -7124,7 +7217,7 @@ index 0063266ed33..346c3fe3704 100644
  #if __has_feature(objc_generics)
  - (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> * URLs))completionHandler
  #else
-@@ -848,4 +870,9 @@ - (IBAction)saveAsWebArchive:(id)sender
+@@ -848,4 +871,9 @@ - (IBAction)saveAsWebArchive:(id)sender
      }];
  }
  
@@ -7190,5 +7283,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.21.0 (Apple Git-122.2)
 
