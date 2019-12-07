@@ -23,7 +23,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(WEBKIT)('Interception.enable', function() {
+  describe('Interception.enable', function() {
     it('should intercept', async({page, server}) => {
       await page.interception.enable();
       page.on('request', request => {
@@ -275,7 +275,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           return e.message;
         }
       });
-      if (CHROME || WEBKIT)
+      if (CHROME)
         expect(result).toContain('Failed to fetch');
       else
         expect(result).toContain('NetworkError');

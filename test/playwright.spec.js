@@ -147,7 +147,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       require('./network.spec.js').addTests(testOptions);
       require('./page.spec.js').addTests(testOptions);
       require('./queryselector.spec.js').addTests(testOptions);
-      require('./requestinterception.spec.js').addTests(testOptions);
       require('./screenshot.spec.js').addTests(testOptions);
       require('./waittask.spec.js').addTests(testOptions);
 
@@ -162,6 +161,11 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
         require('./chromium/session.spec.js').addTests(testOptions);
         require('./chromium/workers.spec.js').addTests(testOptions);
       }
+
+      if (CHROME || FFOX) {
+        require('./requestinterception.spec.js').addTests(testOptions);
+      }
+
     });
 
     // Browser-level tests that are given a browser.
