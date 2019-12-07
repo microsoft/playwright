@@ -19,6 +19,7 @@ import { RegisteredListener } from '../helper';
 import { Browser, BrowserContext } from './Browser';
 import { Page } from './Page';
 import { Protocol } from './protocol';
+import { isSwappedOutError, TargetSession } from './Connection';
 
 const targetSymbol = Symbol('target');
 
@@ -26,7 +27,7 @@ export class Target {
   private _browserContext: BrowserContext;
   _targetId: string;
   private _type: 'page' | 'service-worker' | 'worker';
-  _pagePromise: Promise<Page> | null = null;
+  private _pagePromise: Promise<Page> | null = null;
   private _url: string;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
@@ -52,16 +53,28 @@ export class Target {
       this._pagePromise.then(page => page._didClose());
   }
 
-  _adoptPage(page: Page) {
+  async _swappedIn(oldTarget: Target, session: TargetSession) {
+    this._pagePromise = oldTarget._pagePromise;
+    // Swapped out target should not be accessed by anyone. Reset page promise so that
+    // old target does not close the page on connection reset.
+    oldTarget._pagePromise = null;
+    if (!this._pagePromise)
+      return;
+    const page = await this._pagePromise;
     (page as any)[targetSymbol] = this;
+    page._swapSessionOnNavigation(session).catch(rethrowIfNotSwapped);
   }
 
   async page(): Promise<Page | null> {
     if (this._type === 'page' && !this._pagePromise) {
       const session = this.browser()._connection.session(this._targetId);
-      this._pagePromise = Page.create(session, this._browserContext, this.browser()._defaultViewport).then(page => {
-        this._adoptPage(page);
-        return page;
+      this._pagePromise = new Promise(async f => {
+        const page = new Page(session, this._browserContext);
+        await page._initialize().catch(rethrowIfNotSwapped);
+        if (this.browser()._defaultViewport)
+          await page.setViewport(this.browser()._defaultViewport);
+        (page as any)[targetSymbol] = this;
+        f(page);
       });
     }
     return this._pagePromise;
@@ -82,4 +95,9 @@ export class Target {
   browserContext(): BrowserContext {
     return this._browserContext;
   }
+}
+
+function rethrowIfNotSwapped(e: Error) {
+  if (!isSwappedOutError(e))
+    throw e;
 }

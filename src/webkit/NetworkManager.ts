@@ -63,6 +63,7 @@ export class NetworkManager extends EventEmitter {
 
   async initialize() {
     await this._sesssion.send('Network.enable');
+    await this._sesssion.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
   }
 
   async setExtraHTTPHeaders(extraHTTPHeaders: { [s: string]: string; }) {

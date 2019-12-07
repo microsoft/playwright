@@ -104,7 +104,6 @@ export class Connection extends EventEmitter {
     } else if (object.method === 'Target.targetDestroyed') {
       const session = this._sessions.get(object.params.targetId);
       if (session) {
-        // FIXME: this is a workaround for cross-origin navigation in WebKit.
         session._onClosed();
         this._sessions.delete(object.params.targetId);
       }
@@ -121,6 +120,7 @@ export class Connection extends EventEmitter {
       const oldSession = this._sessions.get(oldTargetId);
       if (!oldSession)
         throw new Error('Unknown old target: ' + oldTargetId);
+      oldSession._swappedOut = true;
     }
   }
 
@@ -158,6 +158,7 @@ export class TargetSession extends EventEmitter {
   private _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private _targetType: string;
   private _sessionId: string;
+  _swappedOut = false;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -194,7 +195,7 @@ export class TargetSession extends EventEmitter {
     }).catch(e => {
       // There is a possible race of the connection closure. We may have received
       // targetDestroyed notification before response for the command, in that
-      // case it's safe to swallow the exception.g
+      // case it's safe to swallow the exception.
       const callback = this._callbacks.get(innerId);
       assert(!callback, 'Callback was not rejected when target was destroyed.');
     });
@@ -218,11 +219,17 @@ export class TargetSession extends EventEmitter {
   }
 
   _onClosed() {
-    for (const callback of this._callbacks.values())
-      callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
+    for (const callback of this._callbacks.values()) {
+      // TODO: make some calls like screenshot catch swapped out error and retry.
+      if (this._swappedOut)
+        callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target was swapped out.`));
+      else
+        callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
+    }
     this._callbacks.clear();
     this._connection = null;
-    this.emit(TargetSessionEvents.Disconnected);
+    if (!this._swappedOut)
+      this.emit(TargetSessionEvents.Disconnected);
   }
 }
 
@@ -236,4 +243,8 @@ function createProtocolError(error: Error, method: string, object: { error: { me
 function rewriteError(error: Error, message: string): Error {
   error.message = message;
   return error;
+}
+
+export function isSwappedOutError(e: Error) {
+  return e.message.includes('Target was swapped out.');
 }

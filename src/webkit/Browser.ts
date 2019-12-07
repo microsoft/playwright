@@ -184,17 +184,8 @@ export class Browser extends EventEmitter {
 
   async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {
     const oldTarget = this._targets.get(oldTargetId);
-    if (!oldTarget._pagePromise)
-      return;
-    const page = await oldTarget._pagePromise;
     const newTarget = this._targets.get(newTargetId);
-    const newSession = this._connection.session(newTargetId);
-    page._swapSessionOnNavigation(newSession);
-    newTarget._pagePromise = oldTarget._pagePromise;
-    newTarget._adoptPage(page);
-    // Old target should not be accessed by anyone. Reset page promise so that
-    // old target does not close the page on connection reset.
-    oldTarget._pagePromise = null;
+    newTarget._swappedIn(oldTarget, this._connection.session(newTargetId));
   }
 
   disconnect() {
