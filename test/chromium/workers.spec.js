@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('../../../test/utils');
+const utils = require('../utils');
 const { waitEvent } = utils;
 
 module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
@@ -23,7 +23,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(FFOX || WEBKIT)('Workers', function() {
+  describe('Workers', function() {
     it('Page.workers', async function({page, server}) {
       await Promise.all([
         new Promise(x => page.workers.once('workercreated', x)),

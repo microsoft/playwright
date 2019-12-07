@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {waitEvent} = require('./utils');
+const { waitEvent } = require('../utils');
 
 module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;

@@ -31,7 +31,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Playwright', function() {
     describe('BrowserFetcher', function() {
-      it.skip(WEBKIT)('should download and extract linux binary', async({server}) => {
+      it.skip(WEBKIT || FFOX)('should download and extract linux binary', async({server}) => {
         const downloadsFolder = await mkdtempAsync(TMP_FOLDER);
         const browserFetcher = playwright.createBrowserFetcher({
           platform: 'linux',

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { waitEvent } = require('../../../test/utils');
+const { waitEvent } = require('../utils');
 
 module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -227,4 +227,28 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await context.close();
     });
   });
+
+  describe('Chromium-Specific Page Tests', function() {
+    it('Page.setRequestInterception should work with intervention headers', async({server, page}) => {
+      server.setRoute('/intervention', (req, res) => res.end(`
+        <script>
+          document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
+        </script>
+      `));
+      server.setRedirect('/intervention.js', '/redirect.js');
+      let serverRequest = null;
+      server.setRoute('/redirect.js', (req, res) => {
+        serverRequest = req;
+        res.end('console.log(1);');
+      });
+
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
+      await page.goto(server.PREFIX + '/intervention');
+      // Check for feature URL substring rather than https://www.chromestatus.com to
+      // make it work with Edgium.
+      expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
+    });
+  });
+
 };
