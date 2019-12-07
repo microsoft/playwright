@@ -18,7 +18,7 @@
 import { EventEmitter } from 'events';
 import { assert, helper, RegisteredListener } from '../helper';
 import { filterCookies, NetworkCookie, SetNetworkCookieParam, rewriteCookies } from '../network';
-import { Connection, ConnectionEvents } from './Connection';
+import { Connection, ConnectionEvents, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
 import { Permissions } from './features/permissions';
 import { Page } from './Page';
@@ -233,7 +233,10 @@ export class Target {
   async page() {
     if (this._type === 'page' && !this._pagePromise) {
       const session = await this._connection.createSession(this._targetId);
-      this._pagePromise = Page.create(session, this._context, this._browser._defaultViewport);
+      this._pagePromise = Page.create(session, this._context, this._browser._defaultViewport).then(page => {
+        session.once(JugglerSessionEvents.Disconnected, () => page._didDisconnect());
+        return page;
+      });
     }
     return this._pagePromise;
   }
