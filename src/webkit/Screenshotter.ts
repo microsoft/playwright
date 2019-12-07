@@ -11,7 +11,7 @@ import { TargetSession } from './Connection';
 export class WKScreenshotDelegate implements ScreenshotterDelegate {
   private _session: TargetSession;
 
-  initialize(session: TargetSession) {
+  setSession(session: TargetSession) {
     this._session = session;
   }
 

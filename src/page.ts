@@ -78,7 +78,7 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
   private _closedPromise: Promise<void>;
   private _disconnected = false;
   private _disconnectedCallback: (e: Error) => void;
-  private _disconnectedPromise: Promise<Error>;
+  readonly _disconnectedPromise: Promise<Error>;
   private _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;

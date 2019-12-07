@@ -15,26 +15,29 @@
  * limitations under the License.
  */
 
-import {assert} from '../helper';
+import {assert, debugError} from '../helper';
 import * as debug from 'debug';
 import {EventEmitter} from 'events';
 import { ConnectionTransport } from '../types';
 import { Protocol } from './protocol';
+import { throws } from 'assert';
 
 const debugProtocol = debug('playwright:protocol');
 const debugWrappedMessage = require('debug')('wrapped');
 
 export const ConnectionEvents = {
-  Disconnected: Symbol('ConnectionEvents.Disconnected'),
   TargetCreated: Symbol('ConnectionEvents.TargetCreated')
 };
 
 export class Connection extends EventEmitter {
   _lastId = 0;
-  private _callbacks = new Map<number, {resolve:(o: any) => void, reject:  (e: Error) => void, error: Error, method: string}>();
-  private _delay: number;
-  private _transport: ConnectionTransport;
-  private _sessions = new Map<string, TargetSession>();
+  private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject:  (e: Error) => void, error: Error, method: string}>();
+  private readonly _delay: number;
+  private readonly _transport: ConnectionTransport;
+  private readonly _sessions = new Map<string, TargetSession>();
+  private _incomingMessageQueue: string[] = [];
+  private _dispatchTimerId?: NodeJS.Timer;
+
   _closed = false;
 
   constructor(transport: ConnectionTransport, delay: number | undefined = 0) {
@@ -68,12 +71,48 @@ export class Connection extends EventEmitter {
     return id;
   }
 
-  async _onMessage(message: string) {
-    if (this._delay)
-      await new Promise(f => setTimeout(f, this._delay));
+  private _onMessage(message: string) {
+    if (this._incomingMessageQueue.length || this._delay)
+      this._enqueueMessage(message);
+    else
+      this._dispatchMessage(message);
+  }
+
+  private _enqueueMessage(message: string) {
+    this._incomingMessageQueue.push(message);
+    this._scheduleQueueDispatch();
+  }
+
+  private _enqueueMessages(messages: string[]) {
+    this._incomingMessageQueue = this._incomingMessageQueue.concat(messages);
+    this._scheduleQueueDispatch();
+  }
+
+  private _scheduleQueueDispatch() {
+    if (this._dispatchTimerId)
+      return;
+    if (!this._incomingMessageQueue.length)
+      return;
+    const delay = this._delay || 0;
+    this._dispatchTimerId = setTimeout(() => {
+      this._dispatchTimerId = undefined;
+      this._dispatchOneMessageFromQueue()
+    }, delay);
+  }
+
+  private _dispatchOneMessageFromQueue() {
+    const message = this._incomingMessageQueue.shift();
+    try {
+      this._dispatchMessage(message);
+    } finally {
+      this._scheduleQueueDispatch();
+    }
+  }
+
+  private _dispatchMessage(message: string) {
     debugProtocol('◀ RECV ' + message);
     const object = JSON.parse(message);
-    this._dispatchTargetMessageToSession(object);
+    const eventWasEmitted = this._dispatchTargetMessageToSession(object, message);
     if (object.id) {
       const callback = this._callbacks.get(object.id);
       // Callbacks could be all rejected if someone has called `.dispose()`.
@@ -86,30 +125,37 @@ export class Connection extends EventEmitter {
       } else {
         assert(this._closed, 'Received response for unknown callback: ' + object.id);
       }
-    } else {
+    } else if (!eventWasEmitted) {
       this.emit(object.method, object.params);
     }
   }
 
-  _dispatchTargetMessageToSession(object: {method: string, params: any}) {
+  _dispatchTargetMessageToSession(object: {method: string, params: any}, wrappedMessage: string) : boolean {
     if (object.method === 'Target.targetCreated') {
-      const {targetId, type} = object.params.targetInfo;
-      const session = new TargetSession(this, type, targetId);
-      this._sessions.set(targetId, session);
+      const targetIndo = object.params.targetInfo as Protocol.Target.TargetInfo;
+      const session = new TargetSession(this, targetIndo);
+      this._sessions.set(session._sessionId, session);
       this.emit(ConnectionEvents.TargetCreated, session, object.params.targetInfo);
+      if (targetIndo.isPaused)
+        this.send('Target.resume', { targetId: targetIndo.targetId }).catch(debugError);
     } else if (object.method === 'Target.targetDestroyed') {
+      // log(`${object.method}`);
       const session = this._sessions.get(object.params.targetId);
       if (session) {
         session._onClosed();
         this._sessions.delete(object.params.targetId);
       }
     } else if (object.method === 'Target.dispatchMessageFromTarget') {
-      const session = this._sessions.get(object.params.targetId);
+      const {targetId, message} = object.params as Protocol.Target.dispatchMessageFromTargetPayload;
+      const session = this._sessions.get(targetId);
       if (!session)
-        throw new Error('Unknown target: ' + object.params.targetId);
-      session._dispatchMessageFromTarget(object.params.message);
+        throw new Error('Unknown target: ' + targetId);
+      if (session.isProvisional())
+        session._addProvisionalMessage(wrappedMessage);
+      else
+        session._dispatchMessageFromTarget(message);
     } else if (object.method === 'Target.didCommitProvisionalTarget') {
-      const {oldTargetId, newTargetId} = object.params;
+      const {oldTargetId, newTargetId} = object.params as Protocol.Target.didCommitProvisionalTargetPayload;
       const newSession = this._sessions.get(newTargetId);
       if (!newSession)
         throw new Error('Unknown new target: ' + newTargetId);
@@ -117,7 +163,9 @@ export class Connection extends EventEmitter {
       if (!oldSession)
         throw new Error('Unknown old target: ' + oldTargetId);
       oldSession._swappedOut = true;
+      this._enqueueMessages(newSession._takeProvisionalMessagesAndCommit());
     }
+    return false;
   }
 
   _onClose() {
@@ -132,7 +180,6 @@ export class Connection extends EventEmitter {
     for (const session of this._sessions.values())
       session._onClosed();
     this._sessions.clear();
-    this.emit(ConnectionEvents.Disconnected);
   }
 
   dispose() {
@@ -149,19 +196,27 @@ export class TargetSession extends EventEmitter {
   _connection: Connection;
   private _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private _targetType: string;
-  private _sessionId: string;
+  _sessionId: string;
   _swappedOut = false;
+  private _provisionalMessages?: string[];
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(connection: Connection, targetType: string, sessionId: string) {
+  constructor(connection: Connection, targetInfo: Protocol.Target.TargetInfo) {
     super();
+    const {targetId, type, isProvisional} = targetInfo;
     this._connection = connection;
-    this._targetType = targetType;
-    this._sessionId = sessionId;
+    this._targetType = type;
+    this._sessionId = targetId;
+    if (isProvisional)
+        this._provisionalMessages = [];
+  }
+
+  isProvisional() : boolean {
+    return !!this._provisionalMessages;
   }
 
   send<T extends keyof Protocol.CommandParameters>(
@@ -194,7 +249,18 @@ export class TargetSession extends EventEmitter {
     return result;
   }
 
+  _addProvisionalMessage(message: string) {
+    this._provisionalMessages.push(message);
+  }
+
+  _takeProvisionalMessagesAndCommit() : string[] {
+    const messages = this._provisionalMessages;
+    this._provisionalMessages = undefined;
+    return messages;
+  }
+
   _dispatchMessageFromTarget(message: string) {
+    console.assert(!this.isProvisional());
     const object = JSON.parse(message);
     debugWrappedMessage('◀ RECV ' + JSON.stringify(object, null, 2));
     if (object.id && this._callbacks.has(object.id)) {

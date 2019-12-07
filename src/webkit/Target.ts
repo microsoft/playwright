@@ -50,7 +50,18 @@ export class Target {
       this._page._didClose();
   }
 
-  async _swappedIn(oldTarget: Target) {
+  async _initializeSession(session: TargetSession) {
+    if (!this._page)
+      return;
+    await (this._page._delegate as FrameManager)._initializeSession(session).catch(e => {
+      // Swallow initialization errors due to newer target swap in,
+      // since we will reinitialize again.
+      if (!isSwappedOutError(e))
+        throw e;
+    });
+  }
+
+  async _swapWith(oldTarget: Target) {
     if (!oldTarget._pagePromise)
       return;
     this._pagePromise = oldTarget._pagePromise;
@@ -59,22 +70,17 @@ export class Target {
     // old target does not close the page on connection reset.
     oldTarget._pagePromise = null;
     oldTarget._page = null;
-    await this._adoptPage();
+    this._adoptPage();
   }
 
-  private async _adoptPage() {
+  private _adoptPage() {
     (this._page as any)[targetSymbol] = this;
     this._session.once(TargetSessionEvents.Disconnected, () => {
       // Once swapped out, we reset _page and won't call _didDisconnect for old session.
       if (this._page)
         this._page._didDisconnect();
     });
-    await (this._page._delegate as FrameManager).initialize(this._session).catch(e => {
-      // Swallow initialization errors due to newer target swap in,
-      // since we will reinitialize again.
-      if (!isSwappedOutError(e))
-        throw e;
-    });
+    (this._page._delegate as FrameManager).setSession(this._session);
   }
 
   async page(): Promise<Page<Browser, BrowserContext>> {
@@ -86,7 +92,8 @@ export class Target {
       const page = frameManager._page;
       this._page = page;
       this._pagePromise = new Promise(async f => {
-        await this._adoptPage();
+        this._adoptPage();
+        await this._initializeSession(this._session);
         if (browser._defaultViewport)
           await page.setViewport(browser._defaultViewport);
         f(page);
