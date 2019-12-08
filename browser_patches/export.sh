@@ -76,7 +76,6 @@ cd $CHECKOUT_PATH
 if git remote get-url $REMOTE_BROWSER_UPSTREAM >/dev/null; then
   if ! [[ $(git remote get-url $REMOTE_BROWSER_UPSTREAM) == "$REMOTE_URL" ]]; then
     echo "ERROR: remote $REMOTE_BROWSER_UPSTREAM is not pointng to '$REMOTE_URL'! run `prepare_checkout.sh` first"
-    exit 1
   fi
 else
   echo "ERROR: checkout does not have $REMOTE_BROWSER_UPSTREAM; run `prepare_checkout.sh` first"
