@@ -3,7 +3,7 @@
 
 export { TimeoutError } from '../Errors';
 export { Browser, BrowserContext } from './Browser';
-export { BrowserFetcher } from './BrowserFetcher';
+export { BrowserFetcher } from '../browserFetcher';
 export { ExecutionContext, JSHandle } from '../javascript';
 export { ElementHandle } from '../dom';
 export { Frame } from '../frames';

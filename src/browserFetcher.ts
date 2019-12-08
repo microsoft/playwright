@@ -18,40 +18,12 @@
 import * as extract from 'extract-zip';
 import * as fs from 'fs';
 import * as ProxyAgent from 'https-proxy-agent';
-import * as os from 'os';
 import * as path from 'path';
 // @ts-ignore
 import { getProxyForUrl } from 'proxy-from-env';
 import * as removeRecursive from 'rimraf';
 import * as URL from 'url';
-import * as util from 'util';
-import { assert, helper } from '../helper';
-
-const DEFAULT_DOWNLOAD_HOST = 'https://storage.googleapis.com';
-
-const supportedPlatforms = ['mac', 'linux', 'win32', 'win64'];
-const downloadURLs = {
-  linux: '%s/chromium-browser-snapshots/Linux_x64/%d/%s.zip',
-  mac: '%s/chromium-browser-snapshots/Mac/%d/%s.zip',
-  win32: '%s/chromium-browser-snapshots/Win/%d/%s.zip',
-  win64: '%s/chromium-browser-snapshots/Win_x64/%d/%s.zip',
-};
-
-function archiveName(platform: string, revision: string): string {
-  if (platform === 'linux')
-    return 'chrome-linux';
-  if (platform === 'mac')
-    return 'chrome-mac';
-  if (platform === 'win32' || platform === 'win64') {
-    // Windows archive name changed at r591479.
-    return parseInt(revision, 10) > 591479 ? 'chrome-win' : 'chrome-win32';
-  }
-  return null;
-}
-
-function downloadURL(platform: string, host: string, revision: string): string {
-  return util.format(downloadURLs[platform], host, revision, archiveName(platform, revision));
-}
+import { assert, helper } from './helper';
 
 const readdirAsync = helper.promisify(fs.readdir.bind(fs));
 const mkdirAsync = helper.promisify(fs.mkdir.bind(fs));
@@ -65,34 +37,23 @@ function existsAsync(filePath) {
   return promise;
 }
 
+type ParamsGetter = (platform: string, revision: string) => { downloadUrl: string, executablePath: string };
+
+export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
+
 export class BrowserFetcher {
   private _downloadsFolder: string;
-  private _downloadHost: string;
   private _platform: string;
+  private _params: ParamsGetter;
 
-  constructor(projectRoot: string, options: BrowserFetcherOptions = {}) {
-    this._downloadsFolder = options.path || path.join(projectRoot, '.local-chromium');
-    this._downloadHost = options.host || DEFAULT_DOWNLOAD_HOST;
-    this._platform = options.platform || '';
-    if (!this._platform) {
-      const platform = os.platform();
-      if (platform === 'darwin')
-        this._platform = 'mac';
-      else if (platform === 'linux')
-        this._platform = 'linux';
-      else if (platform === 'win32')
-        this._platform = os.arch() === 'x64' ? 'win64' : 'win32';
-      assert(this._platform, 'Unsupported platform: ' + os.platform());
-    }
-    assert(supportedPlatforms.includes(this._platform), 'Unsupported platform: ' + this._platform);
-  }
-
-  platform(): string {
-    return this._platform;
+  constructor(downloadsFolder: string, platform: string, params: ParamsGetter) {
+    this._downloadsFolder = downloadsFolder;
+    this._platform = platform;
+    this._params = params;
   }
 
   canDownload(revision: string): Promise<boolean> {
-    const url = downloadURL(this._platform, this._downloadHost, revision);
+    const url = this._params(this._platform, revision).downloadUrl;
     let resolve;
     const promise = new Promise<boolean>(x => resolve = x);
     const request = httpRequest(url, 'HEAD', response => {
@@ -104,8 +65,9 @@ export class BrowserFetcher {
     });
     return promise;
   }
-  async download(revision: string, progressCallback: ((arg0: number, arg1: number) => void) | null): Promise<BrowserFetcherRevisionInfo> {
-    const url = downloadURL(this._platform, this._downloadHost, revision);
+
+  async download(revision: string, progressCallback: OnProgressCallback | null): Promise<BrowserFetcherRevisionInfo> {
+    const url = this._params(this._platform, revision).downloadUrl;
     const zipPath = path.join(this._downloadsFolder, `download-${this._platform}-${revision}.zip`);
     const folderPath = this._getFolderPath(revision);
     if (await existsAsync(folderPath))
@@ -140,18 +102,9 @@ export class BrowserFetcher {
 
   revisionInfo(revision: string): BrowserFetcherRevisionInfo {
     const folderPath = this._getFolderPath(revision);
-    let executablePath = '';
-    if (this._platform === 'mac')
-      executablePath = path.join(folderPath, archiveName(this._platform, revision), 'Chromium.app', 'Contents', 'MacOS', 'Chromium');
-    else if (this._platform === 'linux')
-      executablePath = path.join(folderPath, archiveName(this._platform, revision), 'chrome');
-    else if (this._platform === 'win32' || this._platform === 'win64')
-      executablePath = path.join(folderPath, archiveName(this._platform, revision), 'chrome.exe');
-    else
-      throw new Error('Unsupported platform: ' + this._platform);
-    const url = downloadURL(this._platform, this._downloadHost, revision);
+    const params = this._params(this._platform, revision);
     const local = fs.existsSync(folderPath);
-    return {revision, executablePath, folderPath, local, url};
+    return {revision, executablePath: path.join(folderPath, params.executablePath), folderPath, local, url: params.downloadUrl};
   }
 
   _getFolderPath(revision: string): string {
@@ -165,12 +118,10 @@ function parseFolderPath(folderPath: string): { platform: string; revision: stri
   if (splits.length !== 2)
     return null;
   const [platform, revision] = splits;
-  if (!supportedPlatforms.includes(platform))
-    return null;
   return {platform, revision};
 }
 
-function downloadFile(url: string, destinationPath: string, progressCallback: ((arg0: number, arg1: number) => void) | null): Promise<any> {
+function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | null): Promise<any> {
   let fulfill, reject;
   let downloadedBytes = 0;
   let totalBytes = 0;
@@ -252,7 +203,7 @@ export type BrowserFetcherOptions = {
   host ?: string,
 };
 
-type BrowserFetcherRevisionInfo = {
+export type BrowserFetcherRevisionInfo = {
   folderPath: string,
   executablePath: string,
   url: string,
