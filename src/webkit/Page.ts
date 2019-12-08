@@ -20,7 +20,7 @@ import * as console from '../console';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import * as input from '../input';
 import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions } from '../input';
 import * as js from '../javascript';
@@ -49,6 +49,7 @@ export class Page extends EventEmitter {
   private _frameManager: FrameManager;
   private _bootstrapScripts: string[] = [];
   _javascriptEnabled = true;
+  private _userAgent: string | null = null;
   private _viewport: types.Viewport | null = null;
   _screenshotter: Screenshotter;
   private _workers = new Map<string, Worker>();
@@ -56,14 +57,6 @@ export class Page extends EventEmitter {
   private _sessionListeners: RegisteredListener[] = [];
   private _emulatedMediaType: string | undefined;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
-
-  static async create(session: TargetSession, browserContext: BrowserContext, defaultViewport: types.Viewport | null): Promise<Page> {
-    const page = new Page(session, browserContext);
-    await page._initialize();
-    if (defaultViewport)
-      await page.setViewport(defaultViewport);
-    return page;
-  }
 
   constructor(session: TargetSession, browserContext: BrowserContext) {
     super();
@@ -97,12 +90,16 @@ export class Page extends EventEmitter {
   }
 
   async _initialize() {
-    return Promise.all([
+    await Promise.all([
       this._frameManager.initialize(),
       this._session.send('Console.enable'),
       this._session.send('Dialog.enable'),
       this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
     ]);
+    if (this._userAgent !== null)
+      await this._session.send('Page.overrideUserAgent', { value: this._userAgent });
+    if (this._emulatedMediaType !== undefined)
+      await this._session.send('Page.setEmulatedMedia', { media: this._emulatedMediaType || '' });
   }
 
   _setSession(newSession: TargetSession) {
@@ -130,8 +127,8 @@ export class Page extends EventEmitter {
 
   async _swapSessionOnNavigation(newSession: TargetSession) {
     this._setSession(newSession);
-    await this._frameManager._swapSessionOnNavigation(newSession);
-    await this._initialize().catch(e => debugError('failed to enable agents after swap: ' + e));
+    this._frameManager._swapSessionOnNavigation(newSession);
+    await this._initialize();
   }
 
   browser(): Browser {
@@ -230,6 +227,7 @@ export class Page extends EventEmitter {
   }
 
   async setUserAgent(userAgent: string) {
+    this._userAgent = userAgent;
     await this._session.send('Page.overrideUserAgent', { value: userAgent });
   }
 
@@ -326,9 +324,8 @@ export class Page extends EventEmitter {
     assert(!options.type || mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
     assert(!options.colorScheme || mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
     assert(!options.colorScheme, 'Media feature emulation is not supported');
-    const media = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
-    await this._session.send('Page.setEmulatedMedia', { media: media || '' });
-    this._emulatedMediaType = options.type;
+    this._emulatedMediaType = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
+    await this._session.send('Page.setEmulatedMedia', { media: this._emulatedMediaType || '' });
   }
 
   async setViewport(viewport: types.Viewport) {
