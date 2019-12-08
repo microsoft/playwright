@@ -1,15 +1,15 @@
-From 91d5f54f0fb4fb797022457d3a55f853a432af2b Mon Sep 17 00:00:00 2001
-From: Dmitry Gozman <dgozman@gmail.com>
-Date: Sat, 7 Dec 2019 10:22:51 -0800
-Subject: [PATCH] chore: bootstrap
+From 65db639b474e4ee15df8f8297a4843b47316567a Mon Sep 17 00:00:00 2001
+From: Yury Semikhatsky <yurys@chromium.org>
+Date: Sat, 7 Dec 2019 17:13:09 -0800
+Subject: [PATCH xserver] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
  Source/JavaScriptCore/DerivedSources.make     |   4 +
  .../inspector/InspectorBackendDispatcher.cpp  |  21 +-
  .../inspector/InspectorBackendDispatcher.h    |   5 +-
- .../inspector/InspectorTarget.h               |   3 +
- .../inspector/agents/InspectorTargetAgent.cpp |  46 +-
+ .../inspector/InspectorTarget.h               |   5 +
+ .../inspector/agents/InspectorTargetAgent.cpp |  52 +-
  .../inspector/agents/InspectorTargetAgent.h   |   6 +-
  .../inspector/protocol/Browser.json           | 106 ++++
  .../inspector/protocol/DOM.json               |  39 ++
@@ -17,7 +17,7 @@ Subject: [PATCH] chore: bootstrap
  .../inspector/protocol/Emulation.json         |  22 +
  .../inspector/protocol/Input.json             | 160 ++++++
  .../inspector/protocol/Page.json              | 103 +++-
- .../inspector/protocol/Target.json            |  20 +-
+ .../inspector/protocol/Target.json            |  22 +-
  Source/WebCore/html/FileInputType.cpp         |   6 +
  .../inspector/InspectorInstrumentation.cpp    |  23 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
@@ -80,8 +80,8 @@ Subject: [PATCH] chore: bootstrap
  .../UIProcess/InspectorBrowserAgentClient.h   |  33 ++
  .../WebKit/UIProcess/InspectorDialogAgent.cpp |  64 +++
  .../WebKit/UIProcess/InspectorDialogAgent.h   |  48 ++
- .../WebKit/UIProcess/InspectorTargetProxy.cpp |  18 +-
- .../WebKit/UIProcess/InspectorTargetProxy.h   |  11 +-
+ .../WebKit/UIProcess/InspectorTargetProxy.cpp |  34 +-
+ .../WebKit/UIProcess/InspectorTargetProxy.h   |  13 +-
  .../WebKit/UIProcess/RemoteInspectorPipe.cpp  | 132 +++++
  Source/WebKit/UIProcess/RemoteInspectorPipe.h |  43 ++
  .../AuthenticatorManager.cpp                  |   1 +
@@ -122,7 +122,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 118 files changed, 4750 insertions(+), 93 deletions(-)
+ 118 files changed, 4777 insertions(+), 94 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -321,18 +321,22 @@ index 95d9d81188e..6f96f174dff 100644
      // Note that 'unused' is a workaround so the compiler can pick the right sendResponse based on arity.
      // When <http://webkit.org/b/179847> is fixed or this class is renamed for the JSON::Object case,
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
-index 4b95964db4d..be7510ba897 100644
+index 4b95964db4d..e9a8079d513 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
 +++ b/Source/JavaScriptCore/inspector/InspectorTarget.h
-@@ -45,6 +45,7 @@ public:
+@@ -45,8 +45,11 @@ public:
      // State.
      virtual String identifier() const = 0;
      virtual InspectorTargetType type() const = 0;
 +    virtual String url() const = 0;
  
      virtual bool isProvisional() const { return false; }
++    virtual String oldTargetID() const { return String(); }
++    virtual String openerID() const { return String(); }
      bool isPaused() const { return m_isPaused; }
-@@ -56,6 +57,8 @@ public:
+     void pause();
+     void resume();
+@@ -56,6 +59,8 @@ public:
      virtual void connect(FrontendChannel::ConnectionType) = 0;
      virtual void disconnect() = 0;
      virtual void sendMessageToTargetBackend(const String&) = 0;
@@ -342,7 +346,7 @@ index 4b95964db4d..be7510ba897 100644
  private:
      WTF::Function<void()> m_resumeCallback;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 8fcb5a1e557..06ba4cb74ad 100644
+index 8fcb5a1e557..6363ca2d549 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 @@ -30,11 +30,12 @@
@@ -388,7 +392,7 @@ index 8fcb5a1e557..06ba4cb74ad 100644
  void InspectorTargetAgent::sendMessageFromTargetToFrontend(const String& targetId, const String& message)
  {
      ASSERT_WITH_MESSAGE(m_targets.get(targetId), "Sending a message from an untracked target to the frontend.");
-@@ -109,16 +132,19 @@ static Protocol::Target::TargetInfo::Type targetTypeToProtocolType(InspectorTarg
+@@ -109,16 +132,23 @@ static Protocol::Target::TargetInfo::Type targetTypeToProtocolType(InspectorTarg
      return Protocol::Target::TargetInfo::Type::Page;
  }
  
@@ -400,16 +404,21 @@ index 8fcb5a1e557..06ba4cb74ad 100644
          .setType(targetTypeToProtocolType(target.type()))
 +        .setUrl(target.url())
          .release();
-     if (target.isProvisional())
+-    if (target.isProvisional())
++    if (target.isProvisional()) {
          result->setIsProvisional(true);
++        result->setOldTargetId(target.oldTargetID());
++    }
      if (target.isPaused())
          result->setIsPaused(true);
 +    if (!browserContextID.isEmpty())
 +        result->setBrowserContextId(browserContextID);
++    if (!target.openerID().isEmpty())
++        result->setOpenerId(target.openerID());
      return result;
  }
  
-@@ -134,7 +160,7 @@ void InspectorTargetAgent::targetCreated(InspectorTarget& target)
+@@ -134,7 +164,7 @@ void InspectorTargetAgent::targetCreated(InspectorTarget& target)
          target.pause();
      target.connect(connectionType());
  
@@ -418,7 +427,7 @@ index 8fcb5a1e557..06ba4cb74ad 100644
  }
  
  void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
-@@ -159,6 +185,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
+@@ -159,6 +189,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
      m_frontendDispatcher->didCommitProvisionalTarget(oldTargetID, committedTargetID);
  }
  
@@ -437,7 +446,7 @@ index 8fcb5a1e557..06ba4cb74ad 100644
  FrontendChannel::ConnectionType InspectorTargetAgent::connectionType() const
  {
      return m_router.hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
-@@ -168,7 +206,7 @@ void InspectorTargetAgent::connectToTargets()
+@@ -168,7 +210,7 @@ void InspectorTargetAgent::connectToTargets()
  {
      for (InspectorTarget* target : m_targets.values()) {
          target->connect(connectionType());
@@ -1044,23 +1053,25 @@ index 367d1f235a8..6800d524cc9 100644
      ]
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
-index 52920cded24..77a4ffb9711 100644
+index 52920cded24..30bcc1d463e 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Target.json
-@@ -10,8 +10,10 @@
+@@ -10,8 +10,12 @@
              "properties": [
                  { "name": "targetId", "type": "string", "description": "Unique identifier for the target." },
                  { "name": "type", "type": "string", "enum": ["page", "service-worker", "worker"] },
 -                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "Whether this is a provisional page target." },
 -                { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." }
 +                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "True value indicates that this is a provisional page target i.e. Such target may be created when current page starts cross-origin navigation. Eventually each provisional target is either committed and swaps with the current target or gets destroyed, e.g. in case of load request failure." },
++                { "name": "oldTargetId", "type": "string", "optional": true, "description": "Unique identifier of the target which is going to be replaced if this target is committed. Only set for provisional targets." },
++                { "name": "openerId", "type": "string", "optional": true, "description": "Unique identifier of the opening target. Only set for pages created by window.open()." },
 +                { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." },
 +                { "name": "url", "type": "string" },
 +                { "name": "browserContextId", "$ref": "Browser.ContextID", "optional": true }
              ]
          }
      ],
-@@ -37,6 +39,20 @@
+@@ -37,6 +41,20 @@
                  { "name": "targetId", "type": "string" },
                  { "name": "message", "type": "string", "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
              ]
@@ -4584,10 +4595,17 @@ index 00000000000..203c203a0e2
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
-index 55c8173ab24..ff2e987171f 100644
+index 55c8173ab24..c580bb17868 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
-@@ -32,6 +32,8 @@
+@@ -26,12 +26,15 @@
+ #include "config.h"
+ #include "InspectorTargetProxy.h"
+ 
++#include "APIPageConfiguration.h"
+ #include "ProvisionalPageProxy.h"
+ #include "WebFrameProxy.h"
+ #include "WebPageInspectorTarget.h"
  #include "WebPageMessages.h"
  #include "WebPageProxy.h"
  #include "WebProcessProxy.h"
@@ -4596,7 +4614,7 @@ index 55c8173ab24..ff2e987171f 100644
  
  namespace WebKit {
  
-@@ -39,23 +41,29 @@ using namespace Inspector;
+@@ -39,23 +42,29 @@ using namespace Inspector;
  
  std::unique_ptr<InspectorTargetProxy> InspectorTargetProxy::create(WebPageProxy& page, const String& targetId, Inspector::InspectorTargetType type)
  {
@@ -4631,11 +4649,31 @@ index 55c8173ab24..ff2e987171f 100644
  void InspectorTargetProxy::connect(Inspector::FrontendChannel::ConnectionType connectionType)
  {
      if (m_provisionalPage) {
+@@ -103,4 +112,19 @@ bool InspectorTargetProxy::isProvisional() const
+     return !!m_provisionalPage;
+ }
+ 
++String InspectorTargetProxy::oldTargetID() const
++{
++    if (!m_provisionalPage)
++        return String();
++    return WebPageInspectorTarget::toTargetID(m_page.webPageID());
++}
++
++String InspectorTargetProxy::openerID() const
++{
++    auto* opener = m_page.configuration().relatedPage();
++    if (!opener)
++        return String();
++    return WebPageInspectorTarget::toTargetID(opener->webPageID());
++}
++
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.h b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-index a2239cec8e1..43415afbc77 100644
+index a2239cec8e1..3985edf2081 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.h
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-@@ -37,17 +37,18 @@ class WebPageProxy;
+@@ -37,30 +37,35 @@ class WebPageProxy;
  // NOTE: This UIProcess side InspectorTarget doesn't care about the frontend channel, since
  // any target -> frontend messages will be routed to the WebPageProxy with a targetId.
  
@@ -4656,7 +4694,10 @@ index a2239cec8e1..43415afbc77 100644
  
      void didCommitProvisionalTarget();
      bool isProvisional() const override;
-@@ -56,11 +57,13 @@ public:
++    String oldTargetID() const override;
++    String openerID() const override;
+ 
+     void connect(Inspector::FrontendChannel::ConnectionType) override;
      void disconnect() override;
      void sendMessageToTargetBackend(const String&) override;
  
@@ -7283,5 +7324,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.21.0 (Apple Git-122.2)
+2.17.1
 
