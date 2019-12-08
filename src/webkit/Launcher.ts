@@ -15,12 +15,16 @@
  * limitations under the License.
  */
 import * as childProcess from 'child_process';
-import { debugError, helper } from '../helper';
+import { debugError, helper, assert } from '../helper';
 import { Browser } from './Browser';
-import { BrowserFetcher } from './BrowserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { Connection } from './Connection';
 import * as types from '../types';
 import { PipeTransport } from './PipeTransport';
+import { execSync } from 'child_process';
+import * as path from 'path';
+import * as util from 'util';
+import * as os from 'os';
 
 const DEFAULT_ARGS = [
 ];
@@ -168,7 +172,7 @@ export class Launcher {
   }
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
-    const browserFetcher = new BrowserFetcher(this._projectRoot);
+    const browserFetcher = createBrowserFetcher(this._projectRoot);
     const revisionInfo = browserFetcher.revisionInfo(this._preferredRevision);
     const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return {executablePath: revisionInfo.executablePath, missingText};
@@ -189,3 +193,48 @@ export type LauncherLaunchOptions = {
   defaultViewport?: types.Viewport | null,
   slowMo?: number,
 };
+
+let cachedMacVersion = undefined;
+function getMacVersion() {
+  if (!cachedMacVersion) {
+    const [major, minor] = execSync('sw_vers -productVersion').toString('utf8').trim().split('.');
+    cachedMacVersion = major + '.' + minor;
+  }
+  return cachedMacVersion;
+}
+
+export function createBrowserFetcher(projectRoot: string, options: BrowserFetcherOptions = {}): BrowserFetcher {
+  const downloadURLs = {
+    linux: '%s/builds/webkit/%s/minibrowser-linux.zip',
+    mac: '%s/builds/webkit/%s/minibrowser-mac-%s.zip',
+  };
+
+  const defaultOptions = {
+    path: path.join(projectRoot, '.local-webkit'),
+    host: 'https://playwrightaccount.blob.core.windows.net',
+    platform: (() => {
+      const platform = os.platform();
+      if (platform === 'darwin')
+        return 'mac';
+      if (platform === 'linux')
+        return 'linux';
+      if (platform === 'win32')
+        return 'linux';  // Windows gets linux binaries and uses WSL
+      return platform;
+    })()
+  };
+  options = {
+    ...defaultOptions,
+    ...options,
+  };
+  assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
+
+  return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+    return {
+      downloadUrl: (platform === 'mac') ?
+        util.format(downloadURLs[platform], options.host, revision, getMacVersion()) :
+        util.format(downloadURLs[platform], options.host, revision),
+      executablePath: 'pw_run.sh',
+    };
+  });
+}

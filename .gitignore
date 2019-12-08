@@ -4,7 +4,7 @@
 /test/output-webkit
 /test/test-user-data-dir*
 /.local-chromium/
-/.local-browser/
+/.local-firefox/
 /.local-webkit/
 /.dev_profile*
 .DS_Store

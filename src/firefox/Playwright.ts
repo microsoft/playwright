@@ -15,24 +15,28 @@
  * limitations under the License.
  */
 import { Browser } from './Browser';
-import { BrowserFetcher } from './BrowserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
 import { ConnectionTransport } from '../ConnectionTransport';
 import { DeviceDescriptors } from '../DeviceDescriptors';
 import * as Errors from '../Errors';
-import { Launcher } from './Launcher';
-import {download, RevisionInfo} from '../download';
+import { Launcher, createBrowserFetcher } from './Launcher';
 
 export class Playwright {
   private _projectRoot: string;
   private _launcher: Launcher;
   readonly _revision: string;
-  downloadBrowser: (options?: { onProgress?: (downloadedBytes: number, totalBytes: number) => void; }) => Promise<RevisionInfo>;
 
   constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
     this._launcher = new Launcher(projectRoot, preferredRevision);
     this._revision = preferredRevision;
-    this.downloadBrowser = download.bind(null, this.createBrowserFetcher(), preferredRevision, 'Chromium');
+  }
+
+  async downloadBrowser(options?: BrowserFetcherOptions & { onProgress?: OnProgressCallback }): Promise<BrowserFetcherRevisionInfo> {
+    const fetcher = this.createBrowserFetcher(options);
+    const revisionInfo = fetcher.revisionInfo(this._revision);
+    await fetcher.download(this._revision, options ? options.onProgress : undefined);
+    return revisionInfo;
   }
 
   launch(options: any): Promise<Browser> {
@@ -65,7 +69,7 @@ export class Playwright {
     return this._launcher.defaultArgs(options);
   }
 
-  createBrowserFetcher(options?: any | undefined): BrowserFetcher {
-    return new BrowserFetcher(this._projectRoot, { browser: 'firefox', ...options });
+  createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher {
+    return  createBrowserFetcher(this._projectRoot, options);
   }
 }
