@@ -16,7 +16,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const utils = require('./utils');
+const utils = require('../utils');
 
 module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -405,7 +405,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         urls.add(request.url().split('/').pop());
         page.interception.continue(request);
       });
-      await page.goto(pathToFileURL(path.join(__dirname, 'assets', 'one-style.html')));
+      await page.goto(pathToFileURL(path.join(__dirname, '..', 'assets', 'one-style.html')));
       expect(urls.size).toBe(2);
       expect(urls.has('one-style.html')).toBe(true);
       expect(urls.has('one-style.css')).toBe(true);
@@ -536,7 +536,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it('should allow mocking binary responses', async({page, server}) => {
       await page.interception.enable();
       page.on('request', request => {
-        const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
+        const imageBuffer = fs.readFileSync(path.join(__dirname, '..', 'assets', 'pptr.png'));
         page.interception.fulfill(request, {
           contentType: 'image/png',
           body: imageBuffer

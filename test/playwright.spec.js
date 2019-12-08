@@ -150,9 +150,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       require('./screenshot.spec.js').addTests(testOptions);
       require('./waittask.spec.js').addTests(testOptions);
 
-      require('./features/accessibility.spec.js').addTests(testOptions);
-      require('./features/permissions.spec.js').addTests(testOptions);
-
       if (CHROME) {
         require('./chromium/chromium.spec.js').addTests(testOptions);
         require('./chromium/coverage.spec.js').addTests(testOptions);
@@ -163,7 +160,9 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       }
 
       if (CHROME || FFOX) {
-        require('./requestinterception.spec.js').addTests(testOptions);
+        require('./features/accessibility.spec.js').addTests(testOptions);
+        require('./features/permissions.spec.js').addTests(testOptions);
+        require('./features/requestinterception.spec.js').addTests(testOptions);
       }
 
     });
