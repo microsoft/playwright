@@ -1,7 +1,7 @@
-From 2dfca1d3f0bb8b6291436c8118c979ad5a626d91 Mon Sep 17 00:00:00 2001
-From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Sun, 8 Dec 2019 13:10:50 -0800
-Subject: [PATCH] chore: bootstrap
+From ced6ff2b2f1fb64dda025d0a49b9a35ef39cf61d Mon Sep 17 00:00:00 2001
+From: Yury Semikhatsky <yurys@chromium.org>
+Date: Sun, 8 Dec 2019 15:09:27 -0800
+Subject: [PATCH xserver] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -65,12 +65,12 @@ Subject: [PATCH] chore: bootstrap
  Source/WebKit/UIProcess/API/gtk/webkit2.h     |   1 +
  .../API/wpe/WebKitBrowserInspector.h          |  54 ++
  Source/WebKit/UIProcess/API/wpe/webkit.h      |   1 +
- .../UIProcess/BrowserInspectorController.cpp  | 101 ++++
- .../UIProcess/BrowserInspectorController.h    |  47 ++
+ .../UIProcess/BrowserInspectorController.cpp  | 116 ++++
+ .../UIProcess/BrowserInspectorController.h    |  55 ++
  .../WebKit/UIProcess/BrowserInspectorPipe.cpp |  35 ++
  .../WebKit/UIProcess/BrowserInspectorPipe.h   |  16 +
- .../UIProcess/BrowserInspectorTargetAgent.cpp |  93 +++
- .../UIProcess/BrowserInspectorTargetAgent.h   |  37 ++
+ .../UIProcess/BrowserInspectorTargetAgent.cpp | 111 ++++
+ .../UIProcess/BrowserInspectorTargetAgent.h   |  44 ++
  .../PopUpSOAuthorizationSession.h             |   4 +
  .../PopUpSOAuthorizationSession.mm            |   1 +
  Source/WebKit/UIProcess/Cocoa/UIDelegate.h    |   2 +
@@ -86,8 +86,8 @@ Subject: [PATCH] chore: bootstrap
  Source/WebKit/UIProcess/RemoteInspectorPipe.h |  43 ++
  .../AuthenticatorManager.cpp                  |   1 +
  .../Mock/MockAuthenticatorManager.cpp         |   4 +-
- .../UIProcess/WebPageInspectorController.cpp  |  67 ++-
- .../UIProcess/WebPageInspectorController.h    |   9 +
+ .../UIProcess/WebPageInspectorController.cpp  |  66 ++-
+ .../UIProcess/WebPageInspectorController.h    |  22 +
  .../WebPageInspectorEmulationAgent.cpp        |  48 ++
  .../WebPageInspectorEmulationAgent.h          |  42 ++
  .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 ++++++++
@@ -123,7 +123,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 119 files changed, 4795 insertions(+), 92 deletions(-)
+ 119 files changed, 4855 insertions(+), 92 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -3659,10 +3659,10 @@ index 9cc31cb4968..930499e65b6 100644
  #include <wpe/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 new file mode 100644
-index 00000000000..bd9351774f9
+index 00000000000..260916b29cf
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,116 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3709,19 +3709,22 @@ index 00000000000..bd9351774f9
 +    , m_browserAgentClient(std::move(client))
 +{
 +    m_agents.append(makeUnique<InspectorBrowserAgent>(m_backendDispatcher, m_browserAgentClient.get()));
-+    m_agents.append(makeUnique<BrowserInspectorTargetAgent>(m_backendDispatcher));
++    auto targetAgent = makeUnique<BrowserInspectorTargetAgent>(m_backendDispatcher);
++    m_browserTargetAgent = targetAgent.get();
++    m_agents.append(WTFMove(targetAgent));
 +}
 +
-+BrowserInspectorController::~BrowserInspectorController() = default;
++BrowserInspectorController::~BrowserInspectorController()
++{
++    if (m_frontendChannel)
++        disconnectFrontend();
++}
 +
 +void BrowserInspectorController::connectFrontend(FrontendChannel& frontendChannel)
 +{
 +    ASSERT(!m_frontendChannel);
 +    m_frontendChannel = &frontendChannel;
-+    // Auto-connect to all new pages.
-+    WebPageInspectorController::setCreationListener([this](WebPageInspectorController& inspectorController) {
-+        inspectorController.connectFrontend(*m_frontendChannel);
-+    });
++    WebPageInspectorController::setObserver(this);
 +
 +    bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
 +    m_frontendRouter->connectFrontend(frontendChannel);
@@ -3740,7 +3743,7 @@ index 00000000000..bd9351774f9
 +    if (!m_frontendRouter->hasFrontends())
 +        m_agents.willDestroyFrontendAndBackend(DisconnectReason::InspectorDestroyed);
 +
-+    WebPageInspectorController::setCreationListener(nullptr);
++    WebPageInspectorController::setObserver(nullptr);
 +    m_frontendChannel = nullptr;
 +}
 +
@@ -3761,15 +3764,27 @@ index 00000000000..bd9351774f9
 +        page->inspectorController().disconnectFrontend(*m_frontendChannel);
 +}
 +
++void BrowserInspectorController::didCreateInspectorController(WebPageInspectorController& inspectorController)
++{
++    ASSERT(m_frontendChannel);
++    // Auto-connect to all new pages.
++    inspectorController.connectFrontend(*m_frontendChannel);
++}
++
++void BrowserInspectorController::didCreateTarget(InspectorTarget& target)
++{
++    m_browserTargetAgent->didCreateTarget(target);
++}
++
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.h b/Source/WebKit/UIProcess/BrowserInspectorController.h
 new file mode 100644
-index 00000000000..9de68f71fbd
+index 00000000000..c487dd06ce4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.h
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,55 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3777,6 +3792,7 @@ index 00000000000..9de68f71fbd
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
++#include "WebPageInspectorController.h"
 +#include <JavaScriptCore/InspectorAgentRegistry.h>
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
@@ -3789,9 +3805,10 @@ index 00000000000..9de68f71fbd
 +
 +namespace WebKit {
 +
++class BrowserInspectorTargetAgent;
 +class InspectorBrowserAgentClient;
 +
-+class BrowserInspectorController {
++class BrowserInspectorController : private WebPageInspectorControllerObserver {
 +    WTF_MAKE_NONCOPYABLE(BrowserInspectorController);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
@@ -3804,6 +3821,11 @@ index 00000000000..9de68f71fbd
 +
 +private:
 +    class TargetHandler;
++
++    // WebPageInspectorControllerObserver
++    void didCreateInspectorController(WebPageInspectorController&) override;
++    void didCreateTarget(Inspector::InspectorTarget&) override;
++
 +    void connectToAllPages();
 +    void disconnectFromAllPages();
 +
@@ -3812,6 +3834,7 @@ index 00000000000..9de68f71fbd
 +    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
 +    std::unique_ptr<InspectorBrowserAgentClient> m_browserAgentClient;
 +    Inspector::AgentRegistry m_agents;
++    BrowserInspectorTargetAgent* m_browserTargetAgent { nullptr };
 +};
 +
 +} // namespace WebKit
@@ -3882,10 +3905,10 @@ index 00000000000..ac0caaabaed
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp
 new file mode 100644
-index 00000000000..885d7e02cbe
+index 00000000000..2d089e80978
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,111 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3936,16 +3959,28 @@ index 00000000000..885d7e02cbe
 +
 +void BrowserInspectorTargetAgent::willDestroyFrontendAndBackend(DisconnectReason)
 +{
++    m_shouldPauseOnStart = false;
 +}
 +
-+void BrowserInspectorTargetAgent::setPauseOnStart(ErrorString& error, bool pauseOnStart)
++void BrowserInspectorTargetAgent::setPauseOnStart(ErrorString&, bool pauseOnStart)
 +{
-+    error = "'setPauseOnStart' is not implemented for browser target";
++    m_shouldPauseOnStart = pauseOnStart;
 +}
 +
-+void BrowserInspectorTargetAgent::resume(ErrorString& error, const String& in_targetId)
++void BrowserInspectorTargetAgent::resume(ErrorString& errorString, const String& targetId)
 +{
-+    error = "'resume' is not implemented for browser target";
++    auto* target = targetForId(targetId);
++    if (!target) {
++        errorString = "Missing target for given targetId"_s;
++        return;
++    }
++
++    if (!target->isPaused()) {
++        errorString = "Target for given targetId is not paused"_s;
++        return;
++    }
++
++    target->resume();
 +}
 +
 +void BrowserInspectorTargetAgent::sendMessageToTarget(ErrorString& error, const String& in_targetId, const String& in_message)
@@ -3978,13 +4013,19 @@ index 00000000000..885d7e02cbe
 +    target->close(error);
 +}
 +
++void BrowserInspectorTargetAgent::didCreateTarget(InspectorTarget& target)
++{
++    if (m_shouldPauseOnStart)
++        target.pause();
++}
++
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h
 new file mode 100644
-index 00000000000..b5819aaba56
+index 00000000000..4dbfe313f4e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,44 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3996,6 +4037,10 @@ index 00000000000..b5819aaba56
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
 +#include <wtf/Forward.h>
 +#include <wtf/Noncopyable.h>
++
++namespace Inspector {
++class InspectorTarget;
++}
 +
 +namespace WebKit {
 +
@@ -4017,8 +4062,11 @@ index 00000000000..b5819aaba56
 +    void setPauseOnStart(Inspector::ErrorString&, bool pauseOnStart) override;
 +    void resume(Inspector::ErrorString&, const String& in_targetId) override;
 +
++    void didCreateTarget(Inspector::InspectorTarget&);
++
 +private:
 +    Ref<Inspector::TargetBackendDispatcher> m_backendDispatcher;
++    bool m_shouldPauseOnStart { false };
 +};
 +
 +} // namespace WebKit
@@ -4932,7 +4980,7 @@ index 2c4f9ddabf0..ae9e0b80708 100644
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf7163..a97d8b02630 100644
+index 1ee28bf7163..6ac7ab2efd9 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,13 @@
@@ -4949,18 +4997,15 @@ index 1ee28bf7163..a97d8b02630 100644
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -46,26 +49,59 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -46,26 +49,56 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
-+static WebPageInspectorController::CreationListener& creationListener() {
-+    static NeverDestroyed<WebPageInspectorController::CreationListener> listener;
-+    return listener;
-+}
++WebPageInspectorControllerObserver* WebPageInspectorController::s_observer = nullptr;
 +
-+void WebPageInspectorController::setCreationListener(CreationListener listener)
++void WebPageInspectorController::setObserver(WebPageInspectorControllerObserver* observer)
 +{
-+    creationListener() = listener;
++    s_observer = observer;
 +}
 +
  WebPageInspectorController::WebPageInspectorController(WebPageProxy& page)
@@ -4979,8 +5024,8 @@ index 1ee28bf7163..a97d8b02630 100644
  
      m_agents.append(WTFMove(targetAgent));
 +
-+    if (creationListener())
-+        creationListener()(*this);
++    if (s_observer)
++        s_observer->didCreateInspectorController(*this);
  }
  
  void WebPageInspectorController::init()
@@ -5010,7 +5055,7 @@ index 1ee28bf7163..a97d8b02630 100644
      disconnectAllFrontends();
  
      m_agents.discardValues();
-@@ -80,6 +116,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -80,6 +113,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  {
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -5020,7 +5065,7 @@ index 1ee28bf7163..a97d8b02630 100644
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -134,6 +173,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +170,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -5037,7 +5082,7 @@ index 1ee28bf7163..a97d8b02630 100644
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -150,7 +199,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,7 +196,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
  
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
@@ -5051,7 +5096,7 @@ index 1ee28bf7163..a97d8b02630 100644
  }
  
  void WebPageInspectorController::destroyInspectorTarget(const String& targetId)
-@@ -186,7 +240,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +237,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -5060,7 +5105,13 @@ index 1ee28bf7163..a97d8b02630 100644
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +272,11 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -214,8 +265,17 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
+ 
+ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>&& target)
+ {
++    if (s_observer)
++        s_observer->didCreateTarget(*target);
+     m_targetAgent->targetCreated(*target);
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -5073,24 +5124,46 @@ index 1ee28bf7163..a97d8b02630 100644
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0c..0d1b2a78e65 100644
+index 78caedf0c0c..be5db786c07 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
-@@ -48,7 +48,13 @@ public:
+@@ -37,10 +37,22 @@ namespace Inspector {
+ class BackendDispatcher;
+ class FrontendChannel;
+ class FrontendRouter;
++class InspectorTarget;
+ }
+ 
+ namespace WebKit {
+ 
++class WebPageInspectorController;
++
++class WebPageInspectorControllerObserver {
++public:
++    virtual void didCreateInspectorController(WebPageInspectorController&) = 0;
++    virtual void didCreateTarget(Inspector::InspectorTarget&) = 0;
++
++protected:
++    virtual ~WebPageInspectorControllerObserver() = default;
++};
++
+ class WebPageInspectorController {
+     WTF_MAKE_NONCOPYABLE(WebPageInspectorController);
+     WTF_MAKE_FAST_ALLOCATED;
+@@ -48,7 +60,12 @@ public:
      WebPageInspectorController(WebPageProxy&);
  
      void init();
 +    void didFinishAttachingToWebProcess();
 +
-+    using CreationListener = std::function<void(WebPageInspectorController&)>;
-+    static void setCreationListener(CreationListener);
++    static void setObserver(WebPageInspectorControllerObserver*);
 +
      void pageClosed();
 +    void didProcessAllPendingKeyboardEvents();
  
      bool hasLocalFrontend() const;
  
-@@ -57,6 +63,8 @@ public:
+@@ -57,6 +74,8 @@ public:
      void disconnectAllFrontends();
  
      void dispatchMessageFromFrontend(const String& message);
@@ -5099,7 +5172,7 @@ index 78caedf0c0c..0d1b2a78e65 100644
  
  #if ENABLE(REMOTE_INSPECTOR)
      void setIndicating(bool);
-@@ -75,6 +83,7 @@ public:
+@@ -75,6 +94,7 @@ public:
  
  private:
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -5107,6 +5180,15 @@ index 78caedf0c0c..0d1b2a78e65 100644
  
      WebPageProxy& m_page;
      Ref<Inspector::FrontendRouter> m_frontendRouter;
+@@ -82,6 +102,8 @@ private:
+     Inspector::AgentRegistry m_agents;
+     Inspector::InspectorTargetAgent* m_targetAgent;
+     HashMap<String, std::unique_ptr<InspectorTargetProxy>> m_targets;
++
++    static WebPageInspectorControllerObserver* s_observer;
+ };
+ 
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
 index 00000000000..f10c1651e64
@@ -7373,5 +7455,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.24.0
+2.17.1
 
