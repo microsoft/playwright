@@ -1,7 +1,7 @@
-From 65db639b474e4ee15df8f8297a4843b47316567a Mon Sep 17 00:00:00 2001
-From: Yury Semikhatsky <yurys@chromium.org>
-Date: Sat, 7 Dec 2019 17:13:09 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From 2dfca1d3f0bb8b6291436c8118c979ad5a626d91 Mon Sep 17 00:00:00 2001
+From: Pavel Feldman <pavel.feldman@gmail.com>
+Date: Sun, 8 Dec 2019 13:10:50 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -53,7 +53,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../UIProcess/API/Cocoa/WKWebsiteDataStore.h  |   3 +-
  .../UIProcess/API/Cocoa/WKWebsiteDataStore.mm |   6 +
  .../UIProcess/API/Cocoa/_WKBrowserInspector.h |  33 ++
- .../API/Cocoa/_WKBrowserInspector.mm          |  28 +
+ .../API/Cocoa/_WKBrowserInspector.mm          |  30 +
  .../API/glib/WebKitBrowserInspector.cpp       | 114 ++++
  .../API/glib/WebKitBrowserInspectorPrivate.h  |   9 +
  .../UIProcess/API/glib/WebKitUIClient.cpp     |   4 +
@@ -104,7 +104,8 @@ Subject: [PATCH xserver] chore: bootstrap
  .../WebKit/UIProcess/ios/PageClientImplIOS.mm |   2 +
  .../mac/InspectorBrowserAgentClientMac.h      |  29 +
  .../mac/InspectorBrowserAgentClientMac.mm     |  54 ++
- .../WebKit/UIProcess/mac/PageClientImplMac.mm |   9 +-
+ .../WebKit/UIProcess/mac/PageClientImplMac.h  |   2 +
+ .../WebKit/UIProcess/mac/PageClientImplMac.mm |  21 +
  .../mac/WebPageInspectorEmulationAgentMac.mm  |  21 +
  .../mac/WebPageInspectorInputAgentMac.mm      |  14 +
  .../mac/WebPageInspectorTargetProxyMac.mm     |  20 +
@@ -122,7 +123,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 118 files changed, 4777 insertions(+), 94 deletions(-)
+ 119 files changed, 4795 insertions(+), 92 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -3225,7 +3226,7 @@ index 48467b7a833..eaca62adb3c 100644
      Vector<WebKit::WebsiteDataRecord> result;
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 new file mode 100644
-index 00000000000..aebcbc62682
+index 00000000000..7ed58e57553
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 @@ -0,0 +1,33 @@
@@ -3256,7 +3257,7 @@ index 00000000000..aebcbc62682
 +
 +WK_CLASS_AVAILABLE(macos(10.14.0))
 +@interface _WKBrowserInspector : NSObject
-++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate;
+++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate headless:(BOOL)headless;
 +@end
 +
 +
@@ -3264,10 +3265,10 @@ index 00000000000..aebcbc62682
 +
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 new file mode 100644
-index 00000000000..d9497d2c862
+index 00000000000..b0bdfb97e28
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,30 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -3276,6 +3277,7 @@ index 00000000000..d9497d2c862
 +
 +#include "BrowserInspectorPipe.h"
 +#include "InspectorBrowserAgentClientMac.h"
++#include "PageClientImplMac.h"
 +#include "WebsiteDataStore.h"
 +
 +#import "WKWebView.h"
@@ -3284,10 +3286,11 @@ index 00000000000..d9497d2c862
 +
 +@implementation _WKBrowserInspector
 +
-++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate
+++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate headless:(BOOL)headless
 +{
 +#if ENABLE(REMOTE_INSPECTOR)
 +  WebsiteDataStore::defaultDataStore();
++  PageClientImpl::setHeadless(headless);
 +  initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientMac>(delegate));
 +#endif
 +}
@@ -6238,22 +6241,68 @@ index 00000000000..e3062b3651f
 +}
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.h b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
+index 8016b56c160..bf5422a3a63 100644
+--- a/Source/WebKit/UIProcess/mac/PageClientImplMac.h
++++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
+@@ -53,6 +53,8 @@ class PageClientImpl final : public PageClientImplCocoa
+ #endif
+     {
+ public:
++    static void setHeadless(bool headless);
++
+     PageClientImpl(NSView *, WKWebView *);
+     virtual ~PageClientImpl();
+ 
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index 22653d74398..15b24ee8197 100644
+index 22653d74398..5086bc7375f 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-@@ -205,8 +205,8 @@ bool PageClientImpl::isViewVisible()
-     if (!activeViewWindow)
-         return false;
+@@ -104,6 +104,13 @@ static NSString * const kAXLoadCompleteNotification = @"AXLoadComplete";
+ namespace WebKit {
+ using namespace WebCore;
  
--    if (!activeViewWindow.isVisible)
--        return false;
-+    // if (!activeViewWindow.isVisible)
-+    //     return false;
++static bool _headless = false;
++
++// static
++void PageClientImpl::setHeadless(bool headless) {
++    _headless = true;
++}
++
+ PageClientImpl::PageClientImpl(NSView* view, WKWebView *webView)
+     : PageClientImplCocoa(webView)
+     , m_view(view)
+@@ -162,6 +169,9 @@ NSWindow *PageClientImpl::activeWindow() const
  
-     if (activeView.isHiddenOrHasHiddenAncestor)
-         return false;
-@@ -455,6 +455,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
+ bool PageClientImpl::isViewWindowActive()
+ {
++    if (_headless)
++        return true;
++
+     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
+     NSWindow *activeViewWindow = activeWindow();
+     return activeViewWindow.isKeyWindow || [NSApp keyWindow] == activeViewWindow;
+@@ -169,6 +179,9 @@ bool PageClientImpl::isViewWindowActive()
+ 
+ bool PageClientImpl::isViewFocused()
+ {
++    if (_headless)
++        return true;
++
+     // FIXME: This is called from the WebPageProxy constructor before we have a WebViewImpl.
+     // Once WebViewImpl and PageClient merge, this won't be a problem.
+     if (!m_impl)
+@@ -192,6 +205,9 @@ void PageClientImpl::makeFirstResponder()
+     
+ bool PageClientImpl::isViewVisible()
+ {
++    if (_headless)
++        return true;
++
+     NSView *activeView = this->activeView();
+     NSWindow *activeViewWindow = activeWindow();
+ 
+@@ -455,6 +471,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
  {
@@ -6262,7 +6311,7 @@ index 22653d74398..15b24ee8197 100644
      m_impl->doneWithKeyEvent(event.nativeEvent(), eventWasHandled);
  }
  
-@@ -930,6 +932,9 @@ void PageClientImpl::didRestoreScrollPosition()
+@@ -930,6 +948,9 @@ void PageClientImpl::didRestoreScrollPosition()
  
  bool PageClientImpl::windowIsFrontWindowUnderMouse(const NativeWebMouseEvent& event)
  {
@@ -6809,7 +6858,7 @@ index 45ef1a6424e..6e015fcb8bc 100644
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..c63c8d354cf 100644
+index b6af4ef724f..365582e402d 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
 @@ -33,7 +33,9 @@
@@ -6866,7 +6915,7 @@ index b6af4ef724f..c63c8d354cf 100644
      }
 -
 +    if ([arguments containsObject: @"--inspector-pipe"])
-+        [_WKBrowserInspector initializeRemoteInspectorPipe:self];
++        [_WKBrowserInspector initializeRemoteInspectorPipe:self headless:_headless];
      return self;
  }
  
@@ -7324,5 +7373,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.24.0
 
