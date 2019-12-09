@@ -8,6 +8,12 @@ cd "$(dirname "$0")"
 REMOTE_BROWSER_UPSTREAM="browser_upstream"
 BUILD_BRANCH="playwright-build"
 
+# COLORS
+RED=$'\e[1;31m'
+GRN=$'\e[1;32m'
+YEL=$'\e[1;33m'
+END=$'\e[0m'
+
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: export.sh [firefox|webkit] [custom_checkout_path]"
   echo
@@ -91,43 +97,40 @@ else
   echo "-- checking $FRIENDLY_CHECKOUT_PATH is clean - OK"
 fi
 
+PATCH_NAME=$(ls -1 $EXPORT_PATH/patches)
+if [[ -z "$PATCH_NAME" ]]; then
+  PATCH_NAME="bootstrap.diff"
+  OLD_DIFF=""
+else
+  OLD_DIFF=$(cat $EXPORT_PATH/patches/$PATCH_NAME)
+fi
+
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 NEW_BASE_REVISION=$(git merge-base $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH $CURRENT_BRANCH)
-echo "=============================================================="
-echo "    Repository:                $FRIENDLY_CHECKOUT_PATH"
-echo "    Changes between branches:  $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH..$CURRENT_BRANCH"
-echo "    BASE_REVISION:             $NEW_BASE_REVISION"
-echo
-
-git checkout -b tmpsquash_export_script $NEW_BASE_REVISION
-git merge --squash $CURRENT_BRANCH
-
-HAS_CHANGES="false"
-if ! git commit -am "chore: bootstrap"; then
-  echo "-- no code changes"
-else
-  HAS_CHANGES="true"
-  PATCH_NAME=$(git format-patch -1 HEAD)
-  mv $PATCH_NAME $EXPORT_PATH/patches/
-fi
-git checkout $CURRENT_BRANCH
-git branch -D tmpsquash_export_script
-
-if [[ "$NEW_BASE_REVISION" == "$BASE_REVISION" ]]; then
-  echo "-- no BASE_REVISION changes"
-else
-  HAS_CHANGES="true"
-fi
-
-if [[ $HAS_CHANGES == "false" ]]; then
+NEW_DIFF=$(git diff $NEW_BASE_REVISION $CURRENT_BRANCH)
+# Increment BUILD_NUMBER
+BUILD_NUMBER=$(cat $EXPORT_PATH/BUILD_NUMBER)
+BUILD_NUMBER=$((BUILD_NUMBER+1))
+if [[ "$NEW_BASE_REVISION" == "$BASE_REVISION" && "$OLD_DIFF" == "$NEW_DIFF" ]]; then
+  echo "No changes"
   exit 0
 fi
 
 echo "REMOTE_URL=\"$REMOTE_URL\"
 BASE_BRANCH=\"$BASE_BRANCH\"
 BASE_REVISION=\"$NEW_BASE_REVISION\"" > $EXPORT_PATH/UPSTREAM_CONFIG.sh
-
-# Increment BUILD_NUMBER
-BUILD_NUMBER=$(cat $EXPORT_PATH/BUILD_NUMBER)
-BUILD_NUMBER=$((BUILD_NUMBER+1))
+echo "$NEW_DIFF" > $EXPORT_PATH/patches/$PATCH_NAME
 echo $BUILD_NUMBER > $EXPORT_PATH/BUILD_NUMBER
+
+NEW_BASE_REVISION_TEXT="$NEW_BASE_REVISION (not changed)"
+if [[ "$NEW_BASE_REVISION" != "$BASE_REVISION" ]]; then
+  NEW_BASE_REVISION_TEXT="$YEL$NEW_BASE_REVISION (changed)$END"
+fi
+
+echo "=============================================================="
+echo "    Repository:                $FRIENDLY_CHECKOUT_PATH"
+echo "    Changes between branches:  $REMOTE_BROWSER_UPSTREAM/$BASE_BRANCH..$CURRENT_BRANCH"
+echo "    BASE_REVISION:             $NEW_BASE_REVISION_TEXT"
+echo "    BUILD_NUMBER:              $YEL$BUILD_NUMBER (changed)$END"
+echo "=============================================================="
+echo

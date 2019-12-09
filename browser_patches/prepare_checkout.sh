@@ -30,15 +30,18 @@ fi
 FRIENDLY_CHECKOUT_PATH="";
 CHECKOUT_PATH=""
 PATCHES_PATH=""
+BUILD_NUMBER=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
   CHECKOUT_PATH="$PWD/firefox/checkout"
   PATCHES_PATH="$PWD/firefox/patches"
+  BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
   source "./firefox/UPSTREAM_CONFIG.sh"
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"
   PATCHES_PATH="$PWD/webkit/patches"
+  BUILD_NUMBER=$(cat "$PWD/webkit/BUILD_NUMBER")
   source "./webkit/UPSTREAM_CONFIG.sh"
 else
   echo ERROR: unknown browser - "$1"
@@ -85,15 +88,17 @@ else
   echo "-- adding |$REMOTE_BROWSER_UPSTREAM| remote to $REMOTE_URL"
   git remote add $REMOTE_BROWSER_UPSTREAM $REMOTE_URL
 fi
-git fetch $REMOTE_BROWSER_UPSTREAM $BASE_BRANCH
 
 # Check if we have the $BASE_REVISION commit in GIT
 if ! git cat-file -e $BASE_REVISION^{commit}; then
-  echo "ERROR: $FRIENDLY_CHECKOUT_PATH/ does not include the BASE_REVISION (@$BASE_REVISION). Wrong revision number?"
-  exit 1
-else
-  echo "-- checking $FRIENDLY_CHECKOUT_PATH repo has BASE_REVISION (@$BASE_REVISION) commit - OK"
+  # If not, fetch from REMOTE_BROWSER_UPSTREAM and check one more time.
+  git fetch $REMOTE_BROWSER_UPSTREAM $BASE_BRANCH
+  if ! git cat-file -e $BASE_REVISION^{commit}; then
+    echo "ERROR: $FRIENDLY_CHECKOUT_PATH/ does not include the BASE_REVISION (@$BASE_REVISION). Wrong revision number?"
+    exit 1
+  fi
 fi
+echo "-- checking $FRIENDLY_CHECKOUT_PATH repo has BASE_REVISION (@$BASE_REVISION) commit - OK"
 
 # Check out the $BASE_REVISION
 git checkout $BASE_REVISION
@@ -103,8 +108,9 @@ if git show-ref --verify --quiet refs/heads/playwright-build; then
   git branch -D playwright-build
 fi
 git checkout -b playwright-build
-echo "-- applying all patches"
-git am $PATCHES_PATH/*
+echo "-- applying patches"
+git apply --index $PATCHES_PATH/*
+git commit -a --author="playwright-devops <devops@playwright.com>" -m "chore: bootstrap build #$BUILD_NUMBER"
 
 echo
 echo
