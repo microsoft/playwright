@@ -26,11 +26,11 @@ import { Protocol } from './protocol';
 import * as types from '../types';
 
 export class Browser extends EventEmitter {
-  _defaultViewport: types.Viewport;
-  private _process: childProcess.ChildProcess;
-  _connection: Connection;
+  readonly _defaultViewport: types.Viewport;
+  private readonly _process: childProcess.ChildProcess;
+  readonly _connection: Connection;
   private _closeCallback: () => Promise<void>;
-  private _defaultContext: BrowserContext;
+  private readonly _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
   private _eventListeners: RegisteredListener[];
@@ -173,7 +173,7 @@ export class Browser extends EventEmitter {
   }
 
   async _pages(context: BrowserContext): Promise<Page[]> {
-    const targets = this.targets().filter(target => target.browserContext() === context && target.type() === 'page');
+    const targets = this.targets().filter(target => target._browserContext === context && target._type === 'page');
     const pages = await Promise.all(targets.map(target => target.page()));
     return pages.filter(page => !!page);
   }
@@ -185,7 +185,7 @@ export class Browser extends EventEmitter {
   async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {
     const oldTarget = this._targets.get(oldTargetId);
     const newTarget = this._targets.get(newTargetId);
-    newTarget._swappedIn(oldTarget, this._connection.session(newTargetId));
+    newTarget._swappedIn(oldTarget);
   }
 
   disconnect() {

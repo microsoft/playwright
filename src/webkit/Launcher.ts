@@ -131,7 +131,7 @@ export class Launcher {
       const transport = new PipeTransport(webkitProcess.stdio[3] as NodeJS.WritableStream, webkitProcess.stdio[4] as NodeJS.ReadableStream);
       connection = new Connection('', transport, slowMo);
       const browser = new Browser(connection, defaultViewport, webkitProcess, gracefullyCloseWebkit);
-      await browser._waitForTarget(t => t.type() === 'page');
+      await browser._waitForTarget(t => t._type === 'page');
       return browser;
     } catch (e) {
       killWebKit();
