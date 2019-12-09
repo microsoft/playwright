@@ -16,18 +16,23 @@
  */
 
 export const Events = {
-  Browser: {
-    Disconnected: 'disconnected'
+  Page: {
+    Close: 'close',
+    Console: 'console',
+    Dialog: 'dialog',
+    FileChooser: 'filechooser',
+    DOMContentLoaded: 'domcontentloaded',
+    // Can't use just 'error' due to node.js special treatment of error events.
+    // @see https://nodejs.org/api/events.html#events_error_events
+    PageError: 'pageerror',
+    Request: 'request',
+    Response: 'response',
+    RequestFailed: 'requestfailed',
+    RequestFinished: 'requestfinished',
+    FrameAttached: 'frameattached',
+    FrameDetached: 'framedetached',
+    FrameNavigated: 'framenavigated',
+    Load: 'load',
+    Popup: 'popup',
   },
-
-  Chromium: {
-    TargetCreated: 'targetcreated',
-    TargetDestroyed: 'targetdestroyed',
-    TargetChanged: 'targetchanged',
-  },
-
-  Workers: {
-    WorkerCreated: 'workercreated',
-    WorkerDestroyed: 'workerdestroyed',
-  }
 };

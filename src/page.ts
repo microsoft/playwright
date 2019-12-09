@@ -16,86 +16,97 @@
  */
 
 import { EventEmitter } from 'events';
-import * as console from '../console';
-import * as dom from '../dom';
-import * as frames from '../frames';
-import { assert, debugError, helper } from '../helper';
-import * as input from '../input';
-import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions, PointerActionOptions, SelectOption } from '../input';
-import * as js from '../javascript';
-import * as network from '../network';
-import { Screenshotter } from '../screenshotter';
-import { TimeoutSettings } from '../TimeoutSettings';
-import * as types from '../types';
-import { Browser } from './Browser';
-import { BrowserContext } from './BrowserContext';
-import { CDPSession } from './Connection';
+import * as console from './console';
+import * as dom from './dom';
+import * as frames from './frames';
+import { assert, debugError, helper } from './helper';
+import * as input from './input';
+import * as js from './javascript';
+import * as network from './network';
+import { Screenshotter, ScreenshotterDelegate } from './screenshotter';
+import { TimeoutSettings } from './TimeoutSettings';
+import * as types from './types';
 import { Events } from './events';
-import { Accessibility } from './features/accessibility';
-import { Coverage } from './features/coverage';
-import { Interception } from './features/interception';
-import { Overrides } from './features/overrides';
-import { PDF } from './features/pdf';
-import { Workers } from './features/workers';
-import { FrameManager, FrameManagerEvents } from './FrameManager';
-import { RawKeyboardImpl, RawMouseImpl } from './Input';
-import { NetworkManagerEvents } from './NetworkManager';
-import { CRScreenshotDelegate } from './Screenshotter';
-import { Protocol } from './protocol';
 
-export class Page extends EventEmitter {
+export interface PageDelegate {
+  readonly rawMouse: input.RawMouse;
+  readonly rawKeyboard: input.RawKeyboard;
+  readonly screenshotterDelegate: ScreenshotterDelegate;
+  mainFrame(): frames.Frame;
+  frames(): frames.Frame[];
+  reload(options?: frames.NavigateOptions): Promise<network.Response | null>;
+  goBack(options?: frames.NavigateOptions): Promise<network.Response | null>;
+  goForward(options?: frames.NavigateOptions): Promise<network.Response | null>;
+  exposeBinding(name: string, bindingFunction: string): Promise<void>;
+  evaluateOnNewDocument(source: string): Promise<void>;
+  closePage(runBeforeUnload: boolean): Promise<void>;
+
+  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
+  setUserAgent(userAgent: string): Promise<void>;
+  setJavaScriptEnabled(enabled: boolean): Promise<void>;
+  setBypassCSP(enabled: boolean): Promise<void>;
+  setViewport(viewport: types.Viewport): Promise<void>;
+  setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void>;
+  setCacheEnabled(enabled: boolean): Promise<void>;
+}
+
+interface BrowserContextInterface<Browser> {
+  browser(): Browser;
+}
+
+type PageState = {
+  viewport: types.Viewport | null;
+  userAgent: string | null;
+  mediaType: input.MediaType | null;
+  mediaColorScheme: input.MediaColorScheme | null;
+  javascriptEnabled: boolean | null;
+  extraHTTPHeaders: network.Headers | null;
+  bypassCSP: boolean | null;
+  cacheEnabled: boolean | null;
+};
+
+export type FileChooser = {
+  element: dom.ElementHandle,
+  multiple: boolean
+};
+
+export class Page<Browser, BrowserContext extends BrowserContextInterface<Browser>> extends EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
   private _disconnected = false;
   private _disconnectedCallback: (e: Error) => void;
   private _disconnectedPromise: Promise<Error>;
-  _client: CDPSession;
   private _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
-  private _timeoutSettings: TimeoutSettings;
-  _frameManager: FrameManager;
-  readonly accessibility: Accessibility;
-  readonly coverage: Coverage;
-  readonly overrides: Overrides;
-  readonly interception: Interception;
-  readonly pdf: PDF;
-  readonly workers: Workers;
+  readonly _timeoutSettings: TimeoutSettings;
+  readonly _delegate: PageDelegate;
+  readonly _state: PageState;
   private _pageBindings = new Map<string, Function>();
-  _javascriptEnabled = true;
-  private _viewport: types.Viewport | null = null;
-  _screenshotter: Screenshotter;
+  readonly _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
-  private _emulatedMediaType: string | undefined;
 
-  constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
+  constructor(delegate: PageDelegate, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
     super();
-    this._client = client;
+    this._delegate = delegate;
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
-    this.keyboard = new input.Keyboard(new RawKeyboardImpl(client));
-    this.mouse = new input.Mouse(new RawMouseImpl(client), this.keyboard);
+    this._state = {
+      viewport: null,
+      userAgent: null,
+      mediaType: null,
+      mediaColorScheme: null,
+      javascriptEnabled: null,
+      extraHTTPHeaders: null,
+      bypassCSP: null,
+      cacheEnabled: null,
+    };
+    this.keyboard = new input.Keyboard(delegate.rawKeyboard);
+    this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
     this._timeoutSettings = new TimeoutSettings();
-    this.accessibility = new Accessibility(client);
-    this._frameManager = new FrameManager(client, this, ignoreHTTPSErrors, this._timeoutSettings);
-    this.coverage = new Coverage(client);
-    this.pdf = new PDF(client);
-    this.workers = new Workers(client, this._addConsoleMessage.bind(this), error => this.emit(Events.Page.PageError, error));
-    this.overrides = new Overrides(client);
-    this.interception = new Interception(this._frameManager.networkManager());
-    this._screenshotter = new Screenshotter(this, new CRScreenshotDelegate(this._client), browserContext.browser());
-
-    this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
-    this._frameManager.on(FrameManagerEvents.FrameDetached, event => this.emit(Events.Page.FrameDetached, event));
-    this._frameManager.on(FrameManagerEvents.FrameNavigated, event => this.emit(Events.Page.FrameNavigated, event));
-
-    const networkManager = this._frameManager.networkManager();
-    networkManager.on(NetworkManagerEvents.Request, event => this.emit(Events.Page.Request, event));
-    networkManager.on(NetworkManagerEvents.Response, event => this.emit(Events.Page.Response, event));
-    networkManager.on(NetworkManagerEvents.RequestFailed, event => this.emit(Events.Page.RequestFailed, event));
-    networkManager.on(NetworkManagerEvents.RequestFinished, event => this.emit(Events.Page.RequestFinished, event));
+    this._screenshotter = new Screenshotter(this, delegate.screenshotterDelegate, browserContext.browser());
   }
 
   _didClose() {
@@ -147,11 +158,11 @@ export class Page extends EventEmitter {
   }
 
   mainFrame(): frames.Frame {
-    return this._frameManager.mainFrame();
+    return this._delegate.mainFrame();
   }
 
   frames(): frames.Frame[] {
-    return this._frameManager.frames();
+    return this._delegate.frames();
   }
 
   setDefaultNavigationTimeout(timeout: number) {
@@ -199,7 +210,7 @@ export class Page extends EventEmitter {
     if (this._pageBindings.has(name))
       throw new Error(`Failed to add page binding with name ${name}: window['${name}'] already exists!`);
     this._pageBindings.set(name, playwrightFunction);
-    await this._frameManager._exposeBinding(name, helper.evaluationString(addPageBinding, name));
+    await this._delegate.exposeBinding(name, helper.evaluationString(addPageBinding, name));
 
     function addPageBinding(bindingName: string) {
       const binding = window[bindingName];
@@ -219,12 +230,14 @@ export class Page extends EventEmitter {
     }
   }
 
-  async setExtraHTTPHeaders(headers: { [s: string]: string; }) {
-    return this._frameManager.networkManager().setExtraHTTPHeaders(headers);
+  setExtraHTTPHeaders(headers: network.Headers) {
+    this._state.extraHTTPHeaders = {...headers};
+    return this._delegate.setExtraHTTPHeaders(headers);
   }
 
-  async setUserAgent(userAgent: string) {
-    return this._frameManager.networkManager().setUserAgent(userAgent);
+  setUserAgent(userAgent: string) {
+    this._state.userAgent = userAgent;
+    return this._delegate.setUserAgent(userAgent);
   }
 
   async _onBindingCalled(payload: string, context: js.ExecutionContext) {
@@ -271,28 +284,24 @@ export class Page extends EventEmitter {
     return this.mainFrame().url();
   }
 
-  async content(): Promise<string> {
-    return await this.mainFrame().content();
+  content(): Promise<string> {
+    return this.mainFrame().content();
   }
 
-  async setContent(html: string, options: { timeout?: number; waitUntil?: string | string[]; } | undefined) {
-    await this.mainFrame().setContent(html, options);
+  setContent(html: string, options?: frames.NavigateOptions): Promise<void> {
+    return this.mainFrame().setContent(html, options);
   }
 
-  async goto(url: string, options: { referer?: string; timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
-    return await this.mainFrame().goto(url, options);
+  goto(url: string, options?: frames.GotoOptions): Promise<network.Response | null> {
+    return this.mainFrame().goto(url, options);
   }
 
-  async reload(options: { timeout?: number; waitUntil?: string | string[]; } = {}): Promise<network.Response | null> {
-    const [response] = await Promise.all([
-      this.waitForNavigation(options),
-      this._client.send('Page.reload')
-    ]);
-    return response;
+  reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._delegate.reload(options);
   }
 
-  async waitForNavigation(options: { timeout?: number; waitUntil?: string | string[]; } = {}): Promise<network.Response | null> {
-    return await this.mainFrame().waitForNavigation(options);
+  waitForNavigation(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this.mainFrame().waitForNavigation(options);
   }
 
   async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<Request> {
@@ -321,24 +330,12 @@ export class Page extends EventEmitter {
     }, timeout, this._disconnectedPromise);
   }
 
-  async goBack(options: { timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
-    return this._go(-1, options);
+  goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._delegate.goBack(options);
   }
 
-  async goForward(options: { timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
-    return this._go(+1, options);
-  }
-
-  async _go(delta, options: { timeout?: number; waitUntil?: string | string[]; } | undefined): Promise<network.Response | null> {
-    const history = await this._client.send('Page.getNavigationHistory');
-    const entry = history.entries[history.currentIndex + delta];
-    if (!entry)
-      return null;
-    const [response] = await Promise.all([
-      this.waitForNavigation(options),
-      this._client.send('Page.navigateToHistoryEntry', {entryId: entry.id}),
-    ]);
-    return response;
+  goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._delegate.goForward(options);
   }
 
   async emulate(options: { viewport: types.Viewport; userAgent: string; }) {
@@ -349,52 +346,41 @@ export class Page extends EventEmitter {
   }
 
   async setJavaScriptEnabled(enabled: boolean) {
-    if (this._javascriptEnabled === enabled)
+    if (this._state.javascriptEnabled === enabled)
       return;
-    this._javascriptEnabled = enabled;
-    await this._client.send('Emulation.setScriptExecutionDisabled', { value: !enabled });
+    this._state.javascriptEnabled = enabled;
+    await this._delegate.setJavaScriptEnabled(enabled);
   }
 
   async setBypassCSP(enabled: boolean) {
-    await this._client.send('Page.setBypassCSP', { enabled });
+    if (this._state.bypassCSP === enabled)
+      return;
+    await this._delegate.setBypassCSP(enabled);
   }
 
-  async emulateMedia(options: {
-      type?: string,
-      colorScheme?: 'dark' | 'light' | 'no-preference' }) {
-    assert(!options.type || mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
-    assert(!options.colorScheme || mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
-    const media = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
-    const features = typeof options.colorScheme === 'undefined' ? [] : [{ name: 'prefers-color-scheme', value: options.colorScheme }];
-    await this._client.send('Emulation.setEmulatedMedia', { media: media || '', features });
-    this._emulatedMediaType = options.type;
+  async emulateMedia(options: { type?: input.MediaType, colorScheme?: input.MediaColorScheme }) {
+    assert(!options.type || input.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
+    assert(!options.colorScheme || input.mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
+    if (options.type !== undefined)
+      this._state.mediaType = options.type;
+    if (options.colorScheme !== undefined)
+      this._state.mediaColorScheme = options.colorScheme;
+    await this._delegate.setEmulateMedia(this._state.mediaType, this._state.mediaColorScheme);
   }
 
   async setViewport(viewport: types.Viewport) {
-    const {
-      width,
-      height,
-      isMobile = false,
-      deviceScaleFactor = 1,
-      hasTouch = false,
-      isLandscape = false,
-    } = viewport;
-    const screenOrientation: Protocol.Emulation.ScreenOrientation = isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' };
-    await Promise.all([
-      this._client.send('Emulation.setDeviceMetricsOverride', { mobile: isMobile, width, height, deviceScaleFactor, screenOrientation }),
-      this._client.send('Emulation.setTouchEmulationEnabled', {
-        enabled: hasTouch
-      })
-    ]);
-    const oldIsMobile = this._viewport ? !!this._viewport.isMobile : false;
-    const oldHasTouch = this._viewport ? !!this._viewport.hasTouch : false;
-    this._viewport = viewport;
-    if (oldIsMobile !== isMobile || oldHasTouch !== hasTouch)
+    const oldIsMobile = this._state.viewport ? !!this._state.viewport.isMobile : false;
+    const oldHasTouch = this._state.viewport ? !!this._state.viewport.hasTouch : false;
+    const newIsMobile = !!viewport.isMobile;
+    const newHasTouch = !!viewport.hasTouch;
+    this._state.viewport = { ...viewport };
+    await this._delegate.setViewport(viewport);
+    if (oldIsMobile !== newIsMobile || oldHasTouch !== newHasTouch)
       await this.reload();
   }
 
   viewport(): types.Viewport | null {
-    return this._viewport;
+    return this._state.viewport;
   }
 
   evaluate: types.Evaluate = (pageFunction, ...args) => {
@@ -403,45 +389,45 @@ export class Page extends EventEmitter {
 
   async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
     const source = helper.evaluationString(pageFunction, ...args);
-    await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source });
+    await this._delegate.evaluateOnNewDocument(source);
   }
 
   async setCacheEnabled(enabled: boolean = true) {
-    await this._frameManager.networkManager().setCacheEnabled(enabled);
+    if (this._state.cacheEnabled === enabled)
+      return;
+    this._state.cacheEnabled = enabled;
+    await this._delegate.setCacheEnabled(enabled);
   }
 
   screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
     return this._screenshotter.screenshotPage(options);
   }
 
-  async title(): Promise<string> {
+  title(): Promise<string> {
     return this.mainFrame().title();
   }
 
   async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
     assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
     const runBeforeUnload = !!options.runBeforeUnload;
-    if (runBeforeUnload) {
-      await this._client.send('Page.close');
-    } else {
-      await this.browser()._closePage(this);
+    await this._delegate.closePage(runBeforeUnload);
+    if (!runBeforeUnload)
       await this._closedPromise;
-    }
   }
 
   isClosed(): boolean {
     return this._closed;
   }
 
-  click(selector: string | types.Selector, options?: ClickOptions) {
+  click(selector: string | types.Selector, options?: input.ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string | types.Selector, options?: MultiClickOptions) {
+  dblclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string | types.Selector, options?: MultiClickOptions) {
+  tripleclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
@@ -453,11 +439,11 @@ export class Page extends EventEmitter {
     return this.mainFrame().focus(selector);
   }
 
-  hover(selector: string | types.Selector, options?: PointerActionOptions) {
+  hover(selector: string | types.Selector, options?: input.PointerActionOptions) {
     return this.mainFrame().hover(selector, options);
   }
 
-  select(selector: string | types.Selector, ...values: (string | dom.ElementHandle | SelectOption)[]): Promise<string[]> {
+  select(selector: string | types.Selector, ...values: (string | dom.ElementHandle | input.SelectOption)[]): Promise<string[]> {
     return this.mainFrame().select(selector, ...values);
   }
 
@@ -481,8 +467,3 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 }
-
-type FileChooser = {
-  element: dom.ElementHandle,
-  multiple: boolean
-};

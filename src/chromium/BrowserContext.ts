@@ -20,7 +20,7 @@ import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } f
 import { Browser } from './Browser';
 import { CDPSession } from './Connection';
 import { Permissions } from './features/permissions';
-import { Page } from './Page';
+import { Page } from '../page';
 
 export class BrowserContext {
   readonly permissions: Permissions;
@@ -34,7 +34,7 @@ export class BrowserContext {
     this.permissions = new Permissions(client, contextId);
   }
 
-  pages(): Promise<Page[]> {
+  pages(): Promise<Page<Browser, BrowserContext>[]> {
     return this._browser._pages(this);
   }
 
@@ -42,7 +42,7 @@ export class BrowserContext {
     return !!this._id;
   }
 
-  newPage(): Promise<Page> {
+  newPage(): Promise<Page<Browser, BrowserContext>> {
     return this._browser._createPageInContext(this._id);
   }
 
