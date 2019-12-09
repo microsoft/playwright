@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import { debugError, assert } from '../helper';
-import * as input from '../input';
 import * as dom from '../dom';
 import * as frames from '../frames';
+import { debugError } from '../helper';
+import * as input from '../input';
 import * as types from '../types';
 import { TargetSession } from './Connection';
+import { ExecutionContextDelegate } from './ExecutionContext';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
 
@@ -99,8 +100,11 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
-    assert(false, 'Multiple isolated worlds are not implemented');
-    return handle;
+    const result = await this._client.send('DOM.resolveNode', {
+      objectId: toRemoteObject(handle).objectId,
+      executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId
+    });
+    return to.context._createHandle(result.object) as dom.ElementHandle<T>;
   }
 }
 

@@ -116,7 +116,6 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     try {
       callFunctionOnPromise = this._session.send('Runtime.callFunctionOn', {
         functionDeclaration: functionText + '\n' + suffix + '\n',
-        // TODO(yurys): support executionContextId in WebKit
         objectId: thisObjectId,
         arguments: serializableArgs.map((arg: any) => this._convertArgument(arg)),
         returnByValue: false,
