@@ -19,7 +19,7 @@ import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
-import { Connection } from './Connection';
+import { Connection, ConnectionEvents, TargetSession } from './Connection';
 import { Page } from './Page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
@@ -55,7 +55,7 @@ export class Browser extends EventEmitter {
     this._contexts = new Map();
 
     this._eventListeners = [
-      helper.addEventListener(this._connection, 'Target.targetCreated', this._onTargetCreated.bind(this)),
+      helper.addEventListener(this._connection, ConnectionEvents.TargetCreated, this._onTargetCreated.bind(this)),
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._connection, 'Target.didCommitProvisionalTarget', this._onProvisionalTargetCommitted.bind(this)),
     ];
@@ -142,7 +142,7 @@ export class Browser extends EventEmitter {
     return contextPages.reduce((acc, x) => acc.concat(x), []);
   }
 
-  async _onTargetCreated({targetInfo}) {
+  async _onTargetCreated(session: TargetSession, targetInfo: Protocol.Target.TargetInfo) {
     let context = null;
     if (targetInfo.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
@@ -155,7 +155,7 @@ export class Browser extends EventEmitter {
     }
     if (!context)
       context =  this._defaultContext;
-    const target = new Target(targetInfo, context);
+    const target = new Target(session, targetInfo, context);
     this._targets.set(targetInfo.targetId, target);
     this._privateEvents.emit(BrowserEvents.TargetCreated, target);
   }
