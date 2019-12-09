@@ -17,10 +17,9 @@
 
 import { EventEmitter } from 'events';
 import * as console from '../console';
-import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, helper } from '../helper';
 import * as input from '../input';
 import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions } from '../input';
 import * as js from '../javascript';
@@ -29,7 +28,7 @@ import { Screenshotter } from '../screenshotter';
 import { TimeoutSettings } from '../TimeoutSettings';
 import * as types from '../types';
 import { Browser, BrowserContext } from './Browser';
-import { TargetSession, TargetSessionEvents } from './Connection';
+import { TargetSession } from './Connection';
 import { Events } from './events';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
@@ -41,6 +40,9 @@ export class Page extends EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
+  private _disconnected = false;
+  private _disconnectedCallback: (e: Error) => void;
+  private _disconnectedPromise: Promise<Error>;
   _session: TargetSession;
   private _browserContext: BrowserContext;
   private _keyboard: input.Keyboard;
@@ -49,18 +51,16 @@ export class Page extends EventEmitter {
   private _frameManager: FrameManager;
   private _bootstrapScripts: string[] = [];
   _javascriptEnabled = true;
-  private _userAgent: string | null = null;
+  _userAgent: string | null = null;
+  _emulatedMediaType: string | undefined;
   private _viewport: types.Viewport | null = null;
   _screenshotter: Screenshotter;
-  private _workers = new Map<string, Worker>();
-  private _disconnectPromise: Promise<Error> | undefined;
-  private _sessionListeners: RegisteredListener[] = [];
-  private _emulatedMediaType: string | undefined;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
   constructor(session: TargetSession, browserContext: BrowserContext) {
     super();
     this._closedPromise = new Promise(f => this._closedCallback = f);
+    this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
     this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
@@ -68,7 +68,7 @@ export class Page extends EventEmitter {
 
     this._screenshotter = new Screenshotter(this, new WKScreenshotDelegate(session), browserContext.browser());
 
-    this._setSession(session);
+    this._session = session;
     this._browserContext = browserContext;
 
     this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
@@ -89,46 +89,20 @@ export class Page extends EventEmitter {
     this._closedCallback();
   }
 
-  async _initialize() {
-    await Promise.all([
-      this._frameManager.initialize(),
-      this._session.send('Console.enable'),
-      this._session.send('Dialog.enable'),
-      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
-    ]);
-    if (this._userAgent !== null)
-      await this._session.send('Page.overrideUserAgent', { value: this._userAgent });
-    if (this._emulatedMediaType !== undefined)
-      await this._session.send('Page.setEmulatedMedia', { media: this._emulatedMediaType || '' });
+  _didDisconnect() {
+    assert(!this._disconnected, 'Page disconnected twice');
+    this._disconnected = true;
+    this._frameManager.disconnectFromTarget();
+    this._disconnectedCallback(new Error('Target closed'));
   }
 
-  _setSession(newSession: TargetSession) {
-    helper.removeEventListeners(this._sessionListeners);
-    this._session = newSession;
-    this._sessionListeners = [
-      helper.addEventListener(this._session, TargetSessionEvents.Disconnected, () => this._frameManager.disconnectFromTarget()),
-      helper.addEventListener(this._session, 'Page.loadEventFired', event => this.emit(Events.Page.Load)),
-      helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
-      helper.addEventListener(this._session, 'Page.domContentEventFired', event => this.emit(Events.Page.DOMContentLoaded)),
-      helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
-      helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event))
-    ];
-  }
-
-  _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    this.emit(Events.Page.Dialog, new dialog.Dialog(
-      event.type as dialog.DialogType,
-      event.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._session.send('Dialog.handleJavaScriptDialog', { accept, promptText });
-      },
-      event.defaultPrompt));
+  _initialize() {
+    return this._frameManager.initialize();
   }
 
   async _swapSessionOnNavigation(newSession: TargetSession) {
-    this._setSession(newSession);
-    this._frameManager._swapSessionOnNavigation(newSession);
-    await this._initialize();
+    this._session = newSession;
+    await this._frameManager._swapSessionOnNavigation(newSession);
   }
 
   browser(): Browser {
@@ -143,25 +117,12 @@ export class Page extends EventEmitter {
     this.emit('error', new Error('Page crashed!'));
   }
 
-  async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
-    const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
-    let derivedType: string = type;
-    if (type === 'log')
-      derivedType = level;
-    else if (type === 'timing')
-      derivedType = 'timeEnd';
-    const mainFrameContext = await this.mainFrame().executionContext();
-    const handles = (parameters || []).map(p => {
-      let context: js.ExecutionContext | null = null;
-      if (p.objectId) {
-        const objectId = JSON.parse(p.objectId);
-        context = this._frameManager._contextIdToContext.get(objectId.injectedScriptId);
-      } else {
-        context = mainFrameContext;
-      }
-      return context._createHandle(p);
-    });
-    this.emit(Events.Page.Console, new console.ConsoleMessage(derivedType, handles.length ? undefined : text, handles, { url, lineNumber, columnNumber }));
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation, text?: string) {
+    if (!this.listenerCount(Events.Page.Console)) {
+      args.forEach(arg => arg.dispose());
+      return;
+    }
+    this.emit(Events.Page.Console, new console.ConsoleMessage(type, text, args, location));
   }
 
   mainFrame(): frames.Frame {
@@ -175,11 +136,6 @@ export class Page extends EventEmitter {
   frames(): frames.Frame[] {
     return this._frameManager.frames();
   }
-
-  workers(): Worker[] {
-    return Array.from(this._workers.values());
-  }
-
 
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
@@ -228,7 +184,7 @@ export class Page extends EventEmitter {
 
   async setUserAgent(userAgent: string) {
     this._userAgent = userAgent;
-    await this._session.send('Page.overrideUserAgent', { value: userAgent });
+    this._frameManager.setUserAgent(userAgent);
   }
 
   url(): string {
@@ -279,12 +235,6 @@ export class Page extends EventEmitter {
     return await this._frameManager.mainFrame().waitForNavigation();
   }
 
-  _sessionClosePromise() {
-    if (!this._disconnectPromise)
-      this._disconnectPromise = new Promise(fulfill => this._session.once(TargetSessionEvents.Disconnected, () => fulfill(new Error('Target closed'))));
-    return this._disconnectPromise;
-  }
-
   async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<Request> {
     const {
       timeout = this._timeoutSettings.timeout(),
@@ -295,7 +245,7 @@ export class Page extends EventEmitter {
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(request));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
   async waitForResponse(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<Response> {
@@ -308,7 +258,7 @@ export class Page extends EventEmitter {
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(response));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
   async emulate(options: { viewport: types.Viewport; userAgent: string; }) {
@@ -325,7 +275,7 @@ export class Page extends EventEmitter {
     assert(!options.colorScheme || mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
     assert(!options.colorScheme, 'Media feature emulation is not supported');
     this._emulatedMediaType = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
-    await this._session.send('Page.setEmulatedMedia', { media: this._emulatedMediaType || '' });
+    this._frameManager.setEmulatedMedia(this._emulatedMediaType);
   }
 
   async setViewport(viewport: types.Viewport) {
@@ -351,11 +301,11 @@ export class Page extends EventEmitter {
     await this._session.send('Page.setBootstrapScript', { source });
   }
 
-  async setJavaScriptEnabled(enabled: boolean) {
+  setJavaScriptEnabled(enabled: boolean) {
     if (this._javascriptEnabled === enabled)
       return;
     this._javascriptEnabled = enabled;
-    await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
+    return this._frameManager.setJavaScriptEnabled(enabled);
   }
 
   async setCacheEnabled(enabled: boolean = true) {
@@ -371,6 +321,7 @@ export class Page extends EventEmitter {
   }
 
   async close() {
+    assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
     this.browser()._closePage(this);
     await this._closedPromise;
   }
@@ -392,11 +343,11 @@ export class Page extends EventEmitter {
     });
   }
 
-  async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
-    if (!this._fileChooserInterceptors.size)
+  async _onFileChooserOpened(handle: dom.ElementHandle) {
+    if (!this._fileChooserInterceptors.size) {
+      await handle.dispose();
       return;
-    const context = await this._frameManager.frame(event.frameId)._utilityContext();
-    const handle = context._createHandle(event.element).asElement()!;
+    }
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
