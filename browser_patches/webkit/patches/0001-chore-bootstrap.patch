@@ -1,7 +1,7 @@
-From ba883b0572c9da4ac17e2dc3d2f772e71f103274 Mon Sep 17 00:00:00 2001
-From: Pavel Feldman <pavel.feldman@gmail.com>
-Date: Mon, 9 Dec 2019 12:19:23 -0800
-Subject: [PATCH] chore: bootstrap
+From 7901fa116ea9693421576159fb39b9fed532829a Mon Sep 17 00:00:00 2001
+From: Pavel <pavel.feldman@gmail.com>
+Date: Mon, 9 Dec 2019 15:17:56 -0800
+Subject: [PATCH xserver] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -15,8 +15,8 @@ Subject: [PATCH] chore: bootstrap
  .../inspector/protocol/DOM.json               |  39 ++
  .../inspector/protocol/Dialog.json            |  36 ++
  .../inspector/protocol/Emulation.json         |  22 +
- .../inspector/protocol/Input.json             | 160 ++++++
- .../inspector/protocol/Page.json              | 103 +++-
+ .../inspector/protocol/Input.json             | 160 +++++
+ .../inspector/protocol/Page.json              | 111 +++-
  .../inspector/protocol/Target.json            |  22 +-
  Source/WebCore/html/FileInputType.cpp         |   6 +
  .../inspector/InspectorInstrumentation.cpp    |  23 +-
@@ -24,9 +24,10 @@ Subject: [PATCH] chore: bootstrap
  .../inspector/agents/InspectorDOMAgent.cpp    | 113 +++-
  .../inspector/agents/InspectorDOMAgent.h      |   4 +
  .../agents/InspectorDOMStorageAgent.h         |   1 +
- .../inspector/agents/InspectorPageAgent.cpp   | 534 +++++++++++++++++-
- .../inspector/agents/InspectorPageAgent.h     |  23 +-
- .../agents/page/PageRuntimeAgent.cpp          |  14 +-
+ .../inspector/agents/InspectorPageAgent.cpp   | 554 +++++++++++++++++-
+ .../inspector/agents/InspectorPageAgent.h     |  26 +-
+ .../agents/page/PageRuntimeAgent.cpp          |  53 +-
+ .../inspector/agents/page/PageRuntimeAgent.h  |   5 +-
  Source/WebCore/loader/FrameLoader.cpp         |   1 +
  Source/WebCore/page/History.cpp               |   1 +
  .../WebCore/platform/PlatformKeyboardEvent.h  |   2 +
@@ -38,6 +39,7 @@ Subject: [PATCH] chore: bootstrap
  .../NetworkProcess/NetworkProcess.messages.in |   4 +
  Source/WebKit/Shared/API/c/wpe/WebKit.h       |   1 +
  Source/WebKit/Shared/NativeWebKeyboardEvent.h |   5 +
+ Source/WebKit/Shared/NativeWebMouseEvent.h    |   2 +
  Source/WebKit/Shared/WebEvent.h               |   6 +-
  Source/WebKit/Shared/WebKeyboardEvent.cpp     |  22 +
  .../Shared/gtk/NativeWebKeyboardEventGtk.cpp  |   2 +-
@@ -74,10 +76,10 @@ Subject: [PATCH] chore: bootstrap
  .../PopUpSOAuthorizationSession.mm            |   1 +
  Source/WebKit/UIProcess/Cocoa/UIDelegate.h    |   2 +
  Source/WebKit/UIProcess/Cocoa/UIDelegate.mm   |  10 +
- .../UIProcess/InspectorBrowserAgent.cpp       | 255 +++++++++
- .../WebKit/UIProcess/InspectorBrowserAgent.h  |  63 +++
+ .../UIProcess/InspectorBrowserAgent.cpp       | 255 ++++++++
+ .../WebKit/UIProcess/InspectorBrowserAgent.h  |  63 ++
  .../UIProcess/InspectorBrowserAgentClient.h   |  33 ++
- .../WebKit/UIProcess/InspectorDialogAgent.cpp |  64 +++
+ .../WebKit/UIProcess/InspectorDialogAgent.cpp |  64 ++
  .../WebKit/UIProcess/InspectorDialogAgent.h   |  48 ++
  .../WebKit/UIProcess/InspectorTargetProxy.cpp |  34 +-
  .../WebKit/UIProcess/InspectorTargetProxy.h   |  13 +-
@@ -89,7 +91,7 @@ Subject: [PATCH] chore: bootstrap
  .../UIProcess/WebPageInspectorController.h    |  22 +
  .../WebPageInspectorEmulationAgent.cpp        |  48 ++
  .../WebPageInspectorEmulationAgent.h          |  42 ++
- .../UIProcess/WebPageInspectorInputAgent.cpp  | 236 ++++++++
+ .../UIProcess/WebPageInspectorInputAgent.cpp  | 237 ++++++++
  .../UIProcess/WebPageInspectorInputAgent.h    |  57 ++
  .../UIProcess/WebPageInspectorTargetProxy.cpp | 109 ++++
  .../UIProcess/WebPageInspectorTargetProxy.h   |  45 ++
@@ -122,7 +124,7 @@ Subject: [PATCH] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 118 files changed, 4909 insertions(+), 92 deletions(-)
+ 120 files changed, 4975 insertions(+), 104 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -897,7 +899,7 @@ index 00000000000..79bbe73b0df
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8..6800d524cc9 100644
+index 367d1f235a8..4a3430230f9 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -963,7 +965,7 @@ index 367d1f235a8..6800d524cc9 100644
              ]
          },
          {
-@@ -288,19 +331,49 @@
+@@ -288,19 +331,57 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -995,6 +997,14 @@ index 367d1f235a8..6800d524cc9 100644
 +            "parameters": [
 +                { "name": "color", "$ref": "DOM.RGBAColor", "optional": true, "description": "RGBA of the default background color. If not specified, any existing override will be cleared." }
 +            ]
++        },
++        {
++            "name": "createIsolatedWorld",
++            "description": "Creates an isolated world for every loaded frame.",
++            "parameters": [
++                { "name": "name", "type": "string", "description": "Isolated world name, will be used as an execution context name." },
++                { "name": "source", "type": "string", "optional": true, "description": "Script to evaluate in the new world." }
++            ]
          }
      ],
      "events": [
@@ -1015,7 +1025,7 @@ index 367d1f235a8..6800d524cc9 100644
              ]
          },
          {
-@@ -346,12 +419,36 @@
+@@ -346,12 +427,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1463,7 +1473,7 @@ index b578660fbb3..a7c968bc9f8 100644
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..3484cb0d9cd 100644
+index f2e228b7f74..52995f8fb0b 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1490,7 +1500,12 @@ index f2e228b7f74..3484cb0d9cd 100644
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -59,13 +63,16 @@
+@@ -55,17 +59,21 @@
+ #include "MIMETypeRegistry.h"
+ #include "MemoryCache.h"
+ #include "Page.h"
++#include "PageRuntimeAgent.h"
+ #include "RenderObject.h"
  #include "RenderTheme.h"
  #include "ScriptController.h"
  #include "ScriptSourceCode.h"
@@ -1507,7 +1522,7 @@ index f2e228b7f74..3484cb0d9cd 100644
  #include <JavaScriptCore/RegularExpression.h>
  #include <wtf/ListHashSet.h>
  #include <wtf/Stopwatch.h>
-@@ -337,6 +344,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -337,6 +345,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -1515,7 +1530,15 @@ index f2e228b7f74..3484cb0d9cd 100644
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -412,14 +420,28 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -382,6 +391,7 @@ void InspectorPageAgent::disable(ErrorString&)
+     overrideUserAgent(unused, nullptr);
+     setEmulatedMedia(unused, emptyString());
+     setForcedAppearance(unused, emptyString());
++    m_isolatedWorldScripts.clear();
+ 
+ #define DISABLE_INSPECTOR_OVERRIDE_SETTING(name) \
+     m_inspectedPage.settings().set##name##InspectorOverride(WTF::nullopt);
+@@ -412,14 +422,28 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -1549,7 +1572,7 @@ index f2e228b7f74..3484cb0d9cd 100644
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -678,19 +700,21 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -678,19 +702,21 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -1576,7 +1599,7 @@ index f2e228b7f74..3484cb0d9cd 100644
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
-@@ -761,6 +785,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -761,6 +787,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1589,7 +1612,7 @@ index f2e228b7f74..3484cb0d9cd 100644
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -815,6 +845,25 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -815,6 +847,25 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1615,7 +1638,7 @@ index f2e228b7f74..3484cb0d9cd 100644
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1035,469 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1037,487 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2084,9 +2107,27 @@ index f2e228b7f74..3484cb0d9cd 100644
 +    view->updateBackgroundRecursively(InspectorDOMAgent::parseColor(color));
 +}
 +
++void InspectorPageAgent::createIsolatedWorld(ErrorString& errorString, const String& name, const String* optionalSource) {
++    if (m_isolatedWorldScripts.find(name) != m_isolatedWorldScripts.end()) {
++        errorString = "World with the given name already exists"_s;
++        return;
++    }
++    auto* pageRuntimeAgent = m_instrumentingAgents.pageRuntimeAgent();
++    if (!pageRuntimeAgent) {
++        errorString = "Runtime agent must be enabled"_s;
++        return;
++    }
++
++    String source = optionalSource ? *optionalSource : String();
++    m_isolatedWorldScripts.set(name, source);
++
++    for (Frame* frame = &m_inspectedPage.mainFrame(); frame; frame = frame->tree().traverseNext())
++        pageRuntimeAgent->createIsolatedWorld(*frame, name, source);
++}
++
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..17a92a83f4c 100644
+index 4fd8c0b1016..b2d547cee84 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2116,7 +2157,7 @@ index 4fd8c0b1016..17a92a83f4c 100644
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -113,12 +120,16 @@ public:
+@@ -113,12 +120,17 @@ public:
      void getCompositingBordersVisible(ErrorString&, bool* out_param) override;
      void setCompositingBordersVisible(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
@@ -2127,6 +2168,7 @@ index 4fd8c0b1016..17a92a83f4c 100644
 +    void accessibilitySnapshot(ErrorString&, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) override;
 +    void setInterceptFileChooserDialog(ErrorString&, bool enabled) override;
 +    void setDefaultBackgroundColorOverride(ErrorString&, const JSON::Object*) override;
++    void createIsolatedWorld(ErrorString&, const String&, const String*) override;
  
      // InspectorInstrumentation
 -    void domContentEventFired();
@@ -2136,7 +2178,7 @@ index 4fd8c0b1016..17a92a83f4c 100644
      void frameNavigated(Frame&);
      void frameDetached(Frame&);
      void loaderDetachedFromFrame(DocumentLoader&);
-@@ -126,6 +137,7 @@ public:
+@@ -126,6 +138,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -2144,7 +2186,7 @@ index 4fd8c0b1016..17a92a83f4c 100644
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,6 +146,7 @@ public:
+@@ -134,11 +147,13 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -2152,7 +2194,13 @@ index 4fd8c0b1016..17a92a83f4c 100644
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -153,6 +166,7 @@ private:
+     String loaderId(DocumentLoader*);
+     Frame* assertFrame(ErrorString&, const String& frameId);
++    HashMap<String, String> isolatedWorldScripts() { return m_isolatedWorldScripts; };
+ 
+ private:
+     double timestamp();
+@@ -153,6 +168,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -2160,8 +2208,11 @@ index 4fd8c0b1016..17a92a83f4c 100644
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -165,6 +179,7 @@ private:
+@@ -163,8 +179,10 @@ private:
+     String m_emulatedMedia;
+     String m_forcedAppearance;
      String m_bootstrapScript;
++    HashMap<String, String> m_isolatedWorldScripts;
      bool m_isFirstLayoutAfterOnLoad { false };
      bool m_showPaintRects { false };
 +    bool m_interceptFileChooserDialog { false };
@@ -2169,10 +2220,18 @@ index 4fd8c0b1016..17a92a83f4c 100644
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-index 8c4a104da04..3dc08926a75 100644
+index 8c4a104da04..be7c4c35b70 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-@@ -70,14 +70,12 @@ PageRuntimeAgent::~PageRuntimeAgent() = default;
+@@ -40,6 +40,7 @@
+ #include "Page.h"
+ #include "PageConsoleClient.h"
+ #include "ScriptController.h"
++#include "ScriptSourceCode.h"
+ #include "ScriptState.h"
+ #include "SecurityOrigin.h"
+ #include "UserGestureEmulationScope.h"
+@@ -70,14 +71,12 @@ PageRuntimeAgent::~PageRuntimeAgent() = default;
  
  void PageRuntimeAgent::enable(ErrorString& errorString)
  {
@@ -2190,19 +2249,111 @@ index 8c4a104da04..3dc08926a75 100644
  }
  
  void PageRuntimeAgent::disable(ErrorString& errorString)
-@@ -142,8 +140,10 @@ void PageRuntimeAgent::reportExecutionContextCreation()
+@@ -93,9 +92,15 @@ void PageRuntimeAgent::didClearWindowObjectInWorld(Frame& frame)
+     if (!pageAgent)
+         return;
+ 
+-    auto frameId = pageAgent->frameId(&frame);
++    // Force main world creation.
+     auto* scriptState = mainWorldExecState(&frame);
+-    notifyContextCreated(frameId, scriptState, nullptr, true);
++    Document* document = frame.document();
++    String worldName = document ? document->securityOrigin().toRawString() : String();
++    notifyContextCreated(frame, scriptState, worldName, true);
++
++    // Create user worlds.
++    for (auto pair : pageAgent->isolatedWorldScripts())
++        createIsolatedWorld(frame, pair.key, pair.value);
+ }
+ 
+ InjectedScript PageRuntimeAgent::injectedScriptForEval(ErrorString& errorString, const int* executionContextId)
+@@ -135,33 +140,38 @@ void PageRuntimeAgent::reportExecutionContextCreation()
+         if (!frame->script().canExecuteScripts(NotAboutToExecuteScript))
+             continue;
+ 
+-        String frameId = pageAgent->frameId(frame);
+-
+         JSC::JSGlobalObject* scriptState = mainWorldExecState(frame);
+-        notifyContextCreated(frameId, scriptState, nullptr, true);
++        Document* document = frame->document();
++        String worldName = document ? document->securityOrigin().toRawString() : String();
++        notifyContextCreated(*frame, scriptState, worldName, true);
          frame->script().collectIsolatedContexts(isolatedContexts);
          if (isolatedContexts.isEmpty())
              continue;
 -        for (auto& context : isolatedContexts)
 -            notifyContextCreated(frameId, context.first, context.second, false);
 +        for (auto& context : isolatedContexts) {
-+            if (scriptState != context.first)
-+                notifyContextCreated(frameId, context.first, context.second, false);
++            if (scriptState == context.first)
++                continue;
++            String name = context.second ? context.second->toRawString() : String();
++            notifyContextCreated(*frame, context.first, name, false);
 +        }
          isolatedContexts.clear();
      }
  }
+ 
+-void PageRuntimeAgent::notifyContextCreated(const String& frameId, JSC::JSGlobalObject* scriptState, SecurityOrigin* securityOrigin, bool isPageContext)
++void PageRuntimeAgent::notifyContextCreated(Frame& frame, JSC::JSGlobalObject* scriptState, const String& contextName, bool isPageContext)
+ {
+-    ASSERT(securityOrigin || isPageContext);
+-
++    auto* pageAgent = m_instrumentingAgents.inspectorPageAgent();
++    if (!pageAgent)
++        return;
++    String frameId = pageAgent->frameId(&frame);
+     InjectedScript result = injectedScriptManager().injectedScriptFor(scriptState);
+     if (result.hasNoValue())
+         return;
+ 
+     int executionContextId = injectedScriptManager().injectedScriptIdFor(scriptState);
+-    String name = securityOrigin ? securityOrigin->toRawString() : String();
+     m_frontendDispatcher->executionContextCreated(ExecutionContextDescription::create()
+         .setId(executionContextId)
+         .setIsPageContext(isPageContext)
+-        .setName(name)
++        .setName(contextName)
+         .setFrameId(frameId)
+         .release());
+ }
+@@ -178,4 +188,13 @@ void PageRuntimeAgent::callFunctionOn(ErrorString& errorString, const String& ob
+     InspectorRuntimeAgent::callFunctionOn(errorString, objectId, expression, optionalArguments, doNotPauseOnExceptionsAndMuteConsole, returnByValue, generatePreview, emulateUserGesture, result, wasThrown);
+ }
+ 
++void PageRuntimeAgent::createIsolatedWorld(Frame& frame, const String& name, const String& source) {
++    Ref<DOMWrapperWorld> world = ScriptController::createWorld();
++    frame.windowProxy().jsWindowProxy(world)->window();
++    if (!source.isEmpty())
++        frame.script().evaluateInWorld(ScriptSourceCode(source, URL { URL(), "web-inspector://isolate_world.js"_s }), world);
++    auto* scriptState = frame.windowProxy().jsWindowProxy(world)->window();
++    notifyContextCreated(frame, scriptState, name, false);
++}
++
+ } // namespace WebCore
+diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
+index f38828044b3..3ab4c8cd00a 100644
+--- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
++++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
+@@ -62,16 +62,17 @@ public:
+     // InspectorInstrumentation
+     void didClearWindowObjectInWorld(Frame&);
+ 
++    void createIsolatedWorld(Frame& frame, const String& name, const String& source);
++
+ private:
+     Inspector::InjectedScript injectedScriptForEval(ErrorString&, const int* executionContextId) override;
+     void muteConsole() override;
+     void unmuteConsole() override;
+     void reportExecutionContextCreation();
+-    void notifyContextCreated(const String& frameId, JSC::JSGlobalObject*, SecurityOrigin*, bool isPageContext);
++    void notifyContextCreated(Frame&, JSC::JSGlobalObject*, const String&, bool isPageContext);
+ 
+     std::unique_ptr<Inspector::RuntimeFrontendDispatcher> m_frontendDispatcher;
+     RefPtr<Inspector::RuntimeBackendDispatcher> m_backendDispatcher;
+-
+     InstrumentingAgents& m_instrumentingAgents;
+ 
+     Page& m_inspectedPage;
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
 index e105be0ba92..2557eacc4b7 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
@@ -2901,6 +3052,19 @@ index 05938ef3564..b050b30281c 100644
  #elif PLATFORM(IOS_FAMILY)
      enum class HandledByInputMethod : bool { No, Yes };
      NativeWebKeyboardEvent(::WebEvent *, HandledByInputMethod);
+diff --git a/Source/WebKit/Shared/NativeWebMouseEvent.h b/Source/WebKit/Shared/NativeWebMouseEvent.h
+index 0fa557e9faa..60ebade975b 100644
+--- a/Source/WebKit/Shared/NativeWebMouseEvent.h
++++ b/Source/WebKit/Shared/NativeWebMouseEvent.h
+@@ -61,6 +61,8 @@ public:
+ #elif PLATFORM(GTK)
+     NativeWebMouseEvent(const NativeWebMouseEvent&);
+     NativeWebMouseEvent(GdkEvent*, int, Optional<WebCore::IntPoint>);
++    NativeWebMouseEvent(Type type, Button button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier> modifiers, WallTime timestamp)
++       : WebMouseEvent(type, button, buttons, position, globalPosition, deltaX, deltaY, deltaZ, clickCount, modifiers, timestamp) { }
+ #elif PLATFORM(IOS_FAMILY)
+     NativeWebMouseEvent(::WebEvent *);
+     NativeWebMouseEvent(Type, Button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier>, WallTime timestamp, double force);
 diff --git a/Source/WebKit/Shared/WebEvent.h b/Source/WebKit/Shared/WebEvent.h
 index f77a16bef13..73f99282f08 100644
 --- a/Source/WebKit/Shared/WebEvent.h
@@ -5277,10 +5441,10 @@ index 00000000000..0025b0be853
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 00000000000..276f3da57fa
+index 00000000000..872ad6f0799
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,237 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5495,6 +5659,7 @@ index 00000000000..276f3da57fa
 +#elif PLATFORM(MAC)
 +    platformDispatchMouseEvent(in_type, in_x, in_y, opt_in_modifiers, opt_in_button, opt_in_clickCount);
 +#elif PLATFORM(GTK)
++    WallTime timestamp = WallTime::now();
 +    NativeWebMouseEvent event(
 +        type,
 +        button,
@@ -7497,5 +7662,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.24.0
+2.17.1
 
