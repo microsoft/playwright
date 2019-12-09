@@ -320,26 +320,45 @@ export const fillFunction = (node: Node) => {
   if (node.nodeType !== Node.ELEMENT_NODE)
     return 'Node is not of type HTMLElement';
   const element = node as HTMLElement;
+  if (!element.isConnected)
+    return 'Element is not attached to the DOM';
+  if (!element.ownerDocument || !element.ownerDocument.defaultView)
+    return 'Element does not belong to a window';
+
+  const style = element.ownerDocument.defaultView.getComputedStyle(element);
+  if (!style || style.visibility === 'hidden')
+    return 'Element is hidden';
+  if (!element.offsetParent && element.tagName !== 'BODY')
+    return 'Element is not visible';
   if (element.nodeName.toLowerCase() === 'input') {
     const input = element as HTMLInputElement;
     const type = input.getAttribute('type') || '';
     const kTextInputTypes = new Set(['', 'password', 'search', 'tel', 'text', 'url']);
     if (!kTextInputTypes.has(type.toLowerCase()))
       return 'Cannot fill input of type "' + type + '".';
+    if (input.disabled)
+      return 'Cannot fill a disabled input.';
+    if (input.readOnly)
+      return 'Cannot fill a readonly input.';
     input.selectionStart = 0;
     input.selectionEnd = input.value.length;
+    input.focus();
   } else if (element.nodeName.toLowerCase() === 'textarea') {
     const textarea = element as HTMLTextAreaElement;
+    if (textarea.disabled)
+      return 'Cannot fill a disabled textarea.';
+    if (textarea.readOnly)
+      return 'Cannot fill a readonly textarea.';
     textarea.selectionStart = 0;
     textarea.selectionEnd = textarea.value.length;
+    textarea.focus();
   } else if (element.isContentEditable) {
-    if (!element.ownerDocument || !element.ownerDocument.defaultView)
-      return 'Element does not belong to a window';
     const range = element.ownerDocument.createRange();
     range.selectNodeContents(element);
     const selection = element.ownerDocument.defaultView.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
+    element.focus();
   } else {
     return 'Element is not an <input>, <textarea> or [contenteditable] element.';
   }
