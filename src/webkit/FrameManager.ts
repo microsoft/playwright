@@ -22,15 +22,20 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import * as network from '../network';
-import { TimeoutSettings } from '../TimeoutSettings';
 import { TargetSession } from './Connection';
 import { Events } from './events';
+import { Events as CommonEvents } from '../events';
 import { ExecutionContextDelegate } from './ExecutionContext';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
-import { Page } from './Page';
+import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
 import { DOMWorldDelegate } from './JSHandle';
 import * as dialog from '../dialog';
+import { Browser, BrowserContext } from './Browser';
+import { RawMouseImpl, RawKeyboardImpl } from './Input';
+import { WKScreenshotDelegate } from './Screenshotter';
+import * as input from '../input';
+import * as types from '../types';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
@@ -45,31 +50,43 @@ type FrameData = {
   id: string,
 };
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate {
+export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
+  readonly rawMouse: RawMouseImpl;
+  readonly rawKeyboard: RawKeyboardImpl;
+  readonly screenshotterDelegate: WKScreenshotDelegate;
   _session: TargetSession;
-  _page: Page;
+  _page: Page<Browser, BrowserContext>;
   _networkManager: NetworkManager;
-  _timeoutSettings: TimeoutSettings;
   _frames: Map<string, frames.Frame>;
   _contextIdToContext: Map<number, js.ExecutionContext>;
   _isolatedWorlds: Set<string>;
   _sessionListeners: RegisteredListener[] = [];
   _mainFrame: frames.Frame;
+  private _bootstrapScripts: string[] = [];
 
-  constructor(page: Page, timeoutSettings: TimeoutSettings) {
+  constructor(browserContext: BrowserContext) {
     super();
-    this._page = page;
+    this.rawKeyboard = new RawKeyboardImpl();
+    this.rawMouse = new RawMouseImpl();
+    this.screenshotterDelegate = new WKScreenshotDelegate();
     this._networkManager = new NetworkManager(this);
-    this._timeoutSettings = timeoutSettings;
     this._frames = new Map();
     this._contextIdToContext = new Map();
     this._isolatedWorlds = new Set();
+    this._page = new Page(this, browserContext);
+    this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(CommonEvents.Page.Request, event));
+    this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(CommonEvents.Page.Response, event));
+    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(CommonEvents.Page.RequestFailed, event));
+    this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(CommonEvents.Page.RequestFinished, event));
   }
 
   async initialize(session: TargetSession) {
     helper.removeEventListeners(this._sessionListeners);
     this.disconnectFromTarget();
     this._session = session;
+    this.rawKeyboard.setSession(session);
+    this.rawMouse.setSession(session);
+    this.screenshotterDelegate.initialize(session);
     this._addSessionListeners();
     this.emit(FrameManagerEvents.TargetSwappedOnNavigation);
     const [,{frameTree}] = await Promise.all([
@@ -85,12 +102,17 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
       this._networkManager.initialize(session),
     ]);
-    if (this._page._userAgent !== null)
-      await this._session.send('Page.overrideUserAgent', { value: this._page._userAgent });
-    if (this._page._emulatedMediaType !== undefined)
-      await this._session.send('Page.setEmulatedMedia', { media: this._page._emulatedMediaType || '' });
-    if (!this._page._javascriptEnabled)
-      await this._session.send('Emulation.setJavaScriptEnabled', { enabled: this._page._javascriptEnabled });
+    if (this._page._state.userAgent !== null)
+      await this._session.send('Page.overrideUserAgent', { value: this._page._state.userAgent });
+    if (this._page._state.mediaType !== null)
+      await this._session.send('Page.setEmulatedMedia', { media: this._page._state.mediaType || '' });
+    if (this._page._state.javascriptEnabled !== null)
+      await this._session.send('Emulation.setJavaScriptEnabled', { enabled: this._page._state.javascriptEnabled });
+  }
+
+  didClose() {
+    helper.removeEventListeners(this._sessionListeners);
+    this.disconnectFromTarget();
   }
 
   _addSessionListeners() {
@@ -137,7 +159,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       this._handleFrameTree(child);
   }
 
-  page(): Page {
+  page(): Page<Browser, BrowserContext> {
     return this._page;
   }
 
@@ -162,13 +184,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new frames.Frame(this, this._timeoutSettings, parentFrame);
+    const frame = new frames.Frame(this, this._page._timeoutSettings, parentFrame);
     const data: FrameData = {
       id: frameId,
     };
     frame[frameDataSymbol] = data;
     this._frames.set(frameId, frame);
     this.emit(FrameManagerEvents.FrameAttached, frame);
+    this._page.emit(CommonEvents.Page.FrameAttached, frame);
     return frame;
   }
 
@@ -189,7 +212,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       }
     } else if (isMainFrame) {
       // Initial frame navigation.
-      frame = new frames.Frame(this, this._timeoutSettings, null);
+      frame = new frames.Frame(this, this._page._timeoutSettings, null);
       const data: FrameData = {
         id: framePayload.id,
       };
@@ -215,6 +238,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     }
 
     this.emit(FrameManagerEvents.FrameNavigated, frame);
+    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
@@ -224,6 +248,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     frame._navigated(url, frame.name());
     this.emit(FrameManagerEvents.FrameNavigatedWithinDocument, frame);
     this.emit(FrameManagerEvents.FrameNavigated, frame);
+    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
   }
 
   _onFrameDetached(frameId: string) {
@@ -264,11 +289,12 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     frame._detach();
     this._frames.delete(this._frameData(frame).id);
     this.emit(FrameManagerEvents.FrameDetached, frame);
+    this._page.emit(CommonEvents.Page.FrameDetached, frame);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, options: { referer?: string; timeout?: number; waitUntil?: string | Array<string>; } | undefined = {}): Promise<network.Response | null> {
     const {
-      timeout = this._timeoutSettings.navigationTimeout(),
+      timeout = this._page._timeoutSettings.navigationTimeout(),
     } = options;
     const watchDog = new NextNavigationWatchdog(this, frame, timeout);
     await this._session.send('Page.navigate', {url});
@@ -329,16 +355,83 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     this._page._onFileChooserOpened(handle);
   }
 
-  async setUserAgent(userAgent: string) {
+  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {
+    return this._networkManager.setExtraHTTPHeaders(extraHTTPHeaders);
+  }
+
+  async setUserAgent(userAgent: string): Promise<void> {
     await this._session.send('Page.overrideUserAgent', { value: userAgent });
   }
 
-  async setEmulatedMedia(type?: string | null) {
-    await this._session.send('Page.setEmulatedMedia', { media: type || '' });
+  async setJavaScriptEnabled(enabled: boolean): Promise<void> {
+    await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
   }
 
-  async setJavaScriptEnabled(enabled: boolean) {
-    await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
+  setBypassCSP(enabled: boolean): Promise<void> {
+    throw new Error('Not implemented');
+  }
+
+  async setViewport(viewport: types.Viewport): Promise<void> {
+    if (viewport.isMobile || viewport.isLandscape || viewport.hasTouch)
+      throw new Error('Not implemented');
+    const width = viewport.width;
+    const height = viewport.height;
+    await this._session.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
+  }
+
+  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+    if (mediaColorScheme !== null)
+      throw new Error('Not implemented');
+    await this._session.send('Page.setEmulatedMedia', { media: mediaType || '' });
+  }
+
+  setCacheEnabled(enabled: boolean): Promise<void> {
+    return this._networkManager.setCacheEnabled(enabled);
+  }
+
+  async reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    const [response] = await Promise.all([
+      this._page.waitForNavigation(options),
+      this._session.send('Page.reload')
+    ]);
+    return response;
+  }
+
+  async _go<T extends keyof Protocol.CommandParameters>(command: T, options?: frames.NavigateOptions): Promise<network.Response | null> {
+    const [response] = await Promise.all([
+      this._page.waitForNavigation(options),
+      this._session.send(command).then(() => null),
+    ]).catch(error => {
+      if (error instanceof Error && error.message.includes(`Protocol error (${command}): Failed to go`))
+        return [null];
+      throw error;
+    });
+    return response;
+  }
+
+  goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._go('Page.goBack', options);
+  }
+
+  goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._go('Page.goForward', options);
+  }
+
+  exposeBinding(name: string, bindingFunction: string): Promise<void> {
+    throw new Error('Not implemented');
+  }
+
+  async evaluateOnNewDocument(script: string): Promise<void> {
+    this._bootstrapScripts.push(script);
+    const source = this._bootstrapScripts.join(';');
+    // TODO(yurys): support process swap on navigation.
+    await this._session.send('Page.setBootstrapScript', { source });
+  }
+
+  async closePage(runBeforeUnload: boolean): Promise<void> {
+    if (runBeforeUnload)
+      throw new Error('Not implemented');
+    this._page.browser()._closePage(this._page);
   }
 }
 

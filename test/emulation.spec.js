@@ -86,7 +86,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
       expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
     });
-    it('should support clicking', async({page, server}) => {
+    it.skip(WEBKIT)('should support clicking', async({page, server}) => {
       await page.emulate(iPhone);
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');

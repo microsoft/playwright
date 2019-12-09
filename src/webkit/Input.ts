@@ -35,7 +35,7 @@ function toModifiersMask(modifiers: Set<input.Modifier>): number {
 export class RawKeyboardImpl implements input.RawKeyboard {
   private _session: TargetSession;
 
-  constructor(session: TargetSession) {
+  setSession(session: TargetSession) {
     this._session = session;
   }
 
@@ -72,7 +72,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 export class RawMouseImpl implements input.RawMouse {
   private _client: TargetSession;
 
-  constructor(client: TargetSession) {
+  setSession(client: TargetSession) {
     this._client = client;
   }
 

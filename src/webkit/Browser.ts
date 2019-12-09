@@ -20,7 +20,7 @@ import { EventEmitter } from 'events';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
 import { Connection, ConnectionEvents, TargetSession } from './Connection';
-import { Page } from './Page';
+import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
 import * as types from '../types';
@@ -98,11 +98,11 @@ export class Browser extends EventEmitter {
     this._contexts.delete(browserContextId);
   }
 
-  async newPage(): Promise<Page> {
+  async newPage(): Promise<Page<Browser, BrowserContext>> {
     return this._createPageInContext(this._defaultContext._id);
   }
 
-  async _createPageInContext(browserContextId?: string): Promise<Page> {
+  async _createPageInContext(browserContextId?: string): Promise<Page<Browser, BrowserContext>> {
     const { targetId } = await this._connection.send('Browser.createPage', { browserContextId });
     const target = this._targets.get(targetId);
     return await target.page();
@@ -136,7 +136,7 @@ export class Browser extends EventEmitter {
     }
   }
 
-  async pages(): Promise<Page[]> {
+  async pages(): Promise<Page<Browser, BrowserContext>[]> {
     const contextPages = await Promise.all(this.browserContexts().map(context => context.pages()));
     // Flatten array.
     return contextPages.reduce((acc, x) => acc.concat(x), []);
@@ -166,19 +166,19 @@ export class Browser extends EventEmitter {
     target._didClose();
   }
 
-  _closePage(page: Page) {
+  _closePage(page: Page<Browser, BrowserContext>) {
     this._connection.send('Target.close', {
       targetId: Target.fromPage(page)._targetId
     }).catch(debugError);
   }
 
-  async _pages(context: BrowserContext): Promise<Page[]> {
+  async _pages(context: BrowserContext): Promise<Page<Browser, BrowserContext>[]> {
     const targets = this.targets().filter(target => target._browserContext === context && target._type === 'page');
     const pages = await Promise.all(targets.map(target => target.page()));
     return pages.filter(page => !!page);
   }
 
-  async _activatePage(page: Page): Promise<void> {
+  async _activatePage(page: Page<Browser, BrowserContext>): Promise<void> {
     await this._connection.send('Target.activate', { targetId: Target.fromPage(page)._targetId });
   }
 
@@ -211,7 +211,7 @@ export class BrowserContext {
     this._id = contextId;
   }
 
-  pages(): Promise<Page[]> {
+  pages(): Promise<Page<Browser, BrowserContext>[]> {
     return this._browser._pages(this);
   }
 
@@ -219,7 +219,7 @@ export class BrowserContext {
     return !!this._id;
   }
 
-  newPage(): Promise<Page> {
+  newPage(): Promise<Page<Browser, BrowserContext>> {
     return this._browser._createPageInContext(this._id);
   }
 

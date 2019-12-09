@@ -275,12 +275,12 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
     }
   }
 
-  _addConsoleMessage(type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation) {
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation, text?: string) {
     if (!this.listenerCount(Events.Page.Console)) {
       args.forEach(arg => arg.dispose());
       return;
     }
-    this.emit(Events.Page.Console, new console.ConsoleMessage(type, undefined, args, location));
+    this.emit(Events.Page.Console, new console.ConsoleMessage(type, text, args, location));
   }
 
   url(): string {

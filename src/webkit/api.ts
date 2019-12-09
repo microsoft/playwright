@@ -9,7 +9,7 @@ export { ElementHandle } from '../dom';
 export { Frame } from '../frames';
 export { Mouse, Keyboard } from '../input';
 export { Request, Response } from '../network';
-export { Page } from './Page';
+export { Page } from '../page';
 export { Playwright } from './Playwright';
 export { Dialog } from '../dialog';
 export { ConsoleMessage } from '../console';
