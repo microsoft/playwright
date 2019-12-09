@@ -19,7 +19,7 @@ import { RegisteredListener } from '../helper';
 import { Browser, BrowserContext } from './Browser';
 import { Page } from './Page';
 import { Protocol } from './protocol';
-import { isSwappedOutError, TargetSession } from './Connection';
+import { isSwappedOutError, TargetSession, TargetSessionEvents } from './Connection';
 
 const targetSymbol = Symbol('target');
 
@@ -74,6 +74,11 @@ export class Target {
         if (this.browser()._defaultViewport)
           await page.setViewport(this.browser()._defaultViewport);
         (page as any)[targetSymbol] = this;
+        session.once(TargetSessionEvents.Disconnected, () => {
+          // Check that this target has not been swapped out.
+          if ((page as any)[targetSymbol] === this)
+            page._didDisconnect();
+        });
         f(page);
       });
     }
