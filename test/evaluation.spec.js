@@ -158,8 +158,17 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const result = await page.evaluate((a, b) => Object.is(a, undefined) && Object.is(b, 'foo'), undefined, 'foo');
       expect(result).toBe(true);
     });
-    it('should properly serialize null fields', async({page}) => {
+    it('should properly serialize undefined arguments', async({page}) => {
+      expect(await page.evaluate(x => ({a: x}), undefined)).toEqual({});
+    });
+    it('should properly serialize undefined fields', async({page}) => {
       expect(await page.evaluate(() => ({a: undefined}))).toEqual({});
+    });
+    it.skip(FFOX)('should properly serialize null arguments', async({page}) => {
+      expect(await page.evaluate(x => x, null)).toEqual(null);
+    });
+    it('should properly serialize null fields', async({page}) => {
+      expect(await page.evaluate(() => ({a: null}))).toEqual({a: null});
     });
     it('should return undefined for non-serializable objects', async({page, server}) => {
       expect(await page.evaluate(() => window)).toBe(undefined);

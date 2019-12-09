@@ -53,7 +53,7 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 
   isJavascriptEnabled(): boolean {
-    return this._frameManager._page._javascriptEnabled;
+    return !!this._frameManager._page._state.javascriptEnabled;
   }
 
   isElement(remoteObject: any): boolean {

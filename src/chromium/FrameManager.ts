@@ -82,7 +82,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this.rawMouse = new RawMouseImpl(client);
     this.screenshotterDelegate = new CRScreenshotDelegate(client);
     this._networkManager = new NetworkManager(client, ignoreHTTPSErrors, this);
-    this._page = new Page(this, browserContext, ignoreHTTPSErrors);
+    this._page = new Page(this, browserContext);
     (this._page as any).accessibility = new Accessibility(client);
     (this._page as any).coverage = new Coverage(client);
     (this._page as any).pdf = new PDF(client);
@@ -128,6 +128,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._networkManager.initialize(),
     ]);
+  }
+
+  didClose() {
+    // TODO: remove listeners.
   }
 
   networkManager(): NetworkManager {
