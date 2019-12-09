@@ -19,11 +19,12 @@ import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import { CDPSession, CDPSessionEvents } from './Connection';
-import { Events } from './events';
+import { Events as CommonEvents } from '../events';
 import { Worker } from './features/workers';
-import { Page } from './Page';
+import { Page } from '../page';
 import { Protocol } from './protocol';
 import { debugError } from '../helper';
+import { FrameManager } from './FrameManager';
 
 const targetSymbol = Symbol('target');
 
@@ -34,14 +35,14 @@ export class Target {
   private _sessionFactory: () => Promise<CDPSession>;
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: types.Viewport;
-  private _pagePromise: Promise<Page> | null = null;
-  private _page: Page | null = null;
+  private _pagePromise: Promise<Page<Browser, BrowserContext>> | null = null;
+  private _page: Page<Browser, BrowserContext> | null = null;
   private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
 
-  static fromPage(page: Page): Target {
+  static fromPage(page: Page<Browser, BrowserContext>): Target {
     return (page as any)[targetSymbol];
   }
 
@@ -64,10 +65,10 @@ export class Target {
       if (!opener || !opener._pagePromise || this.type() !== 'page')
         return true;
       const openerPage = await opener._pagePromise;
-      if (!openerPage.listenerCount(Events.Page.Popup))
+      if (!openerPage.listenerCount(CommonEvents.Page.Popup))
         return true;
       const popupPage = await this.page();
-      openerPage.emit(Events.Page.Popup, popupPage);
+      openerPage.emit(CommonEvents.Page.Popup, popupPage);
       return true;
     });
     this._isInitialized = this._targetInfo.type !== 'page' || this._targetInfo.url !== '';
@@ -80,10 +81,11 @@ export class Target {
       this._page._didClose();
   }
 
-  async page(): Promise<Page | null> {
+  async page(): Promise<Page<Browser, BrowserContext> | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory().then(async client => {
-        const page = new Page(client, this._browserContext, this._ignoreHTTPSErrors);
+        const frameManager = new FrameManager(client, this._browserContext, this._ignoreHTTPSErrors);
+        const page = frameManager.page();
         this._page = page;
         page[targetSymbol] = this;
         client.once(CDPSessionEvents.Disconnected, () => page._didDisconnect());
@@ -93,7 +95,7 @@ export class Target {
             client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
           }
         });
-        await page._frameManager.initialize();
+        await frameManager.initialize();
         await client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true});
         if (this._defaultViewport)
           await page.setViewport(this._defaultViewport);

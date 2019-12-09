@@ -21,7 +21,7 @@ export { Overrides } from './features/overrides';
 export { PDF } from './features/pdf';
 export { Permissions } from './features/permissions';
 export { Worker, Workers } from './features/workers';
-export { Page } from './Page';
+export { Page } from '../page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';
 

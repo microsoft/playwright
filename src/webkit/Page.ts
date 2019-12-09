@@ -263,8 +263,8 @@ export class Page extends EventEmitter {
   }
 
   async emulateMedia(options: {
-      type?: string | null,
-      colorScheme?: 'dark' | 'light' | 'no-preference' | null }) {
+      type?: input.MediaType | null,
+      colorScheme?: input.MediaColorScheme | null }) {
     assert(!options.type || mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
     assert(!options.colorScheme || mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
     assert(!options.colorScheme, 'Media feature emulation is not supported');
