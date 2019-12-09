@@ -63,6 +63,13 @@ fi
 echo "-- preparing checkout"
 ./prepare_checkout.sh $BROWSER_NAME
 
+cd ./$BROWSER_NAME/checkout
+if ! [[ $(git rev-parse --abbrev-ref HEAD) == "playwright-build" ]]; then
+  echo "ERROR: Default branch is not playwright-build!"
+  exit 1
+fi
+cd -
+
 echo "-- cleaning"
 ./$BROWSER_NAME/clean.sh
 

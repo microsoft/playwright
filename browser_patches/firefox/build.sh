@@ -6,15 +6,6 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 cd "checkout"
 
-BUILD_BRANCH="playwright-build"
-
-if ! [[ $(git rev-parse --abbrev-ref HEAD) == "$BUILD_BRANCH" ]]; then
-  echo "ERROR: Cannot build any branch other than $BUILD_BRANCH"
-  exit 1;
-else
-  echo "-- checking git branch is $BUILD_BRANCH - OK"
-fi
-
 if [[ "$(uname)" == "Darwin" ]]; then
   # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.14.
   # Make sure the SDK is out there.
