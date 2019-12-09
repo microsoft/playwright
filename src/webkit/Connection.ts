@@ -25,7 +25,8 @@ const debugProtocol = debug('playwright:protocol');
 const debugWrappedMessage = require('debug')('wrapped');
 
 export const ConnectionEvents = {
-  Disconnected: Symbol('ConnectionEvents.Disconnected')
+  Disconnected: Symbol('ConnectionEvents.Disconnected'),
+  TargetCreated: Symbol('ConnectionEvents.TargetCreated')
 };
 
 export class Connection extends EventEmitter {
@@ -101,6 +102,7 @@ export class Connection extends EventEmitter {
       const {targetId, type} = object.params.targetInfo;
       const session = new TargetSession(this, type, targetId);
       this._sessions.set(targetId, session);
+      this.emit(ConnectionEvents.TargetCreated, session, object.params.targetInfo);
     } else if (object.method === 'Target.targetDestroyed') {
       const session = this._sessions.get(object.params.targetId);
       if (session) {
@@ -142,10 +144,6 @@ export class Connection extends EventEmitter {
   dispose() {
     this._onClose();
     this._transport.close();
-  }
-
-  session(targetId: string) : TargetSession {
-    return this._sessions.get(targetId);
   }
 }
 

@@ -26,6 +26,7 @@ export class Target {
   readonly _browserContext: BrowserContext;
   readonly _targetId: string;
   readonly _type: 'page' | 'service-worker' | 'worker';
+  private readonly _session: TargetSession;
   private _pagePromise: Promise<Page> | null = null;
   private _page: Page | null = null;
 
@@ -33,8 +34,9 @@ export class Target {
     return (page as any)[targetSymbol];
   }
 
-  constructor(targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
+  constructor(session: TargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
     const {targetId, type} = targetInfo;
+    this._session = session;
     this._browserContext = browserContext;
     this._targetId = targetId;
     this._type = type;
@@ -61,14 +63,12 @@ export class Target {
 
   private async _adoptPage() {
     (this._page as any)[targetSymbol] = this;
-    const browser = this._browserContext.browser();
-    const session = browser._connection.session(this._targetId);
-    session.once(TargetSessionEvents.Disconnected, () => {
+    this._session.once(TargetSessionEvents.Disconnected, () => {
       // Once swapped out, we reset _page and won't call _didDisconnect for old session.
       if (this._page)
         this._page._didDisconnect();
     });
-    await this._page._initialize(session).catch(e => {
+    await this._page._initialize(this._session).catch(e => {
       // Swallow initialization errors due to newer target swap in,
       // since we will reinitialize again.
       if (!isSwappedOutError(e))
