@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from './Browser';
-import { Page } from './Page';
+import { BrowserContext, Browser } from './Browser';
+import { Page } from '../page';
 import { Protocol } from './protocol';
 import { isSwappedOutError, TargetSession, TargetSessionEvents } from './Connection';
+import { FrameManager } from './FrameManager';
 
 const targetSymbol = Symbol('target');
 
@@ -27,10 +28,10 @@ export class Target {
   readonly _targetId: string;
   readonly _type: 'page' | 'service-worker' | 'worker';
   private readonly _session: TargetSession;
-  private _pagePromise: Promise<Page> | null = null;
-  private _page: Page | null = null;
+  private _pagePromise: Promise<Page<Browser, BrowserContext>> | null = null;
+  private _page: Page<Browser, BrowserContext> | null = null;
 
-  static fromPage(page: Page): Target {
+  static fromPage(page: Page<Browser, BrowserContext>): Target {
     return (page as any)[targetSymbol];
   }
 
@@ -68,7 +69,7 @@ export class Target {
       if (this._page)
         this._page._didDisconnect();
     });
-    await this._page._initialize(this._session).catch(e => {
+    await (this._page._delegate as FrameManager).initialize(this._session).catch(e => {
       // Swallow initialization errors due to newer target swap in,
       // since we will reinitialize again.
       if (!isSwappedOutError(e))
@@ -76,12 +77,13 @@ export class Target {
     });
   }
 
-  async page(): Promise<Page> {
+  async page(): Promise<Page<Browser, BrowserContext>> {
     if (this._type === 'page' && !this._pagePromise) {
       const browser = this._browserContext.browser();
       // Reference local page variable as _page may be
       // cleared on swap.
-      const page = new Page(this._browserContext);
+      const frameManager = new FrameManager(this._browserContext);
+      const page = frameManager._page;
       this._page = page;
       this._pagePromise = new Promise(async f => {
         await this._adoptPage();
