@@ -40,6 +40,8 @@ export interface PageDelegate {
   exposeBinding(name: string, bindingFunction: string): Promise<void>;
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
+  // TODO: reverse didClose call sequence.
+  didClose(): void;
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
   setUserAgent(userAgent: string): Promise<void>;
@@ -87,7 +89,7 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
   readonly _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  constructor(delegate: PageDelegate, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
+  constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
     this._delegate = delegate;
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -112,6 +114,7 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
   _didClose() {
     assert(!this._closed, 'Page closed twice');
     this._closed = true;
+    this._delegate.didClose();
     this.emit(Events.Page.Close);
     this._closedCallback();
   }
@@ -296,7 +299,7 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
     return this.mainFrame().goto(url, options);
   }
 
-  reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
+  async reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
     return this._delegate.reload(options);
   }
 
@@ -330,11 +333,11 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
     }, timeout, this._disconnectedPromise);
   }
 
-  goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
+  async goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
     return this._delegate.goBack(options);
   }
 
-  goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
+  async goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
     return this._delegate.goForward(options);
   }
 
@@ -399,7 +402,7 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
     await this._delegate.setCacheEnabled(enabled);
   }
 
-  screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
+  async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
     return this._screenshotter.screenshotPage(options);
   }
 

@@ -21,8 +21,9 @@ import { filterCookies, NetworkCookie, SetNetworkCookieParam, rewriteCookies } f
 import { Connection, ConnectionEvents, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
 import { Permissions } from './features/permissions';
-import { Page } from './Page';
+import { Page } from '../page';
 import * as types from '../types';
+import { FrameManager } from './FrameManager';
 
 export class Browser extends EventEmitter {
   private _connection: Connection;
@@ -130,11 +131,11 @@ export class Browser extends EventEmitter {
     }
   }
 
-  newPage(): Promise<Page> {
+  newPage(): Promise<Page<Browser, BrowserContext>> {
     return this._createPageInContext(this._defaultContext._browserContextId);
   }
 
-  async _createPageInContext(browserContextId: string | null): Promise<Page> {
+  async _createPageInContext(browserContextId: string | null): Promise<Page<Browser, BrowserContext>> {
     const {targetId} = await this._connection.send('Target.newPage', {
       browserContextId: browserContextId || undefined
     });
@@ -151,7 +152,7 @@ export class Browser extends EventEmitter {
     return Array.from(this._targets.values());
   }
 
-  async _pages(context: BrowserContext): Promise<Page[]> {
+  async _pages(context: BrowserContext): Promise<Page<Browser, BrowserContext>[]> {
     const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
     const pages = await Promise.all(targets.map(target => target.page()));
     return pages.filter(page => !!page);
@@ -188,8 +189,8 @@ export class Browser extends EventEmitter {
 }
 
 export class Target {
-  _pagePromise?: Promise<Page>;
-  private _page: Page | null = null;
+  _pagePromise?: Promise<Page<Browser, BrowserContext>>;
+  private _page: Page<Browser, BrowserContext> | null = null;
   private _browser: Browser;
   _context: BrowserContext;
   private _connection: Connection;
@@ -217,7 +218,6 @@ export class Target {
     return this._openerId ? this._browser._targets.get(this._openerId) : null;
   }
 
-
   type(): 'page' | 'browser' {
     return this._type;
   }
@@ -226,19 +226,19 @@ export class Target {
     return this._url;
   }
 
-
   browserContext(): BrowserContext {
     return this._context;
   }
 
-  page(): Promise<Page> {
+  page(): Promise<Page<Browser, BrowserContext>> {
     if (this._type === 'page' && !this._pagePromise) {
       this._pagePromise = new Promise(async f => {
         const session = await this._connection.createSession(this._targetId);
-        const page = new Page(session, this._context);
+        const frameManager = new FrameManager(session, this._context);
+        const page = frameManager._page;
         this._page = page;
         session.once(JugglerSessionEvents.Disconnected, () => page._didDisconnect());
-        await page._frameManager._initialize();
+        await frameManager._initialize();
         if (this._browser._defaultViewport)
           await page.setViewport(this._browser._defaultViewport);
         f(page);
@@ -265,7 +265,7 @@ export class BrowserContext {
     this.permissions = new Permissions(connection, browserContextId);
   }
 
-  pages(): Promise<Page[]> {
+  pages(): Promise<Page<Browser, BrowserContext>[]> {
     return this._browser._pages(this);
   }
 

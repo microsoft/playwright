@@ -35,12 +35,12 @@ export class NetworkManager extends EventEmitter {
   private _frameManager: FrameManager;
   private _eventListeners: RegisteredListener[];
 
-  constructor(session: JugglerSession) {
+  constructor(session: JugglerSession, frameManager: FrameManager) {
     super();
     this._session = session;
 
     this._requests = new Map();
-    this._frameManager = null;
+    this._frameManager = frameManager;
 
     this._eventListeners = [
       helper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
@@ -52,10 +52,6 @@ export class NetworkManager extends EventEmitter {
 
   dispose() {
     helper.removeEventListeners(this._eventListeners);
-  }
-
-  setFrameManager(frameManager: FrameManager) {
-    this._frameManager = frameManager;
   }
 
   async setExtraHTTPHeaders(headers: network.Headers) {

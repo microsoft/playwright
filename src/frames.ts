@@ -74,11 +74,11 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
-  goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
+  async goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
     return this._delegate.navigateFrame(this, url, options);
   }
 
-  waitForNavigation(options?: NavigateOptions): Promise<network.Response | null> {
+  async waitForNavigation(options?: NavigateOptions): Promise<network.Response | null> {
     return this._delegate.waitForFrameNavigation(this, options);
   }
 
@@ -159,7 +159,7 @@ export class Frame {
     });
   }
 
-  setContent(html: string, options?: NavigateOptions) {
+  async setContent(html: string, options?: NavigateOptions): Promise<void> {
     return this._delegate.setFrameContent(this, html, options);
   }
 

@@ -21,16 +21,24 @@ import * as frames from '../frames';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
-import { TimeoutSettings } from '../TimeoutSettings';
 import { JugglerSession } from './Connection';
 import { ExecutionContextDelegate } from './ExecutionContext';
 import { NavigationWatchdog, NextNavigationWatchdog } from './NavigationWatchdog';
-import { Page } from './Page';
-import { NetworkManager } from './NetworkManager';
+import { Page, PageDelegate } from '../page';
+import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { DOMWorldDelegate } from './JSHandle';
 import { Events } from './events';
+import { Events as CommonEvents } from '../events';
 import * as dialog from '../dialog';
 import { Protocol } from './protocol';
+import * as input from '../input';
+import { RawMouseImpl, RawKeyboardImpl } from './Input';
+import { FFScreenshotDelegate } from './Screenshotter';
+import { Browser, BrowserContext } from './Browser';
+import { Interception } from './features/interception';
+import { Accessibility } from './features/accessibility';
+import * as network from '../network';
+import * as types from '../types';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -47,22 +55,25 @@ type FrameData = {
   firedEvents: Set<string>,
 };
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate {
-  _session: JugglerSession;
-  _page: Page;
-  _networkManager: NetworkManager;
-  _timeoutSettings: TimeoutSettings;
-  _mainFrame: frames.Frame;
-  _frames: Map<string, frames.Frame>;
-  _contextIdToContext: Map<string, js.ExecutionContext>;
-  _eventListeners: RegisteredListener[];
+export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
+  readonly rawMouse: RawMouseImpl;
+  readonly rawKeyboard: RawKeyboardImpl;
+  readonly screenshotterDelegate: FFScreenshotDelegate;
+  readonly _session: JugglerSession;
+  readonly _page: Page<Browser, BrowserContext>;
+  private readonly _networkManager: NetworkManager;
+  private _mainFrame: frames.Frame;
+  private readonly _frames: Map<string, frames.Frame>;
+  private readonly _contextIdToContext: Map<string, js.ExecutionContext>;
+  private _eventListeners: RegisteredListener[];
 
-  constructor(session: JugglerSession, page: Page, networkManager, timeoutSettings) {
+  constructor(session: JugglerSession, browserContext: BrowserContext) {
     super();
     this._session = session;
-    this._page = page;
-    this._networkManager = networkManager;
-    this._timeoutSettings = timeoutSettings;
+    this.rawKeyboard = new RawKeyboardImpl(session);
+    this.rawMouse = new RawMouseImpl(session);
+    this.screenshotterDelegate = new FFScreenshotDelegate(session, this);
+    this._networkManager = new NetworkManager(session, this);
     this._mainFrame = null;
     this._frames = new Map();
     this._contextIdToContext = new Map();
@@ -79,7 +90,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
       helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.Request, request => this._page.emit(CommonEvents.Page.Request, request)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.Response, response => this._page.emit(CommonEvents.Page.Response, response)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFinished, request => this._page.emit(CommonEvents.Page.RequestFinished, request)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this._page.emit(CommonEvents.Page.RequestFailed, request)),
     ];
+    this._page = new Page(this, browserContext);
+    (this._page as any).interception = new Interception(this._networkManager);
+    (this._page as any).accessibility = new Accessibility(session);
   }
 
   async _initialize() {
@@ -147,17 +165,19 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     data.lastCommittedNavigationId = params.navigationId;
     data.firedEvents.clear();
     this.emit(FrameManagerEvents.FrameNavigated, frame);
+    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
   }
 
   _onSameDocumentNavigation(params) {
     const frame = this._frames.get(params.frameId);
     frame._navigated(params.url, frame.name());
     this.emit(FrameManagerEvents.FrameNavigated, frame);
+    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
   }
 
   _onFrameAttached(params) {
     const parentFrame = this._frames.get(params.parentFrameId) || null;
-    const frame = new frames.Frame(this, this._timeoutSettings, parentFrame);
+    const frame = new frames.Frame(this, this._page._timeoutSettings, parentFrame);
     const data: FrameData = {
       frameId: params.frameId,
       lastCommittedNavigationId: '',
@@ -170,6 +190,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     }
     this._frames.set(params.frameId, frame);
     this.emit(FrameManagerEvents.FrameAttached, frame);
+    this._page.emit(CommonEvents.Page.FrameAttached, frame);
   }
 
   _onFrameDetached(params) {
@@ -177,16 +198,20 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     this._frames.delete(params.frameId);
     frame._detach();
     this.emit(FrameManagerEvents.FrameDetached, frame);
+    this._page.emit(CommonEvents.Page.FrameDetached, frame);
   }
 
   _onEventFired({frameId, name}) {
     const frame = this._frames.get(frameId);
     this._frameData(frame).firedEvents.add(name.toLowerCase());
     if (frame === this._mainFrame) {
-      if (name === 'load')
+      if (name === 'load') {
         this.emit(FrameManagerEvents.Load);
-      else if (name === 'DOMContentLoaded')
+        this._page.emit(CommonEvents.Page.Load);
+      } else if (name === 'DOMContentLoaded') {
         this.emit(FrameManagerEvents.DOMContentLoaded);
+        this._page.emit(CommonEvents.Page.DOMContentLoaded);
+      }
     }
   }
 
@@ -222,19 +247,20 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     this._page._onFileChooserOpened(handle);
   }
 
-  async _exposeBinding(name: string, bindingFunction: string) {
+  async exposeBinding(name: string, bindingFunction: string): Promise<void> {
     await this._session.send('Page.addBinding', {name: name});
     await this._session.send('Page.addScriptToEvaluateOnNewDocument', {script: bindingFunction});
     await Promise.all(this.frames().map(frame => frame.evaluate(bindingFunction).catch(debugError)));
   }
 
-  dispose() {
+  didClose() {
     helper.removeEventListeners(this._eventListeners);
+    this._networkManager.dispose();
   }
 
-  async waitForFrameNavigation(frame: frames.Frame, options: { timeout?: number; waitUntil?: string | Array<string>; } = {}) {
+  async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}) {
     const {
-      timeout = this._timeoutSettings.navigationTimeout(),
+      timeout = this._page._timeoutSettings.navigationTimeout(),
       waitUntil = ['load'],
     } = options;
     const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
@@ -277,9 +303,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     return watchDog.navigationResponse();
   }
 
-  async navigateFrame(frame: frames.Frame, url: string, options: { timeout?: number; waitUntil?: string | Array<string>; referer?: string; } = {}) {
+  async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}) {
     const {
-      timeout = this._timeoutSettings.navigationTimeout(),
+      timeout = this._page._timeoutSettings.navigationTimeout(),
       waitUntil = ['load'],
       referer,
     } = options;
@@ -316,6 +342,95 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       document.write(html);
       document.close();
     }, html);
+  }
+
+  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {
+    return this._networkManager.setExtraHTTPHeaders(extraHTTPHeaders);
+  }
+
+  async setUserAgent(userAgent: string): Promise<void> {
+    await this._session.send('Page.setUserAgent', { userAgent });
+  }
+
+  async setJavaScriptEnabled(enabled: boolean): Promise<void> {
+    await this._session.send('Page.setJavascriptEnabled', { enabled });
+  }
+
+  async setBypassCSP(enabled: boolean): Promise<void> {
+    await this._session.send('Page.setBypassCSP', { enabled });
+  }
+
+  async setViewport(viewport: types.Viewport): Promise<void> {
+    const {
+      width,
+      height,
+      isMobile = false,
+      deviceScaleFactor = 1,
+      hasTouch = false,
+      isLandscape = false,
+    } = viewport;
+    await this._session.send('Page.setViewport', {
+      viewport: { width, height, isMobile, deviceScaleFactor, hasTouch, isLandscape },
+    });
+  }
+
+  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+    await this._session.send('Page.setEmulatedMedia', {
+      type: mediaType === null ? undefined : mediaType,
+      colorScheme: mediaColorScheme === null ? undefined : mediaColorScheme
+    });
+  }
+
+  async setCacheEnabled(enabled: boolean): Promise<void> {
+    await this._session.send('Page.setCacheDisabled', {cacheDisabled: !enabled});
+  }
+
+  private async _go(action: () => Promise<{ navigationId: string | null, navigationURL: string | null }>, options: frames.NavigateOptions = {}) {
+    const {
+      timeout = this._page._timeoutSettings.navigationTimeout(),
+      waitUntil = ['load'],
+    } = options;
+    const frame = this.mainFrame();
+    const normalizedWaitUntil = normalizeWaitUntil(waitUntil);
+    const { navigationId, navigationURL } = await action();
+    if (!navigationId)
+      return null;
+
+    const timeoutError = new TimeoutError('Navigation timeout of ' + timeout + ' ms exceeded');
+    let timeoutCallback;
+    const timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
+    const timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
+
+    const watchDog = new NavigationWatchdog(this, frame, this._networkManager, navigationId, navigationURL, normalizedWaitUntil);
+    const error = await Promise.race([
+      timeoutPromise,
+      watchDog.promise(),
+    ]);
+    watchDog.dispose();
+    clearTimeout(timeoutId);
+    if (error)
+      throw error;
+    return watchDog.navigationResponse();
+  }
+
+  reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._go(() => this._session.send('Page.reload', { frameId: this._frameData(this.mainFrame()).frameId }), options);
+  }
+
+  goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._go(() => this._session.send('Page.goBack', { frameId: this._frameData(this.mainFrame()).frameId }), options);
+  }
+
+  goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
+    return this._go(() => this._session.send('Page.goForward', { frameId: this._frameData(this.mainFrame()).frameId }), options);
+  }
+
+  async evaluateOnNewDocument(source: string): Promise<void> {
+    await this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: source });
+  }
+
+  async closePage(runBeforeUnload: boolean): Promise<void> {
+    await this._session.send('Page.close', { runBeforeUnload });
   }
 }
 
