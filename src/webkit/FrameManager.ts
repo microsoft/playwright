@@ -53,23 +53,25 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _frames: Map<string, frames.Frame>;
   _contextIdToContext: Map<number, js.ExecutionContext>;
   _isolatedWorlds: Set<string>;
-  _sessionListeners: RegisteredListener[];
+  _sessionListeners: RegisteredListener[] = [];
   _mainFrame: frames.Frame;
 
-  constructor(session: TargetSession, page: Page, timeoutSettings: TimeoutSettings) {
+  constructor(page: Page, timeoutSettings: TimeoutSettings) {
     super();
-    this._session = session;
     this._page = page;
-    this._networkManager = new NetworkManager(session, this);
+    this._networkManager = new NetworkManager(this);
     this._timeoutSettings = timeoutSettings;
     this._frames = new Map();
     this._contextIdToContext = new Map();
     this._isolatedWorlds = new Set();
-
-    this._addSessionListeners();
   }
 
-  async initialize() {
+  async initialize(session: TargetSession) {
+    helper.removeEventListeners(this._sessionListeners);
+    this.disconnectFromTarget();
+    this._session = session;
+    this._addSessionListeners();
+    this.emit(FrameManagerEvents.TargetSwappedOnNavigation);
     const [,{frameTree}] = await Promise.all([
       // Page agent must be enabled before Runtime.
       this._session.send('Page.enable'),
@@ -81,7 +83,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       this._session.send('Console.enable'),
       this._session.send('Dialog.enable'),
       this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
-      this._networkManager.initialize(),
+      this._networkManager.initialize(session),
     ]);
     if (this._page._userAgent !== null)
       await this._session.send('Page.overrideUserAgent', { value: this._page._userAgent });
@@ -104,16 +106,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event))
     ];
-  }
-
-  async _swapSessionOnNavigation(newSession: TargetSession) {
-    helper.removeEventListeners(this._sessionListeners);
-    this.disconnectFromTarget();
-    this._session = newSession;
-    this._addSessionListeners();
-    this._networkManager.setSession(newSession);
-    this.emit(FrameManagerEvents.TargetSwappedOnNavigation);
-    await this.initialize();
   }
 
   disconnectFromTarget() {

@@ -82,6 +82,15 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     ];
   }
 
+  async _initialize() {
+    await Promise.all([
+      this._session.send('Runtime.enable'),
+      this._session.send('Network.enable'),
+      this._session.send('Page.enable'),
+      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true })
+    ]);
+  }
+
   executionContextById(executionContextId) {
     return this._contextIdToContext.get(executionContextId) || null;
   }

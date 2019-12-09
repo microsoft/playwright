@@ -28,6 +28,7 @@ export class Target {
   _targetId: string;
   private _type: 'page' | 'service-worker' | 'worker';
   private _pagePromise: Promise<Page> | null = null;
+  private _page: Page | null = null;
   private _url: string;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
@@ -49,36 +50,45 @@ export class Target {
   }
 
   _didClose() {
-    if (this._pagePromise)
-      this._pagePromise.then(page => page._didClose());
+    if (this._page)
+      this._page._didClose();
   }
 
   async _swappedIn(oldTarget: Target, session: TargetSession) {
     this._pagePromise = oldTarget._pagePromise;
+    this._page = oldTarget._page;
     // Swapped out target should not be accessed by anyone. Reset page promise so that
     // old target does not close the page on connection reset.
     oldTarget._pagePromise = null;
-    if (!this._pagePromise)
-      return;
-    const page = await this._pagePromise;
-    (page as any)[targetSymbol] = this;
-    page._swapSessionOnNavigation(session).catch(rethrowIfNotSwapped);
+    oldTarget._page = null;
+    if (this._pagePromise)
+      this._adoptPage(this._page || await this._pagePromise, session);
   }
 
-  async page(): Promise<Page | null> {
+  private async _adoptPage(page: Page, session: TargetSession) {
+    this._page = page;
+    (page as any)[targetSymbol] = this;
+    session.once(TargetSessionEvents.Disconnected, () => {
+      // Once swapped out, we reset _page and won't call _didDisconnect for old session.
+      if (this._page === page)
+        page._didDisconnect();
+    });
+    await page._initialize(session).catch(e => {
+      // Swallow initialization errors due to newer target swap in,
+      // since we will reinitialize again.
+      if (!isSwappedOutError(e))
+        throw e;
+    });
+  }
+
+  async page(): Promise<Page> {
     if (this._type === 'page' && !this._pagePromise) {
       const session = this.browser()._connection.session(this._targetId);
       this._pagePromise = new Promise(async f => {
-        const page = new Page(session, this._browserContext);
-        await page._initialize().catch(rethrowIfNotSwapped);
+        const page = new Page(this._browserContext);
+        await this._adoptPage(page, session);
         if (this.browser()._defaultViewport)
           await page.setViewport(this.browser()._defaultViewport);
-        (page as any)[targetSymbol] = this;
-        session.once(TargetSessionEvents.Disconnected, () => {
-          // Check that this target has not been swapped out.
-          if ((page as any)[targetSymbol] === this)
-            page._didDisconnect();
-        });
         f(page);
       });
     }
@@ -100,9 +110,4 @@ export class Target {
   browserContext(): BrowserContext {
     return this._browserContext;
   }
-}
-
-function rethrowIfNotSwapped(e: Error) {
-  if (!isSwappedOutError(e))
-    throw e;
 }
