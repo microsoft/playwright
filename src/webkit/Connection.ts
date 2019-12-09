@@ -228,8 +228,7 @@ export class TargetSession extends EventEmitter {
     }
     this._callbacks.clear();
     this._connection = null;
-    if (!this._swappedOut)
-      this.emit(TargetSessionEvents.Disconnected);
+    this.emit(TargetSessionEvents.Disconnected);
   }
 }
 

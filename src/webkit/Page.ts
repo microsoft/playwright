@@ -57,18 +57,13 @@ export class Page extends EventEmitter {
   _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  constructor(session: TargetSession, browserContext: BrowserContext) {
+  constructor(browserContext: BrowserContext) {
     super();
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
-    this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
-    this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
     this._timeoutSettings = new TimeoutSettings();
-    this._frameManager = new FrameManager(session, this, this._timeoutSettings);
+    this._frameManager = new FrameManager(this, this._timeoutSettings);
 
-    this._screenshotter = new Screenshotter(this, new WKScreenshotDelegate(session), browserContext.browser());
-
-    this._session = session;
     this._browserContext = browserContext;
 
     this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
@@ -96,13 +91,12 @@ export class Page extends EventEmitter {
     this._disconnectedCallback(new Error('Target closed'));
   }
 
-  _initialize() {
-    return this._frameManager.initialize();
-  }
-
-  async _swapSessionOnNavigation(newSession: TargetSession) {
-    this._session = newSession;
-    await this._frameManager._swapSessionOnNavigation(newSession);
+  _initialize(session: TargetSession) {
+    this._session = session;
+    this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
+    this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
+    this._screenshotter = new Screenshotter(this, new WKScreenshotDelegate(session), this._browserContext.browser());
+    return this._frameManager.initialize(session);
   }
 
   browser(): Browser {

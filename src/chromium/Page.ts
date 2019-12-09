@@ -55,7 +55,7 @@ export class Page extends EventEmitter {
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
-  private _frameManager: FrameManager;
+  _frameManager: FrameManager;
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
   readonly overrides: Overrides;
@@ -68,14 +68,6 @@ export class Page extends EventEmitter {
   _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   private _emulatedMediaType: string | undefined;
-
-  static async create(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean, defaultViewport: types.Viewport | null): Promise<Page> {
-    const page = new Page(client, browserContext, ignoreHTTPSErrors);
-    await page._frameManager.initialize();
-    if (defaultViewport)
-      await page.setViewport(defaultViewport);
-    return page;
-  }
 
   constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
     super();

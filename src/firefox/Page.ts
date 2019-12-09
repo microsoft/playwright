@@ -61,20 +61,6 @@ export class Page extends EventEmitter {
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   _screenshotter: Screenshotter;
 
-  static async create(session: JugglerSession, browserContext: BrowserContext, defaultViewport: types.Viewport | null) {
-    const page = new Page(session, browserContext);
-    await Promise.all([
-      session.send('Runtime.enable'),
-      session.send('Network.enable'),
-      session.send('Page.enable'),
-      session.send('Page.setInterceptFileChooserDialog', { enabled: true })
-    ]);
-
-    if (defaultViewport)
-      await page.setViewport(defaultViewport);
-    return page;
-  }
-
   constructor(session: JugglerSession, browserContext: BrowserContext) {
     super();
     this._timeoutSettings = new TimeoutSettings();

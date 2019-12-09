@@ -39,29 +39,20 @@ export class NetworkManager extends EventEmitter {
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
 
-  constructor(client: TargetSession, frameManager: FrameManager) {
+  constructor(frameManager: FrameManager) {
     super();
-    this._sesssion = client;
     this._frameManager = frameManager;
-
-    this._sesssion.on('Network.requestWillBeSent', this._onRequestWillBeSent.bind(this));
-    this._sesssion.on('Network.responseReceived', this._onResponseReceived.bind(this));
-    this._sesssion.on('Network.loadingFinished', this._onLoadingFinished.bind(this));
-    this._sesssion.on('Network.loadingFailed', this._onLoadingFailed.bind(this));
   }
 
-  setSession(newSession: TargetSession) {
+  async initialize(session: TargetSession) {
     helper.removeEventListeners(this._sessionListeners);
-    this._sesssion = newSession;
+    this._sesssion = session;
     this._sessionListeners = [
       helper.addEventListener(this._sesssion, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
       helper.addEventListener(this._sesssion, 'Network.responseReceived', this._onResponseReceived.bind(this)),
       helper.addEventListener(this._sesssion, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
       helper.addEventListener(this._sesssion, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
     ];
-  }
-
-  async initialize() {
     await this._sesssion.send('Network.enable');
     await this._sesssion.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
   }

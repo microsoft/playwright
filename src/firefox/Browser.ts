@@ -189,9 +189,10 @@ export class Browser extends EventEmitter {
 
 export class Target {
   _pagePromise?: Promise<Page>;
+  private _page: Page | null = null;
   private _browser: Browser;
   _context: BrowserContext;
-  private _connection: any;
+  private _connection: Connection;
   private _targetId: string;
   private _type: 'page' | 'browser';
   _url: string;
@@ -208,8 +209,8 @@ export class Target {
   }
 
   _didClose() {
-    if (this._pagePromise)
-      this._pagePromise.then(page => page._didClose());
+    if (this._page)
+      this._page._didClose();
   }
 
   opener(): Target | null {
@@ -230,12 +231,17 @@ export class Target {
     return this._context;
   }
 
-  async page() {
+  page(): Promise<Page> {
     if (this._type === 'page' && !this._pagePromise) {
-      const session = await this._connection.createSession(this._targetId);
-      this._pagePromise = Page.create(session, this._context, this._browser._defaultViewport).then(page => {
+      this._pagePromise = new Promise(async f => {
+        const session = await this._connection.createSession(this._targetId);
+        const page = new Page(session, this._context);
+        this._page = page;
         session.once(JugglerSessionEvents.Disconnected, () => page._didDisconnect());
-        return page;
+        await page._frameManager._initialize();
+        if (this._browser._defaultViewport)
+          await page.setViewport(this._browser._defaultViewport);
+        f(page);
       });
     }
     return this._pagePromise;

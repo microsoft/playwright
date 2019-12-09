@@ -35,6 +35,7 @@ export class Target {
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: types.Viewport;
   private _pagePromise: Promise<Page> | null = null;
+  private _page: Page | null = null;
   private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
@@ -75,14 +76,15 @@ export class Target {
   }
 
   _didClose() {
-    if (this._pagePromise)
-      this._pagePromise.then(page => page._didClose());
+    if (this._page)
+      this._page._didClose();
   }
 
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory().then(async client => {
-        const page = await Page.create(client, this._browserContext, this._ignoreHTTPSErrors, this._defaultViewport);
+        const page = new Page(client, this._browserContext, this._ignoreHTTPSErrors);
+        this._page = page;
         page[targetSymbol] = this;
         client.once(CDPSessionEvents.Disconnected, () => page._didDisconnect());
         client.on('Target.attachedToTarget', event => {
@@ -91,7 +93,10 @@ export class Target {
             client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
           }
         });
+        await page._frameManager.initialize();
         await client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true});
+        if (this._defaultViewport)
+          await page.setViewport(this._defaultViewport);
         return page;
       });
     }
