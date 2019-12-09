@@ -1,7 +1,7 @@
-From ced6ff2b2f1fb64dda025d0a49b9a35ef39cf61d Mon Sep 17 00:00:00 2001
-From: Yury Semikhatsky <yurys@chromium.org>
-Date: Sun, 8 Dec 2019 15:09:27 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From ba883b0572c9da4ac17e2dc3d2f772e71f103274 Mon Sep 17 00:00:00 2001
+From: Pavel Feldman <pavel.feldman@gmail.com>
+Date: Mon, 9 Dec 2019 12:19:23 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -38,7 +38,6 @@ Subject: [PATCH xserver] chore: bootstrap
  .../NetworkProcess/NetworkProcess.messages.in |   4 +
  Source/WebKit/Shared/API/c/wpe/WebKit.h       |   1 +
  Source/WebKit/Shared/NativeWebKeyboardEvent.h |   5 +
- Source/WebKit/Shared/NativeWebMouseEvent.h    |   4 +
  Source/WebKit/Shared/WebEvent.h               |   6 +-
  Source/WebKit/Shared/WebKeyboardEvent.cpp     |  22 +
  .../Shared/gtk/NativeWebKeyboardEventGtk.cpp  |   2 +-
@@ -90,8 +89,8 @@ Subject: [PATCH xserver] chore: bootstrap
  .../UIProcess/WebPageInspectorController.h    |  22 +
  .../WebPageInspectorEmulationAgent.cpp        |  48 ++
  .../WebPageInspectorEmulationAgent.h          |  42 ++
- .../UIProcess/WebPageInspectorInputAgent.cpp  | 235 ++++++++
- .../UIProcess/WebPageInspectorInputAgent.h    |  54 ++
+ .../UIProcess/WebPageInspectorInputAgent.cpp  | 236 ++++++++
+ .../UIProcess/WebPageInspectorInputAgent.h    |  57 ++
  .../UIProcess/WebPageInspectorTargetProxy.cpp | 109 ++++
  .../UIProcess/WebPageInspectorTargetProxy.h   |  45 ++
  Source/WebKit/UIProcess/WebPageProxy.cpp      |  20 +-
@@ -107,7 +106,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../WebKit/UIProcess/mac/PageClientImplMac.h  |   2 +
  .../WebKit/UIProcess/mac/PageClientImplMac.mm |  21 +
  .../mac/WebPageInspectorEmulationAgentMac.mm  |  21 +
- .../mac/WebPageInspectorInputAgentMac.mm      |  14 +
+ .../mac/WebPageInspectorInputAgentMac.mm      |  68 +++
  .../mac/WebPageInspectorTargetProxyMac.mm     |  20 +
  .../wpe/WebPageInspectorEmulationAgentWPE.cpp |  18 +
  .../wpe/WebPageInspectorInputAgentWPE.cpp     |  76 +++
@@ -123,7 +122,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 119 files changed, 4855 insertions(+), 92 deletions(-)
+ 118 files changed, 4909 insertions(+), 92 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -2902,21 +2901,6 @@ index 05938ef3564..b050b30281c 100644
  #elif PLATFORM(IOS_FAMILY)
      enum class HandledByInputMethod : bool { No, Yes };
      NativeWebKeyboardEvent(::WebEvent *, HandledByInputMethod);
-diff --git a/Source/WebKit/Shared/NativeWebMouseEvent.h b/Source/WebKit/Shared/NativeWebMouseEvent.h
-index 0fa557e9faa..db299d91de3 100644
---- a/Source/WebKit/Shared/NativeWebMouseEvent.h
-+++ b/Source/WebKit/Shared/NativeWebMouseEvent.h
-@@ -56,6 +56,10 @@ namespace WebKit {
- 
- class NativeWebMouseEvent : public WebMouseEvent {
- public:
-+    NativeWebMouseEvent(Type type, Button button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier> modifiers, WallTime timestamp)
-+        : WebMouseEvent(type, button, buttons, position, globalPosition, deltaX, deltaY, deltaZ, clickCount, modifiers, timestamp)
-+    {
-+    }
- #if USE(APPKIT)
-     NativeWebMouseEvent(NSEvent *, NSEvent *lastPressureEvent, NSView *);
- #elif PLATFORM(GTK)
 diff --git a/Source/WebKit/Shared/WebEvent.h b/Source/WebKit/Shared/WebEvent.h
 index f77a16bef13..73f99282f08 100644
 --- a/Source/WebKit/Shared/WebEvent.h
@@ -5293,10 +5277,10 @@ index 00000000000..0025b0be853
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 00000000000..6bd5242c9c2
+index 00000000000..276f3da57fa
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,236 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5508,8 +5492,9 @@ index 00000000000..6bd5242c9c2
 +    m_inputObserver->addMouseCallback(WTFMove(callback));
 +#if PLATFORM(WPE)
 +    platformDispatchMouseEvent(type, in_x, in_y, button, modifiers);
-+#elif PLATFORM(GTK) || PLATFORM(MAC)
-+    WallTime timestamp = WallTime::now();
++#elif PLATFORM(MAC)
++    platformDispatchMouseEvent(in_type, in_x, in_y, opt_in_modifiers, opt_in_button, opt_in_clickCount);
++#elif PLATFORM(GTK)
 +    NativeWebMouseEvent event(
 +        type,
 +        button,
@@ -5534,10 +5519,10 @@ index 00000000000..6bd5242c9c2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 00000000000..36531345add
+index 00000000000..5804c52add6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,57 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5580,6 +5565,9 @@ index 00000000000..36531345add
 +    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, WallTime timestamp);
 +#if PLATFORM(WPE)
 +    void platformDispatchMouseEvent(WebMouseEvent::Type type, int x, int y, WebMouseEvent::Button button, OptionSet<WebEvent::Modifier> modifiers);
++#endif
++#if PLATFORM(MAC)
++    void platformDispatchMouseEvent(const String& type, int x, int y, const int* modifier, const String* button, const int* clickCount);
 +#endif
 +
 +    Ref<Inspector::InputBackendDispatcher> m_backendDispatcher;
@@ -6432,17 +6420,71 @@ index 00000000000..d364ca6d955
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 new file mode 100644
-index 00000000000..7ce9b71b0fb
+index 00000000000..9ce6d7bec29
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,68 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
-+#include "config.h"
-+#include "WebPageInspectorInputAgent.h"
++#import "config.h"
++#import "NativeWebMouseEvent.h"
++#import "WebPageInspectorInputAgent.h"
++#import "WebPageProxy.h"
++#import <WebCore/IntPoint.h>
++#import <WebCore/IntSize.h>
 +
 +namespace WebKit {
++
++using namespace WebCore;
++
++void WebPageInspectorInputAgent::platformDispatchMouseEvent(const String& type, int x, int y, const int* optionalModifiers, const String* button, const int* optionalClickCount) {
++    IntPoint locationInWindow(x, y);
++
++    NSEventModifierFlags modifiers = optionalModifiers ? *optionalModifiers : 0;
++    int clickCount = optionalClickCount ? *optionalClickCount : 0;
++
++    NSTimeInterval timestamp = [NSDate timeIntervalSinceReferenceDate];
++    NSWindow *window = m_page.platformWindow();
++    NSInteger windowNumber = window.windowNumber;
++
++    NSEventType downEventType = (NSEventType)0;
++    NSEventType dragEventType = (NSEventType)0;
++    NSEventType upEventType = (NSEventType)0;
++
++    if (!button || *button == "none") {
++        downEventType = NSEventTypeMouseMoved;
++        dragEventType = NSEventTypeMouseMoved;
++        upEventType = NSEventTypeMouseMoved;
++    } else if (*button == "left") {
++        downEventType = NSEventTypeLeftMouseDown;
++        dragEventType = NSEventTypeLeftMouseDragged;
++        upEventType = NSEventTypeLeftMouseUp;
++    } else if (*button == "middle") {
++        downEventType = NSEventTypeOtherMouseDown;
++        dragEventType = NSEventTypeLeftMouseDragged;
++        upEventType = NSEventTypeOtherMouseUp;
++    } else if (*button == "right") {
++        downEventType = NSEventTypeRightMouseDown;
++        upEventType = NSEventTypeRightMouseUp;
++    }
++
++    NSInteger eventNumber = 0;
++
++    NSEvent* event = nil;
++    if (type == "move") {
++        event = [NSEvent mouseEventWithType:dragEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:clickCount pressure:0.0f];
++    } else if (type == "down") {
++        event = [NSEvent mouseEventWithType:downEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:clickCount pressure:WebCore::ForceAtClick];
++    } else if (type == "up") {
++        event = [NSEvent mouseEventWithType:upEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:clickCount pressure:0.0f];
++    }
++
++    if (event) {
++        NativeWebMouseEvent nativeEvent(event, nil, [window contentView]);
++        m_page.handleMouseEvent(nativeEvent);
++    }
++}
 +
 +void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, WallTime timestamp)
 +{
@@ -7455,5 +7497,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.24.0
 
