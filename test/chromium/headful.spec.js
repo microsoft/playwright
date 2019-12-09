@@ -18,8 +18,6 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const util = require('util');
-const utils = require('./utils');
-const {waitEvent} = utils;
 
 const rmAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -37,7 +35,7 @@ module.exports.addTests = function({testRunner, expect, playwright, defaultBrows
   const headlessOptions = Object.assign({}, defaultBrowserOptions, {
     headless: true
   });
-  const extensionPath = path.join(__dirname, 'assets', 'simple-extension');
+  const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
   const extensionOptions = Object.assign({}, defaultBrowserOptions, {
     headless: false,
     args: [

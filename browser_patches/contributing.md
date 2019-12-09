@@ -11,15 +11,16 @@ and develop from there.
 From the `playwright` repo, run the following command:
 
 ```sh
-$ ./browser_patches/prepare_checkout.sh firefox
+$ ./browser_patches/prepare_checkout.sh firefox <path to checkout>
 ```
-
 (you can optionally pass "webkit" for a webkit checkout)
+
+If you don't have a checkout, don't pass a path and one will be created for you in `./browser_patches/firefox/checkout`
 
 > **NOTE:** this command downloads GBs of data.
 
+
 This command will:
-- create a git browser checkout at `./browser_patches/firefox/checkout`
 - create a `browser_upstream` remote in the checkout
 - create a `playwright-build` branch and apply all playwright-required patches to it.
 
@@ -41,13 +42,15 @@ Once you're happy with the work you did in the browser-land, you want to export 
 Assuming that you're in the root of the `playwright` repo and that your browser checkout has your feature branch checked out:
 
 ```sh
-$ ./browser_patches/export.sh firefox
+$ ./browser_patches/export.sh firefox <path to checkout>
 ```
 
 This script will:
 - create a new patch and put it to the `./browser_patches/firefox/patches/`
 - update the `./browser_patches/firefox/UPSTREAM_CONFIG.sh` if necessary
 - bump the `./browser_patches/firefox/BUILD_NUMBER` number.
+
+If you omit the path to your checkout, the script will assume one is located at `./browser_patches/firefox/checkout`
 
 Send a PR to the PlayWright repo to be reviewed. 
 
@@ -62,12 +65,3 @@ $ ./browser_patches/tools/check_cdn.sh
 ```
 
 As the builds appear, you can roll to a new browser version in the `./package.json` file.
-
-
-# FAQ
-
-## Q: Can I reuse my other browser checkout?
-
-Yes, you can. For this:
-- pass path to your browser checkout as a second argument to `prepare_checkout.sh` script.
-- pass path to your browser checkout as a second argument to `export.sh` when exporting changes.

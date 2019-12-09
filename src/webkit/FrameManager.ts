@@ -30,6 +30,7 @@ import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page } from './Page';
 import { Protocol } from './protocol';
 import { DOMWorldDelegate } from './JSHandle';
+import * as dialog from '../dialog';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
@@ -52,23 +53,25 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
   _frames: Map<string, frames.Frame>;
   _contextIdToContext: Map<number, js.ExecutionContext>;
   _isolatedWorlds: Set<string>;
-  _sessionListeners: RegisteredListener[];
+  _sessionListeners: RegisteredListener[] = [];
   _mainFrame: frames.Frame;
 
-  constructor(session: TargetSession, page: Page, timeoutSettings: TimeoutSettings) {
+  constructor(page: Page, timeoutSettings: TimeoutSettings) {
     super();
-    this._session = session;
     this._page = page;
-    this._networkManager = new NetworkManager(session, this);
+    this._networkManager = new NetworkManager(this);
     this._timeoutSettings = timeoutSettings;
     this._frames = new Map();
     this._contextIdToContext = new Map();
     this._isolatedWorlds = new Set();
-
-    this._addSessionListeners();
   }
 
-  async initialize() {
+  async initialize(session: TargetSession) {
+    helper.removeEventListeners(this._sessionListeners);
+    this.disconnectFromTarget();
+    this._session = session;
+    this._addSessionListeners();
+    this.emit(FrameManagerEvents.TargetSwappedOnNavigation);
     const [,{frameTree}] = await Promise.all([
       // Page agent must be enabled before Runtime.
       this._session.send('Page.enable'),
@@ -77,8 +80,17 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
     this._handleFrameTree(frameTree);
     await Promise.all([
       this._session.send('Runtime.enable'),
-      this._networkManager.initialize(),
+      this._session.send('Console.enable'),
+      this._session.send('Dialog.enable'),
+      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
+      this._networkManager.initialize(session),
     ]);
+    if (this._page._userAgent !== null)
+      await this._session.send('Page.overrideUserAgent', { value: this._page._userAgent });
+    if (this._page._emulatedMediaType !== undefined)
+      await this._session.send('Page.setEmulatedMedia', { media: this._page._emulatedMediaType || '' });
+    if (!this._page._javascriptEnabled)
+      await this._session.send('Emulation.setJavaScriptEnabled', { enabled: this._page._javascriptEnabled });
   }
 
   _addSessionListeners() {
@@ -88,17 +100,12 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       helper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
       helper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      helper.addEventListener(this._session, 'Page.loadEventFired', event => this._page.emit(Events.Page.Load)),
+      helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
+      helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page.emit(Events.Page.DOMContentLoaded)),
+      helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
+      helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event))
     ];
-  }
-
-  async _swapTargetOnNavigation(newSession) {
-    helper.removeEventListeners(this._sessionListeners);
-    this.disconnectFromTarget();
-    this._session = newSession;
-    this._addSessionListeners();
-    this._networkManager.setSession(newSession);
-    this.emit(FrameManagerEvents.TargetSwappedOnNavigation);
-    // this.initialize() will be called by page.
   }
 
   disconnectFromTarget() {
@@ -283,6 +290,55 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       document.close();
     }, html);
     await watchDog.waitForNavigation();
+  }
+
+  async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
+    const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
+    let derivedType: string = type;
+    if (type === 'log')
+      derivedType = level;
+    else if (type === 'timing')
+      derivedType = 'timeEnd';
+    const mainFrameContext = await this.mainFrame().executionContext();
+    const handles = (parameters || []).map(p => {
+      let context: js.ExecutionContext | null = null;
+      if (p.objectId) {
+        const objectId = JSON.parse(p.objectId);
+        context = this._contextIdToContext.get(objectId.injectedScriptId);
+      } else {
+        context = mainFrameContext;
+      }
+      return context._createHandle(p);
+    });
+    this._page._addConsoleMessage(derivedType, handles, { url, lineNumber, columnNumber }, handles.length ? undefined : text);
+  }
+
+  _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
+    this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+      event.type as dialog.DialogType,
+      event.message,
+      async (accept: boolean, promptText?: string) => {
+        await this._session.send('Dialog.handleJavaScriptDialog', { accept, promptText });
+      },
+      event.defaultPrompt));
+  }
+
+  async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
+    const context = await this.frame(event.frameId)._utilityContext();
+    const handle = context._createHandle(event.element).asElement()!;
+    this._page._onFileChooserOpened(handle);
+  }
+
+  async setUserAgent(userAgent: string) {
+    await this._session.send('Page.overrideUserAgent', { value: userAgent });
+  }
+
+  async setEmulatedMedia(type?: string | null) {
+    await this._session.send('Page.setEmulatedMedia', { media: type || '' });
+  }
+
+  async setJavaScriptEnabled(enabled: boolean) {
+    await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
   }
 }
 

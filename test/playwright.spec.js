@@ -131,9 +131,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
 
       // Page-level tests that are given a browser, a context and a page.
       // Each test is launched in a new browser context.
-      require('../src/tests/accessibility.spec.js').addTests(testOptions);
-      require('../src/tests/permissions.spec.js').addTests(testOptions);
-      require('../src/chromium/features/workers.spec.js').addTests(testOptions);
       require('./browser.spec.js').addTests(testOptions);
       require('./click.spec.js').addTests(testOptions);
       require('./cookies.spec.js').addTests(testOptions);
@@ -148,21 +145,26 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       require('./mouse.spec.js').addTests(testOptions);
       require('./navigation.spec.js').addTests(testOptions);
       require('./network.spec.js').addTests(testOptions);
-      require('./requestinterception.spec.js').addTests(testOptions);
       require('./page.spec.js').addTests(testOptions);
-      // FIXME: screenshot tests will fail when running in parallel (maybe)
-      require('./screenshot.spec.js').addTests(testOptions);
       require('./queryselector.spec.js').addTests(testOptions);
+      require('./screenshot.spec.js').addTests(testOptions);
       require('./waittask.spec.js').addTests(testOptions);
+
       if (CHROME) {
-        require('./CDPSession.spec.js').addTests(testOptions);
-        require('../src/chromium/features/coverage.spec.js').addTests(testOptions);
-        // Add page-level Chromium-specific tests.
-        require('./chromiumonly.spec.js').addPageTests(testOptions);
-        require('../src/chromium/features/geolocation.spec.js').addTests(testOptions);
-        require('../src/chromium/features/pdf.spec.js').addTests(testOptions);
-        require('../src/chromium/features/chromium.spec.js').addTests(testOptions);
+        require('./chromium/chromium.spec.js').addTests(testOptions);
+        require('./chromium/coverage.spec.js').addTests(testOptions);
+        require('./chromium/geolocation.spec.js').addTests(testOptions);
+        require('./chromium/pdf.spec.js').addTests(testOptions);
+        require('./chromium/session.spec.js').addTests(testOptions);
+        require('./chromium/workers.spec.js').addTests(testOptions);
       }
+
+      if (CHROME || FFOX) {
+        require('./features/accessibility.spec.js').addTests(testOptions);
+        require('./features/permissions.spec.js').addTests(testOptions);
+        require('./features/requestinterception.spec.js').addTests(testOptions);
+      }
+
     });
 
     // Browser-level tests that are given a browser.
@@ -170,15 +172,14 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
   });
 
   // Top-level tests that launch Browser themselves.
-  require('./ignorehttpserrors.spec.js').addTests(testOptions);
   require('./defaultbrowsercontext.spec.js').addTests(testOptions);
-  require('./launcher.spec.js').addTests(testOptions);
   require('./fixtures.spec.js').addTests(testOptions);
+  require('./ignorehttpserrors.spec.js').addTests(testOptions);
+  require('./launcher.spec.js').addTests(testOptions);
   if (CHROME) {
-    require('./oopif.spec.js').addTests(testOptions);
-    require('./headful.spec.js').addTests(testOptions);
-    require('../src/chromium/features/tracing.spec.js').addTests(testOptions);
-    // Add top-level Chromium-specific tests.
-    require('./chromiumonly.spec.js').addLauncherTests(testOptions);
+    require('./chromium/headful.spec.js').addTests(testOptions);
+    require('./chromium/launcher.spec.js').addTests(testOptions);
+    require('./chromium/oopif.spec.js').addTests(testOptions);
+    require('./chromium/tracing.spec.js').addTests(testOptions);
   }
 };

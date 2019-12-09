@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { TargetSession } from './Connection';
+import { TargetSession, isSwappedOutError } from './Connection';
 import { helper } from '../helper';
 import { valueFromRemoteObject, releaseObject } from './protocolHelper';
 import { Protocol } from './protocol';
@@ -25,7 +25,7 @@ export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
 export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
-  private _globalObjectId?: string;
+  private _globalObjectId?: Promise<string>;
   _session: TargetSession;
   _contextId: number;
   private _contextDestroyedCallback: () => void;
@@ -45,8 +45,6 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   }
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-    const suffix = `//# sourceURL=${EVALUATION_SCRIPT_URL}`;
-
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
       const expression: string = pageFunction as string;
@@ -58,18 +56,9 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
         emulateUserGesture: true
       }).then(response => {
         if (response.result.type === 'object' && response.result.className === 'Promise') {
-          const contextDiscarded = this._executionContextDestroyedPromise.then(() => ({
-            wasThrown: true,
-            result: {
-              description: 'Protocol error: Execution context was destroyed, most likely because of a navigation.'
-            } as Protocol.Runtime.RemoteObject
-          }));
           return Promise.race([
-            contextDiscarded,
-            this._session.send('Runtime.awaitPromise', {
-              promiseObjectId: response.result.objectId,
-              returnByValue: false
-            })
+            this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
+            this._awaitPromise(response.result.objectId),
           ]);
         }
         return response;
@@ -78,32 +67,8 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
           throw new Error('Evaluation failed: ' + response.result.description);
         if (!returnByValue)
           return context._createHandle(response.result);
-        if (response.result.objectId) {
-          const serializeFunction = function() {
-            try {
-              return JSON.stringify(this);
-            } catch (e) {
-              if (e instanceof TypeError)
-                return void 0;
-              throw e;
-            }
-          };
-          return this._session.send('Runtime.callFunctionOn', {
-            // Serialize object using standard JSON implementation to correctly pass 'undefined'.
-            functionDeclaration: serializeFunction + '\n' + suffix + '\n',
-            objectId: response.result.objectId,
-            returnByValue
-          }).then(serializeResponse => {
-            if (serializeResponse.wasThrown)
-              throw new Error('Serialization failed: ' + serializeResponse.result.description);
-            // This is the case of too long property chain, not serializable to json string.
-            if (serializeResponse.result.type === 'undefined')
-              return undefined;
-            if (serializeResponse.result.type !== 'string')
-              throw new Error('Unexpected result of JSON.stringify: ' + JSON.stringify(serializeResponse, null, 2));
-            return JSON.parse(serializeResponse.result.value);
-          });
-        }
+        if (response.result.objectId)
+          return this._returnObjectByValue(response.result.objectId);
         return valueFromRemoteObject(response.result);
       }).catch(rewriteError);
     }
@@ -164,18 +129,9 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     }
     return callFunctionOnPromise.then(response => {
       if (response.result.type === 'object' && response.result.className === 'Promise') {
-        const contextDiscarded = this._executionContextDestroyedPromise.then(() => ({
-          wasThrown: true,
-          result: {
-            description: 'Protocol error: Execution context was destroyed, most likely because of a navigation.'
-          } as Protocol.Runtime.RemoteObject
-        }));
         return Promise.race([
-          contextDiscarded,
-          this._session.send('Runtime.awaitPromise', {
-            promiseObjectId: response.result.objectId,
-            returnByValue: false
-          })
+          this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
+          this._awaitPromise(response.result.objectId),
         ]);
       }
       return response;
@@ -184,32 +140,8 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
         throw new Error('Evaluation failed: ' + response.result.description);
       if (!returnByValue)
         return context._createHandle(response.result);
-      if (response.result.objectId) {
-        const serializeFunction = function() {
-          try {
-            return JSON.stringify(this);
-          } catch (e) {
-            if (e instanceof TypeError)
-              return void 0;
-            throw e;
-          }
-        };
-        return this._session.send('Runtime.callFunctionOn', {
-          // Serialize object using standard JSON implementation to correctly pass 'undefined'.
-          functionDeclaration: serializeFunction + '\n' + suffix + '\n',
-          objectId: response.result.objectId,
-          returnByValue
-        }).then(serializeResponse => {
-          if (serializeResponse.wasThrown)
-            throw new Error('Serialization failed: ' + serializeResponse.result.description);
-          // This is the case of too long property chain, not serializable to json string.
-          if (serializeResponse.result.type === 'undefined')
-            return undefined;
-          if (serializeResponse.result.type !== 'string')
-            throw new Error('Unexpected result of JSON.stringify: ' + JSON.stringify(serializeResponse, null, 2));
-          return JSON.parse(serializeResponse.result.value);
-        });
-      }
+      if (response.result.objectId)
+        return this._returnObjectByValue(response.result.objectId);
       return valueFromRemoteObject(response.result);
     }).catch(rewriteError);
 
@@ -263,12 +195,62 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     }
   }
 
-  async _contextGlobalObjectId() {
+  private _contextGlobalObjectId() {
     if (!this._globalObjectId) {
-      const globalObject = await this._session.send('Runtime.evaluate', { expression: 'this', contextId: this._contextId });
-      this._globalObjectId = globalObject.result.objectId;
+      this._globalObjectId = this._session.send('Runtime.evaluate', {
+        expression: 'this',
+        contextId: this._contextId
+      }).catch(e => {
+        if (isSwappedOutError(e))
+          throw new Error('Execution context was destroyed, most likely because of a navigation.');
+        throw e;
+      }).then(response => {
+        return response.result.objectId;
+      });
     }
     return this._globalObjectId;
+  }
+
+  private _awaitPromise(objectId: Protocol.Runtime.RemoteObjectId) {
+    return this._session.send('Runtime.awaitPromise', {
+      promiseObjectId: objectId,
+      returnByValue: false
+    }).catch(e => {
+      if (isSwappedOutError(e))
+        return contextDestroyedResult;
+      throw e;
+    });
+  }
+
+  private _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) {
+    const serializeFunction = function() {
+      try {
+        return JSON.stringify(this);
+      } catch (e) {
+        if (e instanceof TypeError)
+          return void 0;
+        throw e;
+      }
+    };
+    return this._session.send('Runtime.callFunctionOn', {
+      // Serialize object using standard JSON implementation to correctly pass 'undefined'.
+      functionDeclaration: serializeFunction + '\n' + suffix + '\n',
+      objectId: objectId,
+      returnByValue: true
+    }).catch(e => {
+      if (isSwappedOutError(e))
+        return contextDestroyedResult;
+      throw e;
+    }).then(serializeResponse => {
+      if (serializeResponse.wasThrown)
+        throw new Error('Serialization failed: ' + serializeResponse.result.description);
+      // This is the case of too long property chain, not serializable to json string.
+      if (serializeResponse.result.type === 'undefined')
+        return undefined;
+      if (serializeResponse.result.type !== 'string')
+        throw new Error('Unexpected result of JSON.stringify: ' + JSON.stringify(serializeResponse, null, 2));
+      return JSON.parse(serializeResponse.result.value);
+    });
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
@@ -289,7 +271,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     await releaseObject(this._session, toRemoteObject(handle));
   }
 
-  async handleJSONValue(handle: js.JSHandle): Promise<any> {
+  async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
     const remoteObject = toRemoteObject(handle);
     if (remoteObject.objectId) {
       const response = await this._session.send('Runtime.callFunctionOn', {
@@ -328,8 +310,15 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     }
     return { value: arg };
   }
-
 }
+
+const suffix = `//# sourceURL=${EVALUATION_SCRIPT_URL}`;
+const contextDestroyedResult = {
+  wasThrown: true,
+  result: {
+    description: 'Protocol error: Execution context was destroyed, most likely because of a navigation.'
+  } as Protocol.Runtime.RemoteObject
+};
 
 function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
   return handle._remoteObject as Protocol.Runtime.RemoteObject;

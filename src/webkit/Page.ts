@@ -16,73 +16,55 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as mime from 'mime';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
+import * as console from '../console';
+import * as dom from '../dom';
+import * as frames from '../frames';
+import { assert, helper } from '../helper';
+import * as input from '../input';
 import { ClickOptions, mediaColorSchemes, mediaTypes, MultiClickOptions } from '../input';
+import * as js from '../javascript';
+import * as network from '../network';
+import { Screenshotter } from '../screenshotter';
 import { TimeoutSettings } from '../TimeoutSettings';
+import * as types from '../types';
 import { Browser, BrowserContext } from './Browser';
-import { TargetSession, TargetSessionEvents } from './Connection';
+import { TargetSession } from './Connection';
 import { Events } from './events';
 import { FrameManager, FrameManagerEvents } from './FrameManager';
 import { RawKeyboardImpl, RawMouseImpl } from './Input';
 import { NetworkManagerEvents } from './NetworkManager';
 import { Protocol } from './protocol';
-import { Target } from './Target';
-import { TaskQueue } from './TaskQueue';
-import * as input from '../input';
-import * as types from '../types';
-import * as frames from '../frames';
-import * as js from '../javascript';
-import * as dom from '../dom';
-import * as network from '../network';
-import * as dialog from '../dialog';
-import * as console from '../console';
-
-const writeFileAsync = helper.promisify(fs.writeFile);
-
-export type Viewport = {
-  width: number;
-  height: number;
-}
+import { WKScreenshotDelegate } from './Screenshotter';
 
 export class Page extends EventEmitter {
   private _closed = false;
+  private _closedCallback: () => void;
+  private _closedPromise: Promise<void>;
+  private _disconnected = false;
+  private _disconnectedCallback: (e: Error) => void;
+  private _disconnectedPromise: Promise<Error>;
   _session: TargetSession;
-  private _target: Target;
+  private _browserContext: BrowserContext;
   private _keyboard: input.Keyboard;
   private _mouse: input.Mouse;
   private _timeoutSettings: TimeoutSettings;
   private _frameManager: FrameManager;
   private _bootstrapScripts: string[] = [];
   _javascriptEnabled = true;
-  private _viewport: Viewport | null = null;
-  private _screenshotTaskQueue: TaskQueue;
-  private _workers = new Map<string, Worker>();
-  private _disconnectPromise: Promise<Error> | undefined;
-  private _sessionListeners: RegisteredListener[] = [];
-  private _emulatedMediaType: string | undefined;
+  _userAgent: string | null = null;
+  _emulatedMediaType: string | undefined;
+  private _viewport: types.Viewport | null = null;
+  _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  static async create(session: TargetSession, target: Target, defaultViewport: Viewport | null, screenshotTaskQueue: TaskQueue): Promise<Page> {
-    const page = new Page(session, target, screenshotTaskQueue);
-    await page._initialize();
-    if (defaultViewport)
-      await page.setViewport(defaultViewport);
-    return page;
-  }
-
-  constructor(session: TargetSession, target: Target, screenshotTaskQueue: TaskQueue) {
+  constructor(browserContext: BrowserContext) {
     super();
-    this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
-    this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
+    this._closedPromise = new Promise(f => this._closedCallback = f);
+    this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._timeoutSettings = new TimeoutSettings();
-    this._frameManager = new FrameManager(session, this, this._timeoutSettings);
+    this._frameManager = new FrameManager(this, this._timeoutSettings);
 
-    this._screenshotTaskQueue = screenshotTaskQueue;
-
-    this._setSession(session);
-    this._setTarget(target);
+    this._browserContext = browserContext;
 
     this._frameManager.on(FrameManagerEvents.FrameAttached, event => this.emit(Events.Page.FrameAttached, event));
     this._frameManager.on(FrameManagerEvents.FrameDetached, event => this.emit(Events.Page.FrameDetached, event));
@@ -95,86 +77,46 @@ export class Page extends EventEmitter {
     networkManager.on(NetworkManagerEvents.RequestFinished, event => this.emit(Events.Page.RequestFinished, event));
   }
 
-  async _initialize() {
-    return Promise.all([
-      this._frameManager.initialize(),
-      this._session.send('Console.enable'),
-      this._session.send('Dialog.enable'),
-      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
-    ]);
+  _didClose() {
+    assert(!this._closed, 'Page closed twice');
+    this._closed = true;
+    this.emit(Events.Page.Close);
+    this._closedCallback();
   }
 
-  _setSession(newSession: TargetSession) {
-    helper.removeEventListeners(this._sessionListeners);
-    this._session = newSession;
-    this._sessionListeners = [
-      helper.addEventListener(this._session, TargetSessionEvents.Disconnected, () => this._frameManager.disconnectFromTarget()),
-      helper.addEventListener(this._session, 'Page.loadEventFired', event => this.emit(Events.Page.Load)),
-      helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
-      helper.addEventListener(this._session, 'Page.domContentEventFired', event => this.emit(Events.Page.DOMContentLoaded)),
-      helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
-      helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event))
-    ];
+  _didDisconnect() {
+    assert(!this._disconnected, 'Page disconnected twice');
+    this._disconnected = true;
+    this._frameManager.disconnectFromTarget();
+    this._disconnectedCallback(new Error('Target closed'));
   }
 
-  _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    this.emit(Events.Page.Dialog, new dialog.Dialog(
-      event.type as dialog.DialogType,
-      event.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._session.send('Dialog.handleJavaScriptDialog', { accept, promptText });
-      },
-      event.defaultPrompt));
-  }
-
-  _setTarget(newTarget: Target) {
-    this._target = newTarget;
-    this._target._isClosedPromise.then(() => {
-      if (this._target !== newTarget)
-        return;
-      this.emit(Events.Page.Close);
-      this._closed = true;
-    });
-  }
-
-  async _swapTargetOnNavigation(newSession : TargetSession, newTarget : Target) {
-    this._setSession(newSession);
-    this._setTarget(newTarget);
-    await this._frameManager._swapTargetOnNavigation(newSession);
-    await this._initialize().catch(e => debugError('failed to enable agents after swap: ' + e));
+  _initialize(session: TargetSession) {
+    this._session = session;
+    this._keyboard = new input.Keyboard(new RawKeyboardImpl(session));
+    this._mouse = new input.Mouse(new RawMouseImpl(session), this._keyboard);
+    this._screenshotter = new Screenshotter(this, new WKScreenshotDelegate(session), this._browserContext.browser());
+    return this._frameManager.initialize(session);
   }
 
   browser(): Browser {
-    return this._target.browser();
+    return this._browserContext.browser();
   }
 
   browserContext(): BrowserContext {
-    return this._target.browserContext();
+    return this._browserContext;
   }
 
   _onTargetCrashed() {
     this.emit('error', new Error('Page crashed!'));
   }
 
-  async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
-    const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
-    let derivedType: string = type;
-    if (type === 'log')
-      derivedType = level;
-    else if (type === 'timing')
-      derivedType = 'timeEnd';
-    const mainFrameContext = await this.mainFrame().executionContext();
-    const handles = (parameters || []).map(p => {
-      let context: js.ExecutionContext | null = null;
-      if (p.objectId) {
-        const objectId = JSON.parse(p.objectId);
-        context = this._frameManager._contextIdToContext.get(objectId.injectedScriptId);
-      } else {
-        context = mainFrameContext;
-      }
-      return context._createHandle(p);
-    });
-    this.emit(Events.Page.Console, new console.ConsoleMessage(derivedType, handles.length ? undefined : text, handles, { url, lineNumber, columnNumber }));
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation, text?: string) {
+    if (!this.listenerCount(Events.Page.Console)) {
+      args.forEach(arg => arg.dispose());
+      return;
+    }
+    this.emit(Events.Page.Console, new console.ConsoleMessage(type, text, args, location));
   }
 
   mainFrame(): frames.Frame {
@@ -188,11 +130,6 @@ export class Page extends EventEmitter {
   frames(): frames.Frame[] {
     return this._frameManager.frames();
   }
-
-  workers(): Worker[] {
-    return Array.from(this._workers.values());
-  }
-
 
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
@@ -240,7 +177,8 @@ export class Page extends EventEmitter {
   }
 
   async setUserAgent(userAgent: string) {
-    await this._session.send('Page.overrideUserAgent', { value: userAgent });
+    this._userAgent = userAgent;
+    this._frameManager.setUserAgent(userAgent);
   }
 
   url(): string {
@@ -276,23 +214,19 @@ export class Page extends EventEmitter {
   }
 
   async _go<T extends keyof Protocol.CommandParameters>(command: T): Promise<network.Response | null> {
-    const [response, error] = await Promise.all([
+    const [response] = await Promise.all([
       this.waitForNavigation(),
-      this._session.send(command).then(() => null).catch(e => e),
-    ]);
-    if (error)
-      return null;
+      this._session.send(command).then(() => null),
+    ]).catch(error => {
+      if (error instanceof Error && error.message.includes(`Protocol error (${command}): Failed to go`))
+        return [null];
+      throw error;
+    });
     return response;
   }
 
   async waitForNavigation(): Promise<network.Response | null> {
     return await this._frameManager.mainFrame().waitForNavigation();
-  }
-
-  _sessionClosePromise() {
-    if (!this._disconnectPromise)
-      this._disconnectPromise = new Promise(fulfill => this._session.once(TargetSessionEvents.Disconnected, () => fulfill(new Error('Target closed'))));
-    return this._disconnectPromise;
   }
 
   async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<Request> {
@@ -305,7 +239,7 @@ export class Page extends EventEmitter {
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(request));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
   async waitForResponse(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<Response> {
@@ -318,10 +252,10 @@ export class Page extends EventEmitter {
       if (typeof urlOrPredicate === 'function')
         return !!(urlOrPredicate(response));
       return false;
-    }, timeout, this._sessionClosePromise());
+    }, timeout, this._disconnectedPromise);
   }
 
-  async emulate(options: { viewport: Viewport; userAgent: string; }) {
+  async emulate(options: { viewport: types.Viewport; userAgent: string; }) {
     await Promise.all([
       this.setViewport(options.viewport),
       this.setUserAgent(options.userAgent)
@@ -329,24 +263,23 @@ export class Page extends EventEmitter {
   }
 
   async emulateMedia(options: {
-      type?: string | null,
-      colorScheme?: 'dark' | 'light' | 'no-preference' | null }) {
+      type?: input.MediaType | null,
+      colorScheme?: input.MediaColorScheme | null }) {
     assert(!options.type || mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
     assert(!options.colorScheme || mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
     assert(!options.colorScheme, 'Media feature emulation is not supported');
-    const media = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
-    await this._session.send('Page.setEmulatedMedia', { media: media || '' });
-    this._emulatedMediaType = options.type;
+    this._emulatedMediaType = typeof options.type === 'undefined' ? this._emulatedMediaType : options.type;
+    this._frameManager.setEmulatedMedia(this._emulatedMediaType);
   }
 
-  async setViewport(viewport: Viewport) {
+  async setViewport(viewport: types.Viewport) {
     this._viewport = viewport;
     const width = viewport.width;
     const height = viewport.height;
-    await this._session.send('Emulation.setDeviceMetricsOverride', { width, height });
+    await this._session.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
   }
 
-  viewport(): Viewport | null {
+  viewport(): types.Viewport | null {
     return this._viewport;
   }
 
@@ -362,74 +295,19 @@ export class Page extends EventEmitter {
     await this._session.send('Page.setBootstrapScript', { source });
   }
 
-  async setJavaScriptEnabled(enabled: boolean) {
+  setJavaScriptEnabled(enabled: boolean) {
     if (this._javascriptEnabled === enabled)
       return;
     this._javascriptEnabled = enabled;
-    await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
+    return this._frameManager.setJavaScriptEnabled(enabled);
   }
 
   async setCacheEnabled(enabled: boolean = true) {
     await this._frameManager.networkManager().setCacheEnabled(enabled);
   }
 
-  async screenshot(options: ScreenshotOptions = {}): Promise<Buffer | string> {
-    let screenshotType = null;
-    // options.type takes precedence over inferring the type from options.path
-    // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
-    if (options.type) {
-      assert(options.type === 'png', 'Unknown options.type value: ' + options.type);
-      screenshotType = options.type;
-    } else if (options.path) {
-      const mimeType = mime.getType(options.path);
-      if (mimeType === 'image/png')
-        screenshotType = 'png';
-      assert(screenshotType, 'Unsupported screenshot mime type: ' + mimeType);
-    }
-
-    if (!screenshotType)
-      screenshotType = 'png';
-
-    if (options.quality)
-      assert(screenshotType === 'jpeg', 'options.quality is unsupported for the ' + screenshotType + ' screenshots');
-    assert(!options.clip || !options.fullPage, 'options.clip and options.fullPage are exclusive');
-    if (options.clip) {
-      assert(typeof options.clip.x === 'number', 'Expected options.clip.x to be a number but found ' + (typeof options.clip.x));
-      assert(typeof options.clip.y === 'number', 'Expected options.clip.y to be a number but found ' + (typeof options.clip.y));
-      assert(typeof options.clip.width === 'number', 'Expected options.clip.width to be a number but found ' + (typeof options.clip.width));
-      assert(typeof options.clip.height === 'number', 'Expected options.clip.height to be a number but found ' + (typeof options.clip.height));
-      assert(options.clip.width !== 0, 'Expected options.clip.width not to be 0.');
-      assert(options.clip.height !== 0, 'Expected options.clip.height not to be 0.');
-    }
-    return this._screenshotTaskQueue.postTask(this._screenshotTask.bind(this, options));
-  }
-
-  async _screenshotTask(options?: ScreenshotOptions): Promise<Buffer | string> {
-    const params: Protocol.Page.snapshotRectParameters = { x: 0, y: 0, width: 800, height: 600, coordinateSystem: 'Page' };
-    if (options.fullPage) {
-      const pageSize = await this.evaluate(() =>
-        ({
-          width: document.body.scrollWidth,
-          height: document.body.scrollHeight
-        }));
-      Object.assign(params, pageSize);
-    } else if (options.clip) {
-      Object.assign(params, options.clip);
-    } else if (this._viewport) {
-      Object.assign(params, this._viewport);
-    }
-    const [, result] = await Promise.all([
-      this._session._connection.send('Target.activate', { targetId: this._target._targetId }),
-      this._session.send('Page.snapshotRect', params),
-    ]).catch(e => {
-      debugError('Failed to take screenshot: ' + e);
-      throw e;
-    });
-    const prefix = 'data:image/png;base64,';
-    const buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
-    if (options.path)
-      await writeFileAsync(options.path, buffer);
-    return buffer;
+  screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
+    return this._screenshotter.screenshotPage(options);
   }
 
   async title(): Promise<string> {
@@ -437,12 +315,9 @@ export class Page extends EventEmitter {
   }
 
   async close() {
-    this.browser()._connection.send('Target.close', {
-      targetId: this._target._targetId
-    }).catch(e => {
-      debugError(e);
-    });
-    await this._target._isClosedPromise;
+    assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
+    this.browser()._closePage(this);
+    await this._closedPromise;
   }
 
   isClosed(): boolean {
@@ -462,11 +337,11 @@ export class Page extends EventEmitter {
     });
   }
 
-  async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
-    if (!this._fileChooserInterceptors.size)
+  async _onFileChooserOpened(handle: dom.ElementHandle) {
+    if (!this._fileChooserInterceptors.size) {
+      await handle.dispose();
       return;
-    const context = await this._frameManager.frame(event.frameId)._utilityContext();
-    const handle = context._createHandle(event.element).asElement()!;
+    }
     const interceptors = Array.from(this._fileChooserInterceptors);
     this._fileChooserInterceptors.clear();
     const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
@@ -527,33 +402,6 @@ export class Page extends EventEmitter {
   waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
-}
-
-
-type Metrics = {
-  Timestamp?: number,
-  Documents?: number,
-  Frames?: number,
-  JSEventListeners?: number,
-  Nodes?: number,
-  LayoutCount?: number,
-  RecalcStyleCount?: number,
-  LayoutDuration?: number,
-  RecalcStyleDuration?: number,
-  ScriptDuration?: number,
-  TaskDuration?: number,
-  JSHeapUsedSize?: number,
-  JSHeapTotalSize?: number,
-}
-
-type ScreenshotOptions = {
-  type?: string,
-  path?: string,
-  fullPage?: boolean,
-  clip?: {x: number, y: number, width: number, height: number},
-  quality?: number,
-  omitBackground?: boolean,
-  encoding?: string,
 }
 
 type FileChooser = {

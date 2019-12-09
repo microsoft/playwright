@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+const { waitEvent } = require('../utils');
+const util = require('util');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const rmAsync = util.promisify(require('rimraf'));
+const mkdtempAsync = util.promisify(fs.mkdtemp);
 
-module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOptions, playwright}) {
+const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
+
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -162,7 +170,7 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
       remoteBrowser2.on('disconnected', () => ++disconnectedRemote2);
 
       await Promise.all([
-        utils.waitEvent(remoteBrowser2, 'disconnected'),
+        waitEvent(remoteBrowser2, 'disconnected'),
         remoteBrowser2.disconnect(),
       ]);
 
@@ -171,8 +179,8 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
       expect(disconnectedRemote2).toBe(1);
 
       await Promise.all([
-        utils.waitEvent(remoteBrowser1, 'disconnected'),
-        utils.waitEvent(originalBrowser, 'disconnected'),
+        waitEvent(remoteBrowser1, 'disconnected'),
+        waitEvent(originalBrowser, 'disconnected'),
         originalBrowser.close(),
       ]);
 
@@ -183,33 +191,3 @@ module.exports.addLauncherTests = function({testRunner, expect, defaultBrowserOp
   });
 
 };
-
-module.exports.addPageTests = function({testRunner, expect}) {
-  const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
-  const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
-
-  describe('Chromium-Specific Page Tests', function() {
-    it('Page.setRequestInterception should work with intervention headers', async({server, page}) => {
-      server.setRoute('/intervention', (req, res) => res.end(`
-        <script>
-          document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
-        </script>
-      `));
-      server.setRedirect('/intervention.js', '/redirect.js');
-      let serverRequest = null;
-      server.setRoute('/redirect.js', (req, res) => {
-        serverRequest = req;
-        res.end('console.log(1);');
-      });
-
-      await page.interception.enable();
-      page.on('request', request => page.interception.continue(request));
-      await page.goto(server.PREFIX + '/intervention');
-      // Check for feature URL substring rather than https://www.chromestatus.com to
-      // make it work with Edgium.
-      expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
-    });
-  });
-};
-

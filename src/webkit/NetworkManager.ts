@@ -31,7 +31,7 @@ export const NetworkManagerEvents = {
 };
 
 export class NetworkManager extends EventEmitter {
-  private _sesssion: TargetSession;
+  private _session: TargetSession;
   private _frameManager: FrameManager;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _extraHTTPHeaders: network.Headers = {};
@@ -39,30 +39,22 @@ export class NetworkManager extends EventEmitter {
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
 
-  constructor(client: TargetSession, frameManager: FrameManager) {
+  constructor(frameManager: FrameManager) {
     super();
-    this._sesssion = client;
     this._frameManager = frameManager;
-
-    this._sesssion.on('Network.requestWillBeSent', this._onRequestWillBeSent.bind(this));
-    this._sesssion.on('Network.responseReceived', this._onResponseReceived.bind(this));
-    this._sesssion.on('Network.loadingFinished', this._onLoadingFinished.bind(this));
-    this._sesssion.on('Network.loadingFailed', this._onLoadingFailed.bind(this));
   }
 
-  setSession(newSession: TargetSession) {
+  async initialize(session: TargetSession) {
     helper.removeEventListeners(this._sessionListeners);
-    this._sesssion = newSession;
+    this._session = session;
     this._sessionListeners = [
-      helper.addEventListener(this._sesssion, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
-      helper.addEventListener(this._sesssion, 'Network.responseReceived', this._onResponseReceived.bind(this)),
-      helper.addEventListener(this._sesssion, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
-      helper.addEventListener(this._sesssion, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
+      helper.addEventListener(this._session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
+      helper.addEventListener(this._session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
+      helper.addEventListener(this._session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
+      helper.addEventListener(this._session, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
     ];
-  }
-
-  async initialize() {
-    await this._sesssion.send('Network.enable');
+    await this._session.send('Network.enable');
+    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
   }
 
   async setExtraHTTPHeaders(extraHTTPHeaders: { [s: string]: string; }) {
@@ -72,7 +64,7 @@ export class NetworkManager extends EventEmitter {
       assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
       this._extraHTTPHeaders[key.toLowerCase()] = value;
     }
-    await this._sesssion.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
+    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
   }
 
   extraHTTPHeaders(): { [s: string]: string; } {
@@ -85,7 +77,7 @@ export class NetworkManager extends EventEmitter {
   }
 
   async _updateProtocolCacheDisabled() {
-    await this._sesssion.send('Network.setResourceCachingDisabled', {
+    await this._session.send('Network.setResourceCachingDisabled', {
       disabled: this._userCacheDisabled
     });
   }
@@ -109,7 +101,7 @@ export class NetworkManager extends EventEmitter {
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
     const remoteAddress: network.RemoteAddress = { ip: '', port: 0 };
     const getResponseBody = async () => {
-      const response = await this._sesssion.send('Network.getResponseBody', { requestId: request._requestId });
+      const response = await this._session.send('Network.getResponseBody', { requestId: request._requestId });
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
     return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), remoteAddress, getResponseBody);

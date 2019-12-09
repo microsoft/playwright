@@ -10,7 +10,6 @@ import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
-import { SelectorRoot } from './injected/selectorEngine';
 
 export interface DOMWorldDelegate {
   keyboard: input.Keyboard;
@@ -22,12 +21,12 @@ export interface DOMWorldDelegate {
   contentQuads(handle: ElementHandle): Promise<types.Quad[] | null>;
   layoutViewport(): Promise<{ width: number, height: number }>;
   boundingBox(handle: ElementHandle): Promise<types.Rect | null>;
-  screenshot(handle: ElementHandle, options?: any): Promise<string | Buffer>;
+  screenshot(handle: ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer>;
   setInputFiles(handle: ElementHandle, files: input.FilePayload[]): Promise<void>;
-  adoptElementHandle(handle: ElementHandle, to: DOMWorld): Promise<ElementHandle>;
+  adoptElementHandle<T extends Node>(handle: ElementHandle<T>, to: DOMWorld): Promise<ElementHandle<T>>;
 }
 
-export type ScopedSelector = types.Selector & { scope?: ElementHandle };
+type ScopedSelector = types.Selector & { scope?: ElementHandle };
 type ResolvedSelector = { scope?: ElementHandle, selector: string, visible?: boolean, disposeScope?: boolean };
 
 export class DOMWorld {
@@ -60,7 +59,7 @@ export class DOMWorld {
     return this._injectedPromise;
   }
 
-  async adoptElementHandle(handle: ElementHandle): Promise<ElementHandle> {
+  async adoptElementHandle<T extends Node>(handle: ElementHandle<T>): Promise<ElementHandle<T>> {
     assert(handle.executionContext() !== this.context, 'Should not adopt to the same context');
     return this.delegate.adoptElementHandle(handle, this);
   }
@@ -75,10 +74,10 @@ export class DOMWorld {
     return { scope: selector.scope, selector: normalizeSelector(selector.selector), visible: selector.visible };
   }
 
-  async $(selector: string | ScopedSelector): Promise<ElementHandle | null> {
+  async $(selector: string | ScopedSelector): Promise<ElementHandle<Element> | null> {
     const resolved = await this.resolveSelector(selector);
     const handle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
+        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
           const element = injected.querySelector(selector, scope || document);
           if (visible === undefined || !element)
             return element;
@@ -93,10 +92,10 @@ export class DOMWorld {
     return handle.asElement();
   }
 
-  async $$(selector: string | ScopedSelector): Promise<ElementHandle[]> {
+  async $$(selector: string | ScopedSelector): Promise<ElementHandle<Element>[]> {
     const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
+        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
           const elements = injected.querySelectorAll(selector, scope || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
@@ -131,7 +130,7 @@ export class DOMWorld {
   $$eval: types.$$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
     const resolved = await this.resolveSelector(selector);
     const arrayHandle = await this.context.evaluateHandle(
-        (injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined) => {
+        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
           const elements = injected.querySelectorAll(selector, scope || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
@@ -145,8 +144,8 @@ export class DOMWorld {
   }
 }
 
-export class ElementHandle extends js.JSHandle {
-  private readonly _world: DOMWorld;
+export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
+  readonly _world: DOMWorld;
 
   constructor(context: js.ExecutionContext, remoteObject: any) {
     super(context, remoteObject);
@@ -154,7 +153,7 @@ export class ElementHandle extends js.JSHandle {
     this._world = context._domWorld;
   }
 
-  asElement(): ElementHandle | null {
+  asElement(): ElementHandle<T> | null {
     return this;
   }
 
@@ -163,13 +162,15 @@ export class ElementHandle extends js.JSHandle {
   }
 
   async _scrollIntoViewIfNeeded() {
-    const error = await this.evaluate(async (element, pageJavascriptEnabled) => {
-      if (!element.isConnected)
+    const error = await this.evaluate(async (node: Node, pageJavascriptEnabled: boolean) => {
+      if (!node.isConnected)
         return 'Node is detached from document';
-      if (element.nodeType !== Node.ELEMENT_NODE)
+      if (node.nodeType !== Node.ELEMENT_NODE)
         return 'Node is not of type HTMLElement';
+      const element = node as Element;
       // force-scroll if page's javascript is disabled.
       if (!pageJavascriptEnabled) {
+        // @ts-ignore because only Chromium still supports 'instant'
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
         return false;
       }
@@ -183,8 +184,10 @@ export class ElementHandle extends js.JSHandle {
         // there are rafs.
         requestAnimationFrame(() => {});
       });
-      if (visibleRatio !== 1.0)
+      if (visibleRatio !== 1.0) {
+        // @ts-ignore because only Chromium still supports 'instant'
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
+      }
       return false;
     }, this._world.delegate.isJavascriptEnabled());
     if (error)
@@ -254,8 +257,10 @@ export class ElementHandle extends js.JSHandle {
   private async _viewportPointAndScroll(relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this.evaluate((e: Element) => {
-        const style = e.ownerDocument.defaultView.getComputedStyle(e);
+      this.evaluate((node: Node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE)
+          return { x: 0, y: 0 };
+        const style = node.ownerDocument.defaultView.getComputedStyle(node as Element);
         return { x: parseInt(style.borderLeftWidth, 10), y: parseInt(style.borderTopWidth, 10) };
       }).catch(debugError),
     ]);
@@ -270,17 +275,17 @@ export class ElementHandle extends js.JSHandle {
       point.y += border.y;
     }
     const metrics = await this._world.delegate.layoutViewport();
-    // Give one extra pixel to avoid any issues on viewport edge.
+    // Give 20 extra pixels to avoid any issues on viewport edge.
     let scrollX = 0;
-    if (point.x < 1)
-      scrollX = point.x - 1;
-    if (point.x > metrics.width - 1)
-      scrollX = point.x - metrics.width + 1;
+    if (point.x < 20)
+      scrollX = point.x - 20;
+    if (point.x > metrics.width - 20)
+      scrollX = point.x - metrics.width + 20;
     let scrollY = 0;
-    if (point.y < 1)
-      scrollY = point.y - 1;
-    if (point.y > metrics.height - 1)
-      scrollY = point.y - metrics.height + 1;
+    if (point.y < 20)
+      scrollY = point.y - 20;
+    if (point.y > metrics.height - 20)
+      scrollY = point.y - metrics.height + 20;
     return { point, scrollX, scrollY };
   }
 
@@ -334,13 +339,25 @@ export class ElementHandle extends js.JSHandle {
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
-    const multiple = await this.evaluate((element: HTMLInputElement) => !!element.multiple);
+    const multiple = await this.evaluate((node: Node) => {
+      if (node.nodeType !== Node.ELEMENT_NODE || (node as Element).tagName !== 'INPUT')
+        throw new Error('Node is not an HTMLInputElement');
+      const input = node as HTMLInputElement;
+      return input.multiple;
+    });
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
     await this._world.delegate.setInputFiles(this, await input.loadFiles(files));
   }
 
   async focus() {
-    await this.evaluate(element => element.focus());
+    const errorMessage = await this.evaluate((element: Node) => {
+      if (!element['focus'])
+        return 'Node is not an HTML or SVG element.';
+      (element as HTMLElement|SVGElement).focus();
+      return false;
+    });
+    if (errorMessage)
+      throw new Error(errorMessage);
   }
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {
@@ -357,7 +374,7 @@ export class ElementHandle extends js.JSHandle {
     return this._world.delegate.boundingBox(this);
   }
 
-  async screenshot(options: any = {}): Promise<string | Buffer> {
+  async screenshot(options?: types.ElementScreenshotOptions): Promise<string | Buffer> {
     return this._world.delegate.screenshot(this, options);
   }
 
@@ -372,7 +389,7 @@ export class ElementHandle extends js.JSHandle {
     return this._world.$(this._scopedSelector(selector));
   }
 
-  $$(selector: string | types.Selector): Promise<ElementHandle[]> {
+  $$(selector: string | types.Selector): Promise<ElementHandle<Element>[]> {
     return this._world.$$(this._scopedSelector(selector));
   }
 
@@ -384,12 +401,15 @@ export class ElementHandle extends js.JSHandle {
     return this._world.$$eval(this._scopedSelector(selector), pageFunction, ...args as any);
   }
 
-  $x(expression: string): Promise<ElementHandle[]> {
+  $x(expression: string): Promise<ElementHandle<Element>[]> {
     return this._world.$$({ scope: this, selector: 'xpath=' + expression });
   }
 
   isIntersectingViewport(): Promise<boolean> {
-    return this.evaluate(async element => {
+    return this.evaluate(async (node: Node) => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        throw new Error('Node is not of type HTMLElement');
+      const element = node as Element;
       const visibleRatio = await new Promise(resolve => {
         const observer = new IntersectionObserver(entries => {
           resolve(entries[0].intersectionRatio);
@@ -439,7 +459,7 @@ export function waitForFunctionTask(pageFunction: Function | string, options: ty
 export function waitForSelectorTask(selector: string | types.Selector, timeout: number): Task {
   return async (domWorld: DOMWorld) => {
     const resolved = await domWorld.resolveSelector(selector);
-    return domWorld.context.evaluateHandle((injected: Injected, selector: string, scope: SelectorRoot | undefined, visible: boolean | undefined, timeout: number) => {
+    return domWorld.context.evaluateHandle((injected: Injected, selector: string, scope: Node | undefined, visible: boolean | undefined, timeout: number) => {
       if (visible !== undefined)
         return injected.pollRaf(predicate, timeout);
       return injected.pollMutation(predicate, timeout);

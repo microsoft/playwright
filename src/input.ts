@@ -287,9 +287,10 @@ export class Mouse {
   }
 }
 
-export const selectFunction = (element: HTMLSelectElement, ...optionsToSelect: (Node | SelectOption)[]) => {
-  if (element.nodeName.toLowerCase() !== 'select')
+export const selectFunction = (node: Node, ...optionsToSelect: (Node | SelectOption)[]) => {
+  if (node.nodeName.toLowerCase() !== 'select')
     throw new Error('Element is not a <select> element.');
+  const element = node as HTMLSelectElement;
 
   const options = Array.from(element.options);
   element.value = undefined;
@@ -315,9 +316,10 @@ export const selectFunction = (element: HTMLSelectElement, ...optionsToSelect: (
   return options.filter(option => option.selected).map(option => option.value);
 };
 
-export const fillFunction = (element: HTMLElement) => {
-  if (element.nodeType !== Node.ELEMENT_NODE)
+export const fillFunction = (node: Node) => {
+  if (node.nodeType !== Node.ELEMENT_NODE)
     return 'Node is not of type HTMLElement';
+  const element = node as HTMLElement;
   if (!element.isConnected)
     return 'Element is not attached to the DOM';
   if (!element.ownerDocument || !element.ownerDocument.defaultView)
@@ -328,7 +330,6 @@ export const fillFunction = (element: HTMLElement) => {
     return 'Element is hidden';
   if (!element.offsetParent && element.tagName !== 'BODY')
     return 'Element is not visible';
-
   if (element.nodeName.toLowerCase() === 'input') {
     const input = element as HTMLInputElement;
     const type = input.getAttribute('type') || '';
@@ -397,5 +398,7 @@ export type FilePayload = {
   data: string
 };
 
-export const mediaTypes = new Set(['screen', 'print']);
-export const mediaColorSchemes = new Set(['dark', 'light', 'no-preference']);
+export type MediaType = 'screen' | 'print';
+export const mediaTypes: Set<MediaType> = new Set(['screen', 'print']);
+export type MediaColorScheme = 'dark' | 'light' | 'no-preference';
+export const mediaColorSchemes: Set<MediaColorScheme> = new Set(['dark', 'light', 'no-preference']);

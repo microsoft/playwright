@@ -24,14 +24,15 @@ import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
 import * as URL from 'url';
 import { Browser } from './Browser';
-import { BrowserFetcher } from './BrowserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { Connection } from './Connection';
 import { TimeoutError } from '../Errors';
 import { assert, debugError, helper } from '../helper';
-import { Viewport } from './Page';
+import * as types from '../types';
 import { PipeTransport } from './PipeTransport';
 import { WebSocketTransport } from './WebSocketTransport';
 import { ConnectionTransport } from '../ConnectionTransport';
+import * as util from 'util';
 
 const mkdtempAsync = helper.promisify(fs.mkdtemp);
 const removeFolderAsync = helper.promisify(removeFolder);
@@ -289,7 +290,7 @@ export class Launcher {
   }
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
-    const browserFetcher = new BrowserFetcher(this._projectRoot);
+    const browserFetcher = createBrowserFetcher(this._projectRoot);
     const revisionInfo = browserFetcher.revisionInfo(this._preferredRevision);
     const missingText = !revisionInfo.local ? `Chromium revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return {executablePath: revisionInfo.executablePath, missingText};
@@ -392,6 +393,55 @@ export type LauncherLaunchOptions = {
 
 export type LauncherBrowserOptions = {
    ignoreHTTPSErrors?: boolean,
-   defaultViewport?: Viewport | null,
+   defaultViewport?: types.Viewport | null,
    slowMo?: number,
 };
+
+export function createBrowserFetcher(projectRoot: string, options: BrowserFetcherOptions = {}): BrowserFetcher {
+  const downloadURLs = {
+    linux: '%s/chromium-browser-snapshots/Linux_x64/%d/%s.zip',
+    mac: '%s/chromium-browser-snapshots/Mac/%d/%s.zip',
+    win32: '%s/chromium-browser-snapshots/Win/%d/%s.zip',
+    win64: '%s/chromium-browser-snapshots/Win_x64/%d/%s.zip',
+  };
+
+  const defaultOptions = {
+    path: path.join(projectRoot, '.local-chromium'),
+    host: 'https://storage.googleapis.com',
+    platform: (() => {
+      const platform = os.platform();
+      if (platform === 'darwin')
+        return 'mac';
+      if (platform === 'linux')
+        return 'linux';
+      if (platform === 'win32')
+        return os.arch() === 'x64' ? 'win64' : 'win32';
+      return platform;
+    })()
+  };
+  options = {
+    ...defaultOptions,
+    ...options,
+  };
+  assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
+
+  return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+    let archiveName = '';
+    let executablePath = '';
+    if (platform === 'linux') {
+      archiveName = 'chrome-linux';
+      executablePath = path.join(archiveName, 'chrome');
+    } else if (platform === 'mac') {
+      archiveName = 'chrome-mac';
+      executablePath = path.join(archiveName, 'Chromium.app', 'Contents', 'MacOS', 'Chromium');
+    } else if (platform === 'win32' || platform === 'win64') {
+      // Windows archive name changed at r591479.
+      archiveName = parseInt(revision, 10) > 591479 ? 'chrome-win' : 'chrome-win32';
+      executablePath = path.join(archiveName, 'chrome.exe');
+    }
+    return {
+      downloadUrl: util.format(downloadURLs[platform], options.host, revision, archiveName),
+      executablePath
+    };
+  });
+}

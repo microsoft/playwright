@@ -15,14 +15,18 @@
  * limitations under the License.
  */
 
+import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
-import { CDPSession } from './Connection';
-import { Events } from './events';
+import { CDPSession, CDPSessionEvents } from './Connection';
+import { Events as CommonEvents } from '../events';
 import { Worker } from './features/workers';
-import { Page, Viewport } from './Page';
+import { Page } from '../page';
 import { Protocol } from './protocol';
-import { Screenshotter } from './Screenshotter';
+import { debugError } from '../helper';
+import { FrameManager } from './FrameManager';
+
+const targetSymbol = Symbol('target');
 
 export class Target {
   private _targetInfo: Protocol.Target.TargetInfo;
@@ -30,30 +34,30 @@ export class Target {
   _targetId: string;
   private _sessionFactory: () => Promise<CDPSession>;
   private _ignoreHTTPSErrors: boolean;
-  private _defaultViewport: Viewport;
-  private _screenshotter: Screenshotter;
-  private _pagePromise: Promise<Page> | null = null;
+  private _defaultViewport: types.Viewport;
+  private _pagePromise: Promise<Page<Browser, BrowserContext>> | null = null;
+  private _page: Page<Browser, BrowserContext> | null = null;
   private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
-  _isClosedPromise: Promise<void>;
-  _closedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
+
+  static fromPage(page: Page<Browser, BrowserContext>): Target {
+    return (page as any)[targetSymbol];
+  }
 
   constructor(
     targetInfo: Protocol.Target.TargetInfo,
     browserContext: BrowserContext,
     sessionFactory: () => Promise<CDPSession>,
     ignoreHTTPSErrors: boolean,
-    defaultViewport: Viewport | null,
-    screenshotter: Screenshotter) {
+    defaultViewport: types.Viewport | null) {
     this._targetInfo = targetInfo;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this._sessionFactory = sessionFactory;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._defaultViewport = defaultViewport;
-    this._screenshotter = screenshotter;
     this._initializedPromise = new Promise(fulfill => this._initializedCallback = fulfill).then(async success => {
       if (!success)
         return false;
@@ -61,22 +65,42 @@ export class Target {
       if (!opener || !opener._pagePromise || this.type() !== 'page')
         return true;
       const openerPage = await opener._pagePromise;
-      if (!openerPage.listenerCount(Events.Page.Popup))
+      if (!openerPage.listenerCount(CommonEvents.Page.Popup))
         return true;
       const popupPage = await this.page();
-      openerPage.emit(Events.Page.Popup, popupPage);
+      openerPage.emit(CommonEvents.Page.Popup, popupPage);
       return true;
     });
-    this._isClosedPromise = new Promise(fulfill => this._closedCallback = fulfill);
     this._isInitialized = this._targetInfo.type !== 'page' || this._targetInfo.url !== '';
     if (this._isInitialized)
       this._initializedCallback(true);
   }
 
-  async page(): Promise<Page | null> {
+  _didClose() {
+    if (this._page)
+      this._page._didClose();
+  }
+
+  async page(): Promise<Page<Browser, BrowserContext> | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
-      this._pagePromise = this._sessionFactory()
-          .then(client => Page.create(client, this, this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotter));
+      this._pagePromise = this._sessionFactory().then(async client => {
+        const frameManager = new FrameManager(client, this._browserContext, this._ignoreHTTPSErrors);
+        const page = frameManager.page();
+        this._page = page;
+        page[targetSymbol] = this;
+        client.once(CDPSessionEvents.Disconnected, () => page._didDisconnect());
+        client.on('Target.attachedToTarget', event => {
+          if (event.targetInfo.type !== 'worker') {
+            // If we don't detach from service workers, they will never die.
+            client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
+          }
+        });
+        await frameManager.initialize();
+        await client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true});
+        if (this._defaultViewport)
+          await page.setViewport(this._defaultViewport);
+        return page;
+      });
     }
     return this._pagePromise;
   }

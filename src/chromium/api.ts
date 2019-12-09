@@ -11,7 +11,7 @@ export { ExecutionContext, JSHandle } from '../javascript';
 export { Request, Response } from '../network';
 export { Browser } from './Browser';
 export { BrowserContext } from './BrowserContext';
-export { BrowserFetcher } from './BrowserFetcher';
+export { BrowserFetcher } from '../browserFetcher';
 export { CDPSession } from './Connection';
 export { Accessibility } from './features/accessibility';
 export { Chromium } from './features/chromium';
@@ -21,7 +21,7 @@ export { Overrides } from './features/overrides';
 export { PDF } from './features/pdf';
 export { Permissions } from './features/permissions';
 export { Worker, Workers } from './features/workers';
-export { Page } from './Page';
+export { Page } from '../page';
 export { Playwright } from './Playwright';
 export { Target } from './Target';
 

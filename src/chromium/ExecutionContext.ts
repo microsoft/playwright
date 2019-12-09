@@ -149,7 +149,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     await releaseObject(this._client, toRemoteObject(handle));
   }
 
-  async handleJSONValue(handle: js.JSHandle): Promise<any> {
+  async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {
     const remoteObject = toRemoteObject(handle);
     if (remoteObject.objectId) {
       const response = await this._client.send('Runtime.callFunctionOn', {

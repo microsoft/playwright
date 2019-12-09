@@ -78,7 +78,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       ]);
       expect(page.url()).toBe(server.PREFIX + '/wrappedlink.html#clicked');
     });
-    it.skip(FFOX)('should click when one of inline box children is outside of viewport', async({page, server}) => {
+    it('should click when one of inline box children is outside of viewport', async({page, server}) => {
       await page.setContent(`
         <style>
         i {
@@ -93,9 +93,8 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should select the text by triple clicking', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.focus('textarea');
       const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
-      await page.keyboard.type(text);
+      await page.fill('textarea', text);
       await page.tripleclick('textarea');
       expect(await page.evaluate(() => {
         const textarea = document.querySelector('textarea');
@@ -272,7 +271,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await frame.click('button');
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
-    it.skip(WEBKIT)('should click the button with deviceScaleFactor set', async({page, server}) => {
+    it('should click the button with deviceScaleFactor set', async({page, server}) => {
       await page.setViewport({width: 400, height: 400, deviceScaleFactor: 5});
       expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
       await page.setContent('<div style="width:100px;height:100px">spacer</div>');
@@ -282,37 +281,34 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await button.click();
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
-
-    it('should click the button with relative point', async({page, server}) => {
-      await page.goto(server.PREFIX + '/input/button.html');
-      await page.click('button', { relativePoint: { x: 20, y: 10 } });
-      expect(await page.evaluate(() => result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(20);
-      expect(await page.evaluate(() => offsetY)).toBe(10);
-    });
     it('should click the button with px border with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
-      await page.$eval('button', button => button.style.borderWidth = '2px');
+      await page.$eval('button', button => button.style.borderWidth = '8px');
       await page.click('button', { relativePoint: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(20);
-      expect(await page.evaluate(() => offsetY)).toBe(10);
+      // Safari reports border-relative offsetX/offsetY.
+      expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 20 + 8 : 20);
+      expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 10 + 8 : 10);
     });
     it('should click the button with em border with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '2em');
+      await page.$eval('button', button => button.style.fontSize = '12px');
       await page.click('button', { relativePoint: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(20);
-      expect(await page.evaluate(() => offsetY)).toBe(10);
+      // Safari reports border-relative offsetX/offsetY.
+      expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 12 * 2 + 20 : 20);
+      expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 12 * 2 + 10 : 10);
     });
     it('should click a very large button with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', button => button.style.borderWidth = '8px');
       await page.$eval('button', button => button.style.height = button.style.width = '2000px');
       await page.click('button', { relativePoint: { x: 1900, y: 1910 } });
       expect(await page.evaluate(() => window.result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(1900);
-      expect(await page.evaluate(() => offsetY)).toBe(1910);
+      // Safari reports border-relative offsetX/offsetY.
+      expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
+      expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
     xit('should click a button in scrolling container with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -332,7 +328,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(await page.evaluate(() => offsetY)).toBe(1910);
     });
 
-    it.skip(FFOX || WEBKIT)('should update modifiers correctly', async({page, server}) => {
+    it('should update modifiers correctly', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.click('button', { modifiers: ['Shift'] });
       expect(await page.evaluate(() => shiftKey)).toBe(true);
@@ -347,6 +343,15 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.keyboard.up('Shift');
       await page.click('button');
       expect(await page.evaluate(() => shiftKey)).toBe(false);
+    });
+    it.skip(CHROME)('should click an offscreen element when scroll-behavior is smooth', async({page}) => {
+      await page.setContent(`
+        <div style="border: 1px solid black; height: 500px; overflow: auto; width: 500px; scroll-behavior: smooth">
+        <button style="margin-top: 2000px" onClick="window.clicked = true">hi</button>
+        </div>
+      `);
+      await page.click('button');
+      expect(await page.evaluate('window.clicked')).toBe(true);
     });
   });
 };

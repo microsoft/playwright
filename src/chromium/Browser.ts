@@ -21,17 +21,17 @@ import { Events } from './events';
 import { assert, helper } from '../helper';
 import { BrowserContext } from './BrowserContext';
 import { Connection, ConnectionEvents, CDPSession } from './Connection';
-import { Page, Viewport } from './Page';
+import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
 import { Chromium } from './features/chromium';
-import { Screenshotter } from './Screenshotter';
+import * as types from '../types';
+import { FrameManager } from './FrameManager';
 
 export class Browser extends EventEmitter {
   private _ignoreHTTPSErrors: boolean;
-  private _defaultViewport: Viewport;
+  private _defaultViewport: types.Viewport;
   private _process: childProcess.ChildProcess;
-  private _screenshotter = new Screenshotter();
   _connection: Connection;
   _client: CDPSession;
   private _closeCallback: () => Promise<void>;
@@ -44,7 +44,7 @@ export class Browser extends EventEmitter {
     connection: Connection,
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
-    defaultViewport: Viewport | null,
+    defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     const browser = new Browser(connection, contextIds, ignoreHTTPSErrors, defaultViewport, process, closeCallback);
@@ -56,7 +56,7 @@ export class Browser extends EventEmitter {
     connection: Connection,
     contextIds: string[],
     ignoreHTTPSErrors: boolean,
-    defaultViewport: Viewport | null,
+    defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     super();
@@ -107,7 +107,7 @@ export class Browser extends EventEmitter {
     const {browserContextId} = targetInfo;
     const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId) : this._defaultContext;
 
-    const target = new Target(targetInfo, context, () => this._connection.createSession(targetInfo), this._ignoreHTTPSErrors, this._defaultViewport, this._screenshotter);
+    const target = new Target(targetInfo, context, () => this._connection.createSession(targetInfo), this._ignoreHTTPSErrors, this._defaultViewport);
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(event.targetInfo.targetId, target);
 
@@ -119,7 +119,7 @@ export class Browser extends EventEmitter {
     const target = this._targets.get(event.targetId);
     target._initializedCallback(false);
     this._targets.delete(event.targetId);
-    target._closedCallback();
+    target._didClose();
     if (await target._initializedPromise)
       this.chromium.emit(Events.Chromium.TargetDestroyed, target);
   }
@@ -134,11 +134,11 @@ export class Browser extends EventEmitter {
       this.chromium.emit(Events.Chromium.TargetChanged, target);
   }
 
-  async newPage(): Promise<Page> {
+  async newPage(): Promise<Page<Browser, BrowserContext>> {
     return this._defaultContext.newPage();
   }
 
-  async _createPageInContext(contextId: string | null): Promise<Page> {
+  async _createPageInContext(contextId: string | null): Promise<Page<Browser, BrowserContext>> {
     const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
     const target = this._targets.get(targetId);
     assert(await target._initializedPromise, 'Failed to create target for page');
@@ -146,12 +146,22 @@ export class Browser extends EventEmitter {
     return page;
   }
 
-  async _closeTarget(target: Target) {
-    await this._client.send('Target.closeTarget', { targetId: target._targetId });
+  async _closePage(page: Page<Browser, BrowserContext>) {
+    await this._client.send('Target.closeTarget', { targetId: Target.fromPage(page)._targetId });
   }
 
   _allTargets(): Target[] {
     return Array.from(this._targets.values()).filter(target => target._isInitialized);
+  }
+
+  async _pages(context: BrowserContext): Promise<Page<Browser, BrowserContext>[]> {
+    const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
+    const pages = await Promise.all(targets.map(target => target.page()));
+    return pages.filter(page => !!page);
+  }
+
+  async _activatePage(page: Page<Browser, BrowserContext>) {
+    await (page._delegate as FrameManager)._client.send('Target.activateTarget', {targetId: Target.fromPage(page)._targetId});
   }
 
   async _waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
@@ -180,7 +190,7 @@ export class Browser extends EventEmitter {
     }
   }
 
-  async pages(): Promise<Page[]> {
+  async pages(): Promise<Page<Browser, BrowserContext>[]> {
     const contextPages = await Promise.all(this.browserContexts().map(context => context.pages()));
     // Flatten array.
     return contextPages.reduce((acc, x) => acc.concat(x), []);

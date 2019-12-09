@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as debug from 'debug';
 import { TimeoutError } from './Errors';
 
@@ -22,7 +23,7 @@ export const debugError = debug(`playwright:error`);
 export type RegisteredListener = {
   emitter: NodeJS.EventEmitter;
   eventName: (string | symbol);
-  handler: (_: any) => void;
+  handler: (...args: any[]) => void;
 };
 
 class Helper {
@@ -62,7 +63,7 @@ class Helper {
   static addEventListener(
     emitter: NodeJS.EventEmitter,
     eventName: (string | symbol),
-    handler: (_: any) => void): RegisteredListener {
+    handler: (...args: any[]) => void): RegisteredListener {
     emitter.on(eventName, handler);
     return { emitter, eventName, handler };
   }
@@ -70,7 +71,7 @@ class Helper {
   static removeEventListeners(listeners: Array<{
       emitter: NodeJS.EventEmitter;
       eventName: (string | symbol);
-      handler: (_: any) => void;
+      handler: (...args: any[]) => void;
     }>) {
     for (const listener of listeners)
       listener.emitter.removeListener(listener.eventName, listener.handler);

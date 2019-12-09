@@ -94,4 +94,17 @@ export async function readProtocolStream(client: CDPSession, handle: string, pat
   }
 }
 
+export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace | undefined) {
+  return stackTrace && stackTrace.callFrames.length ? {
+    url: stackTrace.callFrames[0].url,
+    lineNumber: stackTrace.callFrames[0].lineNumber,
+    columnNumber: stackTrace.callFrames[0].columnNumber,
+  } : {};
+}
 
+export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDetails): Error {
+  const message = getExceptionMessage(exceptionDetails);
+  const err = new Error(message);
+  err.stack = ''; // Don't report clientside error with a node stack attached
+  return err;
+}

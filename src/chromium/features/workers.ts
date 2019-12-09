@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import { EventEmitter } from 'events';
 import { CDPSession, Connection } from '../Connection';
 import { debugError } from '../../helper';
@@ -21,10 +22,12 @@ import { Protocol } from '../protocol';
 import { Events } from '../events';
 import * as types from '../../types';
 import * as js from '../../javascript';
+import * as console from '../../console';
 import { ExecutionContextDelegate } from '../ExecutionContext';
+import { toConsoleMessageLocation, exceptionToError } from '../protocolHelper';
 
-type AddToConsoleCallback = (type: string, args: js.JSHandle[], stackTrace: Protocol.Runtime.StackTrace | undefined) => void;
-type HandleExceptionCallback = (exceptionDetails: Protocol.Runtime.ExceptionDetails) => void;
+type AddToConsoleCallback = (type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation) => void;
+type HandleExceptionCallback = (error: Error) => void;
 
 export class Workers extends EventEmitter {
   private _workers = new Map<string, Worker>();
@@ -74,8 +77,8 @@ export class Worker extends EventEmitter {
     // This might fail if the target is closed before we recieve all execution contexts.
     this._client.send('Runtime.enable', {}).catch(debugError);
 
-    this._client.on('Runtime.consoleAPICalled', event => addToConsole(event.type, event.args.map(jsHandleFactory), event.stackTrace));
-    this._client.on('Runtime.exceptionThrown', exception => handleException(exception.exceptionDetails));
+    this._client.on('Runtime.consoleAPICalled', event => addToConsole(event.type, event.args.map(jsHandleFactory), toConsoleMessageLocation(event.stackTrace)));
+    this._client.on('Runtime.exceptionThrown', exception => handleException(exceptionToError(exception.exceptionDetails)));
   }
 
   url(): string {

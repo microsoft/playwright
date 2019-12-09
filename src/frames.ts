@@ -122,12 +122,12 @@ export class Frame {
     return context.evaluate(pageFunction, ...args as any);
   }
 
-  async $(selector: string | types.Selector): Promise<dom.ElementHandle | null> {
+  async $(selector: string | types.Selector): Promise<dom.ElementHandle<Element> | null> {
     const domWorld = await this._mainDOMWorld();
     return domWorld.$(types.clearSelector(selector));
   }
 
-  async $x(expression: string): Promise<dom.ElementHandle[]> {
+  async $x(expression: string): Promise<dom.ElementHandle<Element>[]> {
     const domWorld = await this._mainDOMWorld();
     return domWorld.$$('xpath=' + expression);
   }
@@ -142,7 +142,7 @@ export class Frame {
     return domWorld.$$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$(selector: string | types.Selector): Promise<dom.ElementHandle[]> {
+  async $$(selector: string | types.Selector): Promise<dom.ElementHandle<Element>[]> {
     const domWorld = await this._mainDOMWorld();
     return domWorld.$$(types.clearSelector(selector));
   }

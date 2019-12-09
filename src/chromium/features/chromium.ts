@@ -19,10 +19,11 @@ import { assert } from '../../helper';
 import { Browser } from '../Browser';
 import { BrowserContext } from '../BrowserContext';
 import { CDPSession, Connection } from '../Connection';
-import { Page } from '../Page';
+import { Page } from '../../page';
 import { readProtocolStream } from '../protocolHelper';
 import { Target } from '../Target';
 import { Worker } from './workers';
+import { FrameManager } from '../FrameManager';
 
 export class Chromium extends EventEmitter {
   private _connection: Connection;
@@ -47,9 +48,9 @@ export class Chromium extends EventEmitter {
     return target._worker();
   }
 
-  async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+  async startTracing(page: Page<Browser, BrowserContext> | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._recording, 'Cannot start recording trace while already recording trace.');
-    this._tracingClient = page ? page._client : this._client;
+    this._tracingClient = page ? (page._delegate as FrameManager)._client : this._client;
 
     const defaultCategories = [
       '-*', 'devtools.timeline', 'v8.execute', 'disabled-by-default-devtools.timeline',
@@ -91,8 +92,8 @@ export class Chromium extends EventEmitter {
     return context ? targets.filter(t => t.browserContext() === context) : targets;
   }
 
-  pageTarget(page: Page): Target {
-    return page._target;
+  pageTarget(page: Page<Browser, BrowserContext>): Target {
+    return Target.fromPage(page);
   }
 
   waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {

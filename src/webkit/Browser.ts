@@ -17,21 +17,20 @@
 
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener, debugError } from '../helper';
 import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
-import { Connection } from './Connection';
-import { Page, Viewport } from './Page';
+import { Connection, ConnectionEvents, TargetSession } from './Connection';
+import { Page } from './Page';
 import { Target } from './Target';
-import { TaskQueue } from './TaskQueue';
 import { Protocol } from './protocol';
+import * as types from '../types';
 
 export class Browser extends EventEmitter {
-  _defaultViewport: Viewport;
-  private _process: childProcess.ChildProcess;
-  _screenshotTaskQueue = new TaskQueue();
-  _connection: Connection;
+  readonly _defaultViewport: types.Viewport;
+  private readonly _process: childProcess.ChildProcess;
+  readonly _connection: Connection;
   private _closeCallback: () => Promise<void>;
-  private _defaultContext: BrowserContext;
+  private readonly _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
   private _eventListeners: RegisteredListener[];
@@ -39,7 +38,7 @@ export class Browser extends EventEmitter {
 
   constructor(
     connection: Connection,
-    defaultViewport: Viewport | null,
+    defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     super();
@@ -56,13 +55,10 @@ export class Browser extends EventEmitter {
     this._contexts = new Map();
 
     this._eventListeners = [
-      helper.addEventListener(this._connection, 'Target.targetCreated', this._onTargetCreated.bind(this)),
+      helper.addEventListener(this._connection, ConnectionEvents.TargetCreated, this._onTargetCreated.bind(this)),
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._connection, 'Target.didCommitProvisionalTarget', this._onProvisionalTargetCommitted.bind(this)),
     ];
-
-    // Taking multiple screenshots in parallel doesn't work well, so we serialize them.
-    this._screenshotTaskQueue = new TaskQueue();
   }
 
   async userAgent(): Promise<string> {
@@ -146,7 +142,7 @@ export class Browser extends EventEmitter {
     return contextPages.reduce((acc, x) => acc.concat(x), []);
   }
 
-  async _onTargetCreated({targetInfo}) {
+  async _onTargetCreated(session: TargetSession, targetInfo: Protocol.Target.TargetInfo) {
     let context = null;
     if (targetInfo.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
@@ -159,7 +155,7 @@ export class Browser extends EventEmitter {
     }
     if (!context)
       context =  this._defaultContext;
-    const target = new Target(targetInfo, context);
+    const target = new Target(session, targetInfo, context);
     this._targets.set(targetInfo.targetId, target);
     this._privateEvents.emit(BrowserEvents.TargetCreated, target);
   }
@@ -167,18 +163,29 @@ export class Browser extends EventEmitter {
   _onTargetDestroyed({targetId}) {
     const target = this._targets.get(targetId);
     this._targets.delete(targetId);
-    target._closedCallback();
+    target._didClose();
+  }
+
+  _closePage(page: Page) {
+    this._connection.send('Target.close', {
+      targetId: Target.fromPage(page)._targetId
+    }).catch(debugError);
+  }
+
+  async _pages(context: BrowserContext): Promise<Page[]> {
+    const targets = this.targets().filter(target => target._browserContext === context && target._type === 'page');
+    const pages = await Promise.all(targets.map(target => target.page()));
+    return pages.filter(page => !!page);
+  }
+
+  async _activatePage(page: Page): Promise<void> {
+    await this._connection.send('Target.activate', { targetId: Target.fromPage(page)._targetId });
   }
 
   async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {
     const oldTarget = this._targets.get(oldTargetId);
-    if (!oldTarget._pagePromise)
-      return;
-    const page = await oldTarget._pagePromise;
     const newTarget = this._targets.get(newTargetId);
-    const newSession = this._connection.session(newTargetId);
-    page._swapTargetOnNavigation(newSession, newTarget);
-    newTarget._pagePromise = oldTarget._pagePromise;
+    newTarget._swappedIn(oldTarget);
   }
 
   disconnect() {
@@ -204,17 +211,8 @@ export class BrowserContext {
     this._id = contextId;
   }
 
-  _targets(): Target[] {
-    return this._browser.targets().filter(target => target.browserContext() === this);
-  }
-
-  async pages(): Promise<Page[]> {
-    const pages = await Promise.all(
-        this._targets()
-            .filter(target => target.type() === 'page')
-            .map(target => target.page())
-    );
-    return pages.filter(page => !!page);
+  pages(): Promise<Page[]> {
+    return this._browser._pages(this);
   }
 
   isIncognito(): boolean {

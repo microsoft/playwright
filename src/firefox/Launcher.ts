@@ -20,11 +20,11 @@ import * as removeFolder from 'rimraf';
 import * as childProcess from 'child_process';
 import {Connection} from './Connection';
 import {Browser} from './Browser';
-import {BrowserFetcher} from './BrowserFetcher';
+import {BrowserFetcher, BrowserFetcherOptions} from '../browserFetcher';
 import * as readline from 'readline';
 import * as fs from 'fs';
 import * as util from 'util';
-import {helper, debugError} from '../helper';
+import {helper, debugError, assert} from '../helper';
 import {TimeoutError} from '../Errors';
 import {WebSocketTransport} from './WebSocketTransport';
 
@@ -227,7 +227,7 @@ export class Launcher {
   }
 
   _resolveExecutablePath() {
-    const browserFetcher = new BrowserFetcher(this._projectRoot, { browser: 'firefox' });
+    const browserFetcher = createBrowserFetcher(this._projectRoot);
     const revisionInfo = browserFetcher.revisionInfo(this._preferredRevision);
     const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return {executablePath: revisionInfo.executablePath, missingText};
@@ -273,5 +273,48 @@ function waitForWSEndpoint(firefoxProcess: import('child_process').ChildProcess,
         clearTimeout(timeoutId);
       helper.removeEventListeners(listeners);
     }
+  });
+}
+
+export function createBrowserFetcher(projectRoot: string, options: BrowserFetcherOptions = {}): BrowserFetcher {
+  const downloadURLs = {
+    linux: '%s/builds/firefox/%s/firefox-linux.zip',
+    mac: '%s/builds/firefox/%s/firefox-mac.zip',
+    win32: '%s/builds/firefox/%s/firefox-win32.zip',
+    win64: '%s/builds/firefox/%s/firefox-win64.zip',
+  };
+
+  const defaultOptions = {
+    path: path.join(projectRoot, '.local-firefox'),
+    host: 'https://playwrightaccount.blob.core.windows.net',
+    platform: (() => {
+      const platform = os.platform();
+      if (platform === 'darwin')
+        return 'mac';
+      if (platform === 'linux')
+        return 'linux';
+      if (platform === 'win32')
+        return os.arch() === 'x64' ? 'win64' : 'win32';
+      return platform;
+    })()
+  };
+  options = {
+    ...defaultOptions,
+    ...options,
+  };
+  assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
+
+  return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+    let executablePath = '';
+    if (platform === 'linux')
+      executablePath = path.join('firefox', 'firefox');
+    else if (platform === 'mac')
+      executablePath = path.join('firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox');
+    else if (platform === 'win32' || platform === 'win64')
+      executablePath = path.join('firefox', 'firefox.exe');
+    return {
+      downloadUrl: util.format(downloadURLs[platform], options.host, revision),
+      executablePath
+    };
   });
 }

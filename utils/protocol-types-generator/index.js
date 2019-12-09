@@ -6,7 +6,7 @@ const vm = require('vm');
 const os = require('os');
 
 async function generateChromeProtocol(revision) {
-  const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.d.ts');
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
   if (revision.local && fs.existsSync(outputPath))
     return;
   const playwright = await require('../../chromium');
@@ -18,17 +18,17 @@ async function generateChromeProtocol(revision) {
   const version = await browser.version();
   await browser.close();
   fs.writeFileSync(outputPath, jsonToTS(json));
-  console.log(`Wrote protocol.d.ts for ${version} to ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Wrote protocol.ts for ${version} to ${path.relative(process.cwd(), outputPath)}`);
 }
 
 
 async function generateWebKitProtocol(revision) {
-  const outputPath = path.join(__dirname, '..', '..', 'src', 'webkit', 'protocol.d.ts');
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'webkit', 'protocol.ts');
   if (revision.local && fs.existsSync(outputPath))
     return;
   const json = JSON.parse(fs.readFileSync(path.join(revision.folderPath, 'protocol.json'), 'utf8'));
   fs.writeFileSync(outputPath, jsonToTS({domains: json}));
-  console.log(`Wrote protocol.d.ts for WebKit to ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Wrote protocol.ts for WebKit to ${path.relative(process.cwd(), outputPath)}`);
 }
 
 function jsonToTS(json) {
@@ -118,7 +118,7 @@ function typeOfProperty(property, domain) {
 }
 
 async function generateFirefoxProtocol(revision) {
-  const outputPath = path.join(__dirname, '..', '..', 'src', 'firefox', 'protocol.d.ts');
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'firefox', 'protocol.ts');
   if (revision.local && fs.existsSync(outputPath))
     return;
   const omnija = os.platform() === 'darwin' ?
@@ -164,7 +164,7 @@ async function generateFirefoxProtocol(revision) {
   }
   const json = vm.runInContext(`(${inject})();${protocolJSCode}; this.protocol.types = types; this.protocol;`, ctx);
   fs.writeFileSync(outputPath, firefoxJSONToTS(json));
-  console.log(`Wrote protocol.d.ts for Firefox to ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Wrote protocol.ts for Firefox to ${path.relative(process.cwd(), outputPath)}`);
 }
 
 function firefoxJSONToTS(json) {

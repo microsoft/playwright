@@ -18,7 +18,7 @@
 import { EventEmitter } from 'events';
 import { TimeoutError } from '../Errors';
 import * as frames from '../frames';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import { TimeoutSettings } from '../TimeoutSettings';
@@ -28,6 +28,9 @@ import { NavigationWatchdog, NextNavigationWatchdog } from './NavigationWatchdog
 import { Page } from './Page';
 import { NetworkManager } from './NetworkManager';
 import { DOMWorldDelegate } from './JSHandle';
+import { Events } from './events';
+import * as dialog from '../dialog';
+import { Protocol } from './protocol';
 
 export const FrameManagerEvents = {
   FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
@@ -71,7 +74,21 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       helper.addEventListener(this._session, 'Page.sameDocumentNavigation', this._onSameDocumentNavigation.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
+      helper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
+      helper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
+      helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
+      helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
+      helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
     ];
+  }
+
+  async _initialize() {
+    await Promise.all([
+      this._session.send('Runtime.enable'),
+      this._session.send('Network.enable'),
+      this._session.send('Page.enable'),
+      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true })
+    ]);
   }
 
   executionContextById(executionContextId) {
@@ -171,6 +188,44 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate {
       else if (name === 'DOMContentLoaded')
         this.emit(FrameManagerEvents.DOMContentLoaded);
     }
+  }
+
+  _onUncaughtError(params) {
+    const error = new Error(params.message);
+    error.stack = params.stack;
+    this._page.emit(Events.Page.PageError, error);
+  }
+
+  _onConsole({type, args, executionContextId, location}) {
+    const context = this.executionContextById(executionContextId);
+    this._page._addConsoleMessage(type, args.map(arg => context._createHandle(arg)), location);
+  }
+
+  _onDialogOpened(params) {
+    this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+      params.type as dialog.DialogType,
+      params.message,
+      async (accept: boolean, promptText?: string) => {
+        await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(debugError);
+      },
+      params.defaultValue));
+  }
+
+  _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
+    const context = this.executionContextById(event.executionContextId);
+    this._page._onBindingCalled(event.payload, context);
+  }
+
+  async _onFileChooserOpened({executionContextId, element}) {
+    const context = this.executionContextById(executionContextId);
+    const handle = context._createHandle(element).asElement()!;
+    this._page._onFileChooserOpened(handle);
+  }
+
+  async _exposeBinding(name: string, bindingFunction: string) {
+    await this._session.send('Page.addBinding', {name: name});
+    await this._session.send('Page.addScriptToEvaluateOnNewDocument', {script: bindingFunction});
+    await Promise.all(this.frames().map(frame => frame.evaluate(bindingFunction).catch(debugError)));
   }
 
   dispose() {

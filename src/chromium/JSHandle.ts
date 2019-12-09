@@ -23,7 +23,6 @@ import * as frames from '../frames';
 import { CDPSession } from './Connection';
 import { FrameManager } from './FrameManager';
 import { Protocol } from './protocol';
-import { ScreenshotOptions } from './Screenshotter';
 import { ExecutionContextDelegate } from './ExecutionContext';
 
 export class DOMWorldDelegate implements dom.DOMWorldDelegate {
@@ -51,7 +50,7 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
   }
 
   isJavascriptEnabled(): boolean {
-    return this._frameManager.page()._javascriptEnabled;
+    return this._frameManager.page()._state.javascriptEnabled;
   }
 
   isElement(remoteObject: any): boolean {
@@ -91,20 +90,20 @@ export class DOMWorldDelegate implements dom.DOMWorldDelegate {
     return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
   }
 
-  screenshot(handle: dom.ElementHandle, options: ScreenshotOptions = {}): Promise<string | Buffer> {
+  screenshot(handle: dom.ElementHandle, options?: types.ElementScreenshotOptions): Promise<Buffer> {
     const page = this._frameManager.page();
-    return page._screenshotter.screenshotElement(page, handle, options);
+    return page._screenshotter.screenshotElement(handle, options);
   }
 
   async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
     await handle.evaluate(input.setFileInputFunction, files);
   }
 
-  async adoptElementHandle(handle: dom.ElementHandle, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(handle).objectId,
     });
-    return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to);
+    return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
   }
 
   async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.DOMWorld): Promise<dom.ElementHandle> {
