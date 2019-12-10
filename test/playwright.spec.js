@@ -162,7 +162,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       if (CHROME || FFOX) {
         require('./features/accessibility.spec.js').addTests(testOptions);
         require('./features/permissions.spec.js').addTests(testOptions);
-        require('./features/requestinterception.spec.js').addTests(testOptions);
+        require('./features/interception.spec.js').addTests(testOptions);
       }
 
     });
