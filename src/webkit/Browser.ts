@@ -164,7 +164,7 @@ export class Browser extends EventEmitter {
       if (!opener)
         return;
       const openerPage = opener._page;
-      if (!openerPage)
+      if (!openerPage || !openerPage.listenerCount(Events.Page.Popup))
         return;
       const page = await target.page();
       openerPage.emit(Events.Page.Popup, page);
