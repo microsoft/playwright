@@ -59,6 +59,12 @@ export class Browser extends EventEmitter {
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._connection, 'Target.didCommitProvisionalTarget', this._onProvisionalTargetCommitted.bind(this)),
     ];
+
+    // Intercept provisional targets during cross-process navigation.
+    this._connection.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
+      debugError(e);
+      throw e;
+    });
   }
 
   async userAgent(): Promise<string> {
@@ -157,6 +163,11 @@ export class Browser extends EventEmitter {
       context =  this._defaultContext;
     const target = new Target(session, targetInfo, context);
     this._targets.set(targetInfo.targetId, target);
+    if (targetInfo.isProvisional) {
+      const oldTarget = this._targets.get(targetInfo.oldTargetId);
+      if (oldTarget)
+        oldTarget._initializeSession(session);
+    }
     this._privateEvents.emit(BrowserEvents.TargetCreated, target);
   }
 
@@ -185,7 +196,7 @@ export class Browser extends EventEmitter {
   async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {
     const oldTarget = this._targets.get(oldTargetId);
     const newTarget = this._targets.get(newTargetId);
-    newTarget._swappedIn(oldTarget);
+    newTarget._swapWith(oldTarget);
   }
 
   disconnect() {

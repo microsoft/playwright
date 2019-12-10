@@ -44,7 +44,7 @@ export class NetworkManager extends EventEmitter {
     this._frameManager = frameManager;
   }
 
-  async initialize(session: TargetSession) {
+  setSession(session: TargetSession) {
     helper.removeEventListeners(this._sessionListeners);
     this._session = session;
     this._sessionListeners = [
@@ -53,8 +53,13 @@ export class NetworkManager extends EventEmitter {
       helper.addEventListener(this._session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
       helper.addEventListener(this._session, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
     ];
-    await this._session.send('Network.enable');
-    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
+  }
+
+  async initializeSession(session: TargetSession) {
+    await Promise.all([
+      session.send('Network.enable'),
+      session.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders }),
+    ]);
   }
 
   async setExtraHTTPHeaders(extraHTTPHeaders: { [s: string]: string; }) {

@@ -40,7 +40,6 @@ const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
-  TargetSwappedOnNavigation: Symbol('TargetSwappedOnNavigation'),
   FrameAttached: Symbol('FrameAttached'),
   FrameDetached: Symbol('FrameDetached'),
   FrameNavigated: Symbol('FrameNavigated'),
@@ -58,14 +57,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   readonly rawKeyboard: RawKeyboardImpl;
   readonly screenshotterDelegate: WKScreenshotDelegate;
   _session: TargetSession;
-  _page: Page<Browser, BrowserContext>;
-  _networkManager: NetworkManager;
-  _frames: Map<string, frames.Frame>;
-  _contextIdToContext: Map<number, js.ExecutionContext>;
-  _isolatedWorlds: Set<string>;
-  _sessionListeners: RegisteredListener[] = [];
-  _mainFrame: frames.Frame;
-  private _bootstrapScripts: string[] = [];
+  readonly _page: Page<Browser, BrowserContext>;
+  private readonly _networkManager: NetworkManager;
+  private readonly _frames: Map<string, frames.Frame>;
+  private readonly _contextIdToContext: Map<number, js.ExecutionContext>;
+  private _isolatedWorlds: Set<string>;
+  private _sessionListeners: RegisteredListener[] = [];
+  private _mainFrame: frames.Frame;
+  private readonly _bootstrapScripts: string[] = [];
 
   constructor(browserContext: BrowserContext) {
     super();
@@ -83,34 +82,43 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(Events.Page.RequestFinished, event));
   }
 
-  async initialize(session: TargetSession) {
+  setSession(session: TargetSession) {
     helper.removeEventListeners(this._sessionListeners);
     this.disconnectFromTarget();
     this._session = session;
     this.rawKeyboard.setSession(session);
     this.rawMouse.setSession(session);
-    this.screenshotterDelegate.initialize(session);
+    this.screenshotterDelegate.setSession(session);
     this._addSessionListeners();
-    this.emit(FrameManagerEvents.TargetSwappedOnNavigation);
-    const [,{frameTree}] = await Promise.all([
+    this._networkManager.setSession(session);
+    this._isolatedWorlds = new Set();
+  }
+
+  // This method is called for provisional targets as well. The session passed as the parameter
+  // may be different from the current session and may be destroyed without becoming current. 
+  async _initializeSession(session: TargetSession) {
+    const promises : Promise<any>[] = [
       // Page agent must be enabled before Runtime.
-      this._session.send('Page.enable'),
-      this._session.send('Page.getResourceTree'),
-    ]);
-    this._handleFrameTree(frameTree);
-    await Promise.all([
-      this._session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
-      this._session.send('Console.enable'),
-      this._session.send('Dialog.enable'),
-      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
-      this._networkManager.initialize(session),
-    ]);
+      session.send('Page.enable'),
+      session.send('Page.getResourceTree').then(({frameTree}) => this._handleFrameTree(frameTree)),
+      // Resource tree should be received before first execution context.
+      session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
+      session.send('Console.enable'),
+      session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
+      this._networkManager.initializeSession(session),
+    ];
+    if (!session.isProvisional()) {
+      // FIXME: move dialog agent to web process.
+      // Dialog agent resides in the UI process and should not be re-enabled on navigation. 
+      promises.push(session.send('Dialog.enable'));
+    }
     if (this._page._state.userAgent !== null)
-      await this._session.send('Page.overrideUserAgent', { value: this._page._state.userAgent });
+      promises.push(session.send('Page.overrideUserAgent', { value: this._page._state.userAgent }));
     if (this._page._state.mediaType !== null)
-      await this._session.send('Page.setEmulatedMedia', { media: this._page._state.mediaType || '' });
+      promises.push(session.send('Page.setEmulatedMedia', { media: this._page._state.mediaType || '' }));
     if (this._page._state.javascriptEnabled !== null)
-      await this._session.send('Emulation.setJavaScriptEnabled', { enabled: this._page._state.javascriptEnabled });
+      promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: this._page._state.javascriptEnabled }));
+    await Promise.all(promises);
   }
 
   didClose() {
@@ -511,24 +519,24 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
  * @internal
  */
 class NextNavigationWatchdog {
-  _frameManager: FrameManager;
-  _frame: frames.Frame;
-  _newDocumentNavigationPromise: Promise<Error | null>;
-  _newDocumentNavigationCallback: (value?: unknown) => void;
-  _sameDocumentNavigationPromise: Promise<Error | null>;
-  _sameDocumentNavigationCallback: (value?: unknown) => void;
-  private _lifecyclePromise: Promise<void>;
+  private readonly _frameManager: FrameManager;
+  private readonly _frame: frames.Frame;
+  private readonly _newDocumentNavigationPromise: Promise<Error | null>;
+  private _newDocumentNavigationCallback: (value?: unknown) => void;
+  private readonly _sameDocumentNavigationPromise: Promise<Error | null>;
+  private _sameDocumentNavigationCallback: (value?: unknown) => void;
+  private readonly _lifecyclePromise: Promise<void>;
   private _lifecycleCallback: () => void;
-  private _terminationPromise: Promise<Error | null>;
-  private _terminationCallback: (err: Error | null) => void;
-  _navigationRequest: any;
-  _eventListeners: RegisteredListener[];
-  _timeoutPromise: Promise<Error | null>;
-  _timeoutId: NodeJS.Timer;
-  _hasSameDocumentNavigation = false;
-  _expectedLifecycle: frames.LifecycleEvent[];
-  _initialLoaderId: string;
-  _disconnectedListener: RegisteredListener;
+  private readonly _frameDetachPromise: Promise<Error | null>;
+  private _frameDetachCallback: (err: Error | null) => void;
+  private readonly _initialSession: TargetSession;
+  private _navigationRequest?: network.Request = null;
+  private readonly _eventListeners: RegisteredListener[];
+  private readonly _timeoutPromise: Promise<Error | null>;
+  private readonly _timeoutId: NodeJS.Timer;
+  private _hasSameDocumentNavigation = false;
+  private readonly _expectedLifecycle: frames.LifecycleEvent[];
+  private readonly _initialLoaderId: string;
 
   constructor(frameManager: FrameManager, frame: frames.Frame, waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[], timeout) {
     if (Array.isArray(waitUntil))
@@ -539,6 +547,7 @@ class NextNavigationWatchdog {
     this._frameManager = frameManager;
     this._frame = frame;
     this._initialLoaderId = frameManager._frameData(frame).loaderId;
+    this._initialSession = frameManager._session;
     this._newDocumentNavigationPromise = new Promise(fulfill => {
       this._newDocumentNavigationCallback = fulfill;
     });
@@ -548,23 +557,19 @@ class NextNavigationWatchdog {
     this._lifecyclePromise = new Promise(fulfill => {
       this._lifecycleCallback = fulfill;
     });
-    /** @type {?Request} */
-    this._navigationRequest = null;
     this._eventListeners = [
       helper.addEventListener(frameManager, FrameManagerEvents.LifecycleEvent, frame => this._onLifecycleEvent(frame)),
       helper.addEventListener(frameManager, FrameManagerEvents.FrameNavigated, frame => this._onLifecycleEvent(frame)),
       helper.addEventListener(frameManager, FrameManagerEvents.FrameNavigatedWithinDocument, frame => this._onSameDocumentNavigation(frame)),
-      helper.addEventListener(frameManager, FrameManagerEvents.TargetSwappedOnNavigation, event => this._onTargetReconnected()),
       helper.addEventListener(frameManager, FrameManagerEvents.FrameDetached, frame => this._onFrameDetached(frame)),
       helper.addEventListener(frameManager.networkManager(), NetworkManagerEvents.Request, this._onRequest.bind(this)),
     ];
-    this._registerDisconnectedListener();
     const timeoutError = new TimeoutError('Navigation Timeout Exceeded: ' + timeout + 'ms');
     let timeoutCallback;
     this._timeoutPromise = new Promise(resolve => timeoutCallback = resolve.bind(null, timeoutError));
     this._timeoutId = timeout ? setTimeout(timeoutCallback, timeout) : null;
-    this._terminationPromise = new Promise(fulfill => {
-      this._terminationCallback = fulfill;
+    this._frameDetachPromise = new Promise(fulfill => {
+      this._frameDetachCallback = fulfill;
     });
   }
 
@@ -581,37 +586,11 @@ class NextNavigationWatchdog {
   }
 
   timeoutOrTerminationPromise(): Promise<Error | null> {
-    return Promise.race([this._timeoutPromise, this._terminationPromise]);
-  }
-
-  _registerDisconnectedListener() {
-    if (this._disconnectedListener)
-      helper.removeEventListeners([this._disconnectedListener]);
-    const session = this._frameManager._session;
-    this._disconnectedListener = helper.addEventListener(this._frameManager._session, TargetSessionEvents.Disconnected, () => {
-      // Session may change on swap out, check that it's current.
-      if (session === this._frameManager._session)
-        this._terminationCallback(new Error('Navigation failed because browser has disconnected!'));
-    });
-  }
-
-  async _onTargetReconnected() {
-    this._registerDisconnectedListener();
-    // In case web process change we migh have missed load event. Check current ready
-    // state to mitigate that.
-    try {
-      const context = await this._frame.executionContext();
-      const readyState = await context.evaluate(() => document.readyState);
-      switch (readyState) {
-        case 'loading':
-        case 'interactive':
-        case 'complete':
-          this._newDocumentNavigationCallback();
-          break;
-      }
-    } catch (e) {
-      debugError('_onTargetReconnected ' + e);
-    }
+    return Promise.race([
+      this._timeoutPromise,
+      this._frameDetachPromise,
+      this._frameManager._page._disconnectedPromise
+    ]);
   }
 
   _onLifecycleEvent(frame: frames.Frame) {
@@ -648,13 +627,14 @@ class NextNavigationWatchdog {
     this._lifecycleCallback();
     if (this._hasSameDocumentNavigation)
       this._sameDocumentNavigationCallback();
-    if (this._frameManager._frameData(this._frame).loaderId !== this._initialLoaderId)
+    if (this._frameManager._frameData(this._frame).loaderId !== this._initialLoaderId ||
+        this._initialSession !== this._frameManager._session)
       this._newDocumentNavigationCallback();
   }
 
   _onFrameDetached(frame: frames.Frame) {
     if (this._frame === frame) {
-      this._terminationCallback.call(null, new Error('Navigating frame was detached'));
+      this._frameDetachCallback.call(null, new Error('Navigating frame was detached'));
       return;
     }
     this._checkLifecycle();
