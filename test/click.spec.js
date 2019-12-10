@@ -36,7 +36,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('circle');
       expect(await page.evaluate(() => window.__CLICKED)).toBe(42);
     });
-    it.skip(FFOX || WEBKIT)('should click the button if window.Node is removed', async({page, server}) => {
+    it.skip(FFOX)('should click the button if window.Node is removed', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.evaluate(() => delete window.Node);
       await page.click('button');

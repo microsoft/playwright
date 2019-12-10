@@ -31,7 +31,6 @@ import { Protocol } from './protocol';
 import { Events as CommonEvents } from '../events';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './protocolHelper';
 import * as dialog from '../dialog';
-import * as console from '../console';
 import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { CRScreenshotDelegate } from './Screenshotter';
@@ -45,6 +44,7 @@ import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import * as types from '../types';
 import * as input from '../input';
+import { ConsoleMessage } from '../console';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -331,7 +331,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     await this._client.send('Page.addScriptToEvaluateOnNewDocument', {
       source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`,
       worldName: name,
-    }),
+    });
     await Promise.all(this.frames().map(frame => this._client.send('Page.createIsolatedWorld', {
       frameId: this._frameData(frame).id,
       grantUniveralAccess: true,
@@ -457,7 +457,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     if (args)
       args.map(arg => releaseObject(this._client, arg));
     if (source !== 'worker')
-      this._page.emit(CommonEvents.Page.Console, new console.ConsoleMessage(level, text, [], {url, lineNumber}));
+      this._page.emit(CommonEvents.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {

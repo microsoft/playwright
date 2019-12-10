@@ -25,7 +25,7 @@ import * as network from '../network';
 import { TargetSession, TargetSessionEvents } from './Connection';
 import { Events } from './events';
 import { Events as CommonEvents } from '../events';
-import { ExecutionContextDelegate } from './ExecutionContext';
+import { ExecutionContextDelegate, EVALUATION_SCRIPT_URL } from './ExecutionContext';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
@@ -36,6 +36,8 @@ import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { WKScreenshotDelegate } from './Screenshotter';
 import * as input from '../input';
 import * as types from '../types';
+
+const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
@@ -98,7 +100,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     ]);
     this._handleFrameTree(frameTree);
     await Promise.all([
-      this._session.send('Runtime.enable'),
+      this._session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._session.send('Console.enable'),
       this._session.send('Dialog.enable'),
       this._session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
@@ -293,8 +295,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   _onExecutionContextCreated(contextPayload : Protocol.Runtime.ExecutionContextDescription) {
     if (this._contextIdToContext.has(contextPayload.id))
       return;
-    if (!contextPayload.isPageContext)
-      return;
     const frameId = contextPayload.frameId;
     // If the frame was attached manually there is no navigation event.
     // FIXME: support frameAttached event in WebKit protocol.
@@ -304,8 +304,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, contextPayload));
     if (frame) {
       context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
-      frame._contextCreated('main', context);
-      frame._contextCreated('utility', context);
+      if (contextPayload.isPageContext)
+        frame._contextCreated('main', context);
+      else if (contextPayload.name === UTILITY_WORLD_NAME)
+        frame._contextCreated('utility', context);
     }
     this._contextIdToContext.set(contextPayload.id, context);
   }
@@ -413,13 +415,23 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   }
 
   async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
-    const context = await this.frame(event.frameId)._utilityContext();
+    const context = await this.frame(event.frameId)._mainContext();
     const handle = context._createHandle(event.element).asElement()!;
     this._page._onFileChooserOpened(handle);
   }
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {
     return this._networkManager.setExtraHTTPHeaders(extraHTTPHeaders);
+  }
+
+  async _ensureIsolatedWorld(name: string) {
+    if (this._isolatedWorlds.has(name))
+      return;
+    this._isolatedWorlds.add(name);
+    await this._session.send('Page.createIsolatedWorld', {
+      name,
+      source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`
+    });
   }
 
   async setUserAgent(userAgent: string): Promise<void> {
