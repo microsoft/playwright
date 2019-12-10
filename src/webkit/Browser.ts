@@ -24,6 +24,7 @@ import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
 import * as types from '../types';
+import { Events } from '../events';
 
 export class Browser extends EventEmitter {
   readonly _defaultViewport: types.Viewport;
@@ -125,7 +126,7 @@ export class Browser extends EventEmitter {
     const existingTarget = this.targets().find(predicate);
     if (existingTarget)
       return existingTarget;
-    let resolve;
+    let resolve : (a: Target) => void;
     const targetPromise = new Promise<Target>(x => resolve = x);
     this._privateEvents.on(BrowserEvents.TargetCreated, check);
     try {
@@ -169,6 +170,16 @@ export class Browser extends EventEmitter {
         oldTarget._initializeSession(session);
     }
     this._privateEvents.emit(BrowserEvents.TargetCreated, target);
+    if (!targetInfo.oldTargetId && targetInfo.openerId) {
+      const opener = this._targets.get(targetInfo.openerId);
+      if (!opener)
+        return;
+      const openerPage = opener._page;
+      if (!openerPage || !openerPage.listenerCount(Events.Page.Popup))
+        return;
+      const page = await target.page();
+      openerPage.emit(Events.Page.Popup, page);
+    }
   }
 
   _onTargetDestroyed({targetId}) {

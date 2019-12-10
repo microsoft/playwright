@@ -118,7 +118,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(WEBKIT)('Page.Events.Popup', function() {
+  describe('Page.Events.Popup', function() {
     it('should work', async({page}) => {
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),
@@ -137,7 +137,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
     it('should work with clicking target=_blank', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setContent('<a target=_blank href="/one-style.html">yo</a>');
+      await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),
         page.click('a'),
@@ -165,6 +165,18 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     });
+    it('should not treat navigations as new popups', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
+      const [popup] = await Promise.all([
+        new Promise(x => page.once('popup', x)),
+        page.click('a'),
+      ]);
+      let badSecondPopup = false;
+      page.on('popup', () => badSecondPopup = true);
+      await popup.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      expect(badSecondPopup).toBe(false);
+    })
   });
 
   describe('Page.Events.Console', function() {
@@ -1154,10 +1166,8 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  // FIXME: WebKit shouldn't send targetDestroyed on PSON so that we could
-  // convert target destroy events into close.
   describe('Page.Events.Close', function() {
-    it.skip(WEBKIT)('should work with window.close', async function({ browser, page, context, server }) {
+    it('should work with window.close', async function({ browser, page, context, server }) {
       const newPagePromise = new Promise(f => page.once('popup', f));
       await page.evaluate(() => window['newPage'] = window.open('about:blank'));
       const newPage = await newPagePromise;
@@ -1165,7 +1175,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.evaluate(() => window['newPage'].close());
       await closedPromise;
     });
-    it.skip(WEBKIT)('should work with page.close', async function({ page, context, server }) {
+    it('should work with page.close', async function({ page, context, server }) {
       const newPage = await context.newPage();
       const closedPromise = new Promise(x => newPage.on('close', x));
       await newPage.close();
