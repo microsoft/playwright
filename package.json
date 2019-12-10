@@ -22,6 +22,8 @@
     "prepare": "node install.js",
     "lint": "([ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src) && npm run tsc && npm run doc",
     "doc": "node utils/doclint/cli.js",
+    "typedoc": "typedoc --json docs/docs.json --includeDeclarations --excludeExternals --externalPattern \"**/node_modules/**\" --mode 'file' src/api.d.ts",
+    "newdoc": "npm run typedoc && node utils/tsdoc.js && rm docs/docs.json",
     "coverage": "cross-env COVERAGE=true npm run unit",
     "tsc": "tsc -p .",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
@@ -46,6 +48,7 @@
     "ws": "^6.1.0"
   },
   "devDependencies": {
+    "@microsoft/tsdoc": "^0.12.16",
     "@types/debug": "0.0.31",
     "@types/extract-zip": "^1.6.2",
     "@types/jpeg-js": "^0.3.7",
@@ -67,6 +70,7 @@
     "progress": "^2.0.1",
     "text-diff": "^1.0.1",
     "ts-loader": "^6.1.2",
+    "typedoc": "^0.15.4",
     "typescript": "3.6.3",
     "webpack": "^4.41.0",
     "webpack-cli": "^3.3.9"
