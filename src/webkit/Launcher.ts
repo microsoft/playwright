@@ -129,7 +129,7 @@ export class Launcher {
     let connection: Connection | null = null;
     try {
       const transport = new PipeTransport(webkitProcess.stdio[3] as NodeJS.WritableStream, webkitProcess.stdio[4] as NodeJS.ReadableStream);
-      connection = new Connection('', transport, slowMo);
+      connection = new Connection(transport, slowMo);
       const browser = new Browser(connection, defaultViewport, webkitProcess, gracefullyCloseWebkit);
       await browser._waitForTarget(t => t._type === 'page');
       return browser;
