@@ -30,7 +30,6 @@ export const ConnectionEvents = {
 };
 
 export class Connection extends EventEmitter {
-  private _url: string;
   _lastId = 0;
   private _callbacks = new Map<number, {resolve:(o: any) => void, reject:  (e: Error) => void, error: Error, method: string}>();
   private _delay: number;
@@ -38,9 +37,8 @@ export class Connection extends EventEmitter {
   private _sessions = new Map<string, TargetSession>();
   _closed = false;
 
-  constructor(url: string, transport: ConnectionTransport, delay: number | undefined = 0) {
+  constructor(transport: ConnectionTransport, delay: number | undefined = 0) {
     super();
-    this._url = url;
     this._delay = delay;
 
     this._transport = transport;
@@ -50,10 +48,6 @@ export class Connection extends EventEmitter {
 
   static fromSession(session: TargetSession): Connection {
     return session._connection;
-  }
-
-  url(): string {
-    return this._url;
   }
 
   send<T extends keyof Protocol.CommandParameters>(
