@@ -1,5 +1,6 @@
 /**
  * Copyright 2019 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +186,8 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
   require('./launcher.spec.js').addTests(testOptions);
   if (CHROME) {
     require('./chromium/headful.spec.js').addTests(testOptions);
-    require('./chromium/launcher.spec.js').addTests(testOptions);
+    require('./chromium/connect.spec.js').addTests(testOptions);
+    require('./chromium/headful.spec.js').addTests(testOptions);
     require('./chromium/oopif.spec.js').addTests(testOptions);
     require('./chromium/tracing.spec.js').addTests(testOptions);
   }

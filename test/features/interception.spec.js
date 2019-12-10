@@ -1,5 +1,6 @@
 /**
  * Copyright 2018 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -607,7 +608,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(response.status()).toBe(401);
     });
   });
-
   
   describe.skip(FFOX)('Interception.setOfflineMode', function() {
     it('should work', async({page, server}) => {
