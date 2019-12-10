@@ -38,6 +38,7 @@ export const keypadLocation = keyboardLayout.keypadLocation;
 
 type KeyDescription = {
   keyCode: number,
+  keyCodeWithoutLocation: number,
   key: string,
   text: string,
   code: string,
@@ -47,8 +48,8 @@ type KeyDescription = {
 const kModifiers: Modifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
 
 export interface RawKeyboard {
-  keydown(modifiers: Set<Modifier>, code: string, keyCode: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
-  keyup(modifiers: Set<Modifier>, code: string, keyCode: number, key: string, location: number): Promise<void>;
+  keydown(modifiers: Set<Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
+  keyup(modifiers: Set<Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
   sendText(text: string): Promise<void>;
 }
 
@@ -68,7 +69,7 @@ export class Keyboard {
     if (kModifiers.includes(description.key as Modifier))
       this._pressedModifiers.add(description.key as Modifier);
     const text = options.text === undefined ? description.text : options.text;
-    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.key, description.location, autoRepeat, text);
+    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
   }
 
   private _keyDescriptionForString(keyString: string): KeyDescription {
@@ -76,6 +77,7 @@ export class Keyboard {
     const description: KeyDescription = {
       key: '',
       keyCode: 0,
+      keyCodeWithoutLocation: 0,
       code: '',
       text: '',
       location: 0
@@ -112,6 +114,10 @@ export class Keyboard {
     if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1))
       description.text = '';
 
+    if (definition.keyCodeWithoutLocation)
+      description.keyCodeWithoutLocation = definition.keyCodeWithoutLocation;
+    else
+      description.keyCodeWithoutLocation = description.keyCode;
     return description;
   }
 
@@ -120,7 +126,7 @@ export class Keyboard {
     if (kModifiers.includes(description.key as Modifier))
       this._pressedModifiers.delete(description.key as Modifier);
     this._pressedKeys.delete(description.code);
-    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.key, description.location);
+    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
   }
 
   async sendCharacters(text: string) {

@@ -17,7 +17,7 @@
 const utils = require('./utils');
 const os = require('os');
 
-module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
+module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -39,7 +39,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         window.keyPromise = new Promise(resolve => document.addEventListener('keydown', event => resolve(event.key)));
       });
       await page.keyboard.press('Meta');
-      expect(await page.evaluate('keyPromise')).toBe(FFOX && os.platform() !== 'darwin' ? 'OS' : 'Meta');
+      expect(await page.evaluate('keyPromise')).toBe(FFOX && !MAC ? 'OS' : 'Meta');
     });
     it('should move with the arrow keys', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
@@ -226,6 +226,34 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await textarea.type('👹 Tokyo street Japan 🇯🇵');
       expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
     });
+    it.skip(CHROME && MAC)('should handle selectAll', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      const textarea = await page.$('textarea');
+      await textarea.type('some text');
+      const modifier = MAC ? 'Meta' : 'Control';
+      await page.keyboard.down(modifier);
+      await page.keyboard.press('a');
+      await page.keyboard.up(modifier);
+      await page.keyboard.press('Backspace');
+      expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
+    });
+    it.skip(CHROME && MAC)('should be able to prevent selectAll', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      const textarea = await page.$('textarea');
+      await textarea.type('some text');
+      await page.$eval('textarea', textarea => {
+        textarea.addEventListener('keydown', event => {
+          if (event.key === 'a' && (event.metaKey || event.ctrlKey))
+            event.preventDefault();
+        }, false);
+      });
+      const modifier = MAC ? 'Meta' : 'Control';
+      await page.keyboard.down(modifier);
+      await page.keyboard.press('a');
+      await page.keyboard.up(modifier);
+      await page.keyboard.press('Backspace');
+      expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
+    });
     it('should press the meta key', async({page}) => {
       await page.evaluate(() => {
         window.result = null;
@@ -235,7 +263,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       });
       await page.keyboard.press('Meta');
       const [key, code, metaKey] = await page.evaluate('result');
-      if (FFOX && os.platform() !== 'darwin')
+      if (FFOX && !MAC)
         expect(key).toBe('OS');
       else
         expect(key).toBe('Meta');
@@ -245,7 +273,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       else
         expect(code).toBe('MetaLeft');
 
-      if (FFOX && os.platform() !== 'darwin')
+      if (FFOX && !MAC)
         expect(metaKey).toBe(false);
       else
         expect(metaKey).toBe(true);

@@ -38,11 +38,11 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._client = client;
   }
 
-  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
       modifiers: toModifiersMask(modifiers),
-      windowsVirtualKeyCode: keyCode,
+      windowsVirtualKeyCode: keyCodeWithoutLocation,
       code,
       key,
       text,
@@ -53,12 +53,12 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     });
   }
 
-  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
     await this._client.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),
       key,
-      windowsVirtualKeyCode: keyCode,
+      windowsVirtualKeyCode: keyCodeWithoutLocation,
       code,
       location
     });

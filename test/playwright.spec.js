@@ -15,6 +15,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const rm = require('rimraf').sync;
 const GoldenUtils = require('./golden-utils');
 const {Matchers} = require('../utils/testrunner/');
@@ -30,6 +31,9 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
   const CHROME = product === 'Chromium';
   const FFOX = product === 'Firefox';
   const WEBKIT = product === 'WebKit';
+  const MAC = os.platform() === 'darwin';
+  const LINUX = os.platform() === 'linux';
+  const WIN = os.platform() === 'win32';
 
   const playwright = require(playwrightPath);
 
@@ -72,6 +76,9 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
     FFOX,
     WEBKIT,
     CHROME,
+    MAC,
+    LINUX,
+    WIN,
     playwright,
     expect,
     defaultBrowserOptions,

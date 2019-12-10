@@ -16,6 +16,8 @@
  */
 
 import * as input from '../input';
+import { helper } from '../helper';
+import { macEditingCommands } from '../USKeyboardLayout';
 import { TargetSession } from './Connection';
 
 function toModifiersMask(modifiers: Set<input.Modifier>): number {
@@ -39,7 +41,17 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._session = session;
   }
 
-  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+    const parts = [];
+    for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as input.Modifier[]) {
+      if (modifiers.has(modifier))
+        parts.push(modifier);
+    }
+    parts.push(code);
+    const shortcut = parts.join('+');
+    let commands = macEditingCommands[shortcut];
+    if (helper.isString(commands))
+      commands = [commands];
     await this._session.send('Input.dispatchKeyEvent', {
       type: 'keyDown',
       modifiers: toModifiersMask(modifiers),
@@ -49,11 +61,12 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       text,
       unmodifiedText: text,
       autoRepeat,
+      macCommands: commands,
       isKeypad: location === input.keypadLocation
     });
   }
 
-  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
     await this._session.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),

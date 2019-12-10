@@ -108,7 +108,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window.lastEvent = e, true));
       const modifiers = {'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey'};
       // In Firefox, the Meta modifier only exists on Mac
-      if (FFOX && os.platform() !== 'darwin')
+      if (FFOX && !MAC)
         delete modifiers['Meta'];
       for (const modifier in modifiers) {
         await page.keyboard.down(modifier);
