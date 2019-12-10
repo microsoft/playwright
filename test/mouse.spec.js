@@ -71,7 +71,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(newDimensions.width).toBe(Math.round(width + 104));
       expect(newDimensions.height).toBe(Math.round(height + 104));
     });
-    it.skip(WEBKIT)('should select the text with mouse', async({page, server}) => {
+    it('should select the text with mouse', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
       const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
