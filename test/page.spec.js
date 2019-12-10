@@ -396,7 +396,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   });
 
   describe('Page.exposeFunction', function() {
-    it.skip(WEBKIT)('should work', async({page, server}) => {
+    it('should work', async({page, server}) => {
       await page.exposeFunction('compute', function(a, b) {
         return a * b;
       });
@@ -405,7 +405,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
       expect(result).toBe(36);
     });
-    it.skip(WEBKIT)('should throw exception in page context', async({page, server}) => {
+    it('should throw exception in page context', async({page, server}) => {
       await page.exposeFunction('woof', function() {
         throw new Error('WOOF WOOF');
       });
@@ -419,7 +419,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(message).toBe('WOOF WOOF');
       expect(stack).toContain(__filename);
     });
-    it.skip(WEBKIT)('should support throwing "null"', async({page, server}) => {
+    it('should support throwing "null"', async({page, server}) => {
       await page.exposeFunction('woof', function() {
         throw null;
       });
@@ -432,7 +432,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
       expect(thrown).toBe(null);
     });
-    it.skip(WEBKIT)('should be callable from-inside evaluateOnNewDocument', async({page, server}) => {
+    it('should be callable from-inside evaluateOnNewDocument', async({page, server}) => {
       let called = false;
       await page.exposeFunction('woof', function() {
         called = true;
@@ -441,7 +441,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.reload();
       expect(called).toBe(true);
     });
-    it.skip(WEBKIT)('should survive navigation', async({page, server}) => {
+    it('should survive navigation', async({page, server}) => {
       await page.exposeFunction('compute', function(a, b) {
         return a * b;
       });
@@ -452,7 +452,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
       expect(result).toBe(36);
     });
-    it.skip(WEBKIT)('should await returned promise', async({page, server}) => {
+    it('should await returned promise', async({page, server}) => {
       await page.exposeFunction('compute', function(a, b) {
         return Promise.resolve(a * b);
       });
@@ -462,7 +462,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
       expect(result).toBe(15);
     });
-    it.skip(WEBKIT)('should work on frames', async({page, server}) => {
+    it('should work on frames', async({page, server}) => {
       await page.exposeFunction('compute', function(a, b) {
         return Promise.resolve(a * b);
       });
@@ -474,7 +474,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
       expect(result).toBe(15);
     });
-    it.skip(WEBKIT)('should work on frames before navigation', async({page, server}) => {
+    it('should work on frames before navigation', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/nested-frames.html');
       await page.exposeFunction('compute', function(a, b) {
         return Promise.resolve(a * b);
@@ -486,7 +486,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
       expect(result).toBe(15);
     });
-    it.skip(WEBKIT)('should work with complex objects', async({page, server}) => {
+    it('should work with complex objects', async({page, server}) => {
       await page.exposeFunction('complexObject', function(a, b) {
         return {x: a.x + b.x};
       });

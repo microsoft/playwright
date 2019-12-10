@@ -16,7 +16,6 @@
  */
 
 import { EventEmitter } from 'events';
-import * as console from './console';
 import * as dom from './dom';
 import * as frames from './frames';
 import { assert, debugError, helper } from './helper';
@@ -28,6 +27,7 @@ import { TimeoutSettings } from './TimeoutSettings';
 import * as types from './types';
 import { Events } from './events';
 import { BrowserContext } from './browserContext';
+import { ConsoleMessage, ConsoleMessageLocation } from './console';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -272,12 +272,12 @@ export class Page<Browser> extends EventEmitter {
     }
   }
 
-  _addConsoleMessage(type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation, text?: string) {
+  _addConsoleMessage(type: string, args: js.JSHandle[], location: ConsoleMessageLocation, text?: string) {
     if (!this.listenerCount(Events.Page.Console)) {
       args.forEach(arg => arg.dispose());
       return;
     }
-    this.emit(Events.Page.Console, new console.ConsoleMessage(type, text, args, location));
+    this.emit(Events.Page.Console, new ConsoleMessage(type, text, args, location));
   }
 
   url(): string {
