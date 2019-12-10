@@ -171,7 +171,7 @@ export class Browser extends EventEmitter {
     const existingTarget = this._allTargets().find(predicate);
     if (existingTarget)
       return existingTarget;
-    let resolve;
+    let resolve: (target: Target) => void;
     const targetPromise = new Promise<Target>(x => resolve = x);
     this.chromium.on(Events.Chromium.TargetCreated, check);
     this.chromium.on(Events.Chromium.TargetChanged, check);

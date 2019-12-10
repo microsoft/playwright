@@ -19,7 +19,7 @@ import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from './BrowserContext';
 import { CDPSession, CDPSessionEvents } from './Connection';
-import { Events as CommonEvents } from '../events';
+import { Events } from '../events';
 import { Worker } from './features/workers';
 import { Page } from '../page';
 import { Protocol } from './protocol';
@@ -65,10 +65,10 @@ export class Target {
       if (!opener || !opener._pagePromise || this.type() !== 'page')
         return true;
       const openerPage = await opener._pagePromise;
-      if (!openerPage.listenerCount(CommonEvents.Page.Popup))
+      if (!openerPage.listenerCount(Events.Page.Popup))
         return true;
       const popupPage = await this.page();
-      openerPage.emit(CommonEvents.Page.Popup, popupPage);
+      openerPage.emit(Events.Page.Popup, popupPage);
       return true;
     });
     this._isInitialized = this._targetInfo.type !== 'page' || this._targetInfo.url !== '';
@@ -87,7 +87,7 @@ export class Target {
         const frameManager = new FrameManager(client, this._browserContext, this._ignoreHTTPSErrors);
         const page = frameManager.page();
         this._page = page;
-        page[targetSymbol] = this;
+        (page as any)[targetSymbol] = this;
         client.once(CDPSessionEvents.Disconnected, () => page._didDisconnect());
         client.on('Target.attachedToTarget', event => {
           if (event.targetInfo.type !== 'worker') {

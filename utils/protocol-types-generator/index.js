@@ -113,6 +113,8 @@ function typeOfProperty(property, domain) {
       return typeOfProperty(property.items, domain) + '[]';
     case 'integer':
       return 'number';
+    case 'object':
+      return '{ [key: string]: string }';
   }
   return property.type;
 }

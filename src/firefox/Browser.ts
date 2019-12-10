@@ -20,6 +20,7 @@ import { assert, helper, RegisteredListener } from '../helper';
 import { filterCookies, NetworkCookie, SetNetworkCookieParam, rewriteCookies } from '../network';
 import { Connection, ConnectionEvents, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
+import { Events as CommonEvents } from '../events';
 import { Permissions } from './features/permissions';
 import { Page } from '../page';
 import * as types from '../types';
@@ -164,9 +165,9 @@ export class Browser extends EventEmitter {
     this._targets.set(targetId, target);
     if (target.opener() && target.opener()._pagePromise) {
       const openerPage = await target.opener()._pagePromise;
-      if (openerPage.listenerCount(Events.Page.Popup)) {
+      if (openerPage.listenerCount(CommonEvents.Page.Popup)) {
         const popupPage = await target.page();
-        openerPage.emit(Events.Page.Popup, popupPage);
+        openerPage.emit(CommonEvents.Page.Popup, popupPage);
       }
     }
   }

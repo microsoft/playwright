@@ -62,4 +62,11 @@ export type Viewport = {
   isMobile?: boolean;
   isLandscape?: boolean;
   hasTouch?: boolean;
+};
+
+export interface ConnectionTransport {
+  send(s: string): void;
+  close(): void;
+  onmessage?: (message: string) => void,
+  onclose?: () => void,
 }

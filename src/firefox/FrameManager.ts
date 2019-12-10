@@ -27,8 +27,7 @@ import { NavigationWatchdog, NextNavigationWatchdog } from './NavigationWatchdog
 import { Page, PageDelegate } from '../page';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { DOMWorldDelegate } from './JSHandle';
-import { Events } from './events';
-import { Events as CommonEvents } from '../events';
+import { Events } from '../events';
 import * as dialog from '../dialog';
 import { Protocol } from './protocol';
 import * as input from '../input';
@@ -89,10 +88,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
       helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.Request, request => this._page.emit(CommonEvents.Page.Request, request)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.Response, response => this._page.emit(CommonEvents.Page.Response, response)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFinished, request => this._page.emit(CommonEvents.Page.RequestFinished, request)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this._page.emit(CommonEvents.Page.RequestFailed, request)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.Request, request => this._page.emit(Events.Page.Request, request)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.Response, response => this._page.emit(Events.Page.Response, response)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFinished, request => this._page.emit(Events.Page.RequestFinished, request)),
+      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this._page.emit(Events.Page.RequestFailed, request)),
     ];
     this._page = new Page(this, browserContext);
     (this._page as any).interception = new Interception(this._networkManager);
@@ -164,14 +163,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     data.lastCommittedNavigationId = params.navigationId;
     frame._firedLifecycleEvents.clear();
     this.emit(FrameManagerEvents.FrameNavigated, frame);
-    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
+    this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   _onSameDocumentNavigation(params) {
     const frame = this._frames.get(params.frameId);
     frame._navigated(params.url, frame.name());
     this.emit(FrameManagerEvents.FrameNavigated, frame);
-    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
+    this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   _onFrameAttached(params) {
@@ -188,7 +187,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     }
     this._frames.set(params.frameId, frame);
     this.emit(FrameManagerEvents.FrameAttached, frame);
-    this._page.emit(CommonEvents.Page.FrameAttached, frame);
+    this._page.emit(Events.Page.FrameAttached, frame);
   }
 
   _onFrameDetached(params) {
@@ -196,7 +195,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this._frames.delete(params.frameId);
     frame._detach();
     this.emit(FrameManagerEvents.FrameDetached, frame);
-    this._page.emit(CommonEvents.Page.FrameDetached, frame);
+    this._page.emit(Events.Page.FrameDetached, frame);
   }
 
   _onEventFired({frameId, name}) {
@@ -205,14 +204,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       frame._firedLifecycleEvents.add('load');
       if (frame === this._mainFrame) {
         this.emit(FrameManagerEvents.Load);
-        this._page.emit(CommonEvents.Page.Load);
+        this._page.emit(Events.Page.Load);
       }
     }
     if (name === 'DOMContentLoaded') {
       frame._firedLifecycleEvents.add('domcontentloaded');
       if (frame === this._mainFrame) {
         this.emit(FrameManagerEvents.DOMContentLoaded);
-        this._page.emit(CommonEvents.Page.DOMContentLoaded);
+        this._page.emit(Events.Page.DOMContentLoaded);
       }
     }
   }

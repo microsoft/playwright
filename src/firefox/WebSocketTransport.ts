@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ConnectionTransport } from '../ConnectionTransport';
+import { ConnectionTransport } from '../types';
 import * as WebSocket from 'ws';
 
 export class WebSocketTransport implements ConnectionTransport {

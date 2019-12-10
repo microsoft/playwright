@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { ConnectionTransport } from '../ConnectionTransport';
+import { ConnectionTransport } from '../types';
 import { debugError, helper, RegisteredListener } from '../helper';
 
 export class PipeTransport implements ConnectionTransport {

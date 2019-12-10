@@ -337,7 +337,7 @@ class InterceptableRequest {
     await this._client.send('Fetch.fulfillRequest', {
       requestId: this._interceptionId,
       responseCode: response.status || 200,
-      responsePhrase: STATUS_TEXTS[response.status || 200],
+      responsePhrase: STATUS_TEXTS[String(response.status || 200)],
       responseHeaders: headersArray(responseHeaders),
       body: responseBody ? responseBody.toString('base64') : undefined,
     }).catch(error => {
@@ -367,7 +367,7 @@ class InterceptableRequest {
   }
 }
 
-const errorReasons = {
+const errorReasons: { [reason: string]: Protocol.Network.ErrorReason } = {
   'aborted': 'Aborted',
   'accessdenied': 'AccessDenied',
   'addressunreachable': 'AddressUnreachable',
@@ -401,7 +401,7 @@ function headersObject(headers: Protocol.Network.Headers): network.Headers {
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.
-const STATUS_TEXTS = {
+const STATUS_TEXTS: { [status: string]: string } = {
   '100': 'Continue',
   '101': 'Switching Protocols',
   '102': 'Processing',

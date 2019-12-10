@@ -28,7 +28,7 @@ import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page } from '../page';
 import { Protocol } from './protocol';
-import { Events as CommonEvents } from '../events';
+import { Events } from '../events';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './protocolHelper';
 import * as dialog from '../dialog';
 import { PageDelegate } from '../page';
@@ -85,18 +85,18 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     (this._page as any).accessibility = new Accessibility(client);
     (this._page as any).coverage = new Coverage(client);
     (this._page as any).pdf = new PDF(client);
-    (this._page as any).workers = new Workers(client, this._page._addConsoleMessage.bind(this._page), error => this._page.emit(CommonEvents.Page.PageError, error));
+    (this._page as any).workers = new Workers(client, this._page._addConsoleMessage.bind(this._page), error => this._page.emit(Events.Page.PageError, error));
     (this._page as any).overrides = new Overrides(client);
     (this._page as any).interception = new Interception(this._networkManager);
 
-    this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(CommonEvents.Page.Request, event));
-    this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(CommonEvents.Page.Response, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(CommonEvents.Page.RequestFailed, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(CommonEvents.Page.RequestFinished, event));
+    this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(Events.Page.Request, event));
+    this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(Events.Page.Response, event));
+    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(Events.Page.RequestFailed, event));
+    this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(Events.Page.RequestFinished, event));
 
     this._client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
     this._client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
-    this._client.on('Page.domContentEventFired', event => this._page.emit(CommonEvents.Page.DOMContentLoaded));
+    this._client.on('Page.domContentEventFired', event => this._page.emit(Events.Page.DOMContentLoaded));
     this._client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
     this._client.on('Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId));
     this._client.on('Page.frameDetached', event => this._onFrameDetached(event.frameId));
@@ -104,7 +104,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this._client.on('Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId));
     this._client.on('Page.javascriptDialogOpening', event => this._onDialog(event));
     this._client.on('Page.lifecycleEvent', event => this._onLifecycleEvent(event));
-    this._client.on('Page.loadEventFired', event => this._page.emit(CommonEvents.Page.Load));
+    this._client.on('Page.loadEventFired', event => this._page.emit(Events.Page.Load));
     this._client.on('Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url));
     this._client.on('Runtime.bindingCalled', event => this._onBindingCalled(event));
     this._client.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
@@ -280,10 +280,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       id: frameId,
       loaderId: '',
     };
-    frame[frameDataSymbol] = data;
+    (frame as any)[frameDataSymbol] = data;
     this._frames.set(frameId, frame);
     this.emit(FrameManagerEvents.FrameAttached, frame);
-    this._page.emit(CommonEvents.Page.FrameAttached, frame);
+    this._page.emit(Events.Page.FrameAttached, frame);
   }
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame) {
@@ -311,7 +311,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
           id: framePayload.id,
           loaderId: '',
         };
-        frame[frameDataSymbol] = data;
+        (frame as any)[frameDataSymbol] = data;
       }
       this._frames.set(framePayload.id, frame);
       this._mainFrame = frame;
@@ -321,7 +321,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame._navigated(framePayload.url, framePayload.name);
 
     this.emit(FrameManagerEvents.FrameNavigated, frame);
-    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
+    this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   async _ensureIsolatedWorld(name: string) {
@@ -346,7 +346,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame._navigated(url, frame.name());
     this.emit(FrameManagerEvents.FrameNavigatedWithinDocument, frame);
     this.emit(FrameManagerEvents.FrameNavigated, frame);
-    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
+    this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   _onFrameDetached(frameId: string) {
@@ -355,16 +355,16 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       this._removeFramesRecursively(frame);
   }
 
-  _onExecutionContextCreated(contextPayload) {
+  _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     const frameId = contextPayload.auxData ? contextPayload.auxData.frameId : null;
     const frame = this._frames.get(frameId) || null;
-    if (contextPayload.auxData && contextPayload.auxData['type'] === 'isolated')
+    if (contextPayload.auxData && contextPayload.auxData.type === 'isolated')
       this._isolatedWorlds.add(contextPayload.name);
     const context = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload));
     if (frame)
       context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
     if (frame) {
-      if (contextPayload.auxData && !!contextPayload.auxData['isDefault'])
+      if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
         frame._contextCreated('main', context);
       else if (contextPayload.name === UTILITY_WORLD_NAME)
         frame._contextCreated('utility', context);
@@ -398,7 +398,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame._detach();
     this._frames.delete(this._frameData(frame).id);
     this.emit(FrameManagerEvents.FrameDetached, frame);
-    this._page.emit(CommonEvents.Page.FrameDetached, frame);
+    this._page.emit(Events.Page.FrameDetached, frame);
   }
 
   async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
@@ -435,7 +435,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   }
 
   _onDialog(event : Protocol.Page.javascriptDialogOpeningPayload) {
-    this._page.emit(CommonEvents.Page.Dialog, new dialog.Dialog(
+    this._page.emit(Events.Page.Dialog, new dialog.Dialog(
       event.type as dialog.DialogType,
       event.message,
       async (accept: boolean, promptText?: string) => {
@@ -445,7 +445,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    this._page.emit(CommonEvents.Page.PageError, exceptionToError(exceptionDetails));
+    this._page.emit(Events.Page.PageError, exceptionToError(exceptionDetails));
   }
 
   _onTargetCrashed() {
@@ -457,7 +457,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     if (args)
       args.map(arg => releaseObject(this._client, arg));
     if (source !== 'worker')
-      this._page.emit(CommonEvents.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
+      this._page.emit(Events.Page.Console, new ConsoleMessage(level, text, [], {url, lineNumber}));
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
@@ -550,8 +550,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   }
 }
 
-function assertNoLegacyNavigationOptions(options) {
-  assert(options['networkIdleTimeout'] === undefined, 'ERROR: networkIdleTimeout option is no longer supported.');
-  assert(options['networkIdleInflight'] === undefined, 'ERROR: networkIdleInflight option is no longer supported.');
-  assert(options.waitUntil !== 'networkidle', 'ERROR: "networkidle" option is no longer supported. Use "networkidle2" instead');
+function assertNoLegacyNavigationOptions(options: frames.NavigateOptions) {
+  assert((options as any)['networkIdleTimeout'] === undefined, 'ERROR: networkIdleTimeout option is no longer supported.');
+  assert((options as any)['networkIdleInflight'] === undefined, 'ERROR: networkIdleInflight option is no longer supported.');
+  assert((options as any).waitUntil !== 'networkidle', 'ERROR: "networkidle" option is no longer supported. Use "networkidle2" instead');
 }

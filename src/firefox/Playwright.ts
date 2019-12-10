@@ -16,10 +16,12 @@
  */
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
-import { ConnectionTransport } from '../ConnectionTransport';
-import { DeviceDescriptors } from '../DeviceDescriptors';
+import { ConnectionTransport } from '../types';
+import { DeviceDescriptors, DeviceDescriptor } from '../DeviceDescriptors';
 import * as Errors from '../Errors';
 import { Launcher, createBrowserFetcher } from './Launcher';
+
+type Devices = { [name: string]: DeviceDescriptor } & DeviceDescriptor[];
 
 export class Playwright {
   private _projectRoot: string;
@@ -54,8 +56,8 @@ export class Playwright {
     return this._launcher.executablePath();
   }
 
-  get devices(): any {
-    const result = DeviceDescriptors.slice();
+  get devices(): Devices {
+    const result = DeviceDescriptors.slice() as Devices;
     for (const device of DeviceDescriptors)
       result[device.name] = device;
     return result;
