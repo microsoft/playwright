@@ -38,6 +38,7 @@ import * as input from '../input';
 import * as types from '../types';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
+const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 
 export const FrameManagerEvents = {
   FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
@@ -391,11 +392,18 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
 
   async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
+    if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
+      const parsedObjectId = JSON.parse(parameters[1].objectId);
+      const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
+      this._page._onBindingCalled(parameters[2].value, context);
+      return;
+    }
     let derivedType: string = type;
     if (type === 'log')
       derivedType = level;
     else if (type === 'timing')
       derivedType = 'timeEnd';
+      
     const mainFrameContext = await this.mainFrame().executionContext();
     const handles = (parameters || []).map(p => {
       let context: js.ExecutionContext | null = null;
@@ -498,8 +506,12 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     return this._go('Page.goForward', options);
   }
 
-  exposeBinding(name: string, bindingFunction: string): Promise<void> {
-    throw new Error('Not implemented');
+  async exposeBinding(name: string, bindingFunction: string): Promise<void> {
+    const script = `self.${name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${bindingFunction}`;
+    this._bootstrapScripts.unshift(script);
+    const source = this._bootstrapScripts.join(';');
+    await this._session.send('Page.setBootstrapScript', { source });
+    await Promise.all(this.frames().map(frame => frame.evaluate(script).catch(debugError)));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
