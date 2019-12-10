@@ -24,7 +24,7 @@ const statAsync = helper.promisify(fs.stat);
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 const utils = require('./utils');
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -51,7 +51,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         revisionInfo = await browserFetcher.download('123456');
         expect(revisionInfo.local).toBe(true);
         expect(await readFileAsync(revisionInfo.executablePath, 'utf8')).toBe('LINUX BINARY\n');
-        const expectedPermissions = os.platform() === 'win32' ? 0666 : 0755;
+        const expectedPermissions = WIN ? 0666 : 0755;
         expect((await statAsync(revisionInfo.executablePath)).mode & 0777).toBe(expectedPermissions);
         expect(await browserFetcher.localRevisions()).toEqual(['123456']);
         await browserFetcher.remove('123456');

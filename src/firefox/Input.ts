@@ -58,14 +58,14 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._client = client;
   }
 
-  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     if (code === 'MetaLeft')
       code = 'OSLeft';
     if (code === 'MetaRight')
       code = 'OSRight';
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keydown',
-      keyCode,
+      keyCode: keyCodeWithoutLocation,
       code,
       key,
       repeat: autoRepeat,
@@ -73,7 +73,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     });
   }
 
-  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
     if (code === 'MetaLeft')
       code = 'OSLeft';
     if (code === 'MetaRight')
@@ -81,7 +81,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keyup',
       key,
-      keyCode,
+      keyCode: keyCodeWithoutLocation,
       code,
       location,
       repeat: false
