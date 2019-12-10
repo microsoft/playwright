@@ -20,6 +20,7 @@ import { JugglerSessionEvents } from './Connection';
 import { FrameManagerEvents, FrameManager } from './FrameManager';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import * as frames from '../frames';
+import * as network from '../network';
 
 export class NextNavigationWatchdog {
   private _frameManager: FrameManager;
@@ -75,14 +76,14 @@ export class NavigationWatchdog {
   private _frameManager: FrameManager;
   private _navigatedFrame: frames.Frame;
   private _targetNavigationId: any;
-  private _firedEvents: any;
+  private _firedEvents: frames.LifecycleEvent[];
   private _targetURL: any;
   private _promise: Promise<unknown>;
   private _resolveCallback: (value?: unknown) => void;
-  private _navigationRequest: any;
+  private _navigationRequest: network.Request | null;
   private _eventListeners: RegisteredListener[];
 
-  constructor(frameManager: FrameManager, navigatedFrame: frames.Frame, networkManager: NetworkManager, targetNavigationId, targetURL, firedEvents) {
+  constructor(frameManager: FrameManager, navigatedFrame: frames.Frame, networkManager: NetworkManager, targetNavigationId, targetURL, firedEvents: frames.LifecycleEvent[]) {
     this._frameManager = frameManager;
     this._navigatedFrame = navigatedFrame;
     this._targetNavigationId = targetNavigationId;
@@ -113,17 +114,17 @@ export class NavigationWatchdog {
     this._navigationRequest = request;
   }
 
-  navigationResponse() {
+  navigationResponse(): network.Response | null {
     return this._navigationRequest ? this._navigationRequest.response() : null;
   }
 
   _checkNavigationComplete() {
-    const checkFiredEvents = (frame: frames.Frame, firedEvents) => {
+    const checkFiredEvents = (frame: frames.Frame, firedEvents: frames.LifecycleEvent[]) => {
       for (const subframe of frame.childFrames()) {
         if (!checkFiredEvents(subframe, firedEvents))
           return false;
       }
-      return firedEvents.every(event => this._frameManager._frameData(frame).firedEvents.has(event));
+      return firedEvents.every(event => frame._firedLifecycleEvents.has(event));
     };
 
     if (this._navigatedFrame.isDetached())

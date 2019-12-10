@@ -70,7 +70,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(newDimensions.width).toBe(Math.round(width + 104));
       expect(newDimensions.height).toBe(Math.round(height + 104));
     });
-    it('should select the text with mouse', async({page, server}) => {
+    it.skip(WEBKIT)('should select the text with mouse', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
       const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
@@ -103,7 +103,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.hover('#button-6');
       expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
     });
-    it('should set modifier keys on click', async({page, server}) => {
+    it.skip(WEBKIT)('should set modifier keys on click', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/scrollable.html');
       await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window.lastEvent = e, true));
       const modifiers = {'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey'};

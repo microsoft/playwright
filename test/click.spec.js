@@ -197,7 +197,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(error.message).toBe('No node found for selector: button.does-not-exist');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/161
-    it('should not hang with touch-enabled viewports', async({page, server}) => {
+    it.skip(WEBKIT)('should not hang with touch-enabled viewports', async({page, server}) => {
       await page.setViewport(playwright.devices['iPhone 6'].viewport);
       await page.mouse.down();
       await page.mouse.move(100, 10);
@@ -328,7 +328,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(await page.evaluate(() => offsetY)).toBe(1910);
     });
 
-    it('should update modifiers correctly', async({page, server}) => {
+    it.skip(WEBKIT)('should update modifiers correctly', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.click('button', { modifiers: ['Shift'] });
       expect(await page.evaluate(() => shiftKey)).toBe(true);

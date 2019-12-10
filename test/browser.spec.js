@@ -20,7 +20,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Browser.version', function() {
-    it('should return whether we are in headless', async({browser}) => {
+    it.skip(WEBKIT)('should return whether we are in headless', async({browser}) => {
       const version = await browser.version();
       expect(version.length).toBeGreaterThan(0);
       if (CHROME)

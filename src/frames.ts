@@ -37,7 +37,7 @@ type World = {
 
 export type NavigateOptions = {
   timeout?: number,
-  waitUntil?: string | string[],
+  waitUntil?: LifecycleEvent | LifecycleEvent[],
 };
 
 export type GotoOptions = NavigateOptions & {
@@ -50,8 +50,11 @@ export interface FrameDelegate {
   setFrameContent(frame: Frame, html: string, options?: NavigateOptions): Promise<void>;
 }
 
+export type LifecycleEvent = 'load' | 'domcontentloaded';
+
 export class Frame {
-  _delegate: FrameDelegate;
+  readonly _delegate: FrameDelegate;
+  readonly _firedLifecycleEvents: Set<LifecycleEvent>;
   private _timeoutSettings: TimeoutSettings;
   private _parentFrame: Frame;
   private _url = '';
@@ -62,6 +65,7 @@ export class Frame {
 
   constructor(delegate: FrameDelegate, timeoutSettings: TimeoutSettings, parentFrame: Frame | null) {
     this._delegate = delegate;
+    this._firedLifecycleEvents = new Set();
     this._timeoutSettings = timeoutSettings;
     this._parentFrame = parentFrame;
 

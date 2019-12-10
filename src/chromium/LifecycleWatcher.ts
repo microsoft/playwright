@@ -24,7 +24,7 @@ import * as frames from '../frames';
 import * as network from '../network';
 
 export class LifecycleWatcher {
-  private _expectedLifecycle: string[];
+  private _expectedLifecycle: frames.LifecycleEvent[];
   private _frameManager: FrameManager;
   private _frame: frames.Frame;
   private _initialLoaderId: string;
@@ -43,17 +43,12 @@ export class LifecycleWatcher {
   private _maximumTimer: NodeJS.Timer;
   private _hasSameDocumentNavigation: boolean;
 
-  constructor(frameManager: FrameManager, frame: frames.Frame, waitUntil: string | string[], timeout: number) {
+  constructor(frameManager: FrameManager, frame: frames.Frame, waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[], timeout: number) {
     if (Array.isArray(waitUntil))
       waitUntil = waitUntil.slice();
     else if (typeof waitUntil === 'string')
       waitUntil = [waitUntil];
-    this._expectedLifecycle = waitUntil.map(value => {
-      const protocolEvent = playwrightToProtocolLifecycle.get(value);
-      assert(protocolEvent, 'Unknown value for options.waitUntil: ' + value);
-      return protocolEvent;
-    });
-
+    this._expectedLifecycle = waitUntil.slice();
     this._frameManager = frameManager;
     this._frame = frame;
     this._initialLoaderId = frameManager._frameData(frame).loaderId;
@@ -139,9 +134,9 @@ export class LifecycleWatcher {
   }
 
   _checkLifecycleComplete() {
-    const checkLifecycle = (frame: frames.Frame, expectedLifecycle: string[]): boolean => {
+    const checkLifecycle = (frame: frames.Frame, expectedLifecycle: frames.LifecycleEvent[]): boolean => {
       for (const event of expectedLifecycle) {
-        if (!this._frameManager._frameData(frame).lifecycleEvents.has(event))
+        if (!frame._firedLifecycleEvents.has(event))
           return false;
       }
       for (const child of frame.childFrames()) {
@@ -168,10 +163,3 @@ export class LifecycleWatcher {
     clearTimeout(this._maximumTimer);
   }
 }
-
-const playwrightToProtocolLifecycle = new Map([
-  ['load', 'load'],
-  ['domcontentloaded', 'DOMContentLoaded'],
-  ['networkidle0', 'networkIdle'],
-  ['networkidle2', 'networkAlmostIdle'],
-]);
