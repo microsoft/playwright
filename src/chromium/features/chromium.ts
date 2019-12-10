@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 import { assert } from '../../helper';
 import { Browser } from '../Browser';
-import { BrowserContext } from '../BrowserContext';
+import { BrowserContext } from '../../browserContext';
 import { CDPSession, Connection } from '../Connection';
 import { Page } from '../../page';
 import { readProtocolStream } from '../protocolHelper';
@@ -48,7 +48,7 @@ export class Chromium extends EventEmitter {
     return target._worker();
   }
 
-  async startTracing(page: Page<Browser, BrowserContext> | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+  async startTracing(page: Page<Browser> | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._recording, 'Cannot start recording trace while already recording trace.');
     this._tracingClient = page ? (page._delegate as FrameManager)._client : this._client;
 
@@ -87,12 +87,12 @@ export class Chromium extends EventEmitter {
     return contentPromise;
   }
 
-  targets(context?: BrowserContext): Target[] {
+  targets(context?: BrowserContext<Browser>): Target[] {
     const targets = this._browser._allTargets();
     return context ? targets.filter(t => t.browserContext() === context) : targets;
   }
 
-  pageTarget(page: Page<Browser, BrowserContext>): Target {
+  pageTarget(page: Page<Browser>): Target {
     return Target.fromPage(page);
   }
 

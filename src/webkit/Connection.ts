@@ -20,7 +20,6 @@ import * as debug from 'debug';
 import {EventEmitter} from 'events';
 import { ConnectionTransport } from '../types';
 import { Protocol } from './protocol';
-import { throws } from 'assert';
 
 const debugProtocol = debug('playwright:protocol');
 const debugWrappedMessage = require('debug')('wrapped');
@@ -96,7 +95,7 @@ export class Connection extends EventEmitter {
     const delay = this._delay || 0;
     this._dispatchTimerId = setTimeout(() => {
       this._dispatchTimerId = undefined;
-      this._dispatchOneMessageFromQueue()
+      this._dispatchOneMessageFromQueue();
     }, delay);
   }
 

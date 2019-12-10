@@ -33,7 +33,8 @@ import { Protocol } from './protocol';
 import * as input from '../input';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { FFScreenshotDelegate } from './Screenshotter';
-import { Browser, BrowserContext } from './Browser';
+import { Browser } from './Browser';
+import { BrowserContext } from '../browserContext';
 import { Interception } from './features/interception';
 import { Accessibility } from './features/accessibility';
 import * as network from '../network';
@@ -58,14 +59,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   readonly rawKeyboard: RawKeyboardImpl;
   readonly screenshotterDelegate: FFScreenshotDelegate;
   readonly _session: JugglerSession;
-  readonly _page: Page<Browser, BrowserContext>;
+  readonly _page: Page<Browser>;
   private readonly _networkManager: NetworkManager;
   private _mainFrame: frames.Frame;
   private readonly _frames: Map<string, frames.Frame>;
   private readonly _contextIdToContext: Map<string, js.ExecutionContext>;
   private _eventListeners: RegisteredListener[];
 
-  constructor(session: JugglerSession, browserContext: BrowserContext) {
+  constructor(session: JugglerSession, browserContext: BrowserContext<Browser>) {
     super();
     this._session = session;
     this.rawKeyboard = new RawKeyboardImpl(session);

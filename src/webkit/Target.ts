@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { BrowserContext, Browser } from './Browser';
+import { Browser } from './Browser';
+import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
 import { isSwappedOutError, TargetSession, TargetSessionEvents } from './Connection';
@@ -24,18 +25,18 @@ import { FrameManager } from './FrameManager';
 const targetSymbol = Symbol('target');
 
 export class Target {
-  readonly _browserContext: BrowserContext;
+  readonly _browserContext: BrowserContext<Browser>;
   readonly _targetId: string;
   readonly _type: 'page' | 'service-worker' | 'worker';
   private readonly _session: TargetSession;
-  private _pagePromise: Promise<Page<Browser, BrowserContext>> | null = null;
-  _page: Page<Browser, BrowserContext> | null = null;
+  private _pagePromise: Promise<Page<Browser>> | null = null;
+  _page: Page<Browser> | null = null;
 
-  static fromPage(page: Page<Browser, BrowserContext>): Target {
+  static fromPage(page: Page<Browser>): Target {
     return (page as any)[targetSymbol];
   }
 
-  constructor(session: TargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
+  constructor(session: TargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext<Browser>) {
     const {targetId, type} = targetInfo;
     this._session = session;
     this._browserContext = browserContext;
@@ -83,7 +84,7 @@ export class Target {
     (this._page._delegate as FrameManager).setSession(this._session);
   }
 
-  async page(): Promise<Page<Browser, BrowserContext>> {
+  async page(): Promise<Page<Browser>> {
     if (this._type === 'page' && !this._pagePromise) {
       const browser = this._browserContext.browser();
       // Reference local page variable as _page may be

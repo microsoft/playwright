@@ -27,6 +27,7 @@ import { Screenshotter, ScreenshotterDelegate } from './screenshotter';
 import { TimeoutSettings } from './TimeoutSettings';
 import * as types from './types';
 import { Events } from './events';
+import { BrowserContext } from './browserContext';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -52,10 +53,6 @@ export interface PageDelegate {
   setCacheEnabled(enabled: boolean): Promise<void>;
 }
 
-interface BrowserContextInterface<Browser> {
-  browser(): Browser;
-}
-
 type PageState = {
   viewport: types.Viewport | null;
   userAgent: string | null;
@@ -72,14 +69,14 @@ export type FileChooser = {
   multiple: boolean
 };
 
-export class Page<Browser, BrowserContext extends BrowserContextInterface<Browser>> extends EventEmitter {
+export class Page<Browser> extends EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
   private _disconnected = false;
   private _disconnectedCallback: (e: Error) => void;
   readonly _disconnectedPromise: Promise<Error>;
-  private _browserContext: BrowserContext;
+  private _browserContext: BrowserContext<Browser>;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
@@ -89,7 +86,7 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
   readonly _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
 
-  constructor(delegate: PageDelegate, browserContext: BrowserContext) {
+  constructor(delegate: PageDelegate, browserContext: BrowserContext<Browser>) {
     super();
     this._delegate = delegate;
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -156,7 +153,7 @@ export class Page<Browser, BrowserContext extends BrowserContextInterface<Browse
     return this._browserContext.browser();
   }
 
-  browserContext(): BrowserContext {
+  browserContext(): BrowserContext<Browser> {
     return this._browserContext;
   }
 

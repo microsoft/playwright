@@ -17,7 +17,7 @@
 
 import * as types from '../types';
 import { Browser } from './Browser';
-import { BrowserContext } from './BrowserContext';
+import { BrowserContext } from '../browserContext';
 import { CDPSession, CDPSessionEvents } from './Connection';
 import { Events } from '../events';
 import { Worker } from './features/workers';
@@ -30,25 +30,25 @@ const targetSymbol = Symbol('target');
 
 export class Target {
   private _targetInfo: Protocol.Target.TargetInfo;
-  private _browserContext: BrowserContext;
+  private _browserContext: BrowserContext<Browser>;
   _targetId: string;
   private _sessionFactory: () => Promise<CDPSession>;
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: types.Viewport;
-  private _pagePromise: Promise<Page<Browser, BrowserContext>> | null = null;
-  private _page: Page<Browser, BrowserContext> | null = null;
+  private _pagePromise: Promise<Page<Browser>> | null = null;
+  private _page: Page<Browser> | null = null;
   private _workerPromise: Promise<Worker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
 
-  static fromPage(page: Page<Browser, BrowserContext>): Target {
+  static fromPage(page: Page<Browser>): Target {
     return (page as any)[targetSymbol];
   }
 
   constructor(
     targetInfo: Protocol.Target.TargetInfo,
-    browserContext: BrowserContext,
+    browserContext: BrowserContext<Browser>,
     sessionFactory: () => Promise<CDPSession>,
     ignoreHTTPSErrors: boolean,
     defaultViewport: types.Viewport | null) {
@@ -81,7 +81,7 @@ export class Target {
       this._page._didClose();
   }
 
-  async page(): Promise<Page<Browser, BrowserContext> | null> {
+  async page(): Promise<Page<Browser> | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory().then(async client => {
         const frameManager = new FrameManager(client, this._browserContext, this._ignoreHTTPSErrors);
@@ -131,7 +131,7 @@ export class Target {
     return this._browserContext.browser();
   }
 
-  browserContext(): BrowserContext {
+  browserContext(): BrowserContext<Browser> {
     return this._browserContext;
   }
 

@@ -17,22 +17,23 @@
 
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
-import { assert, helper, RegisteredListener, debugError } from '../helper';
-import { filterCookies, NetworkCookie, rewriteCookies, SetNetworkCookieParam } from '../network';
+import { helper, RegisteredListener, debugError } from '../helper';
+import * as network from '../network';
 import { Connection, ConnectionEvents, TargetSession } from './Connection';
 import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
 import * as types from '../types';
 import { Events } from '../events';
+import { BrowserContext } from '../browserContext';
 
 export class Browser extends EventEmitter {
   readonly _defaultViewport: types.Viewport;
   private readonly _process: childProcess.ChildProcess;
   readonly _connection: Connection;
   private _closeCallback: () => Promise<void>;
-  private readonly _defaultContext: BrowserContext;
-  private _contexts = new Map<string, BrowserContext>();
+  private readonly _defaultContext: BrowserContext<Browser>;
+  private _contexts = new Map<string, BrowserContext<Browser>>();
   _targets = new Map<string, Target>();
   private _eventListeners: RegisteredListener[];
   private _privateEvents = new EventEmitter();
@@ -51,7 +52,7 @@ export class Browser extends EventEmitter {
     /** @type {!Map<string, !Target>} */
     this._targets = new Map();
 
-    this._defaultContext = new BrowserContext(this);
+    this._defaultContext = this._createBrowserContext(undefined);
     /** @type {!Map<string, !BrowserContext>} */
     this._contexts = new Map();
 
@@ -85,34 +86,26 @@ export class Browser extends EventEmitter {
     return this._process;
   }
 
-  async createIncognitoBrowserContext(): Promise<BrowserContext> {
+  async createIncognitoBrowserContext(): Promise<BrowserContext<Browser>> {
     const {browserContextId} = await this._connection.send('Browser.createContext');
-    const context = new BrowserContext(this, browserContextId);
+    const context = this._createBrowserContext(browserContextId);
     this._contexts.set(browserContextId, context);
     return context;
   }
 
-  browserContexts(): BrowserContext[] {
+  browserContexts(): BrowserContext<Browser>[] {
     return [this._defaultContext, ...Array.from(this._contexts.values())];
   }
 
-  defaultBrowserContext(): BrowserContext {
+  defaultBrowserContext(): BrowserContext<Browser> {
     return this._defaultContext;
   }
 
   async _disposeContext(browserContextId: string | null) {
-    await this._connection.send('Browser.deleteContext', {browserContextId});
-    this._contexts.delete(browserContextId);
   }
 
-  async newPage(): Promise<Page<Browser, BrowserContext>> {
-    return this._createPageInContext(this._defaultContext._id);
-  }
-
-  async _createPageInContext(browserContextId?: string): Promise<Page<Browser, BrowserContext>> {
-    const { targetId } = await this._connection.send('Browser.createPage', { browserContextId });
-    const target = this._targets.get(targetId);
-    return await target.page();
+  async newPage(): Promise<Page<Browser>> {
+    return this._defaultContext.newPage();
   }
 
   targets(): Target[] {
@@ -143,7 +136,7 @@ export class Browser extends EventEmitter {
     }
   }
 
-  async pages(): Promise<Page<Browser, BrowserContext>[]> {
+  async pages(): Promise<Page<Browser>[]> {
     const contextPages = await Promise.all(this.browserContexts().map(context => context.pages()));
     // Flatten array.
     return contextPages.reduce((acc, x) => acc.concat(x), []);
@@ -188,19 +181,13 @@ export class Browser extends EventEmitter {
     target._didClose();
   }
 
-  _closePage(page: Page<Browser, BrowserContext>) {
+  _closePage(page: Page<Browser>) {
     this._connection.send('Target.close', {
       targetId: Target.fromPage(page)._targetId
     }).catch(debugError);
   }
 
-  async _pages(context: BrowserContext): Promise<Page<Browser, BrowserContext>[]> {
-    const targets = this.targets().filter(target => target._browserContext === context && target._type === 'page');
-    const pages = await Promise.all(targets.map(target => target.page()));
-    return pages.filter(page => !!page);
-  }
-
-  async _activatePage(page: Page<Browser, BrowserContext>): Promise<void> {
+  async _activatePage(page: Page<Browser>): Promise<void> {
     await this._connection.send('Target.activate', { targetId: Target.fromPage(page)._targetId });
   }
 
@@ -222,54 +209,45 @@ export class Browser extends EventEmitter {
     helper.removeEventListeners(this._eventListeners);
     await this._closeCallback.call(null);
   }
-}
 
-export class BrowserContext {
-  private _browser: Browser;
-  _id: string;
+  _createBrowserContext(browserContextId: string | undefined): BrowserContext<Browser> {
+    const isIncognito = !!browserContextId;
+    const context = new BrowserContext({
+      contextPages: async (): Promise<Page<Browser>[]> => {
+        const targets = this.targets().filter(target => target._browserContext === context && target._type === 'page');
+        const pages = await Promise.all(targets.map(target => target.page()));
+        return pages.filter(page => !!page);
+      },
 
-  constructor(browser: Browser, contextId?: string) {
-    this._browser = browser;
-    this._id = contextId;
-  }
+      createPageInContext: async (): Promise<Page<Browser>> => {
+        const { targetId } = await this._connection.send('Browser.createPage', { browserContextId });
+        const target = this._targets.get(targetId);
+        return await target.page();
+      },
 
-  pages(): Promise<Page<Browser, BrowserContext>[]> {
-    return this._browser._pages(this);
-  }
+      closeContext: async (): Promise<void> => {
+        await this._connection.send('Browser.deleteContext', { browserContextId });
+        this._contexts.delete(browserContextId);
+      },
 
-  isIncognito(): boolean {
-    return !!this._id;
-  }
+      getContextCookies: async (): Promise<network.NetworkCookie[]> => {
+        const { cookies } = await this._connection.send('Browser.getAllCookies', { browserContextId });
+        return cookies.map((c: network.NetworkCookie) => ({
+          ...c,
+          expires: c.expires === 0 ? -1 : c.expires
+        }));
+      },
 
-  newPage(): Promise<Page<Browser, BrowserContext>> {
-    return this._browser._createPageInContext(this._id);
-  }
+      clearContextCookies: async (): Promise<void> => {
+        await this._connection.send('Browser.deleteAllCookies', { browserContextId });
+      },
 
-  browser(): Browser {
-    return this._browser;
-  }
-
-  async close() {
-    assert(this._id, 'Non-incognito profiles cannot be closed!');
-    await this._browser._disposeContext(this._id);
-  }
-
-  async cookies(...urls: string[]): Promise<NetworkCookie[]> {
-    const { cookies } = await this._browser._connection.send('Browser.getAllCookies', { browserContextId: this._id });
-    return filterCookies(cookies.map((c: NetworkCookie) => ({
-      ...c,
-      expires: c.expires === 0 ? -1 : c.expires
-    })), urls);
-  }
-
-  async setCookies(cookies: SetNetworkCookieParam[]) {
-    cookies = rewriteCookies(cookies);
-    const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
-    await this._browser._connection.send('Browser.setCookies', { cookies: cc, browserContextId: this._id });
-  }
-
-  async clearCookies() {
-    await this._browser._connection.send('Browser.deleteAllCookies', { browserContextId: this._id });
+      setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
+        const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
+        await this._connection.send('Browser.setCookies', { cookies: cc, browserContextId });
+      },
+    }, this, isIncognito);
+    return context;
   }
 }
 
