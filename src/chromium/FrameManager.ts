@@ -41,7 +41,7 @@ import { Workers } from './features/workers';
 import { Overrides } from './features/overrides';
 import { Interception } from './features/interception';
 import { Browser } from './Browser';
-import { BrowserContext } from './BrowserContext';
+import { BrowserContext } from '../browserContext';
 import * as types from '../types';
 import * as input from '../input';
 import { ConsoleMessage } from '../console';
@@ -64,7 +64,7 @@ type FrameData = {
 
 export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
   _client: CDPSession;
-  private _page: Page<Browser, BrowserContext>;
+  private _page: Page<Browser>;
   private _networkManager: NetworkManager;
   private _frames = new Map<string, frames.Frame>();
   private _contextIdToContext = new Map<number, js.ExecutionContext>();
@@ -74,7 +74,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   rawKeyboard: RawKeyboardImpl;
   screenshotterDelegate: CRScreenshotDelegate;
 
-  constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
+  constructor(client: CDPSession, browserContext: BrowserContext<Browser>, ignoreHTTPSErrors: boolean) {
     super();
     this._client = client;
     this.rawKeyboard = new RawKeyboardImpl(client);
@@ -254,7 +254,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       this._handleFrameTree(child);
   }
 
-  page(): Page<Browser, BrowserContext> {
+  page(): Page<Browser> {
     return this._page;
   }
 

@@ -10,7 +10,7 @@ export { Keyboard, Mouse } from '../input';
 export { ExecutionContext, JSHandle } from '../javascript';
 export { Request, Response } from '../network';
 export { Browser } from './Browser';
-export { BrowserContext } from './BrowserContext';
+export { BrowserContext } from '../browserContext';
 export { BrowserFetcher } from '../browserFetcher';
 export { CDPSession } from './Connection';
 export { Accessibility } from './features/accessibility';

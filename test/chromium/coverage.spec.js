@@ -22,7 +22,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   describe('JSCoverage', function() {
     it('should work', async function({page, server}) {
       await page.coverage.startJSCoverage();
-      await page.goto(server.PREFIX + '/jscoverage/simple.html', {waitUntil: 'networkidle0'});
+      await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
       const coverage = await page.coverage.stopJSCoverage();
       expect(coverage.length).toBe(1);
       expect(coverage[0].url).toContain('/jscoverage/simple.html');

@@ -2,7 +2,8 @@
 // Licensed under the MIT license.
 
 export { TimeoutError } from '../Errors';
-export { Browser, BrowserContext } from './Browser';
+export { Browser } from './Browser';
+export { BrowserContext } from '../browserContext';
 export { BrowserFetcher } from '../browserFetcher';
 export { ExecutionContext, JSHandle } from '../javascript';
 export { ElementHandle } from '../dom';

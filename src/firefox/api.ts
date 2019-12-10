@@ -3,7 +3,8 @@
 
 export { TimeoutError } from '../Errors';
 export { Keyboard, Mouse } from '../input';
-export { Browser, BrowserContext } from './Browser';
+export { Browser } from './Browser';
+export { BrowserContext } from '../browserContext';
 export { BrowserFetcher } from '../browserFetcher';
 export { Dialog } from '../dialog';
 export { ExecutionContext, JSHandle } from '../javascript';

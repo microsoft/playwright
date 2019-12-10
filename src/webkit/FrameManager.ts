@@ -18,11 +18,11 @@
 import * as EventEmitter from 'events';
 import { TimeoutError } from '../Errors';
 import * as frames from '../frames';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import * as network from '../network';
-import { TargetSession, TargetSessionEvents } from './Connection';
+import { TargetSession } from './Connection';
 import { Events } from '../events';
 import { ExecutionContextDelegate, EVALUATION_SCRIPT_URL } from './ExecutionContext';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
@@ -30,7 +30,8 @@ import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
 import { DOMWorldDelegate } from './JSHandle';
 import * as dialog from '../dialog';
-import { Browser, BrowserContext } from './Browser';
+import { Browser } from './Browser';
+import { BrowserContext } from '../browserContext';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
 import { WKScreenshotDelegate } from './Screenshotter';
 import * as input from '../input';
@@ -57,7 +58,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   readonly rawKeyboard: RawKeyboardImpl;
   readonly screenshotterDelegate: WKScreenshotDelegate;
   _session: TargetSession;
-  readonly _page: Page<Browser, BrowserContext>;
+  readonly _page: Page<Browser>;
   private readonly _networkManager: NetworkManager;
   private readonly _frames: Map<string, frames.Frame>;
   private readonly _contextIdToContext: Map<number, js.ExecutionContext>;
@@ -66,7 +67,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   private _mainFrame: frames.Frame;
   private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browserContext: BrowserContext) {
+  constructor(browserContext: BrowserContext<Browser>) {
     super();
     this.rawKeyboard = new RawKeyboardImpl();
     this.rawMouse = new RawMouseImpl();
@@ -95,7 +96,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   }
 
   // This method is called for provisional targets as well. The session passed as the parameter
-  // may be different from the current session and may be destroyed without becoming current. 
+  // may be different from the current session and may be destroyed without becoming current.
   async _initializeSession(session: TargetSession) {
     const promises : Promise<any>[] = [
       // Page agent must be enabled before Runtime.
@@ -109,7 +110,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     ];
     if (!session.isProvisional()) {
       // FIXME: move dialog agent to web process.
-      // Dialog agent resides in the UI process and should not be re-enabled on navigation. 
+      // Dialog agent resides in the UI process and should not be re-enabled on navigation.
       promises.push(session.send('Dialog.enable'));
     }
     if (this._page._state.userAgent !== null)
@@ -193,7 +194,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       this._handleFrameTree(child);
   }
 
-  page(): Page<Browser, BrowserContext> {
+  page(): Page<Browser> {
     return this._page;
   }
 
