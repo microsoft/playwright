@@ -29,7 +29,7 @@ export class Target {
   readonly _type: 'page' | 'service-worker' | 'worker';
   private readonly _session: TargetSession;
   private _pagePromise: Promise<Page<Browser, BrowserContext>> | null = null;
-  private _page: Page<Browser, BrowserContext> | null = null;
+  _page: Page<Browser, BrowserContext> | null = null;
 
   static fromPage(page: Page<Browser, BrowserContext>): Target {
     return (page as any)[targetSymbol];
