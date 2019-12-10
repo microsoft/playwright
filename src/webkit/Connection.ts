@@ -112,7 +112,7 @@ export class Connection extends EventEmitter {
   private _dispatchMessage(message: string) {
     debugProtocol('◀ RECV ' + message);
     const object = JSON.parse(message);
-    const eventWasEmitted = this._dispatchTargetMessageToSession(object, message);
+    this._dispatchTargetMessageToSession(object, message);
     if (object.id) {
       const callback = this._callbacks.get(object.id);
       // Callbacks could be all rejected if someone has called `.dispose()`.
@@ -125,21 +125,20 @@ export class Connection extends EventEmitter {
       } else {
         assert(this._closed, 'Received response for unknown callback: ' + object.id);
       }
-    } else if (!eventWasEmitted) {
+    } else {
       this.emit(object.method, object.params);
     }
   }
 
-  _dispatchTargetMessageToSession(object: {method: string, params: any}, wrappedMessage: string) : boolean {
+  _dispatchTargetMessageToSession(object: {method: string, params: any}, wrappedMessage: string) {
     if (object.method === 'Target.targetCreated') {
-      const targetIndo = object.params.targetInfo as Protocol.Target.TargetInfo;
-      const session = new TargetSession(this, targetIndo);
+      const targetInfo = object.params.targetInfo as Protocol.Target.TargetInfo;
+      const session = new TargetSession(this, targetInfo);
       this._sessions.set(session._sessionId, session);
       this.emit(ConnectionEvents.TargetCreated, session, object.params.targetInfo);
-      if (targetIndo.isPaused)
-        this.send('Target.resume', { targetId: targetIndo.targetId }).catch(debugError);
+      if (targetInfo.isPaused)
+        this.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
     } else if (object.method === 'Target.targetDestroyed') {
-      // log(`${object.method}`);
       const session = this._sessions.get(object.params.targetId);
       if (session) {
         session._onClosed();
@@ -165,7 +164,6 @@ export class Connection extends EventEmitter {
       oldSession._swappedOut = true;
       this._enqueueMessages(newSession._takeProvisionalMessagesAndCommit());
     }
-    return false;
   }
 
   _onClose() {
@@ -212,7 +210,7 @@ export class TargetSession extends EventEmitter {
     this._targetType = type;
     this._sessionId = targetId;
     if (isProvisional)
-        this._provisionalMessages = [];
+      this._provisionalMessages = [];
   }
 
   isProvisional() : boolean {
