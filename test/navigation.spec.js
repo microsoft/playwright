@@ -410,7 +410,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(response).toBe(null);
       expect(page.url()).toBe(server.PREFIX + '/replaced.html');
     });
-    it.skip(FFOX)('should work with DOM history.back()/history.forward()', async({page, server}) => {
+    it('should work with DOM history.back()/history.forward()', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent(`
         <a id=back onclick='javascript:goBack()'>back</a>

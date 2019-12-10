@@ -59,7 +59,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   });
 
   describe('Frame.evaluate', function() {
-    it.skip(FFOX)('should throw for detached frames', async({page, server}) => {
+    it('should throw for detached frames', async({page, server}) => {
       const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       await utils.detachFrame(page, 'frame1');
       let error = null;
