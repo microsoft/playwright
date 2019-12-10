@@ -29,7 +29,41 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Chromium-Specific Launcher tests', function() {
+  describe('CrPlaywright', function() {
+    describe('Playwright.launch', function() {
+      it('userDataDir option', async({server}) => {
+        const userDataDir = await mkdtempAsync(TMP_FOLDER);
+        const options = Object.assign({userDataDir}, defaultBrowserOptions);
+        const browser = await playwright.launch(options);
+        // Open a page to make sure its functional.
+        await browser.newPage();
+        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+        await browser.close();
+        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+        await rmAsync(userDataDir).catch(e => {});
+      });
+      it('userDataDir argument', async({server}) => {
+        const userDataDir = await mkdtempAsync(TMP_FOLDER);
+        const options = Object.assign({}, defaultBrowserOptions);
+        options.args = [
+          ...(defaultBrowserOptions.args || []),
+          `--user-data-dir=${userDataDir}`
+        ];
+        const browser = await playwright.launch(options);
+        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+        await browser.close();
+        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+        await rmAsync(userDataDir).catch(e => {});
+      });
+      it('should return the default arguments', async() => {
+        expect(playwright.defaultArgs()).toContain('--no-first-run');
+        expect(playwright.defaultArgs()).toContain('--headless');
+        expect(playwright.defaultArgs({headless: false})).not.toContain('--headless');
+        expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain('--user-data-dir=foo');
+      });
+    });
     describe('Playwright.launch |browserURL| option', function() {
       it('should be able to connect using browserUrl, with and without trailing slash', async({server}) => {
         const originalBrowser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {

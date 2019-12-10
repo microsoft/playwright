@@ -20,12 +20,10 @@ const path = require('path');
 const {helper} = require('../lib/helper');
 const rmAsync = helper.promisify(require('rimraf'));
 const mkdtempAsync = helper.promisify(fs.mkdtemp);
-const readFileAsync = helper.promisify(fs.readFile);
-const statAsync = helper.promisify(fs.stat);
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 const utils = require('./utils');
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT, WIN}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -62,42 +60,6 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       it.skip(WEBKIT)('userDataDir argument', async({server}) => {
         const userDataDir = await mkdtempAsync(TMP_FOLDER);
         const options = Object.assign({}, defaultBrowserOptions);
-        if (CHROME || WEBKIT) {
-          options.args = [
-            ...(defaultBrowserOptions.args || []),
-            `--user-data-dir=${userDataDir}`
-          ];
-        } else {
-          options.args = [
-            ...(defaultBrowserOptions.args || []),
-            `-profile`,
-            userDataDir,
-          ];
-        }
-        const browser = await playwright.launch(options);
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        await browser.close();
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-        await rmAsync(userDataDir).catch(e => {});
-      });
-      it('should return the default arguments', async() => {
-        if (CHROME) {
-          expect(playwright.defaultArgs()).toContain('--no-first-run');
-          expect(playwright.defaultArgs()).toContain('--headless');
-          expect(playwright.defaultArgs({headless: false})).not.toContain('--headless');
-          expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain('--user-data-dir=foo');
-        } else if (WEBKIT) {
-          expect(playwright.defaultArgs().length).toBe(0);
-        } else {
-          expect(playwright.defaultArgs({browser: 'firefox'})).toContain('-headless');
-          expect(playwright.defaultArgs({browser: 'firefox', headless: false})).not.toContain('-headless');
-          expect(playwright.defaultArgs({browser: 'firefox', userDataDir: 'foo'})).toContain('-profile');
-          expect(playwright.defaultArgs({browser: 'firefox', userDataDir: 'foo'})).toContain('foo');
-        }
-      });
-      it('should work with no default arguments', async() => {
-        const options = Object.assign({}, defaultBrowserOptions);
         options.ignoreDefaultArgs = true;
         const browser = await playwright.launch(options);
         const page = await browser.newPage();
@@ -116,24 +78,6 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
         expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
         expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
-        await browser.close();
-      });
-      it.skip(FFOX || WEBKIT)('should have default URL when launching browser', async function() {
-        const browser = await playwright.launch(defaultBrowserOptions);
-        const pages = (await browser.pages()).map(page => page.url());
-        expect(pages).toEqual(['about:blank']);
-        await browser.close();
-      });
-      it.skip(FFOX || WEBKIT)('should have custom URL when launching browser', async function({server}) {
-        const options = Object.assign({}, defaultBrowserOptions);
-        options.args = [server.EMPTY_PAGE].concat(options.args || []);
-        const browser = await playwright.launch(options);
-        const pages = await browser.pages();
-        expect(pages.length).toBe(1);
-        const page = pages[0];
-        if (page.url() !== server.EMPTY_PAGE)
-          await page.waitForNavigation();
-        expect(page.url()).toBe(server.EMPTY_PAGE);
         await browser.close();
       });
       it.skip(WEBKIT)('should set the default viewport', async() => {
@@ -169,6 +113,24 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
           fullPage: true
         });
         expect(screenshot).toBeInstanceOf(Buffer);
+        await browser.close();
+      });
+      it('should have default URL when launching browser', async function() {
+        const browser = await playwright.launch(defaultBrowserOptions);
+        const pages = (await browser.pages()).map(page => page.url());
+        expect(pages).toEqual(['about:blank']);
+        await browser.close();
+      });
+      it('should have custom URL when launching browser', async function({server}) {
+        const options = Object.assign({}, defaultBrowserOptions);
+        options.args = [server.EMPTY_PAGE].concat(options.args || []);
+        const browser = await playwright.launch(options);
+        const pages = await browser.pages();
+        expect(pages.length).toBe(1);
+        const page = pages[0];
+        if (page.url() !== server.EMPTY_PAGE)
+          await page.waitForNavigation();
+        expect(page.url()).toBe(server.EMPTY_PAGE);
         await browser.close();
       });
     });

@@ -184,11 +184,21 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
   require('./fixtures.spec.js').addTests(testOptions);
   require('./ignorehttpserrors.spec.js').addTests(testOptions);
   require('./launcher.spec.js').addTests(testOptions);
+
   if (CHROME) {
-    require('./chromium/headful.spec.js').addTests(testOptions);
     require('./chromium/connect.spec.js').addTests(testOptions);
+    require('./chromium/launcher.spec.js').addTests(testOptions);
+    require('./chromium/headful.spec.js').addTests(testOptions);
     require('./chromium/headful.spec.js').addTests(testOptions);
     require('./chromium/oopif.spec.js').addTests(testOptions);
     require('./chromium/tracing.spec.js').addTests(testOptions);
+  }
+
+  if (FFOX) {
+    require('./firefox/launcher.spec.js').addTests(testOptions);
+  }
+
+  if (WEBKIT) {
+    require('./webkit/launcher.spec.js').addTests(testOptions);
   }
 };
