@@ -31,7 +31,7 @@ import { assert, debugError, helper } from '../helper';
 import * as types from '../types';
 import { PipeTransport } from './PipeTransport';
 import { WebSocketTransport } from './WebSocketTransport';
-import { ConnectionTransport } from '../ConnectionTransport';
+import { ConnectionTransport } from '../types';
 import * as util from 'util';
 
 const mkdtempAsync = helper.promisify(fs.mkdtemp);
@@ -100,7 +100,7 @@ export class Launcher {
     else
       chromeArguments.push(...args);
 
-    let temporaryUserDataDir = null;
+    let temporaryUserDataDir: string | null = null;
 
     if (!chromeArguments.some(argument => argument.startsWith('--remote-debugging-')))
       chromeArguments.push(pipe ? '--remote-debugging-pipe' : '--remote-debugging-port=0');
@@ -139,7 +139,7 @@ export class Launcher {
     );
 
     if (!chromeProcess.pid) {
-      let reject;
+      let reject: (e: Error) => void;
       const result = new Promise((f, r) => reject = r);
       chromeProcess.once('error', error => {
         reject(new Error('Failed to launch browser: ' + error));
@@ -160,7 +160,7 @@ export class Launcher {
         if (temporaryUserDataDir) {
           removeFolderAsync(temporaryUserDataDir)
               .then(() => fulfill())
-              .catch(err => console.error(err));
+              .catch((err: Error) => console.error(err));
         } else {
           fulfill();
         }
@@ -344,7 +344,8 @@ function waitForWSEndpoint(chromeProcess: childProcess.ChildProcess, timeout: nu
 }
 
 function getWSEndpoint(browserURL: string): Promise<string> {
-  let resolve, reject;
+  let resolve: (url: string) => void;
+  let reject: (e: Error) => void;
   const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
 
   const endpointURL = URL.resolve(browserURL, '/json/version');
@@ -423,7 +424,7 @@ export function createBrowserFetcher(projectRoot: string, options: BrowserFetche
     ...defaultOptions,
     ...options,
   };
-  assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
+  assert(!!(downloadURLs as any)[options.platform], 'Unsupported platform: ' + options.platform);
 
   return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
     let archiveName = '';
@@ -440,7 +441,7 @@ export function createBrowserFetcher(projectRoot: string, options: BrowserFetche
       executablePath = path.join(archiveName, 'chrome.exe');
     }
     return {
-      downloadUrl: util.format(downloadURLs[platform], options.host, revision, archiveName),
+      downloadUrl: util.format((downloadURLs as any)[platform], options.host, revision, archiveName),
       executablePath
     };
   });

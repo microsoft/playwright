@@ -23,8 +23,7 @@ import * as js from '../javascript';
 import * as dom from '../dom';
 import * as network from '../network';
 import { TargetSession, TargetSessionEvents } from './Connection';
-import { Events } from './events';
-import { Events as CommonEvents } from '../events';
+import { Events } from '../events';
 import { ExecutionContextDelegate, EVALUATION_SCRIPT_URL } from './ExecutionContext';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page, PageDelegate } from '../page';
@@ -78,10 +77,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this._contextIdToContext = new Map();
     this._isolatedWorlds = new Set();
     this._page = new Page(this, browserContext);
-    this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(CommonEvents.Page.Request, event));
-    this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(CommonEvents.Page.Response, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(CommonEvents.Page.RequestFailed, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(CommonEvents.Page.RequestFinished, event));
+    this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(Events.Page.Request, event));
+    this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(Events.Page.Response, event));
+    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(Events.Page.RequestFailed, event));
+    this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(Events.Page.RequestFinished, event));
   }
 
   async initialize(session: TargetSession) {
@@ -128,9 +127,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-      helper.addEventListener(this._session, 'Page.loadEventFired', event => this._page.emit(Events.Page.Load)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
-      helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page.emit(Events.Page.DOMContentLoaded)),
       helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event))
     ];
@@ -158,9 +155,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame._firedLifecycleEvents.add('load');
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
     if (frame === this.mainFrame() && !hasDOMContentLoaded)
-      this._page.emit(CommonEvents.Page.DOMContentLoaded);
+      this._page.emit(Events.Page.DOMContentLoaded);
     if (frame === this.mainFrame() && !hasLoad)
-      this._page.emit(CommonEvents.Page.Load);
+      this._page.emit(Events.Page.Load);
   }
 
   _onLifecycleEvent(frameId: string, event: frames.LifecycleEvent) {
@@ -171,9 +168,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
     if (frame === this.mainFrame()) {
       if (event === 'load')
-        this._page.emit(CommonEvents.Page.Load);
+        this._page.emit(Events.Page.Load);
       if (event === 'domcontentloaded')
-        this._page.emit(CommonEvents.Page.DOMContentLoaded);
+        this._page.emit(Events.Page.DOMContentLoaded);
     }
   }
 
@@ -221,7 +218,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame[frameDataSymbol] = data;
     this._frames.set(frameId, frame);
     this.emit(FrameManagerEvents.FrameAttached, frame);
-    this._page.emit(CommonEvents.Page.FrameAttached, frame);
+    this._page.emit(Events.Page.FrameAttached, frame);
     return frame;
   }
 
@@ -273,7 +270,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     }
 
     this.emit(FrameManagerEvents.FrameNavigated, frame);
-    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
+    this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
@@ -283,7 +280,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame._navigated(url, frame.name());
     this.emit(FrameManagerEvents.FrameNavigatedWithinDocument, frame);
     this.emit(FrameManagerEvents.FrameNavigated, frame);
-    this._page.emit(CommonEvents.Page.FrameNavigated, frame);
+    this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   _onFrameDetached(frameId: string) {
@@ -324,7 +321,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     frame._detach();
     this._frames.delete(this._frameData(frame).id);
     this.emit(FrameManagerEvents.FrameDetached, frame);
-    this._page.emit(CommonEvents.Page.FrameDetached, frame);
+    this._page.emit(Events.Page.FrameDetached, frame);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
@@ -589,7 +586,7 @@ class NextNavigationWatchdog {
 
   _registerDisconnectedListener() {
     if (this._disconnectedListener)
-       helper.removeEventListeners([this._disconnectedListener]);
+      helper.removeEventListeners([this._disconnectedListener]);
     const session = this._frameManager._session;
     this._disconnectedListener = helper.addEventListener(this._frameManager._session, TargetSessionEvents.Disconnected, () => {
       // Session may change on swap out, check that it's current.

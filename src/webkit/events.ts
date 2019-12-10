@@ -16,22 +16,6 @@
  */
 
 export const Events = {
-  Page: {
-    Close: 'close',
-    Console: 'console',
-    Dialog: 'dialog',
-    FileChooser: 'filechooser',
-    DOMContentLoaded: 'domcontentloaded',
-    Request: 'request',
-    Response: 'response',
-    RequestFailed: 'requestfailed',
-    RequestFinished: 'requestfinished',
-    FrameAttached: 'frameattached',
-    FrameDetached: 'framedetached',
-    FrameNavigated: 'framenavigated',
-    Load: 'load',
-  },
-
   Browser: {
     Disconnected: 'disconnected'
   },

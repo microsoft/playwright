@@ -17,7 +17,7 @@
 
 import * as debug from 'debug';
 import { EventEmitter } from 'events';
-import { ConnectionTransport } from '../ConnectionTransport';
+import { ConnectionTransport } from '../types';
 import { assert } from '../helper';
 import { Protocol } from './protocol';
 
