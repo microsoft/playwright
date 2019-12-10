@@ -1,7 +1,7 @@
-From f18fc410fa69265f583f2d28309617131c86b814 Mon Sep 17 00:00:00 2001
-From: Pavel <pavel.feldman@gmail.com>
-Date: Mon, 9 Dec 2019 16:59:28 -0800
-Subject: [PATCH xserver] chore: bootstrap
+From fb515d8abf8e8e88afc551a703fe9296daf79117 Mon Sep 17 00:00:00 2001
+From: Pavel Feldman <pavel.feldman@gmail.com>
+Date: Mon, 9 Dec 2019 22:54:03 -0800
+Subject: [PATCH] chore: bootstrap
 
 ---
  Source/JavaScriptCore/CMakeLists.txt          |   4 +
@@ -19,14 +19,14 @@ Subject: [PATCH xserver] chore: bootstrap
  .../inspector/protocol/Page.json              | 111 +++-
  .../inspector/protocol/Target.json            |  22 +-
  Source/WebCore/html/FileInputType.cpp         |   6 +
- .../inspector/InspectorInstrumentation.cpp    |  23 +-
+ .../inspector/InspectorInstrumentation.cpp    |  26 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
  .../inspector/agents/InspectorDOMAgent.cpp    | 161 ++++-
  .../inspector/agents/InspectorDOMAgent.h      |   9 +-
  .../agents/InspectorDOMStorageAgent.h         |   1 +
- .../inspector/agents/InspectorPageAgent.cpp   | 554 +++++++++++++++++-
- .../inspector/agents/InspectorPageAgent.h     |  26 +-
- .../agents/page/PageRuntimeAgent.cpp          |  53 +-
+ .../inspector/agents/InspectorPageAgent.cpp   | 560 +++++++++++++++++-
+ .../inspector/agents/InspectorPageAgent.h     |  28 +-
+ .../agents/page/PageRuntimeAgent.cpp          |  61 +-
  .../inspector/agents/page/PageRuntimeAgent.h  |   5 +-
  Source/WebCore/loader/FrameLoader.cpp         |   1 +
  Source/WebCore/page/History.cpp               |   1 +
@@ -124,7 +124,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 120 files changed, 5000 insertions(+), 127 deletions(-)
+ 120 files changed, 5008 insertions(+), 138 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -1129,7 +1129,7 @@ index 4e41fd3f807..1f7be602cb2 100644
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index cb6ed9f6c84..4402d67463d 100644
+index cb6ed9f6c84..cac3f7682fa 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1141,7 +1141,17 @@ index cb6ed9f6c84..4402d67463d 100644
          return;
  
      if (auto* pageDebuggerAgent = instrumentingAgents.pageDebuggerAgent())
-@@ -656,20 +656,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
+@@ -129,9 +129,6 @@ void InspectorInstrumentation::didClearWindowObjectInWorldImpl(InstrumentingAgen
+ 
+     if (auto* pageRuntimeAgent = instrumentingAgents.pageRuntimeAgent())
+         pageRuntimeAgent->didClearWindowObjectInWorld(frame);
+-
+-    if (auto* pageAgent = instrumentingAgents.inspectorPageAgent())
+-        pageAgent->didClearWindowObjectInWorld(frame);
+ }
+ 
+ bool InspectorInstrumentation::isDebuggerPausedImpl(InstrumentingAgents& instrumentingAgents)
+@@ -656,20 +653,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
  
  void InspectorInstrumentation::domContentLoadedEventFiredImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
@@ -1165,7 +1175,7 @@ index cb6ed9f6c84..4402d67463d 100644
  }
  
  void InspectorInstrumentation::frameDetachedFromParentImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
-@@ -783,6 +780,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
+@@ -783,6 +777,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
  
@@ -1178,7 +1188,7 @@ index cb6ed9f6c84..4402d67463d 100644
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1251,6 +1254,12 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1251,6 +1251,12 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -1586,7 +1596,7 @@ index b578660fbb3..a7c968bc9f8 100644
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..52995f8fb0b 100644
+index f2e228b7f74..40834d85fd7 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1712,20 +1722,30 @@ index f2e228b7f74..52995f8fb0b 100644
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
-@@ -761,6 +787,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -761,17 +787,15 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
+-void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
 +void InspectorPageAgent::didNavigateWithinPage(Frame& frame)
-+{
+ {
+-    m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
 +    String url = frame.document()->url().string();
 +    m_frontendDispatcher->navigatedWithinDocument(frameId(&frame), url);
-+}
-+
- void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
+ }
+ 
+-void InspectorPageAgent::didClearWindowObjectInWorld(Frame& frame)
++void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
-     m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -815,6 +847,25 @@ void InspectorPageAgent::didRecalculateStyle()
+-    if (m_bootstrapScript.isEmpty())
+-        return;
+-
+-    frame.script().evaluate(ScriptSourceCode(m_bootstrapScript, URL { URL(), "web-inspector://bootstrap.js"_s }));
++    m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
+ }
+ 
+ void InspectorPageAgent::didPaint(RenderObject& renderer, const LayoutRect& rect)
+@@ -815,6 +839,25 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1751,7 +1771,7 @@ index f2e228b7f74..52995f8fb0b 100644
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1037,487 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1029,487 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2240,7 +2260,7 @@ index f2e228b7f74..52995f8fb0b 100644
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..b2d547cee84 100644
+index 4fd8c0b1016..c4b6a7c3e66 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2291,7 +2311,7 @@ index 4fd8c0b1016..b2d547cee84 100644
      void frameNavigated(Frame&);
      void frameDetached(Frame&);
      void loaderDetachedFromFrame(DocumentLoader&);
-@@ -126,6 +138,7 @@ public:
+@@ -126,19 +138,22 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -2299,7 +2319,8 @@ index 4fd8c0b1016..b2d547cee84 100644
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,11 +147,13 @@ public:
+-    void didClearWindowObjectInWorld(Frame&);
+     void didPaint(RenderObject&, const LayoutRect&);
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -2310,6 +2331,7 @@ index 4fd8c0b1016..b2d547cee84 100644
      String loaderId(DocumentLoader*);
      Frame* assertFrame(ErrorString&, const String& frameId);
 +    HashMap<String, String> isolatedWorldScripts() { return m_isolatedWorldScripts; };
++    String bootstrapScript() { return m_bootstrapScript; }
  
  private:
      double timestamp();
@@ -2333,7 +2355,7 @@ index 4fd8c0b1016..b2d547cee84 100644
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-index 8c4a104da04..be7c4c35b70 100644
+index 8c4a104da04..a0cac51247f 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 @@ -40,6 +40,7 @@
@@ -2362,7 +2384,7 @@ index 8c4a104da04..be7c4c35b70 100644
  }
  
  void PageRuntimeAgent::disable(ErrorString& errorString)
-@@ -93,9 +92,15 @@ void PageRuntimeAgent::didClearWindowObjectInWorld(Frame& frame)
+@@ -93,9 +92,18 @@ void PageRuntimeAgent::didClearWindowObjectInWorld(Frame& frame)
      if (!pageAgent)
          return;
  
@@ -2373,6 +2395,9 @@ index 8c4a104da04..be7c4c35b70 100644
 +    Document* document = frame.document();
 +    String worldName = document ? document->securityOrigin().toRawString() : String();
 +    notifyContextCreated(frame, scriptState, worldName, true);
++    String bootstrapScript = pageAgent->bootstrapScript();
++    if (!bootstrapScript.isEmpty())
++        frame.script().evaluateInWorld(ScriptSourceCode(bootstrapScript, URL { URL(), "web-inspector://bootstrap.js"_s }), mainThreadNormalWorld());
 +
 +    // Create user worlds.
 +    for (auto pair : pageAgent->isolatedWorldScripts())
@@ -2380,7 +2405,7 @@ index 8c4a104da04..be7c4c35b70 100644
  }
  
  InjectedScript PageRuntimeAgent::injectedScriptForEval(ErrorString& errorString, const int* executionContextId)
-@@ -135,33 +140,38 @@ void PageRuntimeAgent::reportExecutionContextCreation()
+@@ -135,33 +143,38 @@ void PageRuntimeAgent::reportExecutionContextCreation()
          if (!frame->script().canExecuteScripts(NotAboutToExecuteScript))
              continue;
  
@@ -2429,7 +2454,7 @@ index 8c4a104da04..be7c4c35b70 100644
          .setFrameId(frameId)
          .release());
  }
-@@ -178,4 +188,13 @@ void PageRuntimeAgent::callFunctionOn(ErrorString& errorString, const String& ob
+@@ -178,4 +191,18 @@ void PageRuntimeAgent::callFunctionOn(ErrorString& errorString, const String& ob
      InspectorRuntimeAgent::callFunctionOn(errorString, objectId, expression, optionalArguments, doNotPauseOnExceptionsAndMuteConsole, returnByValue, generatePreview, emulateUserGesture, result, wasThrown);
  }
  
@@ -2440,6 +2465,11 @@ index 8c4a104da04..be7c4c35b70 100644
 +        frame.script().evaluateInWorld(ScriptSourceCode(source, URL { URL(), "web-inspector://isolate_world.js"_s }), world);
 +    auto* scriptState = frame.windowProxy().jsWindowProxy(world)->window();
 +    notifyContextCreated(frame, scriptState, name, false);
++
++    auto* pageAgent = m_instrumentingAgents.inspectorPageAgent();
++    String bootstrapScript = pageAgent->bootstrapScript();
++    if (!bootstrapScript.isEmpty())
++        frame.script().evaluateInWorld(ScriptSourceCode(bootstrapScript, URL { URL(), "web-inspector://bootstrap.js"_s }), world);
 +}
 +
  } // namespace WebCore
@@ -7775,5 +7805,5 @@ index 2d183d39412..d94d4f06fc5 100644
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
 -- 
-2.17.1
+2.24.0
 
