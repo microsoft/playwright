@@ -1,6 +1,6 @@
-From 7901fa116ea9693421576159fb39b9fed532829a Mon Sep 17 00:00:00 2001
+From f18fc410fa69265f583f2d28309617131c86b814 Mon Sep 17 00:00:00 2001
 From: Pavel <pavel.feldman@gmail.com>
-Date: Mon, 9 Dec 2019 15:17:56 -0800
+Date: Mon, 9 Dec 2019 16:59:28 -0800
 Subject: [PATCH xserver] chore: bootstrap
 
 ---
@@ -12,7 +12,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../inspector/agents/InspectorTargetAgent.cpp |  52 +-
  .../inspector/agents/InspectorTargetAgent.h   |   6 +-
  .../inspector/protocol/Browser.json           | 106 ++++
- .../inspector/protocol/DOM.json               |  39 ++
+ .../inspector/protocol/DOM.json               |  34 +-
  .../inspector/protocol/Dialog.json            |  36 ++
  .../inspector/protocol/Emulation.json         |  22 +
  .../inspector/protocol/Input.json             | 160 +++++
@@ -21,8 +21,8 @@ Subject: [PATCH xserver] chore: bootstrap
  Source/WebCore/html/FileInputType.cpp         |   6 +
  .../inspector/InspectorInstrumentation.cpp    |  23 +-
  .../inspector/InspectorInstrumentation.h      |  21 +
- .../inspector/agents/InspectorDOMAgent.cpp    | 113 +++-
- .../inspector/agents/InspectorDOMAgent.h      |   4 +
+ .../inspector/agents/InspectorDOMAgent.cpp    | 161 ++++-
+ .../inspector/agents/InspectorDOMAgent.h      |   9 +-
  .../agents/InspectorDOMStorageAgent.h         |   1 +
  .../inspector/agents/InspectorPageAgent.cpp   | 554 +++++++++++++++++-
  .../inspector/agents/InspectorPageAgent.h     |  26 +-
@@ -124,7 +124,7 @@ Subject: [PATCH xserver] chore: bootstrap
  .../mac/WK2BrowserWindowController.h          |   3 +
  .../mac/WK2BrowserWindowController.m          |  38 +-
  Tools/MiniBrowser/wpe/main.cpp                |  37 ++
- 120 files changed, 4975 insertions(+), 104 deletions(-)
+ 120 files changed, 5000 insertions(+), 127 deletions(-)
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Browser.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Dialog.json
  create mode 100644 Source/JavaScriptCore/inspector/protocol/Emulation.json
@@ -606,7 +606,7 @@ index 00000000000..063e5e1346a
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/DOM.json b/Source/JavaScriptCore/inspector/protocol/DOM.json
-index 38cb48bedf2..c8da2a4f10f 100644
+index 38cb48bedf2..b23e12c5d00 100644
 --- a/Source/JavaScriptCore/inspector/protocol/DOM.json
 +++ b/Source/JavaScriptCore/inspector/protocol/DOM.json
 @@ -167,6 +167,16 @@
@@ -626,7 +626,18 @@ index 38cb48bedf2..c8da2a4f10f 100644
          }
      ],
      "commands": [
-@@ -542,6 +552,35 @@
+@@ -481,7 +491,9 @@
+             "name": "resolveNode",
+             "description": "Resolves JavaScript node object for given node id.",
+             "parameters": [
+-                { "name": "nodeId", "$ref": "NodeId", "description": "Id of the node to resolve." },
++                { "name": "nodeId", "$ref": "NodeId", "optional": true, "description": "Id of the node to resolve." },
++                { "name": "objectId", "$ref": "Runtime.RemoteObjectId", "optional": true, "description": "Source element handle." },
++                { "name": "executionContextId", "$ref": "Runtime.ExecutionContextId", "optional": true, "description": "Specifies in which execution context to adopt to." },
+                 { "name": "objectGroup", "type": "string", "optional": true, "description": "Symbolic group name that can be used to release multiple objects." }
+             ],
+             "returns": [
+@@ -542,6 +554,26 @@
              "parameters": [
                  { "name": "allow", "type": "boolean" }
              ]
@@ -635,20 +646,11 @@ index 38cb48bedf2..c8da2a4f10f 100644
 +            "name": "getContentQuads",
 +            "description": "Returns quads that describe node position on the page. This method\nmight return multiple quads for inline nodes.",
 +            "parameters": [
-+                {
-+                    "name": "objectId",
-+                    "description": "JavaScript object id of the node wrapper.",
-+                    "$ref": "Runtime.RemoteObjectId"
-+                }
++                { "name": "objectId", "description": "JavaScript object id of the node wrapper.", "$ref": "Runtime.RemoteObjectId" }
 +            ],
 +            "returns": [
 +                {
-+                    "name": "quads",
-+                    "description": "Quads that describe node layout relative to viewport.",
-+                    "type": "array",
-+                    "items": {
-+                        "$ref": "Quad"
-+                    }
++                    "name": "quads", "description": "Quads that describe node layout relative to viewport.", "type": "array", "items": { "$ref": "Quad" }
 +                }
 +            ]
 +        },
@@ -1264,7 +1266,7 @@ index 6698431f316..486a6781d81 100644
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index aecc79bc0ca..71f8863378b 100644
+index aecc79bc0ca..fb2460b2121 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -1317,12 +1319,54 @@ index aecc79bc0ca..71f8863378b 100644
  }
  
  static bool parseQuad(const JSON::Array& quadArray, FloatQuad* quad)
-@@ -1475,6 +1482,66 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -438,6 +445,20 @@ Node* InspectorDOMAgent::assertNode(ErrorString& errorString, int nodeId)
+     return node;
+ }
+ 
++Node* InspectorDOMAgent::assertNode(ErrorString& errorString, const int* nodeId, const String* objectId)
++{
++    Node* node = nullptr;
++    if (nodeId) {
++        node = assertNode(errorString, *nodeId);
++    } else if (objectId) {
++        node = nodeForObjectId(*objectId);
++        if (!node)
++            errorString = "Missing node for given objectId"_s;
++    } else
++        errorString = "Either nodeId or objectId must be specified"_s;
++    return node;
++}
++
+ Document* InspectorDOMAgent::assertDocument(ErrorString& errorString, int nodeId)
+ {
+     Node* node = assertNode(errorString, nodeId);
+@@ -1318,16 +1339,7 @@ void InspectorDOMAgent::highlightSelector(ErrorString& errorString, const JSON::
+ 
+ void InspectorDOMAgent::highlightNode(ErrorString& errorString, const JSON::Object& highlightInspectorObject, const int* nodeId, const String* objectId)
+ {
+-    Node* node = nullptr;
+-    if (nodeId)
+-        node = assertNode(errorString, *nodeId);
+-    else if (objectId) {
+-        node = nodeForObjectId(*objectId);
+-        if (!node)
+-            errorString = "Missing node for given objectId"_s;
+-    } else
+-        errorString = "Either nodeId or objectId must be specified"_s;
+-
++    Node* node = assertNode(errorString, nodeId, objectId);
+     if (!node)
+         return;
+ 
+@@ -1475,18 +1487,77 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
+-void InspectorDOMAgent::resolveNode(ErrorString& errorString, int nodeId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result)
 +static FloatPoint contentsToRootView(FrameView& containingView, const FloatPoint& point)
-+{
+ {
+-    String objectGroupName = objectGroup ? *objectGroup : emptyString();
+-    Node* node = assertNode(errorString, nodeId);
 +    return containingView.convertToRootView(point - toFloatSize(containingView.documentScrollPositionRelativeToViewOrigin()));
 +}
 +
@@ -1381,10 +1425,53 @@ index aecc79bc0ca..71f8863378b 100644
 +    out_quads = buildArrayOfQuads(quads);
 +}
 +
- void InspectorDOMAgent::resolveNode(ErrorString& errorString, int nodeId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result)
++void InspectorDOMAgent::resolveNode(ErrorString& errorString, const int* nodeId, const String* objectId, const int* contextId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result)
++{
++    Node* node = assertNode(errorString, nodeId, objectId);
+     if (!node)
+         return;
+-    RefPtr<Inspector::Protocol::Runtime::RemoteObject> object = resolveNode(node, objectGroupName);
+-    if (!object) {
++    String objectGroupName = objectGroup ? *objectGroup : emptyString();
++    result = resolveNode(node, objectGroupName, contextId);
++    if (!result) {
+         errorString = "Missing injected script for given nodeId"_s;
+         return;
+     }
+-    result = object;
+ }
+ 
+ void InspectorDOMAgent::getAttributes(ErrorString& errorString, int nodeId, RefPtr<JSON::ArrayOf<String>>& result)
+@@ -2651,7 +2722,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
+         errorString = "Missing node for given path"_s;
+ }
+ 
+-RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* node, const String& objectGroup)
++RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* node, const String& objectGroup, const int* contextId)
  {
-     String objectGroupName = objectGroup ? *objectGroup : emptyString();
-@@ -2686,4 +2753,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+     Document* document = &node->document();
+     if (auto* templateHost = document->templateDocumentHost())
+@@ -2660,12 +2731,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
+     if (!frame)
+         return nullptr;
+ 
+-    auto& state = *mainWorldExecState(frame);
+-    auto injectedScript = m_injectedScriptManager.injectedScriptFor(&state);
++    InjectedScript injectedScript;
++    if (contextId) {
++        injectedScript = m_injectedScriptManager.injectedScriptForId(*contextId);
++    } else {
++        injectedScript = m_injectedScriptManager.injectedScriptFor(mainWorldExecState(frame));
++    }
+     if (injectedScript.hasNoValue())
+         return nullptr;
+ 
+-    return injectedScript.wrapObject(nodeAsScriptValue(state, node), objectGroup);
++    return injectedScript.wrapObject(nodeAsScriptValue(*injectedScript.globalObject(), node), objectGroup);
+ }
+ 
+ Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
+@@ -2686,4 +2761,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
@@ -1432,7 +1519,7 @@ index aecc79bc0ca..71f8863378b 100644
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 51639abeb84..0ed9a1d80d5 100644
+index 51639abeb84..289792fe5ad 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 @@ -54,6 +54,7 @@ namespace WebCore {
@@ -1451,6 +1538,15 @@ index 51639abeb84..0ed9a1d80d5 100644
  
      // We represent embedded doms as a part of the same hierarchy. Hence we treat children of frame owners differently.
      // We also skip whitespace text nodes conditionally. Following methods encapsulate these specifics.
+@@ -129,7 +131,7 @@ public:
+     void performSearch(ErrorString&, const String& query, const JSON::Array* nodeIds, const bool* caseSensitive, String* searchId, int* resultCount) override;
+     void getSearchResults(ErrorString&, const String& searchId, int fromIndex, int toIndex, RefPtr<JSON::ArrayOf<int>>&) override;
+     void discardSearchResults(ErrorString&, const String& searchId) override;
+-    void resolveNode(ErrorString&, int nodeId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result) override;
++    void resolveNode(ErrorString&, const int* nodeId, const String* objectId, const int* contextId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result) override;
+     void getAttributes(ErrorString&, int nodeId, RefPtr<JSON::ArrayOf<String>>& result) override;
+     void setInspectModeEnabled(ErrorString&, bool enabled, const JSON::Object* highlightConfig, const bool* showRulers) override;
+     void requestNode(ErrorString&, const String& objectId, int* nodeId) override;
 @@ -148,6 +150,8 @@ public:
      void focus(ErrorString&, int nodeId) override;
      void setInspectedNode(ErrorString&, int nodeId) override;
@@ -1460,6 +1556,23 @@ index 51639abeb84..0ed9a1d80d5 100644
  
      // InspectorInstrumentation
      int identifierForNode(Node&);
+@@ -183,7 +187,7 @@ public:
+     Node* nodeForId(int nodeId);
+     int boundNodeId(const Node*);
+ 
+-    RefPtr<Inspector::Protocol::Runtime::RemoteObject> resolveNode(Node*, const String& objectGroup);
++    RefPtr<Inspector::Protocol::Runtime::RemoteObject> resolveNode(Node*, const String& objectGroup, const int* contextId);
+     bool handleMousePress();
+     void mouseDidMoveOverElement(const HitTestResult&, unsigned modifierFlags);
+     void inspect(Node*);
+@@ -194,6 +198,7 @@ public:
+     void reset();
+ 
+     Node* assertNode(ErrorString&, int nodeId);
++    Node* assertNode(ErrorString&, const int* nodeId, const String* objectId);
+     Element* assertElement(ErrorString&, int nodeId);
+     Document* assertDocument(ErrorString&, int nodeId);
+ 
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h b/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
 index b578660fbb3..a7c968bc9f8 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
