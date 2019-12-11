@@ -44,8 +44,7 @@ if [[ -f $ZIP_PATH ]]; then
   echo "Archive $ZIP_PATH already exists - remove and re-run the script."
   exit 1
 fi
-# - make sure the lockfile is removed when we exit and then claim it
-trap "rm -rf ${ZIP_PATH}; cd $(pwd -P); exit" INT TERM EXIT
+trap "rm -rf ${ZIP_PATH}; cd $(pwd -P);" INT TERM EXIT
 cd "$(dirname "$0")"
 BUILD_NUMBER=$(cat ./$BROWSER_NAME/BUILD_NUMBER)
 
@@ -61,13 +60,6 @@ else
   echo "Force-rebuilding the build."
 fi
 
-source ./buildbots/send_telegram_message.sh
-BUILD_ALIAS=$(./upload.sh $BROWSER_NAME --show-alias $FFOX_WIN64)
-send_telegram_message "$BUILD_ALIAS: started ..."
-
-echo "-- preparing checkout"
-./prepare_checkout.sh $BROWSER_NAME
-
 cd ./$BROWSER_NAME/checkout
 if ! [[ $(git rev-parse --abbrev-ref HEAD) == "playwright-build" ]]; then
   echo "ERROR: Default branch is not playwright-build!"
@@ -75,18 +67,37 @@ if ! [[ $(git rev-parse --abbrev-ref HEAD) == "playwright-build" ]]; then
 fi
 cd -
 
+source ./buildbots/send_telegram_message.sh
+BUILD_ALIAS=$(./upload.sh $BROWSER_NAME --show-alias $FFOX_WIN64)
+send_telegram_message "$BUILD_ALIAS: started ..."
+
+echo "-- preparing checkout"
+if ! ./prepare_checkout.sh $BROWSER_NAME; then
+  send_telegram_message "$BUILD_ALIAS: ./prepare_checkout.sh failed! ❌"
+  exit 1
+fi
+
 echo "-- cleaning"
-./$BROWSER_NAME/clean.sh
+if ! ./$BROWSER_NAME/clean.sh; then
+  send_telegram_message "$BUILD_ALIAS: ./clean.sh failed! ❌"
+  exit 1
+fi
 
 echo "-- building"
 if ! ./$BROWSER_NAME/build.sh $FFOX_WIN64; then
-  send_telegram_message "$BUILD_ALIAS: COMPILATION FAILED! ❌"
+  send_telegram_message "$BUILD_ALIAS: ./build.sh failed! ❌"
   exit 1
 fi
 
 echo "-- archiving to $ZIP_PATH"
-./$BROWSER_NAME/archive.sh $ZIP_PATH
+if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH; then
+  send_telegram_message "$BUILD_ALIAS: ./archive.sh failed! ❌"
+  exit 1
+fi
 
 echo "-- uploading"
-./upload.sh $BROWSER_NAME $ZIP_PATH $FFOX_WIN64
+if ! ./upload.sh $BROWSER_NAME $ZIP_PATH $FFOX_WIN64; then
+  send_telegram_message "$BUILD_ALIAS: ./upload.sh failed! ❌"
+  exit 1
+fi
 send_telegram_message "$BUILD_ALIAS: uploaded ✅"
