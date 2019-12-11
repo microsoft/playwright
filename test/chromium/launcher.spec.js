@@ -63,6 +63,19 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         expect(playwright.defaultArgs({headless: false})).not.toContain('--headless');
         expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain('--user-data-dir=foo');
       });
+      it('should filter out ignored default arguments', async() => {
+        // Make sure we launch with `--enable-automation` by default.
+        const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
+        const browser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
+          // Ignore first and third default argument.
+          ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
+        }));
+        const spawnargs = browser.process().spawnargs;
+        expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
+        expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
+        expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
+        await browser.close();
+      });
     });
     describe('Playwright.launch |browserURL| option', function() {
       it('should be able to connect using browserUrl, with and without trailing slash', async({server}) => {

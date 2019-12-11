@@ -23,7 +23,7 @@ const mkdtempAsync = helper.promisify(fs.mkdtemp);
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 const utils = require('./utils');
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, WEBKIT}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -45,42 +45,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
-      it.skip(WEBKIT)('userDataDir option', async({server}) => {
-        const userDataDir = await mkdtempAsync(TMP_FOLDER);
-        const options = Object.assign({userDataDir}, defaultBrowserOptions);
-        const browser = await playwright.launch(options);
-        // Open a page to make sure its functional.
-        await browser.newPage();
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        await browser.close();
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-        await rmAsync(userDataDir).catch(e => {});
-      });
-      it.skip(WEBKIT)('userDataDir argument', async({server}) => {
-        const userDataDir = await mkdtempAsync(TMP_FOLDER);
-        const options = Object.assign({}, defaultBrowserOptions);
-        options.ignoreDefaultArgs = true;
-        const browser = await playwright.launch(options);
-        const page = await browser.newPage();
-        expect(await page.evaluate('11 * 11')).toBe(121);
-        await page.close();
-        await browser.close();
-      });
-      it.skip(WEBKIT)('should filter out ignored default arguments', async() => {
-        // Make sure we launch with `--enable-automation` by default.
-        const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
-        const browser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
-          // Ignore first and third default argument.
-          ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
-        }));
-        const spawnargs = browser.process().spawnargs;
-        expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
-        expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
-        expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
-        await browser.close();
-      });
-      it.skip(WEBKIT)('should set the default viewport', async() => {
+      it('should set the default viewport', async() => {
         const options = Object.assign({}, defaultBrowserOptions, {
           defaultViewport: {
             width: 456,
