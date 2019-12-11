@@ -79,8 +79,7 @@ echo "-- cleaning"
 ./$BROWSER_NAME/clean.sh
 
 echo "-- building"
-if ./$BROWSER_NAME/build.sh $FFOX_WIN64; then
-else
+if ! ./$BROWSER_NAME/build.sh $FFOX_WIN64; then
   send_telegram_message "$BUILD_ALIAS COMPILATION FAILED! ❌"
   exit 1
 fi
