@@ -37,4 +37,8 @@ export class WKScreenshotDelegate implements ScreenshotterDelegate {
       buffer = jpeg.encode(PNG.sync.read(buffer)).data;
     return buffer;
   }
+
+  async resetViewport(oldSize: types.Size): Promise<void> {
+    await this._session.send('Emulation.setDeviceMetricsOverride', { ...oldSize, deviceScaleFactor: 0 });
+  }
 }

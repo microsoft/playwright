@@ -34,6 +34,7 @@ export interface ScreenshotterDelegate {
   canCaptureOutsideViewport(): boolean;
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
   screenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer>;
+  resetViewport(oldSize: types.Size): Promise<void>;
 }
 
 export class Screenshotter {
@@ -57,8 +58,15 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       let overridenViewport: types.Viewport | undefined;
       const viewport = this._page.viewport();
-      if (viewport && options.fullPage && !this._delegate.canCaptureOutsideViewport()) {
-        const fullPage = await this._page.evaluate(() => ({
+      let viewportSize: types.Size | undefined;
+      if (!viewport) {
+        viewportSize = await this._page.evaluate(() => ({
+          width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
+          height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight)
+        }));
+      }
+      if (options.fullPage && !this._delegate.canCaptureOutsideViewport()) {
+        const fullPageRect = await this._page.evaluate(() => ({
           width: Math.max(
               document.body.scrollWidth, document.documentElement.scrollWidth,
               document.body.offsetWidth, document.documentElement.offsetWidth,
@@ -70,7 +78,7 @@ export class Screenshotter {
               document.body.clientHeight, document.documentElement.clientHeight
           )
         }));
-        overridenViewport = { ...viewport, ...fullPage };
+        overridenViewport = viewport ? { ...viewport, ...fullPageRect } : fullPageRect;
         await this._page.setViewport(overridenViewport);
       } else if (options.clip) {
         options.clip = trimClipToViewport(viewport, options.clip);
@@ -78,8 +86,12 @@ export class Screenshotter {
 
       const result = await this._screenshot(format, options, overridenViewport || viewport);
 
-      if (overridenViewport)
-        await this._page.setViewport(viewport);
+      if (overridenViewport) {
+        if (viewport)
+          await this._page.setViewport(viewport);
+        else
+          await this._delegate.resetViewport(viewportSize);
+      }
       return result;
     });
   }

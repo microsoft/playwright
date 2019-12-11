@@ -37,4 +37,8 @@ export class CRScreenshotDelegate implements ScreenshotterDelegate {
     const result = await this._session.send('Page.captureScreenshot', { format, quality: options.quality, clip });
     return Buffer.from(result.data, 'base64');
   }
+
+  async resetViewport(): Promise<void> {
+    await this._session.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
+  }
 }

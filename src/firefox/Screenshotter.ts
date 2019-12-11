@@ -39,4 +39,8 @@ export class FFScreenshotDelegate implements ScreenshotterDelegate {
     });
     return Buffer.from(data, 'base64');
   }
+
+  async resetViewport(): Promise<void> {
+    await this._session.send('Page.setViewport', { viewport: null });
+  }
 }
