@@ -22,7 +22,7 @@ import { assert, debugError, helper } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
-import { Screenshotter, ScreenshotterDelegate } from './screenshotter';
+import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from './TimeoutSettings';
 import * as types from './types';
 import { Events } from './events';
@@ -32,9 +32,7 @@ import { ConsoleMessage, ConsoleMessageLocation } from './console';
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
   readonly rawKeyboard: input.RawKeyboard;
-  readonly screenshotterDelegate: ScreenshotterDelegate;
-  mainFrame(): frames.Frame;
-  frames(): frames.Frame[];
+
   reload(options?: frames.NavigateOptions): Promise<network.Response | null>;
   goBack(options?: frames.NavigateOptions): Promise<network.Response | null>;
   goForward(options?: frames.NavigateOptions): Promise<network.Response | null>;
@@ -44,6 +42,12 @@ export interface PageDelegate {
   // TODO: reverse didClose call sequence.
   didClose(): void;
 
+  mainFrame(): frames.Frame;
+  frames(): frames.Frame[];
+  navigateFrame(frame: frames.Frame, url: string, options?: frames.GotoOptions): Promise<network.Response | null>;
+  waitForFrameNavigation(frame: frames.Frame, options?: frames.NavigateOptions): Promise<network.Response | null>;
+  setFrameContent(frame: frames.Frame, html: string, options?: frames.NavigateOptions): Promise<void>;
+
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
   setUserAgent(userAgent: string): Promise<void>;
   setJavaScriptEnabled(enabled: boolean): Promise<void>;
@@ -51,6 +55,12 @@ export interface PageDelegate {
   setViewport(viewport: types.Viewport): Promise<void>;
   setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
+
+  getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
+  canScreenshotOutsideViewport(): boolean;
+  setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
+  takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer>;
+  resetViewport(oldSize: types.Size): Promise<void>;
 }
 
 type PageState = {
@@ -106,7 +116,7 @@ export class Page extends EventEmitter {
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
     this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
     this._timeoutSettings = new TimeoutSettings();
-    this._screenshotter = new Screenshotter(this, delegate.screenshotterDelegate, browserContext.browser());
+    this._screenshotter = new Screenshotter(this);
   }
 
   _didClose() {

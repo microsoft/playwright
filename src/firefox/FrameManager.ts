@@ -30,8 +30,6 @@ import * as dialog from '../dialog';
 import { Protocol } from './protocol';
 import * as input from '../input';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { FFScreenshotDelegate } from './Screenshotter';
-import { Browser } from './Browser';
 import { BrowserContext } from '../browserContext';
 import { Interception } from './features/interception';
 import { Accessibility } from './features/accessibility';
@@ -51,10 +49,9 @@ type FrameData = {
   frameId: string,
 };
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
+export class FrameManager extends EventEmitter implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
-  readonly screenshotterDelegate: FFScreenshotDelegate;
   readonly _session: JugglerSession;
   readonly _page: Page;
   private readonly _networkManager: NetworkManager;
@@ -68,7 +65,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this._session = session;
     this.rawKeyboard = new RawKeyboardImpl(session);
     this.rawMouse = new RawMouseImpl(session);
-    this.screenshotterDelegate = new FFScreenshotDelegate(session, this);
     this._networkManager = new NetworkManager(session, this);
     this._mainFrame = null;
     this._frames = new Map();
@@ -182,7 +178,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
 
   _onFrameAttached(params) {
     const parentFrame = this._frames.get(params.parentFrameId) || null;
-    const frame = new frames.Frame(this, this._page, parentFrame);
+    const frame = new frames.Frame(this._page, parentFrame);
     const data: FrameData = {
       frameId: params.frameId,
     };
@@ -398,6 +394,36 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
     await this._session.send('Page.close', { runBeforeUnload });
+  }
+
+  getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
+    const frameId = this._frameData(handle.executionContext().frame()).frameId;
+    return this._session.send('Page.getBoundingBox', {
+      frameId,
+      objectId: handle._remoteObject.objectId,
+    });
+  }
+
+  canScreenshotOutsideViewport(): boolean {
+    return true;
+  }
+
+  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
+    if (color)
+      throw new Error('Not implemented');
+  }
+
+  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<Buffer> {
+    const { data } = await this._session.send('Page.screenshot', {
+      mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
+      fullPage: options.fullPage,
+      clip: options.clip,
+    });
+    return Buffer.from(data, 'base64');
+  }
+
+  async resetViewport(): Promise<void> {
+    await this._session.send('Page.setViewport', { viewport: null });
   }
 }
 
