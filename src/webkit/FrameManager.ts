@@ -120,6 +120,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       promises.push(session.send('Page.setEmulatedMedia', { media: this._page._state.mediaType || '' }));
     if (this._page._state.javascriptEnabled !== null)
       promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: this._page._state.javascriptEnabled }));
+    if (this._page._state.bypassCSP !== null)
+      promises.push(session.send('Page.setBypassCSP', { enabled: this._page._state.bypassCSP }));
     await Promise.all(promises);
   }
 
@@ -456,8 +458,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
   }
 
-  setBypassCSP(enabled: boolean): Promise<void> {
-    throw new Error('Not implemented');
+  async setBypassCSP(enabled: boolean): Promise<void> {
+    await this._session.send('Page.setBypassCSP', { enabled });
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
