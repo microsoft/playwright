@@ -41,6 +41,13 @@ mkdir -p $LOCKDIR
 trap "rm -rf ${LOCKDIR}; cd $(pwd -P); exit" INT TERM EXIT
 cd "$(dirname "$0")"
 
+IS_FIRST_RUN_FILE="/tmp/pw-buildbot-first-run.txt";
+if ! [[ -f $IS_FIRST_RUN_FILE ]]; then
+  touch "$IS_FIRST_RUN_FILE"
+  source ./send_telegram_message.sh
+  send_telegram_message '**Linux Buildbot Is Active**'
+fi
+
 # Check if git repo is dirty.
 if [[ -n $(git status -s) ]]; then
   echo "ERROR: dirty GIT state - commit everything and re-run the script."

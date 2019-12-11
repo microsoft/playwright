@@ -1,0 +1,13 @@
+send_telegram_message() {
+  if [[ -z $TELEGRAM_BOT_KEY ]]; then
+    return;
+  fi
+  if ! command -v curl >/dev/null; then
+    return;
+  fi
+  curl --silent \
+       -X POST \
+       -H 'Content-Type: application/json' \
+       -d '{"chat_id": "-1001225613794", "text": "'"$1"'", "disable_notification": false}' \
+       https://api.telegram.org/bot$TELEGRAM_BOT_KEY/sendMessage >/dev/null
+}

@@ -3,6 +3,10 @@
 This document describes setting up bots infrastructure to produce
 browser builds.
 
+All bots require the following env variables to be set:
+- `AZ_ACCOUNT_KEY` and `AZ_ACCOUNT_NAME` secrets to be able to upload to PlayWright CDN
+- `TELEGRAM_BOT_KEY` report build progress to Telegram channel
+
 We currently have 4 build bots that produce 6 builds
 - **[buildbot-linux]** Ubuntu 18.04 machine
     - builds: `Webkit-Linux`, `Firefox-Linux`
@@ -24,8 +28,6 @@ Follow instructions on [Building Firefox for Windows](https://developer.mozilla.
 After this step, you should have `c:\mozilla-build` folder
 and `c:\mozilla-source` folder with firefox checkout.
 
-> **NOTE:** No spaces or quotes are allowed here!
-
 ### 2. Install azure-cli
 
 Install [azure-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest) for windows using MS Installer
@@ -41,16 +43,19 @@ Run `cmd` as administrator and run the following line:
 This command will create a `c:\Windows\az` file that will call azure-cli with passed parameters (Not the most beautiful solution, but it works!)
 
 
-### 4. Provide CDN credentials to mingw env
+### 4. Set custom env variables to mingw env
 
-Edit `c:\mozilla-build\start-shell.bat` and add two lines in the beginning:
+Edit `c:\mozilla-build\start-shell.bat` and add the following lines in the beginning:
 
 ```bat
 SET AZ_ACCOUNT_NAME=<account-name>
 SET AZ_ACCOUNT_KEY=<account-key>
+SET TELEGRAM_BOT_KEY=<bot_key>
 ```
 
 change `<account-name>` and `<account-key>` with relevant keys/names.
+
+> **NOTE:** No spaces or quotes are allowed here!
 
 ### 5. Checkout PlayWright to /c/
 

@@ -47,6 +47,7 @@ fi
 # - make sure the lockfile is removed when we exit and then claim it
 trap "rm -rf ${ZIP_PATH}; cd $(pwd -P); exit" INT TERM EXIT
 cd "$(dirname "$0")"
+BUILD_NUMBER=$(cat ./$BROWSER_NAME/BUILD_NUMBER)
 
 # pull from upstream and check if a new build has to be uploaded.
 if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
@@ -59,6 +60,10 @@ if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
 else
   echo "Force-rebuilding the build."
 fi
+
+source ./buildbots/send_telegram_message.sh
+BUILD_ALIAS=$(./upload.sh $BROWSER_NAME --show-alias $FFOX_WIN64)
+send_telegram_message "starting to build $BUILD_ALIAS"
 
 echo "-- preparing checkout"
 ./prepare_checkout.sh $BROWSER_NAME
@@ -74,10 +79,10 @@ echo "-- cleaning"
 ./$BROWSER_NAME/clean.sh
 
 echo "-- building"
-if [[ $BROWSER_NAME == "firefox" ]]; then
-  ./$BROWSER_NAME/build.sh $FFOX_WIN64
+if ./$BROWSER_NAME/build.sh $FFOX_WIN64; then
 else
-  ./$BROWSER_NAME/build.sh
+  send_telegram_message "$BUILD_ALIAS COMPILATION FAILED! ❌"
+  exit 1
 fi
 
 echo "-- archiving to $ZIP_PATH"
@@ -85,3 +90,4 @@ echo "-- archiving to $ZIP_PATH"
 
 echo "-- uploading"
 ./upload.sh $BROWSER_NAME $ZIP_PATH $FFOX_WIN64
+send_telegram_message "$BUILD_ALIAS uploaded ✅"

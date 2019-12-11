@@ -36,6 +36,9 @@ if [[ -n $(git status -s) ]]; then
   exit 1
 fi
 
+source ./send_telegram_message.sh
+send_telegram_message '**Windows Buildbot Is Active**'
+
 iteration=0
 while true; do
   timestamp=$(date +%s)

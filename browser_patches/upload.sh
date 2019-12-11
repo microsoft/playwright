@@ -33,6 +33,7 @@ fi
 BROWSER_NAME=""
 BUILD_NUMBER=""
 BLOB_NAME=""
+ALIAS=""
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   # we always apply our patches atop of beta since it seems to get better
   # reliability guarantees.
@@ -40,13 +41,17 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   BROWSER_NAME="firefox"
   if [[ "$(uname)" == "Darwin" ]]; then
     BLOB_NAME="firefox-mac.zip"
+    ALIAS="firefox-mac r$BUILD_NUMBER"
   elif [[ "$(uname)" == "Linux" ]]; then
     BLOB_NAME="firefox-linux.zip"
+    ALIAS="ff-linux r$BUILD_NUMBER"
   elif [[ "$(uname)" == MINGW* ]]; then
     if [[ ("$2" == "--win64") || ("$3" == "--win64") ]]; then
       BLOB_NAME="firefox-win64.zip"
+      ALIAS="ff-win64 r$BUILD_NUMBER"
     else
       BLOB_NAME="firefox-win32.zip"
+      ALIAS="ff-win32 r$BUILD_NUMBER"
     fi
   else
     echo "ERROR: unzupported platform - $(uname)"
@@ -58,8 +63,10 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   if [[ "$(uname)" == "Darwin" ]]; then
     MAC_MAJOR_MINOR_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
     BLOB_NAME="minibrowser-mac-$MAC_MAJOR_MINOR_VERSION.zip"
+    ALIAS="webkit-mac-$MAC_MAJOR_MINOR_VERSION r$BUILD_NUMBER"
   elif [[ "$(uname)" == "Linux" ]]; then
     BLOB_NAME="minibrowser-linux.zip"
+    ALIAS="webkit-linux r$BUILD_NUMBER"
   else
     echo "ERROR: unzupported platform - $(uname)"
     exit 1
@@ -69,8 +76,13 @@ else
   exit 1
 fi
 
+if [[ ("$2" == '--show-alias') || ("$3" == '--show-alias') ]]; then
+  echo $ALIAS
+  exit 0
+fi
+
 BLOB_PATH="$BROWSER_NAME/$BUILD_NUMBER/$BLOB_NAME"
-if [[ $2 == '--check' ]]; then
+if [[ ("$2" == '--check') || ("$3" == '--check') ]]; then
   EXISTS=$(az storage blob exists -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -n "$BLOB_PATH" --query "exists")
   if [[ $EXISTS == "true" ]]; then
     exit 0
