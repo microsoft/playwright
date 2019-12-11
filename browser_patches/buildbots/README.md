@@ -113,7 +113,7 @@ Make sure to change the following fields:
 2. Put a proper path to the `Program`
 3. Make sure to put correct `UserName`
 
-```plist
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
