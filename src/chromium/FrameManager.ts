@@ -32,7 +32,6 @@ import { toConsoleMessageLocation, exceptionToError, releaseObject } from './pro
 import * as dialog from '../dialog';
 import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { CRScreenshotDelegate } from './Screenshotter';
 import { Accessibility } from './features/accessibility';
 import { Coverage } from './features/coverage';
 import { PDF } from './features/pdf';
@@ -60,7 +59,7 @@ type FrameData = {
   id: string,
 };
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
+export class FrameManager extends EventEmitter implements PageDelegate {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
@@ -70,14 +69,12 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   private _mainFrame: frames.Frame;
   rawMouse: RawMouseImpl;
   rawKeyboard: RawKeyboardImpl;
-  screenshotterDelegate: CRScreenshotDelegate;
 
   constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
     super();
     this._client = client;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
-    this.screenshotterDelegate = new CRScreenshotDelegate(client);
     this._networkManager = new NetworkManager(client, ignoreHTTPSErrors, this);
     this._page = new Page(this, browserContext);
     (this._page as any).accessibility = new Accessibility(client);
@@ -272,7 +269,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new frames.Frame(this, this._page, parentFrame);
+    const frame = new frames.Frame(this._page, parentFrame);
     const data: FrameData = {
       id: frameId,
     };
@@ -302,7 +299,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
         data.id = framePayload.id;
       } else {
         // Initial main frame navigation.
-        frame = new frames.Frame(this, this._page, null);
+        frame = new frames.Frame(this._page, null);
         const data: FrameData = {
           id: framePayload.id,
         };
@@ -541,6 +538,34 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       await this._client.send('Page.close');
     else
       await (this._page.browser() as Browser)._closePage(this._page);
+  }
+
+  async getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
+    const rect = await handle.boundingBox();
+    if (!rect)
+      return rect;
+    const { layoutViewport: { pageX, pageY } } = await this._client.send('Page.getLayoutMetrics');
+    rect.x += pageX;
+    rect.y += pageY;
+    return rect;
+  }
+
+  canScreenshotOutsideViewport(): boolean {
+    return false;
+  }
+
+  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
+    await this._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
+  }
+
+  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<Buffer> {
+    const clip = options.clip ? { ...options.clip, scale: 1 } : undefined;
+    const result = await this._client.send('Page.captureScreenshot', { format, quality: options.quality, clip });
+    return Buffer.from(result.data, 'base64');
+  }
+
+  async resetViewport(): Promise<void> {
+    await this._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
   }
 }
 

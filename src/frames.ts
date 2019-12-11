@@ -22,10 +22,9 @@ import * as dom from './dom';
 import * as network from './network';
 import { helper, assert, RegisteredListener } from './helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from './input';
-import { TimeoutSettings } from './TimeoutSettings';
 import { TimeoutError } from './Errors';
 import { Events } from './events';
-import { EventEmitter } from 'events';
+import { Page } from './page';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
@@ -46,22 +45,9 @@ export type GotoOptions = NavigateOptions & {
   referer?: string,
 };
 
-export interface FrameDelegate {
-  navigateFrame(frame: Frame, url: string, options?: GotoOptions): Promise<network.Response | null>;
-  waitForFrameNavigation(frame: Frame, options?: NavigateOptions): Promise<network.Response | null>;
-  setFrameContent(frame: Frame, html: string, options?: NavigateOptions): Promise<void>;
-}
-
-interface Page extends EventEmitter {
-  _lifecycleWatchers: Set<LifecycleWatcher>;
-  _timeoutSettings: TimeoutSettings;
-  _disconnectedPromise: Promise<Error>;
-}
-
 export type LifecycleEvent = 'load' | 'domcontentloaded';
 
 export class Frame {
-  readonly _delegate: FrameDelegate;
   readonly _firedLifecycleEvents: Set<LifecycleEvent>;
   _lastDocumentId: string;
   readonly _page: Page;
@@ -72,8 +58,7 @@ export class Frame {
   private _childFrames = new Set<Frame>();
   private _name: string;
 
-  constructor(delegate: FrameDelegate, page: Page, parentFrame: Frame | null) {
-    this._delegate = delegate;
+  constructor(page: Page, parentFrame: Frame | null) {
     this._firedLifecycleEvents = new Set();
     this._lastDocumentId = '';
     this._page = page;
@@ -89,11 +74,11 @@ export class Frame {
   }
 
   async goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
-    return this._delegate.navigateFrame(this, url, options);
+    return this._page._delegate.navigateFrame(this, url, options);
   }
 
   async waitForNavigation(options?: NavigateOptions): Promise<network.Response | null> {
-    return this._delegate.waitForFrameNavigation(this, options);
+    return this._page._delegate.waitForFrameNavigation(this, options);
   }
 
   _mainContext(): Promise<js.ExecutionContext> {
@@ -174,7 +159,7 @@ export class Frame {
   }
 
   async setContent(html: string, options?: NavigateOptions): Promise<void> {
-    return this._delegate.setFrameContent(this, html, options);
+    return this._page._delegate.setFrameContent(this, html, options);
   }
 
   name(): string {

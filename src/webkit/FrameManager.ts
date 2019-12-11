@@ -32,9 +32,10 @@ import * as dialog from '../dialog';
 import { Browser } from './Browser';
 import { BrowserContext } from '../browserContext';
 import { RawMouseImpl, RawKeyboardImpl } from './Input';
-import { WKScreenshotDelegate } from './Screenshotter';
 import * as input from '../input';
 import * as types from '../types';
+import * as jpeg from 'jpeg-js';
+import { PNG } from 'pngjs';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -54,10 +55,9 @@ type FrameData = {
 
 let lastDocumentId = 0;
 
-export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
+export class FrameManager extends EventEmitter implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
-  readonly screenshotterDelegate: WKScreenshotDelegate;
   _session: TargetSession;
   readonly _page: Page;
   private readonly _networkManager: NetworkManager;
@@ -72,7 +72,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     super();
     this.rawKeyboard = new RawKeyboardImpl();
     this.rawMouse = new RawMouseImpl();
-    this.screenshotterDelegate = new WKScreenshotDelegate();
     this._networkManager = new NetworkManager(this);
     this._frames = new Map();
     this._contextIdToContext = new Map();
@@ -90,7 +89,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     this._session = session;
     this.rawKeyboard.setSession(session);
     this.rawMouse.setSession(session);
-    this.screenshotterDelegate.setSession(session);
     this._addSessionListeners();
     this._networkManager.setSession(session);
     this._isolatedWorlds = new Set();
@@ -222,7 +220,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new frames.Frame(this, this._page, parentFrame);
+    const frame = new frames.Frame(this._page, parentFrame);
     const data: FrameData = {
       id: frameId,
     };
@@ -250,7 +248,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       }
     } else if (isMainFrame) {
       // Initial frame navigation.
-      frame = new frames.Frame(this, this._page, null);
+      frame = new frames.Frame(this._page, null);
       const data: FrameData = {
         id: framePayload.id,
       };
@@ -525,5 +523,32 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     if (runBeforeUnload)
       throw new Error('Not implemented');
     (this._page.browser() as Browser)._closePage(this._page);
+  }
+
+  getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
+    return handle.boundingBox();
+  }
+
+  canScreenshotOutsideViewport(): boolean {
+    return false;
+  }
+
+  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
+    // TODO: line below crashes, sort it out.
+    this._session.send('Page.setDefaultBackgroundColorOverride', { color });
+  }
+
+  async takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer> {
+    const rect = options.clip || { x: 0, y: 0, width: viewport.width, height: viewport.height };
+    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
+    const prefix = 'data:image/png;base64,';
+    let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
+    if (format === 'jpeg')
+      buffer = jpeg.encode(PNG.sync.read(buffer)).data;
+    return buffer;
+  }
+
+  async resetViewport(oldSize: types.Size): Promise<void> {
+    await this._session.send('Emulation.setDeviceMetricsOverride', { ...oldSize, deviceScaleFactor: 0 });
   }
 }

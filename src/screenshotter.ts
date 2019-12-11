@@ -20,36 +20,22 @@ import * as mime from 'mime';
 import * as dom from './dom';
 import { assert, helper } from './helper';
 import * as types from './types';
+import { Page } from './page';
 
 const writeFileAsync = helper.promisify(fs.writeFile);
 
-export interface Page {
-  viewport(): types.Viewport | null;
-  setViewport(v: types.Viewport): Promise<void>;
-  evaluate(f: () => any): Promise<types.Rect>;
-}
-
-export interface ScreenshotterDelegate {
-  getBoundingBox(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
-  canCaptureOutsideViewport(): boolean;
-  setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
-  screenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer>;
-  resetViewport(oldSize: types.Size): Promise<void>;
-}
-
 export class Screenshotter {
   private _queue = new TaskQueue();
-  private _delegate: ScreenshotterDelegate;
   private _page: Page;
 
-  constructor(page: Page, delegate: ScreenshotterDelegate, browserObject: any) {
-    this._delegate = delegate;
+  constructor(page: Page) {
     this._page = page;
 
-    this._queue = browserObject[taskQueueSymbol];
+    const browser = page.browser();
+    this._queue = browser[taskQueueSymbol];
     if (!this._queue) {
       this._queue = new TaskQueue();
-      browserObject[taskQueueSymbol] = this._queue;
+      browser[taskQueueSymbol] = this._queue;
     }
   }
 
@@ -65,7 +51,7 @@ export class Screenshotter {
           height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight)
         }));
       }
-      if (options.fullPage && !this._delegate.canCaptureOutsideViewport()) {
+      if (options.fullPage && !this._page._delegate.canScreenshotOutsideViewport()) {
         const fullPageRect = await this._page.evaluate(() => ({
           width: Math.max(
               document.body.scrollWidth, document.documentElement.scrollWidth,
@@ -90,7 +76,7 @@ export class Screenshotter {
         if (viewport)
           await this._page.setViewport(viewport);
         else
-          await this._delegate.resetViewport(viewportSize);
+          await this._page._delegate.resetViewport(viewportSize);
       }
       return result;
     });
@@ -102,14 +88,14 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       let overridenViewport: types.Viewport | undefined;
 
-      let boundingBox = await this._delegate.getBoundingBox(handle);
+      let boundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
       assert(boundingBox, 'Node is either not visible or not an HTMLElement');
       assert(boundingBox.width !== 0, 'Node has 0 width.');
       assert(boundingBox.height !== 0, 'Node has 0 height.');
       boundingBox = enclosingIntRect(boundingBox);
       const viewport = this._page.viewport();
 
-      if (!this._delegate.canCaptureOutsideViewport()) {
+      if (!this._page._delegate.canScreenshotOutsideViewport()) {
         if (boundingBox.width > viewport.width || boundingBox.height > viewport.height) {
           overridenViewport = {
             ...viewport,
@@ -120,7 +106,7 @@ export class Screenshotter {
         }
 
         await handle._scrollIntoViewIfNeeded();
-        boundingBox = enclosingIntRect(await this._delegate.getBoundingBox(handle));
+        boundingBox = enclosingIntRect(await this._page._delegate.getBoundingBoxForScreenshot(handle));
       }
 
       if (!overridenViewport)
@@ -138,10 +124,10 @@ export class Screenshotter {
   private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer> {
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground)
-      await this._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
-    const buffer = await this._delegate.screenshot(format, options, viewport);
+      await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
+    const buffer = await this._page._delegate.takeScreenshot(format, options, viewport);
     if (shouldSetDefaultBackground)
-      await this._delegate.setBackgroundColor();
+      await this._page._delegate.setBackgroundColor();
     if (options.path)
       await writeFileAsync(options.path, buffer);
     return buffer;
