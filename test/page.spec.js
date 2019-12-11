@@ -838,6 +838,10 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.goto('data:text/html, <script>var something = "forbidden"</script>');
       expect(await page.evaluate('something')).toBe('forbidden');
     });
+    it.skip(WEBKIT)('should be able to navigate after disabling javascript', async({page, server}) => {
+      await page.setJavaScriptEnabled(false);
+      await page.goto(server.EMPTY_PAGE);
+    });
   });
 
   describe('Page.setCacheEnabled', function() {
