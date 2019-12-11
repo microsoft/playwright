@@ -7088,7 +7088,7 @@ index 1570d65effb..456f96cf589 100644
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 4c5147dcd38..c04110b8033 100644
+index 4c5147dcd38..c91a7baea1e 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -53,6 +53,7 @@ static const char *cookiesFile;
@@ -7137,7 +7137,20 @@ index 4c5147dcd38..c04110b8033 100644
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -545,6 +570,9 @@ int main(int argc, char *argv[])
+@@ -541,10 +566,21 @@ int main(int argc, char *argv[])
+         return 0;
+     }
+ 
+-    WebKitWebsiteDataManager *manager = (privateMode || automationMode) ? webkit_website_data_manager_new_ephemeral() : webkit_website_data_manager_new(NULL);
++    WebKitWebsiteDataManager *manager;
++    if (inspectorPipe) {
++        manager = webkit_web_context_get_website_data_manager(webkit_web_context_get_default());
++    } else if (privateMode || automationMode) {
++        manager = webkit_website_data_manager_new_ephemeral();
++    } else {
++        manager = webkit_website_data_manager_new(NULL);
++    }
++
      WebKitWebContext *webContext = g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager, "process-swap-on-cross-site-navigation-enabled", TRUE, NULL);
      g_object_unref(manager);
  
