@@ -36,6 +36,7 @@ export class Connection extends EventEmitter {
   private readonly _sessions = new Map<string, TargetSession>();
   private _incomingMessageQueue: string[] = [];
   private _dispatchTimerId?: NodeJS.Timer;
+  private _sameDispatchTask: boolean = false;
 
   _closed = false;
 
@@ -71,10 +72,15 @@ export class Connection extends EventEmitter {
   }
 
   private _onMessage(message: string) {
-    if (this._incomingMessageQueue.length || this._delay)
+    if (this._sameDispatchTask || this._incomingMessageQueue.length || this._delay)
       this._enqueueMessage(message);
-    else
+    else {
+      this._sameDispatchTask = true;
+      // This is for the case when several messages come in a batch and read
+      // in a loop by transport ending up in the same task.
+      Promise.resolve().then(() => this._sameDispatchTask = false);
       this._dispatchMessage(message);
+    }
   }
 
   private _enqueueMessage(message: string) {
@@ -100,6 +106,8 @@ export class Connection extends EventEmitter {
   }
 
   private _dispatchOneMessageFromQueue() {
+    if (this._closed)
+      return;
     const message = this._incomingMessageQueue.shift();
     try {
       this._dispatchMessage(message);

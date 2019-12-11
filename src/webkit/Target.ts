@@ -57,7 +57,7 @@ export class Target {
     await (this._page._delegate as FrameManager)._initializeSession(session).catch(e => {
       // Swallow initialization errors due to newer target swap in,
       // since we will reinitialize again.
-      if (!isSwappedOutError(e))
+      if (this._page)
         throw e;
     });
   }
