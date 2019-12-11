@@ -25,6 +25,7 @@ import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } f
 import { TimeoutError } from './Errors';
 import { Events } from './events';
 import { Page } from './page';
+import { ConsoleMessage } from './console';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
@@ -193,28 +194,21 @@ export class Frame {
       content = null,
       type = ''
     } = options;
-    if (url !== null) {
-      try {
-        const context = await this._mainContext();
+    if (!url && !path && !content)
+      throw new Error('Provide an object with a `url`, `path` or `content` property');
+
+    const context = await this._mainContext();
+    return this._raceWithCSPError(async () => {
+      if (url !== null)
         return (await context.evaluateHandle(addScriptUrl, url, type)).asElement();
-      } catch (error) {
-        throw new Error(`Loading script from ${url} failed`);
+      if (path !== null) {
+        let contents = await readFileAsync(path, 'utf8');
+        contents += '//# sourceURL=' + path.replace(/\n/g, '');
+        return (await context.evaluateHandle(addScriptContent, contents, type)).asElement();
       }
-    }
-
-    if (path !== null) {
-      let contents = await readFileAsync(path, 'utf8');
-      contents += '//# sourceURL=' + path.replace(/\n/g, '');
-      const context = await this._mainContext();
-      return (await context.evaluateHandle(addScriptContent, contents, type)).asElement();
-    }
-
-    if (content !== null) {
-      const context = await this._mainContext();
-      return (await context.evaluateHandle(addScriptContent, content, type)).asElement();
-    }
-
-    throw new Error('Provide an object with a `url`, `path` or `content` property');
+      if (content !== null)
+        return (await context.evaluateHandle(addScriptContent, content, type)).asElement();
+    });
 
     async function addScriptUrl(url: string, type: string): Promise<HTMLElement> {
       const script = document.createElement('script');
@@ -249,29 +243,24 @@ export class Frame {
       path = null,
       content = null
     } = options;
-    if (url !== null) {
-      try {
-        const context = await this._mainContext();
+    if (!url && !path && !content)
+      throw new Error('Provide an object with a `url`, `path` or `content` property');
+
+    const context = await this._mainContext();
+    return this._raceWithCSPError(async () => {
+      if (url !== null)
         return (await context.evaluateHandle(addStyleUrl, url)).asElement();
-      } catch (error) {
-        throw new Error(`Loading style from ${url} failed`);
+  
+      if (path !== null) {
+        let contents = await readFileAsync(path, 'utf8');
+        contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
+        return (await context.evaluateHandle(addStyleContent, contents)).asElement();
       }
-    }
-
-    if (path !== null) {
-      let contents = await readFileAsync(path, 'utf8');
-      contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
-      const context = await this._mainContext();
-      return (await context.evaluateHandle(addStyleContent, contents)).asElement();
-    }
-
-    if (content !== null) {
-      const context = await this._mainContext();
-      return (await context.evaluateHandle(addStyleContent, content)).asElement();
-    }
-
-    throw new Error('Provide an object with a `url`, `path` or `content` property');
-
+  
+      if (content !== null)
+        return (await context.evaluateHandle(addStyleContent, content)).asElement();
+    });
+  
     async function addStyleUrl(url: string): Promise<HTMLElement> {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -297,6 +286,36 @@ export class Frame {
       await promise;
       return style;
     }
+  }
+
+  private async _raceWithCSPError(func: () => Promise<dom.ElementHandle>): Promise<dom.ElementHandle> {
+    const listeners: RegisteredListener[] = [];
+    let result: dom.ElementHandle | undefined;
+    let error: Error | undefined;
+    let cspMessage: ConsoleMessage | undefined;
+    const actionPromise = new Promise<dom.ElementHandle>(async (resolve) => {
+      try {
+        result = await func();
+      } catch (e) {
+        error = e;
+      }
+      resolve();
+    });
+    const errorPromise = new Promise(resolve => {
+      listeners.push(helper.addEventListener(this._page, Events.Page.Console, (message: ConsoleMessage) => {
+        if (message.type() === 'error' && message.text().includes('Content Security Policy')) {
+          cspMessage = message;
+          resolve();
+        }
+      }));
+    });
+    await Promise.race([actionPromise, errorPromise]);
+    helper.removeEventListeners(listeners);
+    if (cspMessage)
+      throw new Error(cspMessage.text());
+    if (error)
+      throw error;
+    return result;
   }
 
   async click(selector: string | types.Selector, options?: ClickOptions) {

@@ -709,7 +709,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       } catch (e) {
         error = e;
       }
-      expect(error.message).toBe('Loading script from /nonexistfile.js failed');
+      expect(error).not.toBe(null);
     });
 
     it('should work with a path', async({page, server}) => {
@@ -719,7 +719,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => __injected)).toBe(42);
     });
 
-    it.skip(WEBKIT)('should include sourcemap when path is provided', async({page, server}) => {
+    it('should include sourceURL when path is provided', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
       const result = await page.evaluate(() => __injectedError.stack);
@@ -733,8 +733,8 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => __injected)).toBe(35);
     });
 
-    // @see https://github.com/GoogleChrome/puppeteer/issues/4840
-    xit('should throw when added with content to the CSP page', async({page, server}) => {
+    // Firefox fires onload for blocked script before it issues the CSP console error.
+    it.skip(FFOX)('should throw when added with content to the CSP page', async({page, server}) => {
       await page.goto(server.PREFIX + '/csp.html');
       let error = null;
       await page.addScriptTag({ content: 'window.__injected = 35;' }).catch(e => error = e);
@@ -775,7 +775,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       } catch (e) {
         error = e;
       }
-      expect(error.message).toBe('Loading style from /nonexistfile.js failed');
+      expect(error).not.toBe(null);
     });
 
     it('should work with a path', async({page, server}) => {
@@ -785,7 +785,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(`window.getComputedStyle(document.querySelector('body')).getPropertyValue('background-color')`)).toBe('rgb(255, 0, 0)');
     });
 
-    it('should include sourcemap when path is provided', async({page, server}) => {
+    it('should include sourceURL when path is provided', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.addStyleTag({ path: path.join(__dirname, 'assets/injectedstyle.css') });
       const styleHandle = await page.$('style');
@@ -800,14 +800,14 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(`window.getComputedStyle(document.querySelector('body')).getPropertyValue('background-color')`)).toBe('rgb(0, 128, 0)');
     });
 
-    it.skip(FFOX || WEBKIT)('should throw when added with content to the CSP page', async({page, server}) => {
+    it('should throw when added with content to the CSP page', async({page, server}) => {
       await page.goto(server.PREFIX + '/csp.html');
       let error = null;
       await page.addStyleTag({ content: 'body { background-color: green; }' }).catch(e => error = e);
       expect(error).toBeTruthy();
     });
 
-    it.skip(WEBKIT)('should throw when added with URL to the CSP page', async({page, server}) => {
+    it('should throw when added with URL to the CSP page', async({page, server}) => {
       await page.goto(server.PREFIX + '/csp.html');
       let error = null;
       await page.addStyleTag({ url: server.CROSS_PROCESS_PREFIX + '/injectedstyle.css' }).catch(e => error = e);
