@@ -604,7 +604,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(WEBKIT)('Page.setBypassCSP', function() {
+  describe('Page.setBypassCSP', function() {
     it('should bypass CSP meta tag', async({page, server}) => {
       // Make sure CSP prohibits addScriptTag.
       await page.goto(server.PREFIX + '/csp.html');

@@ -355,6 +355,7 @@ export class Page<Browser> extends EventEmitter {
   async setBypassCSP(enabled: boolean) {
     if (this._state.bypassCSP === enabled)
       return;
+    this._state.bypassCSP = enabled;
     await this._delegate.setBypassCSP(enabled);
   }
 
