@@ -18,7 +18,7 @@
 import * as EventEmitter from 'events';
 import { TimeoutError } from '../Errors';
 import * as frames from '../frames';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import * as network from '../network';
