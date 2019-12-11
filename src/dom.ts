@@ -8,6 +8,7 @@ import * as types from './types';
 import * as injectedSource from './generated/injectedSource';
 import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
 import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
+import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 
@@ -48,7 +49,7 @@ export class DOMWorld {
 
   injected(): Promise<js.JSHandle> {
     if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source];
+      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source, zsSelectorEngineSource.source];
       const source = `
         new (${injectedSource.source})([
           ${engineSources.join(',\n')}
@@ -431,6 +432,8 @@ function normalizeSelector(selector: string): string {
     return selector;
   if (selector.startsWith('//'))
     return 'xpath=' + selector;
+  if (selector.startsWith('"'))
+    return 'zs=' + selector;
   return 'css=' + selector;
 }
 

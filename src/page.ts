@@ -28,6 +28,7 @@ import * as types from './types';
 import { Events } from './events';
 import { BrowserContext, BrowserInterface } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
+import Injected from './injected/injected';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -186,6 +187,13 @@ export class Page extends EventEmitter {
 
   async $(selector: string | types.Selector): Promise<dom.ElementHandle<Element> | null> {
     return this.mainFrame().$(selector);
+  }
+
+  async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string> {
+    const mainWorld = await this.mainFrame()._mainDOMWorld();
+    return mainWorld.context.evaluate((injected: Injected, target: Element, name: string) => {
+      return injected.engines.get(name).create(document.documentElement, target);
+    }, await mainWorld.injected(), handle, name);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {

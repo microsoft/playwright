@@ -7,6 +7,7 @@ const path = require('path');
 const files = [
   path.join('src', 'injected', 'cssSelectorEngine.webpack.config.js'),
   path.join('src', 'injected', 'xpathSelectorEngine.webpack.config.js'),
+  path.join('src', 'injected', 'zsSelectorEngine.webpack.config.js'),
   path.join('src', 'injected', 'injected.webpack.config.js'),
 ];
 

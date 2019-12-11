@@ -3829,6 +3829,7 @@ All methods accepting selector also accept a string shorthand which is equivalen
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - selector starting with `//` is assumed to be `xpath=selector`;
+- selector starting with `"` is assumed to be `zs=selector`;
 - otherwise selector is assumed to be `css=selector`.
 
 ```js
@@ -3838,6 +3839,9 @@ const handle = await page.$('css=div');
 // queries '//html/body/div' xpath selector
 const handle = await page.$('xpath=//html/body/div');
 
+// queries '"foo"' zs selector
+const handle = await page.$('zs="foo"');
+
 // queries 'span' css selector inside the result of '//html/body/div' xpath selector
 const handle = await page.$('xpath=//html/body/div >> css=span');
 
@@ -3846,6 +3850,9 @@ const handle = await page.$('div');
 
 // converted to 'xpath=//html/body/div'
 const handle = await page.$('//html/body/div');
+
+// converted to 'zs="foo"'
+const handle = await page.$('"foo"');
 
 // queries 'span' css selector inside the div handle
 const handle = await divHandle.$('css=span');
