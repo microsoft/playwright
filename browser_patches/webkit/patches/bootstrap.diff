@@ -740,7 +740,7 @@ index 00000000000..60515155c22
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8..4a3430230f9 100644
+index 367d1f235a8..b75d0c7c362 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -806,7 +806,7 @@ index 367d1f235a8..4a3430230f9 100644
              ]
          },
          {
-@@ -288,19 +331,57 @@
+@@ -288,19 +331,64 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -846,6 +846,13 @@ index 367d1f235a8..4a3430230f9 100644
 +                { "name": "name", "type": "string", "description": "Isolated world name, will be used as an execution context name." },
 +                { "name": "source", "type": "string", "optional": true, "description": "Script to evaluate in the new world." }
 +            ]
++        },
++        {
++            "name": "setBypassCSP",
++            "description": "Enable page Content Security Policy by-passing.",
++            "parameters": [
++                { "name": "enabled", "type": "boolean", "description": "Whether to bypass page CSP." }
++            ]
          }
      ],
      "events": [
@@ -866,7 +873,7 @@ index 367d1f235a8..4a3430230f9 100644
              ]
          },
          {
-@@ -346,12 +427,36 @@
+@@ -346,12 +434,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -968,7 +975,7 @@ index 4e41fd3f807..1f7be602cb2 100644
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index cb6ed9f6c84..4402d67463d 100644
+index cb6ed9f6c84..22001135c88 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1017,7 +1024,7 @@ index cb6ed9f6c84..4402d67463d 100644
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1251,6 +1254,12 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1251,6 +1254,19 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -1027,11 +1034,18 @@ index cb6ed9f6c84..4402d67463d 100644
 +        pageAgent->runOpenPanel(element, intercept);
 +}
 +
++bool InspectorInstrumentation::shouldBypassCSPImpl(InstrumentingAgents& instrumentingAgents)
++{
++    if (InspectorPageAgent* pageAgent = instrumentingAgents.inspectorPageAgent())
++        return pageAgent->shouldBypassCSP();
++    return false;
++}
++
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 6698431f316..486a6781d81 100644
+index 6698431f316..787ab1c35a2 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -77,6 +77,7 @@ class DOMWrapperWorld;
@@ -1050,16 +1064,17 @@ index 6698431f316..486a6781d81 100644
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -313,6 +315,8 @@ public:
+@@ -313,6 +315,9 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
 +    static void runOpenPanel(Frame*, HTMLInputElement*, bool*);
++    static bool shouldBypassCSP(ScriptExecutionContext*);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -428,6 +432,7 @@ private:
+@@ -428,6 +433,7 @@ private:
      static void frameStoppedLoadingImpl(InstrumentingAgents&, Frame&);
      static void frameScheduledNavigationImpl(InstrumentingAgents&, Frame&, Seconds delay);
      static void frameClearedScheduledNavigationImpl(InstrumentingAgents&, Frame&);
@@ -1067,16 +1082,17 @@ index 6698431f316..486a6781d81 100644
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -509,6 +514,8 @@ private:
+@@ -509,6 +515,9 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
 +    static void runOpenPanelImpl(InstrumentingAgents&, HTMLInputElement*, bool*);
++    static bool shouldBypassCSPImpl(InstrumentingAgents&);
 +
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1219,6 +1226,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1219,6 +1228,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -1090,7 +1106,7 @@ index 6698431f316..486a6781d81 100644
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1643,6 +1657,13 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1643,6 +1659,21 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -1099,6 +1115,14 @@ index 6698431f316..486a6781d81 100644
 +    FAST_RETURN_IF_NO_FRONTENDS(void());
 +    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(*frame))
 +        runOpenPanelImpl(*instrumentingAgents, element, intercept);
++}
++
++inline bool InspectorInstrumentation::shouldBypassCSP(ScriptExecutionContext* context)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(false);
++    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForContext(context))
++        return shouldBypassCSPImpl(*instrumentingAgents);
++    return false;
 +}
 +
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgentsForContext(ScriptExecutionContext* context)
@@ -1425,7 +1449,7 @@ index b578660fbb3..a7c968bc9f8 100644
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..52995f8fb0b 100644
+index f2e228b7f74..a91297f7306 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1482,7 +1506,16 @@ index f2e228b7f74..52995f8fb0b 100644
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -382,6 +391,7 @@ void InspectorPageAgent::disable(ErrorString&)
+@@ -375,6 +384,8 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+ void InspectorPageAgent::disable(ErrorString&)
+ {
+     m_instrumentingAgents.setInspectorPageAgent(nullptr);
++    m_interceptFileChooserDialog = false;
++    m_bypassCSP = false;
+ 
+     ErrorString unused;
+     setShowPaintRects(unused, false);
+@@ -382,6 +393,7 @@ void InspectorPageAgent::disable(ErrorString&)
      overrideUserAgent(unused, nullptr);
      setEmulatedMedia(unused, emptyString());
      setForcedAppearance(unused, emptyString());
@@ -1490,7 +1523,7 @@ index f2e228b7f74..52995f8fb0b 100644
  
  #define DISABLE_INSPECTOR_OVERRIDE_SETTING(name) \
      m_inspectedPage.settings().set##name##InspectorOverride(WTF::nullopt);
-@@ -412,14 +422,28 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -412,14 +424,28 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -1524,7 +1557,7 @@ index f2e228b7f74..52995f8fb0b 100644
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -678,19 +702,21 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -678,19 +704,21 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -1551,7 +1584,7 @@ index f2e228b7f74..52995f8fb0b 100644
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
-@@ -761,6 +787,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -761,6 +789,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1564,7 +1597,7 @@ index f2e228b7f74..52995f8fb0b 100644
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -815,6 +847,25 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -815,6 +849,30 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1587,10 +1620,15 @@ index f2e228b7f74..52995f8fb0b 100644
 +    m_frontendDispatcher->fileChooserOpened(frameId(frame), injectedScript.wrapObject(InspectorDOMAgent::nodeAsScriptValue(state, element), WTF::String()));
 +}
 +
++bool InspectorPageAgent::shouldBypassCSP() {
++    return m_bypassCSP;
++}
++
++
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1037,487 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1044,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2077,9 +2115,13 @@ index f2e228b7f74..52995f8fb0b 100644
 +        pageRuntimeAgent->createIsolatedWorld(*frame, name, source);
 +}
 +
++void InspectorPageAgent::setBypassCSP(ErrorString&, bool enabled) {
++    m_bypassCSP = enabled;
++}
++
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..b2d547cee84 100644
+index 4fd8c0b1016..33de324b533 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2109,7 +2151,7 @@ index 4fd8c0b1016..b2d547cee84 100644
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -113,12 +120,17 @@ public:
+@@ -113,12 +120,18 @@ public:
      void getCompositingBordersVisible(ErrorString&, bool* out_param) override;
      void setCompositingBordersVisible(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
@@ -2121,6 +2163,7 @@ index 4fd8c0b1016..b2d547cee84 100644
 +    void setInterceptFileChooserDialog(ErrorString&, bool enabled) override;
 +    void setDefaultBackgroundColorOverride(ErrorString&, const JSON::Object*) override;
 +    void createIsolatedWorld(ErrorString&, const String&, const String*) override;
++    void setBypassCSP(ErrorString&, bool) override;
  
      // InspectorInstrumentation
 -    void domContentEventFired();
@@ -2130,7 +2173,7 @@ index 4fd8c0b1016..b2d547cee84 100644
      void frameNavigated(Frame&);
      void frameDetached(Frame&);
      void loaderDetachedFromFrame(DocumentLoader&);
-@@ -126,6 +138,7 @@ public:
+@@ -126,6 +139,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -2138,11 +2181,12 @@ index 4fd8c0b1016..b2d547cee84 100644
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,11 +147,13 @@ public:
+@@ -134,11 +148,14 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
 +    void runOpenPanel(HTMLInputElement* element, bool* intercept);
++    bool shouldBypassCSP();
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
@@ -2152,7 +2196,7 @@ index 4fd8c0b1016..b2d547cee84 100644
  
  private:
      double timestamp();
-@@ -153,6 +168,7 @@ private:
+@@ -153,6 +170,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -2160,7 +2204,7 @@ index 4fd8c0b1016..b2d547cee84 100644
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -163,8 +179,10 @@ private:
+@@ -163,8 +181,11 @@ private:
      String m_emulatedMedia;
      String m_forcedAppearance;
      String m_bootstrapScript;
@@ -2168,6 +2212,7 @@ index 4fd8c0b1016..b2d547cee84 100644
      bool m_isFirstLayoutAfterOnLoad { false };
      bool m_showPaintRects { false };
 +    bool m_interceptFileChooserDialog { false };
++    bool m_bypassCSP { false };
  };
  
  } // namespace WebCore
@@ -2330,6 +2375,37 @@ index 9c58b06f4c4..3d624733c36 100644
  
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
+diff --git a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp b/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
+index ad6f5209c52..0fcf4fe9877 100644
+--- a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
++++ b/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
+@@ -298,6 +298,8 @@ bool ContentSecurityPolicy::protocolMatchesSelf(const URL& url) const
+ template<typename Predicate, typename... Args>
+ typename std::enable_if<!std::is_convertible<Predicate, ContentSecurityPolicy::ViolatedDirectiveCallback>::value, bool>::type ContentSecurityPolicy::allPoliciesWithDispositionAllow(Disposition disposition, Predicate&& predicate, Args&&... args) const
+ {
++    if (InspectorInstrumentation::shouldBypassCSP(m_scriptExecutionContext))
++        return true;
+     bool isReportOnly = disposition == ContentSecurityPolicy::Disposition::ReportOnly;
+     for (auto& policy : m_policies) {
+         if (policy->isReportOnly() != isReportOnly)
+@@ -311,6 +313,8 @@ typename std::enable_if<!std::is_convertible<Predicate, ContentSecurityPolicy::V
+ template<typename Predicate, typename... Args>
+ bool ContentSecurityPolicy::allPoliciesWithDispositionAllow(Disposition disposition, ViolatedDirectiveCallback&& callback, Predicate&& predicate, Args&&... args) const
+ {
++    if (InspectorInstrumentation::shouldBypassCSP(m_scriptExecutionContext))
++        return true;
+     bool isReportOnly = disposition == ContentSecurityPolicy::Disposition::ReportOnly;
+     bool isAllowed = true;
+     for (auto& policy : m_policies) {
+@@ -327,6 +331,8 @@ bool ContentSecurityPolicy::allPoliciesWithDispositionAllow(Disposition disposit
+ template<typename Predicate, typename... Args>
+ bool ContentSecurityPolicy::allPoliciesAllow(ViolatedDirectiveCallback&& callback, Predicate&& predicate, Args&&... args) const
+ {
++    if (InspectorInstrumentation::shouldBypassCSP(m_scriptExecutionContext))
++        return true;
+     bool isAllowed = true;
+     for (auto& policy : m_policies) {
+         if (const ContentSecurityPolicyDirective* violatedDirective = (policy.get()->*predicate)(std::forward<Args>(args)...)) {
 diff --git a/Source/WebCore/platform/PlatformKeyboardEvent.h b/Source/WebCore/platform/PlatformKeyboardEvent.h
 index 16b3719f77d..d96fd15db01 100644
 --- a/Source/WebCore/platform/PlatformKeyboardEvent.h
