@@ -927,7 +927,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => result.onInput)).toEqual(['blue']);
       expect(await page.evaluate(() => result.onChange)).toEqual(['blue']);
     });
-    it.skip(FFOX)('should not throw when select causes navigation', async({page, server}) => {
+    it('should not throw when select causes navigation', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.$eval('select', select => select.addEventListener('input', () => window.location = '/empty.html'));
       await Promise.all([

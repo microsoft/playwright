@@ -373,7 +373,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(requests.length).toBe(2);
       expect(requests[1].response().status()).toBe(404);
     });
-    it.skip(FFOX)('should not throw "Invalid Interception Id" if the request was cancelled', async({page, server}) => {
+    it('should not throw "Invalid Interception Id" if the request was cancelled', async({page, server}) => {
       await page.setContent('<iframe></iframe>');
       await page.interception.enable();
       let request = null;
