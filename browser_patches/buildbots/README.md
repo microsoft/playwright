@@ -25,9 +25,9 @@ Each bot configuration has 3 parts:
   - [Setting Bot Environment](#setting-bot-environment)
   - [Running Build Loop](#running-build-loop)
 - [Mac](#mac)
-  - [Setting Up Browser Toolchains](#setting-up-browser-toolchains-2)
-  - [Setting Bot Environment](#setting-bot-environment-2)
-  - [Running Build Loop](#running-build-loop-2)
+  - [Setting Up Browser Toolchains](#setting-up-browser-toolchains-1)
+  - [Setting Bot Environment](#setting-bot-environment-1)
+  - [Running Build Loop](#running-build-loop-1)
 
 
 # Windows
