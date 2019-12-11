@@ -25,16 +25,16 @@ import { Page } from '../page';
 import * as types from '../types';
 import { FrameManager } from './FrameManager';
 import * as network from '../network';
-import { BrowserContext } from '../browserContext';
+import { BrowserContext, BrowserInterface } from '../browserContext';
 
-export class Browser extends EventEmitter {
+export class Browser extends EventEmitter implements BrowserInterface {
   private _connection: Connection;
   _defaultViewport: types.Viewport;
   private _process: import('child_process').ChildProcess;
   private _closeCallback: () => void;
   _targets: Map<string, Target>;
-  private _defaultContext: BrowserContext<Browser>;
-  private _contexts: Map<string, BrowserContext<Browser>>;
+  private _defaultContext: BrowserContext;
+  private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
 
   static async create(connection: Connection, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
@@ -75,14 +75,14 @@ export class Browser extends EventEmitter {
     return !this._connection._closed;
   }
 
-  async createIncognitoBrowserContext(): Promise<BrowserContext<Browser>> {
+  async createIncognitoBrowserContext(): Promise<BrowserContext> {
     const {browserContextId} = await this._connection.send('Target.createBrowserContext');
     const context = this._createBrowserContext(browserContextId);
     this._contexts.set(browserContextId, context);
     return context;
   }
 
-  browserContexts(): Array<BrowserContext<Browser>> {
+  browserContexts(): Array<BrowserContext> {
     return [this._defaultContext, ...Array.from(this._contexts.values())];
   }
 
@@ -128,7 +128,7 @@ export class Browser extends EventEmitter {
     }
   }
 
-  newPage(): Promise<Page<Browser>> {
+  newPage(): Promise<Page> {
     return this._defaultContext.newPage();
   }
 
@@ -170,16 +170,16 @@ export class Browser extends EventEmitter {
     this._closeCallback();
   }
 
-  _createBrowserContext(browserContextId: string | null): BrowserContext<Browser> {
+  _createBrowserContext(browserContextId: string | null): BrowserContext {
     const isIncognito = !!browserContextId;
     const context = new BrowserContext({
-      contextPages: async (): Promise<Page<Browser>[]> => {
+      contextPages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page);
       },
 
-      createPageInContext: async (): Promise<Page<Browser>> => {
+      createPageInContext: async (): Promise<Page> => {
         const {targetId} = await this._connection.send('Target.newPage', {
           browserContextId: browserContextId || undefined
         });
@@ -215,17 +215,17 @@ export class Browser extends EventEmitter {
 }
 
 export class Target {
-  _pagePromise?: Promise<Page<Browser>>;
-  private _page: Page<Browser> | null = null;
+  _pagePromise?: Promise<Page>;
+  private _page: Page | null = null;
   private _browser: Browser;
-  _context: BrowserContext<Browser>;
+  _context: BrowserContext;
   private _connection: Connection;
   private _targetId: string;
   private _type: 'page' | 'browser';
   _url: string;
   private _openerId: string;
 
-  constructor(connection: any, browser: Browser, context: BrowserContext<Browser>, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
+  constructor(connection: any, browser: Browser, context: BrowserContext, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
     this._browser = browser;
     this._context = context;
     this._connection = connection;
@@ -252,11 +252,11 @@ export class Target {
     return this._url;
   }
 
-  browserContext(): BrowserContext<Browser> {
+  browserContext(): BrowserContext {
     return this._context;
   }
 
-  page(): Promise<Page<Browser>> {
+  page(): Promise<Page> {
     if (this._type === 'page' && !this._pagePromise) {
       this._pagePromise = new Promise(async f => {
         const session = await this._connection.createSession(this._targetId);

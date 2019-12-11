@@ -18,28 +18,41 @@
 import { assert } from './helper';
 import { Page } from './page';
 import * as network from './network';
+import * as childProcess from 'child_process';
 
-export interface BrowserDelegate<Browser> {
-  contextPages(): Promise<Page<Browser>[]>;
-  createPageInContext(): Promise<Page<Browser>>;
+export interface BrowserInterface {
+  browserContexts(): BrowserContext[];
+  close(): Promise<void>;
+  createIncognitoBrowserContext(): Promise<BrowserContext>;
+  defaultBrowserContext(): BrowserContext;
+  newPage(): Promise<Page>;
+  pages(): Promise<Page[]>;
+  process(): childProcess.ChildProcess | null;
+  version(): Promise<string>;
+  userAgent(): Promise<string>;
+}
+
+export interface BrowserDelegate {
+  contextPages(): Promise<Page[]>;
+  createPageInContext(): Promise<Page>;
   closeContext(): Promise<void>;
   getContextCookies(): Promise<network.NetworkCookie[]>;
   clearContextCookies(): Promise<void>;
   setContextCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
 }
 
-export class BrowserContext<Browser> {
-  private readonly _delegate: BrowserDelegate<Browser>;
-  private readonly _browser: Browser;
+export class BrowserContext {
+  private readonly _delegate: BrowserDelegate;
+  private readonly _browser: BrowserInterface;
   private readonly _isIncognito: boolean;
 
-  constructor(delegate: BrowserDelegate<Browser>, browser: Browser, isIncognito: boolean) {
+  constructor(delegate: BrowserDelegate, browser: BrowserInterface, isIncognito: boolean) {
     this._delegate = delegate;
     this._browser = browser;
     this._isIncognito = isIncognito;
   }
 
-  async pages(): Promise<Page<Browser>[]> {
+  async pages(): Promise<Page[]> {
     return this._delegate.contextPages();
   }
 
@@ -47,11 +60,11 @@ export class BrowserContext<Browser> {
     return this._isIncognito;
   }
 
-  async newPage(): Promise<Page<Browser>> {
+  async newPage(): Promise<Page> {
     return this._delegate.createPageInContext();
   }
 
-  browser(): Browser {
+  browser(): BrowserInterface {
     return this._browser;
   }
 

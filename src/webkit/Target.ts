@@ -25,18 +25,18 @@ import { FrameManager } from './FrameManager';
 const targetSymbol = Symbol('target');
 
 export class Target {
-  readonly _browserContext: BrowserContext<Browser>;
+  readonly _browserContext: BrowserContext;
   readonly _targetId: string;
   readonly _type: 'page' | 'service-worker' | 'worker';
   private readonly _session: TargetSession;
-  private _pagePromise: Promise<Page<Browser>> | null = null;
-  _page: Page<Browser> | null = null;
+  private _pagePromise: Promise<Page> | null = null;
+  _page: Page | null = null;
 
-  static fromPage(page: Page<Browser>): Target {
+  static fromPage(page: Page): Target {
     return (page as any)[targetSymbol];
   }
 
-  constructor(session: TargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext<Browser>) {
+  constructor(session: TargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
     const {targetId, type} = targetInfo;
     this._session = session;
     this._browserContext = browserContext;
@@ -84,9 +84,9 @@ export class Target {
     (this._page._delegate as FrameManager).setSession(this._session);
   }
 
-  async page(): Promise<Page<Browser>> {
+  async page(): Promise<Page> {
     if (this._type === 'page' && !this._pagePromise) {
-      const browser = this._browserContext.browser();
+      const browser = this._browserContext.browser() as Browser;
       // Reference local page variable as _page may be
       // cleared on swap.
       const frameManager = new FrameManager(this._browserContext);
