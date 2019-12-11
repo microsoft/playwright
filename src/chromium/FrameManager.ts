@@ -24,7 +24,6 @@ import * as network from '../network';
 import { CDPSession } from './Connection';
 import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate } from './ExecutionContext';
 import { DOMWorldDelegate } from './JSHandle';
-import { LifecycleWatcher } from './LifecycleWatcher';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page } from '../page';
 import { Protocol } from './protocol';
@@ -59,7 +58,6 @@ export const FrameManagerEvents = {
 const frameDataSymbol = Symbol('frameData');
 type FrameData = {
   id: string,
-  loaderId: string,
 };
 
 export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
@@ -149,16 +147,16 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       timeout = this._page._timeoutSettings.navigationTimeout(),
     } = options;
 
-    const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
+    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
     let ensureNewDocumentNavigation = false;
     let error = await Promise.race([
       navigate(this._client, url, referer, this._frameData(frame).id),
-      watcher.timeoutOrTerminationPromise(),
+      watcher.timeoutOrTerminationPromise,
     ]);
     if (!error) {
       error = await Promise.race([
-        watcher.timeoutOrTerminationPromise(),
-        ensureNewDocumentNavigation ? watcher.newDocumentNavigationPromise() : watcher.sameDocumentNavigationPromise(),
+        watcher.timeoutOrTerminationPromise,
+        ensureNewDocumentNavigation ? watcher.newDocumentNavigationPromise : watcher.sameDocumentNavigationPromise,
       ]);
     }
     watcher.dispose();
@@ -183,11 +181,11 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       waitUntil = (['load'] as frames.LifecycleEvent[]),
       timeout = this._page._timeoutSettings.navigationTimeout(),
     } = options;
-    const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
+    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
     const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise(),
-      watcher.sameDocumentNavigationPromise(),
-      watcher.newDocumentNavigationPromise()
+      watcher.timeoutOrTerminationPromise,
+      watcher.sameDocumentNavigationPromise,
+      watcher.newDocumentNavigationPromise,
     ]);
     watcher.dispose();
     if (error)
@@ -208,10 +206,10 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       document.write(html);
       document.close();
     }, html);
-    const watcher = new LifecycleWatcher(this, frame, waitUntil, timeout);
+    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
     const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise(),
-      watcher.lifecyclePromise(),
+      watcher.timeoutOrTerminationPromise,
+      watcher.lifecyclePromise,
     ]);
     watcher.dispose();
     if (error)
@@ -222,15 +220,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const frame = this._frames.get(event.frameId);
     if (!frame)
       return;
-    const data = this._frameData(frame);
     if (event.name === 'init') {
-      data.loaderId = event.loaderId;
       frame._firedLifecycleEvents.clear();
+      frame._onExpectedNewDocumentNavigation(event.loaderId);
+    } else if (event.name === 'load') {
+      frame._lifecycleEvent('load');
+    } else if (event.name === 'DOMContentLoaded') {
+      frame._lifecycleEvent('domcontentloaded');
     }
-    if (event.name === 'load')
-      frame._firedLifecycleEvents.add('load');
-    else if (event.name === 'DOMContentLoaded')
-      frame._firedLifecycleEvents.add('domcontentloaded');
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
@@ -238,8 +235,8 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    frame._firedLifecycleEvents.add('domcontentloaded');
-    frame._firedLifecycleEvents.add('load');
+    frame._lifecycleEvent('domcontentloaded');
+    frame._lifecycleEvent('load');
     this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
@@ -275,10 +272,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new frames.Frame(this, this._page._timeoutSettings, parentFrame);
+    const frame = new frames.Frame(this, this._page, parentFrame);
     const data: FrameData = {
       id: frameId,
-      loaderId: '',
     };
     (frame as any)[frameDataSymbol] = data;
     this._frames.set(frameId, frame);
@@ -306,10 +302,9 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
         data.id = framePayload.id;
       } else {
         // Initial main frame navigation.
-        frame = new frames.Frame(this, this._page._timeoutSettings, null);
+        frame = new frames.Frame(this, this._page, null);
         const data: FrameData = {
           id: framePayload.id,
-          loaderId: '',
         };
         (frame as any)[frameDataSymbol] = data;
       }
@@ -317,8 +312,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       this._mainFrame = frame;
     }
 
-    // Update frame payload.
-    frame._navigated(framePayload.url, framePayload.name);
+    frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, framePayload.loaderId);
 
     this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
@@ -343,7 +337,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    frame._navigated(url, frame.name());
+    frame._onCommittedSameDocumentNavigation(url);
     this.emit(FrameManagerEvents.FrameNavigatedWithinDocument, frame);
     this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
@@ -395,7 +389,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   _removeFramesRecursively(frame: frames.Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
-    frame._detach();
+    frame._onDetached();
     this._frames.delete(this._frameData(frame).id);
     this.emit(FrameManagerEvents.FrameDetached, frame);
     this._page.emit(Events.Page.FrameDetached, frame);
