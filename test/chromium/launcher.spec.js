@@ -19,12 +19,14 @@ const util = require('util');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const readFileAsync = util.promisify(fs.readFile);
 const rmAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
+const statAsync = util.promisify(fs.stat);
 
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, WEBKIT, FFOX, WIN}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -238,7 +240,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('BrowserFetcher', function() {
-    it.skip(WEBKIT || FFOX)('should download and extract linux binary', async({server}) => {
+    it('should download and extract linux binary', async({server}) => {
       const downloadsFolder = await mkdtempAsync(TMP_FOLDER);
       const browserFetcher = playwright.createBrowserFetcher({
         platform: 'linux',
@@ -251,7 +253,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       });
 
       expect(revisionInfo.local).toBe(false);
-      expect(browserFetcher.platform()).toBe('linux');
+      expect(browserFetcher._platform).toBe('linux');
       expect(await browserFetcher.canDownload('100000')).toBe(false);
       expect(await browserFetcher.canDownload('123456')).toBe(true);
 
