@@ -63,7 +63,7 @@ fi
 
 source ./buildbots/send_telegram_message.sh
 BUILD_ALIAS=$(./upload.sh $BROWSER_NAME --show-alias $FFOX_WIN64)
-send_telegram_message "starting to build $BUILD_ALIAS"
+send_telegram_message "$BUILD_ALIAS: started ..."
 
 echo "-- preparing checkout"
 ./prepare_checkout.sh $BROWSER_NAME
@@ -80,7 +80,7 @@ echo "-- cleaning"
 
 echo "-- building"
 if ! ./$BROWSER_NAME/build.sh $FFOX_WIN64; then
-  send_telegram_message "$BUILD_ALIAS COMPILATION FAILED! ❌"
+  send_telegram_message "$BUILD_ALIAS: COMPILATION FAILED! ❌"
   exit 1
 fi
 
@@ -89,4 +89,4 @@ echo "-- archiving to $ZIP_PATH"
 
 echo "-- uploading"
 ./upload.sh $BROWSER_NAME $ZIP_PATH $FFOX_WIN64
-send_telegram_message "$BUILD_ALIAS uploaded ✅"
+send_telegram_message "$BUILD_ALIAS: uploaded ✅"
