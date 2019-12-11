@@ -141,7 +141,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       server.setRoute('/empty.html', (req, res) => { });
       let error = null;
       await page.goto(server.PREFIX + '/empty.html', {timeout: 1}).catch(e => error = e);
-      const message = WEBKIT ? 'Navigation Timeout Exceeded: 1ms' : 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout of 1 ms exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -151,7 +151,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       let error = null;
       page.setDefaultNavigationTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = WEBKIT ? 'Navigation Timeout Exceeded: 1ms' : 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout of 1 ms exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -161,7 +161,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       let error = null;
       page.setDefaultTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = WEBKIT ? 'Navigation Timeout Exceeded: 1ms' : 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout of 1 ms exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -172,7 +172,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       page.setDefaultTimeout(0);
       page.setDefaultNavigationTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-      const message = WEBKIT ? 'Navigation Timeout Exceeded: 1ms' : 'Navigation timeout of 1 ms exceeded';
+      const message = 'Navigation timeout of 1 ms exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });

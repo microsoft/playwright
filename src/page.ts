@@ -85,6 +85,7 @@ export class Page<Browser> extends EventEmitter {
   private _pageBindings = new Map<string, Function>();
   readonly _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
+  readonly _lifecycleWatchers = new Set<frames.LifecycleWatcher>();
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext<Browser>) {
     super();
