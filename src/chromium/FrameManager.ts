@@ -62,7 +62,7 @@ type FrameData = {
 
 export class FrameManager extends EventEmitter implements frames.FrameDelegate, PageDelegate {
   _client: CDPSession;
-  private _page: Page<Browser>;
+  private _page: Page;
   private _networkManager: NetworkManager;
   private _frames = new Map<string, frames.Frame>();
   private _contextIdToContext = new Map<number, js.ExecutionContext>();
@@ -72,7 +72,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   rawKeyboard: RawKeyboardImpl;
   screenshotterDelegate: CRScreenshotDelegate;
 
-  constructor(client: CDPSession, browserContext: BrowserContext<Browser>, ignoreHTTPSErrors: boolean) {
+  constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
     super();
     this._client = client;
     this.rawKeyboard = new RawKeyboardImpl(client);
@@ -251,7 +251,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       this._handleFrameTree(child);
   }
 
-  page(): Page<Browser> {
+  page(): Page {
     return this._page;
   }
 
@@ -540,7 +540,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
     if (runBeforeUnload)
       await this._client.send('Page.close');
     else
-      await this._page.browser()._closePage(this._page);
+      await (this._page.browser() as Browser)._closePage(this._page);
   }
 }
 

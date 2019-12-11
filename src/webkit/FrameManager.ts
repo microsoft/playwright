@@ -59,7 +59,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   readonly rawKeyboard: RawKeyboardImpl;
   readonly screenshotterDelegate: WKScreenshotDelegate;
   _session: TargetSession;
-  readonly _page: Page<Browser>;
+  readonly _page: Page;
   private readonly _networkManager: NetworkManager;
   private readonly _frames: Map<string, frames.Frame>;
   private readonly _contextIdToContext: Map<number, js.ExecutionContext>;
@@ -68,7 +68,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   private _mainFrame: frames.Frame;
   private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browserContext: BrowserContext<Browser>) {
+  constructor(browserContext: BrowserContext) {
     super();
     this.rawKeyboard = new RawKeyboardImpl();
     this.rawMouse = new RawMouseImpl();
@@ -197,7 +197,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       this._handleFrameTree(child);
   }
 
-  page(): Page<Browser> {
+  page(): Page {
     return this._page;
   }
 
@@ -403,7 +403,7 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
       derivedType = level;
     else if (type === 'timing')
       derivedType = 'timeEnd';
-      
+
     const mainFrameContext = await this.mainFrame().executionContext();
     const handles = (parameters || []).map(p => {
       let context: js.ExecutionContext | null = null;
@@ -524,6 +524,6 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   async closePage(runBeforeUnload: boolean): Promise<void> {
     if (runBeforeUnload)
       throw new Error('Not implemented');
-    this._page.browser()._closePage(this._page);
+    (this._page.browser() as Browser)._closePage(this._page);
   }
 }

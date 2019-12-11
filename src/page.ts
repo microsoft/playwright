@@ -26,7 +26,7 @@ import { Screenshotter, ScreenshotterDelegate } from './screenshotter';
 import { TimeoutSettings } from './TimeoutSettings';
 import * as types from './types';
 import { Events } from './events';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, BrowserInterface } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 
 export interface PageDelegate {
@@ -69,14 +69,14 @@ export type FileChooser = {
   multiple: boolean
 };
 
-export class Page<Browser> extends EventEmitter {
+export class Page extends EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
   private _disconnected = false;
   private _disconnectedCallback: (e: Error) => void;
   readonly _disconnectedPromise: Promise<Error>;
-  private _browserContext: BrowserContext<Browser>;
+  private _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
@@ -87,7 +87,7 @@ export class Page<Browser> extends EventEmitter {
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   readonly _lifecycleWatchers = new Set<frames.LifecycleWatcher>();
 
-  constructor(delegate: PageDelegate, browserContext: BrowserContext<Browser>) {
+  constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
     this._delegate = delegate;
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -150,11 +150,11 @@ export class Page<Browser> extends EventEmitter {
     });
   }
 
-  browser(): Browser {
+  browser(): BrowserInterface {
     return this._browserContext.browser();
   }
 
-  browserContext(): BrowserContext<Browser> {
+  browserContext(): BrowserContext {
     return this._browserContext;
   }
 

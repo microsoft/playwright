@@ -48,7 +48,7 @@ export class Chromium extends EventEmitter {
     return target._worker();
   }
 
-  async startTracing(page: Page<Browser> | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+  async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._recording, 'Cannot start recording trace while already recording trace.');
     this._tracingClient = page ? (page._delegate as FrameManager)._client : this._client;
 
@@ -87,12 +87,12 @@ export class Chromium extends EventEmitter {
     return contentPromise;
   }
 
-  targets(context?: BrowserContext<Browser>): Target[] {
+  targets(context?: BrowserContext): Target[] {
     const targets = this._browser._allTargets();
     return context ? targets.filter(t => t.browserContext() === context) : targets;
   }
 
-  pageTarget(page: Page<Browser>): Target {
+  pageTarget(page: Page): Target {
     return Target.fromPage(page);
   }
 

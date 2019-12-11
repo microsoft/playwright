@@ -19,7 +19,7 @@ import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { Events } from './events';
 import { assert, helper } from '../helper';
-import { BrowserContext } from '../browserContext';
+import { BrowserContext, BrowserInterface } from '../browserContext';
 import { Connection, ConnectionEvents, CDPSession } from './Connection';
 import { Page } from '../page';
 import { Target } from './Target';
@@ -30,15 +30,15 @@ import { FrameManager } from './FrameManager';
 import * as network from '../network';
 import { Permissions } from './features/permissions';
 
-export class Browser extends EventEmitter {
+export class Browser extends EventEmitter implements BrowserInterface {
   private _ignoreHTTPSErrors: boolean;
   private _defaultViewport: types.Viewport;
   private _process: childProcess.ChildProcess;
   _connection: Connection;
   _client: CDPSession;
   private _closeCallback: () => Promise<void>;
-  private _defaultContext: BrowserContext<Browser>;
-  private _contexts = new Map<string, BrowserContext<Browser>>();
+  private _defaultContext: BrowserContext;
+  private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
   readonly chromium: Chromium;
 
@@ -80,16 +80,16 @@ export class Browser extends EventEmitter {
     this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
   }
 
-  _createBrowserContext(contextId: string | null): BrowserContext<Browser> {
+  _createBrowserContext(contextId: string | null): BrowserContext {
     const isIncognito = !!contextId;
     const context = new BrowserContext({
-      contextPages: async (): Promise<Page<Browser>[]> => {
+      contextPages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page);
       },
 
-      createPageInContext: async (): Promise<Page<Browser>> => {
+      createPageInContext: async (): Promise<Page> => {
         const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
         const target = this._targets.get(targetId);
         assert(await target._initializedPromise, 'Failed to create target for page');
@@ -127,18 +127,18 @@ export class Browser extends EventEmitter {
     return this._process;
   }
 
-  async createIncognitoBrowserContext(): Promise<BrowserContext<Browser>> {
+  async createIncognitoBrowserContext(): Promise<BrowserContext> {
     const {browserContextId} = await this._client.send('Target.createBrowserContext');
     const context = this._createBrowserContext(browserContextId);
     this._contexts.set(browserContextId, context);
     return context;
   }
 
-  browserContexts(): BrowserContext<Browser>[] {
+  browserContexts(): BrowserContext[] {
     return [this._defaultContext, ...Array.from(this._contexts.values())];
   }
 
-  defaultBrowserContext(): BrowserContext<Browser> {
+  defaultBrowserContext(): BrowserContext {
     return this._defaultContext;
   }
 
@@ -174,11 +174,11 @@ export class Browser extends EventEmitter {
       this.chromium.emit(Events.Chromium.TargetChanged, target);
   }
 
-  async newPage(): Promise<Page<Browser>> {
+  async newPage(): Promise<Page> {
     return this._defaultContext.newPage();
   }
 
-  async _closePage(page: Page<Browser>) {
+  async _closePage(page: Page) {
     await this._client.send('Target.closeTarget', { targetId: Target.fromPage(page)._targetId });
   }
 
@@ -186,7 +186,7 @@ export class Browser extends EventEmitter {
     return Array.from(this._targets.values()).filter(target => target._isInitialized);
   }
 
-  async _activatePage(page: Page<Browser>) {
+  async _activatePage(page: Page) {
     await (page._delegate as FrameManager)._client.send('Target.activateTarget', {targetId: Target.fromPage(page)._targetId});
   }
 
@@ -216,7 +216,7 @@ export class Browser extends EventEmitter {
     }
   }
 
-  async pages(): Promise<Page<Browser>[]> {
+  async pages(): Promise<Page[]> {
     const contextPages = await Promise.all(this.browserContexts().map(context => context.pages()));
     // Flatten array.
     return contextPages.reduce((acc, x) => acc.concat(x), []);

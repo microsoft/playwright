@@ -56,14 +56,14 @@ export class FrameManager extends EventEmitter implements frames.FrameDelegate, 
   readonly rawKeyboard: RawKeyboardImpl;
   readonly screenshotterDelegate: FFScreenshotDelegate;
   readonly _session: JugglerSession;
-  readonly _page: Page<Browser>;
+  readonly _page: Page;
   private readonly _networkManager: NetworkManager;
   private _mainFrame: frames.Frame;
   private readonly _frames: Map<string, frames.Frame>;
   private readonly _contextIdToContext: Map<string, js.ExecutionContext>;
   private _eventListeners: RegisteredListener[];
 
-  constructor(session: JugglerSession, browserContext: BrowserContext<Browser>) {
+  constructor(session: JugglerSession, browserContext: BrowserContext) {
     super();
     this._session = session;
     this.rawKeyboard = new RawKeyboardImpl(session);
