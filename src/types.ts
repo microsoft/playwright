@@ -19,8 +19,9 @@ export type $$Eval<O = string | Selector> = <Args extends any[], R, S extends O>
 export type EvaluateOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<R>;
 export type EvaluateHandleOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<Handle<R>>;
 
-export type Rect = { x: number, y: number, width: number, height: number };
+export type Size = { width: number, height: number };
 export type Point = { x: number, y: number };
+export type Rect = Size & Point;
 export type Quad = [ Point, Point, Point, Point ];
 
 export type TimeoutOptions = { timeout?: number };

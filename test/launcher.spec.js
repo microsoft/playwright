@@ -74,10 +74,15 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         const browser = await playwright.launch(options);
         const page = await browser.newPage();
         await page.goto(server.PREFIX + '/grid.html');
+        const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
         const screenshot = await page.screenshot({
           fullPage: true
         });
         expect(screenshot).toBeInstanceOf(Buffer);
+
+        const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
+        expect(sizeBefore.width).toBe(sizeAfter.width);
+        expect(sizeBefore.height).toBe(sizeAfter.height);
         await browser.close();
       });
       it('should have default URL when launching browser', async function() {
