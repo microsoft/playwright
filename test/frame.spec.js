@@ -69,7 +69,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   });
 
   describe('Frame Management', function() {
-    it.skip(WEBKIT)('should handle nested frames', async({page, server}) => {
+    it('should handle nested frames', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/nested-frames.html');
       expect(utils.dumpFrames(page.mainFrame())).toEqual([
         'http://localhost:<PORT>/frames/nested-frames.html',
@@ -102,7 +102,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(detachedFrames.length).toBe(1);
       expect(detachedFrames[0].isDetached()).toBe(true);
     });
-    it.skip(WEBKIT)('should send "framenavigated" when navigating on anchor URLs', async({page, server}) => {
+    it('should send "framenavigated" when navigating on anchor URLs', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await Promise.all([
         page.goto(server.EMPTY_PAGE + '#foo'),

@@ -23,7 +23,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
-  describe.skip(WEBKIT)('input', function() {
+  describe('input', function() {
     it('should upload the file', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/fileupload.html');
       const filePath = path.relative(process.cwd(), FILE_TO_UPLOAD);

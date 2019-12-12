@@ -627,6 +627,24 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
     });
   });
+
+  describe('Interception vs isNavigationRequest', () => {
+    it('should work with request interception', async({page, server}) => {
+      const requests = new Map();
+      page.on('request', request => {
+        requests.set(request.url().split('/').pop(), request);
+        page.interception.continue(request);
+      });
+      await page.interception.enable();
+      server.setRedirect('/rrredirect', '/frames/one-frame.html');
+      await page.goto(server.PREFIX + '/rrredirect');
+      expect(requests.get('rrredirect').isNavigationRequest()).toBe(true);
+      expect(requests.get('one-frame.html').isNavigationRequest()).toBe(true);
+      expect(requests.get('frame.html').isNavigationRequest()).toBe(true);
+      expect(requests.get('script.js').isNavigationRequest()).toBe(false);
+      expect(requests.get('style.css').isNavigationRequest()).toBe(false);
+    });
+  });
 };
 
 /**
