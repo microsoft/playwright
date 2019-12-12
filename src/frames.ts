@@ -680,8 +680,8 @@ export class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
-  navigationResponse(): network.Response | null {
-    return this._navigationRequest ? this._navigationRequest.response() : null;
+  navigationResponse(): Promise<network.Response | null> {
+    return this._navigationRequest ? this._navigationRequest._waitForFinishedResponse() : null;
   }
 
   private _createTimeoutPromise(timeout: number): Promise<Error | null> {

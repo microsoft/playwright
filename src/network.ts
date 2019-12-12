@@ -70,7 +70,7 @@ export function rewriteCookies(cookies: SetNetworkCookieParam[]): SetNetworkCook
 export type Headers = { [key: string]: string };
 
 export class Request {
-  _response: Response | null = null;
+  private _response: Response | null = null;
   _redirectChain: Request[];
   private _isNavigationRequest: boolean;
   private _failureText: string | null = null;
@@ -80,6 +80,8 @@ export class Request {
   private _postData: string;
   private _headers: Headers;
   private _frame: frames.Frame;
+  private _waitForResponsePromise: Promise<Response>;
+  private _waitForResponsePromiseCallback: (value?: Response) => void;
 
   constructor(frame: frames.Frame | null, redirectChain: Request[], isNavigationRequest: boolean,
     url: string, resourceType: string, method: string, postData: string, headers: Headers) {
@@ -91,6 +93,7 @@ export class Request {
     this._method = method;
     this._postData = postData;
     this._headers = headers;
+    this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
   }
 
   _setFailureText(failureText: string) {
@@ -119,6 +122,17 @@ export class Request {
 
   response(): Response | null {
     return this._response;
+  }
+
+  async _waitForFinishedResponse(): Promise<Response> {
+    const response = await this._waitForResponsePromise;
+    await response._requestFinishedPromise;
+    return response;
+  }
+
+  _setResponse(response: Response) {
+    this._response = response;
+    this._waitForResponsePromiseCallback(response);
   }
 
   frame(): frames.Frame | null {
@@ -152,8 +166,8 @@ type GetResponseBodyCallback = () => Promise<Buffer>;
 export class Response {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
-  private _bodyLoadedPromise: Promise<Error | null>;
-  private _bodyLoadedPromiseFulfill: any;
+  _requestFinishedPromise: Promise<Error | null>;
+  private _requestFinishedPromiseCallback: any;
   private _remoteAddress: RemoteAddress;
   private _status: number;
   private _statusText: string;
@@ -163,20 +177,20 @@ export class Response {
 
   constructor(request: Request, status: number, statusText: string, headers: Headers, remoteAddress: RemoteAddress, getResponseBodyCallback: GetResponseBodyCallback) {
     this._request = request;
-    this._request._response = this;
+    this._request._setResponse(this);
     this._status = status;
     this._statusText = statusText;
     this._url = request.url();
     this._headers = headers;
     this._remoteAddress = remoteAddress;
     this._getResponseBodyCallback = getResponseBodyCallback;
-    this._bodyLoadedPromise = new Promise(fulfill => {
-      this._bodyLoadedPromiseFulfill = fulfill;
+    this._requestFinishedPromise = new Promise(f => {
+      this._requestFinishedPromiseCallback = f;
     });
   }
 
-  _bodyLoaded(error?: Error) {
-    this._bodyLoadedPromiseFulfill.call(null, error);
+  _requestFinished(error?: Error) {
+    this._requestFinishedPromiseCallback.call(null, error);
   }
 
   remoteAddress(): RemoteAddress {
@@ -205,7 +219,7 @@ export class Response {
 
   buffer(): Promise<Buffer> {
     if (!this._contentPromise) {
-      this._contentPromise = this._bodyLoadedPromise.then(async error => {
+      this._contentPromise = this._requestFinishedPromise.then(async error => {
         if (error)
           throw error;
         return this._getResponseBodyCallback();

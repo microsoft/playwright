@@ -118,7 +118,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(WEBKIT)('Page.Events.Popup', function() {
+  describe('Page.Events.Popup', function() {
     it('should work', async({page}) => {
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),
@@ -719,7 +719,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => __injected)).toBe(42);
     });
 
-    it('should include sourceURL when path is provided', async({page, server}) => {
+    (CHROME || FFOX) && it('should include sourceURL when path is provided', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
       const result = await page.evaluate(() => __injectedError.stack);
