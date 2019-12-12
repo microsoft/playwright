@@ -740,7 +740,7 @@ index 00000000000..60515155c22
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8..b75d0c7c362 100644
+index 367d1f235a8..f5bdf41aad8 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -873,7 +873,22 @@ index 367d1f235a8..b75d0c7c362 100644
              ]
          },
          {
-@@ -346,12 +434,36 @@
+@@ -310,6 +398,14 @@
+                 { "name": "frame", "$ref": "Frame", "description": "Frame object." }
+             ]
+         },
++        {
++          "name": "frameAttached",
++          "description": "Fired when frame has been attached to its parent.",
++          "parameters": [
++              { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has been detached." },
++              { "name": "parentFrameId", "$ref": "Network.FrameId", "optional": true, "description": "Parent frame id if non-root." }
++          ]
++        },
+         {
+             "name": "frameDetached",
+             "description": "Fired when frame has been detached from its parent.",
+@@ -346,12 +442,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -975,7 +990,7 @@ index 4e41fd3f807..1f7be602cb2 100644
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index cb6ed9f6c84..22001135c88 100644
+index cb6ed9f6c84..fcbd312e217 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1024,7 +1039,7 @@ index cb6ed9f6c84..22001135c88 100644
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1251,6 +1254,19 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1251,6 +1254,24 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -1032,6 +1047,11 @@ index cb6ed9f6c84..22001135c88 100644
 +{
 +    if (InspectorPageAgent* pageAgent = instrumentingAgents.inspectorPageAgent())
 +        pageAgent->runOpenPanel(element, intercept);
++}
++
++void InspectorInstrumentation::frameAttachedImpl(InstrumentingAgents& instrumentingAgents, Frame& frame) {
++    if (InspectorPageAgent* pageAgent = instrumentingAgents.inspectorPageAgent())
++        pageAgent->frameAttached(frame);
 +}
 +
 +bool InspectorInstrumentation::shouldBypassCSPImpl(InstrumentingAgents& instrumentingAgents)
@@ -1045,7 +1065,7 @@ index cb6ed9f6c84..22001135c88 100644
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 6698431f316..787ab1c35a2 100644
+index 6698431f316..2e0e67b35b3 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -77,6 +77,7 @@ class DOMWrapperWorld;
@@ -1064,17 +1084,18 @@ index 6698431f316..787ab1c35a2 100644
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -313,6 +315,9 @@ public:
+@@ -313,6 +315,10 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
 +    static void runOpenPanel(Frame*, HTMLInputElement*, bool*);
++    static void frameAttached(Frame*);
 +    static bool shouldBypassCSP(ScriptExecutionContext*);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -428,6 +433,7 @@ private:
+@@ -428,6 +434,7 @@ private:
      static void frameStoppedLoadingImpl(InstrumentingAgents&, Frame&);
      static void frameScheduledNavigationImpl(InstrumentingAgents&, Frame&, Seconds delay);
      static void frameClearedScheduledNavigationImpl(InstrumentingAgents&, Frame&);
@@ -1082,17 +1103,18 @@ index 6698431f316..787ab1c35a2 100644
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -509,6 +515,9 @@ private:
+@@ -509,6 +516,10 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
 +    static void runOpenPanelImpl(InstrumentingAgents&, HTMLInputElement*, bool*);
++    static void frameAttachedImpl(InstrumentingAgents&, Frame&);
 +    static bool shouldBypassCSPImpl(InstrumentingAgents&);
 +
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1219,6 +1228,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1219,6 +1230,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -1106,7 +1128,7 @@ index 6698431f316..787ab1c35a2 100644
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1643,6 +1659,21 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1643,6 +1661,28 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -1115,6 +1137,13 @@ index 6698431f316..787ab1c35a2 100644
 +    FAST_RETURN_IF_NO_FRONTENDS(void());
 +    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(*frame))
 +        runOpenPanelImpl(*instrumentingAgents, element, intercept);
++}
++
++inline void InspectorInstrumentation::frameAttached(Frame* frame)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(void());
++    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(frame))
++        frameAttachedImpl(*instrumentingAgents, *frame);
 +}
 +
 +inline bool InspectorInstrumentation::shouldBypassCSP(ScriptExecutionContext* context)
@@ -1449,7 +1478,7 @@ index b578660fbb3..a7c968bc9f8 100644
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index f2e228b7f74..a91297f7306 100644
+index f2e228b7f74..ed738d56ce2 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1597,11 +1626,12 @@ index f2e228b7f74..a91297f7306 100644
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -815,6 +849,30 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -815,6 +849,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
-+void InspectorPageAgent::runOpenPanel(HTMLInputElement* element, bool* intercept) {
++void InspectorPageAgent::runOpenPanel(HTMLInputElement* element, bool* intercept)
++{
 +    if (m_interceptFileChooserDialog) {
 +        *intercept = true;
 +    } else {
@@ -1620,15 +1650,22 @@ index f2e228b7f74..a91297f7306 100644
 +    m_frontendDispatcher->fileChooserOpened(frameId(frame), injectedScript.wrapObject(InspectorDOMAgent::nodeAsScriptValue(state, element), WTF::String()));
 +}
 +
-+bool InspectorPageAgent::shouldBypassCSP() {
-+    return m_bypassCSP;
++void InspectorPageAgent::frameAttached(Frame& frame)
++{
++    Frame* parent = frame.tree().parent();
++    String parentFrameId = frameId(parent);
++    m_frontendDispatcher->frameAttached(frameId(&frame), parent ? &parentFrameId : nullptr);
 +}
 +
++bool InspectorPageAgent::shouldBypassCSP()
++{
++    return m_bypassCSP;
++}
 +
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -986,4 +1044,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -986,4 +1052,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2121,7 +2158,7 @@ index f2e228b7f74..a91297f7306 100644
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016..33de324b533 100644
+index 4fd8c0b1016..9954be9e35a 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2181,11 +2218,12 @@ index 4fd8c0b1016..33de324b533 100644
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,11 +148,14 @@ public:
+@@ -134,11 +148,15 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
 +    void runOpenPanel(HTMLInputElement* element, bool* intercept);
++    void frameAttached(Frame&);
 +    bool shouldBypassCSP();
  
      Frame* frameForId(const String& frameId);
@@ -2196,7 +2234,7 @@ index 4fd8c0b1016..33de324b533 100644
  
  private:
      double timestamp();
-@@ -153,6 +170,7 @@ private:
+@@ -153,6 +171,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -2204,7 +2242,7 @@ index 4fd8c0b1016..33de324b533 100644
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -163,8 +181,11 @@ private:
+@@ -163,8 +182,11 @@ private:
      String m_emulatedMedia;
      String m_forcedAppearance;
      String m_bootstrapScript;
@@ -2363,6 +2401,18 @@ index e105be0ba92..2557eacc4b7 100644
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client.dispatchDidPopStateWithinPage();
+diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
+index 22cc1fd15bc..4b0e232a19c 100644
+--- a/Source/WebCore/page/Frame.cpp
++++ b/Source/WebCore/page/Frame.cpp
+@@ -180,6 +180,7 @@ Frame::Frame(Page& page, HTMLFrameOwnerElement* ownerElement, FrameLoaderClient&
+ void Frame::init()
+ {
+     m_loader->init();
++    InspectorInstrumentation::frameAttached(this);
+ }
+ 
+ Ref<Frame> Frame::create(Page* page, HTMLFrameOwnerElement* ownerElement, FrameLoaderClient* client)
 diff --git a/Source/WebCore/page/History.cpp b/Source/WebCore/page/History.cpp
 index 9c58b06f4c4..3d624733c36 100644
 --- a/Source/WebCore/page/History.cpp
