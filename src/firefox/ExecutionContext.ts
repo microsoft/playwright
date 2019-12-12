@@ -124,6 +124,8 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
   }
 
   async releaseHandle(handle: js.JSHandle): Promise<void> {
+    if (!handle._remoteObject.objectId)
+      return;
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
       objectId: handle._remoteObject.objectId,
