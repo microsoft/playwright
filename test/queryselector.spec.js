@@ -26,6 +26,11 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const idAttribute = await page.$eval('css=section', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
+    it('should work with zs selector', async({page, server}) => {
+      await page.setContent('<section id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('zs="43543"', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
     it('should work with xpath selector', async({page, server}) => {
       await page.setContent('<section id="testAttribute">43543</section>');
       const idAttribute = await page.$eval('xpath=/html/body/section', e => e.id);
@@ -71,8 +76,8 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       expect(text).toBe('hello world!');
     });
     it('should support >> syntax with different engines', async({page, server}) => {
-      await page.setContent('<section><div>hello</div></section>');
-      const text = await page.$eval('xpath=/html/body/section >> css=div', (e, suffix) => e.textContent + suffix, ' world!');
+      await page.setContent('<section><div><span>hello</span></div></section>');
+      const text = await page.$eval('xpath=/html/body/section >> css=div >> zs="hello"', (e, suffix) => e.textContent + suffix, ' world!');
       expect(text).toBe('hello world!');
     });
     it('should support spaces with >> syntax', async({page, server}) => {
@@ -92,6 +97,8 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       expect(text3).toBe('Hello from root1');
       const text4 = await page.$eval('xpath=/html/body/section/div >> css=div >> css=span', e => e.textContent);
       expect(text4).toBe('Hello from root2');
+      const text5 = await page.$eval('zs=section div >> css=div >> css=span', e => e.textContent);
+      expect(text5).toBe('Hello from root2');
     });
   });
 
@@ -99,6 +106,11 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     it('should work with css selector', async({page, server}) => {
       await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
       const divsCount = await page.$$eval('css=div', divs => divs.length);
+      expect(divsCount).toBe(3);
+    });
+    it('should work with zs selector', async({page, server}) => {
+      await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
+      const divsCount = await page.$$eval('zs=div', divs => divs.length);
       expect(divsCount).toBe(3);
     });
     it('should work with xpath selector', async({page, server}) => {
@@ -130,12 +142,17 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
   });
 
   describe('Page.$', function() {
-    it('should query existing element', async({page, server}) => {
+    it('should query existing element with css selector', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const element = await page.$('css=section');
       expect(element).toBeTruthy();
     });
-    it('should query existing element with xpath', async({page, server}) => {
+    it('should query existing element with zs selector', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const element = await page.$('zs="test"');
+      expect(element).toBeTruthy();
+    });
+    it('should query existing element with xpath selector', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const element = await page.$('xpath=/html/body/section');
       expect(element).toBeTruthy();
@@ -147,6 +164,11 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     it('should auto-detect xpath selector', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const element = await page.$('//html/body/section');
+      expect(element).toBeTruthy();
+    });
+    it('should auto-detect zs selector', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const element = await page.$('"test"');
       expect(element).toBeTruthy();
     });
     it('should auto-detect css selector', async({page, server}) => {
@@ -219,6 +241,16 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const html = await page.$('html');
       const second = await html.$('.second');
       const inner = await second.$('.inner');
+      const content = await page.evaluate(e => e.textContent, inner);
+      expect(content).toBe('A');
+    });
+
+    it('should query existing element with zs selector', async({page, server}) => {
+      await page.goto(server.PREFIX + '/playground.html');
+      await page.setContent('<html><body><div class="second"><div class="inner">A</div></div></body></html>');
+      const html = await page.$('zs=html');
+      const second = await html.$('zs=.second');
+      const inner = await second.$('zs=.inner');
       const content = await page.evaluate(e => e.textContent, inner);
       expect(content).toBe('A');
     });
@@ -331,6 +363,124 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const html = await page.$('html');
       const second = await html.$x(`/div[contains(@class, 'third')]`);
       expect(second).toEqual([]);
+    });
+  });
+
+  describe('zselector', () => {
+    it('query', async ({page}) => {
+      await page.setContent(`<div>yo</div><div>ya</div><div>ye</div>`);
+      expect(await page.$eval(`zs="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+
+      await page.setContent(`<div foo="baz"></div><div foo="bar space"></div>`);
+      expect(await page.$eval(`zs=[foo="bar space"]`, e => e.outerHTML)).toBe('<div foo="bar space"></div>');
+
+      await page.setContent(`<div>yo<span></span></div>`);
+      expect(await page.$eval(`zs=span`, e => e.outerHTML)).toBe('<span></span>');
+      expect(await page.$eval(`zs=div > span`, e => e.outerHTML)).toBe('<span></span>');
+      expect(await page.$eval(`zs=div span`, e => e.outerHTML)).toBe('<span></span>');
+      expect(await page.$eval(`zs="yo" > span`, e => e.outerHTML)).toBe('<span></span>');
+      expect(await page.$eval(`zs="yo" span`, e => e.outerHTML)).toBe('<span></span>');
+      expect(await page.$eval(`zs=span ^`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+      expect(await page.$eval(`zs=span ~ div`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+      expect(await page.$eval(`zs=span ~ "yo"`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+
+      await page.setContent(`<div>yo</div><div>yo<span></span></div>`);
+      expect(await page.$eval(`zs="yo"#0`, e => e.outerHTML)).toBe('<div>yo</div>');
+      expect(await page.$eval(`zs="yo"#1`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+      expect(await page.$eval(`zs="yo" ~ DIV#1`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+      expect(await page.$eval(`zs=span ~ div#1`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+      expect(await page.$eval(`zs=span ~ div#0`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+      expect(await page.$eval(`zs=span ~ "yo"#1 ^ > div`, e => e.outerHTML)).toBe('<div>yo</div>');
+      expect(await page.$eval(`zs=span ~ "yo"#1 ^ > div#1`, e => e.outerHTML)).toBe('<div>yo<span></span></div>');
+
+      await page.setContent(`<div>yo<span id="s1"></span></div><div>yo<span id="s2"></span><span id="s3"></span></div>`);
+      expect(await page.$eval(`zs="yo"`, e => e.outerHTML)).toBe('<div>yo<span id="s1"></span></div>');
+      expect(await page.$$eval(`zs="yo"`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div>yo<span id="s1"></span></div>\n<div>yo<span id="s2"></span><span id="s3"></span></div>');
+      expect(await page.$$eval(`zs="yo"#1`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div>yo<span id="s2"></span><span id="s3"></span></div>');
+      expect(await page.$$eval(`zs="yo" ~ span`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<span id="s1"></span>\n<span id="s2"></span>\n<span id="s3"></span>');
+      expect(await page.$$eval(`zs="yo"#1 ~ span`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<span id="s2"></span>\n<span id="s3"></span>');
+      expect(await page.$$eval(`zs="yo" ~ span#0`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<span id="s1"></span>\n<span id="s2"></span>');
+      expect(await page.$$eval(`zs="yo" ~ span#1`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<span id="s2"></span>\n<span id="s3"></span>');
+    });
+
+    it('create', async ({page}) => {
+      await page.setContent(`<div>yo</div><div>ya</div><div>ya</div>`);
+      expect(await page._createSelector('zs', await page.$('div'))).toBe('"yo"');
+      expect(await page._createSelector('zs', await page.$('div:nth-child(2)'))).toBe('"ya"');
+      expect(await page._createSelector('zs', await page.$('div:nth-child(3)'))).toBe('"ya"#1');
+
+      await page.setContent(`<img alt="foo bar">`);
+      expect(await page._createSelector('zs', await page.$('img'))).toBe('img[alt="foo bar"]');
+
+      await page.setContent(`<div>yo<span></span></div><span></span>`);
+      expect(await page._createSelector('zs', await page.$('span'))).toBe('"yo"~SPAN');
+      expect(await page._createSelector('zs', await page.$('span:nth-child(2)'))).toBe('SPAN#1');
+    });
+
+    it('children of various display parents', async ({page}) => {
+      await page.setContent(`<body><div style='position: fixed;'><span>yo</span></div></body>`);
+      expect(await page._createSelector('zs', await page.$('span'))).toBe('"yo"');
+
+      await page.setContent(`<div style='position: relative;'><span>yo</span></div>`);
+      expect(await page._createSelector('zs', await page.$('span'))).toBe('"yo"');
+
+      // "display: none" makes all children text invisible - fallback to tag name.
+      await page.setContent(`<div style='display: none;'><span>yo</span></div>`);
+      expect(await page._createSelector('zs', await page.$('span'))).toBe('SPAN');
+    });
+
+    it('boundary', async ({page}) => {
+      await page.setContent(`
+        <div>hey</div>
+        <div>hey</div>
+        <div>hey</div>
+        <div>
+          <div>yo</div>
+          <div>hello</div>
+          <div>hello</div>
+          <div>hello</div>
+          <div>unique</div>
+          <div>
+            <div>hey2<span></span><span></span><span></span></div>
+            <div>hello</div>
+          </div>
+          <div>
+            <div>hey<span></span><span></span><span></span></div>
+            <div>hello</div>
+          </div>
+        </div>
+        <div>
+          <div>ya<div>
+          <div id=first>hello</div>
+          <div>hello</div>
+          <div>hello</div>
+          <div>
+            <div>hey2<span></span><span></span><span></span></div>
+            <div>hello</div>
+          </div>
+          <div>
+            <div>hey<span></span><span></span><span></span></div>
+            <div id=target>hello</div>
+          </div>
+        </div>
+        <div>
+          <div>ya<div>
+          <div id=first2>hello</div>
+          <div>hello</div>
+          <div>hello</div>
+          <div>
+            <div>hey2<span></span><span></span><span></span></div>
+            <div>hello</div>
+          </div>
+          <div>
+            <div>hey<span></span><span></span><span></span></div>
+            <div id=target2>hello</div>
+          </div>
+        </div>`);
+      expect(await page._createSelector('zs', await page.$('#target'))).toBe('"ya"~"hey"~"hello"');
+      expect(await page.$eval(`zs="ya"~"hey"~"hello"`, e => e.outerHTML)).toBe('<div id="target">hello</div>');
+      expect(await page.$eval(`zs="ya"~"hey"~"unique"`, e => e.outerHTML).catch(e => e.message)).toBe('Error: failed to find element matching selector "zs="ya"~"hey"~"unique""');
+      expect(await page.$$eval(`zs="ya" ~ "hey" ~ "hello"`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div id="target">hello</div>\n<div id="target2">hello</div>');
     });
   });
 };
