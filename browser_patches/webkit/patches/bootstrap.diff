@@ -5247,7 +5247,7 @@ index 2c4f9ddabf0..ae9e0b80708 100644
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf7163..6ac7ab2efd9 100644
+index 1ee28bf7163..c1c918d6e2a 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,13 @@
@@ -5327,7 +5327,7 @@ index 1ee28bf7163..6ac7ab2efd9 100644
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
 +    if (connectingFirstFrontend)
-+        disableBackForwardCache();
++        adjustPageSettings();
 +
      m_frontendRouter->connectFrontend(frontendChannel);
  
@@ -5372,7 +5372,7 @@ index 1ee28bf7163..6ac7ab2efd9 100644
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -214,8 +265,17 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
+@@ -214,8 +265,22 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
  
  void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>&& target)
  {
@@ -5382,8 +5382,13 @@ index 1ee28bf7163..6ac7ab2efd9 100644
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
-+void WebPageInspectorController::disableBackForwardCache()
++void WebPageInspectorController::adjustPageSettings()
 +{
++    // Set this to true as otherwise updating any preferences will override its
++    // value in the Web Process to false (and InspectorController sets it locally
++    // to true when frontend is connected).
++    m_page.preferences().setDeveloperExtrasEnabled(true);
++
 +    // Navigation to cached pages doesn't fire some of the events (e.g. execution context created)
 +    // that inspector depends on. So we disable the cache when front-end connects.
 +    m_page.preferences().setUsesBackForwardCache(false);
@@ -5391,7 +5396,7 @@ index 1ee28bf7163..6ac7ab2efd9 100644
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0c..be5db786c07 100644
+index 78caedf0c0c..a380d778c36 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
 @@ -37,10 +37,22 @@ namespace Inspector {
@@ -5443,7 +5448,7 @@ index 78caedf0c0c..be5db786c07 100644
  
  private:
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
-+    void disableBackForwardCache();
++    void adjustPageSettings();
  
      WebPageProxy& m_page;
      Ref<Inspector::FrontendRouter> m_frontendRouter;
