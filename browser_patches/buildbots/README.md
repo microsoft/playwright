@@ -144,6 +144,9 @@ Make sure to change the following fields:
 
       <key>AZ_ACCOUNT_KEY</key>
       <string></string>
+
+      <key>MOZ_NOSPAM</key>
+      <string>1</string>
     </dict>
 
 
@@ -160,3 +163,6 @@ Make sure to change the following fields:
 ```
 
 Next, you can either use `launchctl load` command to load the daemon, or reboot bot to make sure it auto-starts.
+
+> **NOTE**: mozbuild uses [terminal-notifier](https://github.com/julienXX/terminal-notifier) which hangs
+> in launchctl environment. The `MOZ_NOSPAM` env variable disables terminal notifications.

@@ -62,4 +62,4 @@ if [[ -n $(git status -s) ]]; then
 fi
 
 git pull origin master
-../checkout_build_archive_upload.sh webkit >/tmp/$(basename $0)-webkit-log.log
+../checkout_build_archive_upload.sh webkit >/tmp/$(basename $0)-webkit-log.log || true
