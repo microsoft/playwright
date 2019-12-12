@@ -88,8 +88,9 @@ export class Connection extends EventEmitter {
     this._scheduleQueueDispatch();
   }
 
-  private _enqueueMessages(messages: string[]) {
-    this._incomingMessageQueue = this._incomingMessageQueue.concat(messages);
+  private _enqueueProvisionalMessages(messages: string[]) {
+    // Insert provisional messages at the point of "Target.didCommitProvisionalTarget" message.
+    this._incomingMessageQueue = messages.concat(this._incomingMessageQueue);
     this._scheduleQueueDispatch();
   }
 
@@ -169,7 +170,7 @@ export class Connection extends EventEmitter {
       if (!oldSession)
         throw new Error('Unknown old target: ' + oldTargetId);
       oldSession._swappedOut = true;
-      this._enqueueMessages(newSession._takeProvisionalMessagesAndCommit());
+      this._enqueueProvisionalMessages(newSession._takeProvisionalMessagesAndCommit());
     }
   }
 
