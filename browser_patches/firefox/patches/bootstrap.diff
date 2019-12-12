@@ -1780,10 +1780,10 @@ index 000000000000..2508cce41565
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 000000000000..daec73796e3b
+index 000000000000..266fad046ba2
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,649 @@
+@@ -0,0 +1,661 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -1909,6 +1909,7 @@ index 000000000000..daec73796e3b
 +      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
 +      helper.addEventListener(this._session.mm(), 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
 +      helper.addEventListener(this._session.mm(), 'pageshow', this._onLoad.bind(this)),
++      helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
 +      helper.addEventListener(this._session.mm(), 'error', this._onError.bind(this)),
 +      helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
 +      helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
@@ -1953,6 +1954,17 @@ index 000000000000..daec73796e3b
 +      frameId: frame.id(),
 +      message: errorEvent.message,
 +      stack: errorEvent.error.stack
++    });
++  }
++
++  _onDocumentOpenLoad(document) {
++    const docShell = document.ownerGlobal.docShell;
++    const frame = this._frameTree.frameForDocShell(docShell);
++    if (!frame)
++      return;
++    this._session.emitEvent('Page.eventFired', {
++      frameId: frame.id(),
++      name: 'load'
 +    });
 +  }
 +
@@ -4959,10 +4971,24 @@ index 79d6eeed7247..0362763ead99 100644
      ]
  
 diff --git a/uriloader/base/nsDocLoader.cpp b/uriloader/base/nsDocLoader.cpp
-index 92cb5f3cf6da..7918f127c801 100644
+index 92cb5f3cf6da..bfcb01b08156 100644
 --- a/uriloader/base/nsDocLoader.cpp
 +++ b/uriloader/base/nsDocLoader.cpp
-@@ -1370,6 +1370,24 @@ void nsDocLoader::FireOnLocationChange(nsIWebProgress* aWebProgress,
+@@ -763,6 +763,13 @@ void nsDocLoader::DocLoaderIsEmpty(bool aFlushLayout) {
+                         ("DocLoader:%p: Firing load event for document.open\n",
+                          this));
+ 
++                nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
++                if (os) {
++                  nsIPrincipal* principal = doc->NodePrincipal();
++                  if (!nsContentUtils::IsSystemPrincipal(principal))
++                    os->NotifyObservers(ToSupports(doc), "juggler-document-open-loaded", nullptr);
++                }
++
+                 // This is a very cut-down version of
+                 // nsDocumentViewer::LoadComplete that doesn't do various things
+                 // that are not relevant here because this wasn't an actual
+@@ -1370,6 +1377,24 @@ void nsDocLoader::FireOnLocationChange(nsIWebProgress* aWebProgress,
    }
  }
  
