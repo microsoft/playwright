@@ -413,7 +413,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       }
       return context._createHandle(p);
     });
-    this._page._addConsoleMessage(derivedType, handles, { url, lineNumber, columnNumber }, handles.length ? undefined : text);
+    this._page._addConsoleMessage(derivedType, handles, { url, lineNumber: lineNumber - 1, columnNumber: columnNumber - 1 }, handles.length ? undefined : text);
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
