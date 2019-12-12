@@ -240,22 +240,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       else
         expect(message.type()).toEqual('warn');
     });
-    it.skip(FFOX || WEBKIT)('should have location when fetch fails', async({page, server}) => {
-      // The point of this test is to make sure that we report console messages from
-      // Log domain: https://vanilla.aslushnikov.com/?Log.entryAdded
-      await page.goto(server.EMPTY_PAGE);
-      const [message] = await Promise.all([
-        waitEvent(page, 'console'),
-        page.setContent(`<script>fetch('http://wat');</script>`),
-      ]);
-      expect(message.text()).toContain(`ERR_NAME_NOT_RESOLVED`);
-      expect(message.type()).toEqual('error');
-      expect(message.location()).toEqual({
-        url: 'http://wat/',
-        lineNumber: undefined
-      });
-    });
-    it.skip(WEBKIT)('should have location for console API calls', async({page, server}) => {
+    it('should have location for console API calls', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [message] = await Promise.all([
         waitEvent(page, 'console'),
@@ -263,10 +248,12 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       ]);
       expect(message.text()).toBe('yellow');
       expect(message.type()).toBe('log');
-      expect(message.location()).toEqual({
+      const location = message.location();
+      // Engines have different column notion.
+      delete location.columnNumber;
+      expect(location).toEqual({
         url: server.PREFIX + '/consolelog.html',
         lineNumber: 7,
-        columnNumber: 14,
       });
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3865
