@@ -7265,7 +7265,7 @@ index 45ef1a6424e..6e015fcb8bc 100644
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..365582e402d 100644
+index b6af4ef724f..7a3c798da52 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
 @@ -33,7 +33,9 @@
@@ -7428,7 +7428,7 @@ index b6af4ef724f..365582e402d 100644
      [_extensionManagerWindowController showWindow:sender];
  }
  
-@@ -345,4 +399,135 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +399,147 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
@@ -7462,14 +7462,13 @@ index b6af4ef724f..365582e402d 100644
 +    return [controller webView];
 +}
 +
-+- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
++- (WKWebView *)createHeadlessWebView:(WKWebViewConfiguration *)configuration
 +{
 +    NSRect rect = NSMakeRect(0, 0, 1024, 768);
 +    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
 +    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
 +    NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
 +
-+    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
 +    WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
 +    webView._windowOcclusionDetectionEnabled = NO;
 +    if (!webView)
@@ -7482,6 +7481,12 @@ index b6af4ef724f..365582e402d 100644
 +    [_headlessWindows addObject:window];
 +    webView.UIDelegate = self;
 +    return [webView autorelease];
++}
++
++- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
++{
++    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
++    return [self createHeadlessWebView:configuration];
 +}
 +
 +- (_WKBrowserContext *)createBrowserContext
@@ -7508,6 +7513,8 @@ index b6af4ef724f..365582e402d 100644
 +{
 +    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
 +}
++
++#pragma mark WKUIDelegate
 +
 +- (void)webViewDidClose:(WKWebView *)webView {
 +    for (NSWindow *window in _headlessWindows) {
@@ -7561,6 +7568,11 @@ index b6af4ef724f..365582e402d 100644
 +        dialog.completionHandler(accept, value);
 +        break;
 +    }
++}
++
++- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
++{
++    return [self createHeadlessWebView:configuration];
 +}
 +
  @end
