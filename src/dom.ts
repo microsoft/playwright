@@ -12,37 +12,22 @@ import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 
-export interface DOMWorldDelegate {
-  keyboard: input.Keyboard;
-  mouse: input.Mouse;
-  frame: frames.Frame;
-  isJavascriptEnabled(): boolean;
-  isElement(remoteObject: any): boolean;
-  contentFrame(handle: ElementHandle): Promise<frames.Frame | null>;
-  contentQuads(handle: ElementHandle): Promise<types.Quad[] | null>;
-  layoutViewport(): Promise<{ width: number, height: number }>;
-  boundingBox(handle: ElementHandle): Promise<types.Rect | null>;
-  screenshot(handle: ElementHandle, options?: types.ScreenshotOptions): Promise<string | Buffer>;
-  setInputFiles(handle: ElementHandle, files: input.FilePayload[]): Promise<void>;
-  adoptElementHandle<T extends Node>(handle: ElementHandle<T>, to: DOMWorld): Promise<ElementHandle<T>>;
-}
-
 type ScopedSelector = types.Selector & { scope?: ElementHandle };
 type ResolvedSelector = { scope?: ElementHandle, selector: string, visible?: boolean, disposeScope?: boolean };
 
 export class DOMWorld {
   readonly context: js.ExecutionContext;
-  readonly delegate: DOMWorldDelegate;
+  readonly frame: frames.Frame;
 
   private _injectedPromise?: Promise<js.JSHandle>;
 
-  constructor(context: js.ExecutionContext, delegate: DOMWorldDelegate) {
+  constructor(context: js.ExecutionContext, frame: frames.Frame) {
     this.context = context;
-    this.delegate = delegate;
+    this.frame = frame;
   }
 
   createHandle(remoteObject: any): ElementHandle | null {
-    if (this.delegate.isElement(remoteObject))
+    if (this.frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this.context, remoteObject);
     return null;
   }
@@ -62,7 +47,7 @@ export class DOMWorld {
 
   async adoptElementHandle<T extends Node>(handle: ElementHandle<T>): Promise<ElementHandle<T>> {
     assert(handle.executionContext() !== this.context, 'Should not adopt to the same context');
-    return this.delegate.adoptElementHandle(handle, this);
+    return this.frame._page._delegate.adoptElementHandle(handle, this);
   }
 
   async resolveSelector(selector: string | ScopedSelector): Promise<ResolvedSelector> {
@@ -159,7 +144,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    return this._world.delegate.contentFrame(this);
+    return this._world.frame._page._delegate.getContentFrame(this);
   }
 
   async _scrollIntoViewIfNeeded() {
@@ -190,7 +175,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
       }
       return false;
-    }, this._world.delegate.isJavascriptEnabled());
+    }, !!this._world.frame._page._state.javascriptEnabled);
     if (error)
       throw new Error(error);
   }
@@ -237,8 +222,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
 
     const [quads, metrics] = await Promise.all([
-      this._world.delegate.contentQuads(this),
-      this._world.delegate.layoutViewport(),
+      this._world.frame._page._delegate.getContentQuads(this),
+      this._world.frame._page._delegate.layoutViewport(),
     ]);
     if (!quads || !quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
@@ -275,7 +260,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       point.x += border.x;
       point.y += border.y;
     }
-    const metrics = await this._world.delegate.layoutViewport();
+    const metrics = await this._world.frame._page._delegate.layoutViewport();
     // Give 20 extra pixels to avoid any issues on viewport edge.
     let scrollX = 0;
     if (point.x < 20)
@@ -294,26 +279,26 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const point = await this._ensurePointerActionPoint(options ? options.relativePoint : undefined);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
-      restoreModifiers = await this._world.delegate.keyboard._ensureModifiers(options.modifiers);
+      restoreModifiers = await this._world.frame._page.keyboard._ensureModifiers(options.modifiers);
     await action(point);
     if (restoreModifiers)
-      await this._world.delegate.keyboard._ensureModifiers(restoreModifiers);
+      await this._world.frame._page.keyboard._ensureModifiers(restoreModifiers);
   }
 
   hover(options?: input.PointerActionOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.delegate.mouse.move(point.x, point.y), options);
+    return this._performPointerAction(point => this._world.frame._page.mouse.move(point.x, point.y), options);
   }
 
   click(options?: input.ClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.delegate.mouse.click(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._world.frame._page.mouse.click(point.x, point.y, options), options);
   }
 
   dblclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.delegate.mouse.dblclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._world.frame._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
   tripleclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.delegate.mouse.tripleclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._world.frame._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
   async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
@@ -336,7 +321,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const error = await this.evaluate(input.fillFunction);
     if (error)
       throw new Error(error);
-    await this._world.delegate.keyboard.sendCharacters(value);
+    await this._world.frame._page.keyboard.sendCharacters(value);
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
@@ -347,7 +332,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return input.multiple;
     });
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    await this._world.delegate.setInputFiles(this, await input.loadFiles(files));
+    await this._world.frame._page._delegate.setInputFiles(this, await input.loadFiles(files));
   }
 
   async focus() {
@@ -363,20 +348,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {
     await this.focus();
-    await this._world.delegate.keyboard.type(text, options);
+    await this._world.frame._page.keyboard.type(text, options);
   }
 
   async press(key: string, options: { delay?: number; text?: string; } | undefined) {
     await this.focus();
-    await this._world.delegate.keyboard.press(key, options);
+    await this._world.frame._page.keyboard.press(key, options);
   }
 
   async boundingBox(): Promise<types.Rect | null> {
-    return this._world.delegate.boundingBox(this);
+    return this._world.frame._page._delegate.getBoundingBox(this);
   }
 
   async screenshot(options?: types.ElementScreenshotOptions): Promise<string | Buffer> {
-    return this._world.delegate.screenshot(this, options);
+    return this._world.frame._page._screenshotter.screenshotElement(this, options);
   }
 
   private _scopedSelector(selector: string | types.Selector): string | ScopedSelector {

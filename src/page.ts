@@ -62,6 +62,14 @@ export interface PageDelegate {
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
   takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer>;
   resetViewport(oldSize: types.Size): Promise<void>;
+
+  isElementHandle(remoteObject: any): boolean;
+  adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>>;
+  getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;
+  getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null>;
+  layoutViewport(): Promise<{ width: number, height: number }>;
+  setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void>;
+  getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
 }
 
 type PageState = {

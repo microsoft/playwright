@@ -23,7 +23,6 @@ import * as js from '../javascript';
 import * as network from '../network';
 import { CDPSession } from './Connection';
 import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate } from './ExecutionContext';
-import { DOMWorldDelegate } from './JSHandle';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page } from '../page';
 import { Protocol } from './protocol';
@@ -353,7 +352,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       this._isolatedWorlds.add(contextPayload.name);
     const context = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload));
     if (frame)
-      context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
+      context._domWorld = new dom.DOMWorld(context, frame);
     if (frame) {
       if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
         frame._contextCreated('main', context);
@@ -454,7 +453,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
     const frame = this.frame(event.frameId);
     const utilityWorld = await frame._utilityDOMWorld();
-    const handle = await (utilityWorld.delegate as DOMWorldDelegate).adoptBackendNodeId(event.backendNodeId, utilityWorld);
+    const handle = await this.adoptBackendNodeId(event.backendNodeId, utilityWorld);
     this._page._onFileChooserOpened(handle);
   }
 
@@ -567,10 +566,81 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   async resetViewport(): Promise<void> {
     await this._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
   }
+
+  async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    const nodeInfo = await this._client.send('DOM.describeNode', {
+      objectId: toRemoteObject(handle).objectId
+    });
+    if (typeof nodeInfo.node.frameId !== 'string')
+      return null;
+    return this.frame(nodeInfo.node.frameId);
+  }
+
+  isElementHandle(remoteObject: any): boolean {
+    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
+  }
+
+  async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
+    const result = await this._client.send('DOM.getBoxModel', {
+      objectId: toRemoteObject(handle).objectId
+    }).catch(debugError);
+    if (!result)
+      return null;
+    const quad = result.model.border;
+    const x = Math.min(quad[0], quad[2], quad[4], quad[6]);
+    const y = Math.min(quad[1], quad[3], quad[5], quad[7]);
+    const width = Math.max(quad[0], quad[2], quad[4], quad[6]) - x;
+    const height = Math.max(quad[1], quad[3], quad[5], quad[7]) - y;
+    return {x, y, width, height};
+  }
+
+  async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+    const result = await this._client.send('DOM.getContentQuads', {
+      objectId: toRemoteObject(handle).objectId
+    }).catch(debugError);
+    if (!result)
+      return null;
+    return result.quads.map(quad => [
+      { x: quad[0], y: quad[1] },
+      { x: quad[2], y: quad[3] },
+      { x: quad[4], y: quad[5] },
+      { x: quad[6], y: quad[7] }
+    ]);
+  }
+
+  async layoutViewport(): Promise<{ width: number, height: number }> {
+    const layoutMetrics = await this._client.send('Page.getLayoutMetrics');
+    return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
+  }
+
+  async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
+    await handle.evaluate(input.setFileInputFunction, files);
+  }
+
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
+    const nodeInfo = await this._client.send('DOM.describeNode', {
+      objectId: toRemoteObject(handle).objectId,
+    });
+    return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
+  }
+
+  async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+    const result = await this._client.send('DOM.resolveNode', {
+      backendNodeId,
+      executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId,
+    }).catch(debugError);
+    if (!result)
+      throw new Error('Unable to adopt element handle from a different document');
+    return to.context._createHandle(result.object).asElement()!;
+  }
 }
 
 function assertNoLegacyNavigationOptions(options: frames.NavigateOptions) {
   assert((options as any)['networkIdleTimeout'] === undefined, 'ERROR: networkIdleTimeout option is no longer supported.');
   assert((options as any)['networkIdleInflight'] === undefined, 'ERROR: networkIdleInflight option is no longer supported.');
   assert((options as any).waitUntil !== 'networkidle', 'ERROR: "networkidle" option is no longer supported. Use "networkidle2" instead');
+}
+
+function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
+  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }

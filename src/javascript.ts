@@ -22,7 +22,7 @@ export class ExecutionContext {
   }
 
   frame(): frames.Frame | null {
-    return this._domWorld ? this._domWorld.delegate.frame : null;
+    return this._domWorld ? this._domWorld.frame : null;
   }
 
   evaluate: types.Evaluate = (pageFunction, ...args) => {

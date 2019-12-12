@@ -24,7 +24,6 @@ import { JugglerSession } from './Connection';
 import { ExecutionContextDelegate } from './ExecutionContext';
 import { Page, PageDelegate } from '../page';
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
-import { DOMWorldDelegate } from './JSHandle';
 import { Events } from '../events';
 import * as dialog from '../dialog';
 import { Protocol } from './protocol';
@@ -112,7 +111,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const frame = this._frames.get(frameId) || null;
     const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, executionContextId));
     if (frame) {
-      context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
+      context._domWorld = new dom.DOMWorld(context, frame);
       frame._contextCreated('main', context);
       frame._contextCreated('utility', context);
     }
@@ -425,6 +424,62 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   async resetViewport(): Promise<void> {
     await this._session.send('Page.setViewport', { viewport: null });
   }
+
+  async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    const { frameId } = await this._session.send('Page.contentFrame', {
+      frameId: this._frameData(handle._world.frame).frameId,
+      objectId: toRemoteObject(handle).objectId,
+    });
+    if (!frameId)
+      return null;
+    return this.frame(frameId);
+  }
+
+  isElementHandle(remoteObject: any): boolean {
+    return remoteObject.subtype === 'node';
+  }
+
+  async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
+    const quads = await this.getContentQuads(handle);
+    if (!quads || !quads.length)
+      return null;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const quad of quads) {
+      for (const point of quad) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+      }
+    }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
+
+  async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+    const result = await this._session.send('Page.getContentQuads', {
+      frameId: this._frameData(handle._world.frame).frameId,
+      objectId: toRemoteObject(handle).objectId,
+    }).catch(debugError);
+    if (!result)
+      return null;
+    return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);
+  }
+
+  async layoutViewport(): Promise<{ width: number, height: number }> {
+    return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+  }
+
+  async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
+    await handle.evaluate(input.setFileInputFunction, files);
+  }
+
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
+    assert(false, 'Multiple isolated worlds are not implemented');
+    return handle;
+  }
 }
 
 export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[]): frames.LifecycleEvent[] {
@@ -435,4 +490,8 @@ export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.Lif
       throw new Error('Unknown waitUntil condition: ' + condition);
   }
   return waitUntil;
+}
+
+function toRemoteObject(handle: dom.ElementHandle): Protocol.RemoteObject {
+  return handle._remoteObject;
 }
