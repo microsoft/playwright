@@ -132,6 +132,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._sessionListeners = [
       helper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
       helper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      helper.addEventListener(this._session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
       helper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
       helper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
@@ -185,8 +186,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
-    if (frameTree.frame.parentId)
-      this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId);
+    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId);
     this._onFrameNavigated(frameTree.frame, true);
     if (!frameTree.childFrames)
       return;
@@ -216,16 +216,16 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
-    if (this._frames.has(frameId))
-      return;
-    assert(parentFrameId);
-    const parentFrame = this._frames.get(parentFrameId);
+    assert(!this._frames.has(frameId));
+    const parentFrame = parentFrameId ? this._frames.get(parentFrameId) : null;
     const frame = new frames.Frame(this._page, parentFrame);
     const data: FrameData = {
       id: frameId,
     };
     frame[frameDataSymbol] = data;
     this._frames.set(frameId, frame);
+    if (!parentFrame)
+      this._mainFrame = frame;
     this.emit(FrameManagerEvents.FrameAttached, frame);
     this._page.emit(Events.Page.FrameAttached, frame);
     return frame;
@@ -233,34 +233,18 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     const isMainFrame = !framePayload.parentId;
-    let frame = isMainFrame ? this._mainFrame : this._frames.get(framePayload.id);
+    const frame = isMainFrame ? this._mainFrame : this._frames.get(framePayload.id);
 
     // Detach all child frames first.
-    if (frame) {
-      for (const child of frame.childFrames())
-        this._removeFramesRecursively(child);
-      if (isMainFrame) {
-        // Update frame id to retain frame identity on cross-process navigation.
-        const data = this._frameData(frame);
-        this._frames.delete(data.id);
-        data.id = framePayload.id;
-        this._frames.set(data.id, frame);
-      }
-    } else if (isMainFrame) {
-      // Initial frame navigation.
-      frame = new frames.Frame(this._page, null);
-      const data: FrameData = {
-        id: framePayload.id,
-      };
-      frame[frameDataSymbol] = data;
-      this._frames.set(framePayload.id, frame);
-    } else {
-      // FIXME(WebKit): there is no Page.frameAttached event in WK.
-      frame = this._onFrameAttached(framePayload.id, framePayload.parentId);
+    for (const child of frame.childFrames())
+      this._removeFramesRecursively(child);
+    if (isMainFrame) {
+      // Update frame id to retain frame identity on cross-process navigation.
+      const data = this._frameData(frame);
+      this._frames.delete(data.id);
+      data.id = framePayload.id;
+      this._frames.set(data.id, frame);
     }
-    // Update or create main frame.
-    if (isMainFrame)
-      this._mainFrame = frame;
 
     for (const context of this._contextIdToContext.values()) {
       if (context.frame() === frame) {
