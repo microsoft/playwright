@@ -1037,7 +1037,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(error.message).toContain('Indices must be numbers');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3327
-    it.skip(FFOX || WEBKIT)('should work when re-defining top-level Event class', async({page, server}) => {
+    it.skip(FFOX)('should work when re-defining top-level Event class', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.evaluate(() => window.Event = null);
       await page.select('select', 'blue');

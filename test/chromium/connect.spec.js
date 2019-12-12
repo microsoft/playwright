@@ -145,4 +145,16 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
+  describe('Browser.isConnected', () => {
+    it('should set the browser connected state', async () => {
+      const browser = await playwright.launch(defaultBrowserOptions);
+      const browserWSEndpoint = browser.chromium.wsEndpoint();
+      const newBrowser = await playwright.connect({browserWSEndpoint});
+      expect(newBrowser.isConnected()).toBe(true);
+      newBrowser.disconnect();
+      expect(newBrowser.isConnected()).toBe(false);
+      await browser.close();
+    });
+  });
+
 };

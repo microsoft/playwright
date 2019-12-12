@@ -56,14 +56,4 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       remoteBrowser.disconnect();
     });
   });
-
-  describe.skip(WEBKIT || FFOX)('Browser.isConnected', () => {
-    it('should set the browser connected state', async({browser}) => {
-      const browserWSEndpoint = browser.chromium.wsEndpoint();
-      const newBrowser = await playwright.connect({browserWSEndpoint});
-      expect(newBrowser.isConnected()).toBe(true);
-      newBrowser.disconnect();
-      expect(newBrowser.isConnected()).toBe(false);
-    });
-  });
 };
