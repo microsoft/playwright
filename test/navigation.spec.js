@@ -73,7 +73,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'domcontentloaded'});
       expect(response.status()).toBe(200);
     });
-    it('should work when page calls history API in beforeunload', async({page, server}) => {
+    it.skip(WEBKIT)('should work when page calls history API in beforeunload', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         window.addEventListener('beforeunload', () => history.replaceState(null, 'initial', window.location.href), false);
@@ -98,7 +98,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       else
         expect(error.message).toContain('Invalid url');
     });
-    it.skip(WEBKIT)('should fail when navigating to bad SSL', async({page, httpsServer}) => {
+    it('should fail when navigating to bad SSL', async({page, httpsServer}) => {
       // Make sure that network events do not emit 'undefined'.
       // @see https://crbug.com/750469
       page.on('request', request => expect(request).toBeTruthy());
@@ -106,20 +106,22 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       page.on('requestfailed', request => expect(request).toBeTruthy());
       let error = null;
       await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-      // FIXME: shows dialog in WebKit.
-      if (CHROME || WEBKIT)
+      if (CHROME)
         expect(error.message).toContain('net::ERR_CERT_AUTHORITY_INVALID');
+      else if (WEBKIT)
+        expect(error.message).toContain('Unacceptable TLS certificate');
       else
         expect(error.message).toContain('SSL_ERROR_UNKNOWN');
     });
-    it.skip(WEBKIT)('should fail when navigating to bad SSL after redirects', async({page, server, httpsServer}) => {
+    it('should fail when navigating to bad SSL after redirects', async({page, server, httpsServer}) => {
       server.setRedirect('/redirect/1.html', '/redirect/2.html');
       server.setRedirect('/redirect/2.html', '/empty.html');
       let error = null;
       await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
-      // FIXME: shows dialog in WebKit.
-      if (CHROME || WEBKIT)
+      if (CHROME)
         expect(error.message).toContain('net::ERR_CERT_AUTHORITY_INVALID');
+      else if (WEBKIT)
+        expect(error.message).toContain('Unacceptable TLS certificate');
       else
         expect(error.message).toContain('SSL_ERROR_UNKNOWN');
     });
@@ -128,11 +130,13 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle'}).catch(err => error = err);
       expect(error.message).toContain('"networkidle" option is no longer supported');
     });
-    it.skip(WEBKIT)('should fail when main resources failed to load', async({page, server}) => {
+    it('should fail when main resources failed to load', async({page, server}) => {
       let error = null;
       await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-      if (CHROME || WEBKIT)
+      if (CHROME)
         expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
+      else if (WEBKIT)
+        expect(error.message).toContain('Could not connect: Connection refused');
       else
         expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
     });
@@ -311,12 +315,12 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(requests.length).toBe(1);
       expect(requests[0].url()).toBe(server.EMPTY_PAGE);
     });
-    it.skip(WEBKIT)('should work with self requesting page', async({page, server}) => {
+    it('should work with self requesting page', async({page, server}) => {
       const response = await page.goto(server.PREFIX + '/self-request.html');
       expect(response.status()).toBe(200);
       expect(response.url()).toContain('self-request.html');
     });
-    it.skip(WEBKIT)('should fail when navigating and show the url at the error message', async function({page, server, httpsServer}) {
+    it('should fail when navigating and show the url at the error message', async function({page, server, httpsServer}) {
       const url = httpsServer.PREFIX + '/redirect/1.html';
       let error = null;
       try {

@@ -638,7 +638,7 @@ export class LifecycleWatcher {
     frame._page._lifecycleWatchers.add(this);
     this._listeners = [
       helper.addEventListener(this._frame._page, Events.Page.Request, (request: network.Request) => {
-        if (request.frame() === this._frame && request.isNavigationRequest())
+        if (request.frame() === this._frame && request.isNavigationRequest() && (!this._navigationRequest || request.redirectChain().includes(this._navigationRequest)))
           this._navigationRequest = request;
       }),
     ];
@@ -681,7 +681,7 @@ export class LifecycleWatcher {
   }
 
   navigationResponse(): Promise<network.Response | null> {
-    return this._navigationRequest ? this._navigationRequest._waitForFinishedResponse() : null;
+    return this._navigationRequest ? this._navigationRequest._waitForFinished() : null;
   }
 
   private _createTimeoutPromise(timeout: number): Promise<Error | null> {
