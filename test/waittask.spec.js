@@ -216,7 +216,7 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
       await frame.waitForSelector('div');
     });
 
-    fit.skip(FFOX)('should work with removed MutationObserver', async({page, server}) => {
+    it.skip(FFOX)('should work with removed MutationObserver', async({page, server}) => {
       await page.evaluate(() => delete window.MutationObserver);
       const [handle] = await Promise.all([
         page.waitForSelector('.zombo'),
