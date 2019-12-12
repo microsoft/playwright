@@ -29,10 +29,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const result = await page.evaluate(() => 7 * 3);
       expect(result).toBe(21);
     });
-    (bigint ? it.skip(FFOX || WEBKIT) : xit)('should transfer BigInt', async({page, server}) => {
-      const result = await page.evaluate(a => a, BigInt(42));
-      expect(result).toBe(BigInt(42));
-    });
     it('should transfer NaN', async({page, server}) => {
       const result = await page.evaluate(a => a, NaN);
       expect(Object.is(result, NaN)).toBe(true);
@@ -134,10 +130,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const result = await page.evaluate(a => a, object);
       expect(result).not.toBe(object);
       expect(result).toEqual(object);
-    });
-    (bigint ? it.skip(FFOX || WEBKIT) : xit)('should return BigInt', async({page, server}) => {
-      const result = await page.evaluate(() => BigInt(42));
-      expect(result).toBe(BigInt(42));
     });
     it('should return NaN', async({page, server}) => {
       const result = await page.evaluate(() => NaN);
