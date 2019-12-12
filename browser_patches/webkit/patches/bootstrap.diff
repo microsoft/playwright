@@ -2255,7 +2255,7 @@ index 4fd8c0b1016..9954be9e35a 100644
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-index 8c4a104da04..be7c4c35b70 100644
+index 8c4a104da04..0481143531b 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 @@ -40,6 +40,7 @@
@@ -2302,10 +2302,13 @@ index 8c4a104da04..be7c4c35b70 100644
  }
  
  InjectedScript PageRuntimeAgent::injectedScriptForEval(ErrorString& errorString, const int* executionContextId)
-@@ -135,33 +140,38 @@ void PageRuntimeAgent::reportExecutionContextCreation()
-         if (!frame->script().canExecuteScripts(NotAboutToExecuteScript))
-             continue;
+@@ -132,36 +137,38 @@ void PageRuntimeAgent::reportExecutionContextCreation()
  
+     Vector<std::pair<JSC::JSGlobalObject*, SecurityOrigin*>> isolatedContexts;
+     for (Frame* frame = &m_inspectedPage.mainFrame(); frame; frame = frame->tree().traverseNext()) {
+-        if (!frame->script().canExecuteScripts(NotAboutToExecuteScript))
+-            continue;
+-
 -        String frameId = pageAgent->frameId(frame);
 -
          JSC::JSGlobalObject* scriptState = mainWorldExecState(frame);
@@ -2351,7 +2354,7 @@ index 8c4a104da04..be7c4c35b70 100644
          .setFrameId(frameId)
          .release());
  }
-@@ -178,4 +188,13 @@ void PageRuntimeAgent::callFunctionOn(ErrorString& errorString, const String& ob
+@@ -178,4 +185,13 @@ void PageRuntimeAgent::callFunctionOn(ErrorString& errorString, const String& ob
      InspectorRuntimeAgent::callFunctionOn(errorString, objectId, expression, optionalArguments, doNotPauseOnExceptionsAndMuteConsole, returnByValue, generatePreview, emulateUserGesture, result, wasThrown);
  }
  
@@ -2390,7 +2393,7 @@ index f38828044b3..3ab4c8cd00a 100644
  
      Page& m_inspectedPage;
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index e105be0ba92..2557eacc4b7 100644
+index e105be0ba92..03a5969987d 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1179,6 +1179,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -2401,6 +2404,35 @@ index e105be0ba92..2557eacc4b7 100644
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client.dispatchDidPopStateWithinPage();
+@@ -3945,9 +3946,6 @@ String FrameLoader::referrer() const
+ 
+ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+ {
+-    if (!m_frame.script().canExecuteScripts(NotAboutToExecuteScript))
+-        return;
+-
+     Vector<Ref<DOMWrapperWorld>> worlds;
+     ScriptController::getAllWorlds(worlds);
+     for (auto& world : worlds)
+@@ -3956,13 +3954,12 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+ 
+ void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
+ {
+-    if (!m_frame.script().canExecuteScripts(NotAboutToExecuteScript) || !m_frame.windowProxy().existingJSWindowProxy(world))
+-        return;
++    if (m_frame.script().canExecuteScripts(NotAboutToExecuteScript) && m_frame.windowProxy().existingJSWindowProxy(world)) {
++        m_client.dispatchDidClearWindowObjectInWorld(world);
+ 
+-    m_client.dispatchDidClearWindowObjectInWorld(world);
+-
+-    if (Page* page = m_frame.page())
+-        page->inspectorController().didClearWindowObjectInWorld(m_frame, world);
++        if (Page* page = m_frame.page())
++            page->inspectorController().didClearWindowObjectInWorld(m_frame, world);
++    }
+ 
+     InspectorInstrumentation::didClearWindowObjectInWorld(m_frame, world);
+ }
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
 index 22cc1fd15bc..4b0e232a19c 100644
 --- a/Source/WebCore/page/Frame.cpp
