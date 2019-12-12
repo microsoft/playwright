@@ -45,9 +45,9 @@ while true; do
   iteration=$(( iteration + 1 ))
   echo "== ITERATION ${iteration} =="
   git pull origin master
-  ../checkout_build_archive_upload.sh firefox
+  ../checkout_build_archive_upload.sh firefox || true
   git pull origin master
-  ../checkout_build_archive_upload.sh firefox --win64
+  ../checkout_build_archive_upload.sh firefox --win64 || true
   newTimestamp=$(date +%s)
   delta=$(( 300 - newTimestamp + timestamp ));
   if (( delta > 0 )); then
