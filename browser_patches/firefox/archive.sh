@@ -43,6 +43,9 @@ if [[ $OBJ_FOLDER == "" ]]; then
   echo "ERROR: cannot find obj-* folder in the checkout/. Did you build?"
   exit 1;
 fi
+
+./mach package
+
 if ! [[ -d $OBJ_FOLDER/dist/firefox ]]; then
   echo "ERROR: cannot find $OBJ_FOLDER/dist/firefox folder in the checkout/. Did you build?"
   exit 1;

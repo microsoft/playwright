@@ -37,4 +37,3 @@ else
 fi
 
 ./mach build
-./mach package
