@@ -70,7 +70,11 @@ change `<account-name>` and `<account-key>` with relevant keys/names.
 
 > **NOTE:** No spaces or quotes are allowed here!
 
-### 4. Checkout PlayWright to /c/
+### 4. Disable git autocrlf
+
+Run `c:\mozilla-build\start-shell.bat` and run `git config --global core.autocrlf false`.
+
+### 5. Checkout PlayWright to /c/
 
 Run `c:\mozilla-build\start-shell.bat` and checkout PlayWright repo to `/c/playwright`.
 
