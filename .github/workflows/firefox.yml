@@ -1,4 +1,4 @@
-name: Node CI
+name: Firefox Tests
 
 on: [push, pull_request]
 
@@ -19,15 +19,12 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: install required packages
       run: |
-        sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0
         sudo apt-get install xvfb
 
     - name: npm install, build, and test
       run: |
         npm install
         npm run build
-        xvfb-run --auto-servernum npm run unit
         xvfb-run --auto-servernum npm run funit
-        xvfb-run --auto-servernum npm run wunit
       env:
         CI: true
