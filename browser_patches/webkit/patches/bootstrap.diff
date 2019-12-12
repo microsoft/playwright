@@ -7287,10 +7287,10 @@ index 4c5147dcd38..c91a7baea1e 100644
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
          GEnumClass *enumClass = g_type_class_ref(WEBKIT_TYPE_COOKIE_ACCEPT_POLICY);
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.h b/Tools/MiniBrowser/mac/AppDelegate.h
-index 45ef1a6424e..6e015fcb8bc 100644
+index 45ef1a6424e..30964dbd4cc 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.h
 +++ b/Tools/MiniBrowser/mac/AppDelegate.h
-@@ -23,10 +23,22 @@
+@@ -23,10 +23,23 @@
   * THE POSSIBILITY OF SUCH DAMAGE.
   */
  
@@ -7311,11 +7311,12 @@ index 45ef1a6424e..6e015fcb8bc 100644
 +    NSMutableSet *_browserContexts;
 +    bool _headless;
 +    NSMutableSet *_dialogs;
++    NSString* _initialURL;
      ExtensionManagerWindowController *_extensionManagerWindowController;
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724f..7a3c798da52 100644
+index b6af4ef724f..0afe6ceec4f 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
 @@ -33,7 +33,9 @@
@@ -7328,7 +7329,7 @@ index b6af4ef724f..7a3c798da52 100644
  #import <WebKit/WebKit.h>
  #import <WebKit/_WKExperimentalFeature.h>
  #import <WebKit/_WKInternalDebugFeature.h>
-@@ -52,16 +54,44 @@ @interface NSApplication (TouchBar)
+@@ -52,16 +54,53 @@ @interface NSApplication (TouchBar)
  @property (getter=isAutomaticCustomizeTouchBarMenuItemEnabled) BOOL automaticCustomizeTouchBarMenuItemEnabled;
  @end
  
@@ -7353,10 +7354,20 @@ index b6af4ef724f..7a3c798da52 100644
      self = [super init];
 -    if (self) {
 -        _browserWindowControllers = [[NSMutableSet alloc] init];
+-        _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
 +    if (!self)
 +        return nil;
 +
++    _initialURL = nil;
 +    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
++    NSRange subargs = NSMakeRange(1, [arguments count] - 1);
++    NSArray *subArray = [arguments subarrayWithRange:subargs];
++
++    for (NSString *argument in subArray) {
++        if (![argument hasPrefix:@"--"])
++            _initialURL = argument;
+     }
+ 
 +    _headless = [arguments containsObject: @"--headless"];
 +    _browserContexts = [[NSMutableSet alloc] init];
 +
@@ -7367,16 +7378,15 @@ index b6af4ef724f..7a3c798da52 100644
 +                                                       reason:ActivityReason];
 +        _dialogs = [[NSMutableSet alloc] init];
 +    } else {
-         _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
++        _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
 +        _browserWindowControllers = [[NSMutableSet alloc] init];
-     }
--
++    }
 +    if ([arguments containsObject: @"--inspector-pipe"])
 +        [_WKBrowserInspector initializeRemoteInspectorPipe:self headless:_headless];
      return self;
  }
  
-@@ -88,7 +118,7 @@ - (void)awakeFromNib
+@@ -88,7 +127,7 @@ - (void)awakeFromNib
          configuration.networkCacheSpeculativeValidationEnabled = YES;
          dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
      }
@@ -7385,7 +7395,7 @@ index b6af4ef724f..7a3c798da52 100644
      return dataStore;
  }
  
-@@ -103,13 +133,18 @@ - (void)awakeFromNib
+@@ -103,13 +142,18 @@ - (void)awakeFromNib
          configuration.preferences._developerExtrasEnabled = YES;
          configuration.preferences._mediaDevicesEnabled = YES;
          configuration.preferences._mockCaptureDevicesEnabled = YES;
@@ -7405,7 +7415,7 @@ index b6af4ef724f..7a3c798da52 100644
          configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
  
          NSArray<_WKExperimentalFeature *> *experimentalFeatures = [WKPreferences _experimentalFeatures];
-@@ -145,6 +180,9 @@ - (void)awakeFromNib
+@@ -145,6 +189,9 @@ - (void)awakeFromNib
  
  - (BrowserWindowController *)createBrowserWindowController:(id)sender
  {
@@ -7415,7 +7425,7 @@ index b6af4ef724f..7a3c798da52 100644
      BrowserWindowController *controller = nil;
      BOOL useWebKit2 = NO;
      BOOL makeEditable = NO;
-@@ -158,9 +196,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
+@@ -158,9 +205,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
      }
  
      if (!useWebKit2)
@@ -7427,7 +7437,7 @@ index b6af4ef724f..7a3c798da52 100644
  
      if (makeEditable)
          controller.editable = YES;
-@@ -185,6 +223,9 @@ - (IBAction)newWindow:(id)sender
+@@ -185,6 +232,9 @@ - (IBAction)newWindow:(id)sender
  
  - (IBAction)newPrivateWindow:(id)sender
  {
@@ -7437,7 +7447,7 @@ index b6af4ef724f..7a3c798da52 100644
      WKWebViewConfiguration *privateConfiguraton = [defaultConfiguration() copy];
      privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
  
-@@ -214,6 +255,11 @@ - (void)browserWindowWillClose:(NSWindow *)window
+@@ -214,16 +264,19 @@ - (void)browserWindowWillClose:(NSWindow *)window
  
  - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
  {
@@ -7449,7 +7459,26 @@ index b6af4ef724f..7a3c798da52 100644
      WebHistory *webHistory = [[WebHistory alloc] init];
      [WebHistory setOptionalSharedHistory:webHistory];
      [webHistory release];
-@@ -255,6 +301,9 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+ 
+     [self _updateNewWindowKeyEquivalents];
+-
+-    if ([SettingsController shared].createEditorByDefault)
+-        [self newEditorWindow:self];
+-    else
++    if (!_initialURL)
+         [self newWindow:self];
++    _initialURL = nil;
+ }
+ 
+ - (BrowserWindowController *)frontmostBrowserWindowController
+@@ -249,12 +302,15 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+         return NO;
+ 
+     [controller.window makeKeyAndOrderFront:self];
+-    [controller loadURLString:[NSURL fileURLWithPath:filename].absoluteString];
++    [controller loadURLString:_initialURL ? _initialURL : [NSURL fileURLWithPath:filename].absoluteString];
+     return YES;
+ }
  
  - (IBAction)openDocument:(id)sender
  {
@@ -7459,7 +7488,7 @@ index b6af4ef724f..7a3c798da52 100644
      BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
  
      if (browserWindowController) {
-@@ -284,6 +333,9 @@ - (IBAction)openDocument:(id)sender
+@@ -284,6 +340,9 @@ - (IBAction)openDocument:(id)sender
  
  - (void)didChangeSettings
  {
@@ -7469,7 +7498,7 @@ index b6af4ef724f..7a3c798da52 100644
      [self _updateNewWindowKeyEquivalents];
  
      // Let all of the BrowserWindowControllers know that a setting changed, so they can attempt to dynamically update.
-@@ -312,6 +364,8 @@ - (void)_updateNewWindowKeyEquivalents
+@@ -312,6 +371,8 @@ - (void)_updateNewWindowKeyEquivalents
  
  - (IBAction)showExtensionsManager:(id)sender
  {
@@ -7478,7 +7507,7 @@ index b6af4ef724f..7a3c798da52 100644
      [_extensionManagerWindowController showWindow:sender];
  }
  
-@@ -345,4 +399,147 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +406,148 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
@@ -7526,7 +7555,8 @@ index b6af4ef724f..7a3c798da52 100644
 +
 +    webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 +    [window.contentView addSubview:webView];
-+    NSURL *url = [NSURL _webkit_URLWithUserTypedString:@"about:blank"];
++    NSURL *url = [NSURL _webkit_URLWithUserTypedString:_initialURL ? _initialURL : @"about:blank"];
++    _initialURL = nil;
 +    [webView loadRequest:[NSURLRequest requestWithURL:url]];
 +    [_headlessWindows addObject:window];
 +    webView.UIDelegate = self;
