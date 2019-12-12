@@ -553,7 +553,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   private _requestFailed(request: network.Request) {
-    if (request.isNavigationRequest() && request.failure().errorText !== 'Load request cancelled') {
+    if (request.isNavigationRequest() && !request.failure().errorText.includes('cancelled')) {
       request.frame()._onExpectedNewDocumentNavigation('fake-loader-id', request.url());
       request.frame()._onAbortedNewDocumentNavigation('fake-loader-id', request.failure().errorText);
     }

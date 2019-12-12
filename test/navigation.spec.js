@@ -106,24 +106,32 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       page.on('requestfailed', request => expect(request).toBeTruthy());
       let error = null;
       await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-      if (CHROME)
+      if (CHROME) {
         expect(error.message).toContain('net::ERR_CERT_AUTHORITY_INVALID');
-      else if (WEBKIT)
-        expect(error.message).toContain('Unacceptable TLS certificate');
-      else
+      } else if (WEBKIT) {
+        if (process.platform === 'darwin')
+          expect(error.message).toContain('The certificate for this server is invalid');
+        else
+          expect(error.message).toContain('Unacceptable TLS certificate');
+      } else {
         expect(error.message).toContain('SSL_ERROR_UNKNOWN');
+      }
     });
     it('should fail when navigating to bad SSL after redirects', async({page, server, httpsServer}) => {
       server.setRedirect('/redirect/1.html', '/redirect/2.html');
       server.setRedirect('/redirect/2.html', '/empty.html');
       let error = null;
       await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
-      if (CHROME)
+      if (CHROME) {
         expect(error.message).toContain('net::ERR_CERT_AUTHORITY_INVALID');
-      else if (WEBKIT)
-        expect(error.message).toContain('Unacceptable TLS certificate');
-      else
+      } else if (WEBKIT) {
+        if (process.platform === 'darwin')
+          expect(error.message).toContain('The certificate for this server is invalid');
+        else
+          expect(error.message).toContain('Unacceptable TLS certificate');
+      } else {
         expect(error.message).toContain('SSL_ERROR_UNKNOWN');
+      }
     });
     xit('should throw if networkidle is passed as an option', async({page, server}) => {
       let error = null;
@@ -136,7 +144,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       if (CHROME)
         expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
       else if (WEBKIT)
-        expect(error.message).toContain('Could not connect: Connection refused');
+        expect(error.message).toContain('Could not connect');
       else
         expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
     });
