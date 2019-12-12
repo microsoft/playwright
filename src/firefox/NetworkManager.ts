@@ -111,10 +111,10 @@ export class NetworkManager extends EventEmitter {
     // Keep redirected requests in the map for future reference in redirectChain.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
-      response._bodyLoaded(new Error('Response body is unavailable for redirect responses'));
+      response._requestFinished(new Error('Response body is unavailable for redirect responses'));
     } else {
       this._requests.delete(request._id);
-      response._bodyLoaded();
+      response._requestFinished();
     }
     this.emit(NetworkManagerEvents.RequestFinished, request.request);
   }
@@ -125,7 +125,7 @@ export class NetworkManager extends EventEmitter {
       return;
     this._requests.delete(request._id);
     if (request.request.response())
-      request.request.response()._bodyLoaded();
+      request.request.response()._requestFinished();
     request.request._setFailureText(event.errorCode);
     this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }

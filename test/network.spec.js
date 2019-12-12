@@ -234,14 +234,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(remoteAddress.port).toBe(server.PORT);
     });
 
-    // FIXME: requires request interception.
-    it.skip(WEBKIT)('Page.Events.RequestFailed', async({page, server}) => {
-      await page.interception.enable();
-      page.on('request', request => {
-        if (request.url().endsWith('css'))
-          page.interception.abort(request);
-        else
-          page.interception.continue(request);
+    it.skip(FFOX)('Page.Events.RequestFailed', async({page, server}) => {
+      server.setRoute('/one-style.css', (req, res) => {
+        req.socket.write('deadbeef');
+        req.socket.end();
       });
       const failedRequests = [];
       page.on('requestfailed', request => failedRequests.push(request));
@@ -250,14 +246,15 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(failedRequests[0].url()).toContain('one-style.css');
       expect(failedRequests[0].response()).toBe(null);
       expect(failedRequests[0].resourceType()).toBe('stylesheet');
-      if (CHROME || WEBKIT)
-        expect(failedRequests[0].failure().errorText).toBe('net::ERR_FAILED');
+      if (CHROME)
+        expect(failedRequests[0].failure().errorText).toBe('net::ERR_INVALID_HTTP_RESPONSE');
+      else if (WEBKIT)
+        expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
       else
         expect(failedRequests[0].failure().errorText).toBe('NS_ERROR_FAILURE');
       expect(failedRequests[0].frame()).toBeTruthy();
     });
-    // FIXME: WebKit requestfinished comes after goto.
-    it.skip(WEBKIT)('Page.Events.RequestFinished', async({page, server}) => {
+    it('Page.Events.RequestFinished', async({page, server}) => {
       const requests = [];
       page.on('requestfinished', request => requests.push(request));
       await page.goto(server.EMPTY_PAGE);
@@ -267,7 +264,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(requests[0].frame() === page.mainFrame()).toBe(true);
       expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
     });
-    it.skip(WEBKIT)('should fire events in proper order', async({page, server}) => {
+    it('should fire events in proper order', async({page, server}) => {
       const events = [];
       page.on('request', request => events.push('request'));
       page.on('response', response => events.push('response'));
@@ -275,7 +272,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.EMPTY_PAGE);
       expect(events).toEqual(['request', 'response', 'requestfinished']);
     });
-    it.skip(WEBKIT)('should support redirects', async({page, server}) => {
+    it('should support redirects', async({page, server}) => {
       const events = [];
       page.on('request', request => events.push(`${request.method()} ${request.url()}`));
       page.on('response', response => events.push(`${response.status()} ${response.url()}`));
@@ -297,7 +294,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const redirectChain = response.request().redirectChain();
       expect(redirectChain.length).toBe(1);
       expect(redirectChain[0].url()).toContain('/foo.html');
-      expect(redirectChain[0].response().remoteAddress().port).toBe(server.PORT);
     });
   });
 

@@ -115,7 +115,7 @@ export class NetworkManager extends EventEmitter {
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
     const response = this._createResponse(request, responsePayload);
     request.request._redirectChain.push(request.request);
-    response._bodyLoaded(new Error('Response body is unavailable for redirect responses'));
+    response._requestFinished(new Error('Response body is unavailable for redirect responses'));
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
     this.emit(NetworkManagerEvents.Response, response);
@@ -141,7 +141,7 @@ export class NetworkManager extends EventEmitter {
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
     if (request.request.response())
-      request.request.response()._bodyLoaded();
+      request.request.response()._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
     this.emit(NetworkManagerEvents.RequestFinished, request.request);
@@ -156,7 +156,7 @@ export class NetworkManager extends EventEmitter {
     request.request._setFailureText(event.errorText);
     const response = request.request.response();
     if (response)
-      response._bodyLoaded();
+      response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
     this.emit(NetworkManagerEvents.RequestFailed, request.request);

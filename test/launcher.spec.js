@@ -23,7 +23,7 @@ const mkdtempAsync = helper.promisify(fs.mkdtemp);
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 const utils = require('./utils');
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -45,7 +45,8 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
-      it('should set the default viewport', async() => {
+      // Fails on GTK due to async setViewport.
+      it.skip(WEBKIT)('should set the default viewport', async() => {
         const options = Object.assign({}, defaultBrowserOptions, {
           defaultViewport: {
             width: 456,
