@@ -246,12 +246,16 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(failedRequests[0].url()).toContain('one-style.css');
       expect(failedRequests[0].response()).toBe(null);
       expect(failedRequests[0].resourceType()).toBe('stylesheet');
-      if (CHROME)
+      if (CHROME) {
         expect(failedRequests[0].failure().errorText).toBe('net::ERR_INVALID_HTTP_RESPONSE');
-      else if (WEBKIT)
-        expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
-      else
+      } else if (WEBKIT) {
+        if (process.platform === 'darwin')
+          expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
+        else
+          expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
+      } else {
         expect(failedRequests[0].failure().errorText).toBe('NS_ERROR_FAILURE');
+      }
       expect(failedRequests[0].frame()).toBeTruthy();
     });
     it('Page.Events.RequestFinished', async({page, server}) => {
