@@ -146,7 +146,8 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   disconnectFromTarget() {
     for (const context of this._contextIdToContext.values()) {
       (context._delegate as ExecutionContextDelegate)._dispose();
-      context.frame()._contextDestroyed(context);
+      if (context.frame())
+        context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
     }
     // this._mainFrame = null;
   }
@@ -250,7 +251,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
         const delegate = context._delegate as ExecutionContextDelegate;
         delegate._dispose();
         this._contextIdToContext.delete(delegate._contextId);
-        frame._contextDestroyed(context);
+        frame._contextDestroyed(context as dom.FrameExecutionContext);
       }
     }
 
@@ -289,15 +290,17 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const frame = this._frames.get(frameId) || null;
     if (!frame)
       return;
-    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, contextPayload));
+    const delegate = new ExecutionContextDelegate(this._session, contextPayload);
     if (frame) {
-      context._domWorld = new dom.DOMWorld(context, frame);
+      const context = new dom.FrameExecutionContext(delegate, frame);
       if (contextPayload.isPageContext)
         frame._contextCreated('main', context);
       else if (contextPayload.name === UTILITY_WORLD_NAME)
         frame._contextCreated('utility', context);
+      this._contextIdToContext.set(contextPayload.id, context);
+    } else {
+      this._contextIdToContext.set(contextPayload.id, new js.ExecutionContext(delegate));
     }
-    this._contextIdToContext.set(contextPayload.id, context);
   }
 
   executionContextById(contextId: number): js.ExecutionContext {
@@ -593,12 +596,12 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     await this._session.send('DOM.setInputFiles', { objectId, files });
   }
 
-  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const result = await this._session.send('DOM.resolveNode', {
       objectId: toRemoteObject(handle).objectId,
-      executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId
+      executionContextId: (to._delegate as ExecutionContextDelegate)._contextId
     });
-    return to.context._createHandle(result.object) as dom.ElementHandle<T>;
+    return to._createHandle(result.object) as dom.ElementHandle<T>;
   }
 }
 

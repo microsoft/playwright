@@ -15,14 +15,13 @@ export interface ExecutionContextDelegate {
 
 export class ExecutionContext {
   readonly _delegate: ExecutionContextDelegate;
-  _domWorld?: dom.DOMWorld;
 
   constructor(delegate: ExecutionContextDelegate) {
     this._delegate = delegate;
   }
 
   frame(): frames.Frame | null {
-    return this._domWorld ? this._domWorld.frame : null;
+    return null;
   }
 
   evaluate: types.Evaluate = (pageFunction, ...args) => {
@@ -34,7 +33,7 @@ export class ExecutionContext {
   }
 
   _createHandle(remoteObject: any): JSHandle {
-    return (this._domWorld && this._domWorld.createHandle(remoteObject)) || new JSHandle(this, remoteObject);
+    return new JSHandle(this, remoteObject);
   }
 }
 
