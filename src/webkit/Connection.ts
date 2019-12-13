@@ -18,7 +18,7 @@
 import {assert, debugError} from '../helper';
 import * as debug from 'debug';
 import { EventEmitter } from 'events';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SerializingTransport } from '../transport';
 import { Protocol } from './protocol';
 
 const debugProtocol = debug('playwright:protocol');
@@ -31,21 +31,15 @@ export const ConnectionEvents = {
 export class Connection extends EventEmitter {
   _lastId = 0;
   private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject:  (e: Error) => void, error: Error, method: string}>();
-  private readonly _delay: number;
-  private readonly _transport: ConnectionTransport;
+  private readonly _transport: SerializingTransport;
   private readonly _sessions = new Map<string, TargetSession>();
-  private _incomingMessageQueue: string[] = [];
-  private _dispatchTimerId?: NodeJS.Timer;
-  private _sameDispatchTask: boolean = false;
 
   _closed = false;
 
   constructor(transport: ConnectionTransport, delay: number | undefined = 0) {
     super();
-    this._delay = delay;
-
-    this._transport = transport;
-    this._transport.onmessage = this._onMessage.bind(this);
+    this._transport = new SerializingTransport(transport);
+    this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
   }
 
@@ -69,52 +63,6 @@ export class Connection extends EventEmitter {
     debugProtocol('SEND ► ' + message);
     this._transport.send(message);
     return id;
-  }
-
-  private _onMessage(message: string) {
-    if (this._sameDispatchTask || this._incomingMessageQueue.length || this._delay) {
-      this._enqueueMessage(message);
-    } else {
-      this._sameDispatchTask = true;
-      // This is for the case when several messages come in a batch and read
-      // in a loop by transport ending up in the same task.
-      Promise.resolve().then(() => this._sameDispatchTask = false);
-      this._dispatchMessage(message);
-    }
-  }
-
-  private _enqueueMessage(message: string) {
-    this._incomingMessageQueue.push(message);
-    this._scheduleQueueDispatch();
-  }
-
-  private _enqueueProvisionalMessages(messages: string[]) {
-    // Insert provisional messages at the point of "Target.didCommitProvisionalTarget" message.
-    this._incomingMessageQueue = messages.concat(this._incomingMessageQueue);
-    this._scheduleQueueDispatch();
-  }
-
-  private _scheduleQueueDispatch() {
-    if (this._dispatchTimerId)
-      return;
-    if (!this._incomingMessageQueue.length)
-      return;
-    const delay = this._delay || 0;
-    this._dispatchTimerId = setTimeout(() => {
-      this._dispatchTimerId = undefined;
-      this._dispatchOneMessageFromQueue();
-    }, delay);
-  }
-
-  private _dispatchOneMessageFromQueue() {
-    if (this._closed)
-      return;
-    const message = this._incomingMessageQueue.shift();
-    try {
-      this._dispatchMessage(message);
-    } finally {
-      this._scheduleQueueDispatch();
-    }
   }
 
   private _dispatchMessage(message: string) {
@@ -170,7 +118,7 @@ export class Connection extends EventEmitter {
       if (!oldSession)
         throw new Error('Unknown old target: ' + oldTargetId);
       oldSession._swappedOut = true;
-      this._enqueueProvisionalMessages(newSession._takeProvisionalMessagesAndCommit());
+      this._transport.injectMessagesInPlace(newSession._takeProvisionalMessagesAndCommit());
     }
   }
 

@@ -17,14 +17,14 @@
 
 import * as os from 'os';
 import * as path from 'path';
-import {Connection} from './Connection';
-import {Browser} from './Browser';
-import {BrowserFetcher, BrowserFetcherOptions} from '../browserFetcher';
+import { Connection } from './Connection';
+import { Browser } from './Browser';
+import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import * as fs from 'fs';
 import * as util from 'util';
-import {debugError, assert} from '../helper';
-import {TimeoutError} from '../errors';
-import {WebSocketTransport} from './WebSocketTransport';
+import { debugError, assert } from '../helper';
+import { TimeoutError } from '../errors';
+import { SerializingTransport, WebSocketTransport } from '../transport';
 import { launchProcess, waitForLine } from '../processLauncher';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -129,7 +129,7 @@ export class Launcher {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
       const match = await waitForLine(launched.process, launched.process.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
       const url = match[1];
-      const transport = await WebSocketTransport.create(url);
+      const transport = new SerializingTransport(await WebSocketTransport.create(url));
       connection = new Connection(url, transport, slowMo);
       const browser = await Browser.create(connection, defaultViewport, launched.process, launched.gracefullyClose);
       if (ignoreHTTPSErrors)

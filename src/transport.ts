@@ -117,3 +117,92 @@ export class PipeTransport implements ConnectionTransport {
     helper.removeEventListeners(this._eventListeners);
   }
 }
+
+export class SerializingTransport {
+  private readonly _delay: number;
+  private readonly _delegate: ConnectionTransport;
+  private _incomingMessageQueue: string[] = [];
+  private _dispatchTimerId?: NodeJS.Timer;
+  private _sameDispatchTask: boolean = false;
+  private _closed = false;
+
+  onmessage?: (message: string) => void;
+  onclose?: () => void;
+
+  constructor(transport: ConnectionTransport, delay: number | undefined = 0) {
+    this._delay = delay;
+    this._delegate = transport;
+    this._delegate.onmessage = this._onMessage.bind(this);
+    this._delegate.onclose = this._onClose.bind(this);
+  }
+
+  private _onMessage(message: string) {
+    if (this._sameDispatchTask || this._incomingMessageQueue.length || this._delay) {
+      this._enqueueMessage(message);
+    } else {
+      this._sameDispatchTask = true;
+      // This is for the case when several messages come in a batch and read
+      // in a loop by transport ending up in the same task.
+      Promise.resolve().then(() => this._sameDispatchTask = false);
+      this._dispatchMessage(message);
+    }
+  }
+
+  private _enqueueMessage(message: string) {
+    this._incomingMessageQueue.push(message);
+    this._scheduleQueueDispatch();
+  }
+
+  injectMessagesInPlace(messages: string[]) {
+    // Insert provisional messages at the point of "Target.didCommitProvisionalTarget" message.
+    this._incomingMessageQueue = messages.concat(this._incomingMessageQueue);
+    this._scheduleQueueDispatch();
+  }
+
+  private _scheduleQueueDispatch() {
+    if (this._dispatchTimerId)
+      return;
+    if (!this._incomingMessageQueue.length)
+      return;
+    const delay = this._delay || 0;
+    this._dispatchTimerId = setTimeout(() => {
+      this._dispatchTimerId = undefined;
+      this._dispatchOneMessageFromQueue();
+    }, delay);
+  }
+
+  private _dispatchOneMessageFromQueue() {
+    if (this._closed)
+      return;
+    const message = this._incomingMessageQueue.shift();
+    try {
+      this._dispatchMessage(message);
+    } finally {
+      this._scheduleQueueDispatch();
+    }
+  }
+
+  private _dispatchMessage(message: string) {
+    if (this.onmessage)
+      this.onmessage(message);
+  }
+
+  private _onClose() {
+    if (this._closed)
+      return;
+    if (this.onclose)
+      this.onclose();
+    this._closed = true;
+    this._delegate.onmessage = null;
+    this._delegate.onclose = null;
+  }
+
+  send(s: string) {
+    this._delegate.send(s); 
+  }
+
+  close() {
+    this._closed = true;
+    this._delegate.close();    
+  }
+}
