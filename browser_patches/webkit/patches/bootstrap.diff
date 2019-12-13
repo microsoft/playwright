@@ -325,10 +325,10 @@ index 1eb7abb2fa2..5a71d29af64 100644
      bool m_shouldPauseOnStart { false };
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
-index 00000000000..063e5e1346a
+index 00000000000..a51c3e1a6fe
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,114 @@
 +{
 +    "domain": "Browser",
 +    "availability": ["web"],
@@ -403,6 +403,14 @@ index 00000000000..063e5e1346a
 +            ],
 +            "returns": [
 +                { "name": "targetId", "type": "string", "description": "Unique identifier for the page target." }
++            ]
++        },
++        {
++            "name": "setIgnoreCertificateErrors",
++            "description": "Change whether all certificate errors should be ignored.",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "ignore", "type": "boolean" }
 +            ]
 +        },
 +        {
@@ -3086,7 +3094,7 @@ index c32141eba80..ccd58d67e21 100644
  void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
  {
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
-index cf0ec4de567..f266cd16e24 100644
+index cf0ec4de567..a9c3a7d2db3 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.h
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.h
 @@ -74,6 +74,7 @@ class SessionID;
@@ -3108,11 +3116,49 @@ index cf0ec4de567..f266cd16e24 100644
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
      void clearPrevalentResource(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
      void clearUserInteraction(PAL::SessionID, const RegistrableDomain&, CompletionHandler<void()>&&);
+@@ -311,6 +316,7 @@ public:
+ 
+ #if PLATFORM(COCOA)
+     NetworkHTTPSUpgradeChecker& networkHTTPSUpgradeChecker();
++    bool ignoreTLSErrors() const { return m_ignoreTLSErrors; }
+ #endif
+ 
+     const String& uiProcessBundleIdentifier() const { return m_uiProcessBundleIdentifier; }
+@@ -418,6 +424,9 @@ private:
+     void syncAllCookies();
+     void didSyncAllCookies();
+ 
++#if PLATFORM(COCOA)
++    void setIgnoreTLSErrors(bool);
++#endif
+ #if USE(SOUP)
+     void setIgnoreTLSErrors(bool);
+     void userPreferredLanguagesChanged(const Vector<String>&);
+@@ -567,6 +576,7 @@ private:
+ 
+ #if PLATFORM(COCOA)
+     std::unique_ptr<NetworkHTTPSUpgradeChecker> m_networkHTTPSUpgradeChecker;
++    bool m_ignoreTLSErrors { false };
+ #endif
+ 
+ #if ENABLE(RESOURCE_LOAD_STATISTICS)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-index 2ad9881fcf7..24f9b90f6f1 100644
+index 2ad9881fcf7..571f21cfab8 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-@@ -80,6 +80,10 @@ messages -> NetworkProcess LegacyReceiver {
+@@ -27,8 +27,10 @@ messages -> NetworkProcess LegacyReceiver {
+     # Creates a connection for communication with a WebProcess
+     CreateNetworkConnectionToWebProcess(WebCore::ProcessIdentifier processIdentifier, PAL::SessionID sessionID) -> (Optional<IPC::Attachment> connectionIdentifier) Async
+ 
+-#if USE(SOUP)
++#if USE(SOUP) || PLATFORM(COCOA)
+     SetIgnoreTLSErrors(bool ignoreTLSErrors)
++#endif
++#if USE(SOUP)
+     UserPreferredLanguagesChanged(Vector<String> languages)
+     SetNetworkProxySettings(struct WebCore::SoupNetworkProxySettings settings)
+     PrefetchDNS(String hostname)
+@@ -80,6 +82,10 @@ messages -> NetworkProcess LegacyReceiver {
      PrepareToSuspend(bool isSuspensionImminent) -> () Async
      ProcessDidResume()
  
@@ -3123,6 +3169,90 @@ index 2ad9881fcf7..24f9b90f6f1 100644
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
      ClearPrevalentResource(PAL::SessionID sessionID, WebCore::RegistrableDomain resourceDomain) -> () Async
      ClearUserInteraction(PAL::SessionID sessionID, WebCore::RegistrableDomain resourceDomain) -> () Async
+diff --git a/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h b/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h
+index 715ae67fad6..907d85b5bb6 100644
+--- a/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h
++++ b/Source/WebKit/NetworkProcess/NetworkProcessCreationParameters.h
+@@ -78,9 +78,9 @@ struct NetworkProcessCreationParameters {
+ 
+     WebsiteDataStoreParameters defaultDataStoreParameters;
+     
++    bool ignoreTLSErrors { false };
+ #if USE(SOUP)
+     HTTPCookieAcceptPolicy cookieAcceptPolicy { HTTPCookieAcceptPolicy::AlwaysAccept };
+-    bool ignoreTLSErrors { false };
+     Vector<String> languages;
+     WebCore::SoupNetworkProxySettings proxySettings;
+ #endif
+diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm
+index 4af374b7b41..c4309c782cd 100644
+--- a/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm
++++ b/Source/WebKit/NetworkProcess/cocoa/NetworkProcessCocoa.mm
+@@ -91,6 +91,8 @@ void NetworkProcess::platformInitializeNetworkProcessCocoa(const NetworkProcessC
+ #endif
+ #endif
+ 
++    setIgnoreTLSErrors(parameters.ignoreTLSErrors);
++
+     _CFNetworkSetATSContext(parameters.networkATSContext.get());
+ 
+     m_uiProcessBundleIdentifier = parameters.uiProcessBundleIdentifier;
+@@ -216,6 +218,7 @@ void NetworkProcess::syncAllCookies()
+     });
+ }
+ 
++
+ #if HAVE(FOUNDATION_WITH_SAVE_COOKIES_WITH_COMPLETION_HANDLER)
+ static void saveCookies(NSHTTPCookieStorage *cookieStorage, CompletionHandler<void()>&& completionHandler)
+ {
+@@ -246,6 +249,11 @@ void NetworkProcess::platformSyncAllCookies(CompletionHandler<void()>&& completi
+     ALLOW_DEPRECATED_DECLARATIONS_END
+ }
+ 
++void NetworkProcess::setIgnoreTLSErrors(bool ignoreTLSErrors)
++{
++    m_ignoreTLSErrors = ignoreTLSErrors;
++}
++
+ void NetworkProcess::platformPrepareToSuspend(CompletionHandler<void()>&& completionHandler)
+ {
+     completionHandler();
+diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h
+index a801b3f4091..76a639b46bc 100644
+--- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h
++++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.h
+@@ -77,7 +77,7 @@ public:
+     const String& dataConnectionServiceType() const;
+ #endif
+ 
+-    static bool allowsSpecificHTTPSCertificateForHost(const WebCore::AuthenticationChallenge&);
++    bool allowsSpecificHTTPSCertificateForHost(const WebCore::AuthenticationChallenge&);
+ 
+     void continueDidReceiveChallenge(SessionWrapper&, const WebCore::AuthenticationChallenge&, NetworkDataTaskCocoa::TaskIdentifier, NetworkDataTaskCocoa*, CompletionHandler<void(WebKit::AuthenticationChallengeDisposition, const WebCore::Credential&)>&&);
+ 
+diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
+index 3a5bd203935..b5048ad1e8f 100644
+--- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
++++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
+@@ -638,7 +638,7 @@ static inline void processServerTrustEvaluation(NetworkSessionCocoa *session, Se
+     }
+ 
+     if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+-        if (NetworkSessionCocoa::allowsSpecificHTTPSCertificateForHost(challenge))
++        if (sessionCocoa->allowsSpecificHTTPSCertificateForHost(challenge))
+             return completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
+ 
+         // Handle server trust evaluation at platform-level if requested, for performance reasons and to use ATS defaults.
+@@ -1302,6 +1302,9 @@ static bool certificatesMatch(SecTrustRef trust1, SecTrustRef trust2)
+ 
+ bool NetworkSessionCocoa::allowsSpecificHTTPSCertificateForHost(const WebCore::AuthenticationChallenge& challenge)
+ {
++    if (networkProcess().ignoreTLSErrors())
++        return true;
++
+     const String& host = challenge.protectionSpace().host();
+     NSArray *certificates = [NSURLRequest allowsSpecificHTTPSCertificateForHost:host];
+     if (!certificates)
 diff --git a/Source/WebKit/Shared/API/c/wpe/WebKit.h b/Source/WebKit/Shared/API/c/wpe/WebKit.h
 index 898e30b370d..74945e06fac 100644
 --- a/Source/WebKit/Shared/API/c/wpe/WebKit.h
@@ -4447,6 +4577,32 @@ index f9181865734..81c9f62c489 100644
  void UIDelegate::UIClient::requestStorageAccessConfirm(WebPageProxy&, WebFrameProxy*, const WebCore::RegistrableDomain& requestingDomain, const WebCore::RegistrableDomain& currentDomain, CompletionHandler<void(bool)>&& completionHandler)
  {
      auto delegate = m_uiDelegate.m_delegate.get();
+diff --git a/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
+index bd3657bb087..f8fa8e3db22 100644
+--- a/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
++++ b/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
+@@ -121,6 +121,13 @@ static void registerUserDefaultsIfNeeded()
+     [[NSUserDefaults standardUserDefaults] registerDefaults:registrationDictionary];
+ }
+ 
++void WebProcessPool::setIgnoreTLSErrors(bool ignoreTLSErrors)
++{
++    m_ignoreTLSErrors = ignoreTLSErrors;
++    if (m_networkProcess)
++        m_networkProcess->send(Messages::NetworkProcess::SetIgnoreTLSErrors(m_ignoreTLSErrors), 0);
++}
++
+ void WebProcessPool::updateProcessSuppressionState()
+ {
+     if (m_networkProcess)
+@@ -346,6 +353,7 @@ void WebProcessPool::platformInitializeNetworkProcess(NetworkProcessCreationPara
+         }
+     }
+ 
++    parameters.ignoreTLSErrors = m_ignoreTLSErrors;
+     parameters.enableLegacyTLS = false;
+     if (id value = [defaults objectForKey:@"WebKitEnableLegacyTLS"])
+         parameters.enableLegacyTLS = [value boolValue];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 index 9693809e34e..b45a4e7aa61 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
@@ -4519,10 +4675,10 @@ index d7695088e7c..4fe533572b6 100644
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 00000000000..a9729572b4f
+index 00000000000..e0474a86aed
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,263 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4648,6 +4804,14 @@ index 00000000000..a9729572b4f
 +    if (page == nullptr)
 +        return;
 +    *targetID = WebPageInspectorTarget::toTargetID(page->webPageID());
++}
++
++void InspectorBrowserAgent::setIgnoreCertificateErrors(Inspector::ErrorString& errorString, const String* browserContextID, bool ignore)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    browserContext.processPool->setIgnoreTLSErrors(ignore);
 +}
 +
 +void InspectorBrowserAgent::getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&& callback) {
@@ -4780,10 +4944,10 @@ index 00000000000..a9729572b4f
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 00000000000..a0d439f661f
+index 00000000000..5f11df16618
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,64 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -4830,6 +4994,7 @@ index 00000000000..a0d439f661f
 +    void createContext(Inspector::ErrorString&, String* browserContextID) override;
 +    void deleteContext(Inspector::ErrorString&, const String& browserContextID) override;
 +    void createPage(Inspector::ErrorString&, const String* browserContextID, String* targetId) override;
++    void setIgnoreCertificateErrors(Inspector::ErrorString&, const String* browserContextID, bool ignore) override;
 +
 +    void getAllCookies(const String* browserContextID, Ref<GetAllCookiesCallback>&&) override;
 +    void setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&&) override;
@@ -6296,6 +6461,28 @@ index ae3852221d4..6ad08957deb 100644
 +    InputProcessingObserver* m_inputProcessingObserver { nullptr };
  
      Optional<SpellDocumentTag> m_spellDocumentTag;
+ 
+diff --git a/Source/WebKit/UIProcess/WebProcessPool.h b/Source/WebKit/UIProcess/WebProcessPool.h
+index abe32f20524..3dc3c767103 100644
+--- a/Source/WebKit/UIProcess/WebProcessPool.h
++++ b/Source/WebKit/UIProcess/WebProcessPool.h
+@@ -414,7 +414,7 @@ public:
+ 
+     void windowServerConnectionStateChanged();
+ 
+-#if USE(SOUP)
++#if USE(SOUP) || PLATFORM(COCOA)
+     void setIgnoreTLSErrors(bool);
+     bool ignoreTLSErrors() const { return m_ignoreTLSErrors; }
+ #endif
+@@ -709,7 +709,7 @@ private:
+     HashMap<uint64_t, RefPtr<DictionaryCallback>> m_dictionaryCallbacks;
+     HashMap<uint64_t, RefPtr<StatisticsRequest>> m_statisticsRequests;
+ 
+-#if USE(SOUP)
++#if USE(SOUP) || PLATFORM(COCOA)
+     bool m_ignoreTLSErrors { true };
+ #endif
  
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
