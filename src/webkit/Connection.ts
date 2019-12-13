@@ -72,9 +72,9 @@ export class Connection extends EventEmitter {
   }
 
   private _onMessage(message: string) {
-    if (this._sameDispatchTask || this._incomingMessageQueue.length || this._delay)
+    if (this._sameDispatchTask || this._incomingMessageQueue.length || this._delay) {
       this._enqueueMessage(message);
-    else {
+    } else {
       this._sameDispatchTask = true;
       // This is for the case when several messages come in a batch and read
       // in a loop by transport ending up in the same task.

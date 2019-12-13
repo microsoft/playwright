@@ -29,11 +29,11 @@ import { ConsoleMessage } from './console';
 
 const readFileAsync = helper.promisify(fs.readFile);
 
-type WorldType = 'main' | 'utility';
-type World = {
-  contextPromise: Promise<js.ExecutionContext>;
-  contextResolveCallback: (c: js.ExecutionContext) => void;
-  context: js.ExecutionContext | null;
+type ContextType = 'main' | 'utility';
+type ContextData = {
+  contextPromise: Promise<dom.FrameExecutionContext>;
+  contextResolveCallback: (c: dom.FrameExecutionContext) => void;
+  context: dom.FrameExecutionContext | null;
   rerunnableTasks: Set<RerunnableTask>;
 };
 
@@ -55,7 +55,7 @@ export class Frame {
   private _parentFrame: Frame;
   private _url = '';
   private _detached = false;
-  private _worlds = new Map<WorldType, World>();
+  private _contextData = new Map<ContextType, ContextData>();
   private _childFrames = new Set<Frame>();
   private _name: string;
 
@@ -65,8 +65,8 @@ export class Frame {
     this._page = page;
     this._parentFrame = parentFrame;
 
-    this._worlds.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
-    this._worlds.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
+    this._contextData.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
+    this._contextData.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
     this._setContext('main', null);
     this._setContext('utility', null);
 
@@ -82,33 +82,19 @@ export class Frame {
     return this._page._delegate.waitForFrameNavigation(this, options);
   }
 
-  _mainContext(): Promise<js.ExecutionContext> {
+  _mainContext(): Promise<dom.FrameExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
-    return this._worlds.get('main').contextPromise;
+    return this._contextData.get('main').contextPromise;
   }
 
-  async _mainDOMWorld(): Promise<dom.DOMWorld> {
-    const context = await this._mainContext();
-    if (!context._domWorld)
-      throw new Error(`Execution Context does not belong to frame`);
-    return context._domWorld;
-  }
-
-  _utilityContext(): Promise<js.ExecutionContext> {
+  _utilityContext(): Promise<dom.FrameExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
-    return this._worlds.get('utility').contextPromise;
+    return this._contextData.get('utility').contextPromise;
   }
 
-  async _utilityDOMWorld(): Promise<dom.DOMWorld> {
-    const context = await this._utilityContext();
-    if (!context._domWorld)
-      throw new Error(`Execution Context does not belong to frame`);
-    return context._domWorld;
-  }
-
-  executionContext(): Promise<js.ExecutionContext> {
+  executionContext(): Promise<dom.FrameExecutionContext> {
     return this._mainContext();
   }
 
@@ -123,28 +109,28 @@ export class Frame {
   }
 
   async $(selector: string | types.Selector): Promise<dom.ElementHandle<Element> | null> {
-    const domWorld = await this._mainDOMWorld();
-    return domWorld.$(types.clearSelector(selector));
+    const context = await this._mainContext();
+    return context._$(types.clearSelector(selector));
   }
 
   async $x(expression: string): Promise<dom.ElementHandle<Element>[]> {
-    const domWorld = await this._mainDOMWorld();
-    return domWorld.$$('xpath=' + expression);
+    const context = await this._mainContext();
+    return context._$$('xpath=' + expression);
   }
 
   $eval: types.$Eval = async (selector, pageFunction, ...args) => {
-    const domWorld = await this._mainDOMWorld();
-    return domWorld.$eval(selector, pageFunction, ...args as any);
+    const context = await this._mainContext();
+    return context._$eval(selector, pageFunction, ...args as any);
   }
 
   $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
-    const domWorld = await this._mainDOMWorld();
-    return domWorld.$$eval(selector, pageFunction, ...args as any);
+    const context = await this._mainContext();
+    return context._$$eval(selector, pageFunction, ...args as any);
   }
 
   async $$(selector: string | types.Selector): Promise<dom.ElementHandle<Element>[]> {
-    const domWorld = await this._mainDOMWorld();
-    return domWorld.$$(types.clearSelector(selector));
+    const context = await this._mainContext();
+    return context._$$(types.clearSelector(selector));
   }
 
   async content(): Promise<string> {
@@ -250,17 +236,17 @@ export class Frame {
     return this._raceWithCSPError(async () => {
       if (url !== null)
         return (await context.evaluateHandle(addStyleUrl, url)).asElement();
-  
+
       if (path !== null) {
         let contents = await readFileAsync(path, 'utf8');
         contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
         return (await context.evaluateHandle(addStyleContent, contents)).asElement();
       }
-  
+
       if (content !== null)
         return (await context.evaluateHandle(addStyleContent, content)).asElement();
     });
-  
+
     async function addStyleUrl(url: string): Promise<HTMLElement> {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -293,7 +279,7 @@ export class Frame {
     let result: dom.ElementHandle | undefined;
     let error: Error | undefined;
     let cspMessage: ConsoleMessage | undefined;
-    const actionPromise = new Promise<dom.ElementHandle>(async (resolve) => {
+    const actionPromise = new Promise<dom.ElementHandle>(async resolve => {
       try {
         result = await func();
       } catch (e) {
@@ -319,61 +305,61 @@ export class Frame {
   }
 
   async click(selector: string | types.Selector, options?: ClickOptions) {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     await handle.click(options);
     await handle.dispose();
   }
 
   async dblclick(selector: string | types.Selector, options?: MultiClickOptions) {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     await handle.dblclick(options);
     await handle.dispose();
   }
 
   async tripleclick(selector: string | types.Selector, options?: MultiClickOptions) {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     await handle.tripleclick(options);
     await handle.dispose();
   }
 
   async fill(selector: string | types.Selector, value: string) {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     await handle.fill(value);
     await handle.dispose();
   }
 
   async focus(selector: string | types.Selector) {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     await handle.focus();
     await handle.dispose();
   }
 
   async hover(selector: string | types.Selector, options?: PointerActionOptions) {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     await handle.hover(options);
     await handle.dispose();
   }
 
   async select(selector: string | types.Selector, ...values: (string | dom.ElementHandle | SelectOption)[]): Promise<string[]> {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     const toDispose: Promise<dom.ElementHandle>[] = [];
     const adoptedValues = await Promise.all(values.map(async value => {
-      if (value instanceof dom.ElementHandle && value.executionContext() !== domWorld.context) {
-        const adopted = domWorld.adoptElementHandle(value);
+      if (value instanceof dom.ElementHandle && value.executionContext() !== context) {
+        const adopted = context._adoptElementHandle(value);
         toDispose.push(adopted);
         return adopted;
       }
@@ -386,8 +372,8 @@ export class Frame {
   }
 
   async type(selector: string | types.Selector, text: string, options: { delay: (number | undefined); } | undefined) {
-    const domWorld = await this._utilityDOMWorld();
-    const handle = await domWorld.$(types.clearSelector(selector));
+    const context = await this._utilityContext();
+    const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     await handle.type(text, options);
     await handle.dispose();
@@ -411,10 +397,10 @@ export class Frame {
       await handle.dispose();
       return null;
     }
-    const mainDOMWorld = await this._mainDOMWorld();
-    if (handle.executionContext() === mainDOMWorld.context)
+    const maincontext = await this._mainContext();
+    if (handle.executionContext() === maincontext)
       return handle.asElement();
-    const adopted = await mainDOMWorld.adoptElementHandle(handle.asElement());
+    const adopted = await maincontext._adoptElementHandle(handle.asElement());
     await handle.dispose();
     return adopted;
   }
@@ -465,8 +451,8 @@ export class Frame {
 
   _onDetached() {
     this._detached = true;
-    for (const world of this._worlds.values()) {
-      for (const rerunnableTask of world.rerunnableTasks)
+    for (const data of this._contextData.values()) {
+      for (const rerunnableTask of data.rerunnableTasks)
         rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
     }
     if (this._parentFrame)
@@ -476,51 +462,50 @@ export class Frame {
       watcher._onFrameDetached(this);
   }
 
-  private _scheduleRerunnableTask(task: dom.Task, worldType: WorldType, timeout?: number, title?: string): Promise<js.JSHandle> {
-    const world = this._worlds.get(worldType);
-    const rerunnableTask = new RerunnableTask(world, task, timeout, title);
-    world.rerunnableTasks.add(rerunnableTask);
-    if (world.context)
-      rerunnableTask.rerun(world.context._domWorld);
+  private _scheduleRerunnableTask(task: dom.Task, contextType: ContextType, timeout?: number, title?: string): Promise<js.JSHandle> {
+    const data = this._contextData.get(contextType);
+    const rerunnableTask = new RerunnableTask(data, task, timeout, title);
+    data.rerunnableTasks.add(rerunnableTask);
+    if (data.context)
+      rerunnableTask.rerun(data.context);
     return rerunnableTask.promise;
   }
 
-  private _setContext(worldType: WorldType, context: js.ExecutionContext | null) {
-    const world = this._worlds.get(worldType);
-    world.context = context;
+  private _setContext(contextType: ContextType, context: dom.FrameExecutionContext | null) {
+    const data = this._contextData.get(contextType);
+    data.context = context;
     if (context) {
-      assert(context._domWorld, 'Frame context must have a dom world');
-      world.contextResolveCallback.call(null, context);
-      for (const rerunnableTask of world.rerunnableTasks)
-        rerunnableTask.rerun(context._domWorld);
+      data.contextResolveCallback.call(null, context);
+      for (const rerunnableTask of data.rerunnableTasks)
+        rerunnableTask.rerun(context);
     } else {
-      world.contextPromise = new Promise(fulfill => {
-        world.contextResolveCallback = fulfill;
+      data.contextPromise = new Promise(fulfill => {
+        data.contextResolveCallback = fulfill;
       });
     }
   }
 
-  _contextCreated(worldType: WorldType, context: js.ExecutionContext) {
-    const world = this._worlds.get(worldType);
+  _contextCreated(contextType: ContextType, context: dom.FrameExecutionContext) {
+    const data = this._contextData.get(contextType);
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
     // We can use either.
-    if (world.context)
-      this._setContext(worldType, null);
-    this._setContext(worldType, context);
+    if (data.context)
+      this._setContext(contextType, null);
+    this._setContext(contextType, context);
   }
 
-  _contextDestroyed(context: js.ExecutionContext) {
-    for (const [worldType, world] of this._worlds) {
-      if (world.context === context)
-        this._setContext(worldType, null);
+  _contextDestroyed(context: dom.FrameExecutionContext) {
+    for (const [contextType, data] of this._contextData) {
+      if (data.context === context)
+        this._setContext(contextType, null);
     }
   }
 }
 
 class RerunnableTask {
   readonly promise: Promise<js.JSHandle>;
-  private _world: World;
+  private _contextData: ContextData;
   private _task: dom.Task;
   private _runCount: number;
   private _resolve: (result: js.JSHandle) => void;
@@ -528,8 +513,8 @@ class RerunnableTask {
   private _timeoutTimer: NodeJS.Timer;
   private _terminated: boolean;
 
-  constructor(world: World, task: dom.Task, timeout?: number, title?: string) {
-    this._world = world;
+  constructor(data: ContextData, task: dom.Task, timeout?: number, title?: string) {
+    this._contextData = data;
     this._task = task;
     this._runCount = 0;
     this.promise = new Promise<js.JSHandle>((resolve, reject) => {
@@ -550,12 +535,12 @@ class RerunnableTask {
     this._doCleanup();
   }
 
-  async rerun(domWorld: dom.DOMWorld) {
+  async rerun(context: dom.FrameExecutionContext) {
     const runCount = ++this._runCount;
     let success: js.JSHandle | null = null;
     let error = null;
     try {
-      success = await this._task(domWorld);
+      success = await this._task(context);
     } catch (e) {
       error = e;
     }
@@ -569,7 +554,7 @@ class RerunnableTask {
     // Ignore timeouts in pageScript - we track timeouts ourselves.
     // If execution context has been already destroyed, `context.evaluate` will
     // throw an error - ignore this predicate run altogether.
-    if (!error && await domWorld.context.evaluate(s => !s, success).catch(e => true)) {
+    if (!error && await context.evaluate(s => !s, success).catch(e => true)) {
       await success.dispose();
       return;
     }
@@ -594,7 +579,7 @@ class RerunnableTask {
 
   _doCleanup() {
     clearTimeout(this._timeoutTimer);
-    this._world.rerunnableTasks.delete(this);
+    this._contextData.rerunnableTasks.delete(this);
   }
 }
 

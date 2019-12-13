@@ -109,13 +109,15 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   _onExecutionContextCreated({executionContextId, auxData}) {
     const frameId = auxData ? auxData.frameId : null;
     const frame = this._frames.get(frameId) || null;
-    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, executionContextId));
+    const delegate = new ExecutionContextDelegate(this._session, executionContextId);
     if (frame) {
-      context._domWorld = new dom.DOMWorld(context, frame);
+      const context = new dom.FrameExecutionContext(delegate, frame);
       frame._contextCreated('main', context);
       frame._contextCreated('utility', context);
+      this._contextIdToContext.set(executionContextId, context);
+    } else {
+      this._contextIdToContext.set(executionContextId, new js.ExecutionContext(delegate));
     }
-    this._contextIdToContext.set(executionContextId, context);
   }
 
   _onExecutionContextDestroyed({executionContextId}) {
@@ -124,7 +126,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       return;
     this._contextIdToContext.delete(executionContextId);
     if (context.frame())
-      context.frame()._contextDestroyed(context);
+      context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
   }
 
   _frameData(frame: frames.Frame): FrameData {
@@ -440,7 +442,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const { frameId } = await this._session.send('Page.contentFrame', {
-      frameId: this._frameData(handle._world.frame).frameId,
+      frameId: this._frameData(handle._context.frame()).frameId,
       objectId: toRemoteObject(handle).objectId,
     });
     if (!frameId)
@@ -473,7 +475,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('Page.getContentQuads', {
-      frameId: this._frameData(handle._world.frame).frameId,
+      frameId: this._frameData(handle._context.frame()).frameId,
       objectId: toRemoteObject(handle).objectId,
     }).catch(debugError);
     if (!result)
@@ -489,7 +491,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     await handle.evaluate(input.setFileInputFunction, files);
   }
 
-  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     assert(false, 'Multiple isolated worlds are not implemented');
     return handle;
   }

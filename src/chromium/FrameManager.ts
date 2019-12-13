@@ -350,16 +350,17 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const frame = this._frames.get(frameId) || null;
     if (contextPayload.auxData && contextPayload.auxData.type === 'isolated')
       this._isolatedWorlds.add(contextPayload.name);
-    const context = new js.ExecutionContext(new ExecutionContextDelegate(this._client, contextPayload));
-    if (frame)
-      context._domWorld = new dom.DOMWorld(context, frame);
+    const delegate = new ExecutionContextDelegate(this._client, contextPayload);
     if (frame) {
+      const context = new dom.FrameExecutionContext(delegate, frame);
       if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
         frame._contextCreated('main', context);
       else if (contextPayload.name === UTILITY_WORLD_NAME)
         frame._contextCreated('utility', context);
+      this._contextIdToContext.set(contextPayload.id, context);
+    } else {
+      this._contextIdToContext.set(contextPayload.id, new js.ExecutionContext(delegate));
     }
-    this._contextIdToContext.set(contextPayload.id, context);
   }
 
   _onExecutionContextDestroyed(executionContextId: number) {
@@ -368,7 +369,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       return;
     this._contextIdToContext.delete(executionContextId);
     if (context.frame())
-      context.frame()._contextDestroyed(context);
+      context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
   }
 
   _onExecutionContextsCleared() {
@@ -452,8 +453,8 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
     const frame = this.frame(event.frameId);
-    const utilityWorld = await frame._utilityDOMWorld();
-    const handle = await this.adoptBackendNodeId(event.backendNodeId, utilityWorld);
+    const utilityContext = await frame._utilityContext();
+    const handle = await this.adoptBackendNodeId(event.backendNodeId, utilityContext);
     this._page._onFileChooserOpened(handle);
   }
 
@@ -617,21 +618,21 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     await handle.evaluate(input.setFileInputFunction, files);
   }
 
-  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(handle).objectId,
     });
     return this.adoptBackendNodeId(nodeInfo.node.backendNodeId, to) as Promise<dom.ElementHandle<T>>;
   }
 
-  async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.DOMWorld): Promise<dom.ElementHandle> {
+  async adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.FrameExecutionContext): Promise<dom.ElementHandle> {
     const result = await this._client.send('DOM.resolveNode', {
       backendNodeId,
-      executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId,
+      executionContextId: (to._delegate as ExecutionContextDelegate)._contextId,
     }).catch(debugError);
     if (!result)
       throw new Error('Unable to adopt element handle from a different document');
-    return to.context._createHandle(result.object).asElement()!;
+    return to._createHandle(result.object).asElement()!;
   }
 }
 

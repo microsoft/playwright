@@ -64,7 +64,7 @@ export interface PageDelegate {
   resetViewport(oldSize: types.Size): Promise<void>;
 
   isElementHandle(remoteObject: any): boolean;
-  adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>>;
+  adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>>;
   getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;
   getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null>;
   layoutViewport(): Promise<{ width: number, height: number }>;
@@ -198,10 +198,10 @@ export class Page extends EventEmitter {
   }
 
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string> {
-    const mainWorld = await this.mainFrame()._mainDOMWorld();
-    return mainWorld.context.evaluate((injected: Injected, target: Element, name: string) => {
+    const mainContext = await this.mainFrame()._mainContext();
+    return mainContext.evaluate((injected: Injected, target: Element, name: string) => {
       return injected.engines.get(name).create(document.documentElement, target);
-    }, await mainWorld.injected(), handle, name);
+    }, await mainContext._injected(), handle, name);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {

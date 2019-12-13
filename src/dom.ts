@@ -11,28 +11,32 @@ import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSourc
 import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
+import { Page } from './page';
 
 type ScopedSelector = types.Selector & { scope?: ElementHandle };
 type ResolvedSelector = { scope?: ElementHandle, selector: string, visible?: boolean, disposeScope?: boolean };
 
-export class DOMWorld {
-  readonly context: js.ExecutionContext;
-  readonly frame: frames.Frame;
+export class FrameExecutionContext extends js.ExecutionContext {
+  private readonly _frame: frames.Frame;
 
   private _injectedPromise?: Promise<js.JSHandle>;
 
-  constructor(context: js.ExecutionContext, frame: frames.Frame) {
-    this.context = context;
-    this.frame = frame;
+  constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
+    super(delegate);
+    this._frame = frame;
   }
 
-  createHandle(remoteObject: any): ElementHandle | null {
-    if (this.frame._page._delegate.isElementHandle(remoteObject))
-      return new ElementHandle(this.context, remoteObject);
-    return null;
+  frame(): frames.Frame | null {
+    return this._frame;
   }
 
-  injected(): Promise<js.JSHandle> {
+  _createHandle(remoteObject: any): js.JSHandle | null {
+    if (this._frame._page._delegate.isElementHandle(remoteObject))
+      return new ElementHandle(this, remoteObject);
+    return super._createHandle(remoteObject);
+  }
+
+  _injected(): Promise<js.JSHandle> {
     if (!this._injectedPromise) {
       const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source, zsSelectorEngineSource.source];
       const source = `
@@ -40,36 +44,36 @@ export class DOMWorld {
           ${engineSources.join(',\n')}
         ])
       `;
-      this._injectedPromise = this.context.evaluateHandle(source);
+      this._injectedPromise = this.evaluateHandle(source);
     }
     return this._injectedPromise;
   }
 
-  async adoptElementHandle<T extends Node>(handle: ElementHandle<T>): Promise<ElementHandle<T>> {
-    assert(handle.executionContext() !== this.context, 'Should not adopt to the same context');
-    return this.frame._page._delegate.adoptElementHandle(handle, this);
+  async _adoptElementHandle<T extends Node>(handle: ElementHandle<T>): Promise<ElementHandle<T>> {
+    assert(handle.executionContext() !== this, 'Should not adopt to the same context');
+    return this._frame._page._delegate.adoptElementHandle(handle, this);
   }
 
-  async resolveSelector(selector: string | ScopedSelector): Promise<ResolvedSelector> {
+  async _resolveSelector(selector: string | ScopedSelector): Promise<ResolvedSelector> {
     if (helper.isString(selector))
       return { selector: normalizeSelector(selector) };
-    if (selector.scope && selector.scope.executionContext() !== this.context) {
-      const scope = await this.adoptElementHandle(selector.scope);
+    if (selector.scope && selector.scope.executionContext() !== this) {
+      const scope = await this._adoptElementHandle(selector.scope);
       return { scope, selector: normalizeSelector(selector.selector), disposeScope: true, visible: selector.visible };
     }
     return { scope: selector.scope, selector: normalizeSelector(selector.selector), visible: selector.visible };
   }
 
-  async $(selector: string | ScopedSelector): Promise<ElementHandle<Element> | null> {
-    const resolved = await this.resolveSelector(selector);
-    const handle = await this.context.evaluateHandle(
+  async _$(selector: string | ScopedSelector): Promise<ElementHandle<Element> | null> {
+    const resolved = await this._resolveSelector(selector);
+    const handle = await this.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
           const element = injected.querySelector(selector, scope || document);
           if (visible === undefined || !element)
             return element;
           return injected.isVisible(element) === visible ? element : undefined;
         },
-        await this.injected(), resolved.selector, resolved.scope, resolved.visible
+        await this._injected(), resolved.selector, resolved.scope, resolved.visible
     );
     if (resolved.disposeScope)
       await resolved.scope.dispose();
@@ -78,16 +82,16 @@ export class DOMWorld {
     return handle.asElement();
   }
 
-  async $$(selector: string | ScopedSelector): Promise<ElementHandle<Element>[]> {
-    const resolved = await this.resolveSelector(selector);
-    const arrayHandle = await this.context.evaluateHandle(
+  async _$$(selector: string | ScopedSelector): Promise<ElementHandle<Element>[]> {
+    const resolved = await this._resolveSelector(selector);
+    const arrayHandle = await this.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
           const elements = injected.querySelectorAll(selector, scope || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
           return elements;
         },
-        await this.injected(), resolved.selector, resolved.scope, resolved.visible
+        await this._injected(), resolved.selector, resolved.scope, resolved.visible
     );
     if (resolved.disposeScope)
       await resolved.scope.dispose();
@@ -104,8 +108,8 @@ export class DOMWorld {
     return result;
   }
 
-  $eval: types.$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
-    const elementHandle = await this.$(selector);
+  _$eval: types.$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
+    const elementHandle = await this._$(selector);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${types.selectorToString(selector)}"`);
     const result = await elementHandle.evaluate(pageFunction, ...args as any);
@@ -113,16 +117,16 @@ export class DOMWorld {
     return result;
   }
 
-  $$eval: types.$$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
-    const resolved = await this.resolveSelector(selector);
-    const arrayHandle = await this.context.evaluateHandle(
+  _$$eval: types.$$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
+    const resolved = await this._resolveSelector(selector);
+    const arrayHandle = await this.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
           const elements = injected.querySelectorAll(selector, scope || document);
           if (visible !== undefined)
             return elements.filter(element => injected.isVisible(element) === visible);
           return elements;
         },
-        await this.injected(), resolved.selector, resolved.scope, resolved.visible
+        await this._injected(), resolved.selector, resolved.scope, resolved.visible
     );
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
     await arrayHandle.dispose();
@@ -131,12 +135,12 @@ export class DOMWorld {
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
-  readonly _world: DOMWorld;
+  readonly _context: FrameExecutionContext;
+  readonly _page: Page;
 
-  constructor(context: js.ExecutionContext, remoteObject: any) {
+  constructor(context: FrameExecutionContext, remoteObject: any) {
     super(context, remoteObject);
-    assert(context._domWorld, 'Element handle should have a dom world');
-    this._world = context._domWorld;
+    this._page = context.frame()._page;
   }
 
   asElement(): ElementHandle<T> | null {
@@ -144,7 +148,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    return this._world.frame._page._delegate.getContentFrame(this);
+    return this._page._delegate.getContentFrame(this);
   }
 
   async _scrollIntoViewIfNeeded() {
@@ -175,7 +179,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
       }
       return false;
-    }, !!this._world.frame._page._state.javascriptEnabled);
+    }, !!this._page._state.javascriptEnabled);
     if (error)
       throw new Error(error);
   }
@@ -222,8 +226,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
 
     const [quads, metrics] = await Promise.all([
-      this._world.frame._page._delegate.getContentQuads(this),
-      this._world.frame._page._delegate.layoutViewport(),
+      this._page._delegate.getContentQuads(this),
+      this._page._delegate.layoutViewport(),
     ]);
     if (!quads || !quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
@@ -260,7 +264,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       point.x += border.x;
       point.y += border.y;
     }
-    const metrics = await this._world.frame._page._delegate.layoutViewport();
+    const metrics = await this._page._delegate.layoutViewport();
     // Give 20 extra pixels to avoid any issues on viewport edge.
     let scrollX = 0;
     if (point.x < 20)
@@ -279,26 +283,26 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const point = await this._ensurePointerActionPoint(options ? options.relativePoint : undefined);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
-      restoreModifiers = await this._world.frame._page.keyboard._ensureModifiers(options.modifiers);
+      restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
     await action(point);
     if (restoreModifiers)
-      await this._world.frame._page.keyboard._ensureModifiers(restoreModifiers);
+      await this._page.keyboard._ensureModifiers(restoreModifiers);
   }
 
   hover(options?: input.PointerActionOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.frame._page.mouse.move(point.x, point.y), options);
+    return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
   click(options?: input.ClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.frame._page.mouse.click(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
   dblclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.frame._page.mouse.dblclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
   tripleclick(options?: input.MultiClickOptions): Promise<void> {
-    return this._performPointerAction(point => this._world.frame._page.mouse.tripleclick(point.x, point.y, options), options);
+    return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
   async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
@@ -321,7 +325,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const error = await this.evaluate(input.fillFunction);
     if (error)
       throw new Error(error);
-    await this._world.frame._page.keyboard.sendCharacters(value);
+    await this._page.keyboard.sendCharacters(value);
   }
 
   async setInputFiles(...files: (string|input.FilePayload)[]) {
@@ -332,7 +336,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return input.multiple;
     });
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    await this._world.frame._page._delegate.setInputFiles(this, await input.loadFiles(files));
+    await this._page._delegate.setInputFiles(this, await input.loadFiles(files));
   }
 
   async focus() {
@@ -348,20 +352,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async type(text: string, options: { delay: (number | undefined); } | undefined) {
     await this.focus();
-    await this._world.frame._page.keyboard.type(text, options);
+    await this._page.keyboard.type(text, options);
   }
 
   async press(key: string, options: { delay?: number; text?: string; } | undefined) {
     await this.focus();
-    await this._world.frame._page.keyboard.press(key, options);
+    await this._page.keyboard.press(key, options);
   }
 
   async boundingBox(): Promise<types.Rect | null> {
-    return this._world.frame._page._delegate.getBoundingBox(this);
+    return this._page._delegate.getBoundingBox(this);
   }
 
   async screenshot(options?: types.ElementScreenshotOptions): Promise<string | Buffer> {
-    return this._world.frame._page._screenshotter.screenshotElement(this, options);
+    return this._page._screenshotter.screenshotElement(this, options);
   }
 
   private _scopedSelector(selector: string | types.Selector): string | ScopedSelector {
@@ -372,23 +376,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   $(selector: string | types.Selector): Promise<ElementHandle | null> {
-    return this._world.$(this._scopedSelector(selector));
+    return this._context._$(this._scopedSelector(selector));
   }
 
   $$(selector: string | types.Selector): Promise<ElementHandle<Element>[]> {
-    return this._world.$$(this._scopedSelector(selector));
+    return this._context._$$(this._scopedSelector(selector));
   }
 
   $eval: types.$Eval<string | types.Selector> = (selector, pageFunction, ...args) => {
-    return this._world.$eval(this._scopedSelector(selector), pageFunction, ...args as any);
+    return this._context._$eval(this._scopedSelector(selector), pageFunction, ...args as any);
   }
 
   $$eval: types.$$Eval<string | types.Selector> = (selector, pageFunction, ...args) => {
-    return this._world.$$eval(this._scopedSelector(selector), pageFunction, ...args as any);
+    return this._context._$$eval(this._scopedSelector(selector), pageFunction, ...args as any);
   }
 
   $x(expression: string): Promise<ElementHandle<Element>[]> {
-    return this._world.$$({ scope: this, selector: 'xpath=' + expression });
+    return this._context._$$({ scope: this, selector: 'xpath=' + expression });
   }
 
   isIntersectingViewport(): Promise<boolean> {
@@ -422,7 +426,7 @@ function normalizeSelector(selector: string): string {
   return 'css=' + selector;
 }
 
-export type Task = (domWorld: DOMWorld) => Promise<js.JSHandle>;
+export type Task = (context: FrameExecutionContext) => Promise<js.JSHandle>;
 
 export function waitForFunctionTask(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]) {
   const { polling = 'raf' } = options;
@@ -434,20 +438,20 @@ export function waitForFunctionTask(pageFunction: Function | string, options: ty
     throw new Error('Unknown polling options: ' + polling);
   const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(...args)';
 
-  return async (domWorld: DOMWorld) => domWorld.context.evaluateHandle((injected: Injected, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
+  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
     const predicate = new Function('...args', predicateBody);
     if (polling === 'raf')
       return injected.pollRaf(predicate, timeout, ...args);
     if (polling === 'mutation')
       return injected.pollMutation(predicate, timeout, ...args);
     return injected.pollInterval(polling, predicate, timeout, ...args);
-  }, await domWorld.injected(), predicateBody, polling, options.timeout, ...args);
+  }, await context._injected(), predicateBody, polling, options.timeout, ...args);
 }
 
 export function waitForSelectorTask(selector: string | types.Selector, timeout: number): Task {
-  return async (domWorld: DOMWorld) => {
-    const resolved = await domWorld.resolveSelector(selector);
-    return domWorld.context.evaluateHandle((injected: Injected, selector: string, scope: Node | undefined, visible: boolean | undefined, timeout: number) => {
+  return async (context: FrameExecutionContext) => {
+    const resolved = await context._resolveSelector(selector);
+    return context.evaluateHandle((injected: Injected, selector: string, scope: Node | undefined, visible: boolean | undefined, timeout: number) => {
       if (visible !== undefined)
         return injected.pollRaf(predicate, timeout);
       return injected.pollMutation(predicate, timeout);
@@ -460,6 +464,6 @@ export function waitForSelectorTask(selector: string | types.Selector, timeout: 
           return element;
         return injected.isVisible(element) === visible ? element : false;
       }
-    }, await domWorld.injected(), resolved.selector, resolved.scope, resolved.visible, timeout);
+    }, await context._injected(), resolved.selector, resolved.scope, resolved.visible, timeout);
   };
 }

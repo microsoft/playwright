@@ -160,6 +160,8 @@
   * [mouse.up([options])](#mouseupoptions)
 - [class: PDF](#class-pdf)
   * [pdf.generate([options])](#pdfgenerateoptions)
+- [class: Firefox](#class-firefox)
+  * [firefox.wsEndpoint()](#firefoxwsendpoint)
 - [class: Chromium](#class-chromium)
   * [event: 'targetchanged'](#event-targetchanged)
   * [event: 'targetcreated'](#event-targetcreated)
