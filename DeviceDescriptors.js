@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const {DeviceDescriptors} = require('./lib/DeviceDescriptors');
+const {DeviceDescriptors} = require('./lib/deviceDescriptors');
 
 const descriptors = DeviceDescriptors.slice();
 module.exports = descriptors;

@@ -15,8 +15,54 @@
  * limitations under the License.
  */
 
-import { ConnectionTransport } from '../types';
-import { debugError, helper, RegisteredListener } from '../helper';
+import * as WebSocket from 'ws';
+import { debugError, helper, RegisteredListener } from './helper';
+
+export interface ConnectionTransport {
+  send(s: string): void;
+  close(): void;
+  onmessage?: (message: string) => void,
+  onclose?: () => void,
+}
+
+export class WebSocketTransport implements ConnectionTransport {
+  private _ws: WebSocket;
+  onmessage?: (message: string) => void;
+  onclose?: () => void;
+
+  static create(url: string): Promise<WebSocketTransport> {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(url, [], {
+        perMessageDeflate: false,
+        maxPayload: 256 * 1024 * 1024, // 256Mb
+      });
+      ws.addEventListener('open', () => resolve(new WebSocketTransport(ws)));
+      ws.addEventListener('error', reject);
+    });
+  }
+
+  constructor(ws: WebSocket) {
+    this._ws = ws;
+    this._ws.addEventListener('message', event => {
+      if (this.onmessage)
+        this.onmessage.call(null, event.data);
+    });
+    this._ws.addEventListener('close', event => {
+      if (this.onclose)
+        this.onclose.call(null);
+    });
+    // Silently ignore all errors - we don't know what to do with them.
+    this._ws.addEventListener('error', () => {});
+  }
+
+  send(message: string) {
+    this._ws.send(message);
+  }
+
+  close() {
+    this._ws.close();
+  }
+}
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeWrite: NodeJS.WritableStream;
