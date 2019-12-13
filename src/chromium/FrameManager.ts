@@ -201,7 +201,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       return;
     if (event.name === 'init') {
       frame._firedLifecycleEvents.clear();
-      frame._onExpectedNewDocumentNavigation(event.loaderId);
+      frame._expectNewDocumentNavigation(event.loaderId);
     } else if (event.name === 'load') {
       frame._lifecycleEvent('load');
     } else if (event.name === 'DOMContentLoaded') {

@@ -40,8 +40,8 @@ export class Permissions {
       ['gyroscope', 'sensors'],
       ['magnetometer', 'sensors'],
       ['accessibility-events', 'accessibilityEvents'],
-      ['clipboard-read', 'clipboardRead'],
-      ['clipboard-write', 'clipboardWrite'],
+      ['clipboard-read', 'clipboardReadWrite'],
+      ['clipboard-write', 'clipboardSanitizedWrite'],
       ['payment-handler', 'paymentHandler'],
       // chrome-specific permissions we have.
       ['midi-sysex', 'midiSysex'],

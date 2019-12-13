@@ -197,8 +197,13 @@ export class NetworkManager extends EventEmitter {
         redirectChain = request.request._redirectChain;
       }
     }
+    // TODO: how can frame be null here?
     const frame = event.frameId ? this._frameManager.frame(event.frameId) : null;
-    const request = new InterceptableRequest(this._client, frame, interceptionId, this._userRequestInterceptionEnabled, event, redirectChain);
+    const isNavigationRequest = event.requestId === event.loaderId && event.type === 'Document';
+    const documentId = isNavigationRequest ? event.loaderId : undefined;
+    if (documentId && frame)
+      frame._expectNewDocumentNavigation(documentId, event.request.url);
+    const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled, event, redirectChain);
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEvents.Request, request.request);
   }
@@ -259,6 +264,14 @@ export class NetworkManager extends EventEmitter {
       response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
+    if (request._documentId && request.request.frame()) {
+      const isCurrentDocument = request.request.frame()._lastDocumentId === request._documentId;
+      let errorText = event.errorText;
+      if (event.canceled)
+        errorText += '; maybe frame was detached?';
+      if (!isCurrentDocument)
+        request.request.frame()._onAbortedNewDocumentNavigation(request._documentId, errorText);
+    }
     this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }
 }
@@ -273,17 +286,19 @@ class InterceptableRequest {
   readonly request: network.Request;
   _requestId: string;
   _interceptionId: string;
+  _documentId: string;
   private _client: CDPSession;
   private _allowInterception: boolean;
   private _interceptionHandled = false;
 
-  constructor(client: CDPSession, frame: frames.Frame | null, interceptionId: string, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
+  constructor(client: CDPSession, frame: frames.Frame | null, interceptionId: string, documentId: string | undefined, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
     this._client = client;
     this._requestId = event.requestId;
     this._interceptionId = interceptionId;
+    this._documentId = documentId;
     this._allowInterception = allowInterception;
 
-    this.request = new network.Request(frame, redirectChain, event.requestId === event.loaderId && event.type === 'Document',
+    this.request = new network.Request(frame, redirectChain, !!documentId,
         event.request.url, event.type.toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
     (this.request as any)[interceptableRequestSymbol] = this;
   }

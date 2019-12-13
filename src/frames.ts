@@ -422,7 +422,7 @@ export class Frame {
     return context.evaluate(() => document.title);
   }
 
-  _onExpectedNewDocumentNavigation(documentId: string, url?: string) {
+  _expectNewDocumentNavigation(documentId: string, url?: string) {
     for (const watcher of this._page._lifecycleWatchers)
       watcher._onExpectedNewDocumentNavigation(this, documentId, url);
   }
