@@ -37,16 +37,19 @@ export class Browser extends EventEmitter implements BrowserInterface {
   _targets = new Map<string, Target>();
   private _eventListeners: RegisteredListener[];
   private _privateEvents = new EventEmitter();
+  private readonly _ignoreHTTPSErrors: boolean;
 
   constructor(
     connection: Connection,
+    ignoreHTTPSErrors: boolean,
     defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     super();
+    this._connection = connection;
+    this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._defaultViewport = defaultViewport;
     this._process = process;
-    this._connection = connection;
     this._closeCallback = closeCallback || (() => Promise.resolve());
 
     /** @type {!Map<string, !Target>} */
@@ -67,6 +70,9 @@ export class Browser extends EventEmitter implements BrowserInterface {
       debugError(e);
       throw e;
     });
+
+    if (this._ignoreHTTPSErrors)
+      this._setIgnoreTLSFailures(undefined);
   }
 
   async userAgent(): Promise<string> {
@@ -88,6 +94,8 @@ export class Browser extends EventEmitter implements BrowserInterface {
 
   async newContext(): Promise<BrowserContext> {
     const {browserContextId} = await this._connection.send('Browser.createContext');
+    if (this._ignoreHTTPSErrors)
+      await this._setIgnoreTLSFailures(browserContextId);
     const context = this._createBrowserContext(browserContextId);
     this._contexts.set(browserContextId, context);
     return context;
@@ -249,6 +257,10 @@ export class Browser extends EventEmitter implements BrowserInterface {
       },
     }, this, isIncognito);
     return context;
+  }
+
+  async _setIgnoreTLSFailures(browserContextId: string | undefined) {
+    await this._connection.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
   }
 }
 
