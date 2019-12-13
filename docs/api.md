@@ -32,10 +32,10 @@
   * [browser.browserContexts()](#browserbrowsercontexts)
   * [browser.chromium](#browserchromium)
   * [browser.close()](#browserclose)
-  * [browser.newContext()](#browsernewcontext)
   * [browser.defaultBrowserContext()](#browserdefaultbrowsercontext)
   * [browser.disconnect()](#browserdisconnect)
   * [browser.isConnected()](#browserisconnected)
+  * [browser.newContext()](#browsernewcontext)
   * [browser.newPage()](#browsernewpage)
   * [browser.pages()](#browserpages)
   * [browser.process()](#browserprocess)
@@ -160,6 +160,8 @@
   * [mouse.up([options])](#mouseupoptions)
 - [class: PDF](#class-pdf)
   * [pdf.generate([options])](#pdfgenerateoptions)
+- [class: Firefox](#class-firefox)
+  * [firefox.wsEndpoint()](#firefoxwsendpoint)
 - [class: Chromium](#class-chromium)
   * [event: 'targetchanged'](#event-targetchanged)
   * [event: 'targetcreated'](#event-targetcreated)
@@ -625,23 +627,6 @@ a single instance of [BrowserContext].
 
 Closes Chromium and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
-#### browser.newContext()
-- returns: <[Promise]<[BrowserContext]>>
-
-Creates a new incognito browser context. This won't share cookies/cache with other browser contexts.
-
-```js
-(async () => {
-  const browser = await playwright.launch();
-  // Create a new incognito browser context.
-  const context = await browser.newContext();
-  // Create a new page in a pristine context.
-  const page = await context.newPage();
-  // Do stuff
-  await page.goto('https://example.com');
-})();
-```
-
 #### browser.defaultBrowserContext()
 - returns: <[BrowserContext]>
 
@@ -656,6 +641,23 @@ Disconnects Playwright from the browser, but leaves the Chromium process running
 - returns: <[boolean]>
 
 Indicates that the browser is connected.
+
+#### browser.newContext()
+- returns: <[Promise]<[BrowserContext]>>
+
+Creates a new browser context. It won't share cookies/cache with other browser contexts.
+
+```js
+(async () => {
+  const browser = await playwright.launch();
+  // Create a new incognito browser context.
+  const context = await browser.newContext();
+  // Create a new page in a pristine context.
+  const page = await context.newPage();
+  // Do stuff
+  await page.goto('https://example.com');
+})();
+```
 
 #### browser.newPage()
 - returns: <[Promise]<[Page]>>

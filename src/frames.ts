@@ -250,17 +250,17 @@ export class Frame {
     return this._raceWithCSPError(async () => {
       if (url !== null)
         return (await context.evaluateHandle(addStyleUrl, url)).asElement();
-  
+
       if (path !== null) {
         let contents = await readFileAsync(path, 'utf8');
         contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
         return (await context.evaluateHandle(addStyleContent, contents)).asElement();
       }
-  
+
       if (content !== null)
         return (await context.evaluateHandle(addStyleContent, content)).asElement();
     });
-  
+
     async function addStyleUrl(url: string): Promise<HTMLElement> {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -293,7 +293,7 @@ export class Frame {
     let result: dom.ElementHandle | undefined;
     let error: Error | undefined;
     let cspMessage: ConsoleMessage | undefined;
-    const actionPromise = new Promise<dom.ElementHandle>(async (resolve) => {
+    const actionPromise = new Promise<dom.ElementHandle>(async resolve => {
       try {
         result = await func();
       } catch (e) {

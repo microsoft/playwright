@@ -19,7 +19,7 @@ import { Browser } from './Browser';
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
-import { isSwappedOutError, TargetSession, TargetSessionEvents } from './Connection';
+import { TargetSession, TargetSessionEvents } from './Connection';
 import { FrameManager } from './FrameManager';
 
 const targetSymbol = Symbol('target');
