@@ -307,7 +307,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         sameSite: 'None',
       }]);
     });
-    it.skip(WEBKIT)('should set cookies from a frame', async({context, page, server}) => {
+    it('should set cookies from a frame', async({context, page, server}) => {
       await page.goto(server.PREFIX + '/grid.html');
       await context.setCookies([
         {url: server.PREFIX, name: 'localhost-cookie', value: 'best'},

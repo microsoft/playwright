@@ -245,7 +245,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(result).toEqual([42]);
     });
     // Works in WebKit, but slow
-    it.skip(FFOX || WEBKIT)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
+    it.skip(FFOX)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
       const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
       expect(a.length).toBe(100 * 1024 * 1024);
     });

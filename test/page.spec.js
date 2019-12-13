@@ -71,7 +71,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await newPage.close();
       expect(newPage.isClosed()).toBe(true);
     });
-    it.skip(FFOX || WEBKIT)('should terminate network waiters', async({context, server}) => {
+    it.skip(FFOX)('should terminate network waiters', async({context, server}) => {
       const newPage = await context.newPage();
       const results = await Promise.all([
         newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
@@ -257,7 +257,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-    it.skip(FFOX || WEBKIT)('should not throw when there are console messages in detached iframes', async({browser, page, server}) => {
+    it.skip(FFOX)('should not throw when there are console messages in detached iframes', async({browser, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(async() => {
         // 1. Create a popup that Playwright is not connected to.
@@ -825,7 +825,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.goto('data:text/html, <script>var something = "forbidden"</script>');
       expect(await page.evaluate('something')).toBe('forbidden');
     });
-    it.skip(WEBKIT)('should be able to navigate after disabling javascript', async({page, server}) => {
+    it('should be able to navigate after disabling javascript', async({page, server}) => {
       await page.setJavaScriptEnabled(false);
       await page.goto(server.EMPTY_PAGE);
     });
