@@ -24,6 +24,7 @@ import { Permissions } from './features/permissions';
 import { Page } from '../page';
 import * as types from '../types';
 import { FrameManager } from './FrameManager';
+import { Firefox } from './features/firefox';
 import * as network from '../network';
 import { BrowserContext, BrowserInterface } from '../browserContext';
 
@@ -36,6 +37,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
   private _defaultContext: BrowserContext;
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
+  readonly firefox: Firefox;
 
   static async create(connection: Connection, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
     const {browserContextIds} = await connection.send('Target.getBrowserContexts');
@@ -50,6 +52,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     this._defaultViewport = defaultViewport;
     this._process = process;
     this._closeCallback = closeCallback;
+    this.firefox = new Firefox(this);
 
     this._targets = new Map();
 
