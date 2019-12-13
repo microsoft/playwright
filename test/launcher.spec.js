@@ -45,8 +45,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
-      // Fails on GTK due to async setViewport.
-      it.skip(WEBKIT)('should set the default viewport', async() => {
+      it('should set the default viewport', async() => {
         const options = Object.assign({}, defaultBrowserOptions, {
           defaultViewport: {
             width: 456,

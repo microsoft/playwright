@@ -538,10 +538,10 @@ index 00000000000..79edea03fed
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
-index 00000000000..759390956ea
+index 00000000000..7133fb577e2
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,23 @@
 +{
 +    "domain": "Emulation",
 +    "availability": ["web"],
@@ -549,6 +549,7 @@ index 00000000000..759390956ea
 +        {
 +            "name": "setDeviceMetricsOverride",
 +            "description": "Overrides device metrics with provided values.",
++            "async": true,
 +            "parameters": [
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
@@ -4451,6 +4452,76 @@ index 83990d9e81e..732566829b3 100644
  void UIDelegate::UIClient::requestStorageAccessConfirm(WebPageProxy&, WebFrameProxy*, const WebCore::RegistrableDomain& requestingDomain, const WebCore::RegistrableDomain& currentDomain, CompletionHandler<void(bool)>&& completionHandler)
  {
      auto delegate = m_uiDelegate.m_delegate.get();
+diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+index 9693809e34e..b45a4e7aa61 100644
+--- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
++++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+@@ -37,6 +37,7 @@
+ #include "WebProcessProxy.h"
+ #include <WebCore/PlatformDisplay.h>
+ #include <WebCore/Region.h>
++#include <wtf/Vector.h>
+ 
+ #if PLATFORM(GTK)
+ #include <gtk/gtk.h>
+@@ -133,6 +134,11 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange()
+     backingStoreStateDidChange(RespondImmediately);
+ }
+ 
++void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdate(Function<void ()>&& callback)
++{
++    m_callbacks.set(m_currentBackingStoreStateID, WTFMove(callback));
++}
++
+ void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
+ {
+     m_hasReceivedFirstUpdate = true;
+@@ -195,6 +201,16 @@ void DrawingAreaProxyCoordinatedGraphics::didUpdateBackingStoreState(uint64_t ba
+     else
+         m_hasReceivedFirstUpdate = true;
+ 
++    Vector<uint64_t> notified;
++    for (auto& [key, value] : m_callbacks) {
++        if (backingStoreStateID > key) {
++            notified.append(key);
++            value();
++        }
++    }
++    for (uint64_t id : notified)
++        m_callbacks.remove(id);
++
+ #if !PLATFORM(WPE)
+     if (isInAcceleratedCompositingMode()) {
+         ASSERT(!m_backingStore);
+diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
+index d7695088e7c..4fe533572b6 100644
+--- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
++++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
+@@ -30,6 +30,7 @@
+ #include "BackingStore.h"
+ #include "DrawingAreaProxy.h"
+ #include "LayerTreeContext.h"
++#include <wtf/HashMap.h>
+ #include <wtf/RunLoop.h>
+ 
+ namespace WebCore {
+@@ -49,6 +50,7 @@ public:
+ 
+     bool isInAcceleratedCompositingMode() const { return !m_layerTreeContext.isEmpty(); }
+     const LayerTreeContext& layerTreeContext() const { return m_layerTreeContext; }
++    void waitForBackingStoreUpdate(Function<void ()>&&);
+ 
+ private:
+     // DrawingAreaProxy
+@@ -126,6 +128,8 @@ private:
+     // For a new Drawing Area don't draw anything until the WebProcess has sent over the first content.
+     bool m_hasReceivedFirstUpdate { false };
+ 
++    HashMap<uint64_t, Function<void ()>> m_callbacks;
++
+ #if !PLATFORM(WPE)
+     bool m_isBackingStoreDiscardable { true };
+     std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
 index 00000000000..556be919504
@@ -5495,10 +5566,10 @@ index 78caedf0c0c..a380d778c36 100644
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 00000000000..f10c1651e64
+index 00000000000..c2cd2d42a63
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,52 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5533,10 +5604,14 @@ index 00000000000..f10c1651e64
 +{
 +}
 +
-+void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(ErrorString& error, int in_width, int in_height, double in_deviceScaleFactor)
-+{
-+    platformSetSize(error, in_width, in_height);
-+    m_page.setCustomDeviceScaleFactor(in_deviceScaleFactor);
++void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&& callback) {
++    m_page.setCustomDeviceScaleFactor(deviceScaleFactor);
++    platformSetSize(width, height, [callback = WTFMove(callback)](const String& error) {
++        if (error.isEmpty())
++            callback->sendSuccess();
++        else
++            callback->sendFailure(error);
++    });
 +}
 +
 +void WebPageInspectorEmulationAgent::setJavaScriptEnabled(ErrorString&, bool enabled)
@@ -5549,10 +5624,10 @@ index 00000000000..f10c1651e64
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 00000000000..0025b0be853
+index 00000000000..2047a0c3fb7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,43 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5562,6 +5637,7 @@ index 00000000000..0025b0be853
 +#include <JavaScriptCore/InspectorBackendDispatchers.h>
 +
 +#include <wtf/Forward.h>
++#include <wtf/Function.h>
 +#include <wtf/Noncopyable.h>
 +
 +namespace Inspector {
@@ -5584,11 +5660,11 @@ index 00000000000..0025b0be853
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
-+    void setDeviceMetricsOverride(Inspector::ErrorString&, int in_width, int in_height, double in_deviceScaleFactor) override;
++    void setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&&) override;
 +    void setJavaScriptEnabled(Inspector::ErrorString&, bool enabled) override;
 +
 +private:
-+    void platformSetSize(String& error, int width, int height);
++    void platformSetSize(int width, int height, Function<void (const String& error)>&&);
 +
 +    Ref<Inspector::EmulationBackendDispatcher> m_backendDispatcher;
 +    WebPageProxy& m_page;
@@ -6379,30 +6455,31 @@ index 00000000000..37a5e7ad390
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 new file mode 100644
-index 00000000000..e8a29bebe24
+index 00000000000..e38a4ad3e2f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,43 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
 +#include "config.h"
++#include "DrawingAreaProxyCoordinatedGraphics.h"
 +#include "WebPageInspectorEmulationAgent.h"
-+
 +#include "WebPageProxy.h"
++#include <WebCore/IntSize.h>
 +#include <gtk/gtk.h>
 +
 +namespace WebKit {
-+void WebPageInspectorEmulationAgent::platformSetSize(String& error, int width, int height)
++void WebPageInspectorEmulationAgent::platformSetSize(int width, int height, Function<void (const String& error)>&& callback)
 +{
 +    GtkWidget* viewWidget = m_page.viewWidget();
 +    GtkWidget* window = gtk_widget_get_toplevel(viewWidget);
 +    if (!window) {
-+        error = "Cannot find parent window";
++        callback("Cannot find parent window"_s);
 +        return;
 +    }
 +    if (!GTK_IS_WINDOW(window)) {
-+        error = "Toplevel is not a window";
++        callback("Toplevel is not a window"_s);
 +        return;
 +    }
 +    GtkAllocation viewAllocation;
@@ -6414,6 +6491,13 @@ index 00000000000..e8a29bebe24
 +    width += windowAllocation.width - viewAllocation.width;
 +    height += windowAllocation.height - viewAllocation.height;
 +
++    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea())) {
++        drawingArea->waitForBackingStoreUpdate([callback = WTFMove(callback)]() {
++            callback(String());
++        });
++    } else {
++        callback("No backing store for window"_s);
++    }
 +    gtk_window_resize(GTK_WINDOW(window), width, height);
 +}
 +
@@ -6727,10 +6811,10 @@ index 22653d74398..5086bc7375f 100644
  
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
 new file mode 100644
-index 00000000000..d364ca6d955
+index 00000000000..71d742789cb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,22 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -6741,7 +6825,7 @@ index 00000000000..d364ca6d955
 +
 +namespace WebKit {
 +
-+void WebPageInspectorEmulationAgent::platformSetSize(String& error, int width, int height)
++void WebPageInspectorEmulationAgent::platformSetSize(int width, int height, Function<void (const String& error)>&& callback)
 +{
 +    NSWindow* window = m_page.platformWindow();
 +    NSRect windowRect = [window frame];
@@ -6749,6 +6833,7 @@ index 00000000000..d364ca6d955
 +    windowRect.size.width += width - viewRect.size.width;
 +    windowRect.size.height += height - viewRect.size.height;
 +    [window setFrame:windowRect display:YES animate:NO];
++    callback(String());
 +}
 +
 +} // namespace WebKit
