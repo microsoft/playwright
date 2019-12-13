@@ -17,7 +17,7 @@
 
 import * as debug from 'debug';
 import { EventEmitter } from 'events';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 import { assert } from '../helper';
 import { Protocol } from './protocol';
 
@@ -30,7 +30,6 @@ export const ConnectionEvents = {
 export class Connection extends EventEmitter {
   private _url: string;
   private _lastId = 0;
-  private _delay: number;
   private _transport: ConnectionTransport;
   private _sessions = new Map<string, CDPSession>();
   readonly rootSession: CDPSession;
@@ -39,9 +38,8 @@ export class Connection extends EventEmitter {
   constructor(url: string, transport: ConnectionTransport, delay: number | undefined = 0) {
     super();
     this._url = url;
-    this._delay = delay;
 
-    this._transport = transport;
+    this._transport = SlowMoTransport.wrap(transport, delay);
     this._transport.onmessage = this._onMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this.rootSession = new CDPSession(this, 'browser', '');
@@ -72,8 +70,6 @@ export class Connection extends EventEmitter {
   }
 
   async _onMessage(message: string) {
-    if (this._delay)
-      await new Promise(f => setTimeout(f, this._delay));
     debugProtocol('◀ RECV ' + message);
     const object = JSON.parse(message);
     if (object.method === 'Target.attachedToTarget') {
@@ -101,7 +97,7 @@ export class Connection extends EventEmitter {
     for (const session of this._sessions.values())
       session._onClosed();
     this._sessions.clear();
-    this.emit(ConnectionEvents.Disconnected);
+    Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
   dispose() {
@@ -164,7 +160,7 @@ export class CDPSession extends EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      this.emit(object.method, object.params);
+      Promise.resolve().then(() => this.emit(object.method, object.params));
     }
   }
 
@@ -179,7 +175,7 @@ export class CDPSession extends EventEmitter {
       callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
     this._connection = null;
-    this.emit(CDPSessionEvents.Disconnected);
+    Promise.resolve().then(() => this.emit(CDPSessionEvents.Disconnected));
   }
 }
 

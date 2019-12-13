@@ -15,37 +15,33 @@
  * limitations under the License.
  */
 
-import {assert, debugError} from '../helper';
+import { assert } from '../helper';
 import * as debug from 'debug';
 import { EventEmitter } from 'events';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 import { Protocol } from './protocol';
 
 const debugProtocol = debug('playwright:protocol');
 const debugWrappedMessage = require('debug')('wrapped');
 
 export const ConnectionEvents = {
-  TargetCreated: Symbol('ConnectionEvents.TargetCreated')
+  TargetCreated: Symbol('ConnectionEvents.TargetCreated'),
+  TargetDestroyed: Symbol('Connection.TargetDestroyed'),
+  DidCommitProvisionalTarget: Symbol('Connection.DidCommitProvisionalTarget')
 };
 
 export class Connection extends EventEmitter {
   _lastId = 0;
   private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject:  (e: Error) => void, error: Error, method: string}>();
-  private readonly _delay: number;
   private readonly _transport: ConnectionTransport;
   private readonly _sessions = new Map<string, TargetSession>();
-  private _incomingMessageQueue: string[] = [];
-  private _dispatchTimerId?: NodeJS.Timer;
-  private _sameDispatchTask: boolean = false;
 
   _closed = false;
 
   constructor(transport: ConnectionTransport, delay: number | undefined = 0) {
     super();
-    this._delay = delay;
-
-    this._transport = transport;
-    this._transport.onmessage = this._onMessage.bind(this);
+    this._transport = SlowMoTransport.wrap(transport, delay);
+    this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
   }
 
@@ -71,52 +67,6 @@ export class Connection extends EventEmitter {
     return id;
   }
 
-  private _onMessage(message: string) {
-    if (this._sameDispatchTask || this._incomingMessageQueue.length || this._delay) {
-      this._enqueueMessage(message);
-    } else {
-      this._sameDispatchTask = true;
-      // This is for the case when several messages come in a batch and read
-      // in a loop by transport ending up in the same task.
-      Promise.resolve().then(() => this._sameDispatchTask = false);
-      this._dispatchMessage(message);
-    }
-  }
-
-  private _enqueueMessage(message: string) {
-    this._incomingMessageQueue.push(message);
-    this._scheduleQueueDispatch();
-  }
-
-  private _enqueueProvisionalMessages(messages: string[]) {
-    // Insert provisional messages at the point of "Target.didCommitProvisionalTarget" message.
-    this._incomingMessageQueue = messages.concat(this._incomingMessageQueue);
-    this._scheduleQueueDispatch();
-  }
-
-  private _scheduleQueueDispatch() {
-    if (this._dispatchTimerId)
-      return;
-    if (!this._incomingMessageQueue.length)
-      return;
-    const delay = this._delay || 0;
-    this._dispatchTimerId = setTimeout(() => {
-      this._dispatchTimerId = undefined;
-      this._dispatchOneMessageFromQueue();
-    }, delay);
-  }
-
-  private _dispatchOneMessageFromQueue() {
-    if (this._closed)
-      return;
-    const message = this._incomingMessageQueue.shift();
-    try {
-      this._dispatchMessage(message);
-    } finally {
-      this._scheduleQueueDispatch();
-    }
-  }
-
   private _dispatchMessage(message: string) {
     debugProtocol('◀ RECV ' + message);
     const object = JSON.parse(message);
@@ -134,7 +84,7 @@ export class Connection extends EventEmitter {
         assert(this._closed, 'Received response for unknown callback: ' + object.id);
       }
     } else {
-      this.emit(object.method, object.params);
+      Promise.resolve().then(() => this.emit(object.method, object.params));
     }
   }
 
@@ -143,26 +93,26 @@ export class Connection extends EventEmitter {
       const targetInfo = object.params.targetInfo as Protocol.Target.TargetInfo;
       const session = new TargetSession(this, targetInfo);
       this._sessions.set(session._sessionId, session);
-      this.emit(ConnectionEvents.TargetCreated, session, object.params.targetInfo);
-      if (targetInfo.isPaused)
-        this.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+      Promise.resolve().then(() => this.emit(ConnectionEvents.TargetCreated, session, object.params.targetInfo));
     } else if (object.method === 'Target.targetDestroyed') {
       const session = this._sessions.get(object.params.targetId);
       if (session) {
         session._onClosed();
         this._sessions.delete(object.params.targetId);
       }
+      Promise.resolve().then(() => this.emit(ConnectionEvents.TargetDestroyed, { targetId: object.params.targetId }));
     } else if (object.method === 'Target.dispatchMessageFromTarget') {
       const {targetId, message} = object.params as Protocol.Target.dispatchMessageFromTargetPayload;
       const session = this._sessions.get(targetId);
       if (!session)
         throw new Error('Unknown target: ' + targetId);
       if (session.isProvisional())
-        session._addProvisionalMessage(wrappedMessage);
+        session._addProvisionalMessage(message);
       else
         session._dispatchMessageFromTarget(message);
     } else if (object.method === 'Target.didCommitProvisionalTarget') {
       const {oldTargetId, newTargetId} = object.params as Protocol.Target.didCommitProvisionalTargetPayload;
+      Promise.resolve().then(() => this.emit(ConnectionEvents.DidCommitProvisionalTarget, { oldTargetId, newTargetId }));
       const newSession = this._sessions.get(newTargetId);
       if (!newSession)
         throw new Error('Unknown new target: ' + newTargetId);
@@ -170,7 +120,8 @@ export class Connection extends EventEmitter {
       if (!oldSession)
         throw new Error('Unknown old target: ' + oldTargetId);
       oldSession._swappedOut = true;
-      this._enqueueProvisionalMessages(newSession._takeProvisionalMessagesAndCommit());
+      for (const message of newSession._takeProvisionalMessagesAndCommit())
+        newSession._dispatchMessageFromTarget(message);
     }
   }
 
@@ -278,7 +229,7 @@ export class TargetSession extends EventEmitter {
         callback.resolve(object.result);
     } else {
       assert(!object.id);
-      this.emit(object.method, object.params);
+      Promise.resolve().then(() => this.emit(object.method, object.params));
     }
   }
 
@@ -292,7 +243,7 @@ export class TargetSession extends EventEmitter {
     }
     this._callbacks.clear();
     this._connection = null;
-    this.emit(TargetSessionEvents.Disconnected);
+    Promise.resolve().then(() => this.emit(TargetSessionEvents.Disconnected));
   }
 }
 

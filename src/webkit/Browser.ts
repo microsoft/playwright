@@ -58,8 +58,8 @@ export class Browser extends EventEmitter implements BrowserInterface {
 
     this._eventListeners = [
       helper.addEventListener(this._connection, ConnectionEvents.TargetCreated, this._onTargetCreated.bind(this)),
-      helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
-      helper.addEventListener(this._connection, 'Target.didCommitProvisionalTarget', this._onProvisionalTargetCommitted.bind(this)),
+      helper.addEventListener(this._connection, ConnectionEvents.TargetDestroyed, this._onTargetDestroyed.bind(this)),
+      helper.addEventListener(this._connection, ConnectionEvents.DidCommitProvisionalTarget, this._onProvisionalTargetCommitted.bind(this)),
     ];
 
     // Intercept provisional targets during cross-process navigation.
@@ -142,7 +142,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return contextPages.reduce((acc, x) => acc.concat(x), []);
   }
 
-  async _onTargetCreated(session: TargetSession, targetInfo: Protocol.Target.TargetInfo) {
+  _onTargetCreated(session: TargetSession, targetInfo: Protocol.Target.TargetInfo) {
     let context = null;
     if (targetInfo.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
@@ -170,9 +170,10 @@ export class Browser extends EventEmitter implements BrowserInterface {
       const openerPage = opener._page;
       if (!openerPage || !openerPage.listenerCount(Events.Page.Popup))
         return;
-      const page = await target.page();
-      openerPage.emit(Events.Page.Popup, page);
+      target.page().then(page => openerPage.emit(Events.Page.Popup, page));
     }
+    if (targetInfo.isPaused)
+      this._connection.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
   }
 
   _onTargetDestroyed({targetId}) {

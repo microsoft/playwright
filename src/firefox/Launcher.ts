@@ -17,14 +17,14 @@
 
 import * as os from 'os';
 import * as path from 'path';
-import {Connection} from './Connection';
-import {Browser} from './Browser';
-import {BrowserFetcher, BrowserFetcherOptions} from '../browserFetcher';
+import { Connection } from './Connection';
+import { Browser } from './Browser';
+import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import * as fs from 'fs';
 import * as util from 'util';
-import {debugError, assert} from '../helper';
-import {TimeoutError} from '../errors';
-import {WebSocketTransport} from './WebSocketTransport';
+import { debugError, assert } from '../helper';
+import { TimeoutError } from '../errors';
+import { WebSocketTransport } from '../transport';
 import { launchProcess, waitForLine } from '../processLauncher';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
