@@ -14,22 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as os from 'os';
 import * as path from 'path';
-import * as removeFolder from 'rimraf';
-import * as childProcess from 'child_process';
 import {Connection} from './Connection';
 import {Browser} from './Browser';
 import {BrowserFetcher, BrowserFetcherOptions} from '../browserFetcher';
-import * as readline from 'readline';
 import * as fs from 'fs';
 import * as util from 'util';
-import {helper, debugError, assert} from '../helper';
+import {debugError, assert} from '../helper';
 import {TimeoutError} from '../Errors';
 import {WebSocketTransport} from './WebSocketTransport';
+import { launchProcess, waitForLine } from '../processLauncher';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
-const removeFolderAsync = util.promisify(removeFolder);
 
 const FIREFOX_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_firefox_profile-');
 
@@ -103,106 +101,44 @@ export class Launcher {
         throw new Error(missingText);
       firefoxExecutable = executablePath;
     }
-    const stdio = ['pipe', 'pipe', 'pipe'];
-    const firefoxProcess = childProcess.spawn(
-        firefoxExecutable,
-        firefoxArguments,
-        {
-          // On non-windows platforms, `detached: false` makes child process a leader of a new
-          // process group, making it possible to kill child process tree with `.kill(-pid)` command.
-          // @see https://nodejs.org/api/child_process.html#child_process_options_detached
-          detached: process.platform !== 'win32',
-          stdio,
-          // On linux Juggler ships the libstdc++ it was linked against.
-          env: os.platform() === 'linux' ? {
-            ...env,
-            LD_LIBRARY_PATH: `${path.dirname(firefoxExecutable)}:${process.env.LD_LIBRARY_PATH}`,
-          } : env,
-        }
-    );
-
-    if (!firefoxProcess.pid) {
-      let reject;
-      const result = new Promise((f, r) => reject = r);
-      firefoxProcess.once('error', error => {
-        reject(new Error('Failed to launch browser: ' + error));
-      });
-      return result as Promise<Browser>;
-    }
-
-    if (dumpio) {
-      firefoxProcess.stderr.pipe(process.stderr);
-      firefoxProcess.stdout.pipe(process.stdout);
-    }
-
-    let firefoxClosed = false;
-    const waitForFirefoxToClose = new Promise((fulfill, reject) => {
-      firefoxProcess.once('close', () => {
-        firefoxClosed = true;
-        // Cleanup as processes exit.
-        if (temporaryProfileDir) {
-          removeFolderAsync(temporaryProfileDir)
-              .then(() => fulfill())
-              .catch(err => console.error(err));
-        } else {
-          fulfill();
-        }
+    const launched = await launchProcess({
+      executablePath: firefoxExecutable,
+      args: firefoxArguments,
+      env: os.platform() === 'linux' ? {
+        ...env,
+        // On linux Juggler ships the libstdc++ it was linked against.
+        LD_LIBRARY_PATH: `${path.dirname(firefoxExecutable)}:${process.env.LD_LIBRARY_PATH}`,
+      } : env,
+      handleSIGINT,
+      handleSIGTERM,
+      handleSIGHUP,
+      dumpio,
+      pipe: false,
+      tempDir: temporaryProfileDir
+    }, () => {
+      if (temporaryProfileDir || !connection)
+        return Promise.reject();
+      return connection.send('Browser.close').catch(error => {
+        debugError(error);
+        throw error;
       });
     });
 
-    const listeners = [ helper.addEventListener(process, 'close', killFirefox) ];
-    if (handleSIGINT)
-      listeners.push(helper.addEventListener(process, 'SIGINT', () => { killFirefox(); process.exit(130); }));
-    if (handleSIGTERM)
-      listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyCloseFirefox));
-    if (handleSIGHUP)
-      listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyCloseFirefox));
     let connection: Connection | null = null;
     try {
-      const url = await waitForWSEndpoint(firefoxProcess, timeout);
+      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
+      const match = await waitForLine(launched.process, launched.process.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
+      const url = match[1];
       const transport = await WebSocketTransport.create(url);
       connection = new Connection(url, transport, slowMo);
-      const browser = await Browser.create(connection, defaultViewport, firefoxProcess, gracefullyCloseFirefox);
+      const browser = await Browser.create(connection, defaultViewport, launched.process, launched.gracefullyClose);
       if (ignoreHTTPSErrors)
         await connection.send('Browser.setIgnoreHTTPSErrors', {enabled: true});
       await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
-      killFirefox();
+      await launched.gracefullyClose;
       throw e;
-    }
-
-    function gracefullyCloseFirefox() {
-      helper.removeEventListeners(listeners);
-      if (temporaryProfileDir) {
-        killFirefox();
-      } else if (connection) {
-        connection.send('Browser.close').catch(error => {
-          debugError(error);
-          killFirefox();
-        });
-      }
-      return waitForFirefoxToClose;
-    }
-
-    // This method has to be sync to be used as 'exit' event handler.
-    function killFirefox() {
-      helper.removeEventListeners(listeners);
-      if (firefoxProcess.pid && !firefoxProcess.killed && !firefoxClosed) {
-        // Force kill chrome.
-        try {
-          if (process.platform === 'win32')
-            childProcess.execSync(`taskkill /pid ${firefoxProcess.pid} /T /F`);
-          else
-            process.kill(-firefoxProcess.pid, 'SIGKILL');
-        } catch (e) {
-          // the process might have already stopped
-        }
-      }
-      // Attempt to remove temporary profile directory to avoid littering.
-      try {
-        removeFolder.sync(temporaryProfileDir);
-      } catch (e) { }
     }
   }
 
@@ -232,48 +168,6 @@ export class Launcher {
     const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return {executablePath: revisionInfo.executablePath, missingText};
   }
-}
-
-function waitForWSEndpoint(firefoxProcess: import('child_process').ChildProcess, timeout: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const rl = readline.createInterface({ input: firefoxProcess.stdout });
-    let stderr = '';
-    const listeners = [
-      helper.addEventListener(rl, 'line', onLine),
-      helper.addEventListener(rl, 'close', () => onClose()),
-      helper.addEventListener(firefoxProcess, 'error', error => onClose(error))
-    ];
-    const timeoutId = timeout ? setTimeout(onTimeout, timeout) : 0;
-
-    function onClose(error?: Error) {
-      cleanup();
-      reject(new Error([
-        'Failed to launch Firefox!' + (error ? ' ' + error.message : ''),
-        stderr,
-        '',
-      ].join('\n')));
-    }
-
-    function onTimeout() {
-      cleanup();
-      reject(new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`));
-    }
-
-    function onLine(line: string) {
-      stderr += line + '\n';
-      const match = line.match(/^Juggler listening on (ws:\/\/.*)$/);
-      if (!match)
-        return;
-      cleanup();
-      resolve(match[1]);
-    }
-
-    function cleanup() {
-      if (timeoutId)
-        clearTimeout(timeoutId);
-      helper.removeEventListeners(listeners);
-    }
-  });
 }
 
 export function createBrowserFetcher(projectRoot: string, options: BrowserFetcherOptions = {}): BrowserFetcher {
