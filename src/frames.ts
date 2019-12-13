@@ -49,6 +49,7 @@ export type GotoOptions = NavigateOptions & {
 export type LifecycleEvent = 'load' | 'domcontentloaded';
 
 export class Frame {
+  _id: string;
   readonly _firedLifecycleEvents: Set<LifecycleEvent>;
   _lastDocumentId: string;
   readonly _page: Page;
@@ -59,7 +60,8 @@ export class Frame {
   private _childFrames = new Set<Frame>();
   private _name: string;
 
-  constructor(page: Page, parentFrame: Frame | null) {
+  constructor(page: Page, id: string, parentFrame: Frame | null) {
+    this._id = id;
     this._firedLifecycleEvents = new Set();
     this._lastDocumentId = '';
     this._page = page;
