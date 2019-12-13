@@ -107,6 +107,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
         return cookies.map(c => {
           const copy: any = { sameSite: 'None', ...c };
           delete copy.size;
+          delete copy.priority;
           return copy as network.NetworkCookie;
         });
       },
