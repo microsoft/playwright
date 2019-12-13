@@ -124,7 +124,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'domcontentloaded'});
       expect(response.status()).toBe(200);
     });
-    it('should work when page calls history API in beforeunload', async({page, server}) => {
+    it.skip(WEBKIT)('should work when page calls history API in beforeunload', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         window.addEventListener('beforeunload', () => history.replaceState(null, 'initial', window.location.href), false);

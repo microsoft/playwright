@@ -168,7 +168,7 @@ export class NetworkManager extends EventEmitter {
       const isCurrentDocument = request.request.frame()._lastDocumentId === request._documentId;
       // When frame was detached during load, "cancelled" comes before detach.
       // Ignore it and hope for the best.
-      const wasCanceled = event.errorText === 'cancelled';
+      const wasCanceled = event.errorText.includes('cancelled');
       if (!isCurrentDocument && !wasCanceled)
         request.request.frame()._onAbortedNewDocumentNavigation(request._documentId, event.errorText);
     }
