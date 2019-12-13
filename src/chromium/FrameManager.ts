@@ -45,19 +45,6 @@ import { ConsoleMessage } from '../console';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-export const FrameManagerEvents = {
-  FrameAttached: Symbol('Events.FrameManager.FrameAttached'),
-  FrameNavigated: Symbol('Events.FrameManager.FrameNavigated'),
-  FrameDetached: Symbol('Events.FrameManager.FrameDetached'),
-  LifecycleEvent: Symbol('Events.FrameManager.LifecycleEvent'),
-  FrameNavigatedWithinDocument: Symbol('Events.FrameManager.FrameNavigatedWithinDocument'),
-};
-
-const frameDataSymbol = Symbol('frameData');
-type FrameData = {
-  id: string,
-};
-
 export class FrameManager extends EventEmitter implements PageDelegate {
   _client: CDPSession;
   private _page: Page;
@@ -131,10 +118,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     return this._networkManager;
   }
 
-  _frameData(frame: frames.Frame): FrameData {
-    return (frame as any)[frameDataSymbol];
-  }
-
   async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
     assertNoLegacyNavigationOptions(options);
     const {
@@ -146,7 +129,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
     let ensureNewDocumentNavigation = false;
     let error = await Promise.race([
-      navigate(this._client, url, referer, this._frameData(frame).id),
+      navigate(this._client, url, referer, frame._id),
       watcher.timeoutOrTerminationPromise,
     ]);
     if (!error) {
@@ -224,7 +207,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     } else if (event.name === 'DOMContentLoaded') {
       frame._lifecycleEvent('domcontentloaded');
     }
-    this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
   _onFrameStoppedLoading(frameId: string) {
@@ -233,7 +215,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       return;
     frame._lifecycleEvent('domcontentloaded');
     frame._lifecycleEvent('load');
-    this.emit(FrameManagerEvents.LifecycleEvent, frame);
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameTree) {
@@ -268,13 +249,8 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       return;
     assert(parentFrameId);
     const parentFrame = this._frames.get(parentFrameId);
-    const frame = new frames.Frame(this._page, parentFrame);
-    const data: FrameData = {
-      id: frameId,
-    };
-    (frame as any)[frameDataSymbol] = data;
+    const frame = new frames.Frame(this._page, frameId, parentFrame);
     this._frames.set(frameId, frame);
-    this.emit(FrameManagerEvents.FrameAttached, frame);
     this._page.emit(Events.Page.FrameAttached, frame);
   }
 
@@ -293,16 +269,11 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     if (isMainFrame) {
       if (frame) {
         // Update frame id to retain frame identity on cross-process navigation.
-        const data = this._frameData(frame);
-        this._frames.delete(data.id);
-        data.id = framePayload.id;
+        this._frames.delete(frame._id);
+        frame._id = framePayload.id;
       } else {
         // Initial main frame navigation.
-        frame = new frames.Frame(this._page, null);
-        const data: FrameData = {
-          id: framePayload.id,
-        };
-        (frame as any)[frameDataSymbol] = data;
+        frame = new frames.Frame(this._page, framePayload.id, null);
       }
       this._frames.set(framePayload.id, frame);
       this._mainFrame = frame;
@@ -310,7 +281,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
     frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, framePayload.loaderId);
 
-    this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -323,7 +293,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       worldName: name,
     });
     await Promise.all(this.frames().map(frame => this._client.send('Page.createIsolatedWorld', {
-      frameId: this._frameData(frame).id,
+      frameId: frame._id,
       grantUniveralAccess: true,
       worldName: name,
     }).catch(debugError))); // frames might be removed before we send this
@@ -334,8 +304,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     if (!frame)
       return;
     frame._onCommittedSameDocumentNavigation(url);
-    this.emit(FrameManagerEvents.FrameNavigatedWithinDocument, frame);
-    this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -387,8 +355,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
     frame._onDetached();
-    this._frames.delete(this._frameData(frame).id);
-    this.emit(FrameManagerEvents.FrameDetached, frame);
+    this._frames.delete(frame._id);
     this._page.emit(Events.Page.FrameDetached, frame);
   }
 

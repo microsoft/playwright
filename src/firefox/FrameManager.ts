@@ -35,19 +35,6 @@ import { Accessibility } from './features/accessibility';
 import * as network from '../network';
 import * as types from '../types';
 
-export const FrameManagerEvents = {
-  FrameNavigated: Symbol('FrameManagerEvents.FrameNavigated'),
-  FrameAttached: Symbol('FrameManagerEvents.FrameAttached'),
-  FrameDetached: Symbol('FrameManagerEvents.FrameDetached'),
-  Load: Symbol('FrameManagerEvents.Load'),
-  DOMContentLoaded: Symbol('FrameManagerEvents.DOMContentLoaded'),
-};
-
-const frameDataSymbol = Symbol('frameData');
-type FrameData = {
-  frameId: string,
-};
-
 export class FrameManager extends EventEmitter implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
@@ -129,10 +116,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
   }
 
-  _frameData(frame: frames.Frame): FrameData {
-    return (frame as any)[frameDataSymbol];
-  }
-
   frame(frameId: string): frames.Frame {
     return this._frames.get(frameId);
   }
@@ -166,30 +149,23 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   _onNavigationCommitted(params) {
     const frame = this._frames.get(params.frameId);
     frame._onCommittedNewDocumentNavigation(params.url, params.name, params.navigationId);
-    this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   _onSameDocumentNavigation(params) {
     const frame = this._frames.get(params.frameId);
     frame._onCommittedSameDocumentNavigation(params.url);
-    this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   _onFrameAttached(params) {
     const parentFrame = this._frames.get(params.parentFrameId) || null;
-    const frame = new frames.Frame(this._page, parentFrame);
-    const data: FrameData = {
-      frameId: params.frameId,
-    };
-    frame[frameDataSymbol] = data;
+    const frame = new frames.Frame(this._page, params.frameId, parentFrame);
     if (!parentFrame) {
       assert(!this._mainFrame, 'INTERNAL ERROR: re-attaching main frame!');
       this._mainFrame = frame;
     }
     this._frames.set(params.frameId, frame);
-    this.emit(FrameManagerEvents.FrameAttached, frame);
     this._page.emit(Events.Page.FrameAttached, frame);
   }
 
@@ -197,7 +173,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const frame = this._frames.get(params.frameId);
     this._frames.delete(params.frameId);
     frame._onDetached();
-    this.emit(FrameManagerEvents.FrameDetached, frame);
     this._page.emit(Events.Page.FrameDetached, frame);
   }
 
@@ -205,17 +180,13 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const frame = this._frames.get(frameId);
     if (name === 'load') {
       frame._lifecycleEvent('load');
-      if (frame === this._mainFrame) {
-        this.emit(FrameManagerEvents.Load);
+      if (frame === this._mainFrame)
         this._page.emit(Events.Page.Load);
-      }
     }
     if (name === 'DOMContentLoaded') {
       frame._lifecycleEvent('domcontentloaded');
-      if (frame === this._mainFrame) {
-        this.emit(FrameManagerEvents.DOMContentLoaded);
+      if (frame === this._mainFrame)
         this._page.emit(Events.Page.DOMContentLoaded);
-      }
     }
   }
 
@@ -288,7 +259,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     } = options;
     const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
     await this._session.send('Page.navigate', {
-      frameId: this._frameData(frame).frameId,
+      frameId: frame._id,
       referer,
       url,
     });
@@ -391,15 +362,15 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.reload', { frameId: this._frameData(this.mainFrame()).frameId }), options);
+    return this._go(() => this._session.send('Page.reload', { frameId: this.mainFrame()._id }), options);
   }
 
   goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.goBack', { frameId: this._frameData(this.mainFrame()).frameId }), options);
+    return this._go(() => this._session.send('Page.goBack', { frameId: this.mainFrame()._id }), options);
   }
 
   goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.goForward', { frameId: this._frameData(this.mainFrame()).frameId }), options);
+    return this._go(() => this._session.send('Page.goForward', { frameId: this.mainFrame()._id }), options);
   }
 
   async evaluateOnNewDocument(source: string): Promise<void> {
@@ -411,7 +382,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
-    const frameId = this._frameData(handle.executionContext().frame()).frameId;
+    const frameId = handle._context.frame()._id;
     return this._session.send('Page.getBoundingBox', {
       frameId,
       objectId: handle._remoteObject.objectId,
@@ -442,7 +413,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const { frameId } = await this._session.send('Page.contentFrame', {
-      frameId: this._frameData(handle._context.frame()).frameId,
+      frameId: handle._context.frame()._id,
       objectId: toRemoteObject(handle).objectId,
     });
     if (!frameId)
@@ -475,7 +446,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('Page.getContentQuads', {
-      frameId: this._frameData(handle._context.frame()).frameId,
+      frameId: handle._context.frame()._id,
       objectId: toRemoteObject(handle).objectId,
     }).catch(debugError);
     if (!result)

@@ -39,19 +39,6 @@ import { PNG } from 'pngjs';
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 
-export const FrameManagerEvents = {
-  FrameNavigatedWithinDocument: Symbol('FrameNavigatedWithinDocument'),
-  FrameAttached: Symbol('FrameAttached'),
-  FrameDetached: Symbol('FrameDetached'),
-  FrameNavigated: Symbol('FrameNavigated'),
-  LifecycleEvent: Symbol('LifecycleEvent'),
-};
-
-const frameDataSymbol = Symbol('frameData');
-type FrameData = {
-  id: string,
-};
-
 let lastDocumentId = 0;
 
 export class FrameManager extends EventEmitter implements PageDelegate {
@@ -164,7 +151,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const hasLoad = frame._firedLifecycleEvents.has('load');
     frame._lifecycleEvent('domcontentloaded');
     frame._lifecycleEvent('load');
-    this.emit(FrameManagerEvents.LifecycleEvent, frame);
     if (frame === this.mainFrame() && !hasDOMContentLoaded)
       this._page.emit(Events.Page.DOMContentLoaded);
     if (frame === this.mainFrame() && !hasLoad)
@@ -176,7 +162,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     if (!frame)
       return;
     frame._lifecycleEvent(event);
-    this.emit(FrameManagerEvents.LifecycleEvent, frame);
     if (frame === this.mainFrame()) {
       if (event === 'load')
         this._page.emit(Events.Page.Load);
@@ -211,22 +196,13 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     return this._frames.get(frameId) || null;
   }
 
-  _frameData(frame: frames.Frame): FrameData {
-    return (frame as any)[frameDataSymbol];
-  }
-
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
     assert(!this._frames.has(frameId));
     const parentFrame = parentFrameId ? this._frames.get(parentFrameId) : null;
-    const frame = new frames.Frame(this._page, parentFrame);
-    const data: FrameData = {
-      id: frameId,
-    };
-    frame[frameDataSymbol] = data;
+    const frame = new frames.Frame(this._page, frameId, parentFrame);
     this._frames.set(frameId, frame);
     if (!parentFrame)
       this._mainFrame = frame;
-    this.emit(FrameManagerEvents.FrameAttached, frame);
     this._page.emit(Events.Page.FrameAttached, frame);
     return frame;
   }
@@ -240,10 +216,9 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       this._removeFramesRecursively(child);
     if (isMainFrame) {
       // Update frame id to retain frame identity on cross-process navigation.
-      const data = this._frameData(frame);
-      this._frames.delete(data.id);
-      data.id = framePayload.id;
-      this._frames.set(data.id, frame);
+      this._frames.delete(frame._id);
+      frame._id = framePayload.id;
+      this._frames.set(framePayload.id, frame);
     }
 
     for (const context of this._contextIdToContext.values()) {
@@ -261,7 +236,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       frame._onExpectedNewDocumentNavigation(documentId);
     frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, documentId);
 
-    this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -270,8 +244,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     if (!frame)
       return;
     frame._onCommittedSameDocumentNavigation(url);
-    this.emit(FrameManagerEvents.FrameNavigatedWithinDocument, frame);
-    this.emit(FrameManagerEvents.FrameNavigated, frame);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -313,8 +285,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
     frame._onDetached();
-    this._frames.delete(this._frameData(frame).id);
-    this.emit(FrameManagerEvents.FrameDetached, frame);
+    this._frames.delete(frame._id);
     this._page.emit(Events.Page.FrameDetached, frame);
   }
 
@@ -324,7 +295,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       waitUntil = (['load'] as frames.LifecycleEvent[])
     } = options;
     const watchDog = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    await this._session.send('Page.navigate', {url, frameId: this._frameData(frame).id});
+    await this._session.send('Page.navigate', {url, frameId: frame._id});
     const error = await Promise.race([
       watchDog.timeoutOrTerminationPromise,
       watchDog.newDocumentNavigationPromise,
