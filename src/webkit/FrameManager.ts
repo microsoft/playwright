@@ -39,8 +39,6 @@ import { PNG } from 'pngjs';
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 
-let lastDocumentId = 0;
-
 export class FrameManager extends EventEmitter implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
@@ -65,7 +63,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(Events.Page.Request, event));
     this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(Events.Page.Response, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._requestFailed(event));
+    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(Events.Page.RequestFailed, event));
     this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(Events.Page.RequestFinished, event));
   }
 
@@ -230,8 +228,8 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       }
     }
 
-    // Auto-increment to avoid cross-process loaderId clash.
-    const documentId = framePayload.loaderId + '::' + (++lastDocumentId);
+    // Append session id to avoid cross-process loaderId clash.
+    const documentId = this._session._sessionId + '::' + framePayload.loaderId;
     if (!initial)
       frame._onExpectedNewDocumentNavigation(documentId);
     frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, documentId);
@@ -507,14 +505,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   async resetViewport(oldSize: types.Size): Promise<void> {
     await this._session.send('Emulation.setDeviceMetricsOverride', { ...oldSize, deviceScaleFactor: 0 });
-  }
-
-  private _requestFailed(request: network.Request) {
-    if (request.isNavigationRequest() && !request.failure().errorText.includes('cancelled')) {
-      request.frame()._onExpectedNewDocumentNavigation('fake-loader-id', request.url());
-      request.frame()._onAbortedNewDocumentNavigation('fake-loader-id', request.failure().errorText);
-    }
-    this._page.emit(Events.Page.RequestFailed, request);
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

@@ -106,7 +106,8 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       });
       await page.goto(server.PREFIX + '/frames/one-frame.html');
     });
-    it.skip(WEBKIT)('should fail when server returns 204', async({page, server}) => {
+    !WEBKIT && it('should fail when server returns 204', async({page, server}) => {
+      // Webkit just loads an empty page.
       server.setRoute('/empty.html', (req, res) => {
         res.statusCode = 204;
         res.end();
@@ -114,7 +115,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       let error = null;
       await page.goto(server.EMPTY_PAGE).catch(e => error = e);
       expect(error).not.toBe(null);
-      if (CHROME || WEBKIT)
+      if (CHROME)
         expect(error.message).toContain('net::ERR_ABORTED');
       else
         expect(error.message).toContain('NS_BINDING_ABORTED');
@@ -123,7 +124,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'domcontentloaded'});
       expect(response.status()).toBe(200);
     });
-    it.skip(WEBKIT)('should work when page calls history API in beforeunload', async({page, server}) => {
+    it('should work when page calls history API in beforeunload', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         window.addEventListener('beforeunload', () => history.replaceState(null, 'initial', window.location.href), false);
@@ -501,16 +502,11 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it.skip(WEBKIT)('should work when subframe issues window.stop()', async({page, server}) => {
       server.setRoute('/frames/style.css', (req, res) => {});
       const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
-      let frame;
-      await new Promise(fulfill => {
-        page.once('frameattached', attached => {
-          frame = attached;
-          page.on('framenavigated', f => {
-            if (f === frame)
-              fulfill();
-          });
-        });
-      });
+      const frame = await new Promise(f => page.once('frameattached', f));
+      await new Promise(fulfill => page.on('framenavigated', f => {
+        if (f === frame)
+          fulfill();
+      }));
       await Promise.all([
         frame.evaluate(() => window.stop()),
         navigationPromise
@@ -572,16 +568,16 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const error = await navigationPromise;
       expect(error.message).toBe('Navigating frame was detached');
     });
-    it.skip(WEBKIT)('should return matching responses', async({page, server}) => {
+    it('should return matching responses', async({page, server}) => {
       // Disable cache: otherwise, chromium will cache similar requests.
       await page.setCacheEnabled(false);
       await page.goto(server.EMPTY_PAGE);
       // Attach three frames.
-      const frames = await Promise.all([
-        utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
-        utils.attachFrame(page, 'frame2', server.EMPTY_PAGE),
-        utils.attachFrame(page, 'frame3', server.EMPTY_PAGE),
-      ]);
+      const frames = [
+        await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
+        await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE),
+        await utils.attachFrame(page, 'frame3', server.EMPTY_PAGE),
+      ];
       // Navigate all frames to the same URL.
       const serverResponses = [];
       server.setRoute('/one-style.html', (req, res) => serverResponses.push(res));
