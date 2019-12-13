@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-export { TimeoutError } from '../Errors';
+export { TimeoutError } from '../errors';
 export { Browser } from './Browser';
 export { BrowserContext } from '../browserContext';
 export { BrowserFetcher } from '../browserFetcher';

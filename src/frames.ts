@@ -22,7 +22,7 @@ import * as dom from './dom';
 import * as network from './network';
 import { helper, assert, RegisteredListener } from './helper';
 import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from './input';
-import { TimeoutError } from './Errors';
+import { TimeoutError } from './errors';
 import { Events } from './events';
 import { Page } from './page';
 import { ConsoleMessage } from './console';

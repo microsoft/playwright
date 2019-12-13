@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { assert, helper } from './helper';
 import * as types from './types';
-import * as keyboardLayout from './USKeyboardLayout';
+import * as keyboardLayout from './usKeyboardLayout';
 
 const readFileAsync = helper.promisify(fs.readFile);
 

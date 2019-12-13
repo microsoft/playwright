@@ -16,8 +16,8 @@
  */
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
-import { DeviceDescriptors } from '../DeviceDescriptors';
-import * as Errors from '../Errors';
+import { DeviceDescriptors } from '../deviceDescriptors';
+import * as Errors from '../errors';
 import { Launcher, LauncherLaunchOptions, createBrowserFetcher } from './Launcher';
 
 export class Playwright {

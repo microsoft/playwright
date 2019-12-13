@@ -23,7 +23,7 @@ import {BrowserFetcher, BrowserFetcherOptions} from '../browserFetcher';
 import * as fs from 'fs';
 import * as util from 'util';
 import {debugError, assert} from '../helper';
-import {TimeoutError} from '../Errors';
+import {TimeoutError} from '../errors';
 import {WebSocketTransport} from './WebSocketTransport';
 import { launchProcess, waitForLine } from '../processLauncher';
 

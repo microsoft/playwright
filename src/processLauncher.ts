@@ -20,7 +20,7 @@ import * as stream from 'stream';
 import * as removeFolder from 'rimraf';
 import { helper } from './helper';
 import * as readline from 'readline';
-import { TimeoutError } from './Errors';
+import { TimeoutError } from './errors';
 
 const removeFolderAsync = helper.promisify(removeFolder);
 

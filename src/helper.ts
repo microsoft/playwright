@@ -16,7 +16,7 @@
  */
 
 import * as debug from 'debug';
-import { TimeoutError } from './Errors';
+import { TimeoutError } from './errors';
 
 export const debugError = debug(`playwright:error`);
 

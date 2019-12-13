@@ -16,7 +16,7 @@
  */
 
 import * as WebSocket from 'ws';
-import { ConnectionTransport } from '../types';
+import { ConnectionTransport } from './types';
 
 export class WebSocketTransport implements ConnectionTransport {
   private _ws: WebSocket;

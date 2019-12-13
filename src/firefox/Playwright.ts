@@ -17,8 +17,8 @@
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
 import { ConnectionTransport } from '../types';
-import { DeviceDescriptors, DeviceDescriptor } from '../DeviceDescriptors';
-import * as Errors from '../Errors';
+import { DeviceDescriptors, DeviceDescriptor } from '../deviceDescriptors';
+import * as Errors from '../errors';
 import { Launcher, createBrowserFetcher } from './Launcher';
 
 type Devices = { [name: string]: DeviceDescriptor } & DeviceDescriptor[];

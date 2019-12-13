@@ -23,7 +23,7 @@ import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
 import { Screenshotter } from './screenshotter';
-import { TimeoutSettings } from './TimeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
 import { BrowserContext, BrowserInterface } from './browserContext';
