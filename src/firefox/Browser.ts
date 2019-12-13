@@ -29,7 +29,7 @@ import * as network from '../network';
 import { BrowserContext, BrowserInterface } from '../browserContext';
 
 export class Browser extends EventEmitter implements BrowserInterface {
-  private _connection: Connection;
+  _connection: Connection;
   _defaultViewport: types.Viewport;
   private _process: import('child_process').ChildProcess;
   private _closeCallback: () => Promise<void>;

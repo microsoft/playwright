@@ -301,13 +301,26 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     return watcher.navigationResponse();
   }
 
-  async setFrameContent(frame: frames.Frame, html: string) {
+  async setFrameContent(frame: frames.Frame, html: string, options: frames.NavigateOptions = {}) {
+    const {
+      waitUntil = (['load'] as frames.LifecycleEvent[]),
+      timeout = this._page._timeoutSettings.navigationTimeout(),
+    } = options;
     const context = await frame._utilityContext();
+    frame._firedLifecycleEvents.clear();
     await context.evaluate(html => {
       document.open();
       document.write(html);
       document.close();
     }, html);
+    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
+    const error = await Promise.race([
+      watcher.timeoutOrTerminationPromise,
+      watcher.lifecyclePromise,
+    ]);
+    watcher.dispose();
+    if (error)
+      throw error;
   }
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {

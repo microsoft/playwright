@@ -528,6 +528,24 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       const result = await page.content();
       expect(result).toBe(expectedOutput);
     });
+    it('should not confuse with previous navigation', async({page, server}) => {
+      const imgPath = '/img.png';
+      let imgResponse = null;
+      server.setRoute(imgPath, (req, res) => imgResponse = res);
+      let loaded = false;
+      // Trigger navigation which might resolve next setContent call.
+      page.evaluate(url => window.location.href = url, server.EMPTY_PAGE);
+      const contentPromise = page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).then(() => loaded = true);
+      await server.waitForRequest(imgPath);
+
+      expect(loaded).toBe(false);
+      for (let i = 0; i < 5; i++)
+        await page.evaluate('1');  // Roundtrips to give setContent a chance to resolve.
+      expect(loaded).toBe(false);
+
+      imgResponse.end();
+      await contentPromise;
+    });
     it('should work with doctype', async({page, server}) => {
       const doctype = '<!DOCTYPE html>';
       await page.setContent(`${doctype}<div>hello</div>`);
@@ -541,7 +559,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       const result = await page.content();
       expect(result).toBe(`${doctype}${expectedOutput}`);
     });
-    it.skip(FFOX)('should respect timeout', async({page, server}) => {
+    it('should respect timeout', async({page, server}) => {
       const imgPath = '/img.png';
       // stall for image
       server.setRoute(imgPath, (req, res) => {});
@@ -549,7 +567,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, {timeout: 1}).catch(e => error = e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
-    it.skip(FFOX)('should respect default navigation timeout', async({page, server}) => {
+    it('should respect default navigation timeout', async({page, server}) => {
       page.setDefaultNavigationTimeout(1);
       const imgPath = '/img.png';
       // stall for image
@@ -558,7 +576,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).catch(e => error = e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
-    it.skip(FFOX)('should await resources to load', async({page, server}) => {
+    it('should await resources to load', async({page, server}) => {
       const imgPath = '/img.png';
       let imgResponse = null;
       server.setRoute(imgPath, (req, res) => imgResponse = res);
