@@ -97,8 +97,13 @@ export class NetworkManager extends EventEmitter {
         redirectChain = request.request._redirectChain;
       }
     }
-    const frame = event.frameId && this._frameManager ? this._frameManager.frame(event.frameId) : null;
-    const request = new InterceptableRequest(frame, undefined, event, redirectChain);
+    const frame = this._frameManager.frame(event.frameId);
+    // TODO(einbinder) this will fail if we are an XHR document request
+    const isNavigationRequest = event.type === 'Document';
+    const documentId = isNavigationRequest ? this._session._sessionId + '::' + event.loaderId : undefined;
+    if (documentId)
+      frame._onExpectedNewDocumentNavigation(documentId, event.request.url);
+    const request = new InterceptableRequest(frame, undefined, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEvents.Request, request.request);
   }
@@ -159,6 +164,14 @@ export class NetworkManager extends EventEmitter {
       response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
+    if (request._documentId) {
+      const isCurrentDocument = request.request.frame()._lastDocumentId === request._documentId;
+      // When frame was detached during load, "cancelled" comes before detach.
+      // Ignore it and hope for the best.
+      const wasCanceled = event.errorText === 'cancelled';
+      if (!isCurrentDocument && !wasCanceled)
+        request.request.frame()._onAbortedNewDocumentNavigation(request._documentId, event.errorText);
+    }
     this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }
 }
@@ -173,13 +186,13 @@ class InterceptableRequest {
   readonly request: network.Request;
   _requestId: string;
   _interceptionId: string;
+  _documentId: string | undefined;
 
-  constructor(frame: frames.Frame | null, interceptionId: string, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
+  constructor(frame: frames.Frame | null, interceptionId: string, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[], documentId: string | undefined) {
     this._requestId = event.requestId;
-    // TODO(einbinder) this will fail if we are an XHR document request
-    const isNavigationRequest = event.type === 'Document';
     this._interceptionId = interceptionId;
-    this.request = new network.Request(frame, redirectChain, isNavigationRequest, event.request.url,
+    this._documentId = documentId;
+    this.request = new network.Request(frame, redirectChain, !!documentId, event.request.url,
         event.type ? event.type.toLowerCase() : 'Unknown', event.request.method, event.request.postData, headersObject(event.request.headers));
     (this.request as any)[interceptableRequestSymbol] = this;
   }
