@@ -2286,6 +2286,15 @@ The `format` options are:
 > 1. Script tags inside templates are not evaluated.
 > 2. Page styles are not visible inside templates.
 
+### class: Firefox
+
+Firefox-specific features.
+
+#### firefox.wsEndpoint()
+- returns: <[string]> Browser websocket url.
+
+Browser websocket endpoint which can be used as an argument to [playwright.connect](#playwrightconnectoptions).
+
 
 ### class: Chromium
 
@@ -2293,9 +2302,9 @@ Chromium-specific features including Tracing, service worker support, etc.
 You can use [`chromium.startTracing`](#chromiumstarttracingpage-options) and [`chromium.stopTracing`](#chromiumstoptracing) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
 
 ```js
-await page.chromium.startTracing({path: 'trace.json'});
+await browser.chromium.startTracing(page, {path: 'trace.json'});
 await page.goto('https://www.google.com');
-await page.chromium.stopTracing();
+await browser.chromium.stopTracing();
 ```
 
 #### event: 'targetchanged'

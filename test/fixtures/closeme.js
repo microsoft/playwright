@@ -1,5 +1,8 @@
 (async() => {
   const [, , playwrightRoot, options] = process.argv;
   const browser = await require(playwrightRoot).launch(JSON.parse(options));
-  console.log(browser.chromium.wsEndpoint());
+  if (browser.chromium)
+    console.log(browser.chromium.wsEndpoint());
+  else if (browser.firefox)
+    console.log(browser.firefox.wsEndpoint());
 })();
