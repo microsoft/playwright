@@ -127,7 +127,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return this._process;
   }
 
-  async createIncognitoBrowserContext(): Promise<BrowserContext> {
+  async newContext(): Promise<BrowserContext> {
     const {browserContextId} = await this._client.send('Target.createBrowserContext');
     const context = this._createBrowserContext(browserContextId);
     this._contexts.set(browserContextId, context);

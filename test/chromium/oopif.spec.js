@@ -26,7 +26,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       }));
     });
     beforeEach(async function(state) {
-      state.context = await state.browser.createIncognitoBrowserContext();
+      state.context = await state.browser.newContext();
       state.page = await state.context.newPage();
     });
     afterEach(async function(state) {

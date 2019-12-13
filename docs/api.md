@@ -32,7 +32,7 @@
   * [browser.browserContexts()](#browserbrowsercontexts)
   * [browser.chromium](#browserchromium)
   * [browser.close()](#browserclose)
-  * [browser.createIncognitoBrowserContext()](#browsercreateincognitobrowsercontext)
+  * [browser.newContext()](#browsernewcontext)
   * [browser.defaultBrowserContext()](#browserdefaultbrowsercontext)
   * [browser.disconnect()](#browserdisconnect)
   * [browser.isConnected()](#browserisconnected)
@@ -625,7 +625,7 @@ a single instance of [BrowserContext].
 
 Closes Chromium and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
-#### browser.createIncognitoBrowserContext()
+#### browser.newContext()
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new incognito browser context. This won't share cookies/cache with other browser contexts.
@@ -634,7 +634,7 @@ Creates a new incognito browser context. This won't share cookies/cache with oth
 (async () => {
   const browser = await playwright.launch();
   // Create a new incognito browser context.
-  const context = await browser.createIncognitoBrowserContext();
+  const context = await browser.newContext();
   // Create a new page in a pristine context.
   const page = await context.newPage();
   // Do stuff
@@ -691,12 +691,12 @@ a single BrowserContext used by default. The method `browser.newPage()` creates 
 If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
 context.
 
-Playwright allows creation of "incognito" browser contexts with `browser.createIncognitoBrowserContext()` method.
+Playwright allows creation of "incognito" browser contexts with `browser.newContext()` method.
 "Incognito" browser contexts don't write any browsing data to disk.
 
 ```js
 // Create a new incognito browser context
-const context = await browser.createIncognitoBrowserContext();
+const context = await browser.newContext();
 // Create a new page inside context.
 const page = await context.newPage();
 // ... do stuff with page ...

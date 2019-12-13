@@ -126,7 +126,7 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
 
     describe('Page', function() {
       beforeEach(async state => {
-        state.context = await state.browser.createIncognitoBrowserContext();
+        state.context = await state.browser.newContext();
         state.page = await state.context.newPage();
       });
 

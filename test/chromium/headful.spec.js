@@ -118,7 +118,7 @@ module.exports.addTests = function({testRunner, expect, playwright, defaultBrows
     });
     it('should open devtools when "devtools: true" option is given', async({server}) => {
       const browser = await playwright.launch(Object.assign({devtools: true}, headfulOptions));
-      const context = await browser.createIncognitoBrowserContext();
+      const context = await browser.newContext();
       await Promise.all([
         context.newPage(),
         browser.chromium.waitForTarget(target => target.browserContext() === context && target.url().includes('devtools://')),

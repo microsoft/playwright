@@ -23,7 +23,7 @@ import * as childProcess from 'child_process';
 export interface BrowserInterface {
   browserContexts(): BrowserContext[];
   close(): Promise<void>;
-  createIncognitoBrowserContext(): Promise<BrowserContext>;
+  newContext(): Promise<BrowserContext>;
   defaultBrowserContext(): BrowserContext;
   newPage(): Promise<Page>;
   pages(): Promise<Page[]>;

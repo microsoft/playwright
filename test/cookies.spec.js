@@ -155,7 +155,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await page.evaluate(() => document.cookie)).toEqual('password=123456');
     });
     it('should isolate cookies in browser contexts', async({context, server, browser}) => {
-      const anotherContext = await browser.createIncognitoBrowserContext();
+      const anotherContext = await browser.newContext();
       await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
       await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
 
@@ -365,7 +365,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await page.evaluate('document.cookie')).toBe('');
     });
     it('should isolate cookies when clearing', async({context, server, browser}) => {
-      const anotherContext = await browser.createIncognitoBrowserContext();
+      const anotherContext = await browser.newContext();
       await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
       await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
 

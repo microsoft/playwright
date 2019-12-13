@@ -34,7 +34,7 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should create new incognito context', async function({browser, server}) {
       expect(browser.browserContexts().length).toBe(1);
-      const context = await browser.createIncognitoBrowserContext();
+      const context = await browser.newContext();
       expect(context.isIncognito()).toBe(true);
       expect(browser.browserContexts().length).toBe(2);
       expect(browser.browserContexts().indexOf(context) !== -1).toBe(true);
@@ -44,7 +44,7 @@ module.exports.addTests = function({testRunner, expect}) {
     it('should close all belonging targets once closing context', async function({browser, server}) {
       expect((await browser.pages()).length).toBe(1);
 
-      const context = await browser.createIncognitoBrowserContext();
+      const context = await browser.newContext();
       await context.newPage();
       expect((await browser.pages()).length).toBe(2);
       expect((await context.pages()).length).toBe(1);
@@ -53,7 +53,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect((await browser.pages()).length).toBe(1);
     });
     it('window.open should use parent tab context', async function({browser, server}) {
-      const context = await browser.createIncognitoBrowserContext();
+      const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       const [popupTarget] = await Promise.all([
@@ -65,8 +65,8 @@ module.exports.addTests = function({testRunner, expect}) {
     });
     it('should isolate localStorage and cookies', async function({browser, server}) {
       // Create two incognito contexts.
-      const context1 = await browser.createIncognitoBrowserContext();
-      const context2 = await browser.createIncognitoBrowserContext();
+      const context1 = await browser.newContext();
+      const context2 = await browser.newContext();
       expect((await context1.pages()).length).toBe(0);
       expect((await context2.pages()).length).toBe(0);
 

@@ -70,7 +70,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
   }
 
   async userAgent(): Promise<string> {
-    const context = await this.createIncognitoBrowserContext();
+    const context = await this.newContext();
     const page = await context.newPage();
     const userAgent = await page.evaluate(() => navigator.userAgent);
     context.close();
@@ -86,7 +86,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return this._process;
   }
 
-  async createIncognitoBrowserContext(): Promise<BrowserContext> {
+  async newContext(): Promise<BrowserContext> {
     const {browserContextId} = await this._connection.send('Browser.createContext');
     const context = this._createBrowserContext(browserContextId);
     this._contexts.set(browserContextId, context);
