@@ -27,7 +27,6 @@ import { ExecutionContextDelegate, EVALUATION_SCRIPT_URL } from './ExecutionCont
 import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
 import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
-import { DOMWorldDelegate } from './JSHandle';
 import * as dialog from '../dialog';
 import { Browser } from './Browser';
 import { BrowserContext } from '../browserContext';
@@ -292,7 +291,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       return;
     const context = new js.ExecutionContext(new ExecutionContextDelegate(this._session, contextPayload));
     if (frame) {
-      context._domWorld = new dom.DOMWorld(context, new DOMWorldDelegate(this, frame));
+      context._domWorld = new dom.DOMWorld(context, frame);
       if (contextPayload.isPageContext)
         frame._contextCreated('main', context);
       else if (contextPayload.name === UTILITY_WORLD_NAME)
@@ -543,4 +542,66 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     }
     this._page.emit(Events.Page.RequestFailed, request);
   }
+
+  async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    throw new Error('contentFrame() is not implemented');
+  }
+
+  isElementHandle(remoteObject: any): boolean {
+    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
+  }
+
+  async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
+    const quads = await this.getContentQuads(handle);
+    if (!quads || !quads.length)
+      return null;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const quad of quads) {
+      for (const point of quad) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+      }
+    }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
+
+  async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
+    const result = await this._session.send('DOM.getContentQuads', {
+      objectId: toRemoteObject(handle).objectId
+    }).catch(debugError);
+    if (!result)
+      return null;
+    return result.quads.map(quad => [
+      { x: quad[0], y: quad[1] },
+      { x: quad[2], y: quad[3] },
+      { x: quad[4], y: quad[5] },
+      { x: quad[6], y: quad[7] }
+    ]);
+  }
+
+  async layoutViewport(): Promise<{ width: number, height: number }> {
+    return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+  }
+
+  async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
+    const objectId = toRemoteObject(handle).objectId;
+    await this._session.send('DOM.setInputFiles', { objectId, files });
+  }
+
+  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.DOMWorld): Promise<dom.ElementHandle<T>> {
+    const result = await this._session.send('DOM.resolveNode', {
+      objectId: toRemoteObject(handle).objectId,
+      executionContextId: (to.context._delegate as ExecutionContextDelegate)._contextId
+    });
+    return to.context._createHandle(result.object) as dom.ElementHandle<T>;
+  }
+}
+
+function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
+  return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }
