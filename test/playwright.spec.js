@@ -189,7 +189,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
     require('./chromium/connect.spec.js').addTests(testOptions);
     require('./chromium/launcher.spec.js').addTests(testOptions);
     require('./chromium/headful.spec.js').addTests(testOptions);
-    require('./chromium/headful.spec.js').addTests(testOptions);
     require('./chromium/oopif.spec.js').addTests(testOptions);
     require('./chromium/tracing.spec.js').addTests(testOptions);
   }

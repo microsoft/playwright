@@ -14,14 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as childProcess from 'child_process';
+
 import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
 import * as os from 'os';
 import * as path from 'path';
-import * as readline from 'readline';
-import * as removeFolder from 'rimraf';
 import * as URL from 'url';
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
@@ -33,9 +31,9 @@ import { PipeTransport } from './PipeTransport';
 import { WebSocketTransport } from './WebSocketTransport';
 import { ConnectionTransport } from '../types';
 import * as util from 'util';
+import { launchProcess, waitForLine } from '../processLauncher';
 
 const mkdtempAsync = helper.promisify(fs.mkdtemp);
-const removeFolderAsync = helper.promisify(removeFolder);
 
 const CHROME_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
@@ -118,112 +116,44 @@ export class Launcher {
     }
 
     const usePipe = chromeArguments.includes('--remote-debugging-pipe');
-    let stdio: ('ignore' | 'pipe')[] = ['pipe', 'pipe', 'pipe'];
-    if (usePipe) {
-      if (dumpio)
-        stdio = ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'];
-      else
-        stdio = ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'];
-    }
-    const chromeProcess = childProcess.spawn(
-        chromeExecutable,
-        chromeArguments,
-        {
-          // On non-windows platforms, `detached: true` makes child process a leader of a new
-          // process group, making it possible to kill child process tree with `.kill(-pid)` command.
-          // @see https://nodejs.org/api/child_process.html#child_process_options_detached
-          detached: process.platform !== 'win32',
-          env,
-          stdio
-        }
-    );
 
-    if (!chromeProcess.pid) {
-      let reject: (e: Error) => void;
-      const result = new Promise((f, r) => reject = r);
-      chromeProcess.once('error', error => {
-        reject(new Error('Failed to launch browser: ' + error));
-      });
-      return result as Promise<Browser>;
-    }
-
-    if (dumpio) {
-      chromeProcess.stderr.pipe(process.stderr);
-      chromeProcess.stdout.pipe(process.stdout);
-    }
-
-    let chromeClosed = false;
-    const waitForChromeToClose = new Promise((fulfill, reject) => {
-      chromeProcess.once('exit', () => {
-        chromeClosed = true;
-        // Cleanup as processes exit.
-        if (temporaryUserDataDir) {
-          removeFolderAsync(temporaryUserDataDir)
-              .then(() => fulfill())
-              .catch((err: Error) => console.error(err));
-        } else {
-          fulfill();
-        }
+    const launched = await launchProcess({
+      executablePath: chromeExecutable,
+      args: chromeArguments,
+      env,
+      handleSIGINT,
+      handleSIGTERM,
+      handleSIGHUP,
+      dumpio,
+      pipe: usePipe,
+      tempDir: temporaryUserDataDir
+    }, () => {
+      if (temporaryUserDataDir || !connection)
+        return Promise.reject();
+      return connection.rootSession.send('Browser.close').catch(error => {
+        debugError(error);
+        throw error;
       });
     });
 
-    const listeners = [ helper.addEventListener(process, 'exit', killChrome) ];
-    if (handleSIGINT)
-      listeners.push(helper.addEventListener(process, 'SIGINT', () => { killChrome(); process.exit(130); }));
-    if (handleSIGTERM)
-      listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyCloseChrome));
-    if (handleSIGHUP)
-      listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyCloseChrome));
     let connection: Connection | null = null;
     try {
       if (!usePipe) {
-        const browserWSEndpoint = await waitForWSEndpoint(chromeProcess, timeout, this._preferredRevision);
+        const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${this._preferredRevision}`);
+        const match = await waitForLine(launched.process, launched.process.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
+        const browserWSEndpoint = match[1];
         const transport = await WebSocketTransport.create(browserWSEndpoint);
         connection = new Connection(browserWSEndpoint, transport, slowMo);
       } else {
-        const transport = new PipeTransport(chromeProcess.stdio[3] as NodeJS.WritableStream, chromeProcess.stdio[4] as NodeJS.ReadableStream);
+        const transport = new PipeTransport(launched.process.stdio[3] as NodeJS.WritableStream, launched.process.stdio[4] as NodeJS.ReadableStream);
         connection = new Connection('', transport, slowMo);
       }
-      const browser = await Browser.create(connection, [], ignoreHTTPSErrors, defaultViewport, chromeProcess, gracefullyCloseChrome);
+      const browser = await Browser.create(connection, [], ignoreHTTPSErrors, defaultViewport, launched.process, launched.gracefullyClose);
       await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
-      killChrome();
+      await launched.gracefullyClose();
       throw e;
-    }
-
-    function gracefullyCloseChrome(): Promise<any> {
-      helper.removeEventListeners(listeners);
-      if (temporaryUserDataDir) {
-        killChrome();
-      } else if (connection) {
-        // Attempt to close chrome gracefully
-        connection.rootSession.send('Browser.close').catch(error => {
-          debugError(error);
-          killChrome();
-        });
-      }
-      return waitForChromeToClose;
-    }
-
-    // This method has to be sync to be used as 'exit' event handler.
-    function killChrome() {
-      helper.removeEventListeners(listeners);
-      if (chromeProcess.pid && !chromeProcess.killed && !chromeClosed) {
-        // Force kill chrome.
-        try {
-          if (process.platform === 'win32')
-            childProcess.execSync(`taskkill /pid ${chromeProcess.pid} /T /F`);
-          else
-            process.kill(-chromeProcess.pid, 'SIGKILL');
-        } catch (e) {
-          // the process might have already stopped
-        }
-      }
-      // Attempt to remove temporary profile directory to avoid littering.
-      try {
-        removeFolder.sync(temporaryUserDataDir);
-      } catch (e) { }
     }
   }
 
@@ -296,51 +226,6 @@ export class Launcher {
     return {executablePath: revisionInfo.executablePath, missingText};
   }
 
-}
-
-function waitForWSEndpoint(chromeProcess: childProcess.ChildProcess, timeout: number, preferredRevision: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const rl = readline.createInterface({ input: chromeProcess.stderr });
-    let stderr = '';
-    const listeners = [
-      helper.addEventListener(rl, 'line', onLine),
-      helper.addEventListener(rl, 'close', () => onClose()),
-      helper.addEventListener(chromeProcess, 'exit', () => onClose()),
-      helper.addEventListener(chromeProcess, 'error', error => onClose(error))
-    ];
-    const timeoutId = timeout ? setTimeout(onTimeout, timeout) : 0;
-
-    function onClose(error?: Error) {
-      cleanup();
-      reject(new Error([
-        'Failed to launch chrome!' + (error ? ' ' + error.message : ''),
-        stderr,
-        '',
-        'TROUBLESHOOTING: https://github.com/Microsoft/playwright/blob/master/docs/troubleshooting.md',
-        '',
-      ].join('\n')));
-    }
-
-    function onTimeout() {
-      cleanup();
-      reject(new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${preferredRevision}`));
-    }
-
-    function onLine(line: string) {
-      stderr += line + '\n';
-      const match = line.match(/^DevTools listening on (ws:\/\/.*)$/);
-      if (!match)
-        return;
-      cleanup();
-      resolve(match[1]);
-    }
-
-    function cleanup() {
-      if (timeoutId)
-        clearTimeout(timeoutId);
-      helper.removeEventListeners(listeners);
-    }
-  });
 }
 
 function getWSEndpoint(browserURL: string): Promise<string> {

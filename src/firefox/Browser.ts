@@ -31,20 +31,20 @@ export class Browser extends EventEmitter implements BrowserInterface {
   private _connection: Connection;
   _defaultViewport: types.Viewport;
   private _process: import('child_process').ChildProcess;
-  private _closeCallback: () => void;
+  private _closeCallback: () => Promise<void>;
   _targets: Map<string, Target>;
   private _defaultContext: BrowserContext;
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
 
-  static async create(connection: Connection, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
+  static async create(connection: Connection, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
     const {browserContextIds} = await connection.send('Target.getBrowserContexts');
     const browser = new Browser(connection, browserContextIds, defaultViewport, process, closeCallback);
     await connection.send('Target.enable');
     return browser;
   }
 
-  constructor(connection: Connection, browserContextIds: Array<string>, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => void) {
+  constructor(connection: Connection, browserContextIds: Array<string>, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
     super();
     this._connection = connection;
     this._defaultViewport = defaultViewport;
@@ -167,7 +167,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
 
   async close() {
     helper.removeEventListeners(this._eventListeners);
-    this._closeCallback();
+    await this._closeCallback();
   }
 
   _createBrowserContext(browserContextId: string | null): BrowserContext {

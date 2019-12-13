@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as childProcess from 'child_process';
-import { debugError, helper, assert } from '../helper';
+
+import { debugError, assert } from '../helper';
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { Connection } from './Connection';
@@ -25,6 +25,7 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as util from 'util';
 import * as os from 'os';
+import { launchProcess } from '../processLauncher';
 
 const DEFAULT_ARGS = [
 ];
@@ -74,96 +75,40 @@ export class Launcher {
         throw new Error(missingText);
       webkitExecutable = executablePath;
     }
-
-    let stdio: ('ignore' | 'pipe')[] = ['pipe', 'pipe', 'pipe'];
-    if (dumpio)
-      stdio = ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'];
-    else
-      stdio = ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'];
     webkitArguments.push('--inspector-pipe');
     // Headless options is only implemented on Mac at the moment.
     if (process.platform === 'darwin' && options.headless !== false)
       webkitArguments.push('--headless');
-    const webkitProcess = childProcess.spawn(
-        webkitExecutable,
-        webkitArguments,
-        {
-          // On non-windows platforms, `detached: true` makes child process a leader of a new
-          // process group, making it possible to kill child process tree with `.kill(-pid)` command.
-          // @see https://nodejs.org/api/child_process.html#child_process_options_detached
-          detached: process.platform !== 'win32',
-          env,
-          stdio
-        }
-    );
 
-    if (!webkitProcess.pid) {
-      let reject;
-      const result = new Promise((f, r) => reject = r);
-      webkitProcess.once('error', error => {
-        reject(new Error('Failed to launch browser: ' + error));
-      });
-      return result as Promise<Browser>;
-    }
-
-    if (dumpio) {
-      webkitProcess.stderr.pipe(process.stderr);
-      webkitProcess.stdout.pipe(process.stdout);
-    }
-
-    let webkitClosed = false;
-    const waitForChromeToClose = new Promise((fulfill, reject) => {
-      webkitProcess.once('exit', () => {
-        webkitClosed = true;
-        fulfill();
+    const launched = await launchProcess({
+      executablePath: webkitExecutable,
+      args: webkitArguments,
+      env,
+      handleSIGINT,
+      handleSIGTERM,
+      handleSIGHUP,
+      dumpio,
+      pipe: true,
+      tempDir: null
+    }, () => {
+      if (!connection)
+        return Promise.reject();
+      return connection.send('Browser.close').catch(error => {
+        debugError(error);
+        throw error;
       });
     });
 
-    const listeners = [ helper.addEventListener(process, 'exit', killWebKit) ];
-    if (handleSIGINT)
-      listeners.push(helper.addEventListener(process, 'SIGINT', () => { killWebKit(); process.exit(130); }));
-    if (handleSIGTERM)
-      listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyCloseWebkit));
-    if (handleSIGHUP)
-      listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyCloseWebkit));
     let connection: Connection | null = null;
     try {
-      const transport = new PipeTransport(webkitProcess.stdio[3] as NodeJS.WritableStream, webkitProcess.stdio[4] as NodeJS.ReadableStream);
+      const transport = new PipeTransport(launched.process.stdio[3] as NodeJS.WritableStream, launched.process.stdio[4] as NodeJS.ReadableStream);
       connection = new Connection(transport, slowMo);
-      const browser = new Browser(connection, defaultViewport, webkitProcess, gracefullyCloseWebkit);
+      const browser = new Browser(connection, defaultViewport, launched.process, launched.gracefullyClose);
       await browser._waitForTarget(t => t._type === 'page');
       return browser;
     } catch (e) {
-      killWebKit();
+      await launched.gracefullyClose();
       throw e;
-    }
-
-    function gracefullyCloseWebkit(): Promise<any> {
-      helper.removeEventListeners(listeners);
-      if (connection) {
-        // Attempt to close chrome gracefully
-        connection.send('Browser.close').catch(error => {
-          debugError(error);
-          killWebKit();
-        });
-      }
-      return waitForChromeToClose;
-    }
-
-    // This method has to be sync to be used as 'exit' event handler.
-    function killWebKit() {
-      helper.removeEventListeners(listeners);
-      if (webkitProcess.pid && !webkitProcess.killed && !webkitClosed) {
-        // Force kill chrome.
-        try {
-          if (process.platform === 'win32')
-            childProcess.execSync(`taskkill /pid ${webkitProcess.pid} /T /F`);
-          else
-            process.kill(-webkitProcess.pid, 'SIGKILL');
-        } catch (e) {
-          // the process might have already stopped
-        }
-      }
     }
   }
 
