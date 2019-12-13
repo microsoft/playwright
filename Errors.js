@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-module.exports = require('./lib/Errors');
+module.exports = require('./lib/errors');

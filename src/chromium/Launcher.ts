@@ -27,9 +27,7 @@ import { Connection } from './Connection';
 import { TimeoutError } from '../errors';
 import { assert, debugError, helper } from '../helper';
 import * as types from '../types';
-import { PipeTransport } from './PipeTransport';
-import { WebSocketTransport } from '../webSocketTransport';
-import { ConnectionTransport } from '../types';
+import { ConnectionTransport, WebSocketTransport, PipeTransport } from '../transport';
 import * as util from 'util';
 import { launchProcess, waitForLine } from '../processLauncher';
 

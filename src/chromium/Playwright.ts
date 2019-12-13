@@ -17,7 +17,7 @@
 
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnProgressCallback } from '../browserFetcher';
-import { ConnectionTransport } from '../types';
+import { ConnectionTransport } from '../transport';
 import { DeviceDescriptors, DeviceDescriptor } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import { Launcher, LauncherBrowserOptions, LauncherChromeArgOptions, LauncherLaunchOptions, createBrowserFetcher } from './Launcher';

@@ -20,7 +20,7 @@ import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { Connection } from './Connection';
 import * as types from '../types';
-import { PipeTransport } from './PipeTransport';
+import { PipeTransport } from '../transport';
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as util from 'util';

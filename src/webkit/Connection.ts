@@ -17,8 +17,8 @@
 
 import {assert, debugError} from '../helper';
 import * as debug from 'debug';
-import {EventEmitter} from 'events';
-import { ConnectionTransport } from '../types';
+import { EventEmitter } from 'events';
+import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
 const debugProtocol = debug('playwright:protocol');
