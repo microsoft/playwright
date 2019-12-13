@@ -47,34 +47,34 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);
 
-      const iframeUrl = server.PREFIX + '/frame.html';
       let requestFrame;
       page.on('request', r => {
-        if (r.url() === iframeUrl)
+        if (r.url() === server.PREFIX + '/frames/frame.html')
           requestFrame = r.frame();
       });
-      const response = await page.goto(server.PREFIX + '/one-frame.html');
-      expect(page.url()).toBe(server.PREFIX + '/one-frame.html');
+      const response = await page.goto(server.PREFIX + '/frames/one-frame.html');
+      expect(page.url()).toBe(server.PREFIX + '/frames/one-frame.html');
       expect(response.frame()).toBe(page.mainFrame());
-      expect(response.url()).toBe(server.PREFIX + '/one-frame.html');
+      expect(response.url()).toBe(server.PREFIX + '/frames/one-frame.html');
 
+      expect(page.frames().length).toBe(2);
       expect(requestFrame).toBe(page.frames()[1]);
     });
     it('should capture cross-process iframe navigation request', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);
 
-      const iframeUrl = server.CROSS_PROCESS_PREFIX + '/frame.html';
       let requestFrame;
       page.on('request', r => {
-        if (r.url() === iframeUrl)
+        if (r.url() === server.CROSS_PROCESS_PREFIX + '/frames/frame.html')
           requestFrame = r.frame();
       });
-      const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/one-frame.html');
-      expect(page.url()).toBe(server.CROSS_PROCESS_PREFIX + '/one-frame.html');
+      const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/frames/one-frame.html');
+      expect(page.url()).toBe(server.CROSS_PROCESS_PREFIX + '/frames/one-frame.html');
       expect(response.frame()).toBe(page.mainFrame());
-      expect(response.url()).toBe(server.CROSS_PROCESS_PREFIX + '/one-frame.html');
+      expect(response.url()).toBe(server.CROSS_PROCESS_PREFIX + '/frames/one-frame.html');
 
+      expect(page.frames().length).toBe(2);
       expect(requestFrame).toBe(page.frames()[1]);
     });
     it('should work with anchor navigation', async({page, server}) => {
