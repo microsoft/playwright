@@ -75,10 +75,6 @@ async function downloadBrowser(browser, playwright) {
   // Remove previous chromium revisions.
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => browserFetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);
-  if (browser === 'firefox') {
-    const installFirefoxPreferences = require('./misc/install-preferences');
-    await installFirefoxPreferences(revisionInfo.executablePath);
-  }
   return revisionInfo;
 }
 
