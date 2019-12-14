@@ -42,6 +42,7 @@
     "jpeg-js": "^0.3.6",
     "mime": "^2.0.3",
     "pngjs": "^3.4.0",
+    "progress": "^2.0.3",
     "proxy-from-env": "^1.0.0",
     "rimraf": "^2.6.1",
     "ws": "^6.1.0"
@@ -65,7 +66,6 @@
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.8.2",
     "pixelmatch": "^4.0.2",
-    "progress": "^2.0.1",
     "text-diff": "^1.0.1",
     "ts-loader": "^6.1.2",
     "typescript": "3.6.3",
