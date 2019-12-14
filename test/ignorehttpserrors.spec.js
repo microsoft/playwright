@@ -19,7 +19,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
-  describe.skip(WEBKIT)('ignoreHTTPSErrors', function() {
+  describe('ignoreHTTPSErrors', function() {
     beforeAll(async state => {
       state.browser = await playwright.launch({...defaultBrowserOptions, ignoreHTTPSErrors: true});
     });
@@ -43,13 +43,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       expect(error).toBe(null);
       expect(response.ok()).toBe(true);
     });
-    it('should work with request interception', async({page, server, httpsServer}) => {
+    it.skip(WEBKIT)('should work with request interception', async({page, server, httpsServer}) => {
       await page.interception.enable();
       page.on('request', request => page.interception.continue(request));
       const response = await page.goto(httpsServer.EMPTY_PAGE);
       expect(response.status()).toBe(200);
     });
-    it('should work with mixed content', async({page, server, httpsServer}) => {
+    it.skip(WEBKIT)('should work with mixed content', async({page, server, httpsServer}) => {
       httpsServer.setRoute('/mixedcontent.html', (req, res) => {
         res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
       });
