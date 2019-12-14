@@ -37,22 +37,11 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       delete state.page;
     });
 
-    it('should work', async({page, httpsServer}) => {
-      let error = null;
-      const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-      expect(error).toBe(null);
-      expect(response.ok()).toBe(true);
-    });
-    it.skip(WEBKIT)('should work with mixed content', async({page, server, httpsServer}) => {
-      httpsServer.setRoute('/mixedcontent.html', (req, res) => {
-        res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
-      });
-      await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'load'});
-      expect(page.frames().length).toBe(2);
-      // Make sure blocked iframe has functional execution context
-      // @see https://github.com/GoogleChrome/puppeteer/issues/2709
-      expect(await page.frames()[0].evaluate('1 + 2')).toBe(3);
-      expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
+    it('should work with request interception', async({page, server, httpsServer}) => {
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
+      const response = await page.goto(httpsServer.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
     });
   });
 };
