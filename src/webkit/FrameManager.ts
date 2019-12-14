@@ -97,13 +97,13 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       promises.push(session.send('Dialog.enable'));
     }
     if (this._page._state.userAgent !== null)
-      promises.push(session.send('Page.overrideUserAgent', { value: this._page._state.userAgent }));
-    if (this._page._state.mediaType !== null)
-      promises.push(session.send('Page.setEmulatedMedia', { media: this._page._state.mediaType || '' }));
+      promises.push(this._setUserAgent(session, this._page._state.userAgent));
+    if (this._page._state.mediaType !== null || this._page._state.mediaColorScheme !== null)
+      promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.mediaColorScheme));
     if (this._page._state.javascriptEnabled !== null)
-      promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: this._page._state.javascriptEnabled }));
+      promises.push(this._setJavaScriptEnabled(session, this._page._state.javascriptEnabled));
     if (this._page._state.bypassCSP !== null)
-      promises.push(session.send('Page.setBypassCSP', { enabled: this._page._state.bypassCSP }));
+      promises.push(this._setBypassCSP(session, this._page._state.bypassCSP));
     await Promise.all(promises);
   }
 
@@ -401,16 +401,46 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     });
   }
 
+  private async _setUserAgent(session: TargetSession, userAgent: string): Promise<void> {
+    await session.send('Page.overrideUserAgent', { value: userAgent });
+  }
+
+  private async _setJavaScriptEnabled(session: TargetSession, enabled: boolean): Promise<void> {
+    await session.send('Emulation.setJavaScriptEnabled', { enabled });
+  }
+
+  private async _setBypassCSP(session: TargetSession, enabled: boolean): Promise<void> {
+    await session.send('Page.setBypassCSP', { enabled });
+  }
+
+  private async _setEmulateMedia(session: TargetSession, mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+    const promises = [];
+    promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
+    if (mediaColorScheme !== null) {
+      let appearance: any = '';
+      switch (mediaColorScheme) {
+        case 'light': appearance = 'Light'; break;
+        case 'dark': appearance = 'Dark'; break;
+      }
+      promises.push(session.send('Page.setForcedAppearance', { appearance }));
+    }
+    await Promise.all(promises);
+  }
+
   async setUserAgent(userAgent: string): Promise<void> {
-    await this._session.send('Page.overrideUserAgent', { value: userAgent });
+    await this._setUserAgent(this._session, userAgent);
   }
 
   async setJavaScriptEnabled(enabled: boolean): Promise<void> {
-    await this._session.send('Emulation.setJavaScriptEnabled', { enabled });
+    await this._setJavaScriptEnabled(this._session, enabled);
   }
 
   async setBypassCSP(enabled: boolean): Promise<void> {
-    await this._session.send('Page.setBypassCSP', { enabled });
+    await this._setBypassCSP(this._session, enabled);
+  }
+
+  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+    await this._setEmulateMedia(this._session, mediaType, mediaColorScheme);
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
@@ -419,12 +449,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const width = viewport.width;
     const height = viewport.height;
     await this._session.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
-  }
-
-  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
-    if (mediaColorScheme !== null)
-      throw new Error('Not implemented');
-    await this._session.send('Page.setEmulatedMedia', { media: mediaType || '' });
   }
 
   setCacheEnabled(enabled: boolean): Promise<void> {
