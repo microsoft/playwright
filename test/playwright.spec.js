@@ -88,11 +88,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
     ASSETS_DIR,
   };
 
-  beforeAll(async() => {
-    if (FFOX && defaultBrowserOptions.executablePath)
-      await require('../misc/install-preferences')(defaultBrowserOptions.executablePath);
-  });
-
   describe('Browser', function() {
     beforeAll(async state => {
       state.browser = await playwright.launch(defaultBrowserOptions);
