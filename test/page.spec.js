@@ -867,18 +867,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       ]);
       expect(nonCachedRequest.headers['if-modified-since']).toBe(undefined);
     });
-    it.skip(WEBKIT)('should stay disabled when toggling request interception on/off', async({page, server}) => {
-      await page.setCacheEnabled(false);
-      await page.interception.enable();
-      await page.interception.disable();
-
-      await page.goto(server.PREFIX + '/cached/one-style.html');
-      const [nonCachedRequest] = await Promise.all([
-        server.waitForRequest('/cached/one-style.html'),
-        page.reload(),
-      ]);
-      expect(nonCachedRequest.headers['if-modified-since']).toBe(undefined);
-    });
   });
 
   describe('Page.title', function() {
