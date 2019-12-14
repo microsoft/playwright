@@ -645,6 +645,21 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(requests.get('style.css').isNavigationRequest()).toBe(false);
     });
   });
+
+  describe('Page.setCacheEnabled', function() {
+    it('should stay disabled when toggling request interception on/off', async({page, server}) => {
+      await page.setCacheEnabled(false);
+      await page.interception.enable();
+      await page.interception.disable();
+
+      await page.goto(server.PREFIX + '/cached/one-style.html');
+      const [nonCachedRequest] = await Promise.all([
+        server.waitForRequest('/cached/one-style.html'),
+        page.reload(),
+      ]);
+      expect(nonCachedRequest.headers['if-modified-since']).toBe(undefined);
+    });
+  });
 };
 
 /**
