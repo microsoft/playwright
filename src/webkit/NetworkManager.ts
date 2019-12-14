@@ -102,7 +102,7 @@ export class NetworkManager extends EventEmitter {
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? this._session._sessionId + '::' + event.loaderId : undefined;
     if (documentId)
-      frame._onExpectedNewDocumentNavigation(documentId, event.request.url);
+      frame._expectNewDocumentNavigation(documentId, event.request.url);
     const request = new InterceptableRequest(frame, undefined, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEvents.Request, request.request);
@@ -166,11 +166,11 @@ export class NetworkManager extends EventEmitter {
     this._attemptedAuthentications.delete(request._interceptionId);
     if (request._documentId) {
       const isCurrentDocument = request.request.frame()._lastDocumentId === request._documentId;
-      // When frame was detached during load, "cancelled" comes before detach.
-      // Ignore it and hope for the best.
-      const wasCanceled = event.errorText.includes('cancelled');
-      if (!isCurrentDocument && !wasCanceled)
-        request.request.frame()._onAbortedNewDocumentNavigation(request._documentId, event.errorText);
+      let errorText = event.errorText;
+      if (errorText.includes('cancelled'))
+        errorText += '; maybe frame was detached?';
+      if (!isCurrentDocument)
+        request.request.frame()._onAbortedNewDocumentNavigation(request._documentId, errorText);
     }
     this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }

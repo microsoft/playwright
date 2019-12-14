@@ -178,11 +178,11 @@ export class SlowMoTransport {
   }
 
   send(s: string) {
-    this._delegate.send(s); 
+    this._delegate.send(s);
   }
 
   close() {
     this._closed = true;
-    this._delegate.close();    
+    this._delegate.close();
   }
 }
