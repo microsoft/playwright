@@ -6,33 +6,9 @@ import * as path from 'path';
 import { assert, helper } from './helper';
 import * as types from './types';
 import * as keyboardLayout from './usKeyboardLayout';
+import * as api from './api';
 
 const readFileAsync = helper.promisify(fs.readFile);
-
-export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
-export type Button = 'left' | 'right' | 'middle';
-
-export type PointerActionOptions = {
-  modifiers?: Modifier[];
-  relativePoint?: types.Point;
-};
-
-export type ClickOptions = PointerActionOptions & {
-  delay?: number;
-  button?: Button;
-  clickCount?: number;
-};
-
-export type MultiClickOptions = PointerActionOptions & {
-  delay?: number;
-  button?: Button;
-};
-
-export type SelectOption = {
-  value?: string;
-  label?: string;
-  index?: number;
-};
 
 export const keypadLocation = keyboardLayout.keypadLocation;
 
@@ -45,17 +21,17 @@ type KeyDescription = {
   location: number,
 };
 
-const kModifiers: Modifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
+const kModifiers: types.ModifierKey[] = ['Alt', 'Control', 'Meta', 'Shift'];
 
 export interface RawKeyboard {
-  keydown(modifiers: Set<Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
-  keyup(modifiers: Set<Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
+  keydown(modifiers: Set<types.ModifierKey>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
+  keyup(modifiers: Set<types.ModifierKey>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
   sendText(text: string): Promise<void>;
 }
 
-export class Keyboard {
+export class Keyboard implements api.Keyboard {
   private _raw: RawKeyboard;
-  private _pressedModifiers = new Set<Modifier>();
+  private _pressedModifiers = new Set<types.ModifierKey>();
   private _pressedKeys = new Set<string>();
 
   constructor(raw: RawKeyboard) {
@@ -66,8 +42,8 @@ export class Keyboard {
     const description = this._keyDescriptionForString(key);
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
-    if (kModifiers.includes(description.key as Modifier))
-      this._pressedModifiers.add(description.key as Modifier);
+    if (kModifiers.includes(description.key as types.ModifierKey))
+      this._pressedModifiers.add(description.key as types.ModifierKey);
     const text = options.text === undefined ? description.text : options.text;
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
   }
@@ -123,8 +99,8 @@ export class Keyboard {
 
   async up(key: string) {
     const description = this._keyDescriptionForString(key);
-    if (kModifiers.includes(description.key as Modifier))
-      this._pressedModifiers.delete(description.key as Modifier);
+    if (kModifiers.includes(description.key as types.ModifierKey))
+      this._pressedModifiers.delete(description.key as types.ModifierKey);
     this._pressedKeys.delete(description.code);
     await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
   }
@@ -154,12 +130,12 @@ export class Keyboard {
     await this.up(key);
   }
 
-  async _ensureModifiers(modifiers: Modifier[]): Promise<Modifier[]> {
+  async _ensureModifiers(modifiers: types.ModifierKey[]): Promise<types.ModifierKey[]> {
     for (const modifier of modifiers) {
       if (!kModifiers.includes(modifier))
         throw new Error('Uknown modifier ' + modifier);
     }
-    const restore: Modifier[] = Array.from(this._pressedModifiers);
+    const restore: types.ModifierKey[] = Array.from(this._pressedModifiers);
     const promises: Promise<void>[] = [];
     for (const key of kModifiers) {
       const needDown = modifiers.includes(key);
@@ -173,24 +149,24 @@ export class Keyboard {
     return restore;
   }
 
-  _modifiers(): Set<Modifier> {
+  _modifiers(): Set<types.ModifierKey> {
     return this._pressedModifiers;
   }
 }
 
 export interface RawMouse {
-  move(x: number, y: number, button: Button | 'none', buttons: Set<Button>, modifiers: Set<Modifier>): Promise<void>;
-  down(x: number, y: number, button: Button, buttons: Set<Button>, modifiers: Set<Modifier>, clickCount: number): Promise<void>;
-  up(x: number, y: number, button: Button, buttons: Set<Button>, modifiers: Set<Modifier>, clickCount: number): Promise<void>;
+  move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.ModifierKey>): Promise<void>;
+  down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.ModifierKey>, clickCount: number): Promise<void>;
+  up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.ModifierKey>, clickCount: number): Promise<void>;
 }
 
-export class Mouse {
+export class Mouse implements api.Mouse {
   private _raw: RawMouse;
   private _keyboard: Keyboard;
   private _x = 0;
   private _y = 0;
-  private _lastButton: 'none' | Button = 'none';
-  private _buttons = new Set<Button>();
+  private _lastButton: 'none' | types.MouseButton = 'none';
+  private _buttons = new Set<types.MouseButton>();
 
   constructor(raw: RawMouse, keyboard: Keyboard) {
     this._raw = raw;
@@ -210,21 +186,21 @@ export class Mouse {
     }
   }
 
-  async down(options: { button?: Button, clickCount?: number } = {}) {
+  async down(options: { button?: types.MouseButton, clickCount?: number } = {}) {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = button;
     this._buttons.add(button);
     await this._raw.down(this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
-  async up(options: { button?: Button, clickCount?: number } = {}) {
+  async up(options: { button?: types.MouseButton, clickCount?: number } = {}) {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = 'none';
     this._buttons.delete(button);
     await this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
-  async click(x: number, y: number, options: ClickOptions = {}) {
+  async click(x: number, y: number, options: types.ClickOptions = {}) {
     const {delay = null} = options;
     if (delay !== null) {
       await Promise.all([
@@ -242,7 +218,7 @@ export class Mouse {
     }
   }
 
-  async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
+  async dblclick(x: number, y: number, options: types.DoubleClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
       await this.move(x, y);
@@ -264,7 +240,7 @@ export class Mouse {
     }
   }
 
-  async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
+  async tripleclick(x: number, y: number, options: types.TripleClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
       await this.move(x, y);
@@ -293,7 +269,7 @@ export class Mouse {
   }
 }
 
-export const selectFunction = (node: Node, ...optionsToSelect: (Node | SelectOption)[]) => {
+export const selectFunction = (node: Node, ...optionsToSelect: (Node | types.SelectOption)[]) => {
   if (node.nodeName.toLowerCase() !== 'select')
     throw new Error('Element is not a <select> element.');
   const element = node as HTMLSelectElement;

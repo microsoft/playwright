@@ -49,7 +49,7 @@ export interface PageDelegate {
   waitForFrameNavigation(frame: frames.Frame, options?: frames.NavigateOptions): Promise<network.Response | null>;
   setFrameContent(frame: frames.Frame, html: string, options?: frames.NavigateOptions): Promise<void>;
 
-  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
+  setExtraHTTPHeaders(extraHTTPHeaders: types.HttpHeaders): Promise<void>;
   setUserAgent(userAgent: string): Promise<void>;
   setJavaScriptEnabled(enabled: boolean): Promise<void>;
   setBypassCSP(enabled: boolean): Promise<void>;
@@ -78,7 +78,7 @@ type PageState = {
   mediaType: input.MediaType | null;
   mediaColorScheme: input.MediaColorScheme | null;
   javascriptEnabled: boolean | null;
-  extraHTTPHeaders: network.Headers | null;
+  extraHTTPHeaders: types.HttpHeaders | null;
   bypassCSP: boolean | null;
   cacheEnabled: boolean | null;
 };
@@ -257,7 +257,7 @@ export class Page extends EventEmitter {
     }
   }
 
-  setExtraHTTPHeaders(headers: network.Headers) {
+  setExtraHTTPHeaders(headers: types.HttpHeaders) {
     this._state.extraHTTPHeaders = {...headers};
     return this._delegate.setExtraHTTPHeaders(headers);
   }
@@ -447,15 +447,15 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 
-  click(selector: string | types.Selector, options?: input.ClickOptions) {
+  click(selector: string | types.Selector, options?: types.ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
+  dblclick(selector: string | types.Selector, options?: types.DoubleClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
+  tripleclick(selector: string | types.Selector, options?: types.TripleClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
@@ -467,11 +467,11 @@ export class Page extends EventEmitter {
     return this.mainFrame().focus(selector);
   }
 
-  hover(selector: string | types.Selector, options?: input.PointerActionOptions) {
+  hover(selector: string | types.Selector, options?: types.PointerActionOptions) {
     return this.mainFrame().hover(selector, options);
   }
 
-  select(selector: string | types.Selector, ...values: (string | dom.ElementHandle | input.SelectOption)[]): Promise<string[]> {
+  select(selector: string | types.Selector, ...values: (string | dom.ElementHandle | types.SelectOption)[]): Promise<string[]> {
     return this.mainFrame().select(selector, ...values);
   }
 

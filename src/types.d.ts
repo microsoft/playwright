@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import * as js from './javascript';
-import { helper } from './helper';
 import * as dom from './dom';
 
 type Boxed<Args extends any[]> = { [Index in keyof Args]: Args[Index] | js.JSHandle<Args[Index]> };
@@ -31,18 +30,41 @@ export type Selector = { selector: string, visible?: boolean };
 export type Polling = 'raf' | 'mutation' | number;
 export type WaitForFunctionOptions = TimeoutOptions & { polling?: Polling };
 
-export function selectorToString(selector: string | Selector): string {
-  if (typeof selector === 'string')
-    return selector;
-  return `${selector.visible ? '[visible] ' : selector.visible === false ? '[hidden] ' : ''}${selector.selector}`;
-}
+export type ModifierKey = 'Alt' | 'Control' | 'Meta' | 'Shift';
+export type MouseButton = 'left' | 'right' | 'middle';
 
-// Ensures that we don't use accidental properties in selector, e.g. scope.
-export function clearSelector(selector: string | Selector): string | Selector {
-  if (helper.isString(selector))
-    return selector;
-  return { selector: selector.selector, visible: selector.visible };
-}
+export type PointerActionOptions = {
+  modifiers?: ModifierKey[];
+  relativePoint?: Point;
+};
+
+export type ClickOptions = PointerActionOptions & {
+  delay?: number;
+  button?: MouseButton;
+  clickCount?: number;
+};
+
+export type DoubleClickOptions = PointerActionOptions & {
+  delay?: number;
+  button?: MouseButton;
+};
+
+export type TripleClickOptions = PointerActionOptions & {
+  delay?: number;
+  button?: MouseButton;
+};
+
+export type SelectOption = {
+  value?: string;
+  label?: string;
+  index?: number;
+};
+
+export type HttpHeaders = { [key: string]: string };
+export type NetworkRemoteAddress = {
+  ip: string,
+  port: number,
+};
 
 export type ElementScreenshotOptions = {
   type?: 'png' | 'jpeg',

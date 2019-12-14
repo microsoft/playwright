@@ -111,7 +111,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   _$eval: types.$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
     const elementHandle = await this._$(selector);
     if (!elementHandle)
-      throw new Error(`Error: failed to find element matching selector "${types.selectorToString(selector)}"`);
+      throw new Error(`Error: failed to find element matching selector "${helper.selectorToString(selector)}"`);
     const result = await elementHandle.evaluate(pageFunction, ...args as any);
     await elementHandle.dispose();
     return result;
@@ -279,9 +279,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return { point, scrollX, scrollY };
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: types.PointerActionOptions): Promise<void> {
     const point = await this._ensurePointerActionPoint(options ? options.relativePoint : undefined);
-    let restoreModifiers: input.Modifier[] | undefined;
+    let restoreModifiers: types.ModifierKey[] | undefined;
     if (options && options.modifiers)
       restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
     await action(point);
@@ -289,23 +289,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page.keyboard._ensureModifiers(restoreModifiers);
   }
 
-  hover(options?: input.PointerActionOptions): Promise<void> {
+  hover(options?: types.PointerActionOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: input.ClickOptions): Promise<void> {
+  click(options?: types.ClickOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: input.MultiClickOptions): Promise<void> {
+  dblclick(options?: types.DoubleClickOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: input.MultiClickOptions): Promise<void> {
+  tripleclick(options?: types.TripleClickOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
-  async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
+  async select(...values: (string | ElementHandle | types.SelectOption)[]): Promise<string[]> {
     const options = values.map(value => typeof value === 'object' ? value : { value });
     for (const option of options) {
       if (option instanceof ElementHandle)
@@ -369,7 +369,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   private _scopedSelector(selector: string | types.Selector): string | ScopedSelector {
-    selector = types.clearSelector(selector);
+    selector = helper.clearSelector(selector);
     if (helper.isString(selector))
       selector = { selector };
     return { scope: this, selector: selector.selector, visible: selector.visible };

@@ -22,6 +22,7 @@ import { assert, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
+import * as types from '../types';
 
 export const NetworkManagerEvents = {
   Request: Symbol('Events.NetworkManager.Request'),
@@ -34,7 +35,7 @@ export class NetworkManager extends EventEmitter {
   private _session: TargetSession;
   private _frameManager: FrameManager;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
-  private _extraHTTPHeaders: network.Headers = {};
+  private _extraHTTPHeaders: types.HttpHeaders = {};
   private _attemptedAuthentications = new Set<string>();
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
@@ -109,7 +110,7 @@ export class NetworkManager extends EventEmitter {
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
-    const remoteAddress: network.RemoteAddress = { ip: '', port: 0 };
+    const remoteAddress: types.NetworkRemoteAddress = { ip: '', port: 0 };
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', { requestId: request._requestId });
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
@@ -198,8 +199,8 @@ class InterceptableRequest {
   }
 }
 
-function headersObject(headers: Protocol.Network.Headers): network.Headers {
-  const result: network.Headers = {};
+function headersObject(headers: Protocol.Network.Headers): types.HttpHeaders {
+  const result: types.HttpHeaders = {};
   for (const key of Object.keys(headers))
     result[key.toLowerCase()] = headers[key];
   return result;

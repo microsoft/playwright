@@ -425,7 +425,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._page._onFileChooserOpened(handle);
   }
 
-  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {
+  setExtraHTTPHeaders(extraHTTPHeaders: types.HttpHeaders): Promise<void> {
     return this._networkManager.setExtraHTTPHeaders(extraHTTPHeaders);
   }
 

@@ -21,6 +21,7 @@ import { JugglerSession } from './Connection';
 import { FrameManager } from './FrameManager';
 import * as network from '../network';
 import * as frames from '../frames';
+import * as types from '../types';
 
 export const NetworkManagerEvents = {
   RequestFailed: Symbol('NetworkManagerEvents.RequestFailed'),
@@ -54,7 +55,7 @@ export class NetworkManager extends EventEmitter {
     helper.removeEventListeners(this._eventListeners);
   }
 
-  async setExtraHTTPHeaders(headers: network.Headers) {
+  async setExtraHTTPHeaders(headers: types.HttpHeaders) {
     const array = [];
     for (const [name, value] of Object.entries(headers)) {
       assert(helper.isString(value), `Expected value of header "${name}" to be String, but "${typeof value}" is found.`);
@@ -87,7 +88,7 @@ export class NetworkManager extends EventEmitter {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
-    const remoteAddress: network.RemoteAddress = { ip: event.remoteIPAddress, port: event.remotePort };
+    const remoteAddress: types.NetworkRemoteAddress = { ip: event.remoteIPAddress, port: event.remotePort };
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', {
         requestId: request._id
@@ -96,7 +97,7 @@ export class NetworkManager extends EventEmitter {
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
       return Buffer.from(response.base64body, 'base64');
     };
-    const headers: network.Headers = {};
+    const headers: types.HttpHeaders = {};
     for (const {name, value} of event.headers)
       headers[name.toLowerCase()] = value;
     const response = new network.Response(request.request, event.status, event.statusText, headers, remoteAddress, getResponseBody);
@@ -176,7 +177,7 @@ class InterceptableRequest {
     this._suspended = payload.suspended;
     this._interceptionHandled = false;
 
-    const headers: network.Headers = {};
+    const headers: types.HttpHeaders = {};
     for (const {name, value} of payload.headers)
       headers[name.toLowerCase()] = value;
 

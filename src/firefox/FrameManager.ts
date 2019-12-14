@@ -296,7 +296,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       throw error;
   }
 
-  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {
+  setExtraHTTPHeaders(extraHTTPHeaders: types.HttpHeaders): Promise<void> {
     return this._networkManager.setExtraHTTPHeaders(extraHTTPHeaders);
   }
 

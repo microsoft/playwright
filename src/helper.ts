@@ -16,6 +16,7 @@
  */
 
 import * as debug from 'debug';
+import * as types from './types';
 import { TimeoutError } from './errors';
 
 export const debugError = debug(`playwright:error`);
@@ -152,6 +153,19 @@ class Helper {
       if (timeoutTimer)
         clearTimeout(timeoutTimer);
     }
+  }
+
+  static selectorToString(selector: string | types.Selector): string {
+    if (typeof selector === 'string')
+      return selector;
+    return `${selector.visible ? '[visible] ' : selector.visible === false ? '[hidden] ' : ''}${selector.selector}`;
+  }
+
+  // Ensures that we don't use accidental properties in selector, e.g. scope.
+  static clearSelector(selector: string | types.Selector): string | types.Selector {
+    if (helper.isString(selector))
+      return selector;
+    return { selector: selector.selector, visible: selector.visible };
   }
 }
 

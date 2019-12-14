@@ -22,6 +22,7 @@ import { assert, debugError, helper } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
+import * as types from '../types';
 
 export const NetworkManagerEvents = {
   Request: Symbol('Events.NetworkManager.Request'),
@@ -36,7 +37,7 @@ export class NetworkManager extends EventEmitter {
   private _frameManager: FrameManager;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private _extraHTTPHeaders: network.Headers = {};
+  private _extraHTTPHeaders: types.HttpHeaders = {};
   private _offline = false;
   private _credentials: {username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
@@ -70,7 +71,7 @@ export class NetworkManager extends EventEmitter {
     await this._updateProtocolRequestInterception();
   }
 
-  async setExtraHTTPHeaders(extraHTTPHeaders: network.Headers) {
+  async setExtraHTTPHeaders(extraHTTPHeaders: types.HttpHeaders) {
     this._extraHTTPHeaders = {};
     for (const key of Object.keys(extraHTTPHeaders)) {
       const value = extraHTTPHeaders[key];
@@ -80,7 +81,7 @@ export class NetworkManager extends EventEmitter {
     await this._client.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
   }
 
-  extraHTTPHeaders(): network.Headers {
+  extraHTTPHeaders(): types.HttpHeaders {
     return Object.assign({}, this._extraHTTPHeaders);
   }
 
@@ -204,7 +205,7 @@ export class NetworkManager extends EventEmitter {
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
-    const remoteAddress: network.RemoteAddress = { ip: responsePayload.remoteIPAddress, port: responsePayload.remotePort };
+    const remoteAddress: types.NetworkRemoteAddress = { ip: responsePayload.remoteIPAddress, port: responsePayload.remotePort };
     const getResponseBody = async () => {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
@@ -393,8 +394,8 @@ function headersArray(headers: { [s: string]: string; }): { name: string; value:
   return result;
 }
 
-function headersObject(headers: Protocol.Network.Headers): network.Headers {
-  const result: network.Headers = {};
+function headersObject(headers: Protocol.Network.Headers): types.HttpHeaders {
+  const result: types.HttpHeaders = {};
   for (const key of Object.keys(headers))
     result[key.toLowerCase()] = headers[key];
   return result;

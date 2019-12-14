@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 import * as frames from './frames';
+import * as types from './types';
+import * as api from './api';
 import { assert } from './helper';
 
 export type NetworkCookie = {
@@ -67,9 +69,7 @@ export function rewriteCookies(cookies: SetNetworkCookieParam[]): SetNetworkCook
   });
 }
 
-export type Headers = { [key: string]: string };
-
-export class Request {
+export class Request implements api.Request {
   private _response: Response | null = null;
   _redirectChain: Request[];
   private _isNavigationRequest: boolean;
@@ -78,7 +78,7 @@ export class Request {
   private _resourceType: string;
   private _method: string;
   private _postData: string;
-  private _headers: Headers;
+  private _headers: types.HttpHeaders;
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response>;
   private _waitForResponsePromiseCallback: (value?: Response) => void;
@@ -86,7 +86,7 @@ export class Request {
   private _waitForFinishedPromiseCallback: (value?: Response | undefined) => void;
 
   constructor(frame: frames.Frame | null, redirectChain: Request[], isNavigationRequest: boolean,
-    url: string, resourceType: string, method: string, postData: string, headers: Headers) {
+    url: string, resourceType: string, method: string, postData: string, headers: types.HttpHeaders) {
     this._frame = frame;
     this._redirectChain = redirectChain;
     this._isNavigationRequest = isNavigationRequest;
@@ -120,7 +120,7 @@ export class Request {
     return this._postData;
   }
 
-  headers(): {[key: string]: string} {
+  headers(): types.HttpHeaders {
     return this._headers;
   }
 
@@ -165,26 +165,21 @@ export class Request {
   }
 }
 
-export type RemoteAddress = {
-  ip: string,
-  port: number,
-};
-
 type GetResponseBodyCallback = () => Promise<Buffer>;
 
-export class Response {
+export class Response implements api.Response {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
   _finishedPromise: Promise<Error | null>;
   private _finishedPromiseCallback: any;
-  private _remoteAddress: RemoteAddress;
+  private _remoteAddress: types.NetworkRemoteAddress;
   private _status: number;
   private _statusText: string;
   private _url: string;
-  private _headers: Headers;
+  private _headers: types.HttpHeaders;
   private _getResponseBodyCallback: GetResponseBodyCallback;
 
-  constructor(request: Request, status: number, statusText: string, headers: Headers, remoteAddress: RemoteAddress, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HttpHeaders, remoteAddress: types.NetworkRemoteAddress, getResponseBodyCallback: GetResponseBodyCallback) {
     this._request = request;
     this._status = status;
     this._statusText = statusText;
@@ -202,7 +197,7 @@ export class Response {
     this._finishedPromiseCallback.call(null, error);
   }
 
-  remoteAddress(): RemoteAddress {
+  remoteAddress(): types.NetworkRemoteAddress {
     return this._remoteAddress;
   }
 
@@ -222,7 +217,7 @@ export class Response {
     return this._statusText;
   }
 
-  headers(): object {
+  headers(): types.HttpHeaders {
     return this._headers;
   }
 
