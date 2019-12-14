@@ -256,9 +256,18 @@ index fb7692aa0337..66805103f6ff 100644
        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
            aPolicyStr));
 diff --git a/extensions/permissions/nsPermissionManager.cpp b/extensions/permissions/nsPermissionManager.cpp
-index 9f40b6123b2d..d2709ec9c61e 100644
+index 9f40b6123b2d..45ea8152d545 100644
 --- a/extensions/permissions/nsPermissionManager.cpp
 +++ b/extensions/permissions/nsPermissionManager.cpp
+@@ -167,7 +167,7 @@ void MaybeStripOAs(OriginAttributes& aOriginAttributes) {
+   }
+ 
+   if (flags != 0) {
+-    aOriginAttributes.StripAttributes(flags);
++    // aOriginAttributes.StripAttributes(flags);
+   }
+ }
+ 
 @@ -199,6 +199,8 @@ nsresult GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin) {
  
    OriginAppendOASuffix(attrs, aOrigin);
@@ -268,6 +277,15 @@ index 9f40b6123b2d..d2709ec9c61e 100644
    return NS_OK;
  }
  
+@@ -317,7 +319,7 @@ already_AddRefed<nsIPrincipal> GetNextSubDomainPrincipal(
+ 
+   if (!StaticPrefs::permissions_isolateBy_userContext()) {
+     // Disable userContext for permissions.
+-    attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
++    // attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
+   }
+ 
+   nsCOMPtr<nsIPrincipal> principal =
 diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
 index 0d62c2cd2b67..9a5d68c9daa8 100644
 --- a/parser/html/nsHtml5TreeOpExecutor.cpp
