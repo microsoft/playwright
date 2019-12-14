@@ -422,9 +422,9 @@ export class Frame {
     return context.evaluate(() => document.title);
   }
 
-  _expectNewDocumentNavigation(documentId: string, url?: string) {
+  _onNavigationRequest(request: network.Request) {
     for (const watcher of this._page._lifecycleWatchers)
-      watcher._onExpectedNewDocumentNavigation(this, documentId, url);
+      watcher._onNavigationRequest(this, request);
   }
 
   _onAbortedNewDocumentNavigation(documentId: string, errorText: string) {
@@ -432,11 +432,15 @@ export class Frame {
       watcher._onAbortedNewDocumentNavigation(this, documentId, errorText);
   }
 
-  _onCommittedNewDocumentNavigation(url: string, name: string, documentId: string) {
+  _onCommittedNewDocumentNavigation(url: string, name: string, documentId: string, initial: boolean) {
     this._url = url;
     this._name = name;
     this._lastDocumentId = documentId;
     this._firedLifecycleEvents.clear();
+    if (!initial) {
+      for (const watcher of this._page._lifecycleWatchers)
+        watcher._onCommittedNewDocumentNavigation(this);
+    }
   }
 
   _onCommittedSameDocumentNavigation(url: string) {
@@ -600,7 +604,6 @@ export class LifecycleWatcher {
   private _navigationAbortedCallback: (err: Error) => void;
   private _maximumTimer: NodeJS.Timer;
   private _hasSameDocumentNavigation: boolean;
-  private _listeners: RegisteredListener[];
   private _targetUrl?: string;
   private _expectedDocumentId?: string;
 
@@ -623,12 +626,6 @@ export class LifecycleWatcher {
       this._frame._page._disconnectedPromise.then(() => new Error('Navigation failed because browser has disconnected!')),
     ]);
     frame._page._lifecycleWatchers.add(this);
-    this._listeners = [
-      helper.addEventListener(this._frame._page, Events.Page.Request, (request: network.Request) => {
-        if (request.frame() === this._frame && request.isNavigationRequest() && (!this._navigationRequest || request.redirectChain().includes(this._navigationRequest)))
-          this._navigationRequest = request;
-      }),
-    ];
     this._checkLifecycleComplete();
   }
 
@@ -647,10 +644,19 @@ export class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
-  _onExpectedNewDocumentNavigation(frame: Frame, documentId: string, url?: string) {
+  _onNavigationRequest(frame: Frame, request: network.Request) {
+    assert(request._documentId);
     if (frame === this._frame && this._expectedDocumentId === undefined) {
-      this._expectedDocumentId = documentId;
-      this._targetUrl = url;
+      this._navigationRequest = request;
+      this._expectedDocumentId = request._documentId;
+      this._targetUrl = request.url();
+    }
+  }
+
+  _onCommittedNewDocumentNavigation(frame: Frame) {
+    if (frame === this._frame && this._expectedDocumentId === undefined) {
+      this._expectedDocumentId = frame._lastDocumentId;
+      this._targetUrl = frame.url();
     }
   }
 
@@ -668,7 +674,7 @@ export class LifecycleWatcher {
   }
 
   navigationResponse(): Promise<network.Response | null> {
-    return this._navigationRequest ? this._navigationRequest._waitForFinished() : null;
+    return this._navigationRequest ? this._navigationRequest._finalRequest._waitForFinished() : null;
   }
 
   private _createTimeoutPromise(timeout: number): Promise<Error | null> {
@@ -704,7 +710,6 @@ export class LifecycleWatcher {
 
   dispose() {
     this._frame._page._lifecycleWatchers.delete(this);
-    helper.removeEventListeners(this._listeners);
     clearTimeout(this._maximumTimer);
   }
 }

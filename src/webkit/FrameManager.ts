@@ -230,9 +230,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
     // Append session id to avoid cross-process loaderId clash.
     const documentId = this._session._sessionId + '::' + framePayload.loaderId;
-    if (!initial)
-      frame._expectNewDocumentNavigation(documentId);
-    frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, documentId);
+    frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, documentId, initial);
 
     this._page.emit(Events.Page.FrameNavigated, frame);
   }

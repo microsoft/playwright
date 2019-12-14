@@ -72,7 +72,8 @@ export type Headers = { [key: string]: string };
 export class Request {
   private _response: Response | null = null;
   _redirectChain: Request[];
-  private _isNavigationRequest: boolean;
+  _finalRequest: Request;
+  readonly _documentId?: string;
   private _failureText: string | null = null;
   private _url: string;
   private _resourceType: string;
@@ -85,11 +86,14 @@ export class Request {
   private _waitForFinishedPromise: Promise<Response | undefined>;
   private _waitForFinishedPromiseCallback: (value?: Response | undefined) => void;
 
-  constructor(frame: frames.Frame | null, redirectChain: Request[], isNavigationRequest: boolean,
+  constructor(frame: frames.Frame | null, redirectChain: Request[], documentId: string,
     url: string, resourceType: string, method: string, postData: string, headers: Headers) {
     this._frame = frame;
     this._redirectChain = redirectChain;
-    this._isNavigationRequest = isNavigationRequest;
+    this._finalRequest = this;
+    for (const request of redirectChain)
+      request._finalRequest = this;
+    this._documentId = documentId;
     this._url = url;
     this._resourceType = resourceType;
     this._method = method;
@@ -97,10 +101,20 @@ export class Request {
     this._headers = headers;
     this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
     this._waitForFinishedPromise = new Promise(f => this._waitForFinishedPromiseCallback = f);
+    if (documentId && frame)
+      frame._onNavigationRequest(this);
   }
 
-  _setFailureText(failureText: string) {
+  _setFailureText(failureText: string, canceled: boolean) {
     this._failureText = failureText;
+    if (this._documentId && this._frame) {
+      const isCurrentDocument = this._frame._lastDocumentId === this._documentId;
+      let errorText = failureText;
+      if (canceled)
+        errorText += '; maybe frame was detached?';
+      if (!isCurrentDocument)
+        this._frame._onAbortedNewDocumentNavigation(this._documentId, errorText);
+    }
     this._waitForFinishedPromiseCallback();
   }
 
@@ -149,7 +163,7 @@ export class Request {
   }
 
   isNavigationRequest(): boolean {
-    return this._isNavigationRequest;
+    return !!this._documentId;
   }
 
   redirectChain(): Request[] {
