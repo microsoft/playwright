@@ -126,7 +126,7 @@ export class NetworkManager extends EventEmitter {
     this._requests.delete(request._id);
     if (request.request.response())
       request.request.response()._requestFinished();
-    request.request._setFailureText(event.errorCode);
+    request.request._setFailureText(event.errorCode, event.errorCode === 'NS_BINDING_ABORTED');
     this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }
 }
@@ -180,7 +180,7 @@ class InterceptableRequest {
     for (const {name, value} of payload.headers)
       headers[name.toLowerCase()] = value;
 
-    this.request = new network.Request(frame, redirectChain, payload.isNavigationRequest,
+    this.request = new network.Request(frame, redirectChain, payload.navigationId,
         payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData, headers);
     (this.request as any)[interceptableRequestSymbol] = this;
   }

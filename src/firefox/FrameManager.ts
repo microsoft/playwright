@@ -137,8 +137,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   _onNavigationStarted(params) {
-    const frame = this._frames.get(params.frameId);
-    frame._expectNewDocumentNavigation(params.navigationId, params.url);
   }
 
   _onNavigationAborted(params) {
@@ -148,7 +146,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   _onNavigationCommitted(params) {
     const frame = this._frames.get(params.frameId);
-    frame._onCommittedNewDocumentNavigation(params.url, params.name, params.navigationId);
+    frame._onCommittedNewDocumentNavigation(params.url, params.name, params.navigationId, false);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 

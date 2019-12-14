@@ -81,7 +81,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
     this._client.on('Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId));
     this._client.on('Page.frameDetached', event => this._onFrameDetached(event.frameId));
-    this._client.on('Page.frameNavigated', event => this._onFrameNavigated(event.frame));
+    this._client.on('Page.frameNavigated', event => this._onFrameNavigated(event.frame, false));
     this._client.on('Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId));
     this._client.on('Page.javascriptDialogOpening', event => this._onDialog(event));
     this._client.on('Page.lifecycleEvent', event => this._onLifecycleEvent(event));
@@ -199,14 +199,12 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const frame = this._frames.get(event.frameId);
     if (!frame)
       return;
-    if (event.name === 'init') {
+    if (event.name === 'init')
       frame._firedLifecycleEvents.clear();
-      frame._expectNewDocumentNavigation(event.loaderId);
-    } else if (event.name === 'load') {
+    else if (event.name === 'load')
       frame._lifecycleEvent('load');
-    } else if (event.name === 'DOMContentLoaded') {
+    else if (event.name === 'DOMContentLoaded')
       frame._lifecycleEvent('domcontentloaded');
-    }
   }
 
   _onFrameStoppedLoading(frameId: string) {
@@ -220,7 +218,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   _handleFrameTree(frameTree: Protocol.Page.FrameTree) {
     if (frameTree.frame.parentId)
       this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId);
-    this._onFrameNavigated(frameTree.frame);
+    this._onFrameNavigated(frameTree.frame, true);
     if (!frameTree.childFrames)
       return;
 
@@ -254,7 +252,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._page.emit(Events.Page.FrameAttached, frame);
   }
 
-  _onFrameNavigated(framePayload: Protocol.Page.Frame) {
+  _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     const isMainFrame = !framePayload.parentId;
     let frame = isMainFrame ? this._mainFrame : this._frames.get(framePayload.id);
     assert(isMainFrame || frame, 'We either navigate top level or have old version of the navigated frame');
@@ -279,7 +277,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       this._mainFrame = frame;
     }
 
-    frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, framePayload.loaderId);
+    frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, framePayload.loaderId, initial);
 
     this._page.emit(Events.Page.FrameNavigated, frame);
   }

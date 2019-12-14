@@ -208,7 +208,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   describe('Network Events', function() {
     it('Page.Events.Request', async({page, server}) => {
       const requests = [];
-      page.on('request', request => requests.push(request));
+      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       expect(requests.length).toBe(1);
       expect(requests[0].url()).toBe(server.EMPTY_PAGE);
@@ -278,10 +278,10 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
     it('should support redirects', async({page, server}) => {
       const events = [];
-      page.on('request', request => events.push(`${request.method()} ${request.url()}`));
-      page.on('response', response => events.push(`${response.status()} ${response.url()}`));
-      page.on('requestfinished', request => events.push(`DONE ${request.url()}`));
-      page.on('requestfailed', request => events.push(`FAIL ${request.url()}`));
+      page.on('request', request => !utils.isFavicon(request) && events.push(`${request.method()} ${request.url()}`));
+      page.on('response', response => !utils.isFavicon(response.request()) && events.push(`${response.status()} ${response.url()}`));
+      page.on('requestfinished', request => !utils.isFavicon(request) && events.push(`DONE ${request.url()}`));
+      page.on('requestfailed', request => !utils.isFavicon(request) && events.push(`FAIL ${request.url()}`));
       server.setRedirect('/foo.html', '/empty.html');
       const FOO_URL = server.PREFIX + '/foo.html';
       const response = await page.goto(FOO_URL);

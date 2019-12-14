@@ -101,8 +101,6 @@ export class NetworkManager extends EventEmitter {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? this._session._sessionId + '::' + event.loaderId : undefined;
-    if (documentId)
-      frame._expectNewDocumentNavigation(documentId, event.request.url);
     const request = new InterceptableRequest(frame, undefined, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEvents.Request, request.request);
@@ -158,20 +156,12 @@ export class NetworkManager extends EventEmitter {
     // @see https://crbug.com/750469
     if (!request)
       return;
-    request.request._setFailureText(event.errorText);
     const response = request.request.response();
     if (response)
       response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
-    if (request._documentId) {
-      const isCurrentDocument = request.request.frame()._lastDocumentId === request._documentId;
-      let errorText = event.errorText;
-      if (errorText.includes('cancelled'))
-        errorText += '; maybe frame was detached?';
-      if (!isCurrentDocument)
-        request.request.frame()._onAbortedNewDocumentNavigation(request._documentId, errorText);
-    }
+    request.request._setFailureText(event.errorText, event.errorText.includes('cancelled'));
     this.emit(NetworkManagerEvents.RequestFailed, request.request);
   }
 }
@@ -192,7 +182,7 @@ class InterceptableRequest {
     this._requestId = event.requestId;
     this._interceptionId = interceptionId;
     this._documentId = documentId;
-    this.request = new network.Request(frame, redirectChain, !!documentId, event.request.url,
+    this.request = new network.Request(frame, redirectChain, documentId, event.request.url,
         event.type ? event.type.toLowerCase() : 'Unknown', event.request.method, event.request.postData, headersObject(event.request.headers));
     (this.request as any)[interceptableRequestSymbol] = this;
   }
