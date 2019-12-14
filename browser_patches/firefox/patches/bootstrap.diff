@@ -605,7 +605,7 @@ index 000000000000..673e93b0278a
 +
 diff --git a/testing/juggler/NetworkObserver.js b/testing/juggler/NetworkObserver.js
 new file mode 100644
-index 000000000000..cc8cb8fe9d83
+index 000000000000..2afbc74a4170
 --- /dev/null
 +++ b/testing/juggler/NetworkObserver.js
 @@ -0,0 +1,450 @@
@@ -809,7 +809,7 @@ index 000000000000..cc8cb8fe9d83
 +      postData: readRequestPostData(httpChannel),
 +      headers: requestHeaders(httpChannel),
 +      method: httpChannel.requestMethod,
-+      isNavigationRequest: httpChannel.isMainDocumentChannel,
++      navigationId: httpChannel.isMainDocumentChannel ? requestId(httpChannel) : undefined,
 +      cause: causeTypeToString(causeType),
 +    });
 +  }
@@ -1465,10 +1465,10 @@ index 000000000000..f68780d529e7
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
-index 000000000000..2931c75e60d2
+index 000000000000..640782151e30
 --- /dev/null
 +++ b/testing/juggler/content/FrameTree.js
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,240 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -1547,7 +1547,7 @@ index 000000000000..2931c75e60d2
 +
 +    if (isStart) {
 +      // Starting a new navigation.
-+      frame._pendingNavigationId = helper.generateId();
++      frame._pendingNavigationId = this._channelId(channel);
 +      frame._pendingNavigationURL = channel.URI.spec;
 +      this.emit(FrameTree.Events.NavigationStarted, frame);
 +    } else if (isTransferring || (isStop && frame._pendingNavigationId && !status)) {
@@ -1577,6 +1577,14 @@ index 000000000000..2931c75e60d2
 +      frame._url = location.spec;
 +      this.emit(FrameTree.Events.SameDocumentNavigation, frame);
 +    }
++  }
++
++  _channelId(channel) {
++    if (channel instanceof Ci.nsIHttpChannel) {
++      const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
++      return String(httpChannel.channelId);
++    }
++    return helper.generateId();
 +  }
 +
 +  _onDocShellCreated(docShell) {
@@ -4126,7 +4134,7 @@ index 000000000000..78b6601b91d0
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 000000000000..829576c5a48c
+index 000000000000..700571aeed45
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
 @@ -0,0 +1,668 @@
@@ -4355,7 +4363,7 @@ index 000000000000..829576c5a48c
 +      suspended: t.Optional(t.Boolean),
 +      url: t.String,
 +      method: t.String,
-+      isNavigationRequest: t.Boolean,
++      navigationId: t.Optional(t.String),
 +      cause: t.String,
 +    },
 +    'responseReceived': {
