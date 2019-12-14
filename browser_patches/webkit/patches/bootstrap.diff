@@ -4616,7 +4616,7 @@ index bd3657bb087..f8fa8e3db22 100644
      if (id value = [defaults objectForKey:@"WebKitEnableLegacyTLS"])
          parameters.enableLegacyTLS = [value boolValue];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-index 9693809e34e..b45a4e7aa61 100644
+index 9693809e34e..beb27640580 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 @@ -37,6 +37,7 @@
@@ -4633,7 +4633,7 @@ index 9693809e34e..b45a4e7aa61 100644
  
 +void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdate(Function<void ()>&& callback)
 +{
-+    m_callbacks.set(m_currentBackingStoreStateID, WTFMove(callback));
++    m_callbacks.set(m_currentBackingStoreStateID + 1, WTFMove(callback));
 +}
 +
  void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
@@ -4645,7 +4645,7 @@ index 9693809e34e..b45a4e7aa61 100644
  
 +    Vector<uint64_t> notified;
 +    for (auto& [key, value] : m_callbacks) {
-+        if (backingStoreStateID > key) {
++        if (backingStoreStateID >= key) {
 +            notified.append(key);
 +            value();
 +        }
