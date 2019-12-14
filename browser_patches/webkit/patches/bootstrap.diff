@@ -3724,6 +3724,18 @@ index 00000000000..b0bdfb97e28
 +
 +@implementation _WKBrowserContext
 +@end
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm
+index 9c1ffede109..9aac3f45c0b 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm
+@@ -25,6 +25,7 @@
+ 
+ #import "config.h"
+ #import "_WKRemoteWebInspectorViewController.h"
++#import "WKWebViewPrivate.h"
+ 
+ #if PLATFORM(MAC)
+ 
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 new file mode 100644
 index 00000000000..c21192686c9
