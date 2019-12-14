@@ -97,6 +97,8 @@ else
   echo "-- checking $FRIENDLY_CHECKOUT_PATH is clean - OK"
 fi
 
+git fetch $REMOTE_BROWSER_UPSTREAM $BASE_BRANCH
+
 PATCH_NAME=$(ls -1 $EXPORT_PATH/patches)
 if [[ -z "$PATCH_NAME" ]]; then
   PATCH_NAME="bootstrap.diff"
