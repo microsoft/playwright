@@ -97,7 +97,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(WEBKIT)('Page.emulateMedia type', function() {
+  describe('Page.emulateMedia type', function() {
     it('should work', async({page, server}) => {
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
