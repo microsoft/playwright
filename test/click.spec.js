@@ -128,26 +128,26 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
 
     it('should respect selector visibilty', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
-      await page.click({selector: 'button', visible: true});
+      await page.click({selector: 'button', visibility: 'visible'});
       expect(await page.evaluate(() => result)).toBe('Clicked');
 
       let error = null;
       await page.goto(server.PREFIX + '/input/button.html');
-      await page.click({selector: 'button', visible: false}).catch(e => error = e);
+      await page.click({selector: 'button', visibility: 'hidden'}).catch(e => error = e);
       expect(error.message).toBe('No node found for selector: [hidden] button');
       expect(await page.evaluate(() => result)).toBe('Was not clicked');
 
       error = null;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
-      await page.click({selector: 'button', visible: true}).catch(e => error = e);
+      await page.click({selector: 'button', visibility: 'visible'}).catch(e => error = e);
       expect(error.message).toBe('No node found for selector: [visible] button');
       expect(await page.evaluate(() => result)).toBe('Was not clicked');
 
       error = null;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
-      await page.click({selector: 'button', visible: false}).catch(e => error = e);
+      await page.click({selector: 'button', visibility: 'hidden'}).catch(e => error = e);
       expect(error.message).toBe('Node is either not visible or not an HTMLElement');
       expect(await page.evaluate(() => result)).toBe('Was not clicked');
     });

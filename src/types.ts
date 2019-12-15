@@ -25,8 +25,8 @@ export type Rect = Size & Point;
 export type Quad = [ Point, Point, Point, Point ];
 
 export type TimeoutOptions = { timeout?: number };
-
-export type Selector = { selector: string, visible?: boolean };
+export type Visibility = 'visible' | 'hidden' | 'any';
+export type Selector = { selector: string, visibility?: Visibility };
 
 export type Polling = 'raf' | 'mutation' | number;
 export type WaitForFunctionOptions = TimeoutOptions & { polling?: Polling };
@@ -34,14 +34,22 @@ export type WaitForFunctionOptions = TimeoutOptions & { polling?: Polling };
 export function selectorToString(selector: string | Selector): string {
   if (typeof selector === 'string')
     return selector;
-  return `${selector.visible ? '[visible] ' : selector.visible === false ? '[hidden] ' : ''}${selector.selector}`;
+  let label;
+  switch (selector.visibility) {
+    case 'visible': label = '[visible] '; break;
+    case 'hidden': label = '[hidden] '; break;
+    case 'any':
+    case undefined:
+      label = ''; break;
+  }
+  return `${label}${selector.selector}`;
 }
 
 // Ensures that we don't use accidental properties in selector, e.g. scope.
 export function clearSelector(selector: string | Selector): string | Selector {
   if (helper.isString(selector))
     return selector;
-  return { selector: selector.selector, visible: selector.visible };
+  return { selector: selector.selector, visibility: selector.visibility };
 }
 
 export type ElementScreenshotOptions = {
