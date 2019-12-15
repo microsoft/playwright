@@ -44,15 +44,15 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     it('should respect visibility', async({page, server}) => {
       let error = null;
       await page.setContent('<section id="testAttribute" style="display: none">43543</section>');
-      await page.$eval({selector: 'css=section', visible: true}, e => e.id).catch(e => error = e);
+      await page.$eval({selector: 'css=section', visibility: 'visible'}, e => e.id).catch(e => error = e);
       expect(error.message).toContain('failed to find element matching selector "[visible] css=section"');
-      expect(await page.$eval({selector: 'css=section', visible: false}, e => e.id)).toBe('testAttribute');
+      expect(await page.$eval({selector: 'css=section', visibility: 'hidden'}, e => e.id)).toBe('testAttribute');
 
       error = null;
       await page.setContent('<section id="testAttribute">43543</section>');
-      await page.$eval({selector: 'css=section', visible: false}, e => e.id).catch(e => error = e);
+      await page.$eval({selector: 'css=section', visibility: 'hidden'}, e => e.id).catch(e => error = e);
       expect(error.message).toContain('failed to find element matching selector "[hidden] css=section"');
-      expect(await page.$eval({selector: 'css=section', visible: true}, e => e.id)).toBe('testAttribute');
+      expect(await page.$eval({selector: 'css=section', visibility: 'visible'}, e => e.id)).toBe('testAttribute');
     });
     it('should accept arguments', async({page, server}) => {
       await page.setContent('<section>hello</section>');
@@ -135,8 +135,8 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     });
     it('should respect visibility', async({page, server}) => {
       await page.setContent('<section style="display: none">1</section><section style="display: none">2</section><section>3</section>');
-      expect(await page.$$eval({selector: 'css=section', visible: true}, x => x.length)).toBe(1);
-      expect(await page.$$eval({selector: 'css=section', visible: false}, x => x.length)).toBe(2);
+      expect(await page.$$eval({selector: 'css=section', visibility: 'visible'}, x => x.length)).toBe(1);
+      expect(await page.$$eval({selector: 'css=section', visibility: 'hidden'}, x => x.length)).toBe(2);
       expect(await page.$$eval({selector: 'css=section'}, x => x.length)).toBe(3);
     });
   });
@@ -183,13 +183,13 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     });
     it('should respect visibility', async({page, server}) => {
       await page.setContent('<section id="testAttribute">43543</section>');
-      expect(await page.$({selector: 'css=section', visible: true})).toBeTruthy();
-      expect(await page.$({selector: 'css=section', visible: false})).not.toBeTruthy();
+      expect(await page.$({selector: 'css=section', visibility: 'visible'})).toBeTruthy();
+      expect(await page.$({selector: 'css=section', visibility: 'hidden'})).not.toBeTruthy();
       expect(await page.$({selector: 'css=section'})).toBeTruthy();
 
       await page.setContent('<section id="testAttribute" style="display: none">43543</section>');
-      expect(await page.$({selector: 'css=section', visible: true})).not.toBeTruthy();
-      expect(await page.$({selector: 'css=section', visible: false})).toBeTruthy();
+      expect(await page.$({selector: 'css=section', visibility: 'visible'})).not.toBeTruthy();
+      expect(await page.$({selector: 'css=section', visibility: 'hidden'})).toBeTruthy();
       expect(await page.$({selector: 'css=section'})).toBeTruthy();
     });
   });
@@ -209,8 +209,8 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     });
     it('should respect visibility', async({page, server}) => {
       await page.setContent('<section style="display: none">1</section><section style="display: none">2</section><section>3</section>');
-      expect((await page.$$({selector: 'css=section', visible: true})).length).toBe(1);
-      expect((await page.$$({selector: 'css=section', visible: false})).length).toBe(2);
+      expect((await page.$$({selector: 'css=section', visibility: 'visible'})).length).toBe(1);
+      expect((await page.$$({selector: 'css=section', visibility: 'hidden'})).length).toBe(2);
       expect((await page.$$({selector: 'css=section'})).length).toBe(3);
     });
   });
@@ -267,14 +267,14 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       await page.setContent('<html><body><div class="second"><div class="inner" style="display:none">A</div></div></body></html>');
       const second = await page.$('html .second');
 
-      let inner = await second.$({selector: '.inner', visible: true});
+      let inner = await second.$({selector: '.inner', visibility: 'visible'});
       expect(inner).not.toBeTruthy();
 
-      inner = await second.$({selector: '.inner', visible: false});
+      inner = await second.$({selector: '.inner', visibility: 'hidden'});
       expect(await inner.evaluate(e => e.textContent)).toBe('A');
 
       await inner.evaluate(e => e.style.display = 'block');
-      inner = await second.$({selector: '.inner', visible: true});
+      inner = await second.$({selector: '.inner', visibility: 'visible'});
       expect(await inner.evaluate(e => e.textContent)).toBe('A');
     });
   });

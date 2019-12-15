@@ -48,6 +48,8 @@ export type GotoOptions = NavigateOptions & {
 
 export type LifecycleEvent = 'load' | 'domcontentloaded';
 
+export type WaitForOptions = types.TimeoutOptions & { waitFor?: boolean };
+
 export class Frame {
   _id: string;
   readonly _firedLifecycleEvents: Set<LifecycleEvent>;
@@ -306,59 +308,47 @@ export class Frame {
     return result;
   }
 
-  async click(selector: string | types.Selector, options?: ClickOptions) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async click(selector: string | types.Selector, options?: WaitForOptions & ClickOptions) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.click(options);
     await handle.dispose();
   }
 
-  async dblclick(selector: string | types.Selector, options?: MultiClickOptions) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async dblclick(selector: string | types.Selector, options?: WaitForOptions & MultiClickOptions) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.dblclick(options);
     await handle.dispose();
   }
 
-  async tripleclick(selector: string | types.Selector, options?: MultiClickOptions) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async tripleclick(selector: string | types.Selector, options?: WaitForOptions & MultiClickOptions) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.tripleclick(options);
     await handle.dispose();
   }
 
-  async fill(selector: string | types.Selector, value: string) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async fill(selector: string | types.Selector, value: string, options?: WaitForOptions) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.fill(value);
     await handle.dispose();
   }
 
-  async focus(selector: string | types.Selector) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async focus(selector: string | types.Selector, options?: WaitForOptions) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.focus();
     await handle.dispose();
   }
 
-  async hover(selector: string | types.Selector, options?: PointerActionOptions) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async hover(selector: string | types.Selector, options?: WaitForOptions & PointerActionOptions) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.hover(options);
     await handle.dispose();
   }
 
-  async select(selector: string | types.Selector, ...values: (string | dom.ElementHandle | SelectOption)[]): Promise<string[]> {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async select(selector: string | types.Selector, value: string | dom.ElementHandle | SelectOption | string[] | dom.ElementHandle[] | SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     const toDispose: Promise<dom.ElementHandle>[] = [];
+    const values = value === undefined ? [] : value instanceof Array ? value : [value];
+    const context = await this._utilityContext();
     const adoptedValues = await Promise.all(values.map(async value => {
       if (value instanceof dom.ElementHandle && value.executionContext() !== context) {
         const adopted = context._adoptElementHandle(value);
@@ -373,7 +363,7 @@ export class Frame {
     return result;
   }
 
-  async type(selector: string | types.Selector, text: string, options: { delay: (number | undefined); } | undefined) {
+  async type(selector: string | types.Selector, text: string, options: WaitForOptions & { delay: (number | undefined); } | undefined) {
     const context = await this._utilityContext();
     const handle = await context._$(types.clearSelector(selector));
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
@@ -391,7 +381,19 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  async waitForSelector(selector: string | types.Selector, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
+  private async _optionallyWaitForInUtilityContext(selector: string | types.Selector,options: WaitForOptions): Promise<dom.ElementHandle | null> {
+    let handle: dom.ElementHandle | null;
+    if (options && options.waitFor) {
+      handle = await this._waitForSelectorInUtilityContext(selector, options);
+    } else {
+      const context = await this._utilityContext();
+      handle = await context._$(types.clearSelector(selector));  
+    }
+    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+    return handle;
+  }
+
+  private async _waitForSelectorInUtilityContext(selector: string | types.Selector, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
     const { timeout = this._page._timeoutSettings.timeout() } = options;
     const task = dom.waitForSelectorTask(types.clearSelector(selector), timeout);
     const handle = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${types.selectorToString(selector)}"`);
@@ -399,6 +401,13 @@ export class Frame {
       await handle.dispose();
       return null;
     }
+    return handle.asElement();
+  }
+
+  async waitForSelector(selector: string | types.Selector, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
+    const handle = await this._waitForSelectorInUtilityContext(selector, options);
+    if (!handle)
+      return null;
     const maincontext = await this._mainContext();
     if (handle.executionContext() === maincontext)
       return handle.asElement();

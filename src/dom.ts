@@ -14,7 +14,7 @@ import Injected from './injected/injected';
 import { Page } from './page';
 
 type ScopedSelector = types.Selector & { scope?: ElementHandle };
-type ResolvedSelector = { scope?: ElementHandle, selector: string, visible?: boolean, disposeScope?: boolean };
+type ResolvedSelector = { scope?: ElementHandle, selector: string, visibility: types.Visibility, disposeScope?: boolean };
 
 export class FrameExecutionContext extends js.ExecutionContext {
   private readonly _frame: frames.Frame;
@@ -56,24 +56,24 @@ export class FrameExecutionContext extends js.ExecutionContext {
 
   async _resolveSelector(selector: string | ScopedSelector): Promise<ResolvedSelector> {
     if (helper.isString(selector))
-      return { selector: normalizeSelector(selector) };
+      return { selector: normalizeSelector(selector), visibility: 'any' };
     if (selector.scope && selector.scope.executionContext() !== this) {
       const scope = await this._adoptElementHandle(selector.scope);
-      return { scope, selector: normalizeSelector(selector.selector), disposeScope: true, visible: selector.visible };
+      return { scope, selector: normalizeSelector(selector.selector), disposeScope: true, visibility: selector.visibility || 'any' };
     }
-    return { scope: selector.scope, selector: normalizeSelector(selector.selector), visible: selector.visible };
+    return { scope: selector.scope, selector: normalizeSelector(selector.selector), visibility: selector.visibility || 'any' };
   }
 
   async _$(selector: string | ScopedSelector): Promise<ElementHandle<Element> | null> {
     const resolved = await this._resolveSelector(selector);
     const handle = await this.evaluateHandle(
-        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
+        (injected: Injected, selector: string, visibility: types.Visibility, scope?: Node) => {
           const element = injected.querySelector(selector, scope || document);
-          if (visible === undefined || !element)
+          if (visibility === 'any' || !element)
             return element;
-          return injected.isVisible(element) === visible ? element : undefined;
+          return injected.isVisible(element) === (visibility === 'visible') ? element : undefined;
         },
-        await this._injected(), resolved.selector, resolved.scope, resolved.visible
+        await this._injected(), resolved.selector, resolved.visibility, resolved.scope
     );
     if (resolved.disposeScope)
       await resolved.scope.dispose();
@@ -85,13 +85,13 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async _$$(selector: string | ScopedSelector): Promise<ElementHandle<Element>[]> {
     const resolved = await this._resolveSelector(selector);
     const arrayHandle = await this.evaluateHandle(
-        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
+        (injected: Injected, selector: string, visibility: types.Visibility, scope?: Node) => {
           const elements = injected.querySelectorAll(selector, scope || document);
-          if (visible !== undefined)
-            return elements.filter(element => injected.isVisible(element) === visible);
+          if (visibility !== 'any')
+            return elements.filter(element => injected.isVisible(element) === (visibility === 'visible'));
           return elements;
         },
-        await this._injected(), resolved.selector, resolved.scope, resolved.visible
+        await this._injected(), resolved.selector, resolved.visibility, resolved.scope
     );
     if (resolved.disposeScope)
       await resolved.scope.dispose();
@@ -120,13 +120,13 @@ export class FrameExecutionContext extends js.ExecutionContext {
   _$$eval: types.$$Eval<string | ScopedSelector> = async (selector, pageFunction, ...args) => {
     const resolved = await this._resolveSelector(selector);
     const arrayHandle = await this.evaluateHandle(
-        (injected: Injected, selector: string, scope?: Node, visible?: boolean) => {
+        (injected: Injected, selector: string, visibility: types.Visibility, scope?: Node) => {
           const elements = injected.querySelectorAll(selector, scope || document);
-          if (visible !== undefined)
-            return elements.filter(element => injected.isVisible(element) === visible);
+          if (visibility !== 'any')
+            return elements.filter(element => injected.isVisible(element) === (visibility === 'visible'));
           return elements;
         },
-        await this._injected(), resolved.selector, resolved.scope, resolved.visible
+        await this._injected(), resolved.selector, resolved.visibility, resolved.scope
     );
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
     await arrayHandle.dispose();
@@ -372,7 +372,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     selector = types.clearSelector(selector);
     if (helper.isString(selector))
       selector = { selector };
-    return { scope: this, selector: selector.selector, visible: selector.visible };
+    return { scope: this, selector: selector.selector, visibility: selector.visibility };
   }
 
   $(selector: string | types.Selector): Promise<ElementHandle | null> {
@@ -451,19 +451,19 @@ export function waitForFunctionTask(pageFunction: Function | string, options: ty
 export function waitForSelectorTask(selector: string | types.Selector, timeout: number): Task {
   return async (context: FrameExecutionContext) => {
     const resolved = await context._resolveSelector(selector);
-    return context.evaluateHandle((injected: Injected, selector: string, scope: Node | undefined, visible: boolean | undefined, timeout: number) => {
-      if (visible !== undefined)
+    return context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number, scope?: Node) => {
+      if (visibility !== 'any')
         return injected.pollRaf(predicate, timeout);
       return injected.pollMutation(predicate, timeout);
 
       function predicate(): Element | boolean {
         const element = injected.querySelector(selector, scope || document);
         if (!element)
-          return visible === false;
-        if (visible === undefined)
+          return visibility === 'hidden';
+        if (visibility === 'any')
           return element;
-        return injected.isVisible(element) === visible ? element : false;
+        return injected.isVisible(element) === (visibility === 'visible') ? element : false;
       }
-    }, await context._injected(), resolved.selector, resolved.scope, resolved.visible, timeout);
+    }, await context._injected(), resolved.selector, resolved.visibility, timeout, resolved.scope);
   };
 }

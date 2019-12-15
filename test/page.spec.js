@@ -936,14 +936,14 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     it('should select multiple options', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.evaluate(() => makeMultiple());
-      await page.select('select', 'blue', 'green', 'red');
+      await page.select('select', ['blue', 'green', 'red']);
       expect(await page.evaluate(() => result.onInput)).toEqual(['blue', 'green', 'red']);
       expect(await page.evaluate(() => result.onChange)).toEqual(['blue', 'green', 'red']);
     });
     it('should select multiple options with attributes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.evaluate(() => makeMultiple());
-      await page.select('select', 'blue', { label: 'Green' }, { index: 4 });
+      await page.select('select', ['blue', { label: 'Green' }, { index: 4 }]);
       expect(await page.evaluate(() => result.onInput)).toEqual(['blue', 'gray', 'green']);
       expect(await page.evaluate(() => result.onChange)).toEqual(['blue', 'gray', 'green']);
     });
@@ -972,7 +972,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
     it('should return an array of one element when multiple is not set', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
-      const result = await page.select('select','42','blue','black','magenta');
+      const result = await page.select('select',['42','blue','black','magenta']);
       expect(result.length).toEqual(1);
     });
     it('should return [] on no values',async({page, server}) => {
@@ -983,13 +983,13 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     it('should deselect all options when passed no values for a multiple select',async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.evaluate(() => makeMultiple());
-      await page.select('select','blue','black','magenta');
+      await page.select('select', ['blue','black','magenta']);
       await page.select('select');
       expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
     });
     it('should deselect all options when passed no values for a select without multiple',async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
-      await page.select('select','blue','black','magenta');
+      await page.select('select', ['blue','black','magenta']);
       await page.select('select');
       expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
     });
@@ -1111,18 +1111,18 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
     it('should respect selector visibilty', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.fill({selector: 'input', visible: true}, 'some value');
+      await page.fill({selector: 'input', visibility: 'visible'}, 'some value');
       expect(await page.evaluate(() => result)).toBe('some value');
 
       let error = null;
       await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.fill({selector: 'input', visible: false}, 'some value').catch(e => error = e);
+      await page.fill({selector: 'input', visibility: 'hidden'}, 'some value').catch(e => error = e);
       expect(error.message).toBe('No node found for selector: [hidden] input');
 
       error = null;
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.display = 'none');
-      await page.fill({selector: 'input', visible: true}, 'some value').catch(e => error = e);
+      await page.fill({selector: 'input', visibility: 'visible'}, 'some value').catch(e => error = e);
       expect(error.message).toBe('No node found for selector: [visible] input');
     });
     it('should throw on disabled and readonly elements', async({page, server}) => {

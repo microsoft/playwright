@@ -3869,8 +3869,8 @@ const handle = await page.$('"foo"');
 const handle = await divHandle.$('css=span');
 ```
 
-#### selector.visible
-- returns: <[boolean]> Optional visibility to check for. If `true`, only visible elements match. If `false`, only non-visible elements match. If `undefined`, all elements match.
+#### selector.visibility
+- returns: "visible"|"hidden"|"any"> Defaults to `visible`. Optional visibility to check for. If `visible` or `undefined`, only visible elements match. If `hidden`, only non-visible elements match. If `any`, all elements match.
 
 Note that elements are first queried by `selector`, and only after that are checked for visiblity. In particular, [page.$()](#pageselector) will not skip to the first visible element, but instead return `null` if the first matching element is not visible.
 
@@ -3878,16 +3878,16 @@ Element is defined visible if it does not have `visibility: hidden` CSS property
 
 ```js
 // queries 'div', and only returns it when visible
-const handle = await page.$({selector: 'css=div', visible: true});
+const handle = await page.$({selector: 'css=div', visibility: 'visible'});
 
 // queries 'div', and only returns it when non-visible
-const handle = await page.$({selector: 'css=div', visible: false});
+const handle = await page.$({selector: 'css=div', visibility: 'hidden'});
 
 // queries 'div', and returns it no matter the visibility
-const handle = await page.$({selector: 'css=div'});
+const handle = await page.$({selector: 'css=div', visibility: 'any'});
 
 // returns all visible 'div' elements
-const handles = await page.$$({selector: 'css=div', visible: true});
+const handles = await page.$$({selector: 'css=div', visibility: 'visible'});
 ```
 
 

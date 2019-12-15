@@ -447,35 +447,35 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 
-  click(selector: string | types.Selector, options?: input.ClickOptions) {
+  click(selector: string | types.Selector, options?: frames.WaitForOptions & input.ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
+  dblclick(selector: string | types.Selector, options?: frames.WaitForOptions & input.MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string | types.Selector, options?: input.MultiClickOptions) {
+  tripleclick(selector: string | types.Selector, options?: frames.WaitForOptions & input.MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  fill(selector: string | types.Selector, value: string) {
-    return this.mainFrame().fill(selector, value);
+  fill(selector: string | types.Selector, value: string, options?: frames.WaitForOptions) {
+    return this.mainFrame().fill(selector, value, options);
   }
 
-  focus(selector: string | types.Selector) {
-    return this.mainFrame().focus(selector);
+  focus(selector: string | types.Selector, options?: frames.WaitForOptions) {
+    return this.mainFrame().focus(selector, options);
   }
 
-  hover(selector: string | types.Selector, options?: input.PointerActionOptions) {
+  hover(selector: string | types.Selector, options?: frames.WaitForOptions & input.PointerActionOptions) {
     return this.mainFrame().hover(selector, options);
   }
 
-  select(selector: string | types.Selector, ...values: (string | dom.ElementHandle | input.SelectOption)[]): Promise<string[]> {
-    return this.mainFrame().select(selector, ...values);
+  select(selector: string | types.Selector, value: string | dom.ElementHandle | input.SelectOption | string[] | dom.ElementHandle[] | input.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
+    return this.mainFrame().select(selector, value, options);
   }
 
-  type(selector: string | types.Selector, text: string, options: { delay: (number | undefined); } | undefined) {
+  type(selector: string | types.Selector, text: string, options: frames.WaitForOptions & { delay: (number | undefined); } | undefined) {
     return this.mainFrame().type(selector, text, options);
   }
 
