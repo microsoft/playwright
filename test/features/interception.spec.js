@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('../utils');
 
-module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -658,6 +658,26 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         page.reload(),
       ]);
       expect(nonCachedRequest.headers['if-modified-since']).toBe(undefined);
+    });
+  });
+
+  describe('ignoreHTTPSErrors', function() {
+    fit('should work with mixed content', async({server, httpsServer}) => {
+      const browser = await playwright.launch({...defaultBrowserOptions, ignoreHTTPSErrors: true});
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      httpsServer.setRoute('/mixedcontent.html', (req, res) => {
+        res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
+      });
+      await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'load'});
+      expect(page.frames().length).toBe(2);
+      // Make sure blocked iframe has functional execution context
+      // @see https://github.com/GoogleChrome/puppeteer/issues/2709
+      expect(await page.frames()[0].evaluate('1 + 2')).toBe(3);
+      expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
+
+      await browser.close();
     });
   });
 };

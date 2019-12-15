@@ -180,10 +180,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
   require('./ignorehttpserrors.spec.js').addTests(testOptions);
   require('./launcher.spec.js').addTests(testOptions);
 
-  if (CHROME || FFOX) {
-    require('./features/ignorehttpserrors.spec.js').addTests(testOptions);
-  }
-
   if (CHROME) {
     require('./chromium/connect.spec.js').addTests(testOptions);
     require('./chromium/launcher.spec.js').addTests(testOptions);
