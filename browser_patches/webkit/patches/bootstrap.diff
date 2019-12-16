@@ -7531,7 +7531,7 @@ index 1570d65effb..456f96cf589 100644
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 4c5147dcd38..c91a7baea1e 100644
+index 4c5147dcd38..bc895f379e5 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -53,6 +53,7 @@ static const char *cookiesFile;
@@ -7580,7 +7580,7 @@ index 4c5147dcd38..c91a7baea1e 100644
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -541,10 +566,21 @@ int main(int argc, char *argv[])
+@@ -541,10 +566,22 @@ int main(int argc, char *argv[])
          return 0;
      }
  
@@ -7588,6 +7588,7 @@ index 4c5147dcd38..c91a7baea1e 100644
 +    WebKitWebsiteDataManager *manager;
 +    if (inspectorPipe) {
 +        manager = webkit_web_context_get_website_data_manager(webkit_web_context_get_default());
++        g_object_ref(manager);
 +    } else if (privateMode || automationMode) {
 +        manager = webkit_website_data_manager_new_ephemeral();
 +    } else {
