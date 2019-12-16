@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('../utils');
 
-module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
+module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -658,6 +658,21 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         page.reload(),
       ]);
       expect(nonCachedRequest.headers['if-modified-since']).toBe(undefined);
+    });
+  });
+
+  describe('ignoreHTTPSErrors', function() {
+    it('should work with request interception', async({httpsServer}) => {
+      const browser = await playwright.launch({...defaultBrowserOptions, ignoreHTTPSErrors: true});
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await page.interception.enable();
+      page.on('request', request => page.interception.continue(request));
+      const response = await page.goto(httpsServer.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
+
+      await browser.close();
     });
   });
 };

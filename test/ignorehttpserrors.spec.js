@@ -43,12 +43,6 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       expect(error).toBe(null);
       expect(response.ok()).toBe(true);
     });
-    it.skip(WEBKIT)('should work with request interception', async({page, server, httpsServer}) => {
-      await page.interception.enable();
-      page.on('request', request => page.interception.continue(request));
-      const response = await page.goto(httpsServer.EMPTY_PAGE);
-      expect(response.status()).toBe(200);
-    });
     it.skip(WEBKIT)('should work with mixed content', async({page, server, httpsServer}) => {
       httpsServer.setRoute('/mixedcontent.html', (req, res) => {
         res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
