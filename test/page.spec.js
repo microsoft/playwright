@@ -40,7 +40,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await newPage.close();
       expect(await browser.pages()).not.toContain(newPage);
     });
-    it.skip(WEBKIT)('should run beforeunload if asked for', async({context, server}) => {
+    it('should run beforeunload if asked for', async({context, server}) => {
       const newPage = await context.newPage();
       await newPage.goto(server.PREFIX + '/beforeunload.html');
       // We have to interact with a page so that 'beforeunload' handlers
@@ -50,14 +50,16 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       const dialog = await waitEvent(newPage, 'dialog');
       expect(dialog.type()).toBe('beforeunload');
       expect(dialog.defaultValue()).toBe('');
-      if (CHROME || WEBKIT)
+      if (CHROME)
         expect(dialog.message()).toBe('');
+      else if (WEBKIT)
+        expect(dialog.message()).toBe('Leave?');
       else
         expect(dialog.message()).toBe('This page is asking you to confirm that you want to leave - data you have entered may not be saved.');
       await dialog.accept();
       await pageClosingPromise;
     });
-    it.skip(WEBKIT)('should *not* run beforeunload by default', async({context, server}) => {
+    it('should *not* run beforeunload by default', async({context, server}) => {
       const newPage = await context.newPage();
       await newPage.goto(server.PREFIX + '/beforeunload.html');
       // We have to interact with a page so that 'beforeunload' handlers

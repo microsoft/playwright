@@ -190,9 +190,10 @@ export class Browser extends EventEmitter implements BrowserInterface {
     target._didClose();
   }
 
-  _closePage(page: Page) {
+  _closePage(page: Page, runBeforeUnload: boolean) {
     this._connection.send('Target.close', {
-      targetId: Target.fromPage(page)._targetId
+      targetId: Target.fromPage(page)._targetId,
+      runBeforeUnload
     }).catch(debugError);
   }
 
