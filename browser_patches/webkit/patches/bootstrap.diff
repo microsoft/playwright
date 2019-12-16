@@ -4657,7 +4657,7 @@ index 9693809e34e..b45a4e7aa61 100644
      if (isInAcceleratedCompositingMode()) {
          ASSERT(!m_backingStore);
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7c..4fe533572b6 100644
+index d7695088e7c..fd0e1db93b4 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 @@ -30,6 +30,7 @@
@@ -4676,11 +4676,12 @@ index d7695088e7c..4fe533572b6 100644
  
  private:
      // DrawingAreaProxy
-@@ -126,6 +128,8 @@ private:
+@@ -126,6 +128,9 @@ private:
      // For a new Drawing Area don't draw anything until the WebProcess has sent over the first content.
      bool m_hasReceivedFirstUpdate { false };
  
-+    HashMap<uint64_t, Function<void ()>> m_callbacks;
++    using ResizeCallbackMap = HashMap<uint64_t, Function<void ()>, WTF::IntHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>>;
++    ResizeCallbackMap m_callbacks;
 +
  #if !PLATFORM(WPE)
      bool m_isBackingStoreDiscardable { true };
