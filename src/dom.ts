@@ -12,6 +12,7 @@ import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 import { Page } from './page';
+import { TimeoutError } from './errors';
 
 type ScopedSelector = types.Selector & { scope?: ElementHandle };
 type ResolvedSelector = { scope?: ElementHandle, selector: string, visibility: types.Visibility, disposeScope?: boolean };
@@ -279,8 +280,66 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return { point, scrollX, scrollY };
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
+  private async _waitForStationary(options: types.TimeoutOptions) {
+    const { timeout = this._page._timeoutSettings.timeout() } = options;
+    const success = await helper.waitWithTimeout(this.evaluate((node: Node, injected: Injected, timeout: number) => {
+      let elementState;
+      return injected.pollRaf(() => {
+        if (!node.isConnected || node.nodeType !== Node.ELEMENT_NODE)
+          return false;
+        const element = node as Element;
+        const rect = element.getBoundingClientRect();
+        let computedOpacity = 1;
+        for (let parent: Element | undefined = element; parent; parent = injected.utils.parentElementOrShadowHost(parent))
+          computedOpacity *= +getComputedStyle(parent).opacity;
+        const newState = {
+          x: rect.top,
+          y: rect.left,
+          width: rect.width,
+          height: rect.height,
+          computedOpacity,
+          iteration: elementState ? elementState.iteration + 1 : 1,
+        };
+        if (elementState &&
+            elementState.iteration >= 2 &&
+            newState.x === elementState.x &&
+            newState.y === elementState.y &&
+            newState.width === elementState.width &&
+            newState.height === elementState.height &&
+            newState.computedOpacity === elementState.computedOpacity) {
+          return true;
+        }
+        elementState = newState;
+        return false;
+      }, timeout);
+    }, await this._context._injected(), timeout), 'stationary', timeout);
+    if (!success)
+      throw new TimeoutError(`waiting for stationary failed: timeout ${timeout}ms exceeded`);
+  }
+
+  private async _waitToBecomeHitTargetAt(point: types.Point, options: types.TimeoutOptions) {
+    const { timeout = this._page._timeoutSettings.timeout() } = options;
+    const success = await helper.waitWithTimeout(this.evaluate((node: Node, injected: Injected, timeout: number, point: types.Point) => {
+      return injected.pollRaf(() => {
+        for (let hitElement = injected.utils.deepElementFromPoint(document, point.x, point.y);
+             hitElement;
+             hitElement = injected.utils.parentElementOrShadowHost(hitElement)) {
+          if (hitElement === node)
+            return true;
+        }
+        return false;
+      }, timeout);
+    }, await this._context._injected(), timeout, point), 'hit target', timeout);
+    if (!success)
+      throw new TimeoutError(`waiting for hit target failed: timeout ${timeout}ms exceeded`);
+  }
+
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions & types.WaitForOptions<'stationary' | 'hittarget'>): Promise<void> {
+    if (options && types.multipleContains(options.waitFor, 'stationary'))
+      await this._waitForStationary(options);
     const point = await this._ensurePointerActionPoint(options ? options.relativePoint : undefined);
+    if (options && types.multipleContains(options.waitFor, 'hittarget'))
+      await this._waitToBecomeHitTargetAt(point, options);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
       restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
@@ -289,19 +348,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page.keyboard._ensureModifiers(restoreModifiers);
   }
 
-  hover(options?: input.PointerActionOptions): Promise<void> {
+  hover(options?: input.PointerActionOptions & types.WaitForOptions<'stationary' | 'hittarget'>): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: input.ClickOptions): Promise<void> {
+  click(options?: input.ClickOptions & types.WaitForOptions<'stationary' | 'hittarget'>): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: input.MultiClickOptions): Promise<void> {
+  dblclick(options?: input.MultiClickOptions & types.WaitForOptions<'stationary' | 'hittarget'>): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: input.MultiClickOptions): Promise<void> {
+  tripleclick(options?: input.MultiClickOptions & types.WaitForOptions<'stationary' | 'hittarget'>): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
@@ -350,7 +409,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       throw new Error(errorMessage);
   }
 
-  async type(text: string, options: { delay: (number | undefined); } | undefined) {
+  async type(text: string, options?: { delay?: number }) {
     await this.focus();
     await this._page.keyboard.type(text, options);
   }

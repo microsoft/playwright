@@ -39,7 +39,7 @@ type ContextData = {
 
 export type NavigateOptions = {
   timeout?: number,
-  waitUntil?: LifecycleEvent | LifecycleEvent[],
+  waitUntil?: types.Multiple<LifecycleEvent>,
 };
 
 export type GotoOptions = NavigateOptions & {
@@ -47,8 +47,6 @@ export type GotoOptions = NavigateOptions & {
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded';
-
-export type WaitForOptions = types.TimeoutOptions & { waitFor?: boolean };
 
 export class Frame {
   _id: string;
@@ -308,43 +306,43 @@ export class Frame {
     return result;
   }
 
-  async click(selector: string | types.Selector, options?: WaitForOptions & ClickOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
-    await handle.click(options);
+  async click(selector: string | types.Selector, options?: ClickOptions & types.WaitForOptions<'selector' | 'stationary' | 'hittarget'>) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, types.toWaitFor(options));
+    await handle.click(types.toWaitFor(options));
     await handle.dispose();
   }
 
-  async dblclick(selector: string | types.Selector, options?: WaitForOptions & MultiClickOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
-    await handle.dblclick(options);
+  async dblclick(selector: string | types.Selector, options?: MultiClickOptions & types.WaitForOptions<'selector' | 'stationary' | 'hittarget'>) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, types.toWaitFor(options));
+    await handle.dblclick(types.toWaitFor(options));
     await handle.dispose();
   }
 
-  async tripleclick(selector: string | types.Selector, options?: WaitForOptions & MultiClickOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
-    await handle.tripleclick(options);
+  async tripleclick(selector: string | types.Selector, options?: MultiClickOptions & types.WaitForOptions<'selector' | 'stationary' | 'hittarget'>) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, types.toWaitFor(options));
+    await handle.tripleclick(types.toWaitFor(options));
     await handle.dispose();
   }
 
-  async fill(selector: string | types.Selector, value: string, options?: WaitForOptions) {
+  async fill(selector: string | types.Selector, value: string, options?: types.WaitForOptions<'selector'>) {
     const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.fill(value);
     await handle.dispose();
   }
 
-  async focus(selector: string | types.Selector, options?: WaitForOptions) {
+  async focus(selector: string | types.Selector, options?: types.WaitForOptions<'selector'>) {
     const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.focus();
     await handle.dispose();
   }
 
-  async hover(selector: string | types.Selector, options?: WaitForOptions & PointerActionOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
-    await handle.hover(options);
+  async hover(selector: string | types.Selector, options?: PointerActionOptions & types.WaitForOptions<'selector' | 'stationary' | 'hittarget'>) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, types.toWaitFor(options));
+    await handle.hover(types.toWaitFor(options));
     await handle.dispose();
   }
 
-  async select(selector: string | types.Selector, value: string | dom.ElementHandle | SelectOption | string[] | dom.ElementHandle[] | SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
+  async select(selector: string | types.Selector, value: types.Multiple<string | dom.ElementHandle | SelectOption> | undefined, options?: types.WaitForOptions<'selector'>): Promise<string[]> {
     const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     const toDispose: Promise<dom.ElementHandle>[] = [];
     const values = value === undefined ? [] : value instanceof Array ? value : [value];
@@ -363,10 +361,8 @@ export class Frame {
     return result;
   }
 
-  async type(selector: string | types.Selector, text: string, options: WaitForOptions & { delay: (number | undefined); } | undefined) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async type(selector: string | types.Selector, text: string, options?: { delay?: number } & types.WaitForOptions<'selector'>) {
+    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
     await handle.type(text, options);
     await handle.dispose();
   }
@@ -381,13 +377,13 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _optionallyWaitForInUtilityContext(selector: string | types.Selector,options: WaitForOptions): Promise<dom.ElementHandle | null> {
+  private async _optionallyWaitForInUtilityContext(selector: string | types.Selector, options?: types.WaitForOptions<'selector'>): Promise<dom.ElementHandle | null> {
     let handle: dom.ElementHandle | null;
-    if (options && options.waitFor) {
+    if (options && types.multipleContains(options.waitFor, 'selector')) {
       handle = await this._waitForSelectorInUtilityContext(selector, options);
     } else {
       const context = await this._utilityContext();
-      handle = await context._$(types.clearSelector(selector));  
+      handle = await context._$(types.clearSelector(selector));
     }
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     return handle;
@@ -616,7 +612,7 @@ export class LifecycleWatcher {
   private _targetUrl?: string;
   private _expectedDocumentId?: string;
 
-  constructor(frame: Frame, waitUntil: LifecycleEvent | LifecycleEvent[], timeout: number) {
+  constructor(frame: Frame, waitUntil: types.Multiple<LifecycleEvent>, timeout: number) {
     if (Array.isArray(waitUntil))
       waitUntil = waitUntil.slice();
     else if (typeof waitUntil === 'string')

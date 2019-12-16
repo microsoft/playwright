@@ -354,5 +354,112 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('button');
       expect(await page.evaluate('window.clicked')).toBe(true);
     });
+
+    describe('wait for option', () => {
+      it('should wait for selector', async({page, server}) => {
+        let clicked = false;
+        const clickPromise = page.click('button', { waitFor: 'selector' }).then(() => clicked = true);
+        expect(clicked).toBe(false);
+        await page.goto(server.EMPTY_PAGE);
+        expect(clicked).toBe(false);
+        await page.goto(server.PREFIX + '/input/button.html');
+        await clickPromise;
+        expect(await page.evaluate(() => result)).toBe('Clicked');
+      });
+
+      it('should wait for hit target', async({page, server}) => {
+        await page.goto(server.PREFIX + '/input/button.html?glasspane');
+        let clicked = false;
+        const clickPromise = page.click('button', { waitFor: 'hittarget' }).then(() => clicked = true);
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => 'dummy');
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleGlassPane());
+        await clickPromise;
+        expect(await page.evaluate(() => result)).toBe('Clicked');
+      });
+
+      it('should wait for stationary', async({page, server}) => {
+        await page.goto(server.PREFIX + '/input/button.html?moving');
+        let clicked = false;
+        const clickPromise = page.click('button', { waitFor: 'stationary' }).then(() => clicked = true);
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => new Promise(f => requestAnimationFrame(f)));
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleMoving());
+        await clickPromise;
+        expect(await page.evaluate(() => result)).toBe('Clicked');
+      });
+
+      it('should wait for selector and hit target', async({page, server}) => {
+        let clicked = false;
+        const clickPromise = page.click('button', { waitFor: ['hittarget', 'selector'] }).then(() => clicked = true);
+        expect(clicked).toBe(false);
+        await page.goto(server.EMPTY_PAGE);
+        expect(clicked).toBe(false);
+        await page.goto(server.PREFIX + '/input/button.html?glasspane');
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => 'dummy');
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleGlassPane());
+        await clickPromise;
+        expect(await page.evaluate(() => result)).toBe('Clicked');
+      });
+
+      it('should wait for selector and stationary', async({page, server}) => {
+        let clicked = false;
+        const clickPromise = page.click('button', { waitFor: ['stationary', 'selector'] }).then(() => clicked = true);
+        expect(clicked).toBe(false);
+        await page.goto(server.EMPTY_PAGE);
+        expect(clicked).toBe(false);
+        await page.goto(server.PREFIX + '/input/button.html?moving');
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => new Promise(f => requestAnimationFrame(f)));
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleMoving());
+        await clickPromise;
+        expect(await page.evaluate(() => result)).toBe('Clicked');
+      });
+
+      it('should wait for stationary and hit target', async({page, server}) => {
+        await page.goto(server.PREFIX + '/input/button.html?moving&glasspane');
+        let clicked = false;
+        const clickPromise = page.click('button', { waitFor: ['stationary', 'hittarget'] }).then(() => clicked = true);
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => new Promise(f => requestAnimationFrame(f)));
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleMoving());
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => new Promise(f => requestAnimationFrame(f)));
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleGlassPane());
+        await clickPromise;
+        expect(await page.evaluate(() => result)).toBe('Clicked');
+      });
+
+      it('should wait for hit target and stationary', async({page, server}) => {
+        await page.goto(server.PREFIX + '/input/button.html?moving&glasspane');
+        let clicked = false;
+        const clickPromise = page.click('button', { waitFor: ['stationary', 'hittarget'] }).then(() => clicked = true);
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => new Promise(f => requestAnimationFrame(f)));
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleGlassPane());
+        expect(clicked).toBe(false);
+        for (let i = 0; i < 5; i++)
+          await page.evaluate(() => new Promise(f => requestAnimationFrame(f)));
+        expect(clicked).toBe(false);
+        await page.evaluate(() => toggleMoving());
+        await clickPromise;
+        expect(await page.evaluate(() => result)).toBe('Clicked');
+      });
+    });
   });
 };

@@ -72,3 +72,13 @@ export type Viewport = {
   isLandscape?: boolean;
   hasTouch?: boolean;
 };
+
+export type Multiple<T> = T | T[];
+export function multipleContains<T>(multiple: Multiple<T> | undefined, t: T): boolean {
+  return multiple === t || (Array.isArray(multiple) && multiple.includes(t));
+}
+
+export type WaitForOptions<T> = TimeoutOptions & { waitFor?: Multiple<T> };
+export function toWaitFor<A, B>(o: WaitForOptions<A>): A extends B ? WaitForOptions<B> : never {
+  return o as any as (A extends B ? WaitForOptions<B> : never);
+}

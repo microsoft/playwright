@@ -466,7 +466,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 }
 
-export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[]): frames.LifecycleEvent[] {
+export function normalizeWaitUntil(waitUntil: types.Multiple<frames.LifecycleEvent>): frames.LifecycleEvent[] {
   if (!Array.isArray(waitUntil))
     waitUntil = [waitUntil];
   for (const condition of waitUntil) {

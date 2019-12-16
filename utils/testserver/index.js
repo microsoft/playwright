@@ -226,6 +226,11 @@ class TestServer {
   serveFile(request, response, pathName) {
     if (pathName === '/')
       pathName = '/index.html';
+    try {
+      const url = new URL('http://localhost' + pathName);
+      pathName = url.pathname;
+    } catch (e) {
+    }
     const filePath = path.join(this._dirPath, pathName.substring(1));
 
     if (this._cachedPathPrefix !== null && filePath.startsWith(this._cachedPathPrefix)) {

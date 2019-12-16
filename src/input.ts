@@ -133,7 +133,7 @@ export class Keyboard {
     await this._raw.sendText(text);
   }
 
-  async type(text: string, options: { delay: (number | undefined); } | undefined) {
+  async type(text: string, options?: { delay?: number }) {
     const delay = (options && options.delay) || null;
     for (const char of text) {
       if (keyboardLayout.keyDefinitions[char]) {

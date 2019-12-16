@@ -2,10 +2,43 @@
 <html>
   <head>
     <title>Button test</title>
+    <style>
+      body {
+        position: relative;
+      }
+
+      div.glasspane {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      div.glasspane.capture {
+        pointer-events: all;
+      }
+
+      @keyframes leftright {
+        from {
+          margin-left: 0;
+        }
+        to {
+          margin-left: 400px;
+        }
+      }
+
+      button.moving {
+        animation: 1s infinite alternate leftright;
+      }
+    </style>
   </head>
   <body>
     <script src="mouse-helper.js"></script>
     <button>Click target</button>
+    <div class=glasspane></div>
     <script>
       window.result = 'Was not clicked';
       window.offsetX = undefined;
@@ -17,6 +50,16 @@
         offsetY = e.offsetY;
         shiftKey = e.shiftKey;
       }, false);
+      function toggleGlassPane() {
+        document.querySelector('div.glasspane').classList.toggle('capture');
+      }
+      if (window.location.search.includes('glasspane'))
+        toggleGlassPane();
+      function toggleMoving() {
+        document.querySelector('button').classList.toggle('moving');
+      }
+      if (window.location.search.includes('moving'))
+        toggleMoving();
     </script>
   </body>
 </html>
