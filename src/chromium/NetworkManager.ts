@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import { CDPSession } from './Connection';
 import { Page } from '../page';
 import { assert, debugError, helper } from '../helper';
@@ -23,14 +22,7 @@ import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
 
-export const NetworkManagerEvents = {
-  Request: Symbol('Events.NetworkManager.Request'),
-  Response: Symbol('Events.NetworkManager.Response'),
-  RequestFailed: Symbol('Events.NetworkManager.RequestFailed'),
-  RequestFinished: Symbol('Events.NetworkManager.RequestFinished'),
-};
-
-export class NetworkManager extends EventEmitter {
+export class NetworkManager {
   private _client: CDPSession;
   private _ignoreHTTPSErrors: boolean;
   private _page: Page;
@@ -46,7 +38,6 @@ export class NetworkManager extends EventEmitter {
   private _requestIdToInterceptionId = new Map<string, string>();
 
   constructor(client: CDPSession, ignoreHTTPSErrors: boolean, page: Page) {
-    super();
     this._client = client;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._page = page;
@@ -203,7 +194,7 @@ export class NetworkManager extends EventEmitter {
     const documentId = isNavigationRequest ? event.loaderId : undefined;
     const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled, event, redirectChain);
     this._requestIdToRequest.set(event.requestId, request);
-    this.emit(NetworkManagerEvents.Request, request.request);
+    this._page._frameManager.requestStarted(request.request);
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
@@ -221,8 +212,8 @@ export class NetworkManager extends EventEmitter {
     response._requestFinished(new Error('Response body is unavailable for redirect responses'));
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
-    this.emit(NetworkManagerEvents.Response, response);
-    this.emit(NetworkManagerEvents.RequestFinished, request.request);
+    this._page._frameManager.requestReceivedResponse(response);
+    this._page._frameManager.requestFinished(request.request);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -231,7 +222,7 @@ export class NetworkManager extends EventEmitter {
     if (!request)
       return;
     const response = this._createResponse(request, event.response);
-    this.emit(NetworkManagerEvents.Response, response);
+    this._page._frameManager.requestReceivedResponse(response);
   }
 
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
@@ -247,7 +238,7 @@ export class NetworkManager extends EventEmitter {
       request.request.response()._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
-    this.emit(NetworkManagerEvents.RequestFinished, request.request);
+    this._page._frameManager.requestFinished(request.request);
   }
 
   _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
@@ -261,8 +252,8 @@ export class NetworkManager extends EventEmitter {
       response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._attemptedAuthentications.delete(request._interceptionId);
-    request.request._setFailureText(event.errorText, event.canceled);
-    this.emit(NetworkManagerEvents.RequestFailed, request.request);
+    request.request._setFailureText(event.errorText);
+    this._page._frameManager.requestFailed(request.request, event.canceled);
   }
 }
 

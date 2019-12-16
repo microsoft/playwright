@@ -23,7 +23,7 @@ import * as js from '../javascript';
 import * as network from '../network';
 import { CDPSession } from './Connection';
 import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate } from './ExecutionContext';
-import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
+import { NetworkManager } from './NetworkManager';
 import { Page } from '../page';
 import { Protocol } from './protocol';
 import { Events } from '../events';
@@ -68,11 +68,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     (this._page as any).overrides = new Overrides(client);
     (this._page as any).interception = new Interception(this._networkManager);
 
-    this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(Events.Page.Request, event));
-    this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(Events.Page.Response, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(Events.Page.RequestFailed, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(Events.Page.RequestFinished, event));
-
     this._client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
     this._client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
     this._client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
@@ -115,7 +110,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
-    assertNoLegacyNavigationOptions(options);
     const {
       referer = this._networkManager.extraHTTPHeaders()['referer'],
       waitUntil = (['load'] as frames.LifecycleEvent[]),
@@ -151,7 +145,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}): Promise<network.Response | null> {
-    assertNoLegacyNavigationOptions(options);
     const {
       waitUntil = (['load'] as frames.LifecycleEvent[]),
       timeout = this._page._timeoutSettings.navigationTimeout(),
@@ -529,12 +522,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object).asElement()!;
   }
-}
-
-function assertNoLegacyNavigationOptions(options: frames.NavigateOptions) {
-  assert((options as any)['networkIdleTimeout'] === undefined, 'ERROR: networkIdleTimeout option is no longer supported.');
-  assert((options as any)['networkIdleInflight'] === undefined, 'ERROR: networkIdleInflight option is no longer supported.');
-  assert((options as any).waitUntil !== 'networkidle', 'ERROR: "networkidle" option is no longer supported. Use "networkidle2" instead');
 }
 
 function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
