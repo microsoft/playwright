@@ -43,8 +43,6 @@ export interface PageDelegate {
   // TODO: reverse didClose call sequence.
   didClose(): void;
 
-  mainFrame(): frames.Frame;
-  frames(): frames.Frame[];
   navigateFrame(frame: frames.Frame, url: string, options?: frames.GotoOptions): Promise<network.Response | null>;
   waitForFrameNavigation(frame: frames.Frame, options?: frames.NavigateOptions): Promise<network.Response | null>;
   setFrameContent(frame: frames.Frame, html: string, options?: frames.NavigateOptions): Promise<void>;
@@ -104,7 +102,7 @@ export class Page extends EventEmitter {
   private _pageBindings = new Map<string, Function>();
   readonly _screenshotter: Screenshotter;
   private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
-  readonly _lifecycleWatchers = new Set<frames.LifecycleWatcher>();
+  readonly _frameManager: frames.FrameManager;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -126,6 +124,7 @@ export class Page extends EventEmitter {
     this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
     this._timeoutSettings = new TimeoutSettings();
     this._screenshotter = new Screenshotter(this);
+    this._frameManager = new frames.FrameManager(this);
   }
 
   _didClose() {
@@ -178,11 +177,11 @@ export class Page extends EventEmitter {
   }
 
   mainFrame(): frames.Frame {
-    return this._delegate.mainFrame();
+    return this._frameManager.mainFrame();
   }
 
   frames(): frames.Frame[] {
-    return this._delegate.frames();
+    return this._frameManager.frames();
   }
 
   setDefaultNavigationTimeout(timeout: number) {

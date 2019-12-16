@@ -41,8 +41,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   readonly _session: JugglerSession;
   readonly _page: Page;
   private readonly _networkManager: NetworkManager;
-  private _mainFrame: frames.Frame;
-  private readonly _frames: Map<string, frames.Frame>;
   private readonly _contextIdToContext: Map<string, js.ExecutionContext>;
   private _eventListeners: RegisteredListener[];
 
@@ -51,10 +49,9 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._session = session;
     this.rawKeyboard = new RawKeyboardImpl(session);
     this.rawMouse = new RawMouseImpl(session);
-    this._networkManager = new NetworkManager(session, this);
-    this._mainFrame = null;
-    this._frames = new Map();
     this._contextIdToContext = new Map();
+    this._page = new Page(this, browserContext);
+    this._networkManager = new NetworkManager(session, this._page);
     this._eventListeners = [
       helper.addEventListener(this._session, 'Page.eventFired', this._onEventFired.bind(this)),
       helper.addEventListener(this._session, 'Page.frameAttached', this._onFrameAttached.bind(this)),
@@ -75,7 +72,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFinished, request => this._page.emit(Events.Page.RequestFinished, request)),
       helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this._page.emit(Events.Page.RequestFailed, request)),
     ];
-    this._page = new Page(this, browserContext);
     (this._page as any).interception = new Interception(this._networkManager);
     (this._page as any).accessibility = new Accessibility(session);
   }
@@ -95,7 +91,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   _onExecutionContextCreated({executionContextId, auxData}) {
     const frameId = auxData ? auxData.frameId : null;
-    const frame = this._frames.get(frameId) || null;
+    const frame = this._page._frameManager.frame(frameId);
     const delegate = new ExecutionContextDelegate(this._session, executionContextId);
     if (frame) {
       const context = new dom.FrameExecutionContext(delegate, frame);
@@ -116,76 +112,36 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
   }
 
-  frame(frameId: string): frames.Frame {
-    return this._frames.get(frameId);
-  }
-
-  mainFrame(): frames.Frame {
-    return this._mainFrame;
-  }
-
-  frames() {
-    const frames: Array<frames.Frame> = [];
-    collect(this._mainFrame);
-    return frames;
-
-    function collect(frame: frames.Frame) {
-      frames.push(frame);
-      for (const subframe of frame.childFrames())
-        collect(subframe);
-    }
-  }
-
   _onNavigationStarted(params) {
   }
 
   _onNavigationAborted(params) {
-    const frame = this._frames.get(params.frameId);
-    frame._onAbortedNewDocumentNavigation(params.navigationId, params.errorText);
+    const frame = this._page._frameManager.frame(params.frameId);
+    for (const watcher of this._page._frameManager._lifecycleWatchers)
+      watcher._onAbortedNewDocumentNavigation(frame, params.navigationId, params.errorText);
   }
 
-  _onNavigationCommitted(params) {
-    const frame = this._frames.get(params.frameId);
-    frame._onCommittedNewDocumentNavigation(params.url, params.name, params.navigationId, false);
-    this._page.emit(Events.Page.FrameNavigated, frame);
+  _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
+    this._page._frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId, false);
   }
 
-  _onSameDocumentNavigation(params) {
-    const frame = this._frames.get(params.frameId);
-    frame._onCommittedSameDocumentNavigation(params.url);
-    this._page.emit(Events.Page.FrameNavigated, frame);
+  _onSameDocumentNavigation(params: Protocol.Page.sameDocumentNavigationPayload) {
+    this._page._frameManager.frameCommittedSameDocumentNavigation(params.frameId, params.url);
   }
 
-  _onFrameAttached(params) {
-    const parentFrame = this._frames.get(params.parentFrameId) || null;
-    const frame = new frames.Frame(this._page, params.frameId, parentFrame);
-    if (!parentFrame) {
-      assert(!this._mainFrame, 'INTERNAL ERROR: re-attaching main frame!');
-      this._mainFrame = frame;
-    }
-    this._frames.set(params.frameId, frame);
-    this._page.emit(Events.Page.FrameAttached, frame);
+  _onFrameAttached(params: Protocol.Page.frameAttachedPayload) {
+    this._page._frameManager.frameAttached(params.frameId, params.parentFrameId);
   }
 
-  _onFrameDetached(params) {
-    const frame = this._frames.get(params.frameId);
-    this._frames.delete(params.frameId);
-    frame._onDetached();
-    this._page.emit(Events.Page.FrameDetached, frame);
+  _onFrameDetached(params: Protocol.Page.frameDetachedPayload) {
+    this._page._frameManager.frameDetached(params.frameId);
   }
 
   _onEventFired({frameId, name}) {
-    const frame = this._frames.get(frameId);
-    if (name === 'load') {
-      frame._lifecycleEvent('load');
-      if (frame === this._mainFrame)
-        this._page.emit(Events.Page.Load);
-    }
-    if (name === 'DOMContentLoaded') {
-      frame._lifecycleEvent('domcontentloaded');
-      if (frame === this._mainFrame)
-        this._page.emit(Events.Page.DOMContentLoaded);
-    }
+    if (name === 'load')
+      this._page._frameManager.frameLifecycleEvent(frameId, 'load');
+    if (name === 'DOMContentLoaded')
+      this._page._frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
   }
 
   _onUncaughtError(params) {
@@ -223,7 +179,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {
     await this._session.send('Page.addBinding', {name: name});
     await this._session.send('Page.addScriptToEvaluateOnNewDocument', {script: bindingFunction});
-    await Promise.all(this.frames().map(frame => frame.evaluate(bindingFunction).catch(debugError)));
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(bindingFunction).catch(debugError)));
   }
 
   didClose() {
@@ -340,7 +296,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       timeout = this._page._timeoutSettings.navigationTimeout(),
       waitUntil = (['load'] as frames.LifecycleEvent[]),
     } = options;
-    const frame = this.mainFrame();
+    const frame = this._page.mainFrame();
     const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
     const { navigationId } = await action();
     if (navigationId === null) {
@@ -360,15 +316,15 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.reload', { frameId: this.mainFrame()._id }), options);
+    return this._go(() => this._session.send('Page.reload', { frameId: this._page.mainFrame()._id }), options);
   }
 
   goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.goBack', { frameId: this.mainFrame()._id }), options);
+    return this._go(() => this._session.send('Page.goBack', { frameId: this._page.mainFrame()._id }), options);
   }
 
   goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.goForward', { frameId: this.mainFrame()._id }), options);
+    return this._go(() => this._session.send('Page.goForward', { frameId: this._page.mainFrame()._id }), options);
   }
 
   async evaluateOnNewDocument(source: string): Promise<void> {
@@ -416,7 +372,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     });
     if (!frameId)
       return null;
-    return this.frame(frameId);
+    return this._page._frameManager.frame(frameId);
   }
 
   isElementHandle(remoteObject: any): boolean {

@@ -45,22 +45,19 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   _session: TargetSession;
   readonly _page: Page;
   private readonly _networkManager: NetworkManager;
-  private readonly _frames: Map<string, frames.Frame>;
   private readonly _contextIdToContext: Map<number, js.ExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
-  private _mainFrame: frames.Frame;
   private readonly _bootstrapScripts: string[] = [];
 
   constructor(browserContext: BrowserContext) {
     super();
     this.rawKeyboard = new RawKeyboardImpl();
     this.rawMouse = new RawMouseImpl();
-    this._networkManager = new NetworkManager(this);
-    this._frames = new Map();
     this._contextIdToContext = new Map();
     this._isolatedWorlds = new Set();
     this._page = new Page(this, browserContext);
+    this._networkManager = new NetworkManager(this._page);
     this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(Events.Page.Request, event));
     this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(Events.Page.Response, event));
     this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(Events.Page.RequestFailed, event));
@@ -142,30 +139,11 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   _onFrameStoppedLoading(frameId: string) {
-    const frame = this._frames.get(frameId);
-    if (!frame)
-      return;
-    const hasDOMContentLoaded = frame._firedLifecycleEvents.has('domcontentloaded');
-    const hasLoad = frame._firedLifecycleEvents.has('load');
-    frame._lifecycleEvent('domcontentloaded');
-    frame._lifecycleEvent('load');
-    if (frame === this.mainFrame() && !hasDOMContentLoaded)
-      this._page.emit(Events.Page.DOMContentLoaded);
-    if (frame === this.mainFrame() && !hasLoad)
-      this._page.emit(Events.Page.Load);
+    this._page._frameManager.frameStoppedLoading(frameId);
   }
 
   _onLifecycleEvent(frameId: string, event: frames.LifecycleEvent) {
-    const frame = this._frames.get(frameId);
-    if (!frame)
-      return;
-    frame._lifecycleEvent(event);
-    if (frame === this.mainFrame()) {
-      if (event === 'load')
-        this._page.emit(Events.Page.Load);
-      if (event === 'domcontentloaded')
-        this._page.emit(Events.Page.DOMContentLoaded);
-    }
+    this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
@@ -178,47 +156,12 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       this._handleFrameTree(child);
   }
 
-  page(): Page {
-    return this._page;
-  }
-
-  mainFrame(): frames.Frame {
-    return this._mainFrame;
-  }
-
-  frames(): Array<frames.Frame> {
-    return Array.from(this._frames.values());
-  }
-
-  frame(frameId: string): frames.Frame | null {
-    return this._frames.get(frameId) || null;
-  }
-
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
-    assert(!this._frames.has(frameId));
-    const parentFrame = parentFrameId ? this._frames.get(parentFrameId) : null;
-    const frame = new frames.Frame(this._page, frameId, parentFrame);
-    this._frames.set(frameId, frame);
-    if (!parentFrame)
-      this._mainFrame = frame;
-    this._page.emit(Events.Page.FrameAttached, frame);
-    return frame;
+    this._page._frameManager.frameAttached(frameId, parentFrameId);
   }
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
-    const isMainFrame = !framePayload.parentId;
-    const frame = isMainFrame ? this._mainFrame : this._frames.get(framePayload.id);
-
-    // Detach all child frames first.
-    for (const child of frame.childFrames())
-      this._removeFramesRecursively(child);
-    if (isMainFrame) {
-      // Update frame id to retain frame identity on cross-process navigation.
-      this._frames.delete(frame._id);
-      frame._id = framePayload.id;
-      this._frames.set(framePayload.id, frame);
-    }
-
+    const frame = this._page._frameManager.frame(framePayload.id);
     for (const context of this._contextIdToContext.values()) {
       if (context.frame() === frame) {
         const delegate = context._delegate as ExecutionContextDelegate;
@@ -227,26 +170,17 @@ export class FrameManager extends EventEmitter implements PageDelegate {
         frame._contextDestroyed(context as dom.FrameExecutionContext);
       }
     }
-
     // Append session id to avoid cross-process loaderId clash.
     const documentId = this._session._sessionId + '::' + framePayload.loaderId;
-    frame._onCommittedNewDocumentNavigation(framePayload.url, framePayload.name, documentId, initial);
-
-    this._page.emit(Events.Page.FrameNavigated, frame);
+    this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', documentId, initial);
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
-    const frame = this._frames.get(frameId);
-    if (!frame)
-      return;
-    frame._onCommittedSameDocumentNavigation(url);
-    this._page.emit(Events.Page.FrameNavigated, frame);
+    this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
   _onFrameDetached(frameId: string) {
-    const frame = this._frames.get(frameId);
-    if (frame)
-      this._removeFramesRecursively(frame);
+    this._page._frameManager.frameDetached(frameId);
   }
 
   _onExecutionContextCreated(contextPayload : Protocol.Runtime.ExecutionContextDescription) {
@@ -255,7 +189,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const frameId = contextPayload.frameId;
     // If the frame was attached manually there is no navigation event.
     // FIXME: support frameAttached event in WebKit protocol.
-    const frame = this._frames.get(frameId) || null;
+    const frame = this._page._frameManager.frame(frameId);
     if (!frame)
       return;
     const delegate = new ExecutionContextDelegate(this._session, contextPayload);
@@ -275,14 +209,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     const context = this._contextIdToContext.get(contextId);
     assert(context, 'INTERNAL ERROR: missing context with id = ' + contextId);
     return context;
-  }
-
-  _removeFramesRecursively(frame: frames.Frame) {
-    for (const child of frame.childFrames())
-      this._removeFramesRecursively(child);
-    frame._onDetached();
-    this._frames.delete(frame._id);
-    this._page.emit(Events.Page.FrameDetached, frame);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
@@ -355,7 +281,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     else if (type === 'timing')
       derivedType = 'timeEnd';
 
-    const mainFrameContext = await this.mainFrame().executionContext();
+    const mainFrameContext = await this._page.mainFrame().executionContext();
     const handles = (parameters || []).map(p => {
       let context: js.ExecutionContext | null = null;
       if (p.objectId) {
@@ -380,7 +306,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
-    const context = await this.frame(event.frameId)._mainContext();
+    const context = await this._page._frameManager.frame(event.frameId)._mainContext();
     const handle = context._createHandle(event.element).asElement()!;
     this._page._onFileChooserOpened(handle);
   }
@@ -486,7 +412,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._bootstrapScripts.unshift(script);
     const source = this._bootstrapScripts.join(';');
     await this._session.send('Page.setBootstrapScript', { source });
-    await Promise.all(this.frames().map(frame => frame.evaluate(script).catch(debugError)));
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(debugError)));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {

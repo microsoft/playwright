@@ -17,7 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { CDPSession } from './Connection';
-import { FrameManager } from './FrameManager';
+import { Page } from '../page';
 import { assert, debugError, helper } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
@@ -33,7 +33,7 @@ export const NetworkManagerEvents = {
 export class NetworkManager extends EventEmitter {
   private _client: CDPSession;
   private _ignoreHTTPSErrors: boolean;
-  private _frameManager: FrameManager;
+  private _page: Page;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
   private _extraHTTPHeaders: network.Headers = {};
@@ -45,11 +45,11 @@ export class NetworkManager extends EventEmitter {
   private _userCacheDisabled = false;
   private _requestIdToInterceptionId = new Map<string, string>();
 
-  constructor(client: CDPSession, ignoreHTTPSErrors: boolean, frameManager: FrameManager) {
+  constructor(client: CDPSession, ignoreHTTPSErrors: boolean, page: Page) {
     super();
     this._client = client;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
-    this._frameManager = frameManager;
+    this._page = page;
 
     this._client.on('Fetch.requestPaused', this._onRequestPaused.bind(this));
     this._client.on('Fetch.authRequired', this._onAuthRequired.bind(this));
@@ -198,7 +198,7 @@ export class NetworkManager extends EventEmitter {
       }
     }
     // TODO: how can frame be null here?
-    const frame = event.frameId ? this._frameManager.frame(event.frameId) : null;
+    const frame = event.frameId ? this._page._frameManager.frame(event.frameId) : null;
     const isNavigationRequest = event.requestId === event.loaderId && event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
     const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled, event, redirectChain);

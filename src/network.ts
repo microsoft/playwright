@@ -101,19 +101,23 @@ export class Request {
     this._headers = headers;
     this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
     this._waitForFinishedPromise = new Promise(f => this._waitForFinishedPromiseCallback = f);
-    if (documentId && frame)
-      frame._onNavigationRequest(this);
+    if (documentId && frame) {
+      for (const watcher of frame._page._frameManager._lifecycleWatchers)
+        watcher._onNavigationRequest(frame, this);
+    }
   }
 
   _setFailureText(failureText: string, canceled: boolean) {
     this._failureText = failureText;
     if (this._documentId && this._frame) {
       const isCurrentDocument = this._frame._lastDocumentId === this._documentId;
-      let errorText = failureText;
-      if (canceled)
-        errorText += '; maybe frame was detached?';
-      if (!isCurrentDocument)
-        this._frame._onAbortedNewDocumentNavigation(this._documentId, errorText);
+      if (!isCurrentDocument) {
+        let errorText = failureText;
+        if (canceled)
+          errorText += '; maybe frame was detached?';
+        for (const watcher of this._frame._page._frameManager._lifecycleWatchers)
+          watcher._onAbortedNewDocumentNavigation(this._frame, this._documentId, errorText);
+      }
     }
     this._waitForFinishedPromiseCallback();
   }
