@@ -50,17 +50,144 @@ export type LifecycleEvent = 'load' | 'domcontentloaded';
 
 export type WaitForOptions = types.TimeoutOptions & { waitFor?: boolean };
 
+export class FrameManager {
+  private _page: Page;
+  private _frames = new Map<string, Frame>();
+  private _mainFrame: Frame;
+  readonly _lifecycleWatchers = new Set<LifecycleWatcher>();
+
+  constructor(page: Page) {
+    this._page = page;
+  }
+
+  mainFrame(): Frame {
+    return this._mainFrame;
+  }
+
+  frames() {
+    const frames: Frame[] = [];
+    collect(this._mainFrame);
+    return frames;
+
+    function collect(frame: Frame) {
+      frames.push(frame);
+      for (const subframe of frame.childFrames())
+        collect(subframe);
+    }
+  }
+
+  frame(frameId: string): Frame | null {
+    return this._frames.get(frameId) || null;
+  }
+
+  frameAttached(frameId: string, parentFrameId: string | null | undefined): Frame {
+    const parentFrame = parentFrameId ? this._frames.get(parentFrameId) : null;
+    if (!parentFrame) {
+      if (this._mainFrame) {
+        // Update frame id to retain frame identity on cross-process navigation.
+        this._frames.delete(this._mainFrame._id);
+        this._mainFrame._id = frameId;
+      } else {
+        assert(!this._frames.has(frameId));
+        this._mainFrame = new Frame(this._page, frameId, parentFrame);
+      }
+      this._frames.set(frameId, this._mainFrame);
+      return this._mainFrame;
+    } else {
+      assert(!this._frames.has(frameId));
+      const frame = new Frame(this._page, frameId, parentFrame);
+      this._frames.set(frameId, frame);
+      this._page.emit(Events.Page.FrameAttached, frame);
+      return frame;
+    }
+  }
+
+  frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
+    const frame = this._frames.get(frameId);
+    for (const child of frame.childFrames())
+      this._removeFramesRecursively(child);
+    frame._url = url;
+    frame._name = name;
+    frame._lastDocumentId = documentId;
+    frame._firedLifecycleEvents.clear();
+    if (!initial) {
+      for (const watcher of this._lifecycleWatchers)
+        watcher._onCommittedNewDocumentNavigation(frame);
+    }
+    this._page.emit(Events.Page.FrameNavigated, frame);
+  }
+
+  frameCommittedSameDocumentNavigation(frameId: string, url: string) {
+    const frame = this._frames.get(frameId);
+    if (!frame)
+      return;
+    frame._url = url;
+    for (const watcher of this._lifecycleWatchers)
+      watcher._onNavigatedWithinDocument(frame);
+    this._page.emit(Events.Page.FrameNavigated, frame);
+  }
+
+  frameDetached(frameId: string) {
+    const frame = this._frames.get(frameId);
+    if (frame)
+      this._removeFramesRecursively(frame);
+  }
+
+  frameStoppedLoading(frameId: string) {
+    const frame = this._frames.get(frameId);
+    if (!frame)
+      return;
+    const hasDOMContentLoaded = frame._firedLifecycleEvents.has('domcontentloaded');
+    const hasLoad = frame._firedLifecycleEvents.has('load');
+    frame._firedLifecycleEvents.add('domcontentloaded');
+    frame._firedLifecycleEvents.add('load');
+    for (const watcher of this._lifecycleWatchers)
+      watcher._onLifecycleEvent(frame);
+    if (frame === this.mainFrame() && !hasDOMContentLoaded)
+      this._page.emit(Events.Page.DOMContentLoaded);
+    if (frame === this.mainFrame() && !hasLoad)
+      this._page.emit(Events.Page.Load);
+  }
+
+  frameLifecycleEvent(frameId: string, event: LifecycleEvent | 'clear') {
+    const frame = this._frames.get(frameId);
+    if (!frame)
+      return;
+    if (event === 'clear') {
+      frame._firedLifecycleEvents.clear();
+    } else {
+      frame._firedLifecycleEvents.add(event);
+      for (const watcher of this._lifecycleWatchers)
+        watcher._onLifecycleEvent(frame);
+    }
+    if (frame === this._mainFrame && event === 'load')
+      this._page.emit(Events.Page.Load);
+    if (frame === this._mainFrame && event === 'domcontentloaded')
+      this._page.emit(Events.Page.DOMContentLoaded);
+  }
+
+  private _removeFramesRecursively(frame: Frame) {
+    for (const child of frame.childFrames())
+      this._removeFramesRecursively(child);
+    frame._onDetached();
+    this._frames.delete(frame._id);
+    for (const watcher of this._lifecycleWatchers)
+      watcher._onFrameDetached(frame);
+    this._page.emit(Events.Page.FrameDetached, frame);
+  }
+}
+
 export class Frame {
   _id: string;
   readonly _firedLifecycleEvents: Set<LifecycleEvent>;
   _lastDocumentId: string;
   readonly _page: Page;
   private _parentFrame: Frame;
-  private _url = '';
+  _url = '';
   private _detached = false;
   private _contextData = new Map<ContextType, ContextData>();
   private _childFrames = new Set<Frame>();
-  private _name: string;
+  _name: string;
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     this._id = id;
@@ -387,7 +514,7 @@ export class Frame {
       handle = await this._waitForSelectorInUtilityContext(selector, options);
     } else {
       const context = await this._utilityContext();
-      handle = await context._$(types.clearSelector(selector));  
+      handle = await context._$(types.clearSelector(selector));
     }
     assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     return handle;
@@ -431,39 +558,6 @@ export class Frame {
     return context.evaluate(() => document.title);
   }
 
-  _onNavigationRequest(request: network.Request) {
-    for (const watcher of this._page._lifecycleWatchers)
-      watcher._onNavigationRequest(this, request);
-  }
-
-  _onAbortedNewDocumentNavigation(documentId: string, errorText: string) {
-    for (const watcher of this._page._lifecycleWatchers)
-      watcher._onAbortedNewDocumentNavigation(this, documentId, errorText);
-  }
-
-  _onCommittedNewDocumentNavigation(url: string, name: string, documentId: string, initial: boolean) {
-    this._url = url;
-    this._name = name;
-    this._lastDocumentId = documentId;
-    this._firedLifecycleEvents.clear();
-    if (!initial) {
-      for (const watcher of this._page._lifecycleWatchers)
-        watcher._onCommittedNewDocumentNavigation(this);
-    }
-  }
-
-  _onCommittedSameDocumentNavigation(url: string) {
-    this._url = url;
-    for (const watcher of this._page._lifecycleWatchers)
-      watcher._onNavigatedWithinDocument(this);
-  }
-
-  _lifecycleEvent(event: LifecycleEvent) {
-    this._firedLifecycleEvents.add(event);
-    for (const watcher of this._page._lifecycleWatchers)
-      watcher._onLifecycleEvent(this);
-  }
-
   _onDetached() {
     this._detached = true;
     for (const data of this._contextData.values()) {
@@ -473,8 +567,6 @@ export class Frame {
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
     this._parentFrame = null;
-    for (const watcher of this._page._lifecycleWatchers)
-      watcher._onFrameDetached(this);
   }
 
   private _scheduleRerunnableTask(task: dom.Task, contextType: ContextType, timeout?: number, title?: string): Promise<js.JSHandle> {
@@ -634,7 +726,7 @@ export class LifecycleWatcher {
       new Promise<Error>(f => this._navigationAbortedCallback = f),
       this._frame._page._disconnectedPromise.then(() => new Error('Navigation failed because browser has disconnected!')),
     ]);
-    frame._page._lifecycleWatchers.add(this);
+    frame._page._frameManager._lifecycleWatchers.add(this);
     this._checkLifecycleComplete();
   }
 
@@ -718,7 +810,7 @@ export class LifecycleWatcher {
   }
 
   dispose() {
-    this._frame._page._lifecycleWatchers.delete(this);
+    this._frame._page._frameManager._lifecycleWatchers.delete(this);
     clearTimeout(this._maximumTimer);
   }
 }

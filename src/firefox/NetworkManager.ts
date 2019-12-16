@@ -18,7 +18,7 @@
 import { EventEmitter } from 'events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { JugglerSession } from './Connection';
-import { FrameManager } from './FrameManager';
+import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
 
@@ -32,15 +32,15 @@ export const NetworkManagerEvents = {
 export class NetworkManager extends EventEmitter {
   private _session: JugglerSession;
   private _requests: Map<string, InterceptableRequest>;
-  private _frameManager: FrameManager;
+  private _page: Page;
   private _eventListeners: RegisteredListener[];
 
-  constructor(session: JugglerSession, frameManager: FrameManager) {
+  constructor(session: JugglerSession, page: Page) {
     super();
     this._session = session;
 
     this._requests = new Map();
-    this._frameManager = frameManager;
+    this._page = page;
 
     this._eventListeners = [
       helper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
@@ -69,7 +69,7 @@ export class NetworkManager extends EventEmitter {
 
   _onRequestWillBeSent(event) {
     const redirected = event.redirectedFrom ? this._requests.get(event.redirectedFrom) : null;
-    const frame = redirected ? redirected.request.frame() : (this._frameManager && event.frameId ? this._frameManager.frame(event.frameId) : null);
+    const frame = redirected ? redirected.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
     if (!frame)
       return;
     let redirectChain: network.Request[] = [];

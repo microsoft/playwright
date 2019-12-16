@@ -17,7 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { TargetSession } from './Connection';
-import { FrameManager } from './FrameManager';
+import { Page } from '../page';
 import { assert, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
@@ -32,16 +32,16 @@ export const NetworkManagerEvents = {
 
 export class NetworkManager extends EventEmitter {
   private _session: TargetSession;
-  private _frameManager: FrameManager;
+  private _page: Page;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _extraHTTPHeaders: network.Headers = {};
   private _attemptedAuthentications = new Set<string>();
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
 
-  constructor(frameManager: FrameManager) {
+  constructor(page: Page) {
     super();
-    this._frameManager = frameManager;
+    this._page = page;
   }
 
   setSession(session: TargetSession) {
@@ -97,7 +97,7 @@ export class NetworkManager extends EventEmitter {
         redirectChain = request.request._redirectChain;
       }
     }
-    const frame = this._frameManager.frame(event.frameId);
+    const frame = this._page._frameManager.frame(event.frameId);
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? this._session._sessionId + '::' + event.loaderId : undefined;
