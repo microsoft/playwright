@@ -166,3 +166,10 @@ Next, you can either use `launchctl load` command to load the daemon, or reboot 
 
 > **NOTE**: mozbuild uses [terminal-notifier](https://github.com/julienXX/terminal-notifier) which hangs
 > in launchctl environment. The `MOZ_NOSPAM` env variable disables terminal notifications.
+
+Finally, MacBooks tend to go to sleep no matter what their "energy settings" are. To disable sleep permanently on Macs ([source](https://gist.github.com/pwnsdx/2ae98341e7e5e64d32b734b871614915)):
+
+```sh
+sudo pmset -a sleep 0; sudo pmset -a hibernatemode 0; sudo pmset -a disablesleep 1;
+```
+
