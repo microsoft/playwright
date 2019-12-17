@@ -98,10 +98,10 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   });
 
   describe('Async stacks', () => {
-    it.skip(WEBKIT)('should work', async({page, server}) => {
+    it('should work', async({page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
-        res.statusCode = 204;
-        res.end();
+        req.socket.write('deadbeef');
+        req.socket.end();
       });
       let error = null;
       await page.goto(server.EMPTY_PAGE).catch(e => error = e);
