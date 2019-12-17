@@ -28,7 +28,6 @@ export class NetworkManager {
   private _page: Page;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private _extraHTTPHeaders: network.Headers = {};
   private _offline = false;
   private _credentials: {username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
@@ -66,20 +65,6 @@ export class NetworkManager {
   async authenticate(credentials: { username: string; password: string; } | null) {
     this._credentials = credentials;
     await this._updateProtocolRequestInterception();
-  }
-
-  async setExtraHTTPHeaders(extraHTTPHeaders: network.Headers) {
-    this._extraHTTPHeaders = {};
-    for (const key of Object.keys(extraHTTPHeaders)) {
-      const value = extraHTTPHeaders[key];
-      assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
-      this._extraHTTPHeaders[key.toLowerCase()] = value;
-    }
-    await this._client.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
-  }
-
-  extraHTTPHeaders(): network.Headers {
-    return Object.assign({}, this._extraHTTPHeaders);
   }
 
   async setOfflineMode(value: boolean) {

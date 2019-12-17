@@ -94,6 +94,8 @@ export class FrameManager implements PageDelegate {
       promises.push(this._setJavaScriptEnabled(session, this._page._state.javascriptEnabled));
     if (this._page._state.bypassCSP !== null)
       promises.push(this._setBypassCSP(session, this._page._state.bypassCSP));
+    if (this._page._state.extraHTTPHeaders !== null)
+      promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
     await Promise.all(promises);
   }
 
@@ -240,10 +242,6 @@ export class FrameManager implements PageDelegate {
     this._page._onFileChooserOpened(handle);
   }
 
-  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {
-    return this._networkManager.setExtraHTTPHeaders(extraHTTPHeaders);
-  }
-
   async _ensureIsolatedWorld(name: string) {
     if (this._isolatedWorlds.has(name))
       return;
@@ -252,6 +250,10 @@ export class FrameManager implements PageDelegate {
       name,
       source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`
     });
+  }
+
+  private async _setExtraHTTPHeaders(session: TargetSession, headers: network.Headers): Promise<void> {
+    await session.send('Network.setExtraHTTPHeaders', { headers });
   }
 
   private async _setUserAgent(session: TargetSession, userAgent: string): Promise<void> {
@@ -278,6 +280,10 @@ export class FrameManager implements PageDelegate {
       promises.push(session.send('Page.setForcedAppearance', { appearance }));
     }
     await Promise.all(promises);
+  }
+
+  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
+    await this._setExtraHTTPHeaders(this._session, headers);
   }
 
   async setUserAgent(userAgent: string): Promise<void> {

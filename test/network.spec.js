@@ -270,9 +270,9 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
     it('should fire events in proper order', async({page, server}) => {
       const events = [];
-      page.on('request', request => events.push('request'));
-      page.on('response', response => events.push('response'));
-      page.on('requestfinished', request => events.push('requestfinished'));
+      page.on('request', request => !utils.isFavicon(request) && events.push('request'));
+      page.on('response', response => !utils.isFavicon(response.request()) && events.push('response'));
+      page.on('requestfinished', request => !utils.isFavicon(request) && events.push('requestfinished'));
       await page.goto(server.EMPTY_PAGE);
       expect(events).toEqual(['request', 'response', 'requestfinished']);
     });
