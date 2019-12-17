@@ -152,7 +152,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       page.on('requestfinished', r => requestFinished = requestFinished || r.url().includes('/get'));
       // send request and wait for server response
       const [pageResponse] = await Promise.all([
-        page.waitForResponse(r => !utils.isFavicon(r.request())),
+        page.waitForEvent('response', { predicate: r => !utils.isFavicon(r.request()) }),
         page.evaluate(() => fetch('./get', { method: 'GET'})),
         server.waitForRequest('/get'),
       ]);

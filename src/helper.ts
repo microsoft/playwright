@@ -16,6 +16,7 @@
  */
 
 import * as debug from 'debug';
+import * as types from './types';
 import { TimeoutError } from './errors';
 
 export const debugError = debug(`playwright:error`);
@@ -114,9 +115,13 @@ class Helper {
       rejectCallback = reject;
     });
     const listener = Helper.addEventListener(emitter, eventName, event => {
-      if (!predicate(event))
-        return;
-      resolveCallback(event);
+      try {
+        if (!predicate(event))
+          return;
+        resolveCallback(event);
+      } catch (e) {
+        rejectCallback(e);
+      }
     });
     if (timeout) {
       eventTimeout = setTimeout(() => {
@@ -152,6 +157,93 @@ class Helper {
       if (timeoutTimer)
         clearTimeout(timeoutTimer);
     }
+  }
+
+  static stringMatches(s: string, match: string | RegExp, name: string): boolean {
+    if (helper.isString(match))
+      return s === match;
+    if (match instanceof RegExp)
+      return match.test(s);
+    throw new Error(`url match field "${name}" must be a string or a RegExp, got ${typeof match}`);
+  }
+
+  static searchParamsMatch(params: URLSearchParams, match: types.SearchParamsMatch, strict: boolean, name: string): boolean {
+    if (typeof match !== 'object' || match === null)
+      throw new Error(`url match field "${name}" must be an object, got ${typeof match}`);
+    const keys = new Set((params as any).keys()) as Set<string>;
+    if (strict && keys.size !== Object.keys(match).length)
+      return false;
+    for (const key of keys) {
+      let expected = [];
+      if (key in match) {
+        let keyMatch = match[key];
+        if (!Array.isArray(keyMatch))
+          keyMatch = [keyMatch];
+        expected = keyMatch;
+      } else if (!strict) {
+        continue;
+      }
+      const values = params.getAll(key);
+      if (strict && values.length !== expected.length)
+        return false;
+      for (const v of values) {
+        let found = false;
+        for (const e of expected) {
+          if (helper.stringMatches(v, e, name + '.' + key)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found)
+          return false;
+      }
+    }
+    return true;
+  }
+
+  static urlMatches(urlString: string, match: types.URLMatch): boolean {
+    let url;
+    try {
+      url = new URL(urlString);
+    } catch (e) {
+      return urlString === match.url &&
+        match.hash === undefined &&
+        match.host === undefined &&
+        match.hostname === undefined &&
+        match.origin === undefined &&
+        match.password === undefined &&
+        match.pathname === undefined &&
+        match.port === undefined &&
+        match.protocol === undefined &&
+        match.search === undefined &&
+        match.searchParams === undefined &&
+        match.username === undefined;
+    }
+    if (match.url !== undefined && !helper.stringMatches(urlString, match.url, 'url'))
+      return false;
+    if (match.hash !== undefined && !helper.stringMatches(url.hash, match.hash, 'hash'))
+      return false;
+    if (match.host !== undefined && !helper.stringMatches(url.host, match.host, 'host'))
+      return false;
+    if (match.hostname !== undefined && !helper.stringMatches(url.hostname, match.hostname, 'hostname'))
+      return false;
+    if (match.origin !== undefined && !helper.stringMatches(url.origin, match.origin, 'origin'))
+      return false;
+    if (match.password !== undefined && !helper.stringMatches(url.password, match.password, 'password'))
+      return false;
+    if (match.pathname !== undefined && !helper.stringMatches(url.pathname, match.pathname, 'pathname'))
+      return false;
+    if (match.port !== undefined && !helper.stringMatches(url.port, match.port, 'port'))
+      return false;
+    if (match.protocol !== undefined && !helper.stringMatches(url.protocol, match.protocol, 'protocol'))
+      return false;
+    if (match.search !== undefined && !helper.stringMatches(url.search, match.search, 'search'))
+      return false;
+    if (match.username !== undefined && !helper.stringMatches(url.username, match.username, 'username'))
+      return false;
+    if (match.searchParams !== undefined && !helper.searchParamsMatch(url.searchParams, match.searchParams, !!match.strictSearchParams, 'searchParams'))
+      return false;
+    return true;
   }
 }
 
