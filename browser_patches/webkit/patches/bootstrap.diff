@@ -444,7 +444,7 @@ index 0000000000000000000000000000000000000000..a51c3e1a6fe60353a51bbe95b3f0a8cc
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/DOM.json b/Source/JavaScriptCore/inspector/protocol/DOM.json
-index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..b23e12c5d004d9b6a4556c7e2841f0ecc69b0f86 100644
+index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..a89aa3290972df4dfd8136cbcfa354ad1e0513c9 100644
 --- a/Source/JavaScriptCore/inspector/protocol/DOM.json
 +++ b/Source/JavaScriptCore/inspector/protocol/DOM.json
 @@ -167,6 +167,16 @@
@@ -475,20 +475,32 @@ index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..b23e12c5d004d9b6a4556c7e2841f0ec
                  { "name": "objectGroup", "type": "string", "optional": true, "description": "Symbolic group name that can be used to release multiple objects." }
              ],
              "returns": [
-@@ -542,6 +554,26 @@
+@@ -542,6 +554,38 @@
              "parameters": [
                  { "name": "allow", "type": "boolean" }
              ]
 +        },
 +        {
-+            "name": "getContentQuads",
-+            "description": "Returns quads that describe node position on the page. This method\nmight return multiple quads for inline nodes.",
++            "name": "describeNode",
++            "description": "Returns node description.",
 +            "parameters": [
-+                { "name": "objectId", "description": "JavaScript object id of the node wrapper.", "$ref": "Runtime.RemoteObjectId" }
++                { "name": "objectId", "$ref": "Runtime.RemoteObjectId", "description": "JavaScript object id of the node wrapper." }
 +            ],
 +            "returns": [
 +                {
-+                    "name": "quads", "description": "Quads that describe node layout relative to viewport.", "type": "array", "items": { "$ref": "Quad" }
++                    "name": "contentFrameId", "$ref": "Network.FrameId", "optional": true, "description": "Frame ID for frame owner elements."
++                }
++            ]
++        },
++        {
++            "name": "getContentQuads",
++            "description": "Returns quads that describe node position on the page. This method\nmight return multiple quads for inline nodes.",
++            "parameters": [
++                { "name": "objectId", "$ref": "Runtime.RemoteObjectId", "description": "JavaScript object id of the node wrapper." }
++            ],
++            "returns": [
++                {
++                    "name": "quads", "type": "array", "items": { "$ref": "Quad" }, "description": "Quads that describe node layout relative to viewport."
 +                }
 +            ]
 +        },
@@ -1211,7 +1223,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b19badfc6 100644
+index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a8552279250967e615c43 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -1303,7 +1315,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b
      if (!node)
          return;
  
-@@ -1475,18 +1487,77 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -1475,18 +1487,96 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
@@ -1345,29 +1357,48 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b
 +    return result;
 +}
 +
-+void InspectorDOMAgent::getContentQuads(ErrorString& error, const String& objectId, RefPtr<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>& out_quads)
++void InspectorDOMAgent::describeNode(ErrorString& errorString, const String& objectId, Optional<String>& contentFrameId)
 +{
 +    Node* node = nodeForObjectId(objectId);
 +    if (!node) {
-+        error = "Node not found"_s;
++        errorString = "Node not found"_s;
++        return;
++    }
++
++    if (is<HTMLFrameOwnerElement>(*node)) {
++        auto* pageAgent = m_instrumentingAgents.inspectorPageAgent();
++        if (pageAgent) {
++            const auto& frameOwner = downcast<HTMLFrameOwnerElement>(*node);
++            String frameId = pageAgent->frameId(frameOwner.contentFrame());
++            if (!frameId.isEmpty())
++                contentFrameId = frameId;
++        }
++    }
++}
++
++void InspectorDOMAgent::getContentQuads(ErrorString& errorString, const String& objectId, RefPtr<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>& contentQuads)
++{
++    Node* node = nodeForObjectId(objectId);
++    if (!node) {
++        errorString = "Node not found"_s;
 +        return;
 +    }
 +    RenderObject* renderer = node->renderer();
 +    if (!renderer) {
-+        error = "Node doesn't have renderer"_s;
++        errorString = "Node doesn't have renderer"_s;
 +        return;
 +    }
 +    Frame* containingFrame = renderer->document().frame();
 +    FrameView* containingView = containingFrame ? containingFrame->view() : nullptr;
 +    if (!containingView) {
-+        error = "Internal error: no containing view"_s;
++        errorString = "Internal error: no containing view"_s;
 +        return;
 +    }
 +    Vector<FloatQuad> quads;
 +    renderer->absoluteQuads(quads);
 +    for (auto& quad : quads)
 +        frameQuadToViewport(*containingView, quad);
-+    out_quads = buildArrayOfQuads(quads);
++    contentQuads = buildArrayOfQuads(quads);
 +}
 +
 +void InspectorDOMAgent::resolveNode(ErrorString& errorString, const int* nodeId, const String* objectId, const int* contextId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result)
@@ -1387,7 +1418,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b
  }
  
  void InspectorDOMAgent::getAttributes(ErrorString& errorString, int nodeId, RefPtr<JSON::ArrayOf<String>>& result)
-@@ -2651,7 +2722,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
+@@ -2651,7 +2741,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
          errorString = "Missing node for given path"_s;
  }
  
@@ -1396,7 +1427,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2660,12 +2731,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
+@@ -2660,12 +2750,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
      if (!frame)
          return nullptr;
  
@@ -1416,11 +1447,11 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2686,4 +2761,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+@@ -2686,4 +2780,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
-+void InspectorDOMAgent::setInputFiles(ErrorString& errorString, const String& objectId, const JSON::Array& in_files) {
++void InspectorDOMAgent::setInputFiles(ErrorString& errorString, const String& objectId, const JSON::Array& files) {
 +    InjectedScript injectedScript = m_injectedScriptManager.injectedScriptForObjectId(objectId);
 +    if (injectedScript.hasNoValue()) {
 +        errorString = "Can not find element's context for given id"_s;
@@ -1437,8 +1468,8 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b
 +    }
 +    HTMLInputElement* element = static_cast<HTMLInputElement*>(node);
 +    Vector<Ref<File>> fileObjects;
-+    for (unsigned i = 0; i < in_files.length(); ++i) {
-+        RefPtr<JSON::Value> item = in_files.get(i);
++    for (unsigned i = 0; i < files.length(); ++i) {
++        RefPtr<JSON::Value> item = files.get(i);
 +        RefPtr<JSON::Object> obj;
 +        if (!item->asObject(obj)) {
 +            errorString = "Invalid file payload format"_s;
@@ -1464,7 +1495,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..fb2460b21216cce864efca9dc4ee325b
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..289792fe5ad6e7a7509470214281da05a5c0a97b 100644
+index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..30f79d572821c36232de6d44cb421285bb17f182 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 @@ -54,6 +54,7 @@ namespace WebCore {
@@ -1492,16 +1523,17 @@ index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..289792fe5ad6e7a7509470214281da05
      void getAttributes(ErrorString&, int nodeId, RefPtr<JSON::ArrayOf<String>>& result) override;
      void setInspectModeEnabled(ErrorString&, bool enabled, const JSON::Object* highlightConfig, const bool* showRulers) override;
      void requestNode(ErrorString&, const String& objectId, int* nodeId) override;
-@@ -148,6 +150,8 @@ public:
+@@ -148,6 +150,9 @@ public:
      void focus(ErrorString&, int nodeId) override;
      void setInspectedNode(ErrorString&, int nodeId) override;
      void setAllowEditingUserAgentShadowTrees(ErrorString&, bool allow) final;
-+    void getContentQuads(ErrorString&, const String& objectId, RefPtr<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>& out_quads) override;
-+    void setInputFiles(ErrorString&, const String& objectId, const JSON::Array& in_files) override;
++    void describeNode(ErrorString&, const String& objectId, Optional<String>& contentFrameId) override;
++    void getContentQuads(ErrorString&, const String& objectId, RefPtr<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>&) override;
++    void setInputFiles(ErrorString&, const String& objectId, const JSON::Array& files) override;
  
      // InspectorInstrumentation
      int identifierForNode(Node&);
-@@ -183,7 +187,7 @@ public:
+@@ -183,7 +188,7 @@ public:
      Node* nodeForId(int nodeId);
      int boundNodeId(const Node*);
  
@@ -1510,7 +1542,7 @@ index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..289792fe5ad6e7a7509470214281da05
      bool handleMousePress();
      void mouseDidMoveOverElement(const HitTestResult&, unsigned modifierFlags);
      void inspect(Node*);
-@@ -194,6 +198,7 @@ public:
+@@ -194,6 +199,7 @@ public:
      void reset();
  
      Node* assertNode(ErrorString&, int nodeId);
