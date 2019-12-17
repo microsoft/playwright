@@ -999,7 +999,7 @@ index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..9c018c1a51ddf238c8ca494c60374332ee42cda5 100644
+index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f6043b6a3c50 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1015,7 +1015,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..9c018c1a51ddf238c8ca494c60374332
          consoleAgent->didFailLoading(identifier, error); // This should come AFTER resource notification, front-end relies on this.
  }
  
-+void InspectorInstrumentation::didReceiveMainResourceErrorImpl(InstrumentingAgents& instrumentingAgents, Frame& frame,const ResourceError& error)
++void InspectorInstrumentation::didReceiveMainResourceErrorImpl(InstrumentingAgents& instrumentingAgents, Frame& frame, const ResourceError&)
 +{
 +    if (auto* pageRuntimeAgent = instrumentingAgents.pageRuntimeAgent())
 +        pageRuntimeAgent->didReceiveMainResourceError(frame);
