@@ -186,8 +186,8 @@ export class Page extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async $(selector: string | types.Selector): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().$(selector);
+  async $(selector: string, options?: frames.WaitForOptions): Promise<dom.ElementHandle<Element> | null> {
+    return this.mainFrame().$(selector, options);
   }
 
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string> {
@@ -210,7 +210,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$(selector: string | types.Selector): Promise<dom.ElementHandle<Element>[]> {
+  async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
     return this.mainFrame().$$(selector);
   }
 
@@ -458,48 +458,40 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 
-  click(selector: string | types.Selector, options?: frames.WaitForOptions & input.ClickOptions) {
+  click(selector: string, options?: frames.WaitForOptions & input.ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string | types.Selector, options?: frames.WaitForOptions & input.MultiClickOptions) {
+  dblclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string | types.Selector, options?: frames.WaitForOptions & input.MultiClickOptions) {
+  tripleclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  fill(selector: string | types.Selector, value: string, options?: frames.WaitForOptions) {
+  fill(selector: string, value: string, options?: frames.WaitForOptions) {
     return this.mainFrame().fill(selector, value, options);
   }
 
-  focus(selector: string | types.Selector, options?: frames.WaitForOptions) {
+  focus(selector: string, options?: frames.WaitForOptions) {
     return this.mainFrame().focus(selector, options);
   }
 
-  hover(selector: string | types.Selector, options?: frames.WaitForOptions & input.PointerActionOptions) {
+  hover(selector: string, options?: frames.WaitForOptions & input.PointerActionOptions) {
     return this.mainFrame().hover(selector, options);
   }
 
-  select(selector: string | types.Selector, value: string | dom.ElementHandle | input.SelectOption | string[] | dom.ElementHandle[] | input.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
+  select(selector: string, value: string | dom.ElementHandle | input.SelectOption | string[] | dom.ElementHandle[] | input.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
     return this.mainFrame().select(selector, value, options);
   }
 
-  type(selector: string | types.Selector, text: string, options: frames.WaitForOptions & { delay: (number | undefined); } | undefined) {
+  type(selector: string, text: string, options?: frames.WaitForOptions & { delay?: number }) {
     return this.mainFrame().type(selector, text, options);
   }
 
   waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { visible?: boolean; hidden?: boolean; timeout?: number; polling?: string | number; } = {}, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
-  }
-
-  waitForSelector(selector: string | types.Selector, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
-    return this.mainFrame().waitForSelector(selector, options);
-  }
-
-  waitForXPath(xpath: string, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
-    return this.mainFrame().waitForXPath(xpath, options);
   }
 
   waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {

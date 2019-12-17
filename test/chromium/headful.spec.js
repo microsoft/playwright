@@ -99,7 +99,7 @@ module.exports.addTests = function({testRunner, expect, playwright, defaultBrows
         document.body.appendChild(frame);
         return new Promise(x => frame.onload = x);
       });
-      await page.waitForSelector('iframe[src="https://google.com/"]');
+      await page.$('iframe[src="https://google.com/"]', { waitFor: true });
       const urls = page.frames().map(frame => frame.url()).sort();
       expect(urls).toEqual([
         server.EMPTY_PAGE,

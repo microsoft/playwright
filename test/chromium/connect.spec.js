@@ -119,7 +119,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       const browser = await playwright.launch(defaultBrowserOptions);
       const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browser.chromium.wsEndpoint()});
       const page = await remote.newPage();
-      const watchdog = page.waitForSelector('div', {timeout: 60000}).catch(e => e);
+      const watchdog = page.$('div', { waitFor: true, timeout: 60000 }).catch(e => e);
       remote.disconnect();
       const error = await watchdog;
       expect(error.message).toContain('Protocol error');
