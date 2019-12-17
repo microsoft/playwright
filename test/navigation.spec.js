@@ -125,7 +125,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'domcontentloaded'});
       expect(response.status()).toBe(200);
     });
-    it.skip(WEBKIT)('should work when page calls history API in beforeunload', async({page, server}) => {
+    it('should work when page calls history API in beforeunload', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         window.addEventListener('beforeunload', () => history.replaceState(null, 'initial', window.location.href), false);
@@ -427,6 +427,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(request1.headers['referer']).toBe('http://google.com/');
       // Make sure subresources do not inherit referer.
       expect(request2.headers['referer']).toBe(server.PREFIX + '/grid.html');
+      expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
   });
 

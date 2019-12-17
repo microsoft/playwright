@@ -173,67 +173,13 @@ export class FrameManager implements PageDelegate {
     this._page._didClose();
   }
 
-  async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}) {
-    const {
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = (['load'] as frames.LifecycleEvent[]),
-    } = options;
-
-    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.newDocumentNavigationPromise,
-      watcher.sameDocumentNavigationPromise,
-    ]);
-    watcher.dispose();
-    if (error)
-      throw error;
-    return watcher.navigationResponse();
+  async navigateFrame(frame: frames.Frame, url: string, referer: string | undefined): Promise<frames.GotoResult> {
+    const response = await this._session.send('Page.navigate', { url, referer, frameId: frame._id });
+    return { newDocumentId: response.navigationId, isSameDocument: !response.navigationId };
   }
 
-  async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}) {
-    const {
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = (['load'] as frames.LifecycleEvent[]),
-      referer,
-    } = options;
-    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    await this._session.send('Page.navigate', {
-      frameId: frame._id,
-      referer,
-      url,
-    });
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.newDocumentNavigationPromise,
-      watcher.sameDocumentNavigationPromise,
-    ]);
-    watcher.dispose();
-    if (error)
-      throw error;
-    return watcher.navigationResponse();
-  }
-
-  async setFrameContent(frame: frames.Frame, html: string, options: frames.NavigateOptions = {}) {
-    const {
-      waitUntil = (['load'] as frames.LifecycleEvent[]),
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-    } = options;
-    const context = await frame._utilityContext();
-    frame._firedLifecycleEvents.clear();
-    await context.evaluate(html => {
-      document.open();
-      document.write(html);
-      document.close();
-    }, html);
-    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.lifecyclePromise,
-    ]);
-    watcher.dispose();
-    if (error)
-      throw error;
+  needsLifecycleResetOnSetContent(): boolean {
+    return true;
   }
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {

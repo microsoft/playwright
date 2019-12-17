@@ -41,9 +41,8 @@ export interface PageDelegate {
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
 
-  navigateFrame(frame: frames.Frame, url: string, options?: frames.GotoOptions): Promise<network.Response | null>;
-  waitForFrameNavigation(frame: frames.Frame, options?: frames.NavigateOptions): Promise<network.Response | null>;
-  setFrameContent(frame: frames.Frame, html: string, options?: frames.NavigateOptions): Promise<void>;
+  navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
+  needsLifecycleResetOnSetContent(): boolean;
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
   setUserAgent(userAgent: string): Promise<void>;

@@ -187,60 +187,13 @@ export class FrameManager implements PageDelegate {
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
-  async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
-    const {
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = (['load'] as frames.LifecycleEvent[])
-    } = options;
-    const watchDog = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    await this._session.send('Page.navigate', {url, frameId: frame._id});
-    const error = await Promise.race([
-      watchDog.timeoutOrTerminationPromise,
-      watchDog.newDocumentNavigationPromise,
-      watchDog.sameDocumentNavigationPromise,
-    ]);
-    watchDog.dispose();
-    if (error)
-      throw error;
-    return watchDog.navigationResponse();
+  async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
+    await this._session.send('Page.navigate', { url, frameId: frame._id });
+    return {};  // We cannot get loaderId of cross-process navigation in advance.
   }
 
-  async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}): Promise<network.Response | null> {
-    const {
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = (['load'] as frames.LifecycleEvent[])
-    } = options;
-    const watchDog = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    const error = await Promise.race([
-      watchDog.timeoutOrTerminationPromise,
-      watchDog.newDocumentNavigationPromise,
-      watchDog.sameDocumentNavigationPromise,
-    ]);
-    watchDog.dispose();
-    if (error)
-      throw error;
-    return watchDog.navigationResponse();
-  }
-
-  async setFrameContent(frame: frames.Frame, html: string, options: frames.NavigateOptions = {}) {
-    // We rely upon the fact that document.open() will trigger Page.loadEventFired.
-    const {
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = (['load'] as frames.LifecycleEvent[])
-    } = options;
-    const watchDog = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    await frame.evaluate(html => {
-      document.open();
-      document.write(html);
-      document.close();
-    }, html);
-    const error = await Promise.race([
-      watchDog.timeoutOrTerminationPromise,
-      watchDog.lifecyclePromise,
-    ]);
-    watchDog.dispose();
-    if (error)
-      throw error;
+  needsLifecycleResetOnSetContent(): boolean {
+    return true;
   }
 
   async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
