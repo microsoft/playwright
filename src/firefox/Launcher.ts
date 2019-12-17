@@ -30,8 +30,6 @@ import { launchProcess, waitForLine } from '../processLauncher';
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const writeFileAsync = util.promisify(fs.writeFile);
 
-const FIREFOX_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_firefox_profile-');
-
 const DEFAULT_ARGS = [
   '-no-remote',
   '-foreground',

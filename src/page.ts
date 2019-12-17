@@ -40,8 +40,6 @@ export interface PageDelegate {
   exposeBinding(name: string, bindingFunction: string): Promise<void>;
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
-  // TODO: reverse didClose call sequence.
-  didClose(): void;
 
   navigateFrame(frame: frames.Frame, url: string, options?: frames.GotoOptions): Promise<network.Response | null>;
   waitForFrameNavigation(frame: frames.Frame, options?: frames.NavigateOptions): Promise<network.Response | null>;
@@ -130,7 +128,6 @@ export class Page extends EventEmitter {
   _didClose() {
     assert(!this._closed, 'Page closed twice');
     this._closed = true;
-    this._delegate.didClose();
     this.emit(Events.Page.Close);
     this._closedCallback();
   }

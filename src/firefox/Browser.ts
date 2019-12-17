@@ -219,7 +219,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
 
 export class Target {
   _pagePromise?: Promise<Page>;
-  private _page: Page | null = null;
+  private _frameManager: FrameManager | null = null;
   private _browser: Browser;
   _context: BrowserContext;
   private _connection: Connection;
@@ -239,8 +239,8 @@ export class Target {
   }
 
   _didClose() {
-    if (this._page)
-      this._page._didClose();
+    if (this._frameManager)
+      this._frameManager.didClose();
   }
 
   opener(): Target | null {
@@ -263,11 +263,10 @@ export class Target {
     if (this._type === 'page' && !this._pagePromise) {
       this._pagePromise = new Promise(async f => {
         const session = await this._connection.createSession(this._targetId);
-        const frameManager = new FrameManager(session, this._context);
-        const page = frameManager._page;
-        this._page = page;
+        this._frameManager = new FrameManager(session, this._context);
+        const page = this._frameManager._page;
         session.once(JugglerSessionEvents.Disconnected, () => page._didDisconnect());
-        await frameManager._initialize();
+        await this._frameManager._initialize();
         if (this._browser._defaultViewport)
           await page.setViewport(this._browser._defaultViewport);
         f(page);
