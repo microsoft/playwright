@@ -67,7 +67,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe.skip(WEBKIT)('ElementHandle.contentFrame', function() {
+  describe('ElementHandle.contentFrame', function() {
     it('should work', async({page,server}) => {
       await page.goto(server.EMPTY_PAGE);
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
