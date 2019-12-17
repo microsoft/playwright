@@ -221,7 +221,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     // FIXME: WebKit doesn't provide remoteIPAddress in the response.
     it.skip(WEBKIT)('Page.Events.Response', async({page, server}) => {
       const responses = [];
-      page.on('response', response => responses.push(response));
+      page.on('response', response => !utils.isFavicon(response.request()) && responses.push(response));
       await page.goto(server.EMPTY_PAGE);
       expect(responses.length).toBe(1);
       expect(responses[0].url()).toBe(server.EMPTY_PAGE);
@@ -260,7 +260,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
     it('Page.Events.RequestFinished', async({page, server}) => {
       const requests = [];
-      page.on('requestfinished', request => requests.push(request));
+      page.on('requestfinished', request => !utils.isFavicon(request) && requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       expect(requests.length).toBe(1);
       expect(requests[0].url()).toBe(server.EMPTY_PAGE);

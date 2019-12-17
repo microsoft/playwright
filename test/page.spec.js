@@ -100,7 +100,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   describe('Async stacks', () => {
     it('should work', async({page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
-        req.socket.write('deadbeef');
         req.socket.end();
       });
       let error = null;
@@ -178,7 +177,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       page.on('popup', () => badSecondPopup = true);
       await popup.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(badSecondPopup).toBe(false);
-    })
+    });
   });
 
   describe('Page.Events.Console', function() {
