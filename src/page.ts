@@ -253,7 +253,12 @@ export class Page extends EventEmitter {
   }
 
   setExtraHTTPHeaders(headers: network.Headers) {
-    this._state.extraHTTPHeaders = {...headers};
+    this._state.extraHTTPHeaders = {};
+    for (const key of Object.keys(headers)) {
+      const value = headers[key];
+      assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
+      this._state.extraHTTPHeaders[key.toLowerCase()] = value;
+    }
     return this._delegate.setExtraHTTPHeaders(headers);
   }
 

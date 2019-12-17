@@ -272,8 +272,8 @@ export class FrameManager implements PageDelegate {
     this._page._onFileChooserOpened(handle);
   }
 
-  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void> {
-    return this._networkManager.setExtraHTTPHeaders(extraHTTPHeaders);
+  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
+    await this._client.send('Network.setExtraHTTPHeaders', { headers });
   }
 
   setUserAgent(userAgent: string): Promise<void> {

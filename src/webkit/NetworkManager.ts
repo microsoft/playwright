@@ -26,7 +26,6 @@ export class NetworkManager {
   private _session: TargetSession;
   private _page: Page;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
-  private _extraHTTPHeaders: network.Headers = {};
   private _attemptedAuthentications = new Set<string>();
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
@@ -47,28 +46,11 @@ export class NetworkManager {
   }
 
   async initializeSession(session: TargetSession) {
-    await Promise.all([
-      session.send('Network.enable'),
-      session.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders }),
-    ]);
+    await session.send('Network.enable');
   }
 
   dispose() {
     helper.removeEventListeners(this._sessionListeners);
-  }
-
-  async setExtraHTTPHeaders(extraHTTPHeaders: { [s: string]: string; }) {
-    this._extraHTTPHeaders = {};
-    for (const key of Object.keys(extraHTTPHeaders)) {
-      const value = extraHTTPHeaders[key];
-      assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
-      this._extraHTTPHeaders[key.toLowerCase()] = value;
-    }
-    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._extraHTTPHeaders });
-  }
-
-  extraHTTPHeaders(): { [s: string]: string; } {
-    return Object.assign({}, this._extraHTTPHeaders);
   }
 
   async setCacheEnabled(enabled: boolean) {
