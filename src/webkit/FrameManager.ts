@@ -282,7 +282,7 @@ export class FrameManager implements PageDelegate {
 
   async setUserAgent(userAgent: string): Promise<void> {
     await this._setUserAgent(this._session, userAgent);
-    await this.reload();
+    await this._page.reload();
   }
 
   async setJavaScriptEnabled(enabled: boolean): Promise<void> {
@@ -309,32 +309,24 @@ export class FrameManager implements PageDelegate {
     return this._networkManager.setCacheEnabled(enabled);
   }
 
-  async reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    const [response] = await Promise.all([
-      this._page.waitForNavigation(options),
-      this._session.send('Page.reload')
-    ]);
-    return response;
+  async reload(): Promise<void> {
+    await this._session.send('Page.reload');
   }
 
-  async _go<T extends keyof Protocol.CommandParameters>(command: T, options?: frames.NavigateOptions): Promise<network.Response | null> {
-    const [response] = await Promise.all([
-      this._page.waitForNavigation(options),
-      this._session.send(command).then(() => null),
-    ]).catch(error => {
-      if (error instanceof Error && error.message.includes(`Protocol error (${command}): Failed to go`))
-        return [null];
+  goBack(): Promise<boolean> {
+    return this._session.send('Page.goBack').then(() => true).catch(error => {
+      if (error instanceof Error && error.message.includes(`Protocol error (Page.goBack): Failed to go`))
+        return false;
       throw error;
     });
-    return response;
   }
 
-  goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go('Page.goBack', options);
-  }
-
-  goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go('Page.goForward', options);
+  goForward(): Promise<boolean> {
+    return this._session.send('Page.goForward').then(() => true).catch(error => {
+      if (error instanceof Error && error.message.includes(`Protocol error (Page.goForward): Failed to go`))
+        return false;
+      throw error;
+    });
   }
 
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {

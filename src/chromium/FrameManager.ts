@@ -315,32 +315,25 @@ export class FrameManager implements PageDelegate {
     return this._networkManager.setCacheEnabled(enabled);
   }
 
-  async reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    const [response] = await Promise.all([
-      this._page.waitForNavigation(options),
-      this._client.send('Page.reload')
-    ]);
-    return response;
+  async reload(): Promise<void> {
+    await this._client.send('Page.reload');
   }
 
-  private async _go(delta: number, options?: frames.NavigateOptions): Promise<network.Response | null> {
+  private async _go(delta: number): Promise<boolean> {
     const history = await this._client.send('Page.getNavigationHistory');
     const entry = history.entries[history.currentIndex + delta];
     if (!entry)
-      return null;
-    const [response] = await Promise.all([
-      this._page.waitForNavigation(options),
-      this._client.send('Page.navigateToHistoryEntry', {entryId: entry.id}),
-    ]);
-    return response;
+      return false;
+    await this._client.send('Page.navigateToHistoryEntry', { entryId: entry.id });
+    return true;
   }
 
-  goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(-1, options);
+  goBack(): Promise<boolean> {
+    return this._go(-1);
   }
 
-  goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(+1, options);
+  goForward(): Promise<boolean> {
+    return this._go(+1);
   }
 
   async evaluateOnNewDocument(source: string): Promise<void> {
