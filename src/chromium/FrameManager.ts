@@ -107,79 +107,17 @@ export class FrameManager implements PageDelegate {
     this._page._didClose();
   }
 
-  async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
-    const {
-      referer = this._networkManager.extraHTTPHeaders()['referer'],
-      waitUntil = (['load'] as frames.LifecycleEvent[]),
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-    } = options;
-
-    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    let ensureNewDocumentNavigation = false;
-    let error = await Promise.race([
-      navigate(this._client, url, referer, frame._id),
-      watcher.timeoutOrTerminationPromise,
-    ]);
-    if (!error) {
-      error = await Promise.race([
-        watcher.timeoutOrTerminationPromise,
-        ensureNewDocumentNavigation ? watcher.newDocumentNavigationPromise : watcher.sameDocumentNavigationPromise,
-      ]);
-    }
-    watcher.dispose();
-    if (error)
-      throw error;
-    return watcher.navigationResponse();
-
-    async function navigate(client: CDPSession, url: string, referrer: string, frameId: string): Promise<Error | null> {
-      try {
-        const response = await client.send('Page.navigate', {url, referrer, frameId});
-        ensureNewDocumentNavigation = !!response.loaderId;
-        return response.errorText ? new Error(`${response.errorText} at ${url}`) : null;
-      } catch (error) {
-        return error;
-      }
-    }
+  async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
+    const response = await this._client.send('Page.navigate', { url, referrer, frameId: frame._id });
+    if (response.errorText)
+      throw new Error(`${response.errorText} at ${url}`);
+    return { newDocumentId: response.loaderId, isSameDocument: !response.loaderId };
   }
 
-  async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}): Promise<network.Response | null> {
-    const {
-      waitUntil = (['load'] as frames.LifecycleEvent[]),
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-    } = options;
-    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.sameDocumentNavigationPromise,
-      watcher.newDocumentNavigationPromise,
-    ]);
-    watcher.dispose();
-    if (error)
-      throw error;
-    return watcher.navigationResponse();
-  }
-
-  async setFrameContent(frame: frames.Frame, html: string, options: frames.NavigateOptions = {}) {
-    const {
-      waitUntil = (['load'] as frames.LifecycleEvent[]),
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-    } = options;
-    const context = await frame._utilityContext();
+  needsLifecycleResetOnSetContent(): boolean {
     // We rely upon the fact that document.open() will reset frame lifecycle with "init"
     // lifecycle event. @see https://crrev.com/608658
-    await context.evaluate(html => {
-      document.open();
-      document.write(html);
-      document.close();
-    }, html);
-    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.lifecyclePromise,
-    ]);
-    watcher.dispose();
-    if (error)
-      throw error;
+    return false;
   }
 
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {

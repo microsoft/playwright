@@ -530,6 +530,11 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       const result = await page.content();
       expect(result).toBe(expectedOutput);
     });
+    it('should work with domcontentloaded', async({page, server}) => {
+      await page.setContent('<div>hello</div>', { waitUntil: 'domcontentloaded' });
+      const result = await page.content();
+      expect(result).toBe(expectedOutput);
+    });
     it('should not confuse with previous navigation', async({page, server}) => {
       const imgPath = '/img.png';
       let imgResponse = null;
