@@ -1118,19 +1118,16 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
     it('should respect selector visibilty', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.fill({selector: 'input', visibility: 'visible'}, 'some value');
+      await page.fill('input', 'some value', { waitFor: 'visible' });
       expect(await page.evaluate(() => result)).toBe('some value');
 
-      let error = null;
-      await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.fill({selector: 'input', visibility: 'hidden'}, 'some value').catch(e => error = e);
-      expect(error.message).toBe('No node found for selector: [hidden] input');
-
-      error = null;
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.display = 'none');
-      await page.fill({selector: 'input', visibility: 'visible'}, 'some value').catch(e => error = e);
-      expect(error.message).toBe('No node found for selector: [visible] input');
+      await Promise.all([
+        page.fill('input', 'some value', { waitFor: 'visible' }),
+        page.$eval('input', i => i.style.display = 'block'),
+      ]);
+      expect(await page.evaluate(() => result)).toBe('some value');
     });
     it('should throw on disabled and readonly elements', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');

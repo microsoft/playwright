@@ -53,7 +53,7 @@ export type GotoResult = {
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
 const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
 
-export type WaitForOptions = types.TimeoutOptions & { waitFor?: boolean };
+export type WaitForOptions = types.TimeoutOptions & { waitFor?: boolean | 'visible' | 'hidden' | 'any' };
 
 export class FrameManager {
   private _page: Page;
@@ -340,16 +340,18 @@ export class Frame {
     return watcher.navigationResponse();
   }
 
-  _mainContext(): Promise<dom.FrameExecutionContext> {
+  _context(contextType: ContextType): Promise<dom.FrameExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
-    return this._contextData.get('main').contextPromise;
+    return this._contextData.get(contextType).contextPromise;
+  }
+
+  _mainContext(): Promise<dom.FrameExecutionContext> {
+    return this._context('main');
   }
 
   _utilityContext(): Promise<dom.FrameExecutionContext> {
-    if (this._detached)
-      throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
-    return this._contextData.get('utility').contextPromise;
+    return this._context('utility');
   }
 
   executionContext(): Promise<dom.FrameExecutionContext> {
@@ -366,9 +368,8 @@ export class Frame {
     return context.evaluate(pageFunction, ...args as any);
   }
 
-  async $(selector: string | types.Selector): Promise<dom.ElementHandle<Element> | null> {
-    const context = await this._mainContext();
-    return context._$(types.clearSelector(selector));
+  async $(selector: string, options?: WaitForOptions): Promise<dom.ElementHandle<Element> | null> {
+    return this._optionallyWaitForSelector('main', selector, options, true /* returnNull */);
   }
 
   async $x(expression: string): Promise<dom.ElementHandle<Element>[]> {
@@ -378,17 +379,25 @@ export class Frame {
 
   $eval: types.$Eval = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
-    return context._$eval(selector, pageFunction, ...args as any);
+    const elementHandle = await context._$(selector);
+    if (!elementHandle)
+      throw new Error(`Error: failed to find element matching selector "${selector}"`);
+    const result = await elementHandle.evaluate(pageFunction, ...args as any);
+    await elementHandle.dispose();
+    return result;
   }
 
   $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
-    return context._$$eval(selector, pageFunction, ...args as any);
+    const arrayHandle = await context._$array(selector);
+    const result = await arrayHandle.evaluate(pageFunction, ...args as any);
+    await arrayHandle.dispose();
+    return result;
   }
 
-  async $$(selector: string | types.Selector): Promise<dom.ElementHandle<Element>[]> {
+  async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
     const context = await this._mainContext();
-    return context._$$(types.clearSelector(selector));
+    return context._$$(selector);
   }
 
   async content(): Promise<string> {
@@ -581,50 +590,50 @@ export class Frame {
     return result;
   }
 
-  async click(selector: string | types.Selector, options?: WaitForOptions & ClickOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
+  async click(selector: string, options?: WaitForOptions & ClickOptions) {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     await handle.click(options);
     await handle.dispose();
   }
 
-  async dblclick(selector: string | types.Selector, options?: WaitForOptions & MultiClickOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
+  async dblclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     await handle.dblclick(options);
     await handle.dispose();
   }
 
-  async tripleclick(selector: string | types.Selector, options?: WaitForOptions & MultiClickOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
+  async tripleclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     await handle.tripleclick(options);
     await handle.dispose();
   }
 
-  async fill(selector: string | types.Selector, value: string, options?: WaitForOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
+  async fill(selector: string, value: string, options?: WaitForOptions) {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     await handle.fill(value);
     await handle.dispose();
   }
 
-  async focus(selector: string | types.Selector, options?: WaitForOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
+  async focus(selector: string, options?: WaitForOptions) {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     await handle.focus();
     await handle.dispose();
   }
 
-  async hover(selector: string | types.Selector, options?: WaitForOptions & PointerActionOptions) {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
+  async hover(selector: string, options?: WaitForOptions & PointerActionOptions) {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     await handle.hover(options);
     await handle.dispose();
   }
 
-  async select(selector: string | types.Selector, value: string | dom.ElementHandle | SelectOption | string[] | dom.ElementHandle[] | SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
-    const handle = await this._optionallyWaitForInUtilityContext(selector, options);
+  async select(selector: string, value: string | dom.ElementHandle | SelectOption | string[] | dom.ElementHandle[] | SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     const toDispose: Promise<dom.ElementHandle>[] = [];
-    const values = value === undefined ? [] : value instanceof Array ? value : [value];
+    const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
     const context = await this._utilityContext();
     const adoptedValues = await Promise.all(values.map(async value => {
       if (value instanceof dom.ElementHandle && value.executionContext() !== context) {
-        const adopted = context._adoptElementHandle(value);
+        const adopted = this._page._delegate.adoptElementHandle(value, context);
         toDispose.push(adopted);
         return adopted;
       }
@@ -636,17 +645,15 @@ export class Frame {
     return result;
   }
 
-  async type(selector: string | types.Selector, text: string, options: WaitForOptions & { delay: (number | undefined); } | undefined) {
-    const context = await this._utilityContext();
-    const handle = await context._$(types.clearSelector(selector));
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
+  async type(selector: string, text: string, options?: WaitForOptions & { delay?: number }) {
+    const handle = await this._optionallyWaitForSelector('utility', selector, options);
     await handle.type(text, options);
     await handle.dispose();
   }
 
   waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
+      return this.$(selectorOrFunctionOrTimeout as string, { waitFor: true, ...options }) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout as number));
     if (typeof selectorOrFunctionOrTimeout === 'function')
@@ -654,43 +661,33 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _optionallyWaitForInUtilityContext(selector: string | types.Selector,options: WaitForOptions): Promise<dom.ElementHandle | null> {
-    let handle: dom.ElementHandle | null;
-    if (options && options.waitFor) {
-      handle = await this._waitForSelectorInUtilityContext(selector, options);
+  private async _optionallyWaitForSelector(contextType: ContextType, selector: string, options: WaitForOptions = {}, returnNull?: boolean): Promise<dom.ElementHandle<Element> | null> {
+    const { timeout = this._page._timeoutSettings.timeout(), waitFor = undefined } = options;
+    let handle: dom.ElementHandle<Element> | null;
+    if (waitFor) {
+      let visibility: types.Visibility = 'any';
+      if (waitFor === 'visible' || waitFor === 'hidden' || waitFor === 'any')
+        visibility = waitFor;
+      else if (waitFor === true)
+        visibility = 'any';
+      else
+        throw new Error(`Unsupported waitFor option "${waitFor}"`);
+      const task = dom.waitForSelectorTask(selector, visibility, timeout);
+      const result = await this._scheduleRerunnableTask(task, contextType, timeout, `selector "${selectorToString(selector, visibility)}"`);
+      if (!result.asElement()) {
+        await result.dispose();
+        if (returnNull)
+          return null;
+        throw new Error('No node found for selector: ' + selectorToString(selector, visibility));
+      }
+      handle = result.asElement() as dom.ElementHandle<Element>;
     } else {
-      const context = await this._utilityContext();
-      handle = await context._$(types.clearSelector(selector));
+      const context = await this._context(contextType);
+      handle = await context._$(selector);
+      if (!returnNull)
+        assert(handle, 'No node found for selector: ' + selector);
     }
-    assert(handle, 'No node found for selector: ' + types.selectorToString(selector));
     return handle;
-  }
-
-  private async _waitForSelectorInUtilityContext(selector: string | types.Selector, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
-    const { timeout = this._page._timeoutSettings.timeout() } = options;
-    const task = dom.waitForSelectorTask(types.clearSelector(selector), timeout);
-    const handle = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${types.selectorToString(selector)}"`);
-    if (!handle.asElement()) {
-      await handle.dispose();
-      return null;
-    }
-    return handle.asElement();
-  }
-
-  async waitForSelector(selector: string | types.Selector, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
-    const handle = await this._waitForSelectorInUtilityContext(selector, options);
-    if (!handle)
-      return null;
-    const maincontext = await this._mainContext();
-    if (handle.executionContext() === maincontext)
-      return handle.asElement();
-    const adopted = await maincontext._adoptElementHandle(handle.asElement());
-    await handle.dispose();
-    return adopted;
-  }
-
-  async waitForXPath(xpath: string, options: types.TimeoutOptions = {}): Promise<dom.ElementHandle | null> {
-    return this.waitForSelector('xpath=' + xpath, options);
   }
 
   waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions = {}, ...args: any[]): Promise<js.JSHandle> {
@@ -968,4 +965,16 @@ class LifecycleWatcher {
     this._frame._page._frameManager._lifecycleWatchers.delete(this);
     clearTimeout(this._maximumTimer);
   }
+}
+
+function selectorToString(selector: string, visibility: types.Visibility): string {
+  let label;
+  switch (visibility) {
+    case 'visible': label = '[visible] '; break;
+    case 'hidden': label = '[hidden] '; break;
+    case 'any':
+    case undefined:
+      label = ''; break;
+  }
+  return `${label}${selector}`;
 }
