@@ -416,7 +416,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       }
       expect(error.message).toContain(url);
     });
-    it.skip(WEBKIT)('should send referer', async({page, server}) => {
+    it('should send referer', async({page, server}) => {
       const [request1, request2] = await Promise.all([
         server.waitForRequest('/grid.html'),
         server.waitForRequest('/digits/1.png'),
@@ -427,6 +427,20 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(request1.headers['referer']).toBe('http://google.com/');
       // Make sure subresources do not inherit referer.
       expect(request2.headers['referer']).toBe(server.PREFIX + '/grid.html');
+      expect(page.url()).toBe(server.PREFIX + '/grid.html');
+    });
+    it('should use referer option when setExtraHTTPHeaders provides referer', async({page, server}) => {
+      await page.setExtraHTTPHeaders({ 'referer': 'http://microsoft.com/' });
+      const [request1, request2] = await Promise.all([
+        server.waitForRequest('/grid.html'),
+        server.waitForRequest('/digits/1.png'),
+        page.goto(server.PREFIX + '/grid.html', {
+          referer: 'http://google.com/',
+        }),
+      ]);
+      expect(request1.headers['referer']).toBe('http://google.com/');
+      // Make sure subresources use referer specified by setExtraHTTPHeaders.
+      expect(request2.headers['referer']).toBe('http://microsoft.com/');
       expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
   });
