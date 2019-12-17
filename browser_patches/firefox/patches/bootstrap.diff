@@ -1465,10 +1465,10 @@ index 0000000000000000000000000000000000000000..f68780d529e753e7456c3182b051ad79
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..640782151e30b2a34b3c0c57e88a4053b5382a88
+index 0000000000000000000000000000000000000000..f239981ae0d87581d9a1c25ca1ebe1730d20bfa0
 --- /dev/null
 +++ b/testing/juggler/content/FrameTree.js
-@@ -0,0 +1,240 @@
+@@ -0,0 +1,242 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -1645,6 +1645,8 @@ index 0000000000000000000000000000000000000000..640782151e30b2a34b3c0c57e88a4053
 +    this._frameId = helper.generateId();
 +    this._parentFrame = null;
 +    this._url = '';
++    if (docShell.domWindow && docShell.domWindow.location)
++      this._url = docShell.domWindow.location.href;
 +    if (parentFrame) {
 +      this._parentFrame = parentFrame;
 +      parentFrame._children.add(this);
@@ -1779,7 +1781,7 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..266fad046ba2fcc950b250fed49be61d10ee6776
+index 0000000000000000000000000000000000000000..0031ff4cad5d479db52122f69c1cb6b0d278dbd6
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
 @@ -0,0 +1,661 @@
@@ -2004,7 +2006,7 @@ index 0000000000000000000000000000000000000000..266fad046ba2fcc950b250fed49be61d
 +  _onNavigationCommitted(frame) {
 +    this._session.emitEvent('Page.navigationCommitted', {
 +      frameId: frame.id(),
-+      navigationId: frame.lastCommittedNavigationId(),
++      navigationId: frame.lastCommittedNavigationId() || undefined,
 +      url: frame.url(),
 +      name: frame.name(),
 +    });
@@ -4134,10 +4136,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..700571aeed4509ad5429adb35d9fd4c2d7cd8113
+index 0000000000000000000000000000000000000000..fbffd5bc1c20d012aec35e9f651b8fb3bfb7e2af
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,668 @@
+@@ -0,0 +1,669 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4547,7 +4549,8 @@ index 0000000000000000000000000000000000000000..700571aeed4509ad5429adb35d9fd4c2
 +    },
 +    'navigationCommitted': {
 +      frameId: t.String,
-+      navigationId: t.String,
++      // |navigationId| can only be null in response to enable.
++      navigationId: t.Optional(t.String),
 +      url: t.String,
 +      // frame.id or frame.name
 +      name: t.String,
