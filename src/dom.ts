@@ -6,8 +6,6 @@ import * as input from './input';
 import * as js from './javascript';
 import * as types from './types';
 import * as injectedSource from './generated/injectedSource';
-import * as cssSelectorEngineSource from './generated/cssSelectorEngineSource';
-import * as xpathSelectorEngineSource from './generated/xpathSelectorEngineSource';
 import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
@@ -38,10 +36,10 @@ export class FrameExecutionContext extends js.ExecutionContext {
 
   _injected(): Promise<js.JSHandle> {
     if (!this._injectedPromise) {
-      const engineSources = [cssSelectorEngineSource.source, xpathSelectorEngineSource.source, zsSelectorEngineSource.source];
+      const additionalEngineSources = [zsSelectorEngineSource.source];
       const source = `
         new (${injectedSource.source})([
-          ${engineSources.join(',\n')}
+          ${additionalEngineSources.join(',\n')},
         ])
       `;
       this._injectedPromise = this.evaluateHandle(source);
@@ -417,7 +415,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
 function normalizeSelector(selector: string): string {
   const eqIndex = selector.indexOf('=');
-  if (eqIndex !== -1 && selector.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9]+$/))
+  if (eqIndex !== -1 && selector.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-]+$/))
     return selector;
   if (selector.startsWith('//'))
     return 'xpath=' + selector;
