@@ -3,6 +3,31 @@
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { Utils } from './utils';
+import { CSSEngine } from './cssSelectorEngine';
+import { XPathEngine } from './xpathSelectorEngine';
+
+function createAttributeEngine(attribute: string): SelectorEngine {
+  const engine: SelectorEngine = {
+    name: attribute,
+
+    create(root: SelectorRoot, target: Element): string | undefined {
+      const value = target.getAttribute(attribute);
+      if (!value)
+        return;
+      if (root.querySelector(`[${attribute}=${value}]`) === target)
+        return value;
+    },
+
+    query(root: SelectorRoot, selector: string): Element | undefined {
+      return root.querySelector(`[${attribute}=${selector}]`) || undefined;
+    },
+
+    queryAll(root: SelectorRoot, selector: string): Element[] {
+      return Array.from(root.querySelectorAll(`[${attribute}=${selector}]`));
+    }
+  };
+  return engine;
+}
 
 type ParsedSelector = { engine: SelectorEngine, selector: string }[];
 
@@ -10,10 +35,18 @@ class Injected {
   readonly utils: Utils;
   readonly engines: Map<string, SelectorEngine>;
 
-  constructor(engines: SelectorEngine[]) {
+  constructor(customEngines: SelectorEngine[]) {
+    const defaultEngines = [
+      CSSEngine,
+      XPathEngine,
+      createAttributeEngine('id'),
+      createAttributeEngine('data-testid'),
+      createAttributeEngine('data-test-id'),
+      createAttributeEngine('data-test'),
+    ];
     this.utils = new Utils();
     this.engines = new Map();
-    for (const engine of engines)
+    for (const engine of [...defaultEngines, ...customEngines])
       this.engines.set(engine.name, engine);
   }
 

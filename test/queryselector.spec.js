@@ -26,6 +26,26 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const idAttribute = await page.$eval('css=section', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
+    it('should work with id selector', async({page, server}) => {
+      await page.setContent('<section id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('id=testAttribute', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
+    it('should work with data-test selector', async({page, server}) => {
+      await page.setContent('<section data-test=foo id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('data-test=foo', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
+    it('should work with data-testid selector', async({page, server}) => {
+      await page.setContent('<section data-testid=foo id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('data-testid=foo', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
+    it('should work with data-test-id selector', async({page, server}) => {
+      await page.setContent('<section data-test-id=foo id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('data-test-id=foo', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
     it('should work with zs selector', async({page, server}) => {
       await page.setContent('<section id="testAttribute">43543</section>');
       const idAttribute = await page.$eval('zs="43543"', e => e.id);

@@ -6,7 +6,7 @@ import { SelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
 const maxTextLength = 80;
 const minMeaningfulSelectorLegth = 100;
 
-const XPathEngine: SelectorEngine = {
+export const XPathEngine: SelectorEngine = {
   name: 'xpath',
 
   create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
@@ -175,5 +175,3 @@ function createNoText(root: SelectorRoot, targetElement: Element): string {
 
   return '/' + steps.join('/');
 }
-
-export default XPathEngine;
