@@ -53,7 +53,7 @@ export type GotoResult = {
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
 const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
 
-export type WaitForOptions = types.TimeoutOptions & { waitFor?: boolean | 'visible' | 'hidden' | 'any' };
+export type WaitForOptions = types.TimeoutOptions & { waitFor?: types.Visibility | 'nowait' };
 
 export class FrameManager {
   private _page: Page;
@@ -368,8 +368,30 @@ export class Frame {
     return context.evaluate(pageFunction, ...args as any);
   }
 
-  async $(selector: string, options?: WaitForOptions): Promise<dom.ElementHandle<Element> | null> {
-    return this._optionallyWaitForSelector('main', selector, options, true /* returnNull */);
+  async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+    const utilityContext = await this._utilityContext();
+    const mainContext = await this._mainContext();
+    const handle = await utilityContext._$(selector);
+    if (handle && handle._context !== mainContext) {
+      const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
+      await handle.dispose();
+      return adopted;
+    }
+    return handle;
+  }
+
+  async waitForSelector(selector: string, options?: types.TimeoutOptions & { waitFor?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+    const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'any' } = (options || {});
+    if ((waitFor as any) === 'nowait')
+      throw new Error('waitForSelector does not support "nowait"');
+    const handle = await this._waitForSelectorInUtilityContext(selector, waitFor as types.Visibility, timeout);
+    const mainContext = await this._mainContext();
+    if (handle && handle._context !== mainContext) {
+      const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
+      await handle.dispose();
+      return adopted;
+    }
+    return handle;
   }
 
   async $x(expression: string): Promise<dom.ElementHandle<Element>[]> {
@@ -591,43 +613,43 @@ export class Frame {
   }
 
   async click(selector: string, options?: WaitForOptions & ClickOptions) {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'visible');
     await handle.click(options);
     await handle.dispose();
   }
 
   async dblclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'visible');
     await handle.dblclick(options);
     await handle.dispose();
   }
 
   async tripleclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'visible');
     await handle.tripleclick(options);
     await handle.dispose();
   }
 
   async fill(selector: string, value: string, options?: WaitForOptions) {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'visible');
     await handle.fill(value);
     await handle.dispose();
   }
 
   async focus(selector: string, options?: WaitForOptions) {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'visible');
     await handle.focus();
     await handle.dispose();
   }
 
   async hover(selector: string, options?: WaitForOptions & PointerActionOptions) {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'visible');
     await handle.hover(options);
     await handle.dispose();
   }
 
   async select(selector: string, value: string | dom.ElementHandle | SelectOption | string[] | dom.ElementHandle[] | SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'any');
     const toDispose: Promise<dom.ElementHandle>[] = [];
     const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
     const context = await this._utilityContext();
@@ -646,14 +668,14 @@ export class Frame {
   }
 
   async type(selector: string, text: string, options?: WaitForOptions & { delay?: number }) {
-    const handle = await this._optionallyWaitForSelector('utility', selector, options);
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'visible');
     await handle.type(text, options);
     await handle.dispose();
   }
 
   waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.$(selectorOrFunctionOrTimeout as string, { waitFor: true, ...options }) as any;
+      return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout as number));
     if (typeof selectorOrFunctionOrTimeout === 'function')
@@ -661,33 +683,34 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _optionallyWaitForSelector(contextType: ContextType, selector: string, options: WaitForOptions = {}, returnNull?: boolean): Promise<dom.ElementHandle<Element> | null> {
-    const { timeout = this._page._timeoutSettings.timeout(), waitFor = undefined } = options;
+  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: WaitForOptions | undefined, defaultWaitFor: types.Visibility): Promise<dom.ElementHandle<Element> | null> {
+    const { timeout = this._page._timeoutSettings.timeout(), waitFor = defaultWaitFor } = (options || {});
     let handle: dom.ElementHandle<Element> | null;
-    if (waitFor) {
-      let visibility: types.Visibility = 'any';
-      if (waitFor === 'visible' || waitFor === 'hidden' || waitFor === 'any')
-        visibility = waitFor;
-      else if (waitFor === true)
-        visibility = 'any';
-      else
-        throw new Error(`Unsupported waitFor option "${waitFor}"`);
-      const task = dom.waitForSelectorTask(selector, visibility, timeout);
-      const result = await this._scheduleRerunnableTask(task, contextType, timeout, `selector "${selectorToString(selector, visibility)}"`);
-      if (!result.asElement()) {
-        await result.dispose();
-        if (returnNull)
-          return null;
-        throw new Error('No node found for selector: ' + selectorToString(selector, visibility));
-      }
-      handle = result.asElement() as dom.ElementHandle<Element>;
+    if (waitFor !== 'nowait') {
+      handle = await this._waitForSelectorInUtilityContext(selector, waitFor, timeout);
+      if (!handle)
+        throw new Error('No node found for selector: ' + selectorToString(selector, waitFor));
     } else {
-      const context = await this._context(contextType);
+      const context = await this._context('utility');
       handle = await context._$(selector);
-      if (!returnNull)
-        assert(handle, 'No node found for selector: ' + selector);
+      assert(handle, 'No node found for selector: ' + selector);
     }
     return handle;
+  }
+
+  private async _waitForSelectorInUtilityContext(selector: string, waitFor: types.Visibility, timeout: number): Promise<dom.ElementHandle<Element> | null> {
+    let visibility: types.Visibility = 'any';
+    if (waitFor === 'visible' || waitFor === 'hidden' || waitFor === 'any')
+      visibility = waitFor;
+    else
+      throw new Error(`Unsupported waitFor option "${waitFor}"`);
+    const task = dom.waitForSelectorTask(selector, visibility, timeout);
+    const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, visibility)}"`);
+    if (!result.asElement()) {
+      await result.dispose();
+      return null;
+    }
+    return result.asElement() as dom.ElementHandle<Element>;
   }
 
   waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions = {}, ...args: any[]): Promise<js.JSHandle> {

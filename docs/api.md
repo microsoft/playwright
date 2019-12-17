@@ -32,7 +32,7 @@
   * [browser.browserContexts()](#browserbrowsercontexts)
   * [browser.chromium](#browserchromium)
   * [browser.close()](#browserclose)
-  * [browser.defaultContext()](#browserdefaultContext())
+  * [browser.defaultContext()](#browserdefaultcontext)
   * [browser.disconnect()](#browserdisconnect)
   * [browser.isConnected()](#browserisconnected)
   * [browser.newContext(options)](#browsernewcontextoptions)

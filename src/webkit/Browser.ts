@@ -19,7 +19,6 @@ import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
-import * as types from '../types';
 import { Connection, ConnectionEvents, TargetSession } from './Connection';
 import { Page } from '../page';
 import { Target } from './Target';

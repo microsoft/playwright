@@ -128,7 +128,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
 
     it('should waitFor visible when already visible', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
-      await page.click('button', { waitFor: 'visible' });
+      await page.click('button');
       expect(await page.evaluate(() => result)).toBe('Clicked');
     });
     it('should waitFor hidden when already hidden', async({page, server}) => {
@@ -155,7 +155,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       let done = false;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
-      const clicked = page.click('button', { waitFor: 'visible' }).then(() => done = true);
+      const clicked = page.click('button').then(() => done = true);
       for (let i = 0; i < 5; i++)
         await page.evaluate('1'); // Do a round trip.
       expect(done).toBe(false);
@@ -207,7 +207,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it('should fail to click a missing button', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       let error = null;
-      await page.click('button.does-not-exist').catch(e => error = e);
+      await page.click('button.does-not-exist', { waitFor: 'nowait' }).catch(e => error = e);
       expect(error.message).toBe('No node found for selector: button.does-not-exist');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/161

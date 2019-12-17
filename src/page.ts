@@ -162,8 +162,12 @@ export class Page extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async $(selector: string, options?: frames.WaitForOptions): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().$(selector, options);
+  async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+    return this.mainFrame().$(selector);
+  }
+
+  async waitForSelector(selector: string, options?: types.TimeoutOptions & { waitFor?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+    return this.mainFrame().waitForSelector(selector, options);
   }
 
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string> {

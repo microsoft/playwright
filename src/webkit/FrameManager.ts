@@ -281,8 +281,6 @@ export class FrameManager implements PageDelegate {
     await this._setEmulateMedia(this._session, mediaType, mediaColorScheme);
   }
 
-
-
   async setViewport(viewport: types.Viewport): Promise<void> {
     if (viewport.isMobile || viewport.isLandscape || viewport.hasTouch)
       throw new Error('Not implemented');
