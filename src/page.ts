@@ -151,10 +151,8 @@ export class Page extends EventEmitter {
     this.emit(Events.Page.FileChooser, fileChooser);
   }
 
-  async waitForFileChooser(options: { timeout?: number; } = {}): Promise<FileChooser> {
-    const {
-      timeout = this._timeoutSettings.timeout(),
-    } = options;
+  async waitForFileChooser(options: types.TimeoutOptions = {}): Promise<FileChooser> {
+    const { timeout = this._timeoutSettings.timeout() } = options;
     let callback;
     const promise = new Promise<FileChooser>(x => callback = x);
     this._fileChooserInterceptors.add(callback);
@@ -333,29 +331,28 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitForNavigation(options);
   }
 
-  async waitForRequest(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<Request> {
-    const {
-      timeout = this._timeoutSettings.timeout(),
-    } = options;
+  async waitForEvent(event: string, options: Function | (types.TimeoutOptions & { predicate?: Function }) = {}): Promise<any> {
+    if (typeof options === 'function')
+      options = { predicate: options };
+    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = options;
+    return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, this._disconnectedPromise);
+  }
+
+  async waitForRequest(options: string | (types.URLMatch & types.TimeoutOptions) = {}): Promise<Request> {
+    if (helper.isString(options))
+      options = { url: options };
+    const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
-      if (helper.isString(urlOrPredicate))
-        return (urlOrPredicate === request.url());
-      if (typeof urlOrPredicate === 'function')
-        return !!(urlOrPredicate(request));
-      return false;
+      return helper.urlMatches(request.url(), options as types.URLMatch);
     }, timeout, this._disconnectedPromise);
   }
 
-  async waitForResponse(urlOrPredicate: (string | Function), options: { timeout?: number; } = {}): Promise<network.Response> {
-    const {
-      timeout = this._timeoutSettings.timeout(),
-    } = options;
+  async waitForResponse(options: string | (types.URLMatch & types.TimeoutOptions) = {}): Promise<Request> {
+    if (helper.isString(options))
+      options = { url: options };
+    const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
-      if (helper.isString(urlOrPredicate))
-        return (urlOrPredicate === response.url());
-      if (typeof urlOrPredicate === 'function')
-        return !!(urlOrPredicate(response));
-      return false;
+      return helper.urlMatches(response.url(), options as types.URLMatch);
     }, timeout, this._disconnectedPromise);
   }
 

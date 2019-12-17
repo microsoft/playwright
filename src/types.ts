@@ -72,3 +72,20 @@ export type Viewport = {
   isLandscape?: boolean;
   hasTouch?: boolean;
 };
+
+export type SearchParamsMatch = { [key: string]: string | RegExp | (string | RegExp)[] };
+export type URLMatch = {
+  url?: string | RegExp,
+  hash?: string | RegExp,
+  host?: string | RegExp,
+  hostname?: string | RegExp,
+  origin?: string | RegExp,
+  password?: string | RegExp,
+  pathname?: string | RegExp,
+  port?: string | RegExp,
+  protocol?: string | RegExp,
+  search?: string | RegExp,
+  strictSearchParams?: boolean,
+  searchParams?: SearchParamsMatch,
+  username?: string | RegExp,
+};
