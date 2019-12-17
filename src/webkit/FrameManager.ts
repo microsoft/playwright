@@ -384,7 +384,12 @@ export class FrameManager implements PageDelegate {
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
-    throw new Error('contentFrame() is not implemented');
+    const nodeInfo = await this._session.send('DOM.describeNode', {
+      objectId: toRemoteObject(handle).objectId
+    });
+    if (!nodeInfo.contentFrameId)
+      return null;
+    return this._page._frameManager.frame(nodeInfo.contentFrameId);
   }
 
   isElementHandle(remoteObject: any): boolean {
