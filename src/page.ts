@@ -34,9 +34,9 @@ export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
   readonly rawKeyboard: input.RawKeyboard;
 
-  reload(options?: frames.NavigateOptions): Promise<network.Response | null>;
-  goBack(options?: frames.NavigateOptions): Promise<network.Response | null>;
-  goForward(options?: frames.NavigateOptions): Promise<network.Response | null>;
+  reload(): Promise<void>;
+  goBack(): Promise<boolean>;
+  goForward(): Promise<boolean>;
   exposeBinding(name: string, bindingFunction: string): Promise<void>;
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
@@ -319,7 +319,9 @@ export class Page extends EventEmitter {
   }
 
   async reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._delegate.reload(options);
+    const waitPromise = this.waitForNavigation(options);
+    await this._delegate.reload();
+    return waitPromise;
   }
 
   waitForNavigation(options?: frames.NavigateOptions): Promise<network.Response | null> {
@@ -353,11 +355,23 @@ export class Page extends EventEmitter {
   }
 
   async goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._delegate.goBack(options);
+    const waitPromise = this.waitForNavigation(options);
+    const result = await this._delegate.goBack();
+    if (!result) {
+      waitPromise.catch(() => {});
+      return null;
+    }
+    return waitPromise;
   }
 
   async goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._delegate.goForward(options);
+    const waitPromise = this.waitForNavigation(options);
+    const result = await this._delegate.goForward();
+    if (!result) {
+      waitPromise.catch(() => {});
+      return null;
+    }
+    return waitPromise;
   }
 
   async emulate(options: { viewport: types.Viewport; userAgent: string; }) {

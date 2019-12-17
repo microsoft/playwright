@@ -223,40 +223,18 @@ export class FrameManager implements PageDelegate {
     await this._session.send('Page.setCacheDisabled', {cacheDisabled: !enabled});
   }
 
-  private async _go(action: () => Promise<{ navigationId: string | null, navigationURL: string | null }>, options: frames.NavigateOptions = {}): Promise<network.Response | null> {
-    const {
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-      waitUntil = (['load'] as frames.LifecycleEvent[]),
-    } = options;
-    const frame = this._page.mainFrame();
-    const watcher = new frames.LifecycleWatcher(frame, waitUntil, timeout);
-    const { navigationId } = await action();
-    if (navigationId === null) {
-      // Cannot go back/forward.
-      watcher.dispose();
-      return null;
-    }
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.newDocumentNavigationPromise,
-      watcher.sameDocumentNavigationPromise,
-    ]);
-    watcher.dispose();
-    if (error)
-      throw error;
-    return watcher.navigationResponse();
+  async reload(): Promise<void> {
+    await this._session.send('Page.reload', { frameId: this._page.mainFrame()._id });
   }
 
-  reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.reload', { frameId: this._page.mainFrame()._id }), options);
+  async goBack(): Promise<boolean> {
+    const { navigationId } = await this._session.send('Page.goBack', { frameId: this._page.mainFrame()._id });
+    return navigationId !== null;
   }
 
-  goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.goBack', { frameId: this._page.mainFrame()._id }), options);
-  }
-
-  goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
-    return this._go(() => this._session.send('Page.goForward', { frameId: this._page.mainFrame()._id }), options);
+  async goForward(): Promise<boolean> {
+    const { navigationId } = await this._session.send('Page.goForward', { frameId: this._page.mainFrame()._id });
+    return navigationId !== null;
   }
 
   async evaluateOnNewDocument(source: string): Promise<void> {

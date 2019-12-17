@@ -836,7 +836,7 @@ class RerunnableTask {
   }
 }
 
-export class LifecycleWatcher {
+class LifecycleWatcher {
   readonly sameDocumentNavigationPromise: Promise<Error | null>;
   readonly lifecyclePromise: Promise<void>;
   readonly newDocumentNavigationPromise: Promise<Error | null>;
