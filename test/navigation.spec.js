@@ -535,7 +535,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(forwardResponse).toBe(null);
       expect(page.url()).toBe(server.PREFIX + '/second.html');
     });
-    it.skip(WEBKIT)('should work when subframe issues window.stop()', async({page, server}) => {
+    fit('should work when subframe issues window.stop()', async({page, server}) => {
       server.setRoute('/frames/style.css', (req, res) => {});
       const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = await new Promise(f => page.once('frameattached', f));
