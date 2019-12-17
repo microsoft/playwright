@@ -152,6 +152,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _scrollIntoViewIfNeeded() {
+    const path: frames.Frame[] = [];
+    for (let frame = await this.contentFrame(); frame; frame = frame.parentFrame())
+      path.push(frame);
+    for (const frame of path.reverse()) {
+      const owner = await frame._page._delegate.getFrameOwner(frame);
+      if (owner)
+        await owner._scrollIntoViewIfNeededWithinFrame();
+    }
+    this._scrollIntoViewIfNeededWithinFrame();
+  }
+
+  async _scrollIntoViewIfNeededWithinFrame() {
     const error = await this.evaluate(async (node: Node, pageJavascriptEnabled: boolean) => {
       if (!node.isConnected)
         return 'Node is detached from document';

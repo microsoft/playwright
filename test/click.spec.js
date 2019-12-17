@@ -261,8 +261,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await button.click();
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
-    // @see https://github.com/GoogleChrome/puppeteer/issues/4110
-    xit('should click the button with fixed position inside an iframe', async({page, server}) => {
+    it.skip(WEBKIT || FFOX)('should click the button with fixed position inside an iframe', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setViewport({width: 500, height: 500});
       await page.setContent('<div style="width:100px;height:2000px">spacer</div>');

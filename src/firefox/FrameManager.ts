@@ -406,6 +406,10 @@ export class FrameManager implements PageDelegate {
     assert(false, 'Multiple isolated worlds are not implemented');
     return handle;
   }
+
+  async getFrameOwner(frame: frames.Frame): Promise<dom.ElementHandle | null> {
+    throw new Error('Not implemented');
+  }
 }
 
 export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[]): frames.LifecycleEvent[] {

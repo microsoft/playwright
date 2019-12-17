@@ -487,6 +487,10 @@ export class FrameManager implements PageDelegate {
     });
     return to._createHandle(result.object) as dom.ElementHandle<T>;
   }
+
+  async getFrameOwner(frame: frames.Frame): Promise<dom.ElementHandle | null> {
+    throw new Error('Not implemented');
+  }
 }
 
 function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {

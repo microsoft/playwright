@@ -445,10 +445,13 @@ export class FrameManager implements PageDelegate {
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    const doc = await handle.evaluateHandle(node => node.ownerDocument ? node.ownerDocument.documentElement : null);
+    if (!doc)
+      return null;
     const nodeInfo = await this._client.send('DOM.describeNode', {
-      objectId: toRemoteObject(handle).objectId
+      objectId: toRemoteObject(doc).objectId
     });
-    if (typeof nodeInfo.node.frameId !== 'string')
+    if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string')
       return null;
     return this._page._frameManager.frame(nodeInfo.node.frameId);
   }
@@ -509,6 +512,16 @@ export class FrameManager implements PageDelegate {
     if (!result)
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object).asElement()!;
+  }
+
+  async getFrameOwner(frame: frames.Frame): Promise<dom.ElementHandle | null> {
+    if (!frame.parentFrame())
+      return null;
+    const result = await this._client.send('DOM.getFrameOwner', { frameId: frame._id });
+    if (!result)
+      return null;
+    const utilityContext = await frame.parentFrame()._utilityContext();
+    return this.adoptBackendNodeId(result.backendNodeId, utilityContext);
   }
 }
 
