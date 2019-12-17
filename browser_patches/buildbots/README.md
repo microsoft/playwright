@@ -28,6 +28,10 @@ Each bot configuration has 3 parts:
   - [Setting Up Browser Toolchains](#setting-up-browser-toolchains-1)
   - [Setting Bot Environment](#setting-bot-environment-1)
   - [Running Build Loop](#running-build-loop-1)
+- [Linux](#linux)
+  - [Setting Up Browser Toolchains](#setting-up-browser-toolchains-2)
+  - [Setting Bot Environment](#setting-bot-environment-2)
+  - [Running Build Loop](#running-build-loop-2)
 
 
 # Windows
@@ -173,3 +177,24 @@ Finally, MacBooks tend to go to sleep no matter what their "energy settings" are
 sudo pmset -a sleep 0; sudo pmset -a hibernatemode 0; sudo pmset -a disablesleep 1;
 ```
 
+# Linux
+
+## Setting Up Browser Toolchains
+
+1. Note: firefox binaries will crash randomly if compiled with clang 6. They do work when compiled with clang 9.
+To install clang 9 on ubuntu and make it default:
+```sh
+$ sudo apt-get install clang-9
+$ sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-9 100
+$ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
+```
+
+> **NOTE**: Firefox build config can be checked official Firefox builds, navigating to `about:buildconfig` URL. 
+
+## Setting Bot Environment
+
+> TODO: instructions to set up linux bot
+
+## Running Build Loop
+
+> TODO: instructions to set up cron jobs
