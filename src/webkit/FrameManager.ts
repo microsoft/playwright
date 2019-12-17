@@ -400,9 +400,7 @@ export class FrameManager implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    if (runBeforeUnload)
-      throw new Error('Not implemented');
-    (this._page.browser() as Browser)._closePage(this._page);
+    (this._page.browser() as Browser)._closePage(this._page, runBeforeUnload);
   }
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
