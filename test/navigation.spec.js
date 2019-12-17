@@ -16,6 +16,7 @@
  */
 
 const utils = require('./utils');
+const { performance } = require('perf_hooks');
 
 module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -132,11 +133,11 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.PREFIX + '/grid.html');
       expect(response.status()).toBe(200);
     });
-    xit('should navigate to empty page with networkidle0', async({page, server}) => {
+    it('should navigate to empty page with networkidle0', async({page, server}) => {
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0'});
       expect(response.status()).toBe(200);
     });
-    xit('should navigate to empty page with networkidle2', async({page, server}) => {
+    it('should navigate to empty page with networkidle2', async({page, server}) => {
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2'});
       expect(response.status()).toBe(200);
     });
@@ -166,10 +167,10 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
       expectSSLError(error.message);
     });
-    xit('should throw if networkidle is passed as an option', async({page, server}) => {
+    it('should throw if networkidle is passed as an option', async({page, server}) => {
       let error = null;
       await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle'}).catch(err => error = err);
-      expect(error.message).toContain('"networkidle" option is no longer supported');
+      expect(error.message).toContain('Unsupported waitUntil option');
     });
     it('should fail when main resources failed to load', async({page, server}) => {
       let error = null;
@@ -250,7 +251,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(response.ok()).toBe(true);
       expect(response.url()).toBe(server.EMPTY_PAGE);
     });
-    xit('should wait for network idle to succeed navigation', async({page, server}) => {
+    it('should wait for network idle to succeed navigation', async({page, server}) => {
       let responses = [];
       // Hold on to a bunch of requests without answering.
       server.setRoute('/fetch-request-a.js', (req, res) => responses.push(res));
@@ -303,8 +304,52 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
         response.end(`File not found`);
       }
 
+      const now = performance.now();
       const response = await navigationPromise;
+      expect(performance.now() - now).not.toBeLessThan(499);
       // Expect navigation to succeed.
+      expect(response.ok()).toBe(true);
+    });
+    it('should wait for networkidle2 to succeed navigation', async({page, server}) => {
+      let responses = [];
+      // Hold on to a bunch of requests without answering.
+      server.setRoute('/fetch-request-a.js', (req, res) => responses.push(res));
+      server.setRoute('/fetch-request-b.js', (req, res) => responses.push(res));
+      server.setRoute('/fetch-request-c.js', (req, res) => responses.push(res));
+      server.setRoute('/fetch-request-d.js', (req, res) => responses.push(res));
+      const initialFetchResourcesRequested = Promise.all([
+        server.waitForRequest('/fetch-request-a.js'),
+      ]);
+
+      // Navigate to a page which loads immediately and then does a bunch of
+      // requests via javascript's fetch method.
+      const navigationPromise = page.goto(server.PREFIX + '/networkidle.html', {
+        waitUntil: 'networkidle2',
+      });
+      // Track when the navigation gets completed.
+      let navigationFinished = false;
+      navigationPromise.then(() => navigationFinished = true);
+
+      // Wait for the page's 'load' event.
+      await new Promise(fulfill => page.once('load', fulfill));
+      expect(navigationFinished).toBe(false);
+
+      // Wait for the initial three resources to be requested.
+      await initialFetchResourcesRequested;
+
+      // Expect navigation still to be not finished.
+      expect(navigationFinished).toBe(false);
+
+      // Respond to initial requests.
+      for (const response of responses) {
+        response.statusCode = 404;
+        response.end(`File not found`);
+      }
+
+      const now = performance.now();
+      const response = await navigationPromise;
+      expect(performance.now() - now).not.toBeLessThan(499);
+      // Expect navigation to succeed with two outstanding network requests.
       expect(response.ok()).toBe(true);
     });
     it('should not leak listeners during navigation', async({page, server}) => {

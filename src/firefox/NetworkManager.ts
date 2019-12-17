@@ -15,28 +15,19 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { JugglerSession } from './Connection';
 import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
 
-export const NetworkManagerEvents = {
-  RequestFailed: Symbol('NetworkManagerEvents.RequestFailed'),
-  RequestFinished: Symbol('NetworkManagerEvents.RequestFinished'),
-  Request: Symbol('NetworkManagerEvents.Request'),
-  Response: Symbol('NetworkManagerEvents.Response'),
-};
-
-export class NetworkManager extends EventEmitter {
+export class NetworkManager {
   private _session: JugglerSession;
   private _requests: Map<string, InterceptableRequest>;
   private _page: Page;
   private _eventListeners: RegisteredListener[];
 
   constructor(session: JugglerSession, page: Page) {
-    super();
     this._session = session;
 
     this._requests = new Map();
@@ -80,7 +71,7 @@ export class NetworkManager extends EventEmitter {
     }
     const request = new InterceptableRequest(this._session, frame, redirectChain, event);
     this._requests.set(request._id, request);
-    this.emit(NetworkManagerEvents.Request, request.request);
+    this._page._frameManager.requestStarted(request.request);
   }
 
   _onResponseReceived(event) {
@@ -100,7 +91,7 @@ export class NetworkManager extends EventEmitter {
     for (const {name, value} of event.headers)
       headers[name.toLowerCase()] = value;
     const response = new network.Response(request.request, event.status, event.statusText, headers, remoteAddress, getResponseBody);
-    this.emit(NetworkManagerEvents.Response, response);
+    this._page._frameManager.requestReceivedResponse(response);
   }
 
   _onRequestFinished(event) {
@@ -116,7 +107,7 @@ export class NetworkManager extends EventEmitter {
       this._requests.delete(request._id);
       response._requestFinished();
     }
-    this.emit(NetworkManagerEvents.RequestFinished, request.request);
+    this._page._frameManager.requestFinished(request.request);
   }
 
   _onRequestFailed(event) {
@@ -126,8 +117,8 @@ export class NetworkManager extends EventEmitter {
     this._requests.delete(request._id);
     if (request.request.response())
       request.request.response()._requestFinished();
-    request.request._setFailureText(event.errorCode, event.errorCode === 'NS_BINDING_ABORTED');
-    this.emit(NetworkManagerEvents.RequestFailed, request.request);
+    request.request._setFailureText(event.errorCode);
+    this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
   }
 }
 

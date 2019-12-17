@@ -23,7 +23,7 @@ import * as dom from '../dom';
 import { JugglerSession } from './Connection';
 import { ExecutionContextDelegate } from './ExecutionContext';
 import { Page, PageDelegate } from '../page';
-import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
+import { NetworkManager } from './NetworkManager';
 import { Events } from '../events';
 import * as dialog from '../dialog';
 import { Protocol } from './protocol';
@@ -67,10 +67,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
       helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.Request, request => this._page.emit(Events.Page.Request, request)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.Response, response => this._page.emit(Events.Page.Response, response)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFinished, request => this._page.emit(Events.Page.RequestFinished, request)),
-      helper.addEventListener(this._networkManager, NetworkManagerEvents.RequestFailed, request => this._page.emit(Events.Page.RequestFailed, request)),
     ];
     (this._page as any).interception = new Interception(this._networkManager);
     (this._page as any).accessibility = new Accessibility(session);

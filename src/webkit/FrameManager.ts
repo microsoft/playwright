@@ -24,7 +24,7 @@ import * as network from '../network';
 import { TargetSession } from './Connection';
 import { Events } from '../events';
 import { ExecutionContextDelegate, EVALUATION_SCRIPT_URL } from './ExecutionContext';
-import { NetworkManager, NetworkManagerEvents } from './NetworkManager';
+import { NetworkManager } from './NetworkManager';
 import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
@@ -58,10 +58,6 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     this._isolatedWorlds = new Set();
     this._page = new Page(this, browserContext);
     this._networkManager = new NetworkManager(this._page);
-    this._networkManager.on(NetworkManagerEvents.Request, event => this._page.emit(Events.Page.Request, event));
-    this._networkManager.on(NetworkManagerEvents.Response, event => this._page.emit(Events.Page.Response, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFailed, event => this._page.emit(Events.Page.RequestFailed, event));
-    this._networkManager.on(NetworkManagerEvents.RequestFinished, event => this._page.emit(Events.Page.RequestFinished, event));
   }
 
   setSession(session: TargetSession) {

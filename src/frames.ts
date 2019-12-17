@@ -46,7 +46,8 @@ export type GotoOptions = NavigateOptions & {
   referer?: string,
 };
 
-export type LifecycleEvent = 'load' | 'domcontentloaded';
+export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
+const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
 
 export type WaitForOptions = types.TimeoutOptions & { waitFor?: boolean };
 
@@ -114,6 +115,12 @@ export class FrameManager {
       for (const watcher of this._lifecycleWatchers)
         watcher._onCommittedNewDocumentNavigation(frame);
     }
+    this._stopNetworkIdleTimer(frame, 'networkidle0');
+    if (frame._inflightRequests === 0)
+      this._startNetworkIdleTimer(frame, 'networkidle0');
+    this._stopNetworkIdleTimer(frame, 'networkidle2');
+    if (frame._inflightRequests <= 2)
+      this._startNetworkIdleTimer(frame, 'networkidle2');
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -166,6 +173,42 @@ export class FrameManager {
       this._page.emit(Events.Page.DOMContentLoaded);
   }
 
+  requestStarted(request: network.Request) {
+    if (request.frame())
+      this._incrementRequestCount(request.frame());
+    if (request._documentId && request.frame() && !request.redirectChain().length) {
+      for (const watcher of this._lifecycleWatchers)
+        watcher._onNavigationRequest(request.frame(), request);
+    }
+    this._page.emit(Events.Page.Request, request);
+  }
+
+  requestReceivedResponse(response: network.Response) {
+    this._page.emit(Events.Page.Response, response);
+  }
+
+  requestFinished(request: network.Request) {
+    if (request.frame())
+      this._decrementRequestCount(request.frame());
+    this._page.emit(Events.Page.RequestFinished, request);
+  }
+
+  requestFailed(request: network.Request, canceled: boolean) {
+    if (request.frame())
+      this._decrementRequestCount(request.frame());
+    if (request._documentId && request.frame()) {
+      const isCurrentDocument = request.frame()._lastDocumentId === request._documentId;
+      if (!isCurrentDocument) {
+        let errorText = request.failure().errorText;
+        if (canceled)
+          errorText += '; maybe frame was detached?';
+        for (const watcher of this._lifecycleWatchers)
+          watcher._onAbortedNewDocumentNavigation(request.frame(), request._documentId, errorText);
+      }
+    }
+    this._page.emit(Events.Page.RequestFailed, request);
+  }
+
   private _removeFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
@@ -174,6 +217,36 @@ export class FrameManager {
     for (const watcher of this._lifecycleWatchers)
       watcher._onFrameDetached(frame);
     this._page.emit(Events.Page.FrameDetached, frame);
+  }
+
+  private _decrementRequestCount(frame: Frame) {
+    frame._inflightRequests--;
+    if (frame._inflightRequests === 0)
+      this._startNetworkIdleTimer(frame, 'networkidle0');
+    if (frame._inflightRequests === 2)
+      this._startNetworkIdleTimer(frame, 'networkidle2');
+  }
+
+  private _incrementRequestCount(frame: Frame) {
+    frame._inflightRequests++;
+    if (frame._inflightRequests === 1)
+      this._stopNetworkIdleTimer(frame, 'networkidle0');
+    if (frame._inflightRequests === 3)
+      this._stopNetworkIdleTimer(frame, 'networkidle2');
+  }
+
+  private _startNetworkIdleTimer(frame: Frame, event: LifecycleEvent) {
+    assert(!frame._networkIdleTimers.has(event));
+    if (frame._firedLifecycleEvents.has(event))
+      return;
+    frame._networkIdleTimers.set(event, setTimeout(() => {
+      this.frameLifecycleEvent(frame._id, event);
+    }, 500));
+  }
+
+  private _stopNetworkIdleTimer(frame: Frame, event: LifecycleEvent) {
+    clearTimeout(frame._networkIdleTimers.get(event));
+    frame._networkIdleTimers.delete(event);
   }
 }
 
@@ -188,6 +261,8 @@ export class Frame {
   private _contextData = new Map<ContextType, ContextData>();
   private _childFrames = new Set<Frame>();
   _name: string;
+  _inflightRequests = 0;
+  readonly _networkIdleTimers = new Map<LifecycleEvent, NodeJS.Timer>();
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     this._id = id;
@@ -713,7 +788,7 @@ export class LifecycleWatcher {
       waitUntil = waitUntil.slice();
     else if (typeof waitUntil === 'string')
       waitUntil = [waitUntil];
-    if (waitUntil.some(e => e !== 'load' && e !== 'domcontentloaded'))
+    if (waitUntil.some(e => !kLifecycleEvents.has(e)))
       throw new Error('Unsupported waitUntil option');
     this._expectedLifecycle = waitUntil.slice();
     this._frame = frame;
