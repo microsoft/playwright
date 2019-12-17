@@ -513,7 +513,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       ]);
       expect(request.headers['user-agent']).toBe('foobar');
     });
-    it.skip(WEBKIT)('should emulate device user-agent', async({page, server}) => {
+    it('should emulate device user-agent', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => navigator.userAgent)).not.toContain('iPhone');
       await page.setUserAgent(playwright.devices['iPhone 6'].userAgent);

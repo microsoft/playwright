@@ -329,6 +329,7 @@ export class FrameManager implements PageDelegate {
 
   async setUserAgent(userAgent: string): Promise<void> {
     await this._setUserAgent(this._session, userAgent);
+    await this.reload();
   }
 
   async setJavaScriptEnabled(enabled: boolean): Promise<void> {
