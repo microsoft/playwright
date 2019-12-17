@@ -153,7 +153,7 @@ index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..6f96f174dffd7c5c42561487e1627ef9
      // Note that 'unused' is a workaround so the compiler can pick the right sendResponse based on arity.
      // When <http://webkit.org/b/179847> is fixed or this class is renamed for the JSON::Object case,
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
-index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..e9a8079d5136269165d899311d88f3083ab9055f 100644
+index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..98722db453c2ab1c619c4d9a8706b92ee7093378 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
 +++ b/Source/JavaScriptCore/inspector/InspectorTarget.h
 @@ -45,8 +45,11 @@ public:
@@ -173,12 +173,12 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..e9a8079d5136269165d899311d88f308
      virtual void disconnect() = 0;
      virtual void sendMessageToTargetBackend(const String&) = 0;
 +    virtual void activate(String& error) { error = "Target cannot be activated"; }
-+    virtual void close(String& error) { error = "Target cannot be closed"; }
++    virtual void close(String& error, bool runBeforeUnload) { error = "Target cannot be closed"; }
  
  private:
      WTF::Function<void()> m_resumeCallback;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..6363ca2d549e466a74adaf1dd34a062337da404d 100644
+index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8ef7b410c 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 @@ -30,11 +30,12 @@
@@ -210,7 +210,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..6363ca2d549e466a74adaf1dd34a0623
 +    target->activate(errorString);
 +}
 +
-+void InspectorTargetAgent::close(ErrorString& errorString, const String& targetId)
++void InspectorTargetAgent::close(ErrorString& errorString, const String& targetId, const bool* runBeforeUnload)
 +{
 +    InspectorTarget* target = m_targets.get(targetId);
 +    if (!target) {
@@ -218,7 +218,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..6363ca2d549e466a74adaf1dd34a0623
 +        return;
 +    }
 +
-+    target->close(errorString);
++    target->close(errorString, runBeforeUnload && *runBeforeUnload);
 +}
 +
  void InspectorTargetAgent::sendMessageFromTargetToFrontend(const String& targetId, const String& message)
@@ -288,7 +288,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..6363ca2d549e466a74adaf1dd34a0623
  }
  
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..5a71d29af6426f5b6496428ba6a2c2e16c852fb3 100644
+index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..a32d4235005ecd1d68fac132b3879e106d2a7e56 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
 @@ -41,7 +41,7 @@ class JS_EXPORT_PRIVATE InspectorTargetAgent : public InspectorAgentBase, public
@@ -305,7 +305,7 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..5a71d29af6426f5b6496428ba6a2c2e1
      void resume(ErrorString&, const String& targetId) override;
      void sendMessageToTarget(ErrorString&, const String& targetId, const String& message) final;
 +    void activate(ErrorString&, const String& targetId) override;
-+    void close(ErrorString&, const String& targetId) override;
++    void close(ErrorString&, const String& targetId, const bool* runBeforeUnload) override;
  
      // Target lifecycle.
      void targetCreated(InspectorTarget&);
@@ -935,7 +935,7 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..f5bdf41aad83ae35b33294c5702f41ac
      ]
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
-index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..30bcc1d463eaa5ac15c825749fc3b029eba80bc8 100644
+index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..5849e4fbea626570389d27037f4fd2d99c3526ce 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Target.json
 @@ -10,8 +10,12 @@
@@ -953,7 +953,7 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..30bcc1d463eaa5ac15c825749fc3b029
              ]
          }
      ],
-@@ -37,6 +41,20 @@
+@@ -37,6 +41,21 @@
                  { "name": "targetId", "type": "string" },
                  { "name": "message", "type": "string", "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
              ]
@@ -969,7 +969,8 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..30bcc1d463eaa5ac15c825749fc3b029
 +            "name": "close",
 +            "description": "Closes the target.",
 +            "parameters": [
-+                { "name": "targetId", "type": "string" }
++                { "name": "targetId", "type": "string" },
++                { "name": "runBeforeUnload", "type": "boolean", "optional": true }
 +            ]
          }
      ],
@@ -4434,7 +4435,7 @@ index 0000000000000000000000000000000000000000..ac0caaabaed9373e08c94954b853871c
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..2d089e809789e1b08513d7d72419394f54cf8be6
+index 0000000000000000000000000000000000000000..51e2627159a743a77c38a1a7445becf9253f0f7c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp
 @@ -0,0 +1,111 @@
@@ -4532,14 +4533,14 @@ index 0000000000000000000000000000000000000000..2d089e809789e1b08513d7d72419394f
 +    target->activate(error);
 +}
 +
-+void BrowserInspectorTargetAgent::close(ErrorString& error, const String& targetId)
++void BrowserInspectorTargetAgent::close(ErrorString& error, const String& targetId, const bool* runBeforeUnload)
 +{
 +    auto* target = targetForId(targetId);
 +    if (target == nullptr) {
 +        error = "Cannot find target with provided id.";
 +        return;
 +    }
-+    target->close(error);
++    target->close(error, runBeforeUnload && *runBeforeUnload);
 +}
 +
 +void BrowserInspectorTargetAgent::didCreateTarget(InspectorTarget& target)
@@ -4551,7 +4552,7 @@ index 0000000000000000000000000000000000000000..2d089e809789e1b08513d7d72419394f
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..4dbfe313f4ea627de5c1f9d37db80d5946c656e4
+index 0000000000000000000000000000000000000000..65ad2cf398700345fe1fc483e153ba3dac52e446
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h
 @@ -0,0 +1,44 @@
@@ -4587,7 +4588,7 @@ index 0000000000000000000000000000000000000000..4dbfe313f4ea627de5c1f9d37db80d59
 +    // TargetBackendDispatcherHandler
 +    void sendMessageToTarget(Inspector::ErrorString&, const String& targetId, const String& message) final;
 +    void activate(Inspector::ErrorString&, const String& targetId) override;
-+    void close(Inspector::ErrorString&, const String& targetId) override;
++    void close(Inspector::ErrorString&, const String& targetId, const bool* runBeforeUnload) override;
 +    void setPauseOnStart(Inspector::ErrorString&, bool pauseOnStart) override;
 +    void resume(Inspector::ErrorString&, const String& in_targetId) override;
 +
@@ -6257,10 +6258,10 @@ index 0000000000000000000000000000000000000000..b2f4827eede68fa4a47dbdb18cb0b412
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..7b52be400be9e4514f0db8350c1e65f053d115bd
+index 0000000000000000000000000000000000000000..e63ce5c577c48fef022e911092fd1755472d4604
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp
-@@ -0,0 +1,109 @@
+@@ -0,0 +1,112 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -6364,15 +6365,18 @@ index 0000000000000000000000000000000000000000..7b52be400be9e4514f0db8350c1e65f0
 +    platformActivate(error);
 +}
 +
-+void WebPageInspectorTargetProxy::close(String& error)
++void WebPageInspectorTargetProxy::close(String& error, bool runBeforeUnload)
 +{
-+    m_page.closePage();
++    if (runBeforeUnload)
++        m_page.tryClose();
++    else
++        m_page.closePage();
 +}
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0655b5ea3769412c2fa201cbe0e1542f997e2c37
+index 0000000000000000000000000000000000000000..033f936d9d3caf594b78bb6ad39249d61f6c95e2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
 @@ -0,0 +1,45 @@
@@ -6408,7 +6412,7 @@ index 0000000000000000000000000000000000000000..0655b5ea3769412c2fa201cbe0e1542f
 +    void disconnect() override;
 +    void sendMessageToTargetBackend(const String&) override;
 +    void activate(String& error) override;
-+    void close(String& error) override;
++    void close(String& error, bool runBeforeUnload) override;
 +
 +private:
 +    void platformActivate(String& error) const;
