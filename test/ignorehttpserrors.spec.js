@@ -43,7 +43,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       expect(error).toBe(null);
       expect(response.ok()).toBe(true);
     });
-    it.skip(WEBKIT)('should work with mixed content', async({page, server, httpsServer}) => {
+    it('should work with mixed content', async({page, server, httpsServer}) => {
       httpsServer.setRoute('/mixedcontent.html', (req, res) => {
         res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
       });
