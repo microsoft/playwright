@@ -310,7 +310,7 @@
 - [class: TimeoutError](#class-timeouterror)
 - [class: Selector](#class-selector)
   * [selector.selector](#selectorselector)
-  * [selector.visible](#selectorvisible)
+  * [selector.visibility](#selectorvisibility)
 <!-- GEN:stop -->
 
 ### Overview

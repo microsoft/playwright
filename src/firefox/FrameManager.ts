@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import * as frames from '../frames';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
-import * as js from '../javascript';
 import * as dom from '../dom';
 import { JugglerSession } from './Connection';
 import { ExecutionContextDelegate } from './ExecutionContext';
@@ -35,17 +33,16 @@ import { Accessibility } from './features/accessibility';
 import * as network from '../network';
 import * as types from '../types';
 
-export class FrameManager extends EventEmitter implements PageDelegate {
+export class FrameManager implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly _session: JugglerSession;
   readonly _page: Page;
   private readonly _networkManager: NetworkManager;
-  private readonly _contextIdToContext: Map<string, js.ExecutionContext>;
+  private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
 
   constructor(session: JugglerSession, browserContext: BrowserContext) {
-    super();
     this._session = session;
     this.rawKeyboard = new RawKeyboardImpl(session);
     this.rawMouse = new RawMouseImpl(session);
@@ -81,22 +78,15 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     ]);
   }
 
-  executionContextById(executionContextId) {
-    return this._contextIdToContext.get(executionContextId) || null;
-  }
-
   _onExecutionContextCreated({executionContextId, auxData}) {
-    const frameId = auxData ? auxData.frameId : null;
-    const frame = this._page._frameManager.frame(frameId);
+    const frame = this._page._frameManager.frame(auxData ? auxData.frameId : null);
+    if (!frame)
+      return;
     const delegate = new ExecutionContextDelegate(this._session, executionContextId);
-    if (frame) {
-      const context = new dom.FrameExecutionContext(delegate, frame);
-      frame._contextCreated('main', context);
-      frame._contextCreated('utility', context);
-      this._contextIdToContext.set(executionContextId, context);
-    } else {
-      this._contextIdToContext.set(executionContextId, new js.ExecutionContext(delegate));
-    }
+    const context = new dom.FrameExecutionContext(delegate, frame);
+    frame._contextCreated('main', context);
+    frame._contextCreated('utility', context);
+    this._contextIdToContext.set(executionContextId, context);
   }
 
   _onExecutionContextDestroyed({executionContextId}) {
@@ -104,14 +94,13 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    if (context.frame())
-      context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
+    context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
   }
 
-  _onNavigationStarted(params) {
+  _onNavigationStarted() {
   }
 
-  _onNavigationAborted(params) {
+  _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
     const frame = this._page._frameManager.frame(params.frameId);
     for (const watcher of this._page._frameManager._lifecycleWatchers)
       watcher._onAbortedNewDocumentNavigation(frame, params.navigationId, params.errorText);
@@ -140,18 +129,18 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       this._page._frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
   }
 
-  _onUncaughtError(params) {
+  _onUncaughtError(params: Protocol.Page.uncaughtErrorPayload) {
     const error = new Error(params.message);
     error.stack = params.stack;
     this._page.emit(Events.Page.PageError, error);
   }
 
   _onConsole({type, args, executionContextId, location}) {
-    const context = this.executionContextById(executionContextId);
+    const context = this._contextIdToContext.get(executionContextId);
     this._page._addConsoleMessage(type, args.map(arg => context._createHandle(arg)), location);
   }
 
-  _onDialogOpened(params) {
+  _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
       params.type as dialog.DialogType,
       params.message,
@@ -162,12 +151,12 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
-    const context = this.executionContextById(event.executionContextId);
+    const context = this._contextIdToContext.get(event.executionContextId);
     this._page._onBindingCalled(event.payload, context);
   }
 
   async _onFileChooserOpened({executionContextId, element}) {
-    const context = this.executionContextById(executionContextId);
+    const context = this._contextIdToContext.get(executionContextId);
     const handle = context._createHandle(element).asElement()!;
     this._page._onFileChooserOpened(handle);
   }
@@ -181,6 +170,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   didClose() {
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
+    this._page._didClose();
   }
 
   async waitForFrameNavigation(frame: frames.Frame, options: frames.NavigateOptions = {}) {

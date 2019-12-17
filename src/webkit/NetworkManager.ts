@@ -53,6 +53,10 @@ export class NetworkManager {
     ]);
   }
 
+  dispose() {
+    helper.removeEventListeners(this._sessionListeners);
+  }
+
   async setExtraHTTPHeaders(extraHTTPHeaders: { [s: string]: string; }) {
     this._extraHTTPHeaders = {};
     for (const key of Object.keys(extraHTTPHeaders)) {

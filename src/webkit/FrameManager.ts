@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-import * as EventEmitter from 'events';
 import * as frames from '../frames';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
-import * as js from '../javascript';
+import { debugError, helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
 import { TargetSession } from './Connection';
@@ -39,19 +37,18 @@ import { PNG } from 'pngjs';
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 
-export class FrameManager extends EventEmitter implements PageDelegate {
+export class FrameManager implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   _session: TargetSession;
   readonly _page: Page;
   private readonly _networkManager: NetworkManager;
-  private readonly _contextIdToContext: Map<number, js.ExecutionContext>;
+  private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
   constructor(browserContext: BrowserContext) {
-    super();
     this.rawKeyboard = new RawKeyboardImpl();
     this.rawMouse = new RawMouseImpl();
     this._contextIdToContext = new Map();
@@ -102,7 +99,9 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   didClose() {
     helper.removeEventListeners(this._sessionListeners);
+    this._networkManager.dispose();
     this.disconnectFromTarget();
+    this._page._didClose();
   }
 
   _addSessionListeners() {
@@ -124,14 +123,9 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   disconnectFromTarget() {
     for (const context of this._contextIdToContext.values()) {
       (context._delegate as ExecutionContextDelegate)._dispose();
-      if (context.frame())
-        context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
+      context.frame()._contextDestroyed(context);
     }
-    // this._mainFrame = null;
-  }
-
-  networkManager(): NetworkManager {
-    return this._networkManager;
+    this._contextIdToContext.clear();
   }
 
   _onFrameStoppedLoading(frameId: string) {
@@ -158,12 +152,11 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     const frame = this._page._frameManager.frame(framePayload.id);
-    for (const context of this._contextIdToContext.values()) {
+    for (const [contextId, context] of this._contextIdToContext) {
       if (context.frame() === frame) {
-        const delegate = context._delegate as ExecutionContextDelegate;
-        delegate._dispose();
-        this._contextIdToContext.delete(delegate._contextId);
-        frame._contextDestroyed(context as dom.FrameExecutionContext);
+        (context._delegate as ExecutionContextDelegate)._dispose();
+        this._contextIdToContext.delete(contextId);
+        frame._contextDestroyed(context);
       }
     }
     // Append session id to avoid cross-process loaderId clash.
@@ -182,29 +175,16 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   _onExecutionContextCreated(contextPayload : Protocol.Runtime.ExecutionContextDescription) {
     if (this._contextIdToContext.has(contextPayload.id))
       return;
-    const frameId = contextPayload.frameId;
-    // If the frame was attached manually there is no navigation event.
-    // FIXME: support frameAttached event in WebKit protocol.
-    const frame = this._page._frameManager.frame(frameId);
+    const frame = this._page._frameManager.frame(contextPayload.frameId);
     if (!frame)
       return;
     const delegate = new ExecutionContextDelegate(this._session, contextPayload);
-    if (frame) {
-      const context = new dom.FrameExecutionContext(delegate, frame);
-      if (contextPayload.isPageContext)
-        frame._contextCreated('main', context);
-      else if (contextPayload.name === UTILITY_WORLD_NAME)
-        frame._contextCreated('utility', context);
-      this._contextIdToContext.set(contextPayload.id, context);
-    } else {
-      this._contextIdToContext.set(contextPayload.id, new js.ExecutionContext(delegate));
-    }
-  }
-
-  executionContextById(contextId: number): js.ExecutionContext {
-    const context = this._contextIdToContext.get(contextId);
-    assert(context, 'INTERNAL ERROR: missing context with id = ' + contextId);
-    return context;
+    const context = new dom.FrameExecutionContext(delegate, frame);
+    if (contextPayload.isPageContext)
+      frame._contextCreated('main', context);
+    else if (contextPayload.name === UTILITY_WORLD_NAME)
+      frame._contextCreated('utility', context);
+    this._contextIdToContext.set(contextPayload.id, context);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
@@ -279,7 +259,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
 
     const mainFrameContext = await this._page.mainFrame().executionContext();
     const handles = (parameters || []).map(p => {
-      let context: js.ExecutionContext | null = null;
+      let context: dom.FrameExecutionContext | null = null;
       if (p.objectId) {
         const objectId = JSON.parse(p.objectId);
         context = this._contextIdToContext.get(objectId.injectedScriptId);

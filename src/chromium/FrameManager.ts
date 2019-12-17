@@ -15,11 +15,9 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import * as dom from '../dom';
 import * as frames from '../frames';
-import { assert, debugError } from '../helper';
-import * as js from '../javascript';
+import { debugError, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { CDPSession } from './Connection';
 import { EVALUATION_SCRIPT_URL, ExecutionContextDelegate } from './ExecutionContext';
@@ -45,17 +43,17 @@ import { ConsoleMessage } from '../console';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-export class FrameManager extends EventEmitter implements PageDelegate {
+export class FrameManager implements PageDelegate {
   _client: CDPSession;
   private _page: Page;
   private _networkManager: NetworkManager;
-  private _contextIdToContext = new Map<number, js.ExecutionContext>();
+  private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
+  private _eventListeners: RegisteredListener[];
   rawMouse: RawMouseImpl;
   rawKeyboard: RawKeyboardImpl;
 
   constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
-    super();
     this._client = client;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
@@ -68,22 +66,24 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     (this._page as any).overrides = new Overrides(client);
     (this._page as any).interception = new Interception(this._networkManager);
 
-    this._client.on('Inspector.targetCrashed', event => this._onTargetCrashed());
-    this._client.on('Log.entryAdded', event => this._onLogEntryAdded(event));
-    this._client.on('Page.fileChooserOpened', event => this._onFileChooserOpened(event));
-    this._client.on('Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId));
-    this._client.on('Page.frameDetached', event => this._onFrameDetached(event.frameId));
-    this._client.on('Page.frameNavigated', event => this._onFrameNavigated(event.frame, false));
-    this._client.on('Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId));
-    this._client.on('Page.javascriptDialogOpening', event => this._onDialog(event));
-    this._client.on('Page.lifecycleEvent', event => this._onLifecycleEvent(event));
-    this._client.on('Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url));
-    this._client.on('Runtime.bindingCalled', event => this._onBindingCalled(event));
-    this._client.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
-    this._client.on('Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails));
-    this._client.on('Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context));
-    this._client.on('Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId));
-    this._client.on('Runtime.executionContextsCleared', event => this._onExecutionContextsCleared());
+    this._eventListeners = [
+      helper.addEventListener(client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
+      helper.addEventListener(client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
+      helper.addEventListener(client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
+      helper.addEventListener(client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
+      helper.addEventListener(client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      helper.addEventListener(client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      helper.addEventListener(client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
+      helper.addEventListener(client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
+      helper.addEventListener(client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)),
+      helper.addEventListener(client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      helper.addEventListener(client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
+      helper.addEventListener(client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
+      helper.addEventListener(client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
+      helper.addEventListener(client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      helper.addEventListener(client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
+      helper.addEventListener(client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
+    ];
   }
 
   async initialize() {
@@ -102,11 +102,9 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   didClose() {
-    // TODO: remove listeners.
-  }
-
-  networkManager(): NetworkManager {
-    return this._networkManager;
+    helper.removeEventListeners(this._eventListeners);
+    this._networkManager.dispose();
+    this._page._didClose();
   }
 
   async navigateFrame(frame: frames.Frame, url: string, options: frames.GotoOptions = {}): Promise<network.Response | null> {
@@ -243,21 +241,18 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
-    const frameId = contextPayload.auxData ? contextPayload.auxData.frameId : null;
-    const frame = this._page._frameManager.frame(frameId);
+    const frame = this._page._frameManager.frame(contextPayload.auxData ? contextPayload.auxData.frameId : null);
+    if (!frame)
+      return;
     if (contextPayload.auxData && contextPayload.auxData.type === 'isolated')
       this._isolatedWorlds.add(contextPayload.name);
     const delegate = new ExecutionContextDelegate(this._client, contextPayload);
-    if (frame) {
-      const context = new dom.FrameExecutionContext(delegate, frame);
-      if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
-        frame._contextCreated('main', context);
-      else if (contextPayload.name === UTILITY_WORLD_NAME)
-        frame._contextCreated('utility', context);
-      this._contextIdToContext.set(contextPayload.id, context);
-    } else {
-      this._contextIdToContext.set(contextPayload.id, new js.ExecutionContext(delegate));
-    }
+    const context = new dom.FrameExecutionContext(delegate, frame);
+    if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
+      frame._contextCreated('main', context);
+    else if (contextPayload.name === UTILITY_WORLD_NAME)
+      frame._contextCreated('utility', context);
+    this._contextIdToContext.set(contextPayload.id, context);
   }
 
   _onExecutionContextDestroyed(executionContextId: number) {
@@ -265,19 +260,12 @@ export class FrameManager extends EventEmitter implements PageDelegate {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    if (context.frame())
-      context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
+    context.frame()._contextDestroyed(context);
   }
 
   _onExecutionContextsCleared() {
     for (const contextId of Array.from(this._contextIdToContext.keys()))
       this._onExecutionContextDestroyed(contextId);
-  }
-
-  executionContextById(contextId: number): js.ExecutionContext {
-    const context = this._contextIdToContext.get(contextId);
-    assert(context, 'INTERNAL ERROR: missing context with id = ' + contextId);
-    return context;
   }
 
   async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
@@ -297,7 +285,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
       // @see https://github.com/GoogleChrome/puppeteer/issues/3865
       return;
     }
-    const context = this.executionContextById(event.executionContextId);
+    const context = this._contextIdToContext.get(event.executionContextId);
     const values = event.args.map(arg => context._createHandle(arg));
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
@@ -309,7 +297,7 @@ export class FrameManager extends EventEmitter implements PageDelegate {
   }
 
   _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
-    const context = this.executionContextById(event.executionContextId);
+    const context = this._contextIdToContext.get(event.executionContextId);
     this._page._onBindingCalled(event.payload, context);
   }
 

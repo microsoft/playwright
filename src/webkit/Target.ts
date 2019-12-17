@@ -30,7 +30,7 @@ export class Target {
   readonly _type: 'page' | 'service-worker' | 'worker';
   private readonly _session: TargetSession;
   private _pagePromise: Promise<Page> | null = null;
-  _page: Page | null = null;
+  _frameManager: FrameManager | null = null;
 
   static fromPage(page: Page): Target {
     return (page as any)[targetSymbol];
@@ -47,17 +47,17 @@ export class Target {
   }
 
   _didClose() {
-    if (this._page)
-      this._page._didClose();
+    if (this._frameManager)
+      this._frameManager.didClose();
   }
 
   async _initializeSession(session: TargetSession) {
-    if (!this._page)
+    if (!this._frameManager)
       return;
-    await (this._page._delegate as FrameManager)._initializeSession(session).catch(e => {
+    await this._frameManager._initializeSession(session).catch(e => {
       // Swallow initialization errors due to newer target swap in,
       // since we will reinitialize again.
-      if (this._page)
+      if (this._frameManager)
         throw e;
     });
   }
@@ -66,32 +66,31 @@ export class Target {
     if (!oldTarget._pagePromise)
       return;
     this._pagePromise = oldTarget._pagePromise;
-    this._page = oldTarget._page;
+    this._frameManager = oldTarget._frameManager;
     // Swapped out target should not be accessed by anyone. Reset page promise so that
     // old target does not close the page on connection reset.
     oldTarget._pagePromise = null;
-    oldTarget._page = null;
+    oldTarget._frameManager = null;
     this._adoptPage();
   }
 
   private _adoptPage() {
-    (this._page as any)[targetSymbol] = this;
+    (this._frameManager._page as any)[targetSymbol] = this;
     this._session.once(TargetSessionEvents.Disconnected, () => {
       // Once swapped out, we reset _page and won't call _didDisconnect for old session.
-      if (this._page)
-        this._page._didDisconnect();
+      if (this._frameManager)
+        this._frameManager._page._didDisconnect();
     });
-    (this._page._delegate as FrameManager).setSession(this._session);
+    this._frameManager.setSession(this._session);
   }
 
   async page(): Promise<Page> {
     if (this._type === 'page' && !this._pagePromise) {
       const browser = this._browserContext.browser() as Browser;
-      // Reference local page variable as _page may be
+      this._frameManager = new FrameManager(this._browserContext);
+      // Reference local page variable as |this._frameManager| may be
       // cleared on swap.
-      const frameManager = new FrameManager(this._browserContext);
-      const page = frameManager._page;
-      this._page = page;
+      const page = this._frameManager._page;
       this._pagePromise = new Promise(async f => {
         this._adoptPage();
         await this._initializeSession(this._session);

@@ -175,7 +175,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
       const opener = this._targets.get(targetInfo.openerId);
       if (!opener)
         return;
-      const openerPage = opener._page;
+      const openerPage = opener._frameManager ? opener._frameManager._page : null;
       if (!openerPage || !openerPage.listenerCount(Events.Page.Popup))
         return;
       target.page().then(page => openerPage.emit(Events.Page.Popup, page));

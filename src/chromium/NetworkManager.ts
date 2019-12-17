@@ -17,7 +17,7 @@
 
 import { CDPSession } from './Connection';
 import { Page } from '../page';
-import { assert, debugError, helper } from '../helper';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
@@ -36,24 +36,31 @@ export class NetworkManager {
   private _protocolRequestInterceptionEnabled = false;
   private _userCacheDisabled = false;
   private _requestIdToInterceptionId = new Map<string, string>();
+  private _eventListeners: RegisteredListener[];
 
   constructor(client: CDPSession, ignoreHTTPSErrors: boolean, page: Page) {
     this._client = client;
     this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._page = page;
 
-    this._client.on('Fetch.requestPaused', this._onRequestPaused.bind(this));
-    this._client.on('Fetch.authRequired', this._onAuthRequired.bind(this));
-    this._client.on('Network.requestWillBeSent', this._onRequestWillBeSent.bind(this));
-    this._client.on('Network.responseReceived', this._onResponseReceived.bind(this));
-    this._client.on('Network.loadingFinished', this._onLoadingFinished.bind(this));
-    this._client.on('Network.loadingFailed', this._onLoadingFailed.bind(this));
+    this._eventListeners = [
+      helper.addEventListener(client, 'Fetch.requestPaused', this._onRequestPaused.bind(this)),
+      helper.addEventListener(client, 'Fetch.authRequired', this._onAuthRequired.bind(this)),
+      helper.addEventListener(client, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
+      helper.addEventListener(client, 'Network.responseReceived', this._onResponseReceived.bind(this)),
+      helper.addEventListener(client, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
+      helper.addEventListener(client, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
+    ];
   }
 
   async initialize() {
     await this._client.send('Network.enable');
     if (this._ignoreHTTPSErrors)
       await this._client.send('Security.setIgnoreCertificateErrors', {ignore: true});
+  }
+
+  dispose() {
+    helper.removeEventListeners(this._eventListeners);
   }
 
   async authenticate(credentials: { username: string; password: string; } | null) {
