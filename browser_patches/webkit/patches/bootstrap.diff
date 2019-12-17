@@ -153,7 +153,7 @@ index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..6f96f174dffd7c5c42561487e1627ef9
      // Note that 'unused' is a workaround so the compiler can pick the right sendResponse based on arity.
      // When <http://webkit.org/b/179847> is fixed or this class is renamed for the JSON::Object case,
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
-index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..98722db453c2ab1c619c4d9a8706b92ee7093378 100644
+index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..cecc44dd00bab6aa4f302274cc88af41bf0a8c03 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
 +++ b/Source/JavaScriptCore/inspector/InspectorTarget.h
 @@ -45,8 +45,11 @@ public:
@@ -173,7 +173,7 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..98722db453c2ab1c619c4d9a8706b92e
      virtual void disconnect() = 0;
      virtual void sendMessageToTargetBackend(const String&) = 0;
 +    virtual void activate(String& error) { error = "Target cannot be activated"; }
-+    virtual void close(String& error, bool runBeforeUnload) { error = "Target cannot be closed"; }
++    virtual void close(String& error, bool /* runBeforeUnload */) { error = "Target cannot be closed"; }
  
  private:
      WTF::Function<void()> m_resumeCallback;
