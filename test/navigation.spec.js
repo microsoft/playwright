@@ -429,7 +429,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(request2.headers['referer']).toBe(server.PREFIX + '/grid.html');
       expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
-    it('should use referer option when setExtraHTTPHeaders provides referer', async({page, server}) => {
+    it.skip(FFOX)('should use referer option when setExtraHTTPHeaders provides referer', async({page, server}) => {
       await page.setExtraHTTPHeaders({ 'referer': 'http://microsoft.com/' });
       const [request1, request2] = await Promise.all([
         server.waitForRequest('/grid.html'),
