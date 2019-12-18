@@ -162,25 +162,6 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
       const element = await page.$('non-existing-element');
       expect(element).toBe(null);
     });
-    it('should return null for non-existing element with waitFor:false', async({page, server}) => {
-      const element = await page.$('non-existing-element', { waitFor: false });
-      expect(element).toBe(null);
-    });
-    it('should query existing element with waitFor:false', async({page, server}) => {
-      await page.setContent('<section>test</section>');
-      const element = await page.$('css=section', { waitFor: false });
-      expect(element).toBeTruthy();
-    });
-    it('should throw for unknown waitFor option', async({page, server}) => {
-      await page.setContent('<section>test</section>');
-      const error = await page.$('section', { waitFor: 'foo' }).catch(e => e);
-      expect(error.message).toContain('Unsupported waitFor option');
-    });
-    it('should throw for numeric waitFor option', async({page, server}) => {
-      await page.setContent('<section>test</section>');
-      const error = await page.$('section', { waitFor: 123 }).catch(e => e);
-      expect(error.message).toContain('Unsupported waitFor option');
-    });
     it('should auto-detect xpath selector', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const element = await page.$('//html/body/section');
@@ -203,14 +184,14 @@ module.exports.addTests = function({testRunner, expect, product, FFOX, CHROME, W
     });
     it('should respect waitFor visibility', async({page, server}) => {
       await page.setContent('<section id="testAttribute">43543</section>');
-      expect(await page.$('css=section', { waitFor: 'visible'})).toBeTruthy();
-      expect(await page.$('css=section', { waitFor: 'any'})).toBeTruthy();
-      expect(await page.$('css=section')).toBeTruthy();
+      expect(await page.waitForSelector('css=section', { waitFor: 'visible'})).toBeTruthy();
+      expect(await page.waitForSelector('css=section', { waitFor: 'any'})).toBeTruthy();
+      expect(await page.waitForSelector('css=section')).toBeTruthy();
 
       await page.setContent('<section id="testAttribute" style="display: none">43543</section>');
-      expect(await page.$('css=section', { waitFor: 'hidden'})).toBeTruthy();
-      expect(await page.$('css=section', { waitFor: 'any'})).toBeTruthy();
-      expect(await page.$('css=section')).toBeTruthy();
+      expect(await page.waitForSelector('css=section', { waitFor: 'hidden'})).toBeTruthy();
+      expect(await page.waitForSelector('css=section', { waitFor: 'any'})).toBeTruthy();
+      expect(await page.waitForSelector('css=section')).toBeTruthy();
     });
   });
 

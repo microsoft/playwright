@@ -22,7 +22,6 @@ import { Events } from './events';
 import { Events as CommonEvents } from '../events';
 import { Permissions } from './features/permissions';
 import { Page } from '../page';
-import * as types from '../types';
 import { FrameManager } from './FrameManager';
 import { Firefox } from './features/firefox';
 import * as network from '../network';

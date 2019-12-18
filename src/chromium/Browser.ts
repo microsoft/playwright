@@ -26,7 +26,6 @@ import { Target } from './Target';
 import { Protocol } from './protocol';
 import { Chromium } from './features/chromium';
 import { FrameManager } from './FrameManager';
-import * as events from '../events';
 import * as network from '../network';
 import { Permissions } from './features/permissions';
 import { Overrides } from './features/overrides';

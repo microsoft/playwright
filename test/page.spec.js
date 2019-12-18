@@ -600,7 +600,8 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       const result = await page.content();
       expect(result).toBe(expectedOutput);
     });
-    it('should not confuse with previous navigation', async({page, server}) => {
+    it.skip(FFOX || WEBKIT)('should not confuse with previous navigation', async({page, server}) => {
+      // TODO: ffox and webkit lack 'init' lifecycle event.
       const imgPath = '/img.png';
       let imgResponse = null;
       server.setRoute(imgPath, (req, res) => imgResponse = res);
@@ -1101,15 +1102,15 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       await page.fill('textarea', 123).catch(e => error = e);
       expect(error.message).toContain('Value must be string.');
     });
-    it('should respect selector visibilty', async({page, server}) => {
+    it('should wait for visible visibilty', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.fill('input', 'some value', { waitFor: 'visible' });
+      await page.fill('input', 'some value');
       expect(await page.evaluate(() => result)).toBe('some value');
 
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.display = 'none');
       await Promise.all([
-        page.fill('input', 'some value', { waitFor: 'visible' }),
+        page.fill('input', 'some value'),
         page.$eval('input', i => i.style.display = 'block'),
       ]);
       expect(await page.evaluate(() => result)).toBe('some value');
@@ -1128,12 +1129,12 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     it('should throw on hidden and invisible elements', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.display = 'none');
-      const invisibleError = await page.fill('input', 'some value').catch(e => e);
+      const invisibleError = await page.fill('input', 'some value', { waitFor: 'nowait' }).catch(e => e);
       expect(invisibleError.message).toBe('Element is not visible');
 
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.visibility = 'hidden');
-      const hiddenError = await page.fill('input', 'some value').catch(e => e);
+      const hiddenError = await page.fill('input', 'some value', { waitFor: 'nowait' }).catch(e => e);
       expect(hiddenError.message).toBe('Element is hidden');
     });
     it('should be able to fill the body', async({page}) => {
