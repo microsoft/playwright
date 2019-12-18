@@ -42,9 +42,9 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
   const slowMo = parseInt((process.env.SLOW_MO || '0').trim(), 10);
 
   const executablePath = {
-    'Chromium': process.env.CHROME,
-    'Firefox': process.env.FFOX,
-    'WebKit': process.env.WEBKIT_PATH,
+    'Chromium': process.env.CH_PATH,
+    'Firefox': process.env.FF_PATH,
+    'WebKit': process.env.WK_PATH,
   }[product];
   const defaultBrowserOptions = {
     handleSIGINT: false,
