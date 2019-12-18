@@ -7,7 +7,7 @@ export { ElementHandle } from '../dom';
 export { TimeoutError } from '../errors';
 export { Frame } from '../frames';
 export { Keyboard, Mouse } from '../input';
-export { ExecutionContext, JSHandle } from '../javascript';
+export { JSHandle } from '../javascript';
 export { Request, Response } from '../network';
 export { Browser } from './Browser';
 export { BrowserContext } from '../browserContext';

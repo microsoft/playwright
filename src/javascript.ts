@@ -47,10 +47,6 @@ export class JSHandle<T = any> {
     this._remoteObject = remoteObject;
   }
 
-  executionContext(): ExecutionContext {
-    return this._context;
-  }
-
   evaluate: types.EvaluateOn<T> = (pageFunction, ...args) => {
     return this._context.evaluate(pageFunction, this, ...args);
   }

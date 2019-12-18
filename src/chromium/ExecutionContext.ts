@@ -125,7 +125,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
       if (error.message.includes('Object couldn\'t be returned by value'))
         return {result: {type: 'undefined'}};
 
-      if (error.message.endsWith('Cannot find context with specified id') || error.message.endsWith('Inspected target navigated or closed'))
+      if (error.message.endsWith('Cannot find context with specified id') || error.message.endsWith('Inspected target navigated or closed') || error.message.endsWith('Execution context was destroyed.'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
       throw error;
     }
@@ -140,7 +140,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     for (const property of response.result) {
       if (!property.enumerable)
         continue;
-      result.set(property.name, handle.executionContext()._createHandle(property.value));
+      result.set(property.name, handle._context._createHandle(property.value));
     }
     return result;
   }

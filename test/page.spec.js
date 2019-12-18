@@ -146,14 +146,17 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
     });
-    it('should work with fake-clicking target=_blank and rel=noopener', async({page, server}) => {
+    it.skip(FFOX)('should work with fake-clicking target=_blank and rel=noopener', async({page, server}) => {
+      // TODO: FFOX sends events for "one-style.html" request to both pages.
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup'),
         page.$eval('a', a => a.click()),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
+      // TODO: At this point popup might still have about:blank as the current document.
+      // FFOX is slow enough to trigger this. We should do something about popups api.
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     });
     it('should work with clicking target=_blank and rel=noopener', async({page, server}) => {
@@ -381,7 +384,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     it('should work with relaxed search params match', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [request] = await Promise.all([
-        page.waitForRequest({ searchParams: { 'foo': ['bar', /^baz$/], 'bar': 'foo' } }),
+        page.waitForRequest({ searchParams: { 'foo': ['bar', /^baz$/], 'bar': 'foo' }, url: /\.png/ }),
         page.evaluate(() => {
           fetch('/digits/1.png?key=value&foo=something');
           fetch('/digits/2.png?foo=baz');
@@ -402,7 +405,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     it('should throw for incorrect searchParams match', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [error] = await Promise.all([
-        page.waitForRequest({ searchParams: { 'foo': 123 } }).catch(e => e),
+        page.waitForRequest({ searchParams: { 'foo': 123 }, url: /\.png/ }).catch(e => e),
         page.evaluate(() => {
           fetch('/digits/1.png?foo=bar');
         })

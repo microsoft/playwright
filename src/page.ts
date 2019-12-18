@@ -174,8 +174,7 @@ export class Page extends EventEmitter {
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
-    const context = await this.mainFrame().executionContext();
-    return context.evaluateHandle(pageFunction, ...args as any);
+    return this.mainFrame().evaluateHandle(pageFunction, ...args as any);
   }
 
   $eval: types.$Eval = (selector, pageFunction, ...args) => {

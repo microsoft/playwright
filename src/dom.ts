@@ -87,6 +87,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._page = context.frame()._page;
   }
 
+  frame(): frames.Frame {
+    return this._context.frame();
+  }
+
   asElement(): ElementHandle<T> | null {
     return this;
   }

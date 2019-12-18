@@ -5,7 +5,7 @@ export { TimeoutError } from '../errors';
 export { Browser } from './Browser';
 export { BrowserContext } from '../browserContext';
 export { BrowserFetcher } from '../browserFetcher';
-export { ExecutionContext, JSHandle } from '../javascript';
+export { JSHandle } from '../javascript';
 export { ElementHandle } from '../dom';
 export { Frame } from '../frames';
 export { Mouse, Keyboard } from '../input';

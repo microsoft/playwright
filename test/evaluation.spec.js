@@ -83,7 +83,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         location.reload();
         return new Promise(() => {});
       }).catch(e => error = e);
-      expect(error.message).toContain('Protocol error');
+      expect(error.message).toContain('navigation');
     });
     it('should await promise', async({page, server}) => {
       const result = await page.evaluate(() => Promise.resolve(8 * 7));
@@ -227,13 +227,15 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(result).toBe(true);
     });
     it('should throw a nice error after a navigation', async({page, server}) => {
-      const executionContext = await page.mainFrame().executionContext();
-
+      const errorPromise = page.evaluate(() => new Promise(f => window.__resolve = f)).catch(e => e);
       await Promise.all([
         page.waitForNavigation(),
-        executionContext.evaluate(() => window.location.reload())
+        page.evaluate(() => {
+          window.location.reload();
+          setTimeout(() => window.__resolve(42), 1000);
+        })
       ]);
-      const error = await executionContext.evaluate(() => null).catch(e => e);
+      const error = await errorPromise;
       expect(error.message).toContain('navigation');
     });
     it.skip(FFOX)('should not throw an error when evaluation does a navigation', async({page, server}) => {
