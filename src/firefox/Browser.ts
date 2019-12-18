@@ -26,11 +26,10 @@ import * as types from '../types';
 import { FrameManager } from './FrameManager';
 import { Firefox } from './features/firefox';
 import * as network from '../network';
-import { BrowserContext, BrowserInterface } from '../browserContext';
+import { BrowserContext, BrowserInterface, BrowserContextOptions } from '../browserContext';
 
 export class Browser extends EventEmitter implements BrowserInterface {
   _connection: Connection;
-  _defaultViewport: types.Viewport;
   private _process: import('child_process').ChildProcess;
   private _closeCallback: () => Promise<void>;
   _targets: Map<string, Target>;
@@ -39,27 +38,26 @@ export class Browser extends EventEmitter implements BrowserInterface {
   private _eventListeners: RegisteredListener[];
   readonly firefox: Firefox;
 
-  static async create(connection: Connection, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
+  static async create(connection: Connection, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
     const {browserContextIds} = await connection.send('Target.getBrowserContexts');
-    const browser = new Browser(connection, browserContextIds, defaultViewport, process, closeCallback);
+    const browser = new Browser(connection, browserContextIds, process, closeCallback);
     await connection.send('Target.enable');
     return browser;
   }
 
-  constructor(connection: Connection, browserContextIds: Array<string>, defaultViewport: types.Viewport | null, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
+  constructor(connection: Connection, browserContextIds: Array<string>, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
     super();
     this._connection = connection;
-    this._defaultViewport = defaultViewport;
     this._process = process;
     this._closeCallback = closeCallback;
     this.firefox = new Firefox(this);
 
     this._targets = new Map();
 
-    this._defaultContext = this._createBrowserContext(null);
+    this._defaultContext = this._createBrowserContext(null, {});
     this._contexts = new Map();
     for (const browserContextId of browserContextIds)
-      this._contexts.set(browserContextId, this._createBrowserContext(browserContextId));
+      this._contexts.set(browserContextId, this._createBrowserContext(browserContextId, {}));
 
     this._connection.on(ConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
 
@@ -78,9 +76,12 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return !this._connection._closed;
   }
 
-  async newContext(): Promise<BrowserContext> {
+  async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     const {browserContextId} = await this._connection.send('Target.createBrowserContext');
-    const context = this._createBrowserContext(browserContextId);
+    // TODO: move ignoreHTTPSErrors to browser context level.
+    if (options.ignoreHTTPSErrors)
+      await this._connection.send('Browser.setIgnoreHTTPSErrors', { enabled: true });
+    const context = this._createBrowserContext(browserContextId, options);
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -89,7 +90,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return [this._defaultContext, ...Array.from(this._contexts.values())];
   }
 
-  defaultBrowserContext() {
+  defaultContext() {
     return this._defaultContext;
   }
 
@@ -114,7 +115,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     const existingTarget = this._allTargets().find(predicate);
     if (existingTarget)
       return existingTarget;
-    let resolve;
+    let resolve: (t: Target) => void;
     const targetPromise = new Promise<Target>(x => resolve = x);
     this.on('targetchanged', check);
     try {
@@ -131,8 +132,9 @@ export class Browser extends EventEmitter implements BrowserInterface {
     }
   }
 
-  newPage(): Promise<Page> {
-    return this._defaultContext.newPage();
+  async newPage(options?: BrowserContextOptions): Promise<Page> {
+    const context = await this.newContext(options);
+    return context._createOwnerPage();
   }
 
   async pages() {
@@ -173,7 +175,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     await this._closeCallback();
   }
 
-  _createBrowserContext(browserContextId: string | null): BrowserContext {
+  _createBrowserContext(browserContextId: string | null, options: BrowserContextOptions): BrowserContext {
     const isIncognito = !!browserContextId;
     const context = new BrowserContext({
       contextPages: async (): Promise<Page[]> => {
@@ -187,7 +189,21 @@ export class Browser extends EventEmitter implements BrowserInterface {
           browserContextId: browserContextId || undefined
         });
         const target = this._targets.get(targetId);
-        return await target.page();
+        const page = await target.page();
+        const session = (page._delegate as FrameManager)._session;
+        const promises: Promise<any>[] = [];
+        if (options.viewport)
+          promises.push(page._delegate.setViewport(options.viewport));
+        if (options.bypassCSP)
+          promises.push(session.send('Page.setBypassCSP', { enabled: true }));
+        if (options.javaScriptEnabled === false)
+          promises.push(session.send('Page.setJavascriptEnabled', { enabled: false }));
+        if (options.userAgent)
+          promises.push(session.send('Page.setUserAgent', { userAgent: options.userAgent }));
+        if (options.mediaType || options.colorScheme)
+          promises.push(session.send('Page.setEmulatedMedia', { type: options.mediaType, colorScheme: options.colorScheme }));
+        Promise.all(promises);
+        return page;
       },
 
       closeContext: async (): Promise<void> => {
@@ -211,7 +227,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
       setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._connection.send('Browser.setCookies', { browserContextId: browserContextId || undefined, cookies });
       },
-    }, this, isIncognito);
+    }, this, isIncognito, options);
     (context as any).permissions = new Permissions(this._connection, browserContextId);
     return context;
   }
@@ -267,8 +283,6 @@ export class Target {
         const page = this._frameManager._page;
         session.once(JugglerSessionEvents.Disconnected, () => page._didDisconnect());
         await this._frameManager._initialize();
-        if (this._browser._defaultViewport)
-          await page.setViewport(this._browser._defaultViewport);
         f(page);
       });
     }

@@ -45,46 +45,6 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
-      it('should set the default viewport', async() => {
-        const options = Object.assign({}, defaultBrowserOptions, {
-          defaultViewport: {
-            width: 456,
-            height: 789
-          }
-        });
-        const browser = await playwright.launch(options);
-        const page = await browser.newPage();
-        expect(await page.evaluate('window.innerWidth')).toBe(456);
-        expect(await page.evaluate('window.innerHeight')).toBe(789);
-        await browser.close();
-      });
-      it('should disable the default viewport', async() => {
-        const options = Object.assign({}, defaultBrowserOptions, {
-          defaultViewport: null
-        });
-        const browser = await playwright.launch(options);
-        const page = await browser.newPage();
-        expect(page.viewport()).toBe(null);
-        await browser.close();
-      });
-      it('should take fullPage screenshots when defaultViewport is null', async({server}) => {
-        const options = Object.assign({}, defaultBrowserOptions, {
-          defaultViewport: null
-        });
-        const browser = await playwright.launch(options);
-        const page = await browser.newPage();
-        await page.goto(server.PREFIX + '/grid.html');
-        const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
-        const screenshot = await page.screenshot({
-          fullPage: true
-        });
-        expect(screenshot).toBeInstanceOf(Buffer);
-
-        const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
-        expect(sizeBefore.width).toBe(sizeAfter.width);
-        expect(sizeBefore.height).toBe(sizeAfter.height);
-        await browser.close();
-      });
       it('should have default URL when launching browser', async function() {
         const browser = await playwright.launch(defaultBrowserOptions);
         const pages = (await browser.pages()).map(page => page.url());

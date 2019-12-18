@@ -71,13 +71,13 @@ module.exports.addTests = function({testRunner, expect, playwright, defaultBrows
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       // Write a cookie in headful chrome
       const headfulBrowser = await playwright.launch(Object.assign({userDataDir}, headfulOptions));
-      const headfulPage = await headfulBrowser.newPage();
+      const headfulPage = await headfulBrowser.defaultContext().newPage();
       await headfulPage.goto(server.EMPTY_PAGE);
       await headfulPage.evaluate(() => document.cookie = 'foo=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
       await headfulBrowser.close();
       // Read the cookie from headless chrome
       const headlessBrowser = await playwright.launch(Object.assign({userDataDir}, headlessOptions));
-      const headlessPage = await headlessBrowser.newPage();
+      const headlessPage = await headlessBrowser.defaultContext().newPage();
       await headlessPage.goto(server.EMPTY_PAGE);
       const cookie = await headlessPage.evaluate(() => document.cookie);
       await headlessBrowser.close();

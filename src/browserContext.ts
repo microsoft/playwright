@@ -17,14 +17,16 @@
 
 import { assert } from './helper';
 import { Page } from './page';
+import * as input from './input';
 import * as network from './network';
+import * as types from './types';
 import * as childProcess from 'child_process';
 
 export interface BrowserInterface {
   browserContexts(): BrowserContext[];
   close(): Promise<void>;
   newContext(): Promise<BrowserContext>;
-  defaultBrowserContext(): BrowserContext;
+  defaultContext(): BrowserContext;
   newPage(): Promise<Page>;
   pages(): Promise<Page[]>;
   process(): childProcess.ChildProcess | null;
@@ -41,15 +43,30 @@ export interface BrowserDelegate {
   setContextCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
 }
 
+export type BrowserContextOptions = {
+  viewport?: types.Viewport | null,
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  mediaType?: input.MediaType,
+  colorScheme?: input.ColorScheme,
+  userAgent?: string,
+  timezoneId?: string
+};
+
 export class BrowserContext {
   private readonly _delegate: BrowserDelegate;
   private readonly _browser: BrowserInterface;
   private readonly _isIncognito: boolean;
+  readonly _options: BrowserContextOptions;
 
-  constructor(delegate: BrowserDelegate, browser: BrowserInterface, isIncognito: boolean) {
+  constructor(delegate: BrowserDelegate, browser: BrowserInterface, isIncognito: boolean, options: BrowserContextOptions) {
     this._delegate = delegate;
     this._browser = browser;
     this._isIncognito = isIncognito;
+    this._options = options;
+    if (!options.viewport && options.viewport !== null)
+      options.viewport = { width: 800, height: 600 };
   }
 
   async pages(): Promise<Page[]> {
@@ -62,6 +79,12 @@ export class BrowserContext {
 
   async newPage(): Promise<Page> {
     return this._delegate.createPageInContext();
+  }
+
+  async _createOwnerPage(): Promise<Page> {
+    const page = await this._delegate.createPageInContext();
+    page._isContextOwner = true;
+    return page;
   }
 
   browser(): BrowserInterface {

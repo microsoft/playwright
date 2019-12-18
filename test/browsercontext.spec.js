@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 
-module.exports.addTests = function({testRunner, expect}) {
+module.exports.addTests = function({testRunner, expect, playwright, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -29,7 +29,7 @@ module.exports.addTests = function({testRunner, expect}) {
       expect(defaultContext.isIncognito()).toBe(false);
       let error = null;
       await defaultContext.close().catch(e => error = e);
-      expect(browser.defaultBrowserContext()).toBe(defaultContext);
+      expect(browser.defaultContext()).toBe(defaultContext);
       expect(error.message).toContain('cannot be closed');
     });
     it('should create new incognito context', async function({browser, server}) {
@@ -106,6 +106,162 @@ module.exports.addTests = function({testRunner, expect}) {
         context2.close()
       ]);
       expect(browser.browserContexts().length).toBe(1);
+    });
+    it('should set the default viewport', async({ newPage }) => {
+      const page = await newPage({ viewport: { width: 456, height: 789 } });
+      expect(await page.evaluate('window.innerWidth')).toBe(456);
+      expect(await page.evaluate('window.innerHeight')).toBe(789);
+    });
+    it('should take fullPage screenshots when default viewport is null', async({server, newPage}) => {
+      const page = await newPage({ viewport: null });
+      await page.goto(server.PREFIX + '/grid.html');
+      const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
+      const screenshot = await page.screenshot({
+        fullPage: true
+      });
+      expect(screenshot).toBeInstanceOf(Buffer);
+
+      const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
+      expect(sizeBefore.width).toBe(sizeAfter.width);
+      expect(sizeBefore.height).toBe(sizeAfter.height);
+    });
+  });
+
+  describe('BrowserContext({setUserAgent})', function() {
+    it('should work', async({newPage, server}) => {
+      {
+        const page = await newPage();
+        expect(await page.evaluate(() => navigator.userAgent)).toContain('Mozilla');
+      }
+      {
+        const page = await newPage({ userAgent: 'foobar' });
+        const [request] = await Promise.all([
+          server.waitForRequest('/empty.html'),
+          page.goto(server.EMPTY_PAGE),
+        ]);
+        expect(request.headers['user-agent']).toBe('foobar');  
+      }
+    });
+    it('should work for subframes', async({newPage, server}) => {
+      {
+        const page = await newPage();
+        expect(await page.evaluate(() => navigator.userAgent)).toContain('Mozilla');
+      }
+      {
+        const page = await newPage({ userAgent: 'foobar' });
+        const [request] = await Promise.all([
+          server.waitForRequest('/empty.html'),
+          utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
+        ]);
+        expect(request.headers['user-agent']).toBe('foobar');  
+      }
+    });
+    it('should emulate device user-agent', async({newPage, server}) => {
+      {
+        const page = await newPage();
+        await page.goto(server.PREFIX + '/mobile.html');
+        expect(await page.evaluate(() => navigator.userAgent)).not.toContain('iPhone');
+      }
+      {
+        const page = await newPage({ userAgent: playwright.devices['iPhone 6'].userAgent });
+        await page.goto(server.PREFIX + '/mobile.html');
+        expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
+      }
+    });
+  });
+
+  describe('BrowserContext({bypassCSP})', function() {
+    it('should bypass CSP meta tag', async({newPage, server}) => {
+      // Make sure CSP prohibits addScriptTag.
+      {
+        const page = await newPage();
+        await page.goto(server.PREFIX + '/csp.html');
+        await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
+        expect(await page.evaluate(() => window.__injected)).toBe(undefined);
+      }
+
+      // By-pass CSP and try one more time.
+      {
+        const page = await newPage({ bypassCSP: true });
+        await page.goto(server.PREFIX + '/csp.html');
+        await page.addScriptTag({content: 'window.__injected = 42;'});
+        expect(await page.evaluate(() => window.__injected)).toBe(42);
+      }
+    });
+
+    it('should bypass CSP header', async({newPage, server}) => {
+      // Make sure CSP prohibits addScriptTag.
+      server.setCSP('/empty.html', 'default-src "self"');
+
+      {
+        const page = await newPage();
+        await page.goto(server.EMPTY_PAGE);
+        await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
+        expect(await page.evaluate(() => window.__injected)).toBe(undefined);
+      }
+
+      // By-pass CSP and try one more time.
+      {
+        const page = await newPage({ bypassCSP: true });
+        await page.goto(server.EMPTY_PAGE);
+        await page.addScriptTag({content: 'window.__injected = 42;'});
+        expect(await page.evaluate(() => window.__injected)).toBe(42);
+      }
+    });
+
+    it('should bypass after cross-process navigation', async({newPage, server}) => {
+      const page = await newPage({ bypassCSP: true });
+      await page.goto(server.PREFIX + '/csp.html');
+      await page.addScriptTag({content: 'window.__injected = 42;'});
+      expect(await page.evaluate(() => window.__injected)).toBe(42);
+
+      await page.goto(server.CROSS_PROCESS_PREFIX + '/csp.html');
+      await page.addScriptTag({content: 'window.__injected = 42;'});
+      expect(await page.evaluate(() => window.__injected)).toBe(42);
+    });
+    it('should bypass CSP in iframes as well', async({newPage, server}) => {
+      // Make sure CSP prohibits addScriptTag in an iframe.
+      {
+        const page = await newPage();
+        await page.goto(server.EMPTY_PAGE);
+        const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
+        await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
+        expect(await frame.evaluate(() => window.__injected)).toBe(undefined);
+      }
+
+      // By-pass CSP and try one more time.
+      {
+        const page = await newPage({ bypassCSP: true });
+        await page.goto(server.EMPTY_PAGE);
+        const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
+        await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
+        expect(await frame.evaluate(() => window.__injected)).toBe(42);
+      }
+    });
+  });
+
+  describe('BrowserContext({javaScriptEnabled})', function() {
+    it('should work', async({newPage}) => {
+      {
+        const page = await newPage({ javaScriptEnabled: false });
+        await page.goto('data:text/html, <script>var something = "forbidden"</script>');
+        let error = null;
+        await page.evaluate('something').catch(e => error = e);
+        if (WEBKIT)
+          expect(error.message).toContain('Can\'t find variable: something');
+        else
+          expect(error.message).toContain('something is not defined');
+      }
+
+      {
+        const page = await newPage();
+        await page.goto('data:text/html, <script>var something = "forbidden"</script>');
+        expect(await page.evaluate('something')).toBe('forbidden');
+      }
+    });
+    it('should be able to navigate after disabling javascript', async({newPage, server}) => {
+      const page = await newPage({ javaScriptEnabled: false });
+      await page.goto(server.EMPTY_PAGE);
     });
   });
 };

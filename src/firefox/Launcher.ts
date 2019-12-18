@@ -69,8 +69,6 @@ export class Launcher {
       handleSIGHUP = true,
       handleSIGINT = true,
       handleSIGTERM = true,
-      ignoreHTTPSErrors = false,
-      defaultViewport = {width: 800, height: 600},
       slowMo = 0,
       timeout = 30000,
     } = options;
@@ -129,9 +127,7 @@ export class Launcher {
       const url = match[1];
       const transport = await WebSocketTransport.create(url);
       connection = new Connection(url, transport, slowMo);
-      const browser = await Browser.create(connection, defaultViewport, launched.process, launched.gracefullyClose);
-      if (ignoreHTTPSErrors)
-        await connection.send('Browser.setIgnoreHTTPSErrors', {enabled: true});
+      const browser = await Browser.create(connection, launched.process, launched.gracefullyClose);
       await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
@@ -144,16 +140,11 @@ export class Launcher {
     const {
       browserWSEndpoint,
       slowMo = 0,
-      defaultViewport = {width: 800, height: 600},
-      ignoreHTTPSErrors = false,
     } = options;
     let connection = null;
     const transport = await WebSocketTransport.create(browserWSEndpoint);
     connection = new Connection(browserWSEndpoint, transport, slowMo);
-    const browser = await Browser.create(connection, defaultViewport, null, () => connection.send('Browser.close').catch(debugError));
-    if (ignoreHTTPSErrors)
-      await connection.send('Browser.setIgnoreHTTPSErrors', {enabled: true});
-    return browser;
+    return await Browser.create(connection, null, () => connection.send('Browser.close').catch(debugError));
   }
 
   executablePath(): string {

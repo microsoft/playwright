@@ -406,5 +406,5 @@ export type FilePayload = {
 
 export type MediaType = 'screen' | 'print';
 export const mediaTypes: Set<MediaType> = new Set(['screen', 'print']);
-export type MediaColorScheme = 'dark' | 'light' | 'no-preference';
-export const mediaColorSchemes: Set<MediaColorScheme> = new Set(['dark', 'light', 'no-preference']);
+export type ColorScheme = 'dark' | 'light' | 'no-preference';
+export const mediaColorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-preference']);

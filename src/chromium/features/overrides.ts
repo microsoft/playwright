@@ -15,16 +15,26 @@
  * limitations under the License.
  */
 
-import { CDPSession } from '../Connection';
+import { BrowserContext } from '../../browserContext';
+import { FrameManager } from '../FrameManager';
+import { Page } from '../api';
 
 export class Overrides {
-  private _client: CDPSession;
+  private _context: BrowserContext;
+  private _geolocation: { longitude?: number; latitude?: number; accuracy?: number; } | null = null;
 
-  constructor(client: CDPSession) {
-    this._client = client;
+  constructor(context: BrowserContext) {
+    this._context = context;
   }
 
-  async setGeolocation(options: { longitude: number; latitude: number; accuracy: (number | undefined); }) {
+  async setGeolocation(options: { longitude?: number; latitude?: number; accuracy?: (number | undefined); } | null) {
+    if (!options) {
+      for (const page of await this._context.pages())
+        await (page._delegate as FrameManager)._client.send('Emulation.clearGeolocationOverride', {});
+      this._geolocation = null;
+      return;
+    }
+
     const { longitude, latitude, accuracy = 0} = options;
     if (longitude < -180 || longitude > 180)
       throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
@@ -32,16 +42,13 @@ export class Overrides {
       throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
     if (accuracy < 0)
       throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
-    await this._client.send('Emulation.setGeolocationOverride', {longitude, latitude, accuracy});
+    this._geolocation = { longitude, latitude, accuracy };
+    for (const page of await this._context.pages())
+      await (page._delegate as FrameManager)._client.send('Emulation.setGeolocationOverride', this._geolocation);
   }
 
-  async setTimezone(timezoneId: string | null) {
-    try {
-      await this._client.send('Emulation.setTimezoneOverride', {timezoneId: timezoneId || ''});
-    } catch (exception) {
-      if (exception.message.includes('Invalid timezone'))
-        throw new Error(`Invalid timezone ID: ${timezoneId}`);
-      throw exception;
-    }
+  async _applyOverrides(page: Page): Promise<void> {
+    if (this._geolocation)
+      await (page._delegate as FrameManager)._client.send('Emulation.setGeolocationOverride', this._geolocation);
   }
 }

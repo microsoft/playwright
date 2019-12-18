@@ -24,7 +24,6 @@ import * as frames from '../frames';
 
 export class NetworkManager {
   private _client: CDPSession;
-  private _ignoreHTTPSErrors: boolean;
   private _page: Page;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
@@ -37,9 +36,8 @@ export class NetworkManager {
   private _requestIdToInterceptionId = new Map<string, string>();
   private _eventListeners: RegisteredListener[];
 
-  constructor(client: CDPSession, ignoreHTTPSErrors: boolean, page: Page) {
+  constructor(client: CDPSession, page: Page) {
     this._client = client;
-    this._ignoreHTTPSErrors = ignoreHTTPSErrors;
     this._page = page;
 
     this._eventListeners = [
@@ -54,8 +52,6 @@ export class NetworkManager {
 
   async initialize() {
     await this._client.send('Network.enable');
-    if (this._ignoreHTTPSErrors)
-      await this._client.send('Security.setIgnoreCertificateErrors', {ignore: true});
   }
 
   dispose() {

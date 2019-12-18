@@ -81,14 +81,14 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   describe('Page.emulate', function() {
-    it.skip(WEBKIT)('should work', async({page, server}) => {
+    it.skip(WEBKIT)('should work', async({newPage, server}) => {
+      const page = await newPage({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
       await page.goto(server.PREFIX + '/mobile.html');
-      await page.emulate(iPhone);
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
       expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
     });
-    it.skip(WEBKIT)('should support clicking', async({page, server}) => {
-      await page.emulate(iPhone);
+    it.skip(WEBKIT)('should support clicking', async({newPage, server}) => {
+      const page = await newPage({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
       await page.evaluate(button => button.style.marginTop = '200px', button);
@@ -143,29 +143,32 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Overrides.setTimezone', function() {
-    it('should work', async({page, server}) => {
-      page.evaluate(() => {
-        globalThis.date = new Date(1479579154987);
-      });
-      await page.overrides.setTimezone('America/Jamaica');
-      expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
-
-      await page.overrides.setTimezone('Pacific/Honolulu');
-      expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
-
-      await page.overrides.setTimezone('America/Buenos_Aires');
-      expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
-
-      await page.overrides.setTimezone('Europe/Berlin');
-      expect(await page.evaluate(() => date.toString())).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
+  describe.skip(FFOX || WEBKIT)('BrowserContext({timezoneId})', function() {
+    it('should work', async ({ newPage }) => {
+      const func = () => new Date(1479579154987).toString();
+      {
+        const page = await newPage({ timezoneId: 'America/Jamaica' });
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
+      }
+      {
+        const page = await newPage({ timezoneId: 'Pacific/Honolulu' });
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
+      }
+      {
+        const page = await newPage({ timezoneId: 'America/Buenos_Aires' });
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
+      }
+      {
+        const page = await newPage({ timezoneId: 'Europe/Berlin' });
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
+      }
     });
 
-    it('should throw for invalid timezone IDs', async({page, server}) => {
+    it('should throw for invalid timezone IDs', async({newPage}) => {
       let error = null;
-      await page.overrides.setTimezone('Foo/Bar').catch(e => error = e);
+      await newPage({ timezoneId: 'Foo/Bar' }).catch(e => error = e);
       expect(error.message).toBe('Invalid timezone ID: Foo/Bar');
-      await page.overrides.setTimezone('Baz/Qux').catch(e => error = e);
+      await newPage({ timezoneId: 'Baz/Qux' }).catch(e => error = e);
       expect(error.message).toBe('Invalid timezone ID: Baz/Qux');
     });
   });
