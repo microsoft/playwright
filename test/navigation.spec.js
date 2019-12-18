@@ -141,10 +141,9 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2'});
       expect(response.status()).toBe(200);
     });
-    it.skip(WEBKIT)('should fail when navigating to bad url', async({page, server}) => {
+    it('should fail when navigating to bad url', async({page, server}) => {
       let error = null;
       await page.goto('asdfasdf').catch(e => error = e);
-      // FIXME: shows dialog in WebKit.
       if (CHROME || WEBKIT)
         expect(error.message).toContain('Cannot navigate to invalid URL');
       else
