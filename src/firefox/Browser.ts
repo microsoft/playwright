@@ -202,7 +202,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
           promises.push(session.send('Page.setUserAgent', { userAgent: options.userAgent }));
         if (options.mediaType || options.colorScheme)
           promises.push(session.send('Page.setEmulatedMedia', { type: options.mediaType, colorScheme: options.colorScheme }));
-        Promise.all(promises);
+        await Promise.all(promises);
         return page;
       },
 
