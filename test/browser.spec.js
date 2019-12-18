@@ -49,11 +49,5 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       const process = await browser.process();
       expect(process.pid).toBeGreaterThan(0);
     });
-    it.skip(WEBKIT || FFOX)('should not return child_process for remote browser', async function({browser}) {
-      const browserWSEndpoint = browser.chromium.wsEndpoint();
-      const remoteBrowser = await playwright.connect({browserWSEndpoint});
-      expect(remoteBrowser.process()).toBe(null);
-      remoteBrowser.disconnect();
-    });
   });
 };

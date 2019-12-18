@@ -149,7 +149,6 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
 
       // Page-level tests that are given a browser, a context and a page.
       // Each test is launched in a new browser context.
-      require('./browser.spec.js').addTests(testOptions);
       require('./click.spec.js').addTests(testOptions);
       require('./cookies.spec.js').addTests(testOptions);
       require('./dialog.spec.js').addTests(testOptions);
@@ -186,8 +185,15 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
     });
 
     // Browser-level tests that are given a browser.
+    require('./browser.spec.js').addTests(testOptions);
     require('./browsercontext.spec.js').addTests(testOptions);
     require('./ignorehttpserrors.spec.js').addTests(testOptions);
+    if (CHROME) {
+      require('./chromium/browser.spec.js').addTests(testOptions);
+    }
+    if (FFOX) {
+      require('./firefox/browser.spec.js').addTests(testOptions);
+    }
   });
 
   // Top-level tests that launch Browser themselves.
