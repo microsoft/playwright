@@ -32,7 +32,6 @@ const writeFileAsync = util.promisify(fs.writeFile);
 
 const DEFAULT_ARGS = [
   '-no-remote',
-  '-foreground',
 ];
 
 export class Launcher {
@@ -85,12 +84,12 @@ export class Launcher {
       firefoxArguments.push(...args);
 
     if (!firefoxArguments.includes('-juggler'))
-      firefoxArguments.push('-juggler', '0');
+      firefoxArguments.unshift('-juggler', '0');
 
     let temporaryProfileDir = null;
     if (!firefoxArguments.includes('-profile') && !firefoxArguments.includes('--profile')) {
       temporaryProfileDir = await createProfile();
-      firefoxArguments.push(`-profile`, temporaryProfileDir);
+      firefoxArguments.unshift(`-profile`, temporaryProfileDir);
     }
 
     let firefoxExecutable = executablePath;

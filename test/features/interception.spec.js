@@ -211,7 +211,8 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       const requests = [];
       page.on('request', request => {
         page.interception.continue(request);
-        requests.push(request);
+        if (!utils.isFavicon(request))
+          requests.push(request);
       });
       server.setRedirect('/non-existing-page.html', '/non-existing-page-2.html');
       server.setRedirect('/non-existing-page-2.html', '/non-existing-page-3.html');

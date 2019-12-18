@@ -107,7 +107,7 @@ export class FrameManager implements PageDelegate {
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
-    this._page._frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId, false);
+    this._page._frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId || '', false);
   }
 
   _onSameDocumentNavigation(params: Protocol.Page.sameDocumentNavigationPayload) {

@@ -98,8 +98,9 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         const pages = await browser.pages();
         expect(pages.length).toBe(1);
         const page = pages[0];
-        if (page.url() !== server.EMPTY_PAGE)
+        if (page.url() !== server.EMPTY_PAGE) {
           await page.waitForNavigation();
+        }
         expect(page.url()).toBe(server.EMPTY_PAGE);
         await browser.close();
       });
