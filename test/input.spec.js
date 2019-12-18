@@ -40,17 +40,25 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   describe('Page.waitForFileChooser', function() {
+    it('should emit event', async({page, server}) => {
+      await page.setContent(`<input type=file>`);
+      const [chooser] = await Promise.all([
+        new Promise(f => page.once('filechooser', f)),
+        page.click('input'),
+      ]);
+      expect(chooser).toBeTruthy();
+    });
     it('should work when file input is attached to DOM', async({page, server}) => {
       await page.setContent(`<input type=file>`);
       const [chooser] = await Promise.all([
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
         page.click('input'),
       ]);
       expect(chooser).toBeTruthy();
     });
     it('should work when file input is not attached to DOM', async({page, server}) => {
       const [chooser] = await Promise.all([
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
         page.evaluate(() => {
           const el = document.createElement('input');
           el.type = 'file';
@@ -61,24 +69,24 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should respect timeout', async({page, server}) => {
       let error = null;
-      await page.waitForFileChooser({timeout: 1}).catch(e => error = e);
+      await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should respect default timeout when there is no custom timeout', async({page, server}) => {
       page.setDefaultTimeout(1);
       let error = null;
-      await page.waitForFileChooser().catch(e => error = e);
+      await page.waitForEvent('filechooser').catch(e => error = e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should prioritize exact timeout over default timeout', async({page, server}) => {
       page.setDefaultTimeout(0);
       let error = null;
-      await page.waitForFileChooser({timeout: 1}).catch(e => error = e);
+      await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should work with no timeout', async({page, server}) => {
       const [chooser] = await Promise.all([
-        page.waitForFileChooser({timeout: 0}),
+        page.waitForEvent('filechooser', {timeout: 0}),
         page.evaluate(() => setTimeout(() => {
           const el = document.createElement('input');
           el.type = 'file';
@@ -90,19 +98,16 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it('should return the same file chooser when there are many watchdogs simultaneously', async({page, server}) => {
       await page.setContent(`<input type=file>`);
       const [fileChooser1, fileChooser2] = await Promise.all([
-        page.waitForFileChooser(),
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
+        page.waitForEvent('filechooser'),
         page.$eval('input', input => input.click()),
       ]);
       expect(fileChooser1 === fileChooser2).toBe(true);
     });
-  });
-
-  describe('Page.waitForFileChooser', function() {
     it('should accept single file', async({page, server}) => {
       await page.setContent(`<input type=file oninput='javascript:console.timeStamp()'>`);
       const [{ element }] = await Promise.all([
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
         page.click('input'),
       ]);
       await element.setInputFiles(FILE_TO_UPLOAD);
@@ -111,7 +116,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should be able to read selected file', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      page.waitForFileChooser().then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
+      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
       expect(await page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -123,13 +128,13 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should be able to reset selected files with empty file list', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      page.waitForFileChooser().then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
+      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
       expect(await page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
         return picker.files.length;
       })).toBe(1);
-      page.waitForFileChooser().then(({element}) => element.setInputFiles());
+      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles());
       expect(await page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -139,7 +144,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it('should not accept multiple files for single-file input', async({page, server}) => {
       await page.setContent(`<input type=file>`);
       const [{ element }] = await Promise.all([
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
         page.click('input'),
       ]);
       let error = null;
@@ -154,7 +159,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it('should work for single file pick', async({page, server}) => {
       await page.setContent(`<input type=file>`);
       const [{ multiple }] = await Promise.all([
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
         page.click('input'),
       ]);
       expect(multiple).toBe(false);
@@ -162,7 +167,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it('should work for "multiple"', async({page, server}) => {
       await page.setContent(`<input multiple type=file>`);
       const [{ multiple }] = await Promise.all([
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
         page.click('input'),
       ]);
       expect(multiple).toBe(true);
@@ -170,7 +175,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     it('should work for "webkitdirectory"', async({page, server}) => {
       await page.setContent(`<input multiple webkitdirectory type=file>`);
       const [{ multiple }] = await Promise.all([
-        page.waitForFileChooser(),
+        page.waitForEvent('filechooser'),
         page.click('input'),
       ]);
       expect(multiple).toBe(true);

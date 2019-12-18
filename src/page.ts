@@ -98,7 +98,6 @@ export class Page extends EventEmitter {
   readonly _state: PageState;
   private _pageBindings = new Map<string, Function>();
   readonly _screenshotter: Screenshotter;
-  private _fileChooserInterceptors = new Set<(chooser: FileChooser) => void>();
   readonly _frameManager: frames.FrameManager;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
@@ -138,28 +137,13 @@ export class Page extends EventEmitter {
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
-    if (!this._fileChooserInterceptors.size) {
+    const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
+    if (!this.listenerCount(Events.Page.FileChooser)) {
       await handle.dispose();
       return;
     }
-    const interceptors = Array.from(this._fileChooserInterceptors);
-    this._fileChooserInterceptors.clear();
-    const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
-    const fileChooser = { element: handle, multiple };
-    for (const interceptor of interceptors)
-      interceptor.call(null, fileChooser);
+    const fileChooser: FileChooser = { element: handle, multiple };
     this.emit(Events.Page.FileChooser, fileChooser);
-  }
-
-  async waitForFileChooser(options: types.TimeoutOptions = {}): Promise<FileChooser> {
-    const { timeout = this._timeoutSettings.timeout() } = options;
-    let callback;
-    const promise = new Promise<FileChooser>(x => callback = x);
-    this._fileChooserInterceptors.add(callback);
-    return helper.waitWithTimeout<FileChooser>(promise, 'waiting for file chooser', timeout).catch(e => {
-      this._fileChooserInterceptors.delete(callback);
-      throw e;
-    });
   }
 
   browser(): BrowserInterface {

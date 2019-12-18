@@ -17,7 +17,7 @@
 
 import { TargetSession } from './Connection';
 import { Page } from '../page';
-import { assert, helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';

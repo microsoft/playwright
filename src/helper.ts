@@ -125,7 +125,7 @@ class Helper {
     });
     if (timeout) {
       eventTimeout = setTimeout(() => {
-        rejectCallback(new TimeoutError('Timeout exceeded while waiting for event'));
+        rejectCallback(new TimeoutError(`Timeout exceeded while waiting for ${String(eventName)}`));
       }, timeout);
     }
     function cleanup() {
