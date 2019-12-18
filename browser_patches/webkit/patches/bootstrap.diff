@@ -1619,7 +1619,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..364dd6793f0f35134a302827a72f6c9b
      InspectorNetworkAgent(WebAgentContext&);
  
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2d0935e18 100644
+index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e601925d2 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1693,7 +1693,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2
  
  #define DISABLE_INSPECTOR_OVERRIDE_SETTING(name) \
      m_inspectedPage.settings().set##name##InspectorOverride(WTF::nullopt);
-@@ -412,14 +424,30 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -412,14 +424,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -1717,11 +1717,17 @@ index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2
 +    Frame* frame = frameId ? assertFrame(errorString, *frameId) : &m_inspectedPage.mainFrame();
 +    if (!frame)
 +        return;
++
++    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
++
++    if (!resourceRequest.url().isValid()) {
++        errorString = "Cannot navigate to invalid URL"_s;
++        return;
++    }
  
 -    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
 -    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 -    frame.loader().changeLocation(WTFMove(frameLoadRequest));
-+    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
@@ -1729,7 +1735,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -680,15 +708,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -680,15 +714,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -1751,7 +1757,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -763,6 +792,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -763,6 +798,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1764,7 +1770,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -817,6 +852,38 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -817,6 +858,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1803,7 +1809,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -988,4 +1055,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -988,4 +1061,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
