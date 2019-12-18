@@ -55,8 +55,7 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(requests.length).toBe(1);
       expect(requests[0].frame()).toBe(page.mainFrame());
     });
-    // FIXME: needs frameAttached event, otherwise it introduces too many hacks in the lib.
-    it.skip(WEBKIT)('should work for subframe navigation request', async({page, server}) => {
+    it('should work for subframe navigation request', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const requests = [];
       page.on('request', request => !utils.isFavicon(request) && requests.push(request));
