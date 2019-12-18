@@ -22,33 +22,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Frame.executionContext', function() {
-    it('should work', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-      expect(page.frames().length).toBe(2);
-      const [frame1, frame2] = page.frames();
-      const context1 = await frame1.executionContext();
-      const context2 = await frame2.executionContext();
-      expect(context1).toBeTruthy();
-      expect(context2).toBeTruthy();
-      expect(context1 !== context2).toBeTruthy();
-      expect(context1.frame()).toBe(frame1);
-      expect(context2.frame()).toBe(frame2);
-
-      await Promise.all([
-        context1.evaluate(() => window.a = 1),
-        context2.evaluate(() => window.a = 2)
-      ]);
-      const [a1, a2] = await Promise.all([
-        context1.evaluate(() => window.a),
-        context2.evaluate(() => window.a)
-      ]);
-      expect(a1).toBe(1);
-      expect(a2).toBe(2);
-    });
-  });
-
   describe('Frame.evaluateHandle', function() {
     it('should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
@@ -65,6 +38,24 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       let error = null;
       await frame1.evaluate(() => 7 * 8).catch(e => error = e);
       expect(error.message).toContain('Execution Context is not available in detached frame');
+    });
+    it('should be isolated between frames', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      expect(page.frames().length).toBe(2);
+      const [frame1, frame2] = page.frames();
+      expect(frame1 !== frame2).toBeTruthy();
+
+      await Promise.all([
+        frame1.evaluate(() => window.a = 1),
+        frame2.evaluate(() => window.a = 2)
+      ]);
+      const [a1, a2] = await Promise.all([
+        frame1.evaluate(() => window.a),
+        frame2.evaluate(() => window.a)
+      ]);
+      expect(a1).toBe(1);
+      expect(a2).toBe(2);
     });
   });
 

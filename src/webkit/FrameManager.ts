@@ -212,7 +212,7 @@ export class FrameManager implements PageDelegate {
     else if (type === 'timing')
       derivedType = 'timeEnd';
 
-    const mainFrameContext = await this._page.mainFrame().executionContext();
+    const mainFrameContext = await this._page.mainFrame()._mainContext();
     const handles = (parameters || []).map(p => {
       let context: dom.FrameExecutionContext | null = null;
       if (p.objectId) {

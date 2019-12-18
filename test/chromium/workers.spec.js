@@ -67,11 +67,11 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(log.args().length).toBe(4);
       expect(await (await log.args()[3].getProperty('origin')).jsonValue()).toBe('null');
     });
-    it('should have an execution context', async function({page}) {
+    it('should evaluate', async function({page}) {
       const workerCreatedPromise = new Promise(x => page.workers.once('workercreated', x));
       await page.evaluate(() => new Worker(`data:text/javascript,console.log(1)`));
       const worker = await workerCreatedPromise;
-      expect(await (await worker.executionContext()).evaluate('1+1')).toBe(2);
+      expect(await worker.evaluate('1+1')).toBe(2);
     });
     it('should report errors', async function({page}) {
       const errorPromise = new Promise(x => page.on('pageerror', x));

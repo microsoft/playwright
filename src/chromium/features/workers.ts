@@ -85,10 +85,6 @@ export class Worker extends EventEmitter {
     return this._url;
   }
 
-  async executionContext(): Promise<js.ExecutionContext> {
-    return this._executionContextPromise;
-  }
-
   evaluate: types.Evaluate = async (pageFunction, ...args) => {
     return (await this._executionContextPromise).evaluate(pageFunction, ...args as any);
   }

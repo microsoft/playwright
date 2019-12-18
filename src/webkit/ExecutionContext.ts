@@ -261,7 +261,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     for (const property of response.properties) {
       if (!property.enumerable)
         continue;
-      result.set(property.name, handle.executionContext()._createHandle(property.value));
+      result.set(property.name, handle._context._createHandle(property.value));
     }
     return result;
   }

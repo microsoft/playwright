@@ -106,7 +106,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     return context._createHandle(payload.result);
 
     function rewriteError(error) : never {
-      if (error.message.includes('Failed to find execution context with id'))
+      if (error.message.includes('Failed to find execution context with id') || error.message.includes('Execution context was destroyed!'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
       throw error;
     }
@@ -119,7 +119,7 @@ export class ExecutionContextDelegate implements js.ExecutionContextDelegate {
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, handle.executionContext()._createHandle(property.value));
+      result.set(property.name, handle._context._createHandle(property.value));
     return result;
   }
 

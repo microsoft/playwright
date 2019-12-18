@@ -354,10 +354,6 @@ export class Frame {
     return this._context('utility');
   }
 
-  executionContext(): Promise<dom.FrameExecutionContext> {
-    return this._mainContext();
-  }
-
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     const context = await this._mainContext();
     return context.evaluateHandle(pageFunction, ...args as any);
@@ -632,7 +628,7 @@ export class Frame {
     const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
     const context = await this._utilityContext();
     const adoptedValues = await Promise.all(values.map(async value => {
-      if (value instanceof dom.ElementHandle && value.executionContext() !== context) {
+      if (value instanceof dom.ElementHandle && value._context !== context) {
         const adopted = this._page._delegate.adoptElementHandle(value, context);
         toDispose.push(adopted);
         return adopted;

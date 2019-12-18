@@ -28,7 +28,7 @@ export class ConsoleMessage {
 
   text(): string {
     if (this._text === undefined)
-      this._text = this._args.map(arg => arg.executionContext()._delegate.handleToString(arg, false /* includeType */)).join(' ');
+      this._text = this._args.map(arg => arg._context._delegate.handleToString(arg, false /* includeType */)).join(' ');
     return this._text;
   }
 
