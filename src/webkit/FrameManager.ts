@@ -424,7 +424,9 @@ export class FrameManager implements PageDelegate {
     const result = await this._session.send('DOM.resolveNode', {
       objectId: toRemoteObject(handle).objectId,
       executionContextId: (to._delegate as ExecutionContextDelegate)._contextId
-    });
+    }).catch(debugError);
+    if (!result || result.object.subtype === 'null')
+      throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object) as dom.ElementHandle<T>;
   }
 }

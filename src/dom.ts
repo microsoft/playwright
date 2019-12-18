@@ -25,6 +25,33 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return this._frame;
   }
 
+  async _evaluate(returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
+    const needsAdoption = (value: any): boolean => {
+      return typeof value === 'object' && value instanceof ElementHandle && value._context !== this;
+    };
+
+    if (!args.some(needsAdoption)) {
+      // Only go through asynchronous calls if required.
+      return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
+    }
+
+    const toDispose: Promise<ElementHandle>[] = [];
+    const adopted = await Promise.all(args.map(async arg => {
+      if (!needsAdoption(arg))
+        return arg;
+      const adopted = this._frame._page._delegate.adoptElementHandle(arg, this);
+      toDispose.push(adopted);
+      return adopted;
+    }));
+    let result;
+    try {
+      result = await this._delegate.evaluate(this, returnByValue, pageFunction, ...adopted);
+    } finally {
+      await Promise.all(toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose())));
+    }
+    return result;
+  }
+
   _createHandle(remoteObject: any): js.JSHandle | null {
     if (this._frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this, remoteObject);
