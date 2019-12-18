@@ -36,15 +36,6 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
     });
 	});
 
-  describe('Browser.process', function() {
-    fit('should not return child_process for remote browser', async function({browser}) {
-      const browserWSEndpoint = browser.chromium.wsEndpoint();
-      const remoteBrowser = await playwright.connect({browserWSEndpoint});
-      expect(remoteBrowser.process()).toBe(null);
-      remoteBrowser.disconnect();
-    });
-  });
-
 	describe('Target', function() {
     it('Chromium.targets should return all of the targets', async({page, server, browser}) => {
       // The pages will be the testing page and the original newtab page
