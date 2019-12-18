@@ -761,7 +761,7 @@ index 0000000000000000000000000000000000000000..60515155c222d3ead52f4e4905017e37
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8213f1360f601bc9e64c0949f477b4..f5bdf41aad83ae35b33294c5702f41acbb81c55d 100644
+index 367d1f235a8213f1360f601bc9e64c0949f477b4..4c16f864d99d7959765fc7f68a4d54d454731ddd 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -805,7 +805,7 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..f5bdf41aad83ae35b33294c5702f41ac
          }
      ],
      "commands": [
-@@ -127,11 +161,20 @@
+@@ -127,11 +161,21 @@
                  { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
              ]
          },
@@ -823,11 +823,12 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..f5bdf41aad83ae35b33294c5702f41ac
              "parameters": [
 -                { "name": "url", "type": "string", "description": "URL to navigate the page to." }
 +                { "name": "url", "type": "string", "description": "URL to navigate the page to." },
-+                { "name": "frameId", "$ref": "Network.FrameId", "optional": true, "description": "Id of the frame to navigate."}
++                { "name": "frameId", "$ref": "Network.FrameId", "optional": true, "description": "Id of the frame to navigate."},
++                { "name": "referrer", "type": "string", "optional": true, "description": "Referrer URL." }
              ]
          },
          {
-@@ -288,19 +331,64 @@
+@@ -288,19 +332,64 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -894,7 +895,7 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..f5bdf41aad83ae35b33294c5702f41ac
              ]
          },
          {
-@@ -310,6 +398,14 @@
+@@ -310,6 +399,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -909,7 +910,7 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..f5bdf41aad83ae35b33294c5702f41ac
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -346,12 +442,36 @@
+@@ -346,12 +443,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1562,8 +1563,63 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Frame;
  class Page;
  class SecurityOrigin;
+diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
+index ca8f169d18a697a4dea405c933398e67feef01c6..539263dd036da49441df8bcb98242d555c157428 100644
+--- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
++++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
+@@ -99,6 +99,11 @@ using namespace Inspector;
+ 
+ namespace {
+ 
++String inspectorInitiatorPrefix()
++{
++    return "InspectorPageAgent.navigate referrer:"_s;
++}
++
+ class InspectorThreadableLoaderClient final : public ThreadableLoaderClient {
+     WTF_MAKE_NONCOPYABLE(InspectorThreadableLoaderClient);
+ public:
+@@ -437,6 +442,13 @@ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLo
+     for (auto& entry : m_extraRequestHeaders)
+         request.setHTTPHeaderField(entry.key, entry.value);
+ 
++    if (request.initiatorIdentifier().startsWith(inspectorInitiatorPrefix())) {
++        String referrer = request.initiatorIdentifier().substring(inspectorInitiatorPrefix().length());
++        if (!referrer.isEmpty())
++            request.setHTTPReferrer(referrer);
++        request.setInitiatorIdentifier(String());
++    }
++
+     auto protocolResourceType = InspectorPageAgent::resourceTypeJSON(type);
+ 
+     Document* document = loader && loader->frame() ? loader->frame()->document() : nullptr;
+@@ -1292,6 +1304,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
+     results = ContentSearchUtilities::searchInTextByLines(resourceData->content(), query, caseSensitive, isRegex);
+ }
+ 
++String InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(const String& referrer)
++{
++    return inspectorInitiatorPrefix() + referrer;
++}
++
+ void InspectorNetworkAgent::mainFrameNavigated(DocumentLoader& loader)
+ {
+     m_resourcesData->clear(loaderIdentifier(&loader));
+diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
+index a68f84520736977c8b9216616c5a178fbf5275d6..364dd6793f0f35134a302827a72f6c9b0bd388cd 100644
+--- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
++++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
+@@ -125,6 +125,8 @@ public:
+     void searchOtherRequests(const JSC::Yarr::RegularExpression&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>&);
+     void searchInRequest(ErrorString&, const String& requestId, const String& query, bool caseSensitive, bool isRegex, RefPtr<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>&);
+ 
++    static String createInitiatorIdentifierForInspectorNavigation(const String& referrer);
++
+ protected:
+     InspectorNetworkAgent(WebAgentContext&);
+ 
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190a710a611 100644
+index 01edd0060de362c1ab7b702475ae83822279a800..2a7254f577b2189cb1c3b2d9b0b04cd2d0935e18 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1637,7 +1693,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190
  
  #define DISABLE_INSPECTOR_OVERRIDE_SETTING(name) \
      m_inspectedPage.settings().set##name##InspectorOverride(WTF::nullopt);
-@@ -412,14 +424,28 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -412,14 +424,30 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -1654,7 +1710,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190
 +        errorString = "Failed to go forward"_s;
 +}
 +
-+void InspectorPageAgent::navigate(ErrorString& errorString, const String& url, const String* frameId)
++void InspectorPageAgent::navigate(ErrorString& errorString, const String& url, const String* frameId, const String* referrer)
  {
      UserGestureIndicator indicator { ProcessingUserGesture };
 -    Frame& frame = m_inspectedPage.mainFrame();
@@ -1666,12 +1722,14 @@ index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190
 -    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 -    frame.loader().changeLocation(WTFMove(frameLoadRequest));
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
++    if (referrer)
++        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 +    frame->loader().changeLocation(WTFMove(frameLoadRequest));
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -680,15 +706,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -680,15 +708,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -1693,7 +1751,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -763,6 +790,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -763,6 +792,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1706,7 +1764,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -817,6 +850,38 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -817,6 +852,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1745,7 +1803,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -988,4 +1053,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -988,4 +1055,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2238,7 +2296,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..19d0b3acf2b2f75ac65f00df4e9a9190
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..9954be9e35ab21d056484f3707d092d7d526b79b 100644
+index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..1d5da13a362e64d0cb03955f763f77fed3420684 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2264,7 +2322,7 @@ index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..9954be9e35ab21d056484f3707d092d7
 -    void navigate(ErrorString&, const String& url) override;
 +    void goBack(ErrorString&) override;
 +    void goForward(ErrorString&) override;
-+    void navigate(ErrorString&, const String& url, const String* frameId) override;
++    void navigate(ErrorString&, const String& url, const String* frameId, const String* referrer) override;
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
@@ -2491,7 +2549,7 @@ index 54a00e05828fbe10d7c69facf69bf0c302687786..df0aa6dbd784813514f59bf8c37d8370
  
      Page& m_inspectedPage;
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index 0f1f281a594f7d3161e45403339841cacdd38f4f..d3d08f344a270df5cc342b1824b93912f408ad92 100644
+index 0f1f281a594f7d3161e45403339841cacdd38f4f..72d9bc5fdbf9f0271e6e1488d124efc5848bf294 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1203,6 +1203,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -2502,7 +2560,16 @@ index 0f1f281a594f7d3161e45403339841cacdd38f4f..d3d08f344a270df5cc342b1824b93912
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client.dispatchDidPopStateWithinPage();
-@@ -3205,6 +3206,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
+@@ -1388,6 +1389,8 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
+ 
+     ASSERT(newLoadType != FrameLoadType::Same);
+ 
++    request.setInitiatorIdentifier(frameLoadRequest.resourceRequest().initiatorIdentifier());
++
+     // The search for a target frame is done earlier in the case of form submission.
+     Frame* targetFrame = isFormSubmission ? nullptr : findFrameForNavigation(effectiveFrameName);
+     if (targetFrame && targetFrame != &m_frame) {
+@@ -3205,6 +3208,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
      checkCompleted();
      if (m_frame.page())
          checkLoadComplete();
@@ -2511,7 +2578,7 @@ index 0f1f281a594f7d3161e45403339841cacdd38f4f..d3d08f344a270df5cc342b1824b93912
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3971,9 +3974,6 @@ String FrameLoader::referrer() const
+@@ -3971,9 +3976,6 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
@@ -2521,7 +2588,7 @@ index 0f1f281a594f7d3161e45403339841cacdd38f4f..d3d08f344a270df5cc342b1824b93912
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
      for (auto& world : worlds)
-@@ -3982,13 +3982,12 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+@@ -3982,13 +3984,12 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {

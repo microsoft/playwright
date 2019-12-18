@@ -190,7 +190,7 @@ export class FrameManager implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
-    await this._session.send('Page.navigate', { url, frameId: frame._id });
+    await this._session.send('Page.navigate', { url, frameId: frame._id, referrer });
     return {};  // We cannot get loaderId of cross-process navigation in advance.
   }
 
