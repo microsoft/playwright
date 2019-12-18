@@ -25,9 +25,9 @@ import { Page } from '../page';
 import { FrameManager } from './FrameManager';
 import { Firefox } from './features/firefox';
 import * as network from '../network';
-import { BrowserContext, BrowserInterface, BrowserContextOptions } from '../browserContext';
+import { BrowserContext, BrowserContextOptions } from '../browserContext';
 
-export class Browser extends EventEmitter implements BrowserInterface {
+export class Browser extends EventEmitter {
   _connection: Connection;
   private _process: import('child_process').ChildProcess;
   private _closeCallback: () => Promise<void>;
@@ -226,7 +226,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
       setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._connection.send('Browser.setCookies', { browserContextId: browserContextId || undefined, cookies });
       },
-    }, this, isIncognito, options);
+    }, isIncognito, options);
     (context as any).permissions = new Permissions(this._connection, browserContextId);
     return context;
   }

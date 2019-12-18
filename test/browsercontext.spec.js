@@ -32,19 +32,19 @@ module.exports.addTests = function({testRunner, expect, playwright, WEBKIT}) {
       expect(browser.defaultContext()).toBe(defaultContext);
       expect(error.message).toContain('cannot be closed');
     });
-    it('should create new incognito context', async function({browser, server}) {
+    it('should create new incognito context', async function({browser, newContext}) {
       expect(browser.browserContexts().length).toBe(1);
-      const context = await browser.newContext();
+      const context = await newContext();
       expect(context.isIncognito()).toBe(true);
       expect(browser.browserContexts().length).toBe(2);
       expect(browser.browserContexts().indexOf(context) !== -1).toBe(true);
       await context.close();
       expect(browser.browserContexts().length).toBe(1);
     });
-    it('should close all belonging targets once closing context', async function({browser, server}) {
+    it('should close all belonging targets once closing context', async function({browser, newContext, server}) {
       expect((await browser.pages()).length).toBe(1);
 
-      const context = await browser.newContext();
+      const context = await newContext();
       await context.newPage();
       expect((await browser.pages()).length).toBe(2);
       expect((await context.pages()).length).toBe(1);
@@ -52,8 +52,8 @@ module.exports.addTests = function({testRunner, expect, playwright, WEBKIT}) {
       await context.close();
       expect((await browser.pages()).length).toBe(1);
     });
-    it('window.open should use parent tab context', async function({browser, server}) {
-      const context = await browser.newContext();
+    it('window.open should use parent tab context', async function({browser, newContext, server}) {
+      const context = await newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       const [popupTarget] = await Promise.all([
@@ -61,12 +61,11 @@ module.exports.addTests = function({testRunner, expect, playwright, WEBKIT}) {
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
       expect(popupTarget.browserContext()).toBe(context);
-      await context.close();
     });
-    it('should isolate localStorage and cookies', async function({browser, server}) {
+    it('should isolate localStorage and cookies', async function({browser, newContext, server}) {
       // Create two incognito contexts.
-      const context1 = await browser.newContext();
-      const context2 = await browser.newContext();
+      const context1 = await newContext();
+      const context2 = await newContext();
       expect((await context1.pages()).length).toBe(0);
       expect((await context2.pages()).length).toBe(0);
 

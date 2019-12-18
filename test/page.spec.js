@@ -261,7 +261,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-    it.skip(FFOX)('should not throw when there are console messages in detached iframes', async({browser, page, server}) => {
+    it.skip(FFOX)('should not throw when there are console messages in detached iframes', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(async() => {
         // 1. Create a popup that Playwright is not connected to.
@@ -1154,7 +1154,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
   });
 
   describe('Page.Events.Close', function() {
-    it('should work with window.close', async function({ browser, page, context, server }) {
+    it('should work with window.close', async function({ page, context, server }) {
       const newPagePromise = new Promise(f => page.once('popup', f));
       await page.evaluate(() => window['newPage'] = window.open('about:blank'));
       const newPage = await newPagePromise;
@@ -1170,14 +1170,8 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe('Page.browser', function() {
-    it('should return the correct browser instance', async function({ page, browser }) {
-      expect(page.browser()).toBe(browser);
-    });
-  });
-
   describe('Page.browserContext', function() {
-    it('should return the correct browser instance', async function({page, context, browser}) {
+    it('should return the correct browser instance', async function({page, context}) {
       expect(page.browserContext()).toBe(context);
     });
   });

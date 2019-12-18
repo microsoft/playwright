@@ -20,6 +20,7 @@ import { Page } from '../page';
 import { Protocol } from './protocol';
 import { TargetSession, TargetSessionEvents } from './Connection';
 import { FrameManager } from './FrameManager';
+import { Browser } from './Browser';
 
 const targetSymbol = Symbol('target');
 
@@ -29,14 +30,16 @@ export class Target {
   readonly _type: 'page' | 'service-worker' | 'worker';
   private readonly _session: TargetSession;
   private _pagePromise: Promise<Page> | null = null;
+  private _browser: Browser;
   _frameManager: FrameManager | null = null;
 
   static fromPage(page: Page): Target {
     return (page as any)[targetSymbol];
   }
 
-  constructor(session: TargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
+  constructor(browser: Browser, session: TargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
     const {targetId, type} = targetInfo;
+    this._browser = browser;
     this._session = session;
     this._browserContext = browserContext;
     this._targetId = targetId;
@@ -85,7 +88,7 @@ export class Target {
 
   async page(): Promise<Page> {
     if (this._type === 'page' && !this._pagePromise) {
-      this._frameManager = new FrameManager(this._browserContext);
+      this._frameManager = new FrameManager(this._browser, this._browserContext);
       // Reference local page variable as |this._frameManager| may be
       // cleared on swap.
       const page = this._frameManager._page;

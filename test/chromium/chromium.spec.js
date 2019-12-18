@@ -22,9 +22,9 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Chromium', function() {
-    it('should work across sessions', async function({browser, server}) {
+    it('should work across sessions', async function({browser, newContext}) {
       expect(browser.browserContexts().length).toBe(2);
-      const context = await browser.newContext();
+      await newContext();
       expect(browser.browserContexts().length).toBe(3);
       const remoteBrowser = await playwright.connect({
         browserWSEndpoint: browser.chromium.wsEndpoint()
@@ -32,7 +32,6 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const contexts = remoteBrowser.browserContexts();
       expect(contexts.length).toBe(3);
       remoteBrowser.disconnect();
-      await context.close();
     });
 	});
 
@@ -174,8 +173,8 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   describe('Chromium.waitForTarget', () => {
-    it('should wait for a target', async function({browser, server}) {
-      const context = await browser.newContext();
+    it('should wait for a target', async function({browser, server, newContext}) {
+      const context = await newContext();
       let resolved = false;
       const targetPromise = browser.chromium.waitForTarget(target => target.browserContext() === context && target.url() === server.EMPTY_PAGE);
       targetPromise.then(() => resolved = true);
@@ -184,10 +183,9 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.goto(server.EMPTY_PAGE);
       const target = await targetPromise;
       expect(await target.page()).toBe(page);
-      await context.close();
     });
-    it('should timeout waiting for a non-existent target', async function({browser, server}) {
-      const context = await browser.newContext();
+    it('should timeout waiting for a non-existent target', async function({browser, server, newContext}) {
+      const context = await newContext();
       const error = await browser.chromium.waitForTarget(target => target.browserContext() === context && target.url() === server.EMPTY_PAGE, {timeout: 1}).catch(e => e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
       await context.close();
@@ -210,8 +208,8 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       }).catch(e => error = e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
-    it('should fire target events', async function({browser, server}) {
-      const context = await browser.newContext();
+    it('should fire target events', async function({browser, newContext, server}) {
+      const context = await newContext();
       const events = [];
       browser.chromium.on('targetcreated', target => events.push('CREATED: ' + target.url()));
       browser.chromium.on('targetchanged', target => events.push('CHANGED: ' + target.url()));
@@ -224,7 +222,6 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
         `CHANGED: ${server.EMPTY_PAGE}`,
         `DESTROYED: ${server.EMPTY_PAGE}`
       ]);
-      await context.close();
     });
   });
 

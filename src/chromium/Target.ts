@@ -29,6 +29,7 @@ const targetSymbol = Symbol('target');
 
 export class Target {
   private _targetInfo: Protocol.Target.TargetInfo;
+  private _browser: Browser;
   private _browserContext: BrowserContext;
   _targetId: string;
   private _sessionFactory: () => Promise<CDPSession>;
@@ -44,10 +45,12 @@ export class Target {
   }
 
   constructor(
+    browser: Browser,
     targetInfo: Protocol.Target.TargetInfo,
     browserContext: BrowserContext,
     sessionFactory: () => Promise<CDPSession>) {
     this._targetInfo = targetInfo;
+    this._browser = browser;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this._sessionFactory = sessionFactory;
@@ -77,7 +80,7 @@ export class Target {
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory().then(async client => {
-        this._frameManager = new FrameManager(client, this._browserContext);
+        this._frameManager = new FrameManager(client, this._browser, this._browserContext);
         const page = this._frameManager.page();
         (page as any)[targetSymbol] = this;
         client.once(CDPSessionEvents.Disconnected, () => page._didDisconnect());
@@ -117,10 +120,6 @@ export class Target {
     return 'other';
   }
 
-  browser(): Browser {
-    return this._browserContext.browser() as Browser;
-  }
-
   browserContext(): BrowserContext {
     return this._browserContext;
   }
@@ -129,7 +128,7 @@ export class Target {
     const { openerId } = this._targetInfo;
     if (!openerId)
       return null;
-    return this.browser()._targets.get(openerId);
+    return this._browser._targets.get(openerId);
   }
 
   createCDPSession(): Promise<CDPSession> {

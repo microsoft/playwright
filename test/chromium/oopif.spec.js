@@ -38,24 +38,21 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       await state.browser.close();
       state.browser = null;
     });
-    xit('should report oopif frames', async function({page, server, context}) {
+    xit('should report oopif frames', async function({browser, page, server, context}) {
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs(context).length).toBe(1);
+      expect(oopifs(browser).length).toBe(1);
       expect(page.frames().length).toBe(2);
     });
-    it('should load oopif iframes with subresources and request interception', async function({page, server, context}) {
+    it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
       await page.interception.enable();
       page.on('request', request => page.interception.continue(request));
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs(context).length).toBe(1);
+      expect(oopifs(browser).length).toBe(1);
     });
   });
 };
 
 
-/**
- * @param {!Playwright.BrowserContext} context
- */
-function oopifs(context) {
-  return context.browser().chromium.targets().filter(target => target._targetInfo.type === 'iframe');
+function oopifs(browser) {
+  return browser.chromium.targets().filter(target => target._targetInfo.type === 'iframe');
 }

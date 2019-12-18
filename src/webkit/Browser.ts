@@ -24,9 +24,9 @@ import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
 import { Events } from '../events';
-import { BrowserContext, BrowserInterface, BrowserContextOptions } from '../browserContext';
+import { BrowserContext, BrowserContextOptions } from '../browserContext';
 
-export class Browser extends EventEmitter implements BrowserInterface {
+export class Browser extends EventEmitter {
   private readonly _process: childProcess.ChildProcess;
   readonly _connection: Connection;
   private _closeCallback: () => Promise<void>;
@@ -151,7 +151,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     }
     if (!context)
       context =  this._defaultContext;
-    const target = new Target(session, targetInfo, context);
+    const target = new Target(this, session, targetInfo, context);
     this._targets.set(targetInfo.targetId, target);
     if (targetInfo.isProvisional) {
       const oldTarget = this._targets.get(targetInfo.oldTargetId);
@@ -244,7 +244,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
         const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
         await this._connection.send('Browser.setCookies', { cookies: cc, browserContextId });
       },
-    }, this, isIncognito, options);
+    }, isIncognito, options);
     return context;
   }
 }

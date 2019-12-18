@@ -154,8 +154,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       }]);
       expect(await page.evaluate(() => document.cookie)).toEqual('password=123456');
     });
-    it('should isolate cookies in browser contexts', async({context, server, browser}) => {
-      const anotherContext = await browser.newContext();
+    it('should isolate cookies in browser contexts', async({context, server, newContext}) => {
+      const anotherContext = await newContext();
       await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
       await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
 
@@ -167,7 +167,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(cookies1[0].value).toBe('page1value');
       expect(cookies2[0].name).toBe('page2cookie');
       expect(cookies2[0].value).toBe('page2value');
-      await anotherContext.close();
     });
     it('should set multiple cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
@@ -364,8 +363,8 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await context.clearCookies();
       expect(await page.evaluate('document.cookie')).toBe('');
     });
-    it('should isolate cookies when clearing', async({context, server, browser}) => {
-      const anotherContext = await browser.newContext();
+    it('should isolate cookies when clearing', async({context, server, newContext}) => {
+      const anotherContext = await newContext();
       await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
       await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
 
@@ -379,8 +378,6 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await anotherContext.clearCookies();
       expect((await context.cookies()).length).toBe(0);
       expect((await anotherContext.cookies()).length).toBe(0);
-
-      await anotherContext.close();
     });
   });
 };
