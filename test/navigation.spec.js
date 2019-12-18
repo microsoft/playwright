@@ -443,6 +443,23 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(request2.headers['referer']).toBe('http://microsoft.com/');
       expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
+    it('should override referrer-policy', async({page, server}) => {
+      server.setRoute('/grid.html', (req, res) => {
+        res.setHeader('Referrer-Policy', 'no-referrer');
+        server.serveFile(req, res, '/grid.html');
+      });
+      const [request1, request2] = await Promise.all([
+        server.waitForRequest('/grid.html'),
+        server.waitForRequest('/digits/1.png'),
+        page.goto(server.PREFIX + '/grid.html', {
+          referer: 'http://microsoft.com/',
+        }),
+      ]);
+      expect(request1.headers['referer']).toBe('http://microsoft.com/');
+      // Make sure subresources do not inherit referer.
+      expect(request2.headers['referer']).toBe(undefined);
+      expect(page.url()).toBe(server.PREFIX + '/grid.html');
+    });
   });
 
   describe('Page.waitForNavigation', function() {
