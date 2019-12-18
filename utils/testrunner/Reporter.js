@@ -181,7 +181,9 @@ class Reporter {
       return stack;
     const line = lines[index];
     const fromIndex = line.lastIndexOf(this._projectFolder) + this._projectFolder.length;
-    const toIndex = line.lastIndexOf(')');
+    let toIndex = line.lastIndexOf(')');
+    if (toIndex === -1)
+      toIndex = line.length;
     lines[index] = line.substring(0, fromIndex) + YELLOW_COLOR + line.substring(fromIndex, toIndex) + RESET_COLOR + line.substring(toIndex);
     return lines.join('\n');
   }
