@@ -20,7 +20,7 @@ import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnPr
 import { ConnectionTransport } from '../transport';
 import { DeviceDescriptors, DeviceDescriptor } from '../deviceDescriptors';
 import * as Errors from '../errors';
-import { Launcher, LauncherBrowserOptions, LauncherChromeArgOptions, LauncherLaunchOptions, createBrowserFetcher } from './Launcher';
+import { Launcher, ConnectionOptions, LauncherChromeArgOptions, LauncherLaunchOptions, createBrowserFetcher } from './Launcher';
 
 type Devices = { [name: string]: DeviceDescriptor } & DeviceDescriptor[];
 
@@ -42,11 +42,11 @@ export class Playwright {
     return revisionInfo;
   }
 
-  launch(options?: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) | undefined): Promise<Browser> {
+  launch(options?: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) | undefined): Promise<Browser> {
     return this._launcher.launch(options);
   }
 
-  connect(options: (LauncherBrowserOptions & {
+  connect(options: (ConnectionOptions & {
       browserWSEndpoint?: string;
       browserURL?: string;
       transport?: ConnectionTransport; })): Promise<Browser> {

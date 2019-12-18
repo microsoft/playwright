@@ -189,18 +189,6 @@ export class FrameManager implements PageDelegate {
     await this._session.send('Network.setExtraHTTPHeaders', { headers: array });
   }
 
-  async setUserAgent(userAgent: string): Promise<void> {
-    await this._session.send('Page.setUserAgent', { userAgent });
-  }
-
-  async setJavaScriptEnabled(enabled: boolean): Promise<void> {
-    await this._session.send('Page.setJavascriptEnabled', { enabled });
-  }
-
-  async setBypassCSP(enabled: boolean): Promise<void> {
-    await this._session.send('Page.setBypassCSP', { enabled });
-  }
-
   async setViewport(viewport: types.Viewport): Promise<void> {
     const {
       width,
@@ -215,7 +203,7 @@ export class FrameManager implements PageDelegate {
     });
   }
 
-  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
     await this._session.send('Page.setEmulatedMedia', {
       type: mediaType === null ? undefined : mediaType,
       colorScheme: mediaColorScheme === null ? undefined : mediaColorScheme

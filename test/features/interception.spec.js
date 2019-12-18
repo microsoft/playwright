@@ -663,17 +663,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('ignoreHTTPSErrors', function() {
-    it('should work with request interception', async({httpsServer}) => {
-      const browser = await playwright.launch({...defaultBrowserOptions, ignoreHTTPSErrors: true});
-      const context = await browser.newContext();
-      const page = await context.newPage();
+    it('should work with request interception', async({newPage, httpsServer}) => {
+      const page = await newPage({ ignoreHTTPSErrors: true });
 
       await page.interception.enable();
       page.on('request', request => page.interception.continue(request));
       const response = await page.goto(httpsServer.EMPTY_PAGE);
       expect(response.status()).toBe(200);
-
-      await browser.close();
     });
   });
 };

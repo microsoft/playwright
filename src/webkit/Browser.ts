@@ -19,43 +19,37 @@ import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
+import * as types from '../types';
 import { Connection, ConnectionEvents, TargetSession } from './Connection';
 import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
-import * as types from '../types';
 import { Events } from '../events';
-import { BrowserContext, BrowserInterface } from '../browserContext';
+import { BrowserContext, BrowserInterface, BrowserContextOptions } from '../browserContext';
 
 export class Browser extends EventEmitter implements BrowserInterface {
-  readonly _defaultViewport: types.Viewport;
   private readonly _process: childProcess.ChildProcess;
   readonly _connection: Connection;
   private _closeCallback: () => Promise<void>;
-  private readonly _defaultContext: BrowserContext;
+  private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
   private _eventListeners: RegisteredListener[];
   private _privateEvents = new EventEmitter();
-  private readonly _ignoreHTTPSErrors: boolean;
 
   constructor(
     connection: Connection,
-    ignoreHTTPSErrors: boolean,
-    defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     super();
     this._connection = connection;
-    this._ignoreHTTPSErrors = ignoreHTTPSErrors;
-    this._defaultViewport = defaultViewport;
     this._process = process;
     this._closeCallback = closeCallback || (() => Promise.resolve());
 
     /** @type {!Map<string, !Target>} */
     this._targets = new Map();
 
-    this._defaultContext = this._createBrowserContext(undefined);
+    this._defaultContext = this._createBrowserContext(undefined, {});
     /** @type {!Map<string, !BrowserContext>} */
     this._contexts = new Map();
 
@@ -70,9 +64,6 @@ export class Browser extends EventEmitter implements BrowserInterface {
       debugError(e);
       throw e;
     });
-
-    if (this._ignoreHTTPSErrors)
-      this._setIgnoreTLSFailures(undefined);
   }
 
   async userAgent(): Promise<string> {
@@ -92,11 +83,11 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return this._process;
   }
 
-  async newContext(): Promise<BrowserContext> {
-    const {browserContextId} = await this._connection.send('Browser.createContext');
-    if (this._ignoreHTTPSErrors)
-      await this._setIgnoreTLSFailures(browserContextId);
-    const context = this._createBrowserContext(browserContextId);
+  async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
+    const { browserContextId } = await this._connection.send('Browser.createContext');
+    const context = this._createBrowserContext(browserContextId, options);
+    if (options.ignoreHTTPSErrors)
+      await this._connection.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -105,15 +96,13 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return [this._defaultContext, ...Array.from(this._contexts.values())];
   }
 
-  defaultBrowserContext(): BrowserContext {
+  defaultContext(): BrowserContext {
     return this._defaultContext;
   }
 
-  async _disposeContext(browserContextId: string | null) {
-  }
-
-  async newPage(): Promise<Page> {
-    return this._defaultContext.newPage();
+  async newPage(options?: BrowserContextOptions): Promise<Page> {
+    const context = await this.newContext(options);
+    return context._createOwnerPage();
   }
 
   targets(): Target[] {
@@ -220,7 +209,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     await this._closeCallback.call(null);
   }
 
-  _createBrowserContext(browserContextId: string | undefined): BrowserContext {
+  _createBrowserContext(browserContextId: string | undefined, options: BrowserContextOptions): BrowserContext {
     const isIncognito = !!browserContextId;
     const context = new BrowserContext({
       contextPages: async (): Promise<Page[]> => {
@@ -256,12 +245,8 @@ export class Browser extends EventEmitter implements BrowserInterface {
         const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
         await this._connection.send('Browser.setCookies', { cookies: cc, browserContextId });
       },
-    }, this, isIncognito);
+    }, this, isIncognito, options);
     return context;
-  }
-
-  async _setIgnoreTLSFailures(browserContextId: string | undefined) {
-    await this._connection.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
   }
 }
 

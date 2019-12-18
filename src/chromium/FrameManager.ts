@@ -33,7 +33,6 @@ import { Accessibility } from './features/accessibility';
 import { Coverage } from './features/coverage';
 import { PDF } from './features/pdf';
 import { Workers } from './features/workers';
-import { Overrides } from './features/overrides';
 import { Interception } from './features/interception';
 import { Browser } from './Browser';
 import { BrowserContext } from '../browserContext';
@@ -46,24 +45,23 @@ const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 export class FrameManager implements PageDelegate {
   _client: CDPSession;
   private _page: Page;
-  private _networkManager: NetworkManager;
+  readonly _networkManager: NetworkManager;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
   private _eventListeners: RegisteredListener[];
   rawMouse: RawMouseImpl;
   rawKeyboard: RawKeyboardImpl;
 
-  constructor(client: CDPSession, browserContext: BrowserContext, ignoreHTTPSErrors: boolean) {
+  constructor(client: CDPSession, browserContext: BrowserContext) {
     this._client = client;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
     this._page = new Page(this, browserContext);
-    this._networkManager = new NetworkManager(client, ignoreHTTPSErrors, this._page);
+    this._networkManager = new NetworkManager(client, this._page);
     (this._page as any).accessibility = new Accessibility(client);
     (this._page as any).coverage = new Coverage(client);
     (this._page as any).pdf = new PDF(client);
     (this._page as any).workers = new Workers(client, this._page._addConsoleMessage.bind(this._page), error => this._page.emit(Events.Page.PageError, error));
-    (this._page as any).overrides = new Overrides(client);
     (this._page as any).interception = new Interception(this._networkManager);
 
     this._eventListeners = [
@@ -276,18 +274,6 @@ export class FrameManager implements PageDelegate {
     await this._client.send('Network.setExtraHTTPHeaders', { headers });
   }
 
-  setUserAgent(userAgent: string): Promise<void> {
-    return this._networkManager.setUserAgent(userAgent);
-  }
-
-  async setJavaScriptEnabled(enabled: boolean): Promise<void> {
-    await this._client.send('Emulation.setScriptExecutionDisabled', { value: !enabled });
-  }
-
-  async setBypassCSP(enabled: boolean): Promise<void> {
-    await this._client.send('Page.setBypassCSP', { enabled });
-  }
-
   async setViewport(viewport: types.Viewport): Promise<void> {
     const {
       width,
@@ -306,7 +292,7 @@ export class FrameManager implements PageDelegate {
     ]);
   }
 
-  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
     const features = mediaColorScheme ? [{ name: 'prefers-color-scheme', value: mediaColorScheme }] : [];
     await this._client.send('Emulation.setEmulatedMedia', { media: mediaType || '', features });
   }

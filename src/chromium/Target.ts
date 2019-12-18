@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import * as types from '../types';
 import { Browser } from './Browser';
 import { BrowserContext } from '../browserContext';
 import { CDPSession, CDPSessionEvents } from './Connection';
@@ -33,8 +32,6 @@ export class Target {
   private _browserContext: BrowserContext;
   _targetId: string;
   private _sessionFactory: () => Promise<CDPSession>;
-  private _ignoreHTTPSErrors: boolean;
-  private _defaultViewport: types.Viewport;
   private _pagePromise: Promise<Page> | null = null;
   private _frameManager: FrameManager | null = null;
   private _workerPromise: Promise<Worker> | null = null;
@@ -49,15 +46,11 @@ export class Target {
   constructor(
     targetInfo: Protocol.Target.TargetInfo,
     browserContext: BrowserContext,
-    sessionFactory: () => Promise<CDPSession>,
-    ignoreHTTPSErrors: boolean,
-    defaultViewport: types.Viewport | null) {
+    sessionFactory: () => Promise<CDPSession>) {
     this._targetInfo = targetInfo;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this._sessionFactory = sessionFactory;
-    this._ignoreHTTPSErrors = ignoreHTTPSErrors;
-    this._defaultViewport = defaultViewport;
     this._initializedPromise = new Promise(fulfill => this._initializedCallback = fulfill).then(async success => {
       if (!success)
         return false;
@@ -84,7 +77,7 @@ export class Target {
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory().then(async client => {
-        this._frameManager = new FrameManager(client, this._browserContext, this._ignoreHTTPSErrors);
+        this._frameManager = new FrameManager(client, this._browserContext);
         const page = this._frameManager.page();
         (page as any)[targetSymbol] = this;
         client.once(CDPSessionEvents.Disconnected, () => page._didDisconnect());
@@ -96,8 +89,6 @@ export class Target {
         });
         await this._frameManager.initialize();
         await client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true});
-        if (this._defaultViewport)
-          await page.setViewport(this._defaultViewport);
         return page;
       });
     }

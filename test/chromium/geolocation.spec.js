@@ -26,7 +26,7 @@ module.exports.addTests = function ({ testRunner, expect }) {
     it('should work', async({page, server, context}) => {
       await context.permissions.override(server.PREFIX, ['geolocation']);
       await page.goto(server.EMPTY_PAGE);
-      await page.overrides.setGeolocation({longitude: 10, latitude: 10});
+      await context.overrides.setGeolocation({longitude: 10, latitude: 10});
       const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
         resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
       })));
@@ -35,10 +35,10 @@ module.exports.addTests = function ({ testRunner, expect }) {
         longitude: 10
       });
     });
-    it('should throw when invalid longitude', async({page, server, context}) => {
+    it('should throw when invalid longitude', async({context}) => {
       let error = null;
       try {
-        await page.overrides.setGeolocation({longitude: 200, latitude: 10});
+        await context.overrides.setGeolocation({longitude: 200, latitude: 10});
       } catch (e) {
         error = e;
       }

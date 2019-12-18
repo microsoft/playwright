@@ -124,13 +124,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         const userDataDir = await mkdtempAsync(TMP_FOLDER);
         const options = Object.assign({userDataDir}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
-        const page = await browser.newPage();
+        const page = await browser.defaultContext().newPage();
         await page.goto(server.EMPTY_PAGE);
         await page.evaluate(() => localStorage.hey = 'hello');
         await browser.close();
 
         const browser2 = await playwright.launch(options);
-        const page2 = await browser2.newPage();
+        const page2 = await browser2.defaultContext().newPage();
         await page2.goto(server.EMPTY_PAGE);
         expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
         await browser2.close();
@@ -142,13 +142,13 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         const userDataDir = await mkdtempAsync(TMP_FOLDER);
         const options = Object.assign({userDataDir}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
-        const page = await browser.newPage();
+        const page = await browser.defaultContext().newPage();
         await page.goto(server.EMPTY_PAGE);
         await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
         await browser.close();
 
         const browser2 = await playwright.launch(options);
-        const page2 = await browser2.newPage();
+        const page2 = await browser2.defaultContext().newPage();
         await page2.goto(server.EMPTY_PAGE);
         expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
         await browser2.close();
@@ -161,7 +161,7 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
       it('should support the pipe option', async() => {
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
-        expect((await browser.pages()).length).toBe(1);
+        expect((await browser.defaultContext().pages()).length).toBe(1);
         expect(browser.chromium.wsEndpoint()).toBe('');
         const page = await browser.newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);

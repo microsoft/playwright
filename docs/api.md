@@ -32,15 +32,13 @@
   * [browser.browserContexts()](#browserbrowsercontexts)
   * [browser.chromium](#browserchromium)
   * [browser.close()](#browserclose)
-  * [browser.defaultBrowserContext()](#browserdefaultbrowsercontext)
+  * [browser.defaultContext()](#browserdefaultContext())
   * [browser.disconnect()](#browserdisconnect)
   * [browser.isConnected()](#browserisconnected)
-  * [browser.newContext()](#browsernewcontext)
-  * [browser.newPage()](#browsernewpage)
+  * [browser.newContext(options)](#browsernewcontextoptions)
+  * [browser.newPage(options)](#browsernewpageoptions)
   * [browser.pages()](#browserpages)
   * [browser.process()](#browserprocess)
-  * [browser.userAgent()](#browseruseragent)
-  * [browser.version()](#browserversion)
 - [class: BrowserContext](#class-browsercontext)
   * [browserContext.browser()](#browsercontextbrowser)
   * [browserContext.clearCookies()](#browsercontextclearcookies)
@@ -48,12 +46,12 @@
   * [browserContext.cookies([...urls])](#browsercontextcookiesurls)
   * [browserContext.isIncognito()](#browsercontextisincognito)
   * [browserContext.newPage()](#browsercontextnewpage)
+  * [browserContext.overrides](#browsercontextoverrides)
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.permissions](#browsercontextpermissions)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [class: Overrides](#class-overrides)
   * [overrides.setGeolocation(options)](#overridessetgeolocationoptions)
-  * [overrides.setTimezone(timezoneId)](#overridessettimezonetimezoneid)
 - [class: Permissions](#class-permissions)
   * [permissions.clearOverrides()](#permissionsclearoverrides)
   * [permissions.override(origin, permissions)](#permissionsoverrideorigin-permissions)
@@ -88,8 +86,6 @@
   * [page.content()](#pagecontent)
   * [page.coverage](#pagecoverage)
   * [page.dblclick(selector[, options])](#pagedblclickselector-options)
-  * [page.emulate(options)](#pageemulateoptions)
-  * [page.emulateMedia(options)](#pageemulatemediaoptions)
   * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
   * [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
   * [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
@@ -106,25 +102,19 @@
   * [page.keyboard](#pagekeyboard)
   * [page.mainFrame()](#pagemainframe)
   * [page.mouse](#pagemouse)
-  * [page.overrides](#pageoverrides)
   * [page.pdf](#pagepdf)
   * [page.reload([options])](#pagereloadoptions)
   * [page.screenshot([options])](#pagescreenshotoptions)
   * [page.select(selector, ...values)](#pageselectselector-values)
-  * [page.setBypassCSP(enabled)](#pagesetbypasscspenabled)
   * [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
   * [page.setContent(html[, options])](#pagesetcontenthtml-options)
   * [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
   * [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
   * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
-  * [page.setJavaScriptEnabled(enabled)](#pagesetjavascriptenabledenabled)
-  * [page.setUserAgent(userAgent)](#pagesetuseragentuseragent)
-  * [page.setViewport(viewport)](#pagesetviewportviewport)
   * [page.title()](#pagetitle)
   * [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
   * [page.type(selector, text[, options])](#pagetypeselector-text-options)
   * [page.url()](#pageurl)
-  * [page.viewport()](#pageviewport)
   * [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
   * [page.waitForFileChooser([options])](#pagewaitforfilechooseroptions)
   * [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
@@ -381,14 +371,6 @@ const playwright = require('playwright');
 - `options` <[Object]>
   - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
   - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-  - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
-  - `defaultViewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
-    - `width` <[number]> page width in pixels.
-    - `height` <[number]> page height in pixels.
-    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
 - returns: <[Promise]<[Browser]>>
@@ -476,17 +458,9 @@ try {
 
 #### playwright.launch([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `headless` <[boolean]> Whether to run browser in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `defaultViewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
-    - `width` <[number]> page width in pixels.
-    - `height` <[number]> page height in pixels.
-    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -627,7 +601,7 @@ a single instance of [BrowserContext].
 
 Closes Chromium and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
-#### browser.defaultBrowserContext()
+#### browser.defaultContext()
 - returns: <[BrowserContext]>
 
 Returns the default browser context. The default browser context can not be closed.
@@ -642,7 +616,23 @@ Disconnects Playwright from the browser, but leaves the Chromium process running
 
 Indicates that the browser is connected.
 
-#### browser.newContext()
+#### browser.newContext(options)
+- `options` <[Object]>
+  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
+  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
+    - `width` <[number]> page width in pixels.
+    - `height` <[number]> page height in pixels.
+    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
+    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
+  - `userAgent` <?[string]> Specific user agent to use in this page
+  - `mediaType` <?[string]> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
+  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
+  - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -659,10 +649,24 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 })();
 ```
 
-#### browser.newPage()
-- returns: <[Promise]<[Page]>>
+#### browser.newPage(options)
+- `options` <[Object]>
+  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
+  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
+    - `width` <[number]> page width in pixels.
+    - `height` <[number]> page height in pixels.
+    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
+    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
+  - `userAgent` <?[string]> Specific user agent to use in this page
+  - `mediaType` <?[string]> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
+  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
+  - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
 
-Promise which resolves to a new [Page] object. The [Page] is created in a default browser context.
+Promise which resolves to a new [Page] object. The [Page] is created in a new browser context that it will own. Closing this page will close the context.
 
 #### browser.pages()
 - returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
@@ -672,16 +676,6 @@ the method will return an array with all the pages in all browser contexts.
 
 #### browser.process()
 - returns: <?[ChildProcess]> Spawned browser process. Returns `null` if the browser instance was created with [`playwright.connect`](#playwrightconnectoptions) method.
-
-#### browser.userAgent()
-- returns: <[Promise]<[string]>> Promise which resolves to the browser's original user agent.
-
-> **NOTE** Pages can override browser user agent with [page.setUserAgent](#pagesetuseragentuseragent)
-
-#### browser.version()
-- returns: <[Promise]<[string]>> For headless Chromium, this is similar to `HeadlessChrome/61.0.3153.0`. For non-headless, this is similar to `Chrome/61.0.3153.0`.
-
-> **NOTE** the format of browser.version() might change with future releases of Chromium.
 
 ### class: BrowserContext
 
@@ -755,6 +749,9 @@ The default browser context is the only non-incognito browser context.
 
 Creates a new page in the browser context.
 
+#### browserContext.overrides
+- returns: <[Overrides]>
+
 #### browserContext.pages()
 - returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
 
@@ -792,14 +789,10 @@ await browserContext.setCookies([cookieObject1, cookieObject2]);
 Sets the page's geolocation.
 
 ```js
-await page.overrides.setGeolocation({latitude: 59.95, longitude: 30.31667});
+await browserContext.overrides.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
 > **NOTE** Consider using [browserContext.permissions.override](#permissionsoverrideorigin-permissions) to grant permissions for the page to read its geolocation.
-
-#### overrides.setTimezone(timezoneId)
-- `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs. Passing `null` disables timezone emulation.
-- returns: <[Promise]>
 
 ### class: Permissions
 
@@ -809,7 +802,7 @@ await page.overrides.setGeolocation({latitude: 59.95, longitude: 30.31667});
 Clears all permission overrides for the browser context.
 
 ```js
-const context = browser.defaultBrowserContext();
+const context = browser.defaultContext();
 context.permissions.override('https://example.com', ['clipboard-read']);
 // do stuff ..
 context.permissions.clearOverrides();
@@ -838,7 +831,7 @@ context.permissions.clearOverrides();
 
 
 ```js
-const context = browser.defaultBrowserContext();
+const context = browser.defaultContext();
 await context.permissions.override('https://html5demos.com', ['geolocation']);
 ```
 
@@ -1150,77 +1143,6 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 
 Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclickselector-options).
 
-#### page.emulate(options)
-- `options` <[Object]>
-  - `viewport` <[Object]>
-    - `width` <[number]> page width in pixels.
-    - `height` <[number]> page height in pixels.
-    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
-  - `userAgent` <[string]>
-- returns: <[Promise]>
-
-Emulates given device metrics and user agent. This method is a shortcut for calling two methods:
-- [page.setUserAgent(userAgent)](#pagesetuseragentuseragent)
-- [page.setViewport(viewport)](#pagesetviewportviewport)
-
-To aid emulation, playwright provides a list of device descriptors which can be obtained via the [`playwright.devices`](#playwrightdevices).
-
-`page.emulate` will resize the page. A lot of websites don't expect phones to change size, so you should emulate before navigating to the page.
-
-```js
-const playwright = require('playwright');
-const iPhone = playwright.devices['iPhone 6'];
-
-(async () => {
-  const browser = await playwright.launch();
-  const page = await browser.newPage();
-  await page.emulate(iPhone);
-  await page.goto('https://www.google.com');
-  // other actions...
-  await browser.close();
-})();
-```
-
-List of all available devices is available in the source code: [DeviceDescriptors.js](https://github.com/Microsoft/playwright/blob/master/lib/DeviceDescriptors.js).
-
-#### page.emulateMedia(options)
-- `options` <[Object]>
-  - `type` <?[string]> Optional. Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
-  - `colorScheme` <"dark"|"light"|"no-preference"> Optional. Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
-- returns: <[Promise]>
-
-```js
-await page.evaluate(() => matchMedia('screen').matches));
-// → true
-await page.evaluate(() => matchMedia('print').matches));
-// → true
-
-await page.emulateMedia({ type: 'print' });
-await page.evaluate(() => matchMedia('screen').matches));
-// → false
-await page.evaluate(() => matchMedia('print').matches));
-// → true
-
-await page.emulateMedia({});
-await page.evaluate(() => matchMedia('screen').matches));
-// → true
-await page.evaluate(() => matchMedia('print').matches));
-// → true
-```
-
-```js
-await page.emulateMedia({ colorScheme: 'dark' }] });
-await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
-// → true
-await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
-// → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
-// → false
-```
-
 #### page.evaluate(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
@@ -1480,9 +1402,6 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 - returns: <[Mouse]>
 
-#### page.overrides
-- returns: <[Overrides]>
-
 #### page.pdf
 - returns: <[PDF]>
 
@@ -1538,15 +1457,6 @@ page.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
 Shortcut for [page.mainFrame().select()](#frameselectselector-values)
-
-#### page.setBypassCSP(enabled)
-- `enabled` <[boolean]> sets bypassing of page's Content-Security-Policy.
-- returns: <[Promise]>
-
-Toggles bypassing page's Content-Security-Policy.
-
-> **NOTE** CSP bypassing happens at the moment of CSP initialization rather then evaluation. Usually this means
-that `page.setBypassCSP` should be called before navigating to the domain.
 
 #### page.setCacheEnabled([enabled])
 - `enabled` <[boolean]> sets the `enabled` state of the cache.
@@ -1607,42 +1517,6 @@ The extra HTTP headers will be sent with every request the page initiates.
 
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
 
-#### page.setJavaScriptEnabled(enabled)
-- `enabled` <[boolean]> Whether or not to enable JavaScript on the page.
-- returns: <[Promise]>
-
-> **NOTE** changing this value won't affect scripts that have already been run. It will take full effect on the next [navigation](#pagegotourl-options).
-
-#### page.setUserAgent(userAgent)
-- `userAgent` <[string]> Specific user agent to use in this page
-- returns: <[Promise]> Promise which resolves when the user agent is set.
-
-#### page.setViewport(viewport)
-- `viewport` <[Object]>
-  - `width` <[number]> page width in pixels. **required**
-  - `height` <[number]> page height in pixels. **required**
-  - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-  - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-  - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
-- returns: <[Promise]>
-
-> **NOTE** in certain cases, setting viewport will reload the page in order to set the `isMobile` or `hasTouch` properties.
-
-In the case of multiple pages in a single browser, each page can have its own viewport size.
-
-`page.setViewport` will resize the page. A lot of websites don't expect phones to change size, so you should set the viewport before navigating to the page.
-
-```js
-const page = await browser.newPage();
-await page.setViewport({
-  width: 640,
-  height: 480,
-  deviceScaleFactor: 1,
-});
-await page.goto('https://example.com');
-```
-
 #### page.title()
 - returns: <[Promise]<[string]>> The page's title.
 
@@ -1690,15 +1564,6 @@ Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselect
 - returns: <[string]>
 
 This is a shortcut for [page.mainFrame().url()](#frameurl)
-
-#### page.viewport()
-- returns: <?[Object]>
-  - `width` <[number]> page width in pixels.
-  - `height` <[number]> page height in pixels.
-  - `deviceScaleFactor` <[number]> Specify device scale factor (can be though of as dpr). Defaults to `1`.
-  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-  - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-  - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
 
 #### page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])
 - `selectorOrFunctionOrTimeout` <[string]|[number]|[function]> A [selector], predicate or timeout to wait for

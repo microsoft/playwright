@@ -19,7 +19,6 @@ import { debugError, assert } from '../helper';
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { Connection } from './Connection';
-import * as types from '../types';
 import { PipeTransport } from '../transport';
 import { execSync } from 'child_process';
 import * as path from 'path';
@@ -58,9 +57,7 @@ export class Launcher {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      defaultViewport = {width: 800, height: 600},
       slowMo = 0,
-      ignoreHTTPSErrors = false
     } = options;
 
     const webkitArguments = [];
@@ -104,7 +101,7 @@ export class Launcher {
     try {
       const transport = new PipeTransport(launched.process.stdio[3] as NodeJS.WritableStream, launched.process.stdio[4] as NodeJS.ReadableStream);
       connection = new Connection(transport, slowMo);
-      const browser = new Browser(connection, ignoreHTTPSErrors, defaultViewport, launched.process, launched.gracefullyClose);
+      const browser = new Browser(connection, launched.process, launched.gracefullyClose);
       await browser._waitForTarget(t => t._type === 'page');
       return browser;
     } catch (e) {
@@ -136,9 +133,7 @@ export type LauncherLaunchOptions = {
   headless?: boolean,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
-  defaultViewport?: types.Viewport | null,
   slowMo?: number,
-  ignoreHTTPSErrors?: boolean,
 };
 
 let cachedMacVersion = undefined;

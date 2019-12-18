@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { Browser } from './Browser';
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
@@ -86,7 +85,6 @@ export class Target {
 
   async page(): Promise<Page> {
     if (this._type === 'page' && !this._pagePromise) {
-      const browser = this._browserContext.browser() as Browser;
       this._frameManager = new FrameManager(this._browserContext);
       // Reference local page variable as |this._frameManager| may be
       // cleared on swap.
@@ -94,8 +92,6 @@ export class Target {
       this._pagePromise = new Promise(async f => {
         this._adoptPage();
         await this._initializeSession(this._session);
-        if (browser._defaultViewport)
-          await page.setViewport(browser._defaultViewport);
         f(page);
       });
     }

@@ -20,7 +20,7 @@ module.exports.addTests = function ({ testRunner, expect, defaultBrowserOptions,
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('DefaultBrowserContext', function() {
+  describe('defaultContext()', function() {
     beforeEach(async state => {
       state.browser = await playwright.launch(defaultBrowserOptions);
       state.page = await state.browser.newPage();

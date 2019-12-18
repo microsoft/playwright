@@ -98,36 +98,51 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
       state.browser = null;
     });
 
-    if (!WEBKIT) {
-      beforeEach(async(state, test) => {
-        const rl = require('readline').createInterface({input: state.browser.process().stderr});
+    beforeEach(async(state, test) => {
+      const pages = [];
+      const contexts = [];
+      const onLine = (line) => test.output += line + '\n';
+
+      let rl;
+      if (!WEBKIT) {
+        rl = require('readline').createInterface({ input: state.browser.process().stderr });
         test.output = '';
         rl.on('line', onLine);
-        state.tearDown = () => {
+      }
+
+      state.tearDown = async () => {
+        await Promise.all(pages.map(p => p.close()));
+        await Promise.all(contexts.map(c => c.close()));
+        if (!WEBKIT) {
           rl.removeListener('line', onLine);
           rl.close();
-        };
-        function onLine(line) {
-          test.output += line + '\n';
         }
-      });
-    }
+      };
 
-    if (!WEBKIT) {
-      afterEach(async state => {
-        state.tearDown();
-      });
-    }
+      state.newContext = async (options) => {
+        const context = await state.browser.newContext(options);
+        contexts.push(context);
+        return context;
+      };
+
+      state.newPage = async (options) => {
+        const page = await state.browser.newPage(options);
+        pages.push(page);
+        return page;
+      };
+    });
+
+    afterEach(async state => {
+      await state.tearDown();
+    });
 
     describe('Page', function() {
       beforeEach(async state => {
-        state.context = await state.browser.newContext();
+        state.context = await state.newContext();
         state.page = await state.context.newPage();
       });
 
       afterEach(async state => {
-        // This closes all pages.
-        await state.context.close();
         state.context = null;
         state.page = null;
       });
@@ -172,12 +187,12 @@ module.exports.addTests = ({testRunner, product, playwrightPath}) => {
 
     // Browser-level tests that are given a browser.
     require('./browsercontext.spec.js').addTests(testOptions);
+    require('./ignorehttpserrors.spec.js').addTests(testOptions);
   });
 
   // Top-level tests that launch Browser themselves.
   require('./defaultbrowsercontext.spec.js').addTests(testOptions);
   require('./fixtures.spec.js').addTests(testOptions);
-  require('./ignorehttpserrors.spec.js').addTests(testOptions);
   require('./launcher.spec.js').addTests(testOptions);
 
   if (CHROME) {

@@ -26,7 +26,6 @@ import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { Connection } from './Connection';
 import { TimeoutError } from '../errors';
 import { assert, debugError, helper } from '../helper';
-import * as types from '../types';
 import { ConnectionTransport, WebSocketTransport, PipeTransport } from '../transport';
 import * as util from 'util';
 import { launchProcess, waitForLine } from '../processLauncher';
@@ -71,7 +70,7 @@ export class Launcher {
     this._preferredRevision = preferredRevision;
   }
 
-  async launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & LauncherBrowserOptions) = {}): Promise<Browser> {
+  async launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) = {}): Promise<Browser> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -82,8 +81,6 @@ export class Launcher {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      ignoreHTTPSErrors = false,
-      defaultViewport = {width: 800, height: 600},
       slowMo = 0,
       timeout = 30000
     } = options;
@@ -146,7 +143,7 @@ export class Launcher {
         const transport = new PipeTransport(launched.process.stdio[3] as NodeJS.WritableStream, launched.process.stdio[4] as NodeJS.ReadableStream);
         connection = new Connection('', transport, slowMo);
       }
-      const browser = await Browser.create(connection, [], ignoreHTTPSErrors, defaultViewport, launched.process, launched.gracefullyClose);
+      const browser = await Browser.create(connection, [], launched.process, launched.gracefullyClose);
       await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
@@ -184,15 +181,13 @@ export class Launcher {
     return this._resolveExecutablePath().executablePath;
   }
 
-  async connect(options: (LauncherBrowserOptions & {
+  async connect(options: (ConnectionOptions & {
       browserWSEndpoint?: string;
       browserURL?: string;
       transport?: ConnectionTransport; })): Promise<Browser> {
     const {
       browserWSEndpoint,
       browserURL,
-      ignoreHTTPSErrors = false,
-      defaultViewport = {width: 800, height: 600},
       transport,
       slowMo = 0,
     } = options;
@@ -212,7 +207,7 @@ export class Launcher {
     }
 
     const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
-    return Browser.create(connection, browserContextIds, ignoreHTTPSErrors, defaultViewport, null, async () => {
+    return Browser.create(connection, browserContextIds, null, async () => {
       connection.rootSession.send('Browser.close').catch(debugError);
     });
   }
@@ -275,9 +270,7 @@ export type LauncherLaunchOptions = {
    pipe?: boolean,
 };
 
-export type LauncherBrowserOptions = {
-   ignoreHTTPSErrors?: boolean,
-   defaultViewport?: types.Viewport | null,
+export type ConnectionOptions = {
    slowMo?: number,
 };
 

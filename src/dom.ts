@@ -123,7 +123,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
       }
       return false;
-    }, !!this._page._state.javascriptEnabled);
+    }, !!this._page.browserContext()._options.javaScriptEnabled);
     if (error)
       throw new Error(error);
   }

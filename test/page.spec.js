@@ -166,7 +166,7 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     });
-    it('should not treat navigations as new popups', async({page, server}) => {
+    it.skip(WEBKIT)('should not treat navigations as new popups', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
@@ -585,33 +585,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe('Page.setUserAgent', function() {
-    it('should work', async({page, server}) => {
-      expect(await page.evaluate(() => navigator.userAgent)).toContain('Mozilla');
-      await page.setUserAgent('foobar');
-      const [request] = await Promise.all([
-        server.waitForRequest('/empty.html'),
-        page.goto(server.EMPTY_PAGE),
-      ]);
-      expect(request.headers['user-agent']).toBe('foobar');
-    });
-    it('should work for subframes', async({page, server}) => {
-      expect(await page.evaluate(() => navigator.userAgent)).toContain('Mozilla');
-      await page.setUserAgent('foobar');
-      const [request] = await Promise.all([
-        server.waitForRequest('/empty.html'),
-        utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
-      ]);
-      expect(request.headers['user-agent']).toBe('foobar');
-    });
-    it('should emulate device user-agent', async({page, server}) => {
-      await page.goto(server.PREFIX + '/mobile.html');
-      expect(await page.evaluate(() => navigator.userAgent)).not.toContain('iPhone');
-      await page.setUserAgent(playwright.devices['iPhone 6'].userAgent);
-      expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
-    });
-  });
-
   describe('Page.setContent', function() {
     const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
     it('should work', async({page, server}) => {
@@ -705,64 +678,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe('Page.setBypassCSP', function() {
-    it('should bypass CSP meta tag', async({page, server}) => {
-      // Make sure CSP prohibits addScriptTag.
-      await page.goto(server.PREFIX + '/csp.html');
-      await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-      expect(await page.evaluate(() => window.__injected)).toBe(undefined);
-
-      // By-pass CSP and try one more time.
-      await page.setBypassCSP(true);
-      await page.reload();
-      await page.addScriptTag({content: 'window.__injected = 42;'});
-      expect(await page.evaluate(() => window.__injected)).toBe(42);
-    });
-
-    it('should bypass CSP header', async({page, server}) => {
-      // Make sure CSP prohibits addScriptTag.
-      server.setCSP('/empty.html', 'default-src "self"');
-      await page.goto(server.EMPTY_PAGE);
-      await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-      expect(await page.evaluate(() => window.__injected)).toBe(undefined);
-
-      // By-pass CSP and try one more time.
-      await page.setBypassCSP(true);
-      await page.reload();
-      await page.addScriptTag({content: 'window.__injected = 42;'});
-      expect(await page.evaluate(() => window.__injected)).toBe(42);
-    });
-
-    it('should bypass after cross-process navigation', async({page, server}) => {
-      await page.setBypassCSP(true);
-      await page.goto(server.PREFIX + '/csp.html');
-      await page.addScriptTag({content: 'window.__injected = 42;'});
-      expect(await page.evaluate(() => window.__injected)).toBe(42);
-
-      await page.goto(server.CROSS_PROCESS_PREFIX + '/csp.html');
-      await page.addScriptTag({content: 'window.__injected = 42;'});
-      expect(await page.evaluate(() => window.__injected)).toBe(42);
-    });
-    it('should bypass CSP in iframes as well', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      {
-        // Make sure CSP prohibits addScriptTag in an iframe.
-        const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
-        await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-        expect(await frame.evaluate(() => window.__injected)).toBe(undefined);
-      }
-
-      // By-pass CSP and try one more time.
-      await page.setBypassCSP(true);
-      await page.reload();
-
-      {
-        const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
-        await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-        expect(await frame.evaluate(() => window.__injected)).toBe(42);
-      }
-    });
-  });
 
   describe('Page.addScriptTag', function() {
     it('should throw an error if no options are provided', async({page, server}) => {
@@ -921,27 +836,6 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       expect(page.url()).toBe('about:blank');
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);
-    });
-  });
-
-  describe('Page.setJavaScriptEnabled', function() {
-    it('should work', async({page, server}) => {
-      await page.setJavaScriptEnabled(false);
-      await page.goto('data:text/html, <script>var something = "forbidden"</script>');
-      let error = null;
-      await page.evaluate('something').catch(e => error = e);
-      if (WEBKIT)
-        expect(error.message).toContain('Can\'t find variable: something');
-      else
-        expect(error.message).toContain('something is not defined');
-
-      await page.setJavaScriptEnabled(true);
-      await page.goto('data:text/html, <script>var something = "forbidden"</script>');
-      expect(await page.evaluate('something')).toBe('forbidden');
-    });
-    it('should be able to navigate after disabling javascript', async({page, server}) => {
-      await page.setJavaScriptEnabled(false);
-      await page.goto(server.EMPTY_PAGE);
     });
   });
 

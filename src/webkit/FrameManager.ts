@@ -86,16 +86,19 @@ export class FrameManager implements PageDelegate {
       // Dialog agent resides in the UI process and should not be re-enabled on navigation.
       promises.push(session.send('Dialog.enable'));
     }
-    if (this._page._state.userAgent !== null)
-      promises.push(this._setUserAgent(session, this._page._state.userAgent));
-    if (this._page._state.mediaType !== null || this._page._state.mediaColorScheme !== null)
-      promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.mediaColorScheme));
-    if (this._page._state.javascriptEnabled !== null)
-      promises.push(this._setJavaScriptEnabled(session, this._page._state.javascriptEnabled));
-    if (this._page._state.bypassCSP !== null)
-      promises.push(this._setBypassCSP(session, this._page._state.bypassCSP));
+    const contextOptions = this._page.browserContext()._options;
+    if (contextOptions.userAgent)
+      promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
+    if (this._page._state.mediaType || this._page._state.colorScheme)
+      promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
+    if (contextOptions.javaScriptEnabled === false)
+      promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: false }));
+    if (contextOptions.bypassCSP)
+      promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
+    if (this._page._state.viewport)
+      promises.push(this.setViewport(this._page._state.viewport));
     await Promise.all(promises);
   }
 
@@ -256,19 +259,7 @@ export class FrameManager implements PageDelegate {
     await session.send('Network.setExtraHTTPHeaders', { headers });
   }
 
-  private async _setUserAgent(session: TargetSession, userAgent: string): Promise<void> {
-    await session.send('Page.overrideUserAgent', { value: userAgent });
-  }
-
-  private async _setJavaScriptEnabled(session: TargetSession, enabled: boolean): Promise<void> {
-    await session.send('Emulation.setJavaScriptEnabled', { enabled });
-  }
-
-  private async _setBypassCSP(session: TargetSession, enabled: boolean): Promise<void> {
-    await session.send('Page.setBypassCSP', { enabled });
-  }
-
-  private async _setEmulateMedia(session: TargetSession, mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+  private async _setEmulateMedia(session: TargetSession, mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
     if (mediaColorScheme !== null) {
@@ -286,22 +277,11 @@ export class FrameManager implements PageDelegate {
     await this._setExtraHTTPHeaders(this._session, headers);
   }
 
-  async setUserAgent(userAgent: string): Promise<void> {
-    await this._setUserAgent(this._session, userAgent);
-    await this._page.reload();
-  }
-
-  async setJavaScriptEnabled(enabled: boolean): Promise<void> {
-    await this._setJavaScriptEnabled(this._session, enabled);
-  }
-
-  async setBypassCSP(enabled: boolean): Promise<void> {
-    await this._setBypassCSP(this._session, enabled);
-  }
-
-  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void> {
+  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
     await this._setEmulateMedia(this._session, mediaType, mediaColorScheme);
   }
+
+
 
   async setViewport(viewport: types.Viewport): Promise<void> {
     if (viewport.isMobile || viewport.isLandscape || viewport.hasTouch)

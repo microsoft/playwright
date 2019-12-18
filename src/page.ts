@@ -45,11 +45,8 @@ export interface PageDelegate {
   needsLifecycleResetOnSetContent(): boolean;
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
-  setUserAgent(userAgent: string): Promise<void>;
-  setJavaScriptEnabled(enabled: boolean): Promise<void>;
-  setBypassCSP(enabled: boolean): Promise<void>;
   setViewport(viewport: types.Viewport): Promise<void>;
-  setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.MediaColorScheme | null): Promise<void>;
+  setEmulateMedia(mediaType: input.MediaType | null, colorScheme: input.ColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
@@ -69,12 +66,9 @@ export interface PageDelegate {
 
 type PageState = {
   viewport: types.Viewport | null;
-  userAgent: string | null;
   mediaType: input.MediaType | null;
-  mediaColorScheme: input.MediaColorScheme | null;
-  javascriptEnabled: boolean | null;
+  colorScheme: input.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
-  bypassCSP: boolean | null;
   cacheEnabled: boolean | null;
 };
 
@@ -99,6 +93,7 @@ export class Page extends EventEmitter {
   private _pageBindings = new Map<string, Function>();
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
+  _isContextOwner = false;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -107,13 +102,10 @@ export class Page extends EventEmitter {
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
     this._state = {
-      viewport: null,
-      userAgent: null,
-      mediaType: null,
-      mediaColorScheme: null,
-      javascriptEnabled: null,
+      viewport: browserContext._options.viewport || null,
+      mediaType: browserContext._options.mediaType || null,
+      colorScheme: browserContext._options.colorScheme || null,
       extraHTTPHeaders: null,
-      bypassCSP: null,
       cacheEnabled: null,
     };
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
@@ -244,11 +236,6 @@ export class Page extends EventEmitter {
     return this._delegate.setExtraHTTPHeaders(headers);
   }
 
-  setUserAgent(userAgent: string) {
-    this._state.userAgent = userAgent;
-    return this._delegate.setUserAgent(userAgent);
-  }
-
   async _onBindingCalled(payload: string, context: js.ExecutionContext) {
     const {name, seq, args} = JSON.parse(payload);
     let expression = null;
@@ -360,35 +347,15 @@ export class Page extends EventEmitter {
     return waitPromise;
   }
 
-  async emulate(options: { viewport: types.Viewport; userAgent: string; }) {
-    await Promise.all([
-      this.setViewport(options.viewport),
-      this.setUserAgent(options.userAgent)
-    ]);
-  }
 
-  async setJavaScriptEnabled(enabled: boolean) {
-    if (this._state.javascriptEnabled === enabled)
-      return;
-    this._state.javascriptEnabled = enabled;
-    await this._delegate.setJavaScriptEnabled(enabled);
-  }
-
-  async setBypassCSP(enabled: boolean) {
-    if (this._state.bypassCSP === enabled)
-      return;
-    this._state.bypassCSP = enabled;
-    await this._delegate.setBypassCSP(enabled);
-  }
-
-  async emulateMedia(options: { type?: input.MediaType, colorScheme?: input.MediaColorScheme }) {
+  async emulateMedia(options: { type?: input.MediaType, colorScheme?: input.ColorScheme }) {
     assert(!options.type || input.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
     assert(!options.colorScheme || input.mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
     if (options.type !== undefined)
       this._state.mediaType = options.type;
     if (options.colorScheme !== undefined)
-      this._state.mediaColorScheme = options.colorScheme;
-    await this._delegate.setEmulateMedia(this._state.mediaType, this._state.mediaColorScheme);
+      this._state.colorScheme = options.colorScheme;
+    await this._delegate.setEmulateMedia(this._state.mediaType, this._state.colorScheme);
   }
 
   async setViewport(viewport: types.Viewport) {
@@ -436,6 +403,8 @@ export class Page extends EventEmitter {
     await this._delegate.closePage(runBeforeUnload);
     if (!runBeforeUnload)
       await this._closedPromise;
+    if (this._isContextOwner)
+      await this._browserContext.close();
   }
 
   isClosed(): boolean {

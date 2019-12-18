@@ -19,20 +19,19 @@ import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { Events } from './events';
 import { assert, helper } from '../helper';
-import { BrowserContext, BrowserInterface } from '../browserContext';
+import { BrowserContext, BrowserInterface, BrowserContextOptions } from '../browserContext';
 import { Connection, ConnectionEvents, CDPSession } from './Connection';
 import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
 import { Chromium } from './features/chromium';
-import * as types from '../types';
 import { FrameManager } from './FrameManager';
+import * as events from '../events';
 import * as network from '../network';
 import { Permissions } from './features/permissions';
+import { Overrides } from './features/overrides';
 
 export class Browser extends EventEmitter implements BrowserInterface {
-  private _ignoreHTTPSErrors: boolean;
-  private _defaultViewport: types.Viewport;
   private _process: childProcess.ChildProcess;
   _connection: Connection;
   _client: CDPSession;
@@ -45,11 +44,9 @@ export class Browser extends EventEmitter implements BrowserInterface {
   static async create(
     connection: Connection,
     contextIds: string[],
-    ignoreHTTPSErrors: boolean,
-    defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
-    const browser = new Browser(connection, contextIds, ignoreHTTPSErrors, defaultViewport, process, closeCallback);
+    const browser = new Browser(connection, contextIds, process, closeCallback);
     await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
     return browser;
   }
@@ -57,22 +54,18 @@ export class Browser extends EventEmitter implements BrowserInterface {
   constructor(
     connection: Connection,
     contextIds: string[],
-    ignoreHTTPSErrors: boolean,
-    defaultViewport: types.Viewport | null,
     process: childProcess.ChildProcess | null,
     closeCallback?: (() => Promise<void>)) {
     super();
     this._connection = connection;
     this._client = connection.rootSession;
-    this._ignoreHTTPSErrors = ignoreHTTPSErrors;
-    this._defaultViewport = defaultViewport;
     this._process = process;
     this._closeCallback = closeCallback || (() => Promise.resolve());
     this.chromium = new Chromium(this);
 
-    this._defaultContext = this._createBrowserContext(null);
+    this._defaultContext = this._createBrowserContext(null, {});
     for (const contextId of contextIds)
-      this._contexts.set(contextId, this._createBrowserContext(contextId));
+      this._contexts.set(contextId, this._createBrowserContext(contextId, {}));
 
     this._connection.on(ConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
     this._client.on('Target.targetCreated', this._targetCreated.bind(this));
@@ -80,8 +73,9 @@ export class Browser extends EventEmitter implements BrowserInterface {
     this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
   }
 
-  _createBrowserContext(contextId: string | null): BrowserContext {
+  _createBrowserContext(contextId: string | null, options: BrowserContextOptions): BrowserContext {
     const isIncognito = !!contextId;
+    let overrides: Overrides | null = null;
     const context = new BrowserContext({
       contextPages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
@@ -94,6 +88,25 @@ export class Browser extends EventEmitter implements BrowserInterface {
         const target = this._targets.get(targetId);
         assert(await target._initializedPromise, 'Failed to create target for page');
         const page = await target.page();
+        const session = (page._delegate as FrameManager)._client;
+        const promises: Promise<any>[] = [ overrides._applyOverrides(page) ];
+        if (options.bypassCSP)
+          promises.push(session.send('Page.setBypassCSP', { enabled: true }));
+        if (options.ignoreHTTPSErrors)
+          promises.push(session.send('Security.setIgnoreCertificateErrors', { ignore: true }));
+        if (options.viewport)
+          promises.push(page._delegate.setViewport(options.viewport));
+        if (options.javaScriptEnabled === false)
+          promises.push(session.send('Emulation.setScriptExecutionDisabled', { value: true }));
+        if (options.userAgent)
+          (page._delegate as FrameManager)._networkManager.setUserAgent(options.userAgent);
+        if (options.mediaType || options.colorScheme) {
+          const features = options.colorScheme ? [{ name: 'prefers-color-scheme', value: options.colorScheme }] : [];
+          promises.push(session.send('Emulation.setEmulatedMedia', { media: options.mediaType || '', features }));
+        }
+        if (options.timezoneId)
+          promises.push(emulateTimezone(session, options.timezoneId));
+        await Promise.all(promises);
         return page;
       },
 
@@ -119,8 +132,10 @@ export class Browser extends EventEmitter implements BrowserInterface {
       setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._client.send('Storage.setCookies', { cookies, browserContextId: contextId || undefined });
       },
-    }, this, isIncognito);
+    }, this, isIncognito, options);
+    overrides = new Overrides(context);
     (context as any).permissions = new Permissions(this._client, contextId);
+    (context as any).overrides = overrides;
     return context;
   }
 
@@ -128,9 +143,9 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return this._process;
   }
 
-  async newContext(): Promise<BrowserContext> {
-    const {browserContextId} = await this._client.send('Target.createBrowserContext');
-    const context = this._createBrowserContext(browserContextId);
+  async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
+    const { browserContextId } = await this._client.send('Target.createBrowserContext');
+    const context = this._createBrowserContext(browserContextId, options);
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -139,7 +154,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     return [this._defaultContext, ...Array.from(this._contexts.values())];
   }
 
-  defaultBrowserContext(): BrowserContext {
+  defaultContext(): BrowserContext {
     return this._defaultContext;
   }
 
@@ -148,7 +163,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     const {browserContextId} = targetInfo;
     const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId) : this._defaultContext;
 
-    const target = new Target(targetInfo, context, () => this._connection.createSession(targetInfo), this._ignoreHTTPSErrors, this._defaultViewport);
+    const target = new Target(targetInfo, context, () => this._connection.createSession(targetInfo));
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(event.targetInfo.targetId, target);
 
@@ -175,8 +190,9 @@ export class Browser extends EventEmitter implements BrowserInterface {
       this.chromium.emit(Events.Chromium.TargetChanged, target);
   }
 
-  async newPage(): Promise<Page> {
-    return this._defaultContext.newPage();
+  async newPage(options?: BrowserContextOptions): Promise<Page> {
+    const context = await this.newContext(options);
+    return context._createOwnerPage();
   }
 
   async _closePage(page: Page) {
@@ -248,5 +264,15 @@ export class Browser extends EventEmitter implements BrowserInterface {
 
   _getVersion(): Promise<any> {
     return this._client.send('Browser.getVersion');
+  }
+}
+
+async function emulateTimezone(session: CDPSession, timezoneId: string) {
+  try {
+    await session.send('Emulation.setTimezoneOverride', { timezoneId: timezoneId });
+  } catch (exception) {
+    if (exception.message.includes('Invalid timezone'))
+      throw new Error(`Invalid timezone ID: ${timezoneId}`);
+    throw exception;
   }
 }

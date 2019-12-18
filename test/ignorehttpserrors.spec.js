@@ -20,33 +20,18 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
   describe('ignoreHTTPSErrors', function() {
-    beforeAll(async state => {
-      state.browser = await playwright.launch({...defaultBrowserOptions, ignoreHTTPSErrors: true});
-    });
-    afterAll(async state => {
-      await state.browser.close();
-      delete state.browser;
-    });
-    beforeEach(async state => {
-      state.context = await state.browser.newContext();
-      state.page = await state.context.newPage();
-    });
-    afterEach(async state => {
-      await state.context.close();
-      delete state.context;
-      delete state.page;
-    });
-
-    it('should work', async({page, httpsServer}) => {
+    it('should work', async({newPage, httpsServer}) => {
       let error = null;
+      const page = await newPage({ ignoreHTTPSErrors: true });
       const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
       expect(error).toBe(null);
       expect(response.ok()).toBe(true);
     });
-    it('should work with mixed content', async({page, server, httpsServer}) => {
+    it('should work with mixed content', async({newPage, server, httpsServer}) => {
       httpsServer.setRoute('/mixedcontent.html', (req, res) => {
         res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
       });
+      const page = await newPage({ ignoreHTTPSErrors: true });
       await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'load'});
       expect(page.frames().length).toBe(2);
       // Make sure blocked iframe has functional execution context

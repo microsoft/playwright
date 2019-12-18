@@ -70,8 +70,8 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('button');
       expect(await page.evaluate(() => result)).toBe('Clicked');
     });
-    it.skip(FFOX)('should click with disabled javascript', async({page, server}) => {
-      await page.setJavaScriptEnabled(false);
+    it.skip(FFOX)('should click with disabled javascript', async({newPage, server}) => {
+      const page = await newPage({ javaScriptEnabled: false });
       await page.goto(server.PREFIX + '/wrappedlink.html');
       await Promise.all([
         page.click('a'),
