@@ -141,10 +141,9 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2'});
       expect(response.status()).toBe(200);
     });
-    it.skip(WEBKIT)('should fail when navigating to bad url', async({page, server}) => {
+    it('should fail when navigating to bad url', async({page, server}) => {
       let error = null;
       await page.goto('asdfasdf').catch(e => error = e);
-      // FIXME: shows dialog in WebKit.
       if (CHROME || WEBKIT)
         expect(error.message).toContain('Cannot navigate to invalid URL');
       else
@@ -361,8 +360,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       process.removeListener('warning', warningHandler);
       expect(warning).toBe(null);
     });
-    it.skip(WEBKIT)('should not leak listeners during bad navigation', async({page, server}) => {
-      // FIXME: shows dialog in webkit.
+    it('should not leak listeners during bad navigation', async({page, server}) => {
       let warning = null;
       const warningHandler = w => warning = w;
       process.on('warning', warningHandler);
