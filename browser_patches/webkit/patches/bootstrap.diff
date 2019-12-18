@@ -6845,10 +6845,10 @@ index 0000000000000000000000000000000000000000..37a5e7ad390607668ff3f7eb7dba25e4
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e38a4ad3e2fc7a2eee4deb1bff65a4c7422064b2
+index 0000000000000000000000000000000000000000..6e1b2ab05623f187a16eeed78601fa1207dec76f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,47 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -6874,6 +6874,10 @@ index 0000000000000000000000000000000000000000..e38a4ad3e2fc7a2eee4deb1bff65a4c7
 +    }
 +    GtkAllocation viewAllocation;
 +    gtk_widget_get_allocation(viewWidget, &viewAllocation);
++    if (viewAllocation.width == width && viewAllocation.height == height) {
++        callback(String());
++        return;
++    }
 +
 +    GtkAllocation windowAllocation;
 +    gtk_widget_get_allocation(window, &windowAllocation);
