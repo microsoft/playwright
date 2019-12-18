@@ -73,49 +73,49 @@ beforeEach(async({server, httpsServer}) => {
   httpsServer.reset();
 });
 
-(async() => {
-  if (process.env.BROWSER === 'firefox') {
-    await describe('Firefox', () => {
-      require('./playwright.spec.js').addTests({
-        product: 'Firefox',
-        playwrightPath: path.join(utils.projectRoot(), 'firefox.js'),
-        testRunner,
-      });
+if (process.env.BROWSER === 'firefox') {
+  describe('Firefox', () => {
+    require('./playwright.spec.js').addTests({
+      product: 'Firefox',
+      playwrightPath: path.join(utils.projectRoot(), 'firefox.js'),
+      testRunner,
     });
-  } else if (process.env.BROWSER === 'webkit') {
-    await describe('WebKit', () => {
-      require('./playwright.spec.js').addTests({
-        product: 'WebKit',
-        playwrightPath: path.join(utils.projectRoot(), 'webkit.js'),
-        testRunner,
-      });
-    });
-  } else {
-    await describe('Chromium', () => {
-      require('./playwright.spec.js').addTests({
-        product: 'Chromium',
-        playwrightPath: path.join(utils.projectRoot(), 'chromium.js'),
-        testRunner,
-      });
-      if (process.env.COVERAGE)
-        utils.recordAPICoverage(testRunner, require('../lib/api').Chromium, require('../lib/chromium/events').Events);
-    });
-  }
-
-  if (process.env.CI && testRunner.hasFocusedTestsOrSuites()) {
-    console.error('ERROR: "focused" tests/suites are prohibitted on bots. Remove any "fit"/"fdescribe" declarations.');
-    process.exit(1);
-  }
-
-  new Reporter(testRunner, {
-    verbose: process.argv.includes('--verbose'),
-    summary: !process.argv.includes('--verbose'),
-    projectFolder: utils.projectRoot(),
-    showSlowTests: process.env.CI ? 5 : 0,
   });
+} else if (process.env.BROWSER === 'webkit') {
+  describe('WebKit', () => {
+    require('./playwright.spec.js').addTests({
+      product: 'WebKit',
+      playwrightPath: path.join(utils.projectRoot(), 'webkit.js'),
+      testRunner,
+    });
+  });
+} else {
+  describe('Chromium', () => {
+    require('./playwright.spec.js').addTests({
+      product: 'Chromium',
+      playwrightPath: path.join(utils.projectRoot(), 'chromium.js'),
+      testRunner,
+    });
+    if (process.env.COVERAGE)
+      utils.recordAPICoverage(testRunner, require('../lib/api').Chromium, require('../lib/chromium/events').Events);
+  });
+}
 
-  // await utils.initializeFlakinessDashboardIfNeeded(testRunner);
-  const result = await testRunner.run();
+if (process.env.CI && testRunner.hasFocusedTestsOrSuites()) {
+  console.error('ERROR: "focused" tests/suites are prohibitted on bots. Remove any "fit"/"fdescribe" declarations.');
+  process.exit(1);
+}
+
+new Reporter(testRunner, {
+  verbose: process.argv.includes('--verbose'),
+  summary: !process.argv.includes('--verbose'),
+  projectFolder: utils.projectRoot(),
+  showSlowTests: process.env.CI ? 5 : 0,
+  showSkippedTests: 10,
+});
+
+// await utils.initializeFlakinessDashboardIfNeeded(testRunner);
+testRunner.run().then(result => {
   process.exit(result.terminationError ? 130 : 0);
-})();
+});
 

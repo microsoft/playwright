@@ -25,12 +25,14 @@ class Reporter {
     const {
       projectFolder = null,
       showSlowTests = 3,
+      showSkippedTests = Infinity,
       verbose = false,
       summary = true,
     } = options;
     this._runner = runner;
     this._projectFolder = projectFolder;
     this._showSlowTests = showSlowTests;
+    this._showSkippedTests = showSkippedTests;
     this._verbose = verbose;
     this._summary = summary;
     this._testCounter = 0;
@@ -125,12 +127,16 @@ class Reporter {
     }
 
     const skippedTests = this._runner.skippedTests();
-    if (this._summary && skippedTests.length > 0) {
-      console.log('\nSkipped:');
-      for (let i = 0; i < skippedTests.length; ++i) {
-        const test = skippedTests[i];
-        console.log(`${i + 1}) ${test.fullName} (${formatTestLocation(test)})`);
-        console.log(`  ${YELLOW_COLOR}Temporary disabled with xit${RESET_COLOR}`);
+    if (this._showSkippedTests && this._summary && skippedTests.length) {
+      if (skippedTests.length > 0) {
+        console.log('\nSkipped:');
+        skippedTests.slice(0, this._showSkippedTests).forEach((test, index) => {
+          console.log(`${index + 1}) ${test.fullName} (${formatTestLocation(test)})`);
+        });
+      }
+      if (this._showSkippedTests < skippedTests.length) {
+        console.log('');
+        console.log(`... and ${YELLOW_COLOR}${skippedTests.length - this._showSkippedTests}${RESET_COLOR} more skipped tests ...`);
       }
     }
 

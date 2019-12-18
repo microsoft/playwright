@@ -345,14 +345,12 @@ class TestRunner extends EventEmitter {
     this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
   }
 
-  async _addSuite(mode, comment, name, callback) {
+  _addSuite(mode, comment, name, callback) {
     const oldSuite = this._currentSuite;
     const suite = new Suite(this._currentSuite, name, mode, comment);
     this._currentSuite.children.push(suite);
     this._currentSuite = suite;
     const result = callback();
-    if (result && (typeof result.then === 'function'))
-      await result;
     this._currentSuite = oldSuite;
     this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
   }
