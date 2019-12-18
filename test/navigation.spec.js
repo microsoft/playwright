@@ -360,8 +360,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       process.removeListener('warning', warningHandler);
       expect(warning).toBe(null);
     });
-    it.skip(WEBKIT)('should not leak listeners during bad navigation', async({page, server}) => {
-      // FIXME: shows dialog in webkit.
+    it('should not leak listeners during bad navigation', async({page, server}) => {
       let warning = null;
       const warningHandler = w => warning = w;
       process.on('warning', warningHandler);
