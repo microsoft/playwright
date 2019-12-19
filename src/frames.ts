@@ -701,9 +701,15 @@ export class Frame {
     return result.asElement() as dom.ElementHandle<Element>;
   }
 
-  waitForFunction(pageFunction: Function | string, options: types.WaitForFunctionOptions = {}, ...args: any[]): Promise<js.JSHandle> {
-    options = { timeout: this._page._timeoutSettings.timeout(), ...options };
-    const task = dom.waitForFunctionTask(pageFunction, options, ...args);
+  waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
+    options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
+    const task = dom.waitForFunctionTask(undefined, pageFunction, options, ...args);
+    return this._scheduleRerunnableTask(task, 'main', options.timeout);
+  }
+
+  async $wait(selector: string, pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
+    options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
+    const task = dom.waitForFunctionTask(selector, pageFunction, options, ...args);
     return this._scheduleRerunnableTask(task, 'main', options.timeout);
   }
 

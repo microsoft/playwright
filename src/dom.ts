@@ -377,7 +377,7 @@ function normalizeSelector(selector: string): string {
 
 export type Task = (context: FrameExecutionContext) => Promise<js.JSHandle>;
 
-export function waitForFunctionTask(pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]) {
+export function waitForFunctionTask(selector: string | undefined, pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]) {
   const { polling = 'raf' } = options;
   if (helper.isString(polling))
     assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
@@ -386,33 +386,40 @@ export function waitForFunctionTask(pageFunction: Function | string, options: ty
   else
     throw new Error('Unknown polling options: ' + polling);
   const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(...args)';
+  if (selector !== undefined)
+    selector = normalizeSelector(selector);
 
-  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
-    const predicate = new Function('...args', predicateBody);
+  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string | undefined, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
+    const innerPredicate = new Function('...args', predicateBody);
     if (polling === 'raf')
-      return injected.pollRaf(predicate, timeout, ...args);
+      return injected.pollRaf(selector, predicate, timeout);
     if (polling === 'mutation')
-      return injected.pollMutation(predicate, timeout, ...args);
-    return injected.pollInterval(polling, predicate, timeout, ...args);
-  }, await context._injected(), predicateBody, polling, options.timeout, ...args);
+      return injected.pollMutation(selector, predicate, timeout);
+    return injected.pollInterval(selector, polling, predicate, timeout);
+
+    function predicate(element: Element | undefined): any {
+      if (selector === undefined)
+        return innerPredicate(...args);
+      return innerPredicate(element, ...args);
+    }
+  }, await context._injected(), selector, predicateBody, polling, options.timeout, ...args);
 }
 
 export function waitForSelectorTask(selector: string, visibility: types.Visibility | undefined, timeout: number): Task {
   return async (context: FrameExecutionContext) => {
     selector = normalizeSelector(selector);
-    return context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number, scope?: Node) => {
+    return context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number) => {
       if (visibility !== 'any')
-        return injected.pollRaf(predicate, timeout);
-      return injected.pollMutation(predicate, timeout);
+        return injected.pollRaf(selector, predicate, timeout);
+      return injected.pollMutation(selector, predicate, timeout);
 
-      function predicate(): Element | boolean {
-        const element = injected.querySelector(selector, scope || document);
+      function predicate(element: Element | undefined): Element | boolean {
         if (!element)
           return visibility === 'hidden';
         if (visibility === 'any')
           return element;
         return injected.isVisible(element) === (visibility === 'visible') ? element : false;
       }
-    }, await context._injected(), selector, visibility, timeout, undefined);
+    }, await context._injected(), selector, visibility, timeout);
   };
 }

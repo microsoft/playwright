@@ -30,6 +30,7 @@ function createAttributeEngine(attribute: string): SelectorEngine {
 }
 
 type ParsedSelector = { engine: SelectorEngine, selector: string }[];
+type Predicate = (element: Element | undefined) => any;
 
 class Injected {
   readonly utils: Utils;
@@ -129,23 +130,26 @@ class Injected {
     return !!(rect.top || rect.bottom || rect.width || rect.height);
   }
 
-  pollMutation(predicate: Function, timeout: number, ...args: any[]): Promise<any> {
+  pollMutation(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
 
-    const success = predicate.apply(null, args);
+    const element = selector === undefined ? undefined : this.querySelector(selector, document);
+    const success = predicate(element);
     if (success)
       return Promise.resolve(success);
 
     let fulfill: (result?: any) => void;
     const result = new Promise(x => fulfill = x);
-    const observer = new MutationObserver(mutations => {
+    const observer = new MutationObserver(() => {
       if (timedOut) {
         observer.disconnect();
         fulfill();
+        return;
       }
-      const success = predicate.apply(null, args);
+      const element = selector === undefined ? undefined : this.querySelector(selector, document);
+      const success = predicate(element);
       if (success) {
         observer.disconnect();
         fulfill(success);
@@ -159,50 +163,53 @@ class Injected {
     return result;
   }
 
-  pollRaf(predicate: Function, timeout: number, ...args: any[]): Promise<any> {
+  pollRaf(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
 
     let fulfill: (result?: any) => void;
     const result = new Promise(x => fulfill = x);
-    onRaf();
-    return result;
 
-    function onRaf() {
+    const onRaf = () => {
       if (timedOut) {
         fulfill();
         return;
       }
-      const success = predicate.apply(null, args);
+      const element = selector === undefined ? undefined : this.querySelector(selector, document);
+      const success = predicate(element);
       if (success)
         fulfill(success);
       else
         requestAnimationFrame(onRaf);
-    }
+    };
+
+    onRaf();
+    return result;
   }
 
-  pollInterval(pollInterval: number, predicate: Function, timeout: number, ...args: any[]): Promise<any> {
+  pollInterval(selector: string | undefined, pollInterval: number, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
 
     let fulfill: (result?: any) => void;
     const result = new Promise(x => fulfill = x);
-    onTimeout();
-    return result;
-
-    function onTimeout() {
+    const onTimeout = () => {
       if (timedOut) {
         fulfill();
         return;
       }
-      const success = predicate.apply(null, args);
+      const element = selector === undefined ? undefined : this.querySelector(selector, document);
+      const success = predicate(element);
       if (success)
         fulfill(success);
       else
         setTimeout(onTimeout, pollInterval);
-    }
+    };
+
+    onTimeout();
+    return result;
   }
 }
 
