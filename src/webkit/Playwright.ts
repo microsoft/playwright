@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Browser } from './Browser';
+
+import * as browsers from '../browser';
 import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import { Launcher, LauncherLaunchOptions, createBrowserFetcher } from './Launcher';
+import { Browser } from './Browser';
 
 export class Playwright {
   private _projectRoot: string;
@@ -38,7 +40,12 @@ export class Playwright {
     return revisionInfo;
   }
 
-  launch(options: (LauncherLaunchOptions) | undefined): Promise<Browser> {
+  async launch(options: (LauncherLaunchOptions) | undefined): Promise<Browser> {
+    const server = await this._launcher.launch(options);
+    return server.connect();
+  }
+
+  async launchServer(options: (LauncherLaunchOptions) | undefined): Promise<browsers.BrowserServer<Browser>> {
     return this._launcher.launch(options);
   }
 

@@ -12,7 +12,6 @@ export { Request, Response } from '../network';
 export { BrowserContext } from '../browserContext';
 export { CDPSession } from './Connection';
 export { Accessibility } from './features/accessibility';
-export { Chromium } from './features/chromium';
 export { Coverage } from './features/coverage';
 export { Interception } from './features/interception';
 export { Overrides } from './features/overrides';

@@ -65,15 +65,15 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
       it('should filter out ignored default arguments', async() => {
         // Make sure we launch with `--enable-automation` by default.
         const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
-        const browser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
+        const browserServer = await playwright.launchServer(Object.assign({}, defaultBrowserOptions, {
           // Ignore first and third default argument.
           ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
         }));
-        const spawnargs = browser.process().spawnargs;
+        const spawnargs = browserServer.process().spawnargs;
         expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
         expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
         expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
-        await browser.close();
+        await browserServer.close();
       });
     });
   });

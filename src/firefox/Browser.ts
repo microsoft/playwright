@@ -16,7 +16,6 @@
  */
 
 import { EventEmitter } from 'events';
-import { ChildProcess } from 'child_process';
 import { helper, RegisteredListener, assert } from '../helper';
 import { Connection, ConnectionEvents, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
@@ -24,35 +23,29 @@ import { Events as CommonEvents } from '../events';
 import { Permissions } from './features/permissions';
 import { Page } from '../page';
 import { FrameManager } from './FrameManager';
-import { Firefox } from './features/firefox';
+import * as browser from '../browser';
 import * as network from '../network';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { ConnectionTransport } from '../transport';
 
-export class Browser extends EventEmitter {
+export class Browser extends EventEmitter implements browser.Browser {
   _connection: Connection;
-  private _process: ChildProcess;
   _targets: Map<string, Target>;
   private _defaultContext: BrowserContext;
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
-  readonly firefox: Firefox;
-  readonly _browserWSEndpoint: string;
 
-  static async create(browserWSEndpoint: string, transport: ConnectionTransport, process: ChildProcess | null) {
+  static async create(transport: ConnectionTransport) {
     const connection = new Connection(transport);
     const {browserContextIds} = await connection.send('Target.getBrowserContexts');
-    const browser = new Browser(browserWSEndpoint, connection, browserContextIds, process);
+    const browser = new Browser(connection, browserContextIds);
     await connection.send('Target.enable');
     return browser;
   }
 
-  constructor(browserWSEndpoint: string, connection: Connection, browserContextIds: Array<string>, process: ChildProcess | null) {
+  constructor(connection: Connection, browserContextIds: Array<string>) {
     super();
     this._connection = connection;
-    this._process = process;
-    this.firefox = new Firefox(browserWSEndpoint);
-
     this._targets = new Map();
 
     this._defaultContext = this._createBrowserContext(null, {});
@@ -93,10 +86,6 @@ export class Browser extends EventEmitter {
 
   defaultContext() {
     return this._defaultContext;
-  }
-
-  process(): ChildProcess | null {
-    return this._process;
   }
 
   async _waitForTarget(predicate: (target: Target) => boolean, options: { timeout?: number; } = {}): Promise<Target> {

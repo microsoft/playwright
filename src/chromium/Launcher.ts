@@ -16,18 +16,16 @@
  */
 
 import * as fs from 'fs';
-import * as http from 'http';
-import * as https from 'https';
 import * as os from 'os';
 import * as path from 'path';
-import * as URL from 'url';
-import { Browser } from './Browser';
+import * as util from 'util';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { TimeoutError } from '../errors';
 import { assert, helper } from '../helper';
-import { ConnectionTransport, WebSocketTransport, PipeTransport, SlowMoTransport } from '../transport';
-import * as util from 'util';
 import { launchProcess, waitForLine } from '../processLauncher';
+import { ConnectionTransport, PipeTransport, SlowMoTransport, WebSocketTransport } from '../transport';
+import { Browser } from './Browser';
+import { BrowserServer } from '../browser';
 
 const mkdtempAsync = helper.promisify(fs.mkdtemp);
 
@@ -69,7 +67,7 @@ export class Launcher {
     this._preferredRevision = preferredRevision;
   }
 
-  async launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) = {}): Promise<Browser> {
+  async launch(options: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) = {}): Promise<BrowserServer<Browser>> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -139,9 +137,9 @@ export class Launcher {
       } else {
         transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
       }
-      browser = await Browser.create(browserWSEndpoint, SlowMoTransport.wrap(transport, slowMo), launchedProcess);
-      await browser._waitForTarget(t => t.type() === 'page');
-      return browser;
+
+      browser = await Browser.create(SlowMoTransport.wrap(transport, slowMo));
+      return new BrowserServer(browser, launchedProcess, browserWSEndpoint);
     } catch (e) {
       if (browser)
         await browser.close();
@@ -178,26 +176,6 @@ export class Launcher {
     return this._resolveExecutablePath().executablePath;
   }
 
-  async connect(options: (ConnectionOptions & {
-      browserWSEndpoint?: string;
-      browserURL?: string;
-      transport?: ConnectionTransport; })): Promise<Browser> {
-    assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
-
-    let transport: ConnectionTransport | undefined;
-    let connectionURL: string = '';
-    if (options.transport) {
-      transport = options.transport;
-    } else if (options.browserWSEndpoint) {
-      connectionURL = options.browserWSEndpoint;
-      transport = await WebSocketTransport.create(options.browserWSEndpoint);
-    } else if (options.browserURL) {
-      connectionURL = await getWSEndpoint(options.browserURL);
-      transport = await WebSocketTransport.create(connectionURL);
-    }
-    return Browser.create(connectionURL, SlowMoTransport.wrap(transport, options.slowMo), null);
-  }
-
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
     const browserFetcher = createBrowserFetcher(this._projectRoot);
     const revisionInfo = browserFetcher.revisionInfo(this._preferredRevision);
@@ -205,36 +183,6 @@ export class Launcher {
     return {executablePath: revisionInfo.executablePath, missingText};
   }
 
-}
-
-function getWSEndpoint(browserURL: string): Promise<string> {
-  let resolve: (url: string) => void;
-  let reject: (e: Error) => void;
-  const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
-
-  const endpointURL = URL.resolve(browserURL, '/json/version');
-  const protocol = endpointURL.startsWith('https') ? https : http;
-  const requestOptions = Object.assign(URL.parse(endpointURL), { method: 'GET' });
-  const request = protocol.request(requestOptions, res => {
-    let data = '';
-    if (res.statusCode !== 200) {
-      // Consume response data to free up memory.
-      res.resume();
-      reject(new Error('HTTP ' + res.statusCode));
-      return;
-    }
-    res.setEncoding('utf8');
-    res.on('data', chunk => data += chunk);
-    res.on('end', () => resolve(JSON.parse(data).webSocketDebuggerUrl));
-  });
-
-  request.on('error', reject);
-  request.end();
-
-  return promise.catch(e => {
-    e.message = `Failed to fetch browser webSocket url from ${endpointURL}: ` + e.message;
-    throw e;
-  });
 }
 
 export type LauncherChromeArgOptions = {

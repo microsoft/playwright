@@ -21,8 +21,8 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Browser.process', function() {
-    it('should return child_process instance', async function({browser}) {
-      const process = await browser.process();
+    it('should return child_process instance', async function({browserServer}) {
+      const process = await browserServer.process();
       expect(process.pid).toBeGreaterThan(0);
     });
   });

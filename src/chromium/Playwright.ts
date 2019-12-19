@@ -15,12 +15,17 @@
  * limitations under the License.
  */
 
-import { Browser } from './Browser';
+import * as http from 'http';
+import * as https from 'https';
+import * as URL from 'url';
+import * as browsers from '../browser';
 import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnProgressCallback } from '../browserFetcher';
-import { ConnectionTransport } from '../transport';
-import { DeviceDescriptors, DeviceDescriptor } from '../deviceDescriptors';
+import { DeviceDescriptor, DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
-import { Launcher, ConnectionOptions, LauncherChromeArgOptions, LauncherLaunchOptions, createBrowserFetcher } from './Launcher';
+import { assert } from '../helper';
+import { ConnectionTransport, WebSocketTransport, SlowMoTransport } from '../transport';
+import { ConnectionOptions, createBrowserFetcher, Launcher, LauncherChromeArgOptions, LauncherLaunchOptions } from './Launcher';
+import { Browser } from './Browser';
 
 type Devices = { [name: string]: DeviceDescriptor } & DeviceDescriptor[];
 
@@ -42,15 +47,33 @@ export class Playwright {
     return revisionInfo;
   }
 
-  launch(options?: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) | undefined): Promise<Browser> {
+  async launch(options?: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) | undefined): Promise<browsers.Browser> {
+    const server = await this._launcher.launch(options);
+    return server.connect();
+  }
+
+  async launchServer(options: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) = {}): Promise<browsers.BrowserServer<Browser>> {
     return this._launcher.launch(options);
   }
 
-  connect(options: (ConnectionOptions & {
+  async connect(options: (ConnectionOptions & {
       browserWSEndpoint?: string;
       browserURL?: string;
       transport?: ConnectionTransport; })): Promise<Browser> {
-    return this._launcher.connect(options);
+    assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
+
+    let transport: ConnectionTransport | undefined;
+    let connectionURL: string = '';
+    if (options.transport) {
+      transport = options.transport;
+    } else if (options.browserWSEndpoint) {
+      connectionURL = options.browserWSEndpoint;
+      transport = await WebSocketTransport.create(options.browserWSEndpoint);
+    } else if (options.browserURL) {
+      connectionURL = await getWSEndpoint(options.browserURL);
+      transport = await WebSocketTransport.create(connectionURL);
+    }
+    return Browser.create(SlowMoTransport.wrap(transport, options.slowMo));
   }
 
   executablePath(): string {
@@ -75,4 +98,34 @@ export class Playwright {
   createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher {
     return createBrowserFetcher(this._projectRoot, options);
   }
+}
+
+function getWSEndpoint(browserURL: string): Promise<string> {
+  let resolve: (url: string) => void;
+  let reject: (e: Error) => void;
+  const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
+
+  const endpointURL = URL.resolve(browserURL, '/json/version');
+  const protocol = endpointURL.startsWith('https') ? https : http;
+  const requestOptions = Object.assign(URL.parse(endpointURL), { method: 'GET' });
+  const request = protocol.request(requestOptions, res => {
+    let data = '';
+    if (res.statusCode !== 200) {
+      // Consume response data to free up memory.
+      res.resume();
+      reject(new Error('HTTP ' + res.statusCode));
+      return;
+    }
+    res.setEncoding('utf8');
+    res.on('data', chunk => data += chunk);
+    res.on('end', () => resolve(JSON.parse(data).webSocketDebuggerUrl));
+  });
+
+  request.on('error', reject);
+  request.end();
+
+  return promise.catch(e => {
+    e.message = `Failed to fetch browser webSocket url from ${endpointURL}: ` + e.message;
+    throw e;
+  });
 }

@@ -24,6 +24,7 @@ import * as path from 'path';
 import * as util from 'util';
 import * as os from 'os';
 import { launchProcess } from '../processLauncher';
+import { BrowserServer } from '../browser';
 
 const DEFAULT_ARGS = [
 ];
@@ -46,7 +47,7 @@ export class Launcher {
     return webkitArguments;
   }
 
-  async launch(options: LauncherLaunchOptions = {}): Promise<Browser> {
+  async launch(options: LauncherLaunchOptions = {}): Promise<BrowserServer<Browser>> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -96,9 +97,9 @@ export class Launcher {
     let browser: Browser | undefined;
     try {
       const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-      browser = new Browser(SlowMoTransport.wrap(transport, slowMo), launchedProcess);
+      browser = new Browser(SlowMoTransport.wrap(transport, slowMo));
       await browser._waitForTarget(t => t._type === 'page');
-      return browser;
+      return new BrowserServer(browser, launchedProcess, '');
     } catch (e) {
       if (browser)
         await browser.close();

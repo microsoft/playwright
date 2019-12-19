@@ -7,14 +7,8 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('CrBrowser', function() {
-    it('should not return child_process for remote browser', async function({browser}) {
-      const browserWSEndpoint = browser.chromium.wsEndpoint();
-      const remoteBrowser = await playwright.connect({browserWSEndpoint});
-      expect(remoteBrowser.process()).toBe(null);
-      remoteBrowser.disconnect();
-    });
     it('should close all belonging targets once closing context', async function({browser, newContext}) {
-      const targets = async () => (await browser.chromium.targets()).filter(t => t.type() === 'page');
+      const targets = async () => (await browser.targets()).filter(t => t.type() === 'page');
       expect((await targets()).length).toBe(1);
 
       const context = await newContext();
