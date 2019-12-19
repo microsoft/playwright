@@ -189,11 +189,6 @@ export class Browser extends EventEmitter {
       this.chromium.emit(Events.Chromium.TargetChanged, target);
   }
 
-  async newPage(options?: BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    return context._createOwnerPage();
-  }
-
   async _closePage(page: Page) {
     await this._client.send('Target.closeTarget', { targetId: Target.fromPage(page)._targetId });
   }
@@ -232,22 +227,6 @@ export class Browser extends EventEmitter {
     }
   }
 
-  async pages(): Promise<Page[]> {
-    const contextPages = await Promise.all(this.browserContexts().map(context => context.pages()));
-    // Flatten array.
-    return contextPages.reduce((acc, x) => acc.concat(x), []);
-  }
-
-  async version(): Promise<string> {
-    const version = await this._getVersion();
-    return version.product;
-  }
-
-  async userAgent(): Promise<string> {
-    const version = await this._getVersion();
-    return version.userAgent;
-  }
-
   async close() {
     await this._closeCallback.call(null);
     this.disconnect();
@@ -259,10 +238,6 @@ export class Browser extends EventEmitter {
 
   isConnected(): boolean {
     return !this._connection._closed;
-  }
-
-  _getVersion(): Promise<any> {
-    return this._client.send('Browser.getVersion');
   }
 }
 

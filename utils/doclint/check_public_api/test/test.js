@@ -35,7 +35,7 @@ let page;
 
 beforeAll(async function() {
   browser = await playwright.launch();
-  page = await browser.newPage();
+  page = await browser.defaultContext().newPage();
 });
 
 afterAll(async function() {

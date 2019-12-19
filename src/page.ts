@@ -93,7 +93,6 @@ export class Page extends EventEmitter {
   private _pageBindings = new Map<string, Function>();
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
-  _isContextOwner = false;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -404,8 +403,6 @@ export class Page extends EventEmitter {
     await this._delegate.closePage(runBeforeUnload);
     if (!runBeforeUnload)
       await this._closedPromise;
-    if (this._isContextOwner)
-      await this._browserContext.close();
   }
 
   isClosed(): boolean {

@@ -38,7 +38,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const options = Object.assign({userDataDir}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
         // Open a page to make sure its functional.
-        await browser.newPage();
+        await browser.defaultContext().newPage();
         expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
         await browser.close();
         expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
@@ -87,12 +87,12 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const browserURL = 'http://127.0.0.1:21222';
 
         const browser1 = await playwright.connect({browserURL});
-        const page1 = await browser1.newPage();
+        const page1 = await browser1.defaultContext().newPage();
         expect(await page1.evaluate(() => 7 * 8)).toBe(56);
         browser1.disconnect();
 
         const browser2 = await playwright.connect({browserURL: browserURL + '/'});
-        const page2 = await browser2.newPage();
+        const page2 = await browser2.defaultContext().newPage();
         expect(await page2.evaluate(() => 8 * 7)).toBe(56);
         browser2.disconnect();
         originalBrowser.close();
@@ -163,7 +163,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const browser = await playwright.launch(options);
         expect((await browser.defaultContext().pages()).length).toBe(1);
         expect(browser.chromium.wsEndpoint()).toBe('');
-        const page = await browser.newPage();
+        const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
         await browser.close();
@@ -173,7 +173,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         options.args = ['--remote-debugging-pipe'].concat(options.args || []);
         const browser = await playwright.launch(options);
         expect(browser.chromium.wsEndpoint()).toBe('');
-        const page = await browser.newPage();
+        const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
         await browser.close();
@@ -196,7 +196,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       browser.chromium.on('targetcreated', () => events.push('CREATED'));
       browser.chromium.on('targetchanged', () => events.push('CHANGED'));
       browser.chromium.on('targetdestroyed', () => events.push('DESTROYED'));
-      const page = await browser.newPage();
+      const page = await browser.defaultContext().newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.close();
       expect(events).toEqual(['CREATED', 'CHANGED', 'DESTROYED']);

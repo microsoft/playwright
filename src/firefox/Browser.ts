@@ -93,16 +93,6 @@ export class Browser extends EventEmitter {
     return this._defaultContext;
   }
 
-  async userAgent(): Promise<string> {
-    const info = await this._connection.send('Browser.getInfo');
-    return info.userAgent;
-  }
-
-  async version(): Promise<string> {
-    const info = await this._connection.send('Browser.getInfo');
-    return info.version;
-  }
-
   process(): import('child_process').ChildProcess | null {
     return this._process;
   }
@@ -129,16 +119,6 @@ export class Browser extends EventEmitter {
       if (predicate(target))
         resolve(target);
     }
-  }
-
-  async newPage(options?: BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    return context._createOwnerPage();
-  }
-
-  async pages() {
-    const pageTargets = Array.from(this._targets.values()).filter(target => target.type() === 'page');
-    return await Promise.all(pageTargets.map(target => target.page()));
   }
 
   _allTargets() {

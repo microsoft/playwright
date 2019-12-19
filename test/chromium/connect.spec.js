@@ -32,11 +32,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         ...defaultBrowserOptions,
         browserWSEndpoint: originalBrowser.chromium.wsEndpoint()
       });
-      const page = await browser.newPage();
+      const page = await browser.defaultContext().newPage();
       expect(await page.evaluate(() => 7 * 8)).toBe(56);
       browser.disconnect();
 
-      const secondPage = await originalBrowser.newPage();
+      const secondPage = await originalBrowser.defaultContext().newPage();
       expect(await secondPage.evaluate(() => 7 * 6)).toBe(42, 'original browser should still work');
       await originalBrowser.close();
     });
@@ -54,12 +54,12 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should be able to reconnect to a disconnected browser', async({server}) => {
       const originalBrowser = await playwright.launch(defaultBrowserOptions);
       const browserWSEndpoint = originalBrowser.chromium.wsEndpoint();
-      const page = await originalBrowser.newPage();
+      const page = await originalBrowser.defaultContext().newPage();
       await page.goto(server.PREFIX + '/frames/nested-frames.html');
       originalBrowser.disconnect();
 
       const browser = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint});
-      const pages = await browser.pages();
+      const pages = await browser.defaultContext().pages();
       const restoredPage = pages.find(page => page.url() === server.PREFIX + '/frames/nested-frames.html');
       expect(utils.dumpFrames(restoredPage.mainFrame())).toEqual([
         'http://localhost:<PORT>/frames/nested-frames.html',
@@ -77,7 +77,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const browserTwo = await playwright.connect({ ...defaultBrowserOptions, browserWSEndpoint: browserOne.chromium.wsEndpoint() });
       const [page1, page2] = await Promise.all([
         new Promise(x => browserOne.chromium.once('targetcreated', target => x(target.page()))),
-        browserTwo.newPage(),
+        browserTwo.defaultContext().newPage(),
       ]);
       expect(await page1.evaluate(() => 7 * 8)).toBe(56);
       expect(await page2.evaluate(() => 7 * 6)).toBe(42);
@@ -90,7 +90,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       server.setRoute('/one-style.css', () => {});
       const browser = await playwright.launch(defaultBrowserOptions);
       const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browser.chromium.wsEndpoint()});
-      const page = await remote.newPage();
+      const page = await remote.defaultContext().newPage();
       const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
       await server.waitForRequest('/one-style.css');
       remote.disconnect();
@@ -102,7 +102,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       server.setRoute('/empty.html', () => {});
       const browser = await playwright.launch(defaultBrowserOptions);
       const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browser.chromium.wsEndpoint()});
-      const page = await remote.newPage();
+      const page = await remote.defaultContext().newPage();
       const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
       remote.disconnect();
       const error = await watchdog;
@@ -115,7 +115,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should terminate network waiters', async({context, server}) => {
       const browser = await playwright.launch(defaultBrowserOptions);
       const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browser.chromium.wsEndpoint()});
-      const newPage = await remote.newPage();
+      const newPage = await remote.defaultContext().newPage();
       const results = await Promise.all([
         newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
         newPage.waitForResponse(server.EMPTY_PAGE).catch(e => e),

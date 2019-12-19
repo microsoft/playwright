@@ -46,7 +46,7 @@ async function run() {
     messages.push(...await preprocessor.ensureReleasedAPILinks([readme], VERSION));
 
     const browser = await playwright.launch();
-    const page = await browser.newPage();
+    const page = await browser.defaultContext().newPage();
     const checkPublicAPI = require('./check_public_api');
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
     messages.push(...await checkPublicAPI(page, mdSources, jsSources));

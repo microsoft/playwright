@@ -57,8 +57,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
     });
     it('should be able to use the default page in the browser', async({page, server, browser}) => {
       // The pages will be the testing page and the original newtab page
-      const allPages = await browser.pages();
-      const originalPage = allPages.find(p => p !== page);
+      const originalPage = (await browser.defaultContext().pages())[0];
       expect(await originalPage.evaluate(() => ['Hello', 'world'].join(' '))).toBe('Hello world');
       expect(await originalPage.$('body')).toBeTruthy();
     });
@@ -194,7 +193,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       let resolved = false;
       const targetPromise = browser.chromium.waitForTarget(target => target.url() === server.EMPTY_PAGE);
       targetPromise.then(() => resolved = true);
-      const page = await browser.newPage();
+      const page = await browser.defaultContext().newPage();
       expect(resolved).toBe(false);
       await page.goto(server.EMPTY_PAGE);
       const target = await targetPromise;

@@ -99,7 +99,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     });
 
     beforeEach(async(state, test) => {
-      const pages = [];
       const contexts = [];
       const onLine = (line) => test.output += line + '\n';
 
@@ -111,7 +110,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       }
 
       state.tearDown = async () => {
-        await Promise.all(pages.map(p => p.close()));
         await Promise.all(contexts.map(c => c.close()));
         if (!WEBKIT) {
           rl.removeListener('line', onLine);
@@ -126,9 +124,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       };
 
       state.newPage = async (options) => {
-        const page = await state.browser.newPage(options);
-        pages.push(page);
-        return page;
+        const context = await state.newContext(options);
+        return await context.newPage(options);
       };
     });
 

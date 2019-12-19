@@ -60,17 +60,6 @@ export class BrowserContext {
     return this._delegate.newPage();
   }
 
-  async _createOwnerPage(): Promise<Page> {
-    try {
-      const page = await this._delegate.newPage();
-      page._isContextOwner = true;
-      return page;
-    } catch (e) {
-      await this.close();
-      throw e;
-    }
-  }
-
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
     return network.filterCookies(await this._delegate.cookies(), urls);
   }

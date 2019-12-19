@@ -36,7 +36,7 @@ afterAll(async state => {
 });
 
 beforeEach(async state => {
-  state.page = await state.browser.newPage();
+  state.page = await state.browser.defaultContext().newPage();
   await state.page.evaluateOnNewDocument(playwrightWeb);
   await state.page.addScriptTag({
     content: playwrightWeb + '\n//# sourceURL=playwright-web.js'
@@ -55,7 +55,7 @@ describe('Playwright-Web', () => {
     await page.evaluate(async(browserWSEndpoint, serverConfig) => {
       const playwright = require('playwright');
       const browser = await playwright.connect({browserWSEndpoint});
-      const page = await browser.newPage();
+      const page = await browser.defaultContext().newPage();
       await page.goto(serverConfig.EMPTY_PAGE);
     }, browser2.wsEndpoint(), serverConfig);
     const pageURLs = (await browser2.pages()).map(page => page.url()).sort();
@@ -77,10 +77,10 @@ describe('Playwright-Web', () => {
       const playwright = require('playwright');
       window.cdp.close = () => {};
       const browser = await playwright.connect({transport: window.cdp});
-      const page = await browser.newPage();
+      const page = await browser.defaultContext().newPage();
       await page.goto(serverConfig.EMPTY_PAGE);
     }, serverConfig);
-    const pageURLs = (await browser.pages()).map(page => page.url()).sort();
+    const pageURLs = (await browser.defaultContext().pages()).map(page => page.url()).sort();
     expect(pageURLs).toEqual([
       'about:blank',
       'about:blank',

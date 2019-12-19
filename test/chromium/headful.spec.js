@@ -47,7 +47,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
   describe('HEADFUL', function() {
     it('background_page target type should be available', async() => {
       const browserWithExtension = await playwright.launch(extensionOptions);
-      const page = await browserWithExtension.newPage();
+      const page = await browserWithExtension.defaultContext().newPage();
       const backgroundPageTarget = await browserWithExtension.chromium.waitForTarget(target => target.type() === 'background_page');
       await page.close();
       await browserWithExtension.close();
@@ -63,7 +63,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it('should have default url when launching browser', async function() {
       const browser = await playwright.launch(extensionOptions);
-      const pages = (await browser.pages()).map(page => page.url());
+      const pages = (await browser.defaultContext().pages()).map(page => page.url());
       expect(pages).toEqual(['about:blank']);
       await browser.close();
     });
@@ -89,7 +89,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     xit('OOPIF: should report google.com frame', async({server}) => {
       // https://google.com is isolated by default in Chromium embedder.
       const browser = await playwright.launch(headfulOptions);
-      const page = await browser.newPage();
+      const page = await browser.defaultContext().newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.interception.enable();
       page.on('request', r => page.interception.fulfill(r, {body: 'YO, GOOGLE.COM'}));
@@ -109,7 +109,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     });
     it('should close browser with beforeunload page', async({server}) => {
       const browser = await playwright.launch(headfulOptions);
-      const page = await browser.newPage();
+      const page = await browser.defaultContext().newPage();
       await page.goto(server.PREFIX + '/beforeunload.html');
       // We have to interact with a page so that 'beforeunload' handlers
       // fire.

@@ -65,19 +65,6 @@ export class Browser extends EventEmitter {
     });
   }
 
-  async userAgent(): Promise<string> {
-    const context = await this.newContext();
-    const page = await context.newPage();
-    const userAgent = await page.evaluate(() => navigator.userAgent);
-    context.close();
-    return userAgent;
-  }
-
-  async version(): Promise<string> {
-    const userAgent = await this.userAgent();
-    return userAgent.split(' ').pop();
-  }
-
   process(): childProcess.ChildProcess | null {
     return this._process;
   }
@@ -97,11 +84,6 @@ export class Browser extends EventEmitter {
 
   defaultContext(): BrowserContext {
     return this._defaultContext;
-  }
-
-  async newPage(options?: BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    return context._createOwnerPage();
   }
 
   targets(): Target[] {
@@ -130,12 +112,6 @@ export class Browser extends EventEmitter {
       if (predicate(target))
         resolve(target);
     }
-  }
-
-  async pages(): Promise<Page[]> {
-    const contextPages = await Promise.all(this.browserContexts().map(context => context.pages()));
-    // Flatten array.
-    return contextPages.reduce((acc, x) => acc.concat(x), []);
   }
 
   _onTargetCreated(session: TargetSession, targetInfo: Protocol.Target.TargetInfo) {

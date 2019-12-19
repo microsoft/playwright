@@ -34,11 +34,11 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       ]);
       expect(error.message).toContain('Protocol error');
     });
-    it('should not be visible in browser.pages', async({browser}) => {
-      const newPage = await browser.newPage();
-      expect(await browser.pages()).toContain(newPage);
+    it('should not be visible in context.pages', async({context}) => {
+      const newPage = await context.newPage();
+      expect(await context.pages()).toContain(newPage);
       await newPage.close();
-      expect(await browser.pages()).not.toContain(newPage);
+      expect(await context.pages()).not.toContain(newPage);
     });
     it('should run beforeunload if asked for', async({context, server}) => {
       const newPage = await context.newPage();
