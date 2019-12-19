@@ -390,7 +390,7 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       expect(requests.length).toBe(1);
       expect(requests[0].url()).toBe(dataURL);
     });
-    it.skip(FFOX || WEBKIT)('should navigate to URL with hash and fire requests without hash', async({page, server}) => {
+    it('should navigate to URL with hash and fire requests without hash', async({page, server}) => {
       const requests = [];
       page.on('request', request => !utils.isFavicon(request) && requests.push(request));
       const response = await page.goto(server.EMPTY_PAGE + '#hash');

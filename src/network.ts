@@ -67,6 +67,15 @@ export function rewriteCookies(cookies: SetNetworkCookieParam[]): SetNetworkCook
   });
 }
 
+function stripFragmentFromUrl(url: string): string
+{
+  if (!url.indexOf('#'))
+    return url;
+  const parsed = new URL(url);
+  parsed.hash = '';
+  return parsed.href;
+}
+
 export type Headers = { [key: string]: string };
 
 export class Request {
@@ -94,7 +103,7 @@ export class Request {
     for (const request of redirectChain)
       request._finalRequest = this;
     this._documentId = documentId;
-    this._url = url;
+    this._url = stripFragmentFromUrl(url);
     this._resourceType = resourceType;
     this._method = method;
     this._postData = postData;
