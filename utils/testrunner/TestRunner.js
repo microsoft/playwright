@@ -315,7 +315,7 @@ class TestRunner extends EventEmitter {
     this.fdescribe = this._addSuite.bind(this, TestMode.Focus);
     this.fdescribe.skip = () => this.fdescribe; // no-op
     this.xdescribe = this._addSuite.bind(this, TestMode.Skip);
-    this.xdescribe.skip = () => this.fdescribe; // no-op
+    this.xdescribe.skip = () => this.xdescribe; // no-op
 
     this.it = this._addTest.bind(this, TestMode.Run);
     this.it.skip = condition => condition ? this.xit : this.it;
