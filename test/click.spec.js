@@ -71,6 +71,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('button');
       expect(await page.evaluate(() => result)).toBe('Clicked');
     });
+    it.skip(WEBKIT)('should click the button after a cross origin navigation ', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.click('button');
+      await page.goto(server.CROSS_PROCESS_PREFIX + '/input/button.html');
+      await page.click('button');
+      expect(await page.evaluate(() => result)).toBe('Clicked');
+    });
     it.skip(FFOX)('should click with disabled javascript', async({newPage, server}) => {
       const page = await newPage({ javaScriptEnabled: false });
       await page.goto(server.PREFIX + '/wrappedlink.html');
