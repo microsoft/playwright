@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { Events } from './events';
 import { assert, helper } from '../helper';
@@ -24,44 +23,41 @@ import { Connection, ConnectionEvents, CDPSession } from './Connection';
 import { Page } from '../page';
 import { Target } from './Target';
 import { Protocol } from './protocol';
-import { Chromium } from './features/chromium';
 import { FrameManager } from './FrameManager';
+import * as browser from '../browser';
 import * as network from '../network';
 import { Permissions } from './features/permissions';
 import { Overrides } from './features/overrides';
+import { Worker } from './features/workers';
 import { ConnectionTransport } from '../transport';
+import { readProtocolStream } from './protocolHelper';
 
-export class Browser extends EventEmitter {
-  private _process: childProcess.ChildProcess;
+export class Browser extends EventEmitter implements browser.Browser {
   _connection: Connection;
   _client: CDPSession;
   private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
-  readonly chromium: Chromium;
+
+  private _tracingRecording = false;
+  private _tracingPath = '';
+  private _tracingClient: CDPSession | undefined;
 
   static async create(
-    browserWSEndpoint: string,
-    transport: ConnectionTransport,
-    process: childProcess.ChildProcess | null) {
+    transport: ConnectionTransport) {
     const connection = new Connection(transport);
 
     const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
-    const browser = new Browser(browserWSEndpoint, connection, browserContextIds, process);
+    const browser = new Browser(connection, browserContextIds);
     await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
+    await browser.waitForTarget(t => t.type() === 'page');
     return browser;
   }
 
-  constructor(
-    browserWSEndpoint: string,
-    connection: Connection,
-    contextIds: string[],
-    process: childProcess.ChildProcess | null) {
+  constructor(connection: Connection, contextIds: string[]) {
     super();
     this._connection = connection;
     this._client = connection.rootSession;
-    this._process = process;
-    this.chromium = new Chromium(this, browserWSEndpoint);
 
     this._defaultContext = this._createBrowserContext(null, {});
     for (const contextId of contextIds)
@@ -139,10 +135,6 @@ export class Browser extends EventEmitter {
     return context;
   }
 
-  process(): childProcess.ChildProcess | null {
-    return this._process;
-  }
-
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     const { browserContextId } = await this._client.send('Target.createBrowserContext');
     const context = this._createBrowserContext(browserContextId, options);
@@ -167,8 +159,8 @@ export class Browser extends EventEmitter {
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(event.targetInfo.targetId, target);
 
-    if (await target._initializedPromise)
-      this.chromium.emit(Events.Chromium.TargetCreated, target);
+    if (target._isInitialized || await target._initializedPromise)
+      this.emit(Events.Browser.TargetCreated, target);
   }
 
   async _targetDestroyed(event: { targetId: string; }) {
@@ -177,7 +169,7 @@ export class Browser extends EventEmitter {
     this._targets.delete(event.targetId);
     target._didClose();
     if (await target._initializedPromise)
-      this.chromium.emit(Events.Chromium.TargetDestroyed, target);
+      this.emit(Events.Browser.TargetDestroyed, target);
   }
 
   _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
@@ -187,7 +179,7 @@ export class Browser extends EventEmitter {
     const wasInitialized = target._isInitialized;
     target._targetInfoChanged(event.targetInfo);
     if (wasInitialized && previousURL !== target.url())
-      this.chromium.emit(Events.Chromium.TargetChanged, target);
+      this.emit(Events.Browser.TargetChanged, target);
   }
 
   async _closePage(page: Page) {
@@ -202,7 +194,7 @@ export class Browser extends EventEmitter {
     await (page._delegate as FrameManager)._client.send('Target.activateTarget', {targetId: Target.fromPage(page)._targetId});
   }
 
-  async _waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
+  async waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
     const {
       timeout = 30000
     } = options;
@@ -211,15 +203,15 @@ export class Browser extends EventEmitter {
       return existingTarget;
     let resolve: (target: Target) => void;
     const targetPromise = new Promise<Target>(x => resolve = x);
-    this.chromium.on(Events.Chromium.TargetCreated, check);
-    this.chromium.on(Events.Chromium.TargetChanged, check);
+    this.on(Events.Browser.TargetCreated, check);
+    this.on(Events.Browser.TargetChanged, check);
     try {
       if (!timeout)
         return await targetPromise;
       return await helper.waitWithTimeout(targetPromise, 'target', timeout);
     } finally {
-      this.chromium.removeListener(Events.Chromium.TargetCreated, check);
-      this.chromium.removeListener(Events.Chromium.TargetChanged, check);
+      this.removeListener(Events.Browser.TargetCreated, check);
+      this.removeListener(Events.Browser.TargetChanged, check);
     }
 
     function check(target: Target) {
@@ -231,6 +223,62 @@ export class Browser extends EventEmitter {
   async close() {
     await this._connection.rootSession.send('Browser.close');
     this.disconnect();
+  }
+
+  browserTarget(): Target {
+    return [...this._targets.values()].find(t => t.type() === 'browser');
+  }
+
+  serviceWorker(target: Target): Promise<Worker | null> {
+    return target._worker();
+  }
+
+  async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+    assert(!this._tracingRecording, 'Cannot start recording trace while already recording trace.');
+    this._tracingClient = page ? (page._delegate as FrameManager)._client : this._client;
+
+    const defaultCategories = [
+      '-*', 'devtools.timeline', 'v8.execute', 'disabled-by-default-devtools.timeline',
+      'disabled-by-default-devtools.timeline.frame', 'toplevel',
+      'blink.console', 'blink.user_timing', 'latencyInfo', 'disabled-by-default-devtools.timeline.stack',
+      'disabled-by-default-v8.cpu_profiler', 'disabled-by-default-v8.cpu_profiler.hires'
+    ];
+    const {
+      path = null,
+      screenshots = false,
+      categories = defaultCategories,
+    } = options;
+
+    if (screenshots)
+      categories.push('disabled-by-default-devtools.screenshot');
+
+    this._tracingPath = path;
+    this._tracingRecording = true;
+    await this._tracingClient.send('Tracing.start', {
+      transferMode: 'ReturnAsStream',
+      categories: categories.join(',')
+    });
+  }
+
+  async stopTracing(): Promise<Buffer> {
+    assert(this._tracingClient, 'Tracing was not started.');
+    let fulfill: (buffer: Buffer) => void;
+    const contentPromise = new Promise<Buffer>(x => fulfill = x);
+    this._tracingClient.once('Tracing.tracingComplete', event => {
+      readProtocolStream(this._tracingClient, event.stream, this._tracingPath).then(fulfill);
+    });
+    await this._tracingClient.send('Tracing.end');
+    this._tracingRecording = false;
+    return contentPromise;
+  }
+
+  targets(context?: BrowserContext): Target[] {
+    const targets = this._allTargets();
+    return context ? targets.filter(t => t.browserContext() === context) : targets;
+  }
+
+  pageTarget(page: Page): Target {
+    return Target.fromPage(page);
   }
 
   disconnect() {

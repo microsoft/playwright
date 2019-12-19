@@ -25,6 +25,7 @@ import { assert } from '../helper';
 import { TimeoutError } from '../errors';
 import { WebSocketTransport, SlowMoTransport } from '../transport';
 import { launchProcess, waitForLine } from '../processLauncher';
+import { BrowserServer } from '../browser';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const writeFileAsync = util.promisify(fs.writeFile);
@@ -58,7 +59,7 @@ export class Launcher {
     return firefoxArguments;
   }
 
-  async launch(options: any = {}): Promise<Browser> {
+  async launch(options: any = {}): Promise<BrowserServer<Browser>> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -122,23 +123,14 @@ export class Launcher {
       const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
       const url = match[1];
       const transport = await WebSocketTransport.create(url);
-      browser = await Browser.create(url, SlowMoTransport.wrap(transport, slowMo), launchedProcess);
+      browser = await Browser.create(SlowMoTransport.wrap(transport, slowMo));
       await browser._waitForTarget(t => t.type() === 'page');
-      return browser;
+      return new BrowserServer(browser, launchedProcess, url);
     } catch (e) {
       if (browser)
         await browser.close();
       throw e;
     }
-  }
-
-  async connect(options: any = {}): Promise<Browser> {
-    const {
-      browserWSEndpoint,
-      slowMo = 0,
-    } = options;
-    const transport = await WebSocketTransport.create(browserWSEndpoint);
-    return await Browser.create(browserWSEndpoint, SlowMoTransport.wrap(transport, slowMo), null);
   }
 
   executablePath(): string {

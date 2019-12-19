@@ -76,6 +76,7 @@ export async function launchProcess(options: LaunchProcessOptions, attemptToGrac
   const waitForProcessToClose = new Promise((fulfill, reject) => {
     spawnedProcess.once('exit', () => {
       processClosed = true;
+      helper.removeEventListeners(listeners);
       // Cleanup as processes exit.
       if (options.tempDir) {
         removeFolderAsync(options.tempDir)

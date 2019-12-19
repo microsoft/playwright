@@ -90,12 +90,14 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
   describe('Browser', function() {
     beforeAll(async state => {
-      state.browser = await playwright.launch(defaultBrowserOptions);
+      state.browserServer = await playwright.launchServer(defaultBrowserOptions);
+      state.browser = await state.browserServer.connect();
     });
 
     afterAll(async state => {
-      await state.browser.close();
+      await state.browserServer.close();
       state.browser = null;
+      state.browserServer = null;
     });
 
     beforeEach(async(state, test) => {
@@ -104,7 +106,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
       let rl;
       if (!WEBKIT) {
-        rl = require('readline').createInterface({ input: state.browser.process().stderr });
+        rl = require('readline').createInterface({ input: state.browserServer.process().stderr });
         test.output = '';
         rl.on('line', onLine);
       }
@@ -187,9 +189,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     testRunner.loadTests(require('./ignorehttpserrors.spec.js'), testOptions);
     if (CHROME) {
       testRunner.loadTests(require('./chromium/browser.spec.js'), testOptions);
-    }
-    if (FFOX) {
-      testRunner.loadTests(require('./firefox/browser.spec.js'), testOptions);
     }
   });
 

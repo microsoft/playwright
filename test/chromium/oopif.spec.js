@@ -54,5 +54,5 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
 
 function oopifs(browser) {
-  return browser.chromium.targets().filter(target => target._targetInfo.type === 'iframe');
+  return browser.targets().filter(target => target._targetInfo.type === 'iframe');
 }

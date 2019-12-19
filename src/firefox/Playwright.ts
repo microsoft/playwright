@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import * as browsers from '../browser';
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
-import { ConnectionTransport } from '../transport';
+import { WebSocketTransport, SlowMoTransport } from '../transport';
 import { DeviceDescriptors, DeviceDescriptor } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import { Launcher, createBrowserFetcher } from './Launcher';
@@ -41,15 +43,18 @@ export class Playwright {
     return revisionInfo;
   }
 
-  launch(options: any): Promise<Browser> {
+  async launch(options: any): Promise<Browser> {
+    const server = await this._launcher.launch(options);
+    return server.connect();
+  }
+
+  async launchServer(options: any): Promise<browsers.BrowserServer<Browser>> {
     return this._launcher.launch(options);
   }
 
-  connect(options: (any & {
-      browserWSEndpoint?: string;
-      browserURL?: string;
-      transport?: ConnectionTransport; })): Promise<Browser> {
-    return this._launcher.connect(options);
+  async connect(options: { slowMo?: number, browserWSEndpoint: string }): Promise<Browser> {
+    const transport = await WebSocketTransport.create(options.browserWSEndpoint);
+    return Browser.create(SlowMoTransport.wrap(transport, options.slowMo || 0));
   }
 
   executablePath(): string {

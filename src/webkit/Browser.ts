@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { helper, RegisteredListener, debugError, assert } from '../helper';
+import * as browser from '../browser';
 import * as network from '../network';
 import { Connection, ConnectionEvents, TargetSession } from './Connection';
 import { Page } from '../page';
@@ -27,8 +27,7 @@ import { Events } from '../events';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { ConnectionTransport } from '../transport';
 
-export class Browser extends EventEmitter {
-  private readonly _process: childProcess.ChildProcess;
+export class Browser extends EventEmitter implements browser.Browser {
   readonly _connection: Connection;
   private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
@@ -36,12 +35,9 @@ export class Browser extends EventEmitter {
   private _eventListeners: RegisteredListener[];
   private _privateEvents = new EventEmitter();
 
-  constructor(
-    transport: ConnectionTransport,
-    process: childProcess.ChildProcess | null) {
+  constructor(transport: ConnectionTransport) {
     super();
     this._connection = new Connection(transport);
-    this._process = process;
 
     /** @type {!Map<string, !Target>} */
     this._targets = new Map();
@@ -63,10 +59,6 @@ export class Browser extends EventEmitter {
     });
   }
 
-  process(): childProcess.ChildProcess | null {
-    return this._process;
-  }
-
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     const { browserContextId } = await this._connection.send('Browser.createContext');
     const context = this._createBrowserContext(browserContextId, options);
@@ -84,15 +76,11 @@ export class Browser extends EventEmitter {
     return this._defaultContext;
   }
 
-  targets(): Target[] {
-    return Array.from(this._targets.values());
-  }
-
   async _waitForTarget(predicate: (arg0: Target) => boolean, options: { timeout?: number; } | undefined = {}): Promise<Target> {
     const {
       timeout = 30000
     } = options;
-    const existingTarget = this.targets().find(predicate);
+    const existingTarget = Array.from(this._targets.values()).find(predicate);
     if (existingTarget)
       return existingTarget;
     let resolve : (a: Target) => void;
@@ -185,7 +173,7 @@ export class Browser extends EventEmitter {
   _createBrowserContext(browserContextId: string | undefined, options: BrowserContextOptions): BrowserContext {
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
-        const targets = this.targets().filter(target => target._browserContext === context && target._type === 'page');
+        const targets = Array.from(this._targets.values()).filter(target => target._browserContext === context && target._type === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page);
       },

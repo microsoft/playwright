@@ -27,6 +27,7 @@ export interface ConnectionTransport {
 
 export class WebSocketTransport implements ConnectionTransport {
   private _ws: WebSocket;
+
   onmessage?: (message: string) => void;
   onclose?: () => void;
 
@@ -36,12 +37,12 @@ export class WebSocketTransport implements ConnectionTransport {
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb
       });
-      ws.addEventListener('open', () => resolve(new WebSocketTransport(ws)));
+      ws.addEventListener('open', () => resolve(new WebSocketTransport(ws, url)));
       ws.addEventListener('error', reject);
     });
   }
 
-  constructor(ws: WebSocket) {
+  constructor(ws: WebSocket, url: string) {
     this._ws = ws;
     this._ws.addEventListener('message', event => {
       if (this.onmessage)

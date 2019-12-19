@@ -10,12 +10,12 @@ async function generateChromeProtocol(revision) {
   if (revision.local && fs.existsSync(outputPath))
     return;
   const playwright = await require('../../chromium');
-  const browser = await playwright.launch({executablePath: revision.executablePath});
-  const origin = browser.chromium.wsEndpoint().match(/ws:\/\/([0-9A-Za-z:\.]*)\//)[1];
-  const page = await browser.defaultContext().newPage();
+  const browserServer = await playwright.launchServer({executablePath: revision.executablePath});
+  const origin = browserServer.wsEndpoint().match(/ws:\/\/([0-9A-Za-z:\.]*)\//)[1];
+  const page = (await browserServer.connect()).defaultContext().newPage();
   await page.goto(`http://${origin}/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
-  await browser.close();
+  await browserServer.close();
   fs.writeFileSync(outputPath, jsonToTS(json));
   console.log(`Wrote protocol.ts to ${path.relative(process.cwd(), outputPath)}`);
 }

@@ -68,15 +68,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       it('should filter out ignored default arguments', async() => {
         // Make sure we launch with `--enable-automation` by default.
         const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
-        const browser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
+        const browserServer = await playwright.launchServer(Object.assign({}, defaultBrowserOptions, {
           // Ignore first and third default argument.
           ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
         }));
-        const spawnargs = browser.process().spawnargs;
+        const spawnargs = browserServer.process().spawnargs;
         expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
         expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
         expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
-        await browser.close();
+        await browserServer.close();
       });
     });
     describe('Playwright.launch |browserURL| option', function() {
@@ -98,16 +98,16 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         originalBrowser.close();
       });
       it('should throw when using both browserWSEndpoint and browserURL', async({server}) => {
-        const originalBrowser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
+        const browserServer = await playwright.launchServer(Object.assign({}, defaultBrowserOptions, {
           args: ['--remote-debugging-port=21222']
         }));
         const browserURL = 'http://127.0.0.1:21222';
 
         let error = null;
-        await playwright.connect({browserURL, browserWSEndpoint: originalBrowser.chromium.wsEndpoint()}).catch(e => error = e);
+        await playwright.connect({browserURL, browserWSEndpoint: browserServer.wsEndpoint()}).catch(e => error = e);
         expect(error.message).toContain('Exactly one of browserWSEndpoint, browserURL or transport');
 
-        originalBrowser.close();
+        browserServer.close();
       });
       it('should throw when trying to connect to non-existing browser', async({server}) => {
         const originalBrowser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
@@ -160,30 +160,33 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     describe('Playwright.launch |pipe| option', function() {
       it('should support the pipe option', async() => {
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
-        const browser = await playwright.launch(options);
+        const browserServer = await playwright.launchServer(options);
+        const browser = await browserServer.connect();
         expect((await browser.defaultContext().pages()).length).toBe(1);
-        expect(browser.chromium.wsEndpoint()).toBe('');
+        expect(browserServer.wsEndpoint()).toBe('');
         const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
-        await browser.close();
+        await browserServer.close();
       });
       it('should support the pipe argument', async() => {
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = ['--remote-debugging-pipe'].concat(options.args || []);
-        const browser = await playwright.launch(options);
-        expect(browser.chromium.wsEndpoint()).toBe('');
+        const browserServer = await playwright.launchServer(options);
+        const browser = await browserServer.connect();
+        expect(browserServer.wsEndpoint()).toBe('');
         const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
-        await browser.close();
+        await browserServer.close();
       });
       it('should fire "disconnected" when closing with pipe', async() => {
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
-        const browser = await playwright.launch(options);
+        const browserServer = await playwright.launchServer(options);
+        const browser = await browserServer.connect();
         const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
         // Emulate user exiting browser.
-        browser.process().kill();
+        browserServer.process().kill();
         await disconnectedEventPromise;
       });
     });
@@ -193,9 +196,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should work', async({server}) => {
       const browser = await playwright.launch(defaultBrowserOptions);
       const events = [];
-      browser.chromium.on('targetcreated', () => events.push('CREATED'));
-      browser.chromium.on('targetchanged', () => events.push('CHANGED'));
-      browser.chromium.on('targetdestroyed', () => events.push('DESTROYED'));
+      browser.on('targetcreated', () => events.push('CREATED'));
+      browser.on('targetchanged', () => events.push('CHANGED'));
+      browser.on('targetdestroyed', () => events.push('DESTROYED'));
       const page = await browser.defaultContext().newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.close();
@@ -206,8 +209,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Browser.Events.disconnected', function() {
     it('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async() => {
-      const originalBrowser = await playwright.launch(defaultBrowserOptions);
-      const browserWSEndpoint = originalBrowser.chromium.wsEndpoint();
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const originalBrowser = await browserServer.connect();
+      const browserWSEndpoint = browserServer.wsEndpoint();
       const remoteBrowser1 = await playwright.connect({browserWSEndpoint});
       const remoteBrowser2 = await playwright.connect({browserWSEndpoint});
 
@@ -230,7 +234,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await Promise.all([
         waitEvent(remoteBrowser1, 'disconnected'),
         waitEvent(originalBrowser, 'disconnected'),
-        originalBrowser.close(),
+        browserServer.close(),
       ]);
 
       expect(disconnectedOriginal).toBe(1);
