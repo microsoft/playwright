@@ -130,7 +130,7 @@ export class FrameManager implements PageDelegate {
   disconnectFromTarget() {
     for (const context of this._contextIdToContext.values()) {
       (context._delegate as ExecutionContextDelegate)._dispose();
-      context.frame()._contextDestroyed(context);
+      context.frame._contextDestroyed(context);
     }
     this._contextIdToContext.clear();
   }
@@ -160,7 +160,7 @@ export class FrameManager implements PageDelegate {
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     const frame = this._page._frameManager.frame(framePayload.id);
     for (const [contextId, context] of this._contextIdToContext) {
-      if (context.frame() === frame) {
+      if (context.frame === frame) {
         (context._delegate as ExecutionContextDelegate)._dispose();
         this._contextIdToContext.delete(contextId);
         frame._contextDestroyed(context);
@@ -372,6 +372,10 @@ export class FrameManager implements PageDelegate {
     if (!nodeInfo.contentFrameId)
       return null;
     return this._page._frameManager.frame(nodeInfo.contentFrameId);
+  }
+
+  async getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    return handle._context.frame;
   }
 
   isElementHandle(remoteObject: any): boolean {

@@ -198,7 +198,7 @@ export class FrameManager implements PageDelegate {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    context.frame()._contextDestroyed(context);
+    context.frame._contextDestroyed(context);
   }
 
   _onExecutionContextsCleared() {
@@ -368,9 +368,31 @@ export class FrameManager implements PageDelegate {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: toRemoteObject(handle).objectId
     });
-    if (typeof nodeInfo.node.frameId !== 'string')
+    if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string')
       return null;
     return this._page._frameManager.frame(nodeInfo.node.frameId);
+  }
+
+  async getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    // document.documentElement has frameId of the owner frame.
+    const documentElement = await handle.evaluateHandle(node => {
+      const doc = node as Document;
+      if (doc.documentElement && doc.documentElement.ownerDocument === doc)
+        return doc.documentElement;
+      return node.ownerDocument ? node.ownerDocument.documentElement : null;
+    });
+    if (!documentElement)
+      return null;
+    const remoteObject = toRemoteObject(documentElement);
+    if (!remoteObject.objectId)
+      return null;
+    const nodeInfo = await this._client.send('DOM.describeNode', {
+      objectId: remoteObject.objectId
+    });
+    const frame = nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
+      this._page._frameManager.frame(nodeInfo.node.frameId) : null;
+    await documentElement.dispose();
+    return frame;
   }
 
   isElementHandle(remoteObject: any): boolean {

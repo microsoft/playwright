@@ -75,11 +75,116 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const frame = await elementHandle.contentFrame();
       expect(frame).toBe(page.frames()[1]);
     });
+    it('should work for cross-process iframes', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
+      const elementHandle = await page.$('#frame1');
+      const frame = await elementHandle.contentFrame();
+      expect(frame).toBe(page.frames()[1]);
+    });
+    it('should work for cross-frame evaluations', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.frames()[1];
+      const elementHandle = await frame.evaluateHandle(() => window.top.document.querySelector('#frame1'));
+      expect(await elementHandle.contentFrame()).toBe(frame);
+    });
+    it('should return null for non-iframes', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.frames()[1];
+      const elementHandle = await frame.evaluateHandle(() => document.body);
+      expect(await elementHandle.contentFrame()).toBe(null);
+    });
+    it('should return null for document.documentElement', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.frames()[1];
+      const elementHandle = await frame.evaluateHandle(() => document.documentElement);
+      expect(await elementHandle.contentFrame()).toBe(null);
+    });
+  });
+
+  describe('ElementHandle.ownerFrame', function() {
+    it('should work', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.frames()[1];
+      const elementHandle = await frame.evaluateHandle(() => document.body);
+      expect(await elementHandle.ownerFrame()).toBe(frame);
+    });
+    it('should work for cross-process iframes', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
+      const frame = page.frames()[1];
+      const elementHandle = await frame.evaluateHandle(() => document.body);
+      expect(await elementHandle.ownerFrame()).toBe(frame);
+    });
+    it('should work for document', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.frames()[1];
+      const elementHandle = await frame.evaluateHandle(() => document);
+      expect(await elementHandle.ownerFrame()).toBe(frame);
+    });
+    it('should work for iframe elements', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.mainFrame();
+      const elementHandle = await frame.evaluateHandle(() => document.querySelector('#frame1'));
+      expect(await elementHandle.ownerFrame()).toBe(frame);
+    });
+    it.skip(FFOX || WEBKIT)('should work for cross-frame evaluations', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.mainFrame();
+      const elementHandle = await frame.evaluateHandle(() => document.querySelector('#frame1').contentWindow.document.body);
+      expect(await elementHandle.ownerFrame()).toBe(frame.childFrames()[0]);
+    });
+    it('should work for detached elements', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const divHandle = await page.evaluateHandle(() => {
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        return div;
+      });
+      expect(await divHandle.ownerFrame()).toBe(page.mainFrame());
+      await page.evaluate(() => {
+        const div = document.querySelector('div');
+        document.body.removeChild(div);
+      });
+      expect(await divHandle.ownerFrame()).toBe(page.mainFrame());
+    });
+    xit('should work for adopted elements', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE),
+      ]);
+      const divHandle = await page.evaluateHandle(() => {
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        return div;
+      });
+      expect(await divHandle.ownerFrame()).toBe(page.mainFrame());
+      await page.evaluate(() => {
+        const div = document.querySelector('div');
+        window.__popup.document.body.appendChild(div);
+      });
+      expect(await divHandle.ownerFrame()).toBe(popup.mainFrame());
+    });
   });
 
   describe('ElementHandle.click', function() {
     it('should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
+      const button = await page.$('button');
+      await button.click();
+      expect(await page.evaluate(() => result)).toBe('Clicked');
+    });
+    it.skip(FFOX)('should work with Node removed', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.evaluate(() => delete window['Node']);
       const button = await page.$('button');
       await button.click();
       expect(await page.evaluate(() => result)).toBe('Clicked');
@@ -134,6 +239,13 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await button.hover();
       expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
     });
+    it.skip(FFOX)('should work when Node is removed', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/scrollable.html');
+      await page.evaluate(() => delete window['Node']);
+      const button = await page.$('#button-6');
+      await button.hover();
+      expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
+    });
   });
 
   describe('ElementHandle.isIntersectingViewport', function() {
@@ -145,6 +257,32 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         const visible = i < 10;
         expect(await button.isIntersectingViewport()).toBe(visible);
       }
+    });
+    it.skip(FFOX)('should work when Node is removed', async({page, server}) => {
+      await page.goto(server.PREFIX + '/offscreenbuttons.html');
+      await page.evaluate(() => delete window['Node']);
+      for (let i = 0; i < 11; ++i) {
+        const button = await page.$('#btn' + i);
+        // All but last button are visible.
+        const visible = i < 10;
+        expect(await button.isIntersectingViewport()).toBe(visible);
+      }
+    });
+  });
+
+  describe('ElementHandle.fill', function() {
+    it('should fill input', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      const handle = await page.$('input');
+      await handle.fill('some value');
+      expect(await page.evaluate(() => result)).toBe('some value');
+    });
+    it.skip(FFOX)('should fill input when Node is removed', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.evaluate(() => delete window['Node']);
+      const handle = await page.$('input');
+      await handle.fill('some value');
+      expect(await page.evaluate(() => result)).toBe('some value');
     });
   });
 };

@@ -12,17 +12,13 @@ import Injected from './injected/injected';
 import { Page } from './page';
 
 export class FrameExecutionContext extends js.ExecutionContext {
-  private readonly _frame: frames.Frame;
+  readonly frame: frames.Frame;
 
   private _injectedPromise?: Promise<js.JSHandle>;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
     super(delegate);
-    this._frame = frame;
-  }
-
-  frame(): frames.Frame | null {
-    return this._frame;
+    this.frame = frame;
   }
 
   async _evaluate(returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
@@ -39,7 +35,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     const adopted = await Promise.all(args.map(async arg => {
       if (!needsAdoption(arg))
         return arg;
-      const adopted = this._frame._page._delegate.adoptElementHandle(arg, this);
+      const adopted = this.frame._page._delegate.adoptElementHandle(arg, this);
       toDispose.push(adopted);
       return adopted;
     }));
@@ -53,7 +49,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   _createHandle(remoteObject: any): js.JSHandle | null {
-    if (this._frame._page._delegate.isElementHandle(remoteObject))
+    if (this.frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this, remoteObject);
     return super._createHandle(remoteObject);
   }
@@ -111,23 +107,31 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   constructor(context: FrameExecutionContext, remoteObject: any) {
     super(context, remoteObject);
-    this._page = context.frame()._page;
-  }
-
-  frame(): frames.Frame {
-    return this._context.frame();
+    this._page = context.frame._page;
   }
 
   asElement(): ElementHandle<T> | null {
     return this;
   }
 
+  _evaluateInUtility: types.EvaluateOn<T> = async (pageFunction, ...args) => {
+    const utility = await this._context.frame._utilityContext();
+    return utility.evaluate(pageFunction, this, ...args);
+  }
+
+  async ownerFrame(): Promise<frames.Frame | null> {
+    return this._page._delegate.getOwnerFrame(this);
+  }
+
   async contentFrame(): Promise<frames.Frame | null> {
+    const isFrameElement = await this._evaluateInUtility(node => node && (node instanceof HTMLIFrameElement || node instanceof HTMLFrameElement));
+    if (!isFrameElement)
+      return null;
     return this._page._delegate.getContentFrame(this);
   }
 
   async _scrollIntoViewIfNeeded() {
-    const error = await this.evaluate(async (node: Node, pageJavascriptEnabled: boolean) => {
+    const error = await this._evaluateInUtility(async (node: Node, pageJavascriptEnabled: boolean) => {
       if (!node.isConnected)
         return 'Node is detached from document';
       if (node.nodeType !== Node.ELEMENT_NODE)
@@ -165,7 +169,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return this._clickablePoint();
     let r = await this._viewportPointAndScroll(relativePoint);
     if (r.scrollX || r.scrollY) {
-      const error = await this.evaluate((element, scrollX, scrollY) => {
+      const error = await this._evaluateInUtility((element, scrollX, scrollY) => {
         if (!element.ownerDocument || !element.ownerDocument.defaultView)
           return 'Node does not have a containing window';
         element.ownerDocument.defaultView.scrollBy(scrollX, scrollY);
@@ -222,7 +226,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _viewportPointAndScroll(relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
-      this.evaluate((node: Node) => {
+      this._evaluateInUtility((node: Node) => {
         if (node.nodeType !== Node.ELEMENT_NODE)
           return { x: 0, y: 0 };
         const style = node.ownerDocument.defaultView.getComputedStyle(node as Element);
@@ -292,19 +296,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this.evaluate(input.selectFunction, ...options);
+    return this._evaluateInUtility(input.selectFunction, ...options);
   }
 
   async fill(value: string): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this.evaluate(input.fillFunction);
+    const error = await this._evaluateInUtility(input.fillFunction);
     if (error)
       throw new Error(error);
     await this._page.keyboard.sendCharacters(value);
   }
 
-  async setInputFiles(...files: (string|input.FilePayload)[]) {
-    const multiple = await this.evaluate((node: Node) => {
+  async setInputFiles(...files: (string | input.FilePayload)[]) {
+    const multiple = await this._evaluateInUtility((node: Node) => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Element).tagName !== 'INPUT')
         throw new Error('Node is not an HTMLInputElement');
       const input = node as HTMLInputElement;
@@ -315,7 +319,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus() {
-    const errorMessage = await this.evaluate((element: Node) => {
+    const errorMessage = await this._evaluateInUtility((element: Node) => {
       if (!element['focus'])
         return 'Node is not an HTML or SVG element.';
       (element as HTMLElement|SVGElement).focus();
@@ -372,7 +376,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   isIntersectingViewport(): Promise<boolean> {
-    return this.evaluate(async (node: Node) => {
+    return this._evaluateInUtility(async (node: Node) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         throw new Error('Node is not of type HTMLElement');
       const element = node as Element;
