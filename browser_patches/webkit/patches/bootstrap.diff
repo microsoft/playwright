@@ -761,7 +761,7 @@ index 0000000000000000000000000000000000000000..60515155c222d3ead52f4e4905017e37
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 367d1f235a8213f1360f601bc9e64c0949f477b4..4c16f864d99d7959765fc7f68a4d54d454731ddd 100644
+index 367d1f235a8213f1360f601bc9e64c0949f477b4..2847298f907043cfb09c3b41172149123102d344 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -108,6 +108,40 @@
@@ -828,7 +828,21 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..4c16f864d99d7959765fc7f68a4d54d4
              ]
          },
          {
-@@ -288,19 +332,64 @@
+@@ -244,6 +288,13 @@
+                 { "name": "appearance", "$ref": "Appearance", "description": "Appearance name to force. Empty string disables the override." }
+             ]
+         },
++        {
++            "name": "setTouchEmulationEnabled",
++            "description": "Enables touch events on platforms that lack them.",
++            "parameters": [
++                {"name": "enabled", "type": "boolean", "description": "Whether touch should be enabled."}
++            ]
++        },
+         {
+             "name": "getCompositingBordersVisible",
+             "description": "Indicates the visibility of compositing borders.",
+@@ -288,19 +339,64 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -895,7 +909,7 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..4c16f864d99d7959765fc7f68a4d54d4
              ]
          },
          {
-@@ -310,6 +399,14 @@
+@@ -310,6 +406,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -910,7 +924,7 @@ index 367d1f235a8213f1360f601bc9e64c0949f477b4..4c16f864d99d7959765fc7f68a4d54d4
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -346,12 +443,36 @@
+@@ -346,12 +450,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1619,7 +1633,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..364dd6793f0f35134a302827a72f6c9b
      InspectorNetworkAgent(WebAgentContext&);
  
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e601925d2 100644
+index 01edd0060de362c1ab7b702475ae83822279a800..1059bc3afb9bd405a097a4280ee156287c41f8c9 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1646,13 +1660,14 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -55,17 +59,21 @@
+@@ -55,17 +59,22 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "Page.h"
 +#include "PageRuntimeAgent.h"
  #include "RenderObject.h"
  #include "RenderTheme.h"
++#include "RuntimeEnabledFeatures.h"
  #include "ScriptController.h"
  #include "ScriptSourceCode.h"
 +#include "ScriptState.h"
@@ -1668,7 +1683,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  #include <JavaScriptCore/RegularExpression.h>
  #include <wtf/ListHashSet.h>
  #include <wtf/Stopwatch.h>
-@@ -337,6 +345,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -337,6 +346,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -1676,7 +1691,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -375,6 +384,8 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -375,6 +385,8 @@ void InspectorPageAgent::enable(ErrorString& errorString)
  void InspectorPageAgent::disable(ErrorString&)
  {
      m_instrumentingAgents.setInspectorPageAgent(nullptr);
@@ -1685,7 +1700,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -382,6 +393,7 @@ void InspectorPageAgent::disable(ErrorString&)
+@@ -382,6 +394,7 @@ void InspectorPageAgent::disable(ErrorString&)
      overrideUserAgent(unused, nullptr);
      setEmulatedMedia(unused, emptyString());
      setForcedAppearance(unused, emptyString());
@@ -1693,7 +1708,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  
  #define DISABLE_INSPECTOR_OVERRIDE_SETTING(name) \
      m_inspectedPage.settings().set##name##InspectorOverride(WTF::nullopt);
-@@ -412,14 +424,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -412,14 +425,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -1719,15 +1734,15 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
 +        return;
 +
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
-+
-+    if (!resourceRequest.url().isValid()) {
-+        errorString = "Cannot navigate to invalid URL"_s;
-+        return;
-+    }
  
 -    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
 -    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 -    frame.loader().changeLocation(WTFMove(frameLoadRequest));
++    if (!resourceRequest.url().isValid()) {
++        errorString = "Cannot navigate to invalid URL"_s;
++        return;
++    }
++
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
@@ -1735,7 +1750,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -680,15 +714,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -680,15 +715,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -1757,7 +1772,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -763,6 +798,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -763,6 +799,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1770,7 +1785,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -817,6 +858,38 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -817,6 +859,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1809,7 +1824,25 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -988,4 +1061,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -971,6 +1045,17 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+     *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
+ }
+ 
++void InspectorPageAgent::setTouchEmulationEnabled(ErrorString& errorString, bool enabled) {
++#if ENABLE(TOUCH_EVENTS)
++    RuntimeEnabledFeatures::sharedFeatures().setTouchEventsEnabled(enabled);
++    UNUSED_PARAM(errorString);
++#else
++    UNUSED_PARAM(enabled);
++    errorString = "Not supported"_s;
++#endif
++}
++
++
+ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+ {
+ #if ENABLE(WEB_ARCHIVE) && USE(CF)
+@@ -988,4 +1073,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2302,7 +2335,7 @@ index 01edd0060de362c1ab7b702475ae83822279a800..58203537ca66163ea590bd580e0a5e3e
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..1d5da13a362e64d0cb03955f763f77fed3420684 100644
+index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..57ffce319ea8dbc08eb49977295f5c6b51e87f11 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2332,7 +2365,11 @@ index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..1d5da13a362e64d0cb03955f763f77fe
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -113,12 +120,18 @@ public:
+@@ -110,15 +117,22 @@ public:
+     void setShowPaintRects(ErrorString&, bool show) override;
+     void setEmulatedMedia(ErrorString&, const String&) override;
+     void setForcedAppearance(ErrorString&, const String&) override;
++    void setTouchEmulationEnabled(ErrorString&, bool) override;
      void getCompositingBordersVisible(ErrorString&, bool* out_param) override;
      void setCompositingBordersVisible(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
@@ -2354,7 +2391,7 @@ index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..1d5da13a362e64d0cb03955f763f77fe
      void frameNavigated(Frame&);
      void frameDetached(Frame&);
      void loaderDetachedFromFrame(DocumentLoader&);
-@@ -126,6 +139,7 @@ public:
+@@ -126,6 +140,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -2362,7 +2399,7 @@ index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..1d5da13a362e64d0cb03955f763f77fe
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -134,11 +148,15 @@ public:
+@@ -134,11 +149,15 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -2378,7 +2415,7 @@ index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..1d5da13a362e64d0cb03955f763f77fe
  
  private:
      double timestamp();
-@@ -153,6 +171,7 @@ private:
+@@ -153,6 +172,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -2386,7 +2423,7 @@ index 4fd8c0b1016e5ab4752558d6530abb520ecea26a..1d5da13a362e64d0cb03955f763f77fe
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -163,8 +182,11 @@ private:
+@@ -163,8 +183,11 @@ private:
      String m_emulatedMedia;
      String m_forcedAppearance;
      String m_bootstrapScript;
