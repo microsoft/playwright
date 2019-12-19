@@ -301,7 +301,7 @@ export class Page extends EventEmitter {
     return waitPromise;
   }
 
-  waitForNavigation(options?: frames.NavigateOptions): Promise<network.Response | null> {
+  async waitForNavigation(options?: frames.WaitForNavigationOptions): Promise<network.Response | null> {
     return this.mainFrame().waitForNavigation(options);
   }
 
