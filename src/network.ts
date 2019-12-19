@@ -67,8 +67,7 @@ export function rewriteCookies(cookies: SetNetworkCookieParam[]): SetNetworkCook
   });
 }
 
-function stripFragmentFromUrl(url: string): string
-{
+function stripFragmentFromUrl(url: string): string {
   if (!url.indexOf('#'))
     return url;
   const parsed = new URL(url);
