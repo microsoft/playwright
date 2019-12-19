@@ -42,6 +42,8 @@ export type NavigateOptions = {
   waitUntil?: LifecycleEvent | LifecycleEvent[],
 };
 
+export type WaitForNavigationOptions = NavigateOptions & types.URLMatch;
+
 export type GotoOptions = NavigateOptions & {
   referer?: string,
 };
@@ -284,13 +286,11 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
-  async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
-    const {
-      referer = (this._page._state.extraHTTPHeaders || {})['referer'],
-      waitUntil = (['load'] as LifecycleEvent[]),
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-    } = options;
-    const watcher = new LifecycleWatcher(this, waitUntil, timeout);
+  async goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
+    let referer = (this._page._state.extraHTTPHeaders || {})['referer'];
+    if (options && options.referer !== undefined)
+      referer = options.referer;
+    const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
 
     let navigateResult: GotoResult;
     const navigate = async () => {
@@ -323,12 +323,8 @@ export class Frame {
     return watcher.navigationResponse();
   }
 
-  async waitForNavigation(options: NavigateOptions = {}): Promise<network.Response | null> {
-    const {
-      waitUntil = (['load'] as LifecycleEvent[]),
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-    } = options;
-    const watcher = new LifecycleWatcher(this, waitUntil, timeout);
+  async waitForNavigation(options?: WaitForNavigationOptions): Promise<network.Response | null> {
+    const watcher = new LifecycleWatcher(this, options, true /* supportUrlMatch */);
     const error = await Promise.race([
       watcher.timeoutOrTerminationPromise,
       watcher.sameDocumentNavigationPromise,
@@ -430,11 +426,7 @@ export class Frame {
     });
   }
 
-  async setContent(html: string, options: NavigateOptions = {}): Promise<void> {
-    const {
-      waitUntil = (['load'] as LifecycleEvent[]),
-      timeout = this._page._timeoutSettings.navigationTimeout(),
-    } = options;
+  async setContent(html: string, options?: NavigateOptions): Promise<void> {
     const context = await this._utilityContext();
     if (this._page._delegate.needsLifecycleResetOnSetContent())
       this._firedLifecycleEvents.clear();
@@ -443,7 +435,7 @@ export class Frame {
       document.write(html);
       document.close();
     }, html);
-    const watcher = new LifecycleWatcher(this, waitUntil, timeout);
+    const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
     const error = await Promise.race([
       watcher.timeoutOrTerminationPromise,
       watcher.lifecyclePromise,
@@ -869,14 +861,22 @@ class LifecycleWatcher {
   private _hasSameDocumentNavigation: boolean;
   private _targetUrl?: string;
   private _expectedDocumentId?: string;
+  private _urlMatch?: types.URLMatch;
 
-  constructor(frame: Frame, waitUntil: LifecycleEvent | LifecycleEvent[], timeout: number) {
-    if (Array.isArray(waitUntil))
-      waitUntil = waitUntil.slice();
-    else if (typeof waitUntil === 'string')
+  constructor(frame: Frame, options: WaitForNavigationOptions | undefined, supportUrlMatch: boolean) {
+    options = options || {};
+    let {
+      waitUntil = (['load'] as LifecycleEvent[]),
+      timeout = frame._page._timeoutSettings.navigationTimeout()
+    } = options;
+    if (!Array.isArray(waitUntil))
       waitUntil = [waitUntil];
-    if (waitUntil.some(e => !kLifecycleEvents.has(e)))
-      throw new Error('Unsupported waitUntil option');
+    for (const event of waitUntil) {
+      if (!kLifecycleEvents.has(event))
+        throw new Error(`Unsupported waitUntil option ${String(event)}`);
+    }
+    if (supportUrlMatch)
+      this._urlMatch = options;
     this._expectedLifecycle = waitUntil.slice();
     this._frame = frame;
     this.sameDocumentNavigationPromise = new Promise(f => this._sameDocumentNavigationCompleteCallback = f);
@@ -892,7 +892,12 @@ class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
+  private _urlMatches(urlString: string): boolean {
+    return !this._urlMatch || helper.urlMatches(urlString, this._urlMatch);
+  }
+
   setExpectedDocumentId(documentId: string, url: string) {
+    assert(!this._urlMatch, 'Should not have url match when expecting a particular navigation');
     this._expectedDocumentId = documentId;
     this._targetUrl = url;
     if (this._navigationRequest && this._navigationRequest._documentId !== documentId)
@@ -916,7 +921,7 @@ class LifecycleWatcher {
 
   _onNavigationRequest(frame: Frame, request: network.Request) {
     assert(request._documentId);
-    if (frame !== this._frame)
+    if (frame !== this._frame || !this._urlMatches(request.url()))
       return;
     if (this._expectedDocumentId === undefined || this._expectedDocumentId === request._documentId) {
       this._navigationRequest = request;
@@ -926,7 +931,7 @@ class LifecycleWatcher {
   }
 
   _onCommittedNewDocumentNavigation(frame: Frame) {
-    if (frame === this._frame && this._expectedDocumentId === undefined) {
+    if (frame === this._frame && this._expectedDocumentId === undefined && this._urlMatches(frame.url())) {
       this._expectedDocumentId = frame._lastDocumentId;
       this._targetUrl = frame.url();
     }

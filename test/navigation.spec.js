@@ -582,6 +582,40 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
         navigationPromise
       ]);
     });
+    it('should work with url match', async({page, server}) => {
+      let response1 = null;
+      const response1Promise = page.waitForNavigation({ url: /one-style\.html/ }).then(response => response1 = response);
+      let response2 = null;
+      const response2Promise = page.waitForNavigation({ pathname: '/frame.html' }).then(response => response2 = response);
+      let response3 = null;
+      const response3Promise = page.waitForNavigation({ searchParams: { 'foo': 'bar' }, strictSearchParams: true }).then(response => response3 = response);
+      expect(response1).toBe(null);
+      expect(response2).toBe(null);
+      expect(response3).toBe(null);
+      await page.goto(server.EMPTY_PAGE);
+      expect(response1).toBe(null);
+      expect(response2).toBe(null);
+      expect(response3).toBe(null);
+      await page.goto(server.PREFIX + '/frame.html');
+      expect(response1).toBe(null);
+      await response2Promise;
+      expect(response2).not.toBe(null);
+      expect(response3).toBe(null);
+      await page.goto(server.PREFIX + '/one-style.html');
+      await response1Promise;
+      expect(response1).not.toBe(null);
+      expect(response2).not.toBe(null);
+      expect(response3).toBe(null);
+      await page.goto(server.PREFIX + '/frame.html?foo=bar');
+      await response3Promise;
+      expect(response1).not.toBe(null);
+      expect(response2).not.toBe(null);
+      expect(response3).not.toBe(null);
+      await page.goto(server.PREFIX + '/empty.html');
+      expect(response1.url()).toBe(server.PREFIX + '/one-style.html');
+      expect(response2.url()).toBe(server.PREFIX + '/frame.html');
+      expect(response3.url()).toBe(server.PREFIX + '/frame.html?foo=bar');
+    });
   });
 
   describe('Page.goBack', function() {
