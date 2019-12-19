@@ -73,16 +73,15 @@ export class Browser extends EventEmitter {
   }
 
   _createBrowserContext(contextId: string | null, options: BrowserContextOptions): BrowserContext {
-    const isIncognito = !!contextId;
     let overrides: Overrides | null = null;
     const context = new BrowserContext({
-      contextPages: async (): Promise<Page[]> => {
+      pages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page);
       },
 
-      createPageInContext: async (): Promise<Page> => {
+      newPage: async (): Promise<Page> => {
         const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
         const target = this._targets.get(targetId);
         assert(await target._initializedPromise, 'Failed to create target for page');
@@ -109,12 +108,13 @@ export class Browser extends EventEmitter {
         return page;
       },
 
-      closeContext: async (): Promise<void> => {
+      close: async (): Promise<void> => {
+        assert(contextId, 'Non-incognito profiles cannot be closed!');
         await this._client.send('Target.disposeBrowserContext', {browserContextId: contextId || undefined});
         this._contexts.delete(contextId);
       },
 
-      getContextCookies: async (): Promise<network.NetworkCookie[]> => {
+      cookies: async (): Promise<network.NetworkCookie[]> => {
         const { cookies } = await this._client.send('Storage.getCookies', { browserContextId: contextId || undefined });
         return cookies.map(c => {
           const copy: any = { sameSite: 'None', ...c };
@@ -124,14 +124,14 @@ export class Browser extends EventEmitter {
         });
       },
 
-      clearContextCookies: async (): Promise<void> => {
+      clearCookies: async (): Promise<void> => {
         await this._client.send('Storage.clearCookies', { browserContextId: contextId || undefined });
       },
 
-      setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
+      setCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._client.send('Storage.setCookies', { cookies, browserContextId: contextId || undefined });
       },
-    }, isIncognito, options);
+    }, options);
     overrides = new Overrides(context);
     (context as any).permissions = new Permissions(this._client, contextId);
     (context as any).overrides = overrides;

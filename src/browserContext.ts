@@ -15,19 +15,18 @@
  * limitations under the License.
  */
 
-import { assert } from './helper';
 import { Page } from './page';
 import * as input from './input';
 import * as network from './network';
 import * as types from './types';
 
-export interface BrowserDelegate {
-  contextPages(): Promise<Page[]>;
-  createPageInContext(): Promise<Page>;
-  closeContext(): Promise<void>;
-  getContextCookies(): Promise<network.NetworkCookie[]>;
-  clearContextCookies(): Promise<void>;
-  setContextCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
+export interface BrowserContextDelegate {
+  pages(): Promise<Page[]>;
+  newPage(): Promise<Page>;
+  close(): Promise<void>;
+  cookies(): Promise<network.NetworkCookie[]>;
+  clearCookies(): Promise<void>;
+  setCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
 }
 
 export type BrowserContextOptions = {
@@ -42,34 +41,28 @@ export type BrowserContextOptions = {
 };
 
 export class BrowserContext {
-  private readonly _delegate: BrowserDelegate;
-  private readonly _isIncognito: boolean;
+  private readonly _delegate: BrowserContextDelegate;
   readonly _options: BrowserContextOptions;
   private _closed = false;
 
-  constructor(delegate: BrowserDelegate, isIncognito: boolean, options: BrowserContextOptions) {
+  constructor(delegate: BrowserContextDelegate, options: BrowserContextOptions) {
     this._delegate = delegate;
-    this._isIncognito = isIncognito;
     this._options = options;
     if (!options.viewport && options.viewport !== null)
       options.viewport = { width: 800, height: 600 };
   }
 
   async pages(): Promise<Page[]> {
-    return this._delegate.contextPages();
-  }
-
-  isIncognito(): boolean {
-    return this._isIncognito;
+    return this._delegate.pages();
   }
 
   async newPage(): Promise<Page> {
-    return this._delegate.createPageInContext();
+    return this._delegate.newPage();
   }
 
   async _createOwnerPage(): Promise<Page> {
     try {
-      const page = await this._delegate.createPageInContext();
+      const page = await this._delegate.newPage();
       page._isContextOwner = true;
       return page;
     } catch (e) {
@@ -79,22 +72,21 @@ export class BrowserContext {
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
-    return network.filterCookies(await this._delegate.getContextCookies(), urls);
+    return network.filterCookies(await this._delegate.cookies(), urls);
   }
 
   async clearCookies() {
-    await this._delegate.clearContextCookies();
+    await this._delegate.clearCookies();
   }
 
   async setCookies(cookies: network.SetNetworkCookieParam[]) {
-    await this._delegate.setContextCookies(network.rewriteCookies(cookies));
+    await this._delegate.setCookies(network.rewriteCookies(cookies));
   }
 
   async close() {
     if (this._closed)
       return;
-    assert(this._isIncognito, 'Non-incognito profiles cannot be closed!');
-    await this._delegate.closeContext();
+    await this._delegate.close();
     this._closed = true;
   }
 }

@@ -17,7 +17,7 @@
 
 import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
-import { helper, RegisteredListener, debugError } from '../helper';
+import { helper, RegisteredListener, debugError, assert } from '../helper';
 import * as network from '../network';
 import { Connection, ConnectionEvents, TargetSession } from './Connection';
 import { Page } from '../page';
@@ -209,26 +209,26 @@ export class Browser extends EventEmitter {
   }
 
   _createBrowserContext(browserContextId: string | undefined, options: BrowserContextOptions): BrowserContext {
-    const isIncognito = !!browserContextId;
     const context = new BrowserContext({
-      contextPages: async (): Promise<Page[]> => {
+      pages: async (): Promise<Page[]> => {
         const targets = this.targets().filter(target => target._browserContext === context && target._type === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page);
       },
 
-      createPageInContext: async (): Promise<Page> => {
+      newPage: async (): Promise<Page> => {
         const { targetId } = await this._connection.send('Browser.createPage', { browserContextId });
         const target = this._targets.get(targetId);
         return await target.page();
       },
 
-      closeContext: async (): Promise<void> => {
+      close: async (): Promise<void> => {
+        assert(browserContextId, 'Non-incognito profiles cannot be closed!');
         await this._connection.send('Browser.deleteContext', { browserContextId });
         this._contexts.delete(browserContextId);
       },
 
-      getContextCookies: async (): Promise<network.NetworkCookie[]> => {
+      cookies: async (): Promise<network.NetworkCookie[]> => {
         const { cookies } = await this._connection.send('Browser.getAllCookies', { browserContextId });
         return cookies.map((c: network.NetworkCookie) => ({
           ...c,
@@ -236,15 +236,15 @@ export class Browser extends EventEmitter {
         }));
       },
 
-      clearContextCookies: async (): Promise<void> => {
+      clearCookies: async (): Promise<void> => {
         await this._connection.send('Browser.deleteAllCookies', { browserContextId });
       },
 
-      setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
+      setCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
         await this._connection.send('Browser.setCookies', { cookies: cc, browserContextId });
       },
-    }, isIncognito, options);
+    }, options);
     return context;
   }
 }

@@ -26,7 +26,6 @@ module.exports.addTests = function({testRunner, expect, playwright, WEBKIT}) {
     it('should have default context', async function({browser, server}) {
       expect(browser.browserContexts().length).toBe(1);
       const defaultContext = browser.browserContexts()[0];
-      expect(defaultContext.isIncognito()).toBe(false);
       let error = null;
       await defaultContext.close().catch(e => error = e);
       expect(browser.defaultContext()).toBe(defaultContext);
@@ -35,7 +34,6 @@ module.exports.addTests = function({testRunner, expect, playwright, WEBKIT}) {
     it('should create new incognito context', async function({browser, newContext}) {
       expect(browser.browserContexts().length).toBe(1);
       const context = await newContext();
-      expect(context.isIncognito()).toBe(true);
       expect(browser.browserContexts().length).toBe(2);
       expect(browser.browserContexts().indexOf(context) !== -1).toBe(true);
       await context.close();

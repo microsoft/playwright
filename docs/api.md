@@ -44,7 +44,6 @@
   * [browserContext.clearCookies()](#browsercontextclearcookies)
   * [browserContext.close()](#browsercontextclose)
   * [browserContext.cookies([...urls])](#browsercontextcookiesurls)
-  * [browserContext.isIncognito()](#browsercontextisincognito)
   * [browserContext.newPage()](#browsercontextnewpage)
   * [browserContext.overrides](#browsercontextoverrides)
   * [browserContext.pages()](#browsercontextpages)
@@ -735,12 +734,6 @@ will be closed.
 
 If no URLs are specified, this method returns all cookies.
 If URLs are specified, only cookies that affect those URLs are returned.
-
-#### browserContext.isIncognito()
-- returns: <[boolean]>
-
-Returns whether BrowserContext is incognito.
-The default browser context is the only non-incognito browser context.
 
 > **NOTE** the default browser context cannot be closed.
 

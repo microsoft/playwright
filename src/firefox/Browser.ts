@@ -16,7 +16,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener, assert } from '../helper';
 import { Connection, ConnectionEvents, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
 import { Events as CommonEvents } from '../events';
@@ -175,15 +175,14 @@ export class Browser extends EventEmitter {
   }
 
   _createBrowserContext(browserContextId: string | null, options: BrowserContextOptions): BrowserContext {
-    const isIncognito = !!browserContextId;
     const context = new BrowserContext({
-      contextPages: async (): Promise<Page[]> => {
+      pages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page);
       },
 
-      createPageInContext: async (): Promise<Page> => {
+      newPage: async (): Promise<Page> => {
         const {targetId} = await this._connection.send('Target.newPage', {
           browserContextId: browserContextId || undefined
         });
@@ -205,12 +204,13 @@ export class Browser extends EventEmitter {
         return page;
       },
 
-      closeContext: async (): Promise<void> => {
+      close: async (): Promise<void> => {
+        assert(browserContextId, 'Non-incognito profiles cannot be closed!');
         await this._connection.send('Target.removeBrowserContext', { browserContextId });
         this._contexts.delete(browserContextId);
       },
 
-      getContextCookies: async (): Promise<network.NetworkCookie[]> => {
+      cookies: async (): Promise<network.NetworkCookie[]> => {
         const { cookies } = await this._connection.send('Browser.getCookies', { browserContextId: browserContextId || undefined });
         return cookies.map(c => {
           const copy: any = { ... c };
@@ -219,14 +219,14 @@ export class Browser extends EventEmitter {
         });
       },
 
-      clearContextCookies: async (): Promise<void> => {
+      clearCookies: async (): Promise<void> => {
         await this._connection.send('Browser.clearCookies', { browserContextId: browserContextId || undefined });
       },
 
-      setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
+      setCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._connection.send('Browser.setCookies', { browserContextId: browserContextId || undefined, cookies });
       },
-    }, isIncognito, options);
+    }, options);
     (context as any).permissions = new Permissions(this._connection, browserContextId);
     return context;
   }
