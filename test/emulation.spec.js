@@ -17,7 +17,7 @@
 
 module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
   const iPhone = playwright.devices['iPhone 6'];
   const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];

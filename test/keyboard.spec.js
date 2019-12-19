@@ -20,7 +20,7 @@ const os = require('os');
 
 module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Keyboard', function() {

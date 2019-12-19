@@ -26,7 +26,7 @@ const RESET_COLOR = '\x1b[0m';
 
 module.exports.describe = ({testRunner, product, playwrightPath}) => {
   const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   const CHROME = product === 'Chromium';
