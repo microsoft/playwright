@@ -698,6 +698,65 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       expect(response2.url()).toBe(server.PREFIX + '/frame.html');
       expect(response3.url()).toBe(server.PREFIX + '/frame.html?foo=bar');
     });
+    it('should work with url match for same document navigations', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      let resolved = false;
+      const waitPromise = page.waitForNavigation({ url: /third\.html/ }).then(() => resolved = true);
+      expect(resolved).toBe(false);
+      await page.evaluate(() => {
+        history.pushState({}, '', '/first.html');
+      });
+      expect(resolved).toBe(false);
+      await page.evaluate(() => {
+        history.pushState({}, '', '/second.html');
+      });
+      expect(resolved).toBe(false);
+      await page.evaluate(() => {
+        history.pushState({}, '', '/third.html');
+      });
+      await waitPromise;
+      expect(resolved).toBe(true);
+    });
+  });
+
+  describe('Page.waitForLoadState', () => {
+    it('should pick up ongoing navigation', async({page, server}) => {
+      let response = null;
+      server.setRoute('/one-style.css', (req, res) => response = res);
+      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
+      await server.waitForRequest('/one-style.css');
+      const waitPromise = page.waitForLoadState();
+      response.statusCode = 404;
+      response.end('Not found');
+      await waitPromise;
+      await navigationPromise;
+    });
+    it('should respect timeout', async({page, server}) => {
+      let response = null;
+      server.setRoute('/one-style.css', (req, res) => response = res);
+      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
+      await server.waitForRequest('/one-style.css');
+      const error = await page.waitForLoadState({ timeout: 1 }).catch(e => e);
+      expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
+      response.statusCode = 404;
+      response.end('Not found');
+      await navigationPromise;
+    });
+    it('should resolve immediately if loaded', async({page, server}) => {
+      await page.goto(server.PREFIX + '/one-style.html');
+      await page.waitForLoadState();
+    });
+    it('should resolve immediately if load state matches', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      let response = null;
+      server.setRoute('/one-style.css', (req, res) => response = res);
+      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
+      await server.waitForRequest('/one-style.css');
+      await page.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      response.statusCode = 404;
+      response.end('Not found');
+      await navigationPromise;
+    });
   });
 
   describe('Page.goBack', function() {

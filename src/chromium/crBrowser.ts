@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import { Events } from './events';
 import { Events as CommonEvents } from '../events';
 import { assert, helper } from '../helper';
@@ -156,11 +155,11 @@ export class CRBrowser extends browser.Browser {
         });
         await this._client.send('Browser.grantPermissions', { origin, browserContextId: contextId || undefined, permissions: filtered });
       },
-    
+
       clearPermissions: async () => {
         await this._client.send('Browser.resetPermissions', { browserContextId: contextId || undefined });
       }
-    
+
     }, options);
     overrides = new CROverrides(context);
     (context as any).overrides = overrides;

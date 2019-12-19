@@ -210,7 +210,7 @@ export class WKBrowser extends browser.Browser {
       setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
         throw new Error('Permissions are not supported in WebKit');
       },
-    
+
       clearPermissions: async () => {
         throw new Error('Permissions are not supported in WebKit');
       }
