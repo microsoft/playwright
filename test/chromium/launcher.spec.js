@@ -26,7 +26,7 @@ const statAsync = util.promisify(fs.stat);
 
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
-module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, playwright, WIN}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;

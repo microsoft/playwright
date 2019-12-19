@@ -18,7 +18,7 @@
 const utils = require('./utils');
 const { performance } = require('perf_hooks');
 
-module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;

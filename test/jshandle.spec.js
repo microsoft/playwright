@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-module.exports.addTests = function({testRunner, expect, CHROME, FFOX, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, CHROME, FFOX, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;

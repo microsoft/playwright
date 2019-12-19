@@ -75,7 +75,7 @@ beforeEach(async({server, httpsServer}) => {
 
 if (process.env.BROWSER === 'firefox') {
   describe('Firefox', () => {
-    require('./playwright.spec.js').addTests({
+    testRunner.loadTests(require('./playwright.spec.js'), {
       product: 'Firefox',
       playwrightPath: path.join(utils.projectRoot(), 'firefox.js'),
       testRunner,
@@ -83,7 +83,7 @@ if (process.env.BROWSER === 'firefox') {
   });
 } else if (process.env.BROWSER === 'webkit') {
   describe('WebKit', () => {
-    require('./playwright.spec.js').addTests({
+    testRunner.loadTests(require('./playwright.spec.js'), {
       product: 'WebKit',
       playwrightPath: path.join(utils.projectRoot(), 'webkit.js'),
       testRunner,
@@ -91,7 +91,7 @@ if (process.env.BROWSER === 'firefox') {
   });
 } else {
   describe('Chromium', () => {
-    require('./playwright.spec.js').addTests({
+    testRunner.loadTests(require('./playwright.spec.js'), {
       product: 'Chromium',
       playwrightPath: path.join(utils.projectRoot(), 'chromium.js'),
       testRunner,

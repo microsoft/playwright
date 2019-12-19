@@ -22,7 +22,7 @@ const rmAsync = helper.promisify(require('rimraf'));
 const mkdtempAsync = helper.promisify(fs.mkdtemp);
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
-module.exports.addTests = function ({ testRunner, expect, defaultBrowserOptions, playwright }) {
+module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, playwright }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;

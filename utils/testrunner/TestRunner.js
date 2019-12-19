@@ -102,14 +102,13 @@ const TestResult = {
 };
 
 class Test {
-  constructor(suite, name, callback, declaredMode, timeout, comment) {
+  constructor(suite, name, callback, declaredMode, timeout) {
     this.suite = suite;
     this.name = name;
     this.fullName = (suite.fullName + ' ' + name).trim();
     this.declaredMode = declaredMode;
     this._userCallback = new UserCallback(callback, timeout);
     this.location = this._userCallback.location;
-    this.comment = comment;
 
     // Test results
     this.result = null;
@@ -120,12 +119,11 @@ class Test {
 }
 
 class Suite {
-  constructor(parentSuite, name, declaredMode, comment) {
+  constructor(parentSuite, name, declaredMode) {
     this.parentSuite = parentSuite;
     this.name = name;
     this.fullName = (parentSuite ? parentSuite.fullName + ' ' + name : name).trim();
     this.declaredMode = declaredMode;
-    this.comment = comment;
     /** @type {!Array<(!Test|!Suite)>} */
     this.children = [];
 
@@ -312,45 +310,52 @@ class TestRunner extends EventEmitter {
     }
 
     // bind methods so that they can be used as a DSL.
-    this.addSuiteDSL('describe', TestMode.Run, '');
-    this.addSuiteDSL('fdescribe', TestMode.Focus, '');
-    this.addSuiteDSL('xdescribe', TestMode.Skip, '');
-    this.addTestDSL('it', TestMode.Run, '');
-    this.addTestDSL('fit', TestMode.Focus, '');
-    this.addTestDSL('xit', TestMode.Skip, '');
+    this.describe = this._addSuite.bind(this, TestMode.Run);
+    this.describe.skip = condition => condition ? this.xdescribe : this.describe;
+    this.fdescribe = this._addSuite.bind(this, TestMode.Focus);
+    this.fdescribe.skip = () => this.fdescribe; // no-op
+    this.xdescribe = this._addSuite.bind(this, TestMode.Skip);
+    this.xdescribe.skip = () => this.fdescribe; // no-op
+
+    this.it = this._addTest.bind(this, TestMode.Run);
+    this.it.skip = condition => condition ? this.xit : this.it;
+    this.fit = this._addTest.bind(this, TestMode.Focus);
+    this.fit.skip = () => this.fit; // no-op
+    this.xit = this._addTest.bind(this, TestMode.Skip);
+    this.xit.skip = () => this.xit; // no-op
+
     this.beforeAll = this._addHook.bind(this, 'beforeAll');
     this.beforeEach = this._addHook.bind(this, 'beforeEach');
     this.afterAll = this._addHook.bind(this, 'afterAll');
     this.afterEach = this._addHook.bind(this, 'afterEach');
   }
 
-  addTestDSL(dslName, mode, comment) {
-    this[dslName] = this._addTest.bind(this, mode, comment);
-    this[dslName].skip = condition => this._addTest.bind(this, condition ? TestMode.Skip : mode, comment);
+  loadTests(module, ...args) {
+    if (typeof module.describe === 'function')
+      this._addSuite(TestMode.Run, '', module.describe, ...args);
+    if (typeof module.fdescribe === 'function')
+      this._addSuite(TestMode.Focus, '', module.fdescribe, ...args);
+    if (typeof module.xdescribe === 'function')
+      this._addSuite(TestMode.Skip, '', module.xdescribe, ...args);
   }
 
-  addSuiteDSL(dslName, mode, comment) {
-    this[dslName] = this._addSuite.bind(this, mode, comment);
-    this[dslName].skip = condition => this._addSuite.bind(this, condition ? TestMode.Skip : mode, comment);
-  }
-
-  _addTest(mode, comment, name, callback) {
+  _addTest(mode, name, callback) {
     let suite = this._currentSuite;
     let isSkipped = suite.declaredMode === TestMode.Skip;
     while ((suite = suite.parentSuite))
       isSkipped |= suite.declaredMode === TestMode.Skip;
-    const test = new Test(this._currentSuite, name, callback, isSkipped ? TestMode.Skip : mode, this._timeout, comment);
+    const test = new Test(this._currentSuite, name, callback, isSkipped ? TestMode.Skip : mode, this._timeout);
     this._currentSuite.children.push(test);
     this._tests.push(test);
     this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
   }
 
-  _addSuite(mode, comment, name, callback) {
+  _addSuite(mode, name, callback, ...args) {
     const oldSuite = this._currentSuite;
-    const suite = new Suite(this._currentSuite, name, mode, comment);
+    const suite = new Suite(this._currentSuite, name, mode);
     this._currentSuite.children.push(suite);
     this._currentSuite = suite;
-    const result = callback();
+    const result = callback(...args);
     this._currentSuite = oldSuite;
     this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
   }
