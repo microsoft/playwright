@@ -587,10 +587,10 @@ index 0000000000000000000000000000000000000000..7133fb577e20ac8cf84ab4717b0adde9
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Input.json b/Source/JavaScriptCore/inspector/protocol/Input.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..60515155c222d3ead52f4e4905017e375ef7074c
+index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80cadb2f931d
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Input.json
-@@ -0,0 +1,169 @@
+@@ -0,0 +1,165 @@
 +{
 +    "domain": "Input",
 +    "availability": ["web"],
@@ -602,10 +602,6 @@ index 0000000000000000000000000000000000000000..60515155c222d3ead52f4e4905017e37
 +        }
 +    ],
 +    "commands": [
-+        {
-+            "name": "goBack",
-+            "description": "FIXME: move this to Page domain."
-+        },
 +        {
 +            "name": "dispatchKeyEvent",
 +            "description": "Dispatches a key event to the page.",
@@ -6081,10 +6077,10 @@ index 0000000000000000000000000000000000000000..2047a0c3fb7e4b70057d42fcdc2cc222
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3e834010f4839bbc4f58d89cca16f34983df597c
+index 0000000000000000000000000000000000000000..f1ebdafbfa8571bc480d00c2869a1b2578de6b0b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,250 @@
+@@ -0,0 +1,245 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -6329,18 +6325,13 @@ index 0000000000000000000000000000000000000000..3e834010f4839bbc4f58d89cca16f349
 +#endif
 +}
 +
-+void WebPageInspectorInputAgent::goBack(Inspector::ErrorString&)
-+{
-+    auto navigation = m_page.goBack();
-+}
-+
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b2f4827eede68fa4a47dbdb18cb0b412c81be95f
+index 0000000000000000000000000000000000000000..91edccac67b1efeff41ccdf922de3f03dc529741
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,56 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -6377,7 +6368,6 @@ index 0000000000000000000000000000000000000000..b2f4827eede68fa4a47dbdb18cb0b412
 +
 +    void dispatchKeyEvent(const String& in_type, const int* opt_in_modifiers, const String* opt_in_text, const String* opt_in_unmodifiedText, const String* opt_in_code, const String* opt_in_key, const int* opt_in_windowsVirtualKeyCode, const int* opt_in_nativeVirtualKeyCode, const bool* opt_in_autoRepeat, const bool* opt_in_isKeypad, const bool* opt_in_isSystemKey, const JSON::Array*, Ref<DispatchKeyEventCallback>&& callback) override;
 +    void dispatchMouseEvent(const String& in_type, int in_x, int in_y, const int* opt_in_modifiers, const String* opt_in_button, const int* opt_in_buttons, const int* opt_in_clickCount, const int* opt_in_deltaX, const int* opt_in_deltaY, Ref<DispatchMouseEventCallback>&& callback) override;
-+    void goBack(Inspector::ErrorString&) override;
 +
 +private:
 +    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp);
