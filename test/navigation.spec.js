@@ -167,6 +167,10 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
       expectSSLError(error.message);
     });
+    it.skip(WEBKIT)('should not crash when navigating to bad SSL after a cross origin navigation', async({page, server, httpsServer}) => {
+      await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      await page.goto(httpsServer.EMPTY_PAGE).catch(e => void 0);
+    });
     it('should throw if networkidle is passed as an option', async({page, server}) => {
       let error = null;
       await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle'}).catch(err => error = err);

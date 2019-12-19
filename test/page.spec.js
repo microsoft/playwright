@@ -567,6 +567,18 @@ module.exports.addTests = function({testRunner, expect, headless, playwright, FF
       });
       expect(result).toBe(15);
     });
+    it.skip(WEBKIT)('should work after cross origin navigation', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.exposeFunction('compute', function(a, b) {
+        return a * b;
+      });
+
+      await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      const result = await page.evaluate(async function() {
+        return await compute(9, 4);
+      });
+      expect(result).toBe(36);
+    });
     it('should work with complex objects', async({page, server}) => {
       await page.exposeFunction('complexObject', function(a, b) {
         return {x: a.x + b.x};

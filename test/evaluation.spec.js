@@ -97,6 +97,15 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.EMPTY_PAGE);
       expect(await frameEvaluation).toBe(42);
     });
+    it.skip(WEBKIT)('should work right after a cross-origin navigation', async({page, server}) => {
+        await page.goto(server.EMPTY_PAGE);
+        let frameEvaluation = null;
+        page.on('framenavigated', async frame => {
+          frameEvaluation = frame.evaluate(() => 6 * 7);
+        });
+        await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+        expect(await frameEvaluation).toBe(42);
+    });
     it('should work from-inside an exposed function', async({page, server}) => {
       // Setup inpage callback, which calls Page.evaluate
       await page.exposeFunction('callController', async function(a, b) {
@@ -290,6 +299,14 @@ module.exports.addTests = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       // Make sure CSP works.
       await page.addScriptTag({content: 'window.e = 10;'}).catch(e => void e);
       expect(await page.evaluate(() => window.e)).toBe(undefined);
+    });
+    it.skip(WEBKIT)('should work after a cross origin navigation', async({page, server}) => {
+      await page.goto(server.CROSS_PROCESS_PREFIX);
+      await page.evaluateOnNewDocument(function(){
+        window.injected = 123;
+      });
+      await page.goto(server.PREFIX + '/tamperable.html');
+      expect(await page.evaluate(() => window.result)).toBe(123);
     });
   });
 
