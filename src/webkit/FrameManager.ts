@@ -100,7 +100,7 @@ export class FrameManager implements PageDelegate {
     if (this._page._state.extraHTTPHeaders !== null)
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
     if (this._page._state.viewport)
-      promises.push(this.setViewport(this._page._state.viewport));
+      promises.push(FrameManager._setViewport(session, this._page._state.viewport));
     await Promise.all(promises);
   }
 
@@ -284,11 +284,15 @@ export class FrameManager implements PageDelegate {
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
+    return FrameManager._setViewport(this._session, viewport);
+  }
+
+  private static async _setViewport(session: TargetSession, viewport: types.Viewport): Promise<void> {
     if (viewport.isMobile || viewport.isLandscape || viewport.hasTouch)
       throw new Error('Not implemented');
     const width = viewport.width;
     const height = viewport.height;
-    await this._session.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
+    await session.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
   }
 
   setCacheEnabled(enabled: boolean): Promise<void> {
