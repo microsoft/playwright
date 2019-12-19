@@ -426,7 +426,7 @@ export class FrameManager implements PageDelegate {
       backendNodeId,
       executionContextId: (to._delegate as ExecutionContextDelegate)._contextId,
     }).catch(debugError);
-    if (!result)
+    if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object).asElement()!;
   }

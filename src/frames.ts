@@ -638,20 +638,9 @@ export class Frame {
 
   async select(selector: string, value: string | dom.ElementHandle | SelectOption | string[] | dom.ElementHandle[] | SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options, 'any');
-    const toDispose: Promise<dom.ElementHandle>[] = [];
     const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
-    const context = await this._utilityContext();
-    const adoptedValues = await Promise.all(values.map(async value => {
-      if (value instanceof dom.ElementHandle && value._context !== context) {
-        const adopted = this._page._delegate.adoptElementHandle(value, context);
-        toDispose.push(adopted);
-        return adopted;
-      }
-      return value;
-    }));
-    const result = await handle.select(...adoptedValues);
+    const result = await handle.select(...values);
     await handle.dispose();
-    await Promise.all(toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose())));
     return result;
   }
 

@@ -219,14 +219,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.evaluate(e => e.textContent, element).catch(e => error = e);
       expect(error.message).toContain('JSHandle is disposed');
     });
-    it('should throw if elementHandles are from other frames', async({page, server}) => {
-      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-      const bodyHandle = await page.frames()[1].$('body');
-      let error = null;
-      await page.evaluate(body => body.innerHTML, bodyHandle).catch(e => error = e);
-      expect(error).toBeTruthy();
-      expect(error.message).toContain('JSHandles can be evaluated only in the context they were created');
-    });
     it('should simulate a user gesture', async({page, server}) => {
       const result = await page.evaluate(() => {
         document.body.appendChild(document.createTextNode('test'));
@@ -332,6 +324,35 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(await mainFrame.evaluate(() => window.location.href)).toContain('localhost');
       await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(await mainFrame.evaluate(() => window.location.href)).toContain('127');
+    });
+    xit('should allow cross-frame js handles', async({page, server}) => {
+      // TODO: this should be possible because frames script each other, but
+      // protocol implementations do not support this.
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+      const handle = await page.evaluateHandle(() => {
+        const iframe = document.querySelector('iframe');
+        const foo = { bar: 'baz' };
+        iframe.contentWindow.__foo = foo;
+        return foo;
+      });
+      const childFrame = page.mainFrame().childFrames()[0];
+      const childResult = await childFrame.evaluate(() => window.__foo);
+      expect(childResult).toEqual({ bar: 'baz' });
+      const result = await childFrame.evaluate(foo => foo.bar, handle);
+      expect(result).toBe('baz');
+    });
+    it.skip(FFOX)('should allow cross-frame element handles', async({page, server}) => {
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+      const bodyHandle = await page.mainFrame().childFrames()[0].$('body');
+      const result = await page.evaluate(body => body.innerHTML, bodyHandle);
+      expect(result.trim()).toBe('<div>Hi, I\'m frame</div>');
+    });
+    it.skip(FFOX)('should not allow cross-frame element handles when frames do not script each other', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const frame = await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
+      const bodyHandle = await frame.$('body');
+      const error = await page.evaluate(body => body.innerHTML, bodyHandle).catch(e => e);
+      expect(error.message).toContain('Unable to adopt element handle from a different document');
     });
   });
 };

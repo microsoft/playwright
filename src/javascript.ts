@@ -24,12 +24,16 @@ export class ExecutionContext {
     return null;
   }
 
-  evaluate: types.Evaluate = (pageFunction, ...args) => {
-    return this._delegate.evaluate(this, true /* returnByValue */, pageFunction, ...args);
+  _evaluate(returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
+    return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
   }
 
-  evaluateHandle: types.EvaluateHandle = (pageFunction, ...args) => {
-    return this._delegate.evaluate(this, false /* returnByValue */, pageFunction, ...args);
+  evaluate: types.Evaluate = async (pageFunction, ...args) => {
+    return this._evaluate(true /* returnByValue */, pageFunction, ...args);
+  }
+
+  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
+    return this._evaluate(false /* returnByValue */, pageFunction, ...args);
   }
 
   _createHandle(remoteObject: any): JSHandle {
