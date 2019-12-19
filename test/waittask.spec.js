@@ -205,6 +205,36 @@ module.exports.addTests = function({testRunner, expect, product, playwright, FFO
     });
   });
 
+  describe('Frame.$wait', function() {
+    it('should accept arguments', async({page, server}) => {
+      await page.setContent('<div></div>');
+      const result = await page.$wait('div', (e, foo, bar) => e.nodeName + foo + bar, {}, 'foo1', 'bar2');
+      expect(await result.jsonValue()).toBe('DIVfoo1bar2');
+    });
+    it('should query selector constantly', async({page, server}) => {
+      await page.setContent('<div></div>');
+      let done = null;
+      const resultPromise = page.$wait('span', e => e).then(r => done = r);
+      expect(done).toBe(null);
+      await page.setContent('<section></section>');
+      expect(done).toBe(null);
+      await page.setContent('<span>text</span>');
+      await resultPromise;
+      expect(done).not.toBe(null);
+      expect(await done.evaluate(e => e.textContent)).toBe('text');
+    });
+    it('should be able to wait for removal', async({page}) => {
+      await page.setContent('<div></div>');
+      let done = null;
+      const resultPromise = page.$wait('div', e => !e).then(r => done = r);
+      expect(done).toBe(null);
+      await page.setContent('<section></section>');
+      await resultPromise;
+      expect(done).not.toBe(null);
+      expect(await done.jsonValue()).toBe(true);
+    });
+  });
+
   describe('Frame.waitForSelector', function() {
     const addElement = tag => document.body.appendChild(document.createElement(tag));
 
