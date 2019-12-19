@@ -116,17 +116,11 @@ export class FrameManager {
     frame._url = url;
     frame._name = name;
     frame._lastDocumentId = documentId;
-    frame._firedLifecycleEvents.clear();
+    this.frameLifecycleEvent(frameId, 'clear');
     if (!initial) {
       for (const watcher of this._lifecycleWatchers)
         watcher._onCommittedNewDocumentNavigation(frame);
     }
-    this._stopNetworkIdleTimer(frame, 'networkidle0');
-    if (frame._inflightRequests === 0)
-      this._startNetworkIdleTimer(frame, 'networkidle0');
-    this._stopNetworkIdleTimer(frame, 'networkidle2');
-    if (frame._inflightRequests <= 2)
-      this._startNetworkIdleTimer(frame, 'networkidle2');
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -168,6 +162,12 @@ export class FrameManager {
       return;
     if (event === 'clear') {
       frame._firedLifecycleEvents.clear();
+      this._stopNetworkIdleTimer(frame, 'networkidle0');
+      if (frame._inflightRequests === 0)
+        this._startNetworkIdleTimer(frame, 'networkidle0');
+      this._stopNetworkIdleTimer(frame, 'networkidle2');
+      if (frame._inflightRequests <= 2)
+        this._startNetworkIdleTimer(frame, 'networkidle2');
     } else {
       frame._firedLifecycleEvents.add(event);
       for (const watcher of this._lifecycleWatchers)
@@ -429,7 +429,7 @@ export class Frame {
   async setContent(html: string, options?: NavigateOptions): Promise<void> {
     const context = await this._utilityContext();
     if (this._page._delegate.needsLifecycleResetOnSetContent())
-      this._firedLifecycleEvents.clear();
+      this._page._frameManager.frameLifecycleEvent(this._id, 'clear');
     await context.evaluate(html => {
       document.open();
       document.write(html);
@@ -871,10 +871,8 @@ class LifecycleWatcher {
 
   constructor(frame: Frame, options: WaitForNavigationOptions | undefined, supportUrlMatch: boolean) {
     options = options || {};
-    let {
-      waitUntil = (['load'] as LifecycleEvent[]),
-      timeout = frame._page._timeoutSettings.navigationTimeout()
-    } = options;
+    let { waitUntil = 'load' as LifecycleEvent } = options;
+    const { timeout = frame._page._timeoutSettings.navigationTimeout() } = options;
     if (!Array.isArray(waitUntil))
       waitUntil = [waitUntil];
     for (const event of waitUntil) {
