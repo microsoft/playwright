@@ -17,7 +17,7 @@
 
 module.exports.describe = function ({ testRunner, expect }) {
   const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   // FIXME: not supported in WebKit (as well as Emulation domain in general).

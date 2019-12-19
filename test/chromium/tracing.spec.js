@@ -19,7 +19,7 @@ const path = require('path');
 
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, ASSETS_DIR}) {
   const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Chromium.startTracing', function() {

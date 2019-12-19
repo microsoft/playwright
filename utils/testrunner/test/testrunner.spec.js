@@ -381,20 +381,6 @@ module.exports.addTests = function({testRunner, expect}) {
       await t.run();
       expect(log.join()).toBe('1,2,3,4');
     });
-    it('should support async test suites', async() => {
-      const log = [];
-      const t = new TestRunner();
-      t.it('uno', () => log.push(1));
-      await t.describe('suite1', async() => {
-        await Promise.resolve();
-        t.it('dos', () => log.push(2));
-        await Promise.resolve();
-        t.it('tres', () => log.push(3));
-      });
-      t.it('cuatro', () => log.push(4));
-      await t.run();
-      expect(log.join()).toBe('1,2,3,4');
-    });
   });
 
   describe('TestRunner.run result', () => {

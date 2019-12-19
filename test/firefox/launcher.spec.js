@@ -24,7 +24,7 @@ const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
 module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, playwright }) {
   const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('FFPlaywright', function() {

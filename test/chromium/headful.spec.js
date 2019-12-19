@@ -26,7 +26,7 @@ const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
 module.exports.describe = function({testRunner, expect, playwright, defaultBrowserOptions, FFOX, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
-  const {it, fit, xit} = testRunner;
+  const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   const headfulOptions = Object.assign({}, defaultBrowserOptions, {
