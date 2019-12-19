@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as frames from './frames';
 import * as types from './types';
 import * as dom from './dom';
 
@@ -18,10 +17,6 @@ export class ExecutionContext {
 
   constructor(delegate: ExecutionContextDelegate) {
     this._delegate = delegate;
-  }
-
-  frame(): frames.Frame | null {
-    return null;
   }
 
   _evaluate(returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {

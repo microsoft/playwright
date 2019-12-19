@@ -57,7 +57,8 @@ export interface PageDelegate {
 
   isElementHandle(remoteObject: any): boolean;
   adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>>;
-  getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;
+  getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;  // Only called for frame owner elements.
+  getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;
   getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null>;
   layoutViewport(): Promise<{ width: number, height: number }>;
   setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void>;

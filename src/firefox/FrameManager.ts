@@ -94,7 +94,7 @@ export class FrameManager implements PageDelegate {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    context.frame()._contextDestroyed(context as dom.FrameExecutionContext);
+    context.frame._contextDestroyed(context as dom.FrameExecutionContext);
   }
 
   _onNavigationStarted() {
@@ -237,7 +237,7 @@ export class FrameManager implements PageDelegate {
   }
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
-    const frameId = handle._context.frame()._id;
+    const frameId = handle._context.frame._id;
     return this._session.send('Page.getBoundingBox', {
       frameId,
       objectId: handle._remoteObject.objectId,
@@ -268,12 +268,16 @@ export class FrameManager implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const { frameId } = await this._session.send('Page.contentFrame', {
-      frameId: handle._context.frame()._id,
+      frameId: handle._context.frame._id,
       objectId: toRemoteObject(handle).objectId,
     });
     if (!frameId)
       return null;
     return this._page._frameManager.frame(frameId);
+  }
+
+  async getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+    return handle._context.frame;
   }
 
   isElementHandle(remoteObject: any): boolean {
@@ -301,7 +305,7 @@ export class FrameManager implements PageDelegate {
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('Page.getContentQuads', {
-      frameId: handle._context.frame()._id,
+      frameId: handle._context.frame._id,
       objectId: toRemoteObject(handle).objectId,
     }).catch(debugError);
     if (!result)

@@ -282,7 +282,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await otherFrame.evaluate(addElement, 'div');
       await page.evaluate(addElement, 'div');
       const eHandle = await watchdog;
-      expect(eHandle.frame()).toBe(page.mainFrame());
+      expect(await eHandle.ownerFrame()).toBe(page.mainFrame());
     });
 
     it('should run in specified frame', async({page, server}) => {
@@ -294,7 +294,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await frame1.evaluate(addElement, 'div');
       await frame2.evaluate(addElement, 'div');
       const eHandle = await waitForSelectorPromise;
-      expect(eHandle.frame()).toBe(frame2);
+      expect(await eHandle.ownerFrame()).toBe(frame2);
     });
 
     it('should throw when frame is detached', async({page, server}) => {
@@ -473,7 +473,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await frame1.evaluate(addElement, 'div');
       await frame2.evaluate(addElement, 'div');
       const eHandle = await waitForXPathPromise;
-      expect(eHandle.frame()).toBe(frame2);
+      expect(await eHandle.ownerFrame()).toBe(frame2);
     });
     it('should throw when frame is detached', async({page, server}) => {
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
