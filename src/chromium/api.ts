@@ -9,9 +9,7 @@ export { Frame } from '../frames';
 export { Keyboard, Mouse } from '../input';
 export { JSHandle } from '../javascript';
 export { Request, Response } from '../network';
-export { Browser } from './Browser';
 export { BrowserContext } from '../browserContext';
-export { BrowserFetcher } from '../browserFetcher';
 export { CDPSession } from './Connection';
 export { Accessibility } from './features/accessibility';
 export { Chromium } from './features/chromium';
@@ -22,6 +20,4 @@ export { PDF } from './features/pdf';
 export { Permissions } from './features/permissions';
 export { Worker, Workers } from './features/workers';
 export { Page } from '../page';
-export { Playwright } from './Playwright';
 export { Target } from './Target';
-

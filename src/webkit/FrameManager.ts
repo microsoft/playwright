@@ -42,13 +42,15 @@ export class FrameManager implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   _session: TargetSession;
   readonly _page: Page;
+  private _browser: Browser;
   private readonly _networkManager: NetworkManager;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browserContext: BrowserContext) {
+  constructor(browser: Browser, browserContext: BrowserContext) {
+    this._browser = browser;
     this.rawKeyboard = new RawKeyboardImpl();
     this.rawMouse = new RawMouseImpl();
     this._contextIdToContext = new Map();
@@ -329,7 +331,7 @@ export class FrameManager implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    (this._page.browser() as Browser)._closePage(this._page, runBeforeUnload);
+    this._browser._closePage(this._page, runBeforeUnload);
   }
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {

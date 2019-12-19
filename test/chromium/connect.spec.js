@@ -51,23 +51,6 @@ module.exports.addTests = function({testRunner, expect, defaultBrowserOptions, p
         remoteBrowser.close(),
       ]);
     });
-    it('should support ignoreHTTPSErrors option', async({httpsServer}) => {
-      const originalBrowser = await playwright.launch(defaultBrowserOptions);
-      const browserWSEndpoint = originalBrowser.chromium.wsEndpoint();
-
-      const browser = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint});
-      const context = await browser.newContext({ ignoreHTTPSErrors: true });
-      const page = await context.newPage();
-      let error = null;
-      const [, response] = await Promise.all([
-        httpsServer.waitForRequest('/empty.html'),
-        page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e)
-      ]);
-      expect(error).toBe(null);
-      expect(response.ok()).toBe(true);
-      await context.close();
-      await browser.close();
-    });
     it('should be able to reconnect to a disconnected browser', async({server}) => {
       const originalBrowser = await playwright.launch(defaultBrowserOptions);
       const browserWSEndpoint = originalBrowser.chromium.wsEndpoint();

@@ -56,11 +56,12 @@ module.exports.addTests = function({testRunner, expect, playwright, FFOX, CHROME
       await page.click('span');
       expect(await page.evaluate(() => window.CLICKED)).toBe(42);
     });
-    it('should not throw UnhandledPromiseRejection when page closes', async({page, server}) => {
-      const newPage = await page.browser().newPage();
+    it('should not throw UnhandledPromiseRejection when page closes', async({newContext, server}) => {
+      const context = await newContext();
+      const page = await context.newPage();
       await Promise.all([
-        newPage.close(),
-        newPage.mouse.click(1, 2),
+        page.close(),
+        page.mouse.click(1, 2),
       ]).catch(e => {});
     });
     it('should click the button after navigation ', async({page, server}) => {

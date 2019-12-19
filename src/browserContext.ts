@@ -20,19 +20,6 @@ import { Page } from './page';
 import * as input from './input';
 import * as network from './network';
 import * as types from './types';
-import * as childProcess from 'child_process';
-
-export interface BrowserInterface {
-  browserContexts(): BrowserContext[];
-  close(): Promise<void>;
-  newContext(): Promise<BrowserContext>;
-  defaultContext(): BrowserContext;
-  newPage(): Promise<Page>;
-  pages(): Promise<Page[]>;
-  process(): childProcess.ChildProcess | null;
-  version(): Promise<string>;
-  userAgent(): Promise<string>;
-}
 
 export interface BrowserDelegate {
   contextPages(): Promise<Page[]>;
@@ -56,13 +43,12 @@ export type BrowserContextOptions = {
 
 export class BrowserContext {
   private readonly _delegate: BrowserDelegate;
-  private readonly _browser: BrowserInterface;
   private readonly _isIncognito: boolean;
   readonly _options: BrowserContextOptions;
+  private _closed = false;
 
-  constructor(delegate: BrowserDelegate, browser: BrowserInterface, isIncognito: boolean, options: BrowserContextOptions) {
+  constructor(delegate: BrowserDelegate, isIncognito: boolean, options: BrowserContextOptions) {
     this._delegate = delegate;
-    this._browser = browser;
     this._isIncognito = isIncognito;
     this._options = options;
     if (!options.viewport && options.viewport !== null)
@@ -82,13 +68,14 @@ export class BrowserContext {
   }
 
   async _createOwnerPage(): Promise<Page> {
-    const page = await this._delegate.createPageInContext();
-    page._isContextOwner = true;
-    return page;
-  }
-
-  browser(): BrowserInterface {
-    return this._browser;
+    try {
+      const page = await this._delegate.createPageInContext();
+      page._isContextOwner = true;
+      return page;
+    } catch (e) {
+      await this.close();
+      throw e;
+    }
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
@@ -104,7 +91,10 @@ export class BrowserContext {
   }
 
   async close() {
+    if (this._closed)
+      return;
     assert(this._isIncognito, 'Non-incognito profiles cannot be closed!');
     await this._delegate.closeContext();
+    this._closed = true;
   }
 }

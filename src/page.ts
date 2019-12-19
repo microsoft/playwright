@@ -26,7 +26,7 @@ import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
-import { BrowserContext, BrowserInterface } from './browserContext';
+import { BrowserContext } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import Injected from './injected/injected';
 
@@ -136,10 +136,6 @@ export class Page extends EventEmitter {
     }
     const fileChooser: FileChooser = { element: handle, multiple };
     this.emit(Events.Page.FileChooser, fileChooser);
-  }
-
-  browser(): BrowserInterface {
-    return this._browserContext.browser();
   }
 
   browserContext(): BrowserContext {
@@ -401,6 +397,8 @@ export class Page extends EventEmitter {
   }
 
   async close(options: { runBeforeUnload: (boolean | undefined); } = {runBeforeUnload: undefined}) {
+    if (this._closed)
+      return;
     assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
     const runBeforeUnload = !!options.runBeforeUnload;
     await this._delegate.closePage(runBeforeUnload);

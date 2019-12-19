@@ -51,9 +51,11 @@ export class FrameManager implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   rawMouse: RawMouseImpl;
   rawKeyboard: RawKeyboardImpl;
+  private _browser: Browser;
 
-  constructor(client: CDPSession, browserContext: BrowserContext) {
+  constructor(client: CDPSession, browser: Browser, browserContext: BrowserContext) {
     this._client = client;
+    this._browser = browser;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
     this._page = new Page(this, browserContext);
@@ -330,7 +332,7 @@ export class FrameManager implements PageDelegate {
     if (runBeforeUnload)
       await this._client.send('Page.close');
     else
-      await (this._page.browser() as Browser)._closePage(this._page);
+      await this._browser._closePage(this._page);
   }
 
   async getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
@@ -352,6 +354,7 @@ export class FrameManager implements PageDelegate {
   }
 
   async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<Buffer> {
+    await this._client.send('Page.bringToFront', {});
     const clip = options.clip ? { ...options.clip, scale: 1 } : undefined;
     const result = await this._client.send('Page.captureScreenshot', { format, quality: options.quality, clip });
     return Buffer.from(result.data, 'base64');

@@ -19,7 +19,7 @@ import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
 import { Events } from './events';
 import { assert, helper } from '../helper';
-import { BrowserContext, BrowserInterface, BrowserContextOptions } from '../browserContext';
+import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Connection, ConnectionEvents, CDPSession } from './Connection';
 import { Page } from '../page';
 import { Target } from './Target';
@@ -30,7 +30,7 @@ import * as network from '../network';
 import { Permissions } from './features/permissions';
 import { Overrides } from './features/overrides';
 
-export class Browser extends EventEmitter implements BrowserInterface {
+export class Browser extends EventEmitter {
   private _process: childProcess.ChildProcess;
   _connection: Connection;
   _client: CDPSession;
@@ -131,7 +131,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
       setContextCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._client.send('Storage.setCookies', { cookies, browserContextId: contextId || undefined });
       },
-    }, this, isIncognito, options);
+    }, isIncognito, options);
     overrides = new Overrides(context);
     (context as any).permissions = new Permissions(this._client, contextId);
     (context as any).overrides = overrides;
@@ -162,7 +162,7 @@ export class Browser extends EventEmitter implements BrowserInterface {
     const {browserContextId} = targetInfo;
     const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId) : this._defaultContext;
 
-    const target = new Target(targetInfo, context, () => this._connection.createSession(targetInfo));
+    const target = new Target(this, targetInfo, context, () => this._connection.createSession(targetInfo));
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(event.targetInfo.targetId, target);
 

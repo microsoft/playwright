@@ -31,11 +31,11 @@ export class Screenshotter {
   constructor(page: Page) {
     this._page = page;
 
-    const browser = page.browser();
-    this._queue = browser[taskQueueSymbol];
+    const browserContext = page.browserContext();
+    this._queue = browserContext[taskQueueSymbol];
     if (!this._queue) {
       this._queue = new TaskQueue();
-      browser[taskQueueSymbol] = this._queue;
+      browserContext[taskQueueSymbol] = this._queue;
     }
   }
 
