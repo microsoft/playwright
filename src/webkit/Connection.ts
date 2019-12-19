@@ -18,7 +18,7 @@
 import { assert } from '../helper';
 import * as debug from 'debug';
 import { EventEmitter } from 'events';
-import { ConnectionTransport, SlowMoTransport } from '../transport';
+import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
 const debugProtocol = debug('playwright:protocol');
@@ -38,9 +38,9 @@ export class Connection extends EventEmitter {
 
   _closed = false;
 
-  constructor(transport: ConnectionTransport, delay: number | undefined = 0) {
+  constructor(transport: ConnectionTransport) {
     super();
-    this._transport = SlowMoTransport.wrap(transport, delay);
+    this._transport = transport;
     this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
   }

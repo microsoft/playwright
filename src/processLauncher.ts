@@ -37,12 +37,7 @@ export type LaunchProcessOptions = {
   tempDir?: string,
 };
 
-export type LaunchProcessResult = {
-  process: childProcess.ChildProcess;
-  gracefullyClose: () => Promise<void>;
-};
-
-export async function launchProcess(options: LaunchProcessOptions, attemptToGracefullyClose: () => Promise<any>): Promise<LaunchProcessResult> {
+export async function launchProcess(options: LaunchProcessOptions, attemptToGracefullyClose: () => Promise<any>): Promise<childProcess.ChildProcess> {
   let stdio: ('ignore' | 'pipe')[] = ['pipe', 'pipe', 'pipe'];
   if (options.pipe) {
     if (options.dumpio)
@@ -65,7 +60,7 @@ export async function launchProcess(options: LaunchProcessOptions, attemptToGrac
 
   if (!spawnedProcess.pid) {
     let reject: (e: Error) => void;
-    const result = new Promise<LaunchProcessResult>((f, r) => reject = r);
+    const result = new Promise<childProcess.ChildProcess>((f, r) => reject = r);
     spawnedProcess.once('error', error => {
       reject(new Error('Failed to launch browser: ' + error));
     });
@@ -99,7 +94,7 @@ export async function launchProcess(options: LaunchProcessOptions, attemptToGrac
     listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyClose));
   if (options.handleSIGHUP)
     listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyClose));
-  return { process: spawnedProcess, gracefullyClose };
+  return spawnedProcess;
 
   async function gracefullyClose(): Promise<void> {
     helper.removeEventListeners(listeners);

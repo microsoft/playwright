@@ -23,10 +23,9 @@ import * as path from 'path';
 import * as URL from 'url';
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
-import { Connection } from './Connection';
 import { TimeoutError } from '../errors';
-import { assert, debugError, helper } from '../helper';
-import { ConnectionTransport, WebSocketTransport, PipeTransport } from '../transport';
+import { assert, helper } from '../helper';
+import { ConnectionTransport, WebSocketTransport, PipeTransport, SlowMoTransport } from '../transport';
 import * as util from 'util';
 import { launchProcess, waitForLine } from '../processLauncher';
 
@@ -112,7 +111,7 @@ export class Launcher {
 
     const usePipe = chromeArguments.includes('--remote-debugging-pipe');
 
-    const launched = await launchProcess({
+    const launchedProcess = await launchProcess({
       executablePath: chromeExecutable,
       args: chromeArguments,
       env,
@@ -123,31 +122,29 @@ export class Launcher {
       pipe: usePipe,
       tempDir: temporaryUserDataDir
     }, () => {
-      if (temporaryUserDataDir || !connection)
+      if (temporaryUserDataDir || !browser)
         return Promise.reject();
-      return connection.rootSession.send('Browser.close').catch(error => {
-        debugError(error);
-        throw error;
-      });
+      return browser.close();
     });
 
-    let connection: Connection | null = null;
+    let browser: Browser | undefined;
     try {
+      let transport: ConnectionTransport | null = null;
+      let browserWSEndpoint: string = '';
       if (!usePipe) {
         const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${this._preferredRevision}`);
-        const match = await waitForLine(launched.process, launched.process.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
-        const browserWSEndpoint = match[1];
-        const transport = await WebSocketTransport.create(browserWSEndpoint);
-        connection = new Connection(browserWSEndpoint, transport, slowMo);
+        const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
+        browserWSEndpoint = match[1];
+        transport = await WebSocketTransport.create(browserWSEndpoint);
       } else {
-        const transport = new PipeTransport(launched.process.stdio[3] as NodeJS.WritableStream, launched.process.stdio[4] as NodeJS.ReadableStream);
-        connection = new Connection('', transport, slowMo);
+        transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
       }
-      const browser = await Browser.create(connection, [], launched.process, launched.gracefullyClose);
+      browser = await Browser.create(browserWSEndpoint, SlowMoTransport.wrap(transport, slowMo), launchedProcess);
       await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
-      await launched.gracefullyClose();
+      if (browser)
+        await browser.close();
       throw e;
     }
   }
@@ -185,31 +182,20 @@ export class Launcher {
       browserWSEndpoint?: string;
       browserURL?: string;
       transport?: ConnectionTransport; })): Promise<Browser> {
-    const {
-      browserWSEndpoint,
-      browserURL,
-      transport,
-      slowMo = 0,
-    } = options;
+    assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
 
-    assert(Number(!!browserWSEndpoint) + Number(!!browserURL) + Number(!!transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
-
-    let connection: Connection = null;
-    if (transport) {
-      connection = new Connection('', transport, slowMo);
-    } else if (browserWSEndpoint) {
-      const connectionTransport = await WebSocketTransport.create(browserWSEndpoint);
-      connection = new Connection(browserWSEndpoint, connectionTransport, slowMo);
-    } else if (browserURL) {
-      const connectionURL = await getWSEndpoint(browserURL);
-      const connectionTransport = await WebSocketTransport.create(connectionURL);
-      connection = new Connection(connectionURL, connectionTransport, slowMo);
+    let transport: ConnectionTransport | undefined;
+    let connectionURL: string = '';
+    if (options.transport) {
+      transport = options.transport;
+    } else if (options.browserWSEndpoint) {
+      connectionURL = options.browserWSEndpoint;
+      transport = await WebSocketTransport.create(options.browserWSEndpoint);
+    } else if (options.browserURL) {
+      connectionURL = await getWSEndpoint(options.browserURL);
+      transport = await WebSocketTransport.create(connectionURL);
     }
-
-    const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
-    return Browser.create(connection, browserContextIds, null, async () => {
-      connection.rootSession.send('Browser.close').catch(debugError);
-    });
+    return Browser.create(connectionURL, SlowMoTransport.wrap(transport, options.slowMo), null);
   }
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {

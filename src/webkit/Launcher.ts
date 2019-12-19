@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import { debugError, assert } from '../helper';
+import { assert } from '../helper';
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
-import { Connection } from './Connection';
-import { PipeTransport } from '../transport';
+import { PipeTransport, SlowMoTransport } from '../transport';
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as util from 'util';
@@ -78,7 +77,7 @@ export class Launcher {
     if (process.platform === 'darwin' && options.headless !== false)
       webkitArguments.push('--headless');
 
-    const launched = await launchProcess({
+    const launchedProcess = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
       env,
@@ -89,23 +88,20 @@ export class Launcher {
       pipe: true,
       tempDir: null
     }, () => {
-      if (!connection)
+      if (!browser)
         return Promise.reject();
-      return connection.send('Browser.close').catch(error => {
-        debugError(error);
-        throw error;
-      });
+      browser.close();
     });
 
-    let connection: Connection | null = null;
+    let browser: Browser | undefined;
     try {
-      const transport = new PipeTransport(launched.process.stdio[3] as NodeJS.WritableStream, launched.process.stdio[4] as NodeJS.ReadableStream);
-      connection = new Connection(transport, slowMo);
-      const browser = new Browser(connection, launched.process, launched.gracefullyClose);
+      const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+      browser = new Browser(SlowMoTransport.wrap(transport, slowMo), launchedProcess);
       await browser._waitForTarget(t => t._type === 'page');
       return browser;
     } catch (e) {
-      await launched.gracefullyClose();
+      if (browser)
+        await browser.close();
       throw e;
     }
   }

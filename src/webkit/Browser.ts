@@ -25,11 +25,11 @@ import { Target } from './Target';
 import { Protocol } from './protocol';
 import { Events } from '../events';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
+import { ConnectionTransport } from '../transport';
 
 export class Browser extends EventEmitter {
   private readonly _process: childProcess.ChildProcess;
   readonly _connection: Connection;
-  private _closeCallback: () => Promise<void>;
   private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
@@ -37,13 +37,11 @@ export class Browser extends EventEmitter {
   private _privateEvents = new EventEmitter();
 
   constructor(
-    connection: Connection,
-    process: childProcess.ChildProcess | null,
-    closeCallback?: (() => Promise<void>)) {
+    transport: ConnectionTransport,
+    process: childProcess.ChildProcess | null) {
     super();
-    this._connection = connection;
+    this._connection = new Connection(transport);
     this._process = process;
-    this._closeCallback = closeCallback || (() => Promise.resolve());
 
     /** @type {!Map<string, !Target>} */
     this._targets = new Map();
@@ -181,7 +179,7 @@ export class Browser extends EventEmitter {
 
   async close() {
     helper.removeEventListeners(this._eventListeners);
-    await this._closeCallback.call(null);
+    await this._connection.send('Browser.close');
   }
 
   _createBrowserContext(browserContextId: string | undefined, options: BrowserContextOptions): BrowserContext {

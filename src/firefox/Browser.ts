@@ -16,6 +16,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { ChildProcess } from 'child_process';
 import { helper, RegisteredListener, assert } from '../helper';
 import { Connection, ConnectionEvents, JugglerSessionEvents } from './Connection';
 import { Events } from './events';
@@ -26,30 +27,31 @@ import { FrameManager } from './FrameManager';
 import { Firefox } from './features/firefox';
 import * as network from '../network';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
+import { ConnectionTransport } from '../transport';
 
 export class Browser extends EventEmitter {
   _connection: Connection;
-  private _process: import('child_process').ChildProcess;
-  private _closeCallback: () => Promise<void>;
+  private _process: ChildProcess;
   _targets: Map<string, Target>;
   private _defaultContext: BrowserContext;
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
   readonly firefox: Firefox;
+  readonly _browserWSEndpoint: string;
 
-  static async create(connection: Connection, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
+  static async create(browserWSEndpoint: string, transport: ConnectionTransport, process: ChildProcess | null) {
+    const connection = new Connection(transport);
     const {browserContextIds} = await connection.send('Target.getBrowserContexts');
-    const browser = new Browser(connection, browserContextIds, process, closeCallback);
+    const browser = new Browser(browserWSEndpoint, connection, browserContextIds, process);
     await connection.send('Target.enable');
     return browser;
   }
 
-  constructor(connection: Connection, browserContextIds: Array<string>, process: import('child_process').ChildProcess | null, closeCallback: () => Promise<void>) {
+  constructor(browserWSEndpoint: string, connection: Connection, browserContextIds: Array<string>, process: ChildProcess | null) {
     super();
     this._connection = connection;
     this._process = process;
-    this._closeCallback = closeCallback;
-    this.firefox = new Firefox(this);
+    this.firefox = new Firefox(browserWSEndpoint);
 
     this._targets = new Map();
 
@@ -93,7 +95,7 @@ export class Browser extends EventEmitter {
     return this._defaultContext;
   }
 
-  process(): import('child_process').ChildProcess | null {
+  process(): ChildProcess | null {
     return this._process;
   }
 
@@ -151,7 +153,7 @@ export class Browser extends EventEmitter {
 
   async close() {
     helper.removeEventListeners(this._eventListeners);
-    await this._closeCallback();
+    await this._connection.send('Browser.close');
   }
 
   _createBrowserContext(browserContextId: string | null, options: BrowserContextOptions): BrowserContext {
