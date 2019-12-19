@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 
-module.exports.describe = function({testRunner, expect, playwright, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -39,18 +39,7 @@ module.exports.describe = function({testRunner, expect, playwright, WEBKIT}) {
       await context.close();
       expect(browser.browserContexts().length).toBe(1);
     });
-    it('should close all belonging targets once closing context', async function({browser, newContext, server}) {
-      expect((await browser.pages()).length).toBe(1);
-
-      const context = await newContext();
-      await context.newPage();
-      expect((await browser.pages()).length).toBe(2);
-      expect((await context.pages()).length).toBe(1);
-
-      await context.close();
-      expect((await browser.pages()).length).toBe(1);
-    });
-    it('window.open should use parent tab context', async function({browser, newContext, server}) {
+    it('window.open should use parent tab context', async function({newContext, server}) {
       const context = await newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);

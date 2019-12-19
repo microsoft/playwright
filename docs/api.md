@@ -36,8 +36,6 @@
   * [browser.disconnect()](#browserdisconnect)
   * [browser.isConnected()](#browserisconnected)
   * [browser.newContext(options)](#browsernewcontextoptions)
-  * [browser.newPage(options)](#browsernewpageoptions)
-  * [browser.pages()](#browserpages)
   * [browser.process()](#browserprocess)
 - [class: BrowserContext](#class-browsercontext)
   * [browserContext.browser()](#browsercontextbrowser)
@@ -359,7 +357,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.goto('https://www.google.com');
   // other actions...
   await browser.close();
@@ -405,7 +404,8 @@ const iPhone = playwright.devices['iPhone 6'];
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.emulate(iPhone);
   await page.goto('https://www.google.com');
   // other actions...
@@ -558,7 +558,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.goto('https://example.com');
   await browser.close();
 })();
@@ -648,31 +649,6 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 })();
 ```
 
-#### browser.newPage(options)
-- `options` <[Object]>
-  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
-  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
-    - `width` <[number]> page width in pixels.
-    - `height` <[number]> page height in pixels.
-    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
-  - `userAgent` <?[string]> Specific user agent to use in this page
-  - `mediaType` <?[string]> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
-  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
-  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
-  - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
-
-Promise which resolves to a new [Page] object. The [Page] is created in a new browser context that it will own. Closing this page will close the context.
-
-#### browser.pages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
-
-An array of all pages inside the Browser. In case of multiple browser contexts,
-the method will return an array with all the pages in all browser contexts.
-
 #### browser.process()
 - returns: <?[ChildProcess]> Spawned browser process. Returns `null` if the browser instance was created with [`playwright.connect`](#playwrightconnectoptions) method.
 
@@ -680,8 +656,7 @@ the method will return an array with all the pages in all browser contexts.
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
-BrowserContexts provide a way to operate multiple independent browser sessions. When a browser is launched, it has
-a single BrowserContext used by default. The method `browser.newPage()` creates a page in the default browser context.
+BrowserContexts provide a way to operate multiple independent browser sessions.
 
 If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
 context.
@@ -840,7 +815,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.goto('https://example.com');
   await page.screenshot({path: 'screenshot.png'});
   await browser.close();
@@ -1240,7 +1216,8 @@ const crypto = require('crypto');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   page.on('console', msg => console.log(msg.text()));
   await page.exposeFunction('md5', text =>
     crypto.createHash('md5').update(text).digest('hex')
@@ -1263,7 +1240,8 @@ const fs = require('fs');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   page.on('console', msg => console.log(msg.text()));
   await page.exposeFunction('readfile', async filePath => {
     return new Promise((resolve, reject) => {
@@ -1634,7 +1612,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const watchDog = page.waitForFunction('window.innerWidth < 100');
   await page.setViewport({width: 50, height: 50});
   await watchDog;
@@ -1715,7 +1694,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   let currentURL;
   page
     .waitForSelector('img')
@@ -1744,7 +1724,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   let currentURL;
   page
     .waitForXPath('//img')
@@ -2178,7 +2159,7 @@ Emitted when the url of a target changes.
 #### event: 'targetcreated'
 - <[Target]>
 
-Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browser.newPage`](#browsernewpage).
+Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
 
 > **NOTE** This includes target creations in incognito browser contexts.
 
@@ -2256,7 +2237,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   page.on('dialog', async dialog => {
     console.log(dialog.message());
     await dialog.dismiss();
@@ -2319,7 +2301,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.goto('https://www.google.com/chrome/browser/canary.html');
   dumpFrameTree(page.mainFrame(), '');
   await browser.close();
@@ -2716,7 +2699,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
   page.setViewport({width: 50, height: 50});
   await watchDog;
@@ -2770,7 +2754,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   let currentURL;
   page.mainFrame()
     .waitForSelector('img')
@@ -2798,7 +2783,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   let currentURL;
   page.mainFrame()
     .waitForXPath('//img')
@@ -2961,7 +2947,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.interception.enable();
   page.on('request', interceptedRequest => {
     if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg'))
@@ -3103,7 +3090,8 @@ const playwright = require('playwright');
 
 (async () => {
   const browser = await playwright.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.goto('https://example.com');
   const hrefElement = await page.$('a');
   await hrefElement.click();

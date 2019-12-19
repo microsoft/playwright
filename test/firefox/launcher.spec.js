@@ -34,7 +34,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         const options = Object.assign({userDataDir}, defaultBrowserOptions);
         const browser = await playwright.launch(options);
         // Open a page to make sure its functional.
-        await browser.newPage();
+        await browser.defaultContext().newPage();
         expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
         await browser.close();
         expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);

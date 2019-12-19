@@ -32,7 +32,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     describe('Playwright.launch', function() {
       it('should reject all promises when browser is closed', async() => {
         const browser = await playwright.launch(defaultBrowserOptions);
-        const page = await browser.newPage();
+        const page = await browser.defaultContext().newPage();
         let error = null;
         const neverResolves = page.evaluate(() => new Promise(r => {})).catch(e => error = e);
         await browser.close();
@@ -47,7 +47,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       });
       it('should have default URL when launching browser', async function() {
         const browser = await playwright.launch(defaultBrowserOptions);
-        const pages = (await browser.pages()).map(page => page.url());
+        const pages = (await browser.defaultContext().pages()).map(page => page.url());
         expect(pages).toEqual(['about:blank']);
         await browser.close();
       });
@@ -55,7 +55,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = [server.EMPTY_PAGE].concat(options.args || []);
         const browser = await playwright.launch(options);
-        const pages = await browser.pages();
+        const pages = await browser.defaultContext().pages();
         expect(pages.length).toBe(1);
         const page = pages[0];
         if (page.url() !== server.EMPTY_PAGE) {

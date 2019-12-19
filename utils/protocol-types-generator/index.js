@@ -12,15 +12,13 @@ async function generateChromeProtocol(revision) {
   const playwright = await require('../../chromium');
   const browser = await playwright.launch({executablePath: revision.executablePath});
   const origin = browser.chromium.wsEndpoint().match(/ws:\/\/([0-9A-Za-z:\.]*)\//)[1];
-  const page = await browser.newPage();
+  const page = await browser.defaultContext().newPage();
   await page.goto(`http://${origin}/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
-  const version = await browser.version();
   await browser.close();
   fs.writeFileSync(outputPath, jsonToTS(json));
-  console.log(`Wrote protocol.ts for ${version} to ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Wrote protocol.ts to ${path.relative(process.cwd(), outputPath)}`);
 }
-
 
 async function generateWebKitProtocol(revision) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'webkit', 'protocol.ts');

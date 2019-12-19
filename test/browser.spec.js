@@ -20,30 +20,6 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
   const {it, fit, xit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Browser.version', function() {
-    it.skip(WEBKIT)('should return whether we are in headless', async({browser}) => {
-      const version = await browser.version();
-      expect(version.length).toBeGreaterThan(0);
-      if (CHROME)
-        expect(version.startsWith('Headless')).toBe(headless);
-      else if (WEBKIT)
-        expect(version.startsWith('Safari/')).toBe(true);
-      else
-        expect(version.startsWith('Firefox/')).toBe(true);
-    });
-  });
-
-  describe('Browser.userAgent', function() {
-    it('should include WebKit', async({browser}) => {
-      const userAgent = await browser.userAgent();
-      expect(userAgent.length).toBeGreaterThan(0);
-      if (CHROME || WEBKIT)
-        expect(userAgent).toContain('WebKit');
-      else
-        expect(userAgent).toContain('Gecko');
-    });
-  });
-
   describe('Browser.process', function() {
     it('should return child_process instance', async function({browser}) {
       const process = await browser.process();

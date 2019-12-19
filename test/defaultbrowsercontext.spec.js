@@ -23,7 +23,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
   describe('defaultContext()', function() {
     beforeEach(async state => {
       state.browser = await playwright.launch(defaultBrowserOptions);
-      state.page = await state.browser.newPage();
+      state.page = await state.browser.defaultContext().newPage();
     });
     afterEach(async state => {
       await state.browser.close();
