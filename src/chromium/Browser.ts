@@ -29,38 +29,39 @@ import { FrameManager } from './FrameManager';
 import * as network from '../network';
 import { Permissions } from './features/permissions';
 import { Overrides } from './features/overrides';
+import { ConnectionTransport } from '../transport';
 
 export class Browser extends EventEmitter {
   private _process: childProcess.ChildProcess;
   _connection: Connection;
   _client: CDPSession;
-  private _closeCallback: () => Promise<void>;
   private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, Target>();
   readonly chromium: Chromium;
 
   static async create(
-    connection: Connection,
-    contextIds: string[],
-    process: childProcess.ChildProcess | null,
-    closeCallback?: (() => Promise<void>)) {
-    const browser = new Browser(connection, contextIds, process, closeCallback);
+    browserWSEndpoint: string,
+    transport: ConnectionTransport,
+    process: childProcess.ChildProcess | null) {
+    const connection = new Connection(transport);
+
+    const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
+    const browser = new Browser(browserWSEndpoint, connection, browserContextIds, process);
     await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
     return browser;
   }
 
   constructor(
+    browserWSEndpoint: string,
     connection: Connection,
     contextIds: string[],
-    process: childProcess.ChildProcess | null,
-    closeCallback?: (() => Promise<void>)) {
+    process: childProcess.ChildProcess | null) {
     super();
     this._connection = connection;
     this._client = connection.rootSession;
     this._process = process;
-    this._closeCallback = closeCallback || (() => Promise.resolve());
-    this.chromium = new Chromium(this);
+    this.chromium = new Chromium(this, browserWSEndpoint);
 
     this._defaultContext = this._createBrowserContext(null, {});
     for (const contextId of contextIds)
@@ -228,7 +229,7 @@ export class Browser extends EventEmitter {
   }
 
   async close() {
-    await this._closeCallback.call(null);
+    await this._connection.rootSession.send('Browser.close');
     this.disconnect();
   }
 

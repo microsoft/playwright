@@ -17,7 +17,7 @@
 
 import * as debug from 'debug';
 import { EventEmitter } from 'events';
-import { ConnectionTransport, SlowMoTransport } from '../transport';
+import { ConnectionTransport } from '../transport';
 import { assert } from '../helper';
 import { Protocol } from './protocol';
 
@@ -28,18 +28,15 @@ export const ConnectionEvents = {
 };
 
 export class Connection extends EventEmitter {
-  private _url: string;
   private _lastId = 0;
   private _transport: ConnectionTransport;
   private _sessions = new Map<string, CDPSession>();
   readonly rootSession: CDPSession;
   _closed = false;
 
-  constructor(url: string, transport: ConnectionTransport, delay: number | undefined = 0) {
+  constructor(transport: ConnectionTransport) {
     super();
-    this._url = url;
-
-    this._transport = SlowMoTransport.wrap(transport, delay);
+    this._transport = transport;
     this._transport.onmessage = this._onMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this.rootSession = new CDPSession(this, 'browser', '');
@@ -52,10 +49,6 @@ export class Connection extends EventEmitter {
 
   session(sessionId: string): CDPSession | null {
     return this._sessions.get(sessionId) || null;
-  }
-
-  url(): string {
-    return this._url;
   }
 
   _rawSend(sessionId: string, message: any): number {

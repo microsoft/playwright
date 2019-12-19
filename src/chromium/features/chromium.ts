@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import { assert } from '../../helper';
 import { Browser } from '../Browser';
 import { BrowserContext } from '../../browserContext';
-import { CDPSession, Connection } from '../Connection';
+import { CDPSession } from '../Connection';
 import { Page } from '../../page';
 import { readProtocolStream } from '../protocolHelper';
 import { Target } from '../Target';
@@ -26,16 +26,16 @@ import { Worker } from './workers';
 import { FrameManager } from '../FrameManager';
 
 export class Chromium extends EventEmitter {
-  private _connection: Connection;
   private _client: CDPSession;
   private _recording = false;
   private _path = '';
   private _tracingClient: CDPSession | undefined;
   private _browser: Browser;
+  private _browserWSEndpoint: string;
 
-  constructor(browser: Browser) {
+  constructor(browser: Browser, browserWSEndpoint: string) {
     super();
-    this._connection = browser._connection;
+    this._browserWSEndpoint = browserWSEndpoint;
     this._client = browser._client;
     this._browser = browser;
   }
@@ -101,6 +101,6 @@ export class Chromium extends EventEmitter {
   }
 
   wsEndpoint(): string {
-    return this._connection.url();
+    return this._browserWSEndpoint;
   }
 }

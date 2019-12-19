@@ -17,14 +17,13 @@
 
 import * as os from 'os';
 import * as path from 'path';
-import { Connection } from './Connection';
 import { Browser } from './Browser';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import * as fs from 'fs';
 import * as util from 'util';
-import { debugError, assert } from '../helper';
+import { assert } from '../helper';
 import { TimeoutError } from '../errors';
-import { WebSocketTransport } from '../transport';
+import { WebSocketTransport, SlowMoTransport } from '../transport';
 import { launchProcess, waitForLine } from '../processLauncher';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -97,7 +96,7 @@ export class Launcher {
         throw new Error(missingText);
       firefoxExecutable = executablePath;
     }
-    const launched = await launchProcess({
+    const launchedProcess = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
       env: os.platform() === 'linux' ? {
@@ -112,26 +111,23 @@ export class Launcher {
       pipe: false,
       tempDir: temporaryProfileDir
     }, () => {
-      if (temporaryProfileDir || !connection)
+      if (temporaryProfileDir || !browser)
         return Promise.reject();
-      return connection.send('Browser.close').catch(error => {
-        debugError(error);
-        throw error;
-      });
+      browser.close();
     });
 
-    let connection: Connection | null = null;
+    let browser: Browser | undefined;
     try {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
-      const match = await waitForLine(launched.process, launched.process.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
+      const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
       const url = match[1];
       const transport = await WebSocketTransport.create(url);
-      connection = new Connection(url, transport, slowMo);
-      const browser = await Browser.create(connection, launched.process, launched.gracefullyClose);
+      browser = await Browser.create(url, SlowMoTransport.wrap(transport, slowMo), launchedProcess);
       await browser._waitForTarget(t => t.type() === 'page');
       return browser;
     } catch (e) {
-      await launched.gracefullyClose;
+      if (browser)
+        await browser.close();
       throw e;
     }
   }
@@ -141,10 +137,8 @@ export class Launcher {
       browserWSEndpoint,
       slowMo = 0,
     } = options;
-    let connection = null;
     const transport = await WebSocketTransport.create(browserWSEndpoint);
-    connection = new Connection(browserWSEndpoint, transport, slowMo);
-    return await Browser.create(connection, null, () => connection.send('Browser.close').catch(debugError));
+    return await Browser.create(browserWSEndpoint, SlowMoTransport.wrap(transport, slowMo), null);
   }
 
   executablePath(): string {

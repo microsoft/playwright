@@ -1,17 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Browser } from '../Browser';
-import { Connection } from '../Connection';
 
 export class Firefox {
-  private _connection: Connection;
+  private _browserWSEndpoint: string;
 
-  constructor(browser: Browser) {
-    this._connection = browser._connection;
+  constructor(browserWSEndpoint: string) {
+    this._browserWSEndpoint = browserWSEndpoint;
   }
 
   wsEndpoint(): string {
-    return this._connection.url();
+    return this._browserWSEndpoint;
   }
 }

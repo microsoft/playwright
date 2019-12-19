@@ -18,7 +18,7 @@
 import {assert} from '../helper';
 import {EventEmitter} from 'events';
 import * as debug from 'debug';
-import { ConnectionTransport, SlowMoTransport } from '../transport';
+import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 const debugProtocol = debug('playwright:protocol');
 
@@ -27,20 +27,18 @@ export const ConnectionEvents = {
 };
 
 export class Connection extends EventEmitter {
-  private _url: string;
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
   private _sessions: Map<string, JugglerSession>;
   _closed: boolean;
 
-  constructor(url: string, transport: ConnectionTransport, delay: number | undefined = 0) {
+  constructor(transport: ConnectionTransport) {
     super();
-    this._url = url;
+    this._transport = transport;
     this._lastId = 0;
     this._callbacks = new Map();
 
-    this._transport = SlowMoTransport.wrap(transport, delay);
     this._transport.onmessage = this._onMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this._sessions = new Map();
@@ -53,10 +51,6 @@ export class Connection extends EventEmitter {
 
   session(sessionId: string): JugglerSession | null {
     return this._sessions.get(sessionId) || null;
-  }
-
-  url(): string {
-    return this._url;
   }
 
   send(method: string, params: object | undefined = {}): Promise<any> {
