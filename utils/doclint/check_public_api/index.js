@@ -35,7 +35,7 @@ const EXCLUDE_PROPERTIES = new Set([
  */
 module.exports = async function lint(page, mdSources, jsSources) {
   const mdResult = await mdBuilder(page, mdSources);
-  const jsResult = await jsBuilder(jsSources);
+  const jsResult = jsBuilder.checkSources(jsSources);
   const jsDocumentation = filterJSDocumentation(jsSources, jsResult.documentation);
   const mdDocumentation = mdResult.documentation;
 
@@ -115,8 +115,8 @@ function filterJSDocumentation(jsSources, jsDocumentation) {
   const apijs = jsSources.find(source => source.name() === 'api.ts');
   let includedClasses = null;
   if (apijs) {
-    includedClasses = new Set(Object.keys(require(path.join(apijs.filePath(), '..', '..', 'lib', 'api.js')).Chromium));
-    includedClasses.add('Selector');
+    const api = require(path.join(apijs.filePath(), '..', '..', 'lib', 'api.js'));
+    includedClasses = new Set(Object.keys(api).map(c => jsBuilder.expandPrefix(c)));
   }
   // Filter private classes and methods.
   const classes = [];

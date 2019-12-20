@@ -84,7 +84,7 @@ function convertPrintParameterToInches(parameter: (string | number | undefined))
   return pixels / 96;
 }
 
-export class CRPdf {
+export class CRPDF {
   private _client: CRSession;
 
   constructor(client: CRSession) {

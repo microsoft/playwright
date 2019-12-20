@@ -1,10 +1,23 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chromium from './chromium/crApi';
-import * as firefox from './firefox/ffApi';
-import * as webkit from './webkit/wkApi';
+export { Browser, BrowserServer } from './browser';
+export { BrowserContext } from './browserContext';
+export { BrowserFetcher } from './browserFetcher';
+export { ConsoleMessage } from './console';
+export { Dialog } from './dialog';
+export { ElementHandle } from './dom';
+export { TimeoutError } from './errors';
+export { Frame } from './frames';
+export { Keyboard, Mouse } from './input';
+export { JSHandle } from './javascript';
+export { Request, Response } from './network';
+export { Page } from './page';
 
-export const Chromium = chromium;
-export const Firefox = firefox;
-export const WebKit = webkit;
+export * from './chromium/crApi';
+export * from './firefox/ffApi';
+export * from './webkit/wkApi';
+
+export const Chromium = {};
+export const Firefox = {};
+export const WebKit = {};

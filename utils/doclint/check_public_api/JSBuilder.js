@@ -19,7 +19,7 @@ const ts = require('typescript');
 const path = require('path');
 const Documentation = require('./Documentation');
 const EventEmitter = require('events');
-module.exports = checkSources;
+module.exports = { checkSources, expandPrefix };
 
 /**
  * @param {!Array<!import('../Source')>} sources
@@ -72,7 +72,7 @@ function checkSources(sources) {
           membersMap.set(memberId, member);
         }
       }
-      return new Documentation.Class(cls.name, Array.from(membersMap.values()));
+      return new Documentation.Class(expandPrefix(cls.name), Array.from(membersMap.values()));
     });
   }
 
@@ -240,4 +240,14 @@ function checkSources(sources) {
   function serializeProperty(name, type) {
     return Documentation.Member.createProperty(name, serializeType(type));
   }
+}
+
+function expandPrefix(name) {
+  if (name.startsWith('CR'))
+    return 'Chromium' + name.substring(2);
+  if (name.startsWith('FF'))
+    return 'Firefox' + name.substring(2);
+  if (name.startsWith('WK'))
+    return 'WebKit' + name.substring(2);
+  return name;
 }

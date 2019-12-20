@@ -10,16 +10,15 @@
 
 <!-- GEN:toc -->
 - [Overview](#overview)
-- [Working with Chrome Extensions](#working-with-chrome-extensions)
-- [class: Playwright](#class-playwright)
-  * [playwright.connect(options)](#playwrightconnectoptions)
-  * [playwright.createBrowserFetcher([options])](#playwrightcreatebrowserfetcheroptions)
-  * [playwright.defaultArgs([options])](#playwrightdefaultargsoptions)
-  * [playwright.devices](#playwrightdevices)
-  * [playwright.downloadBrowser([options])](#playwrightdownloadbrowseroptions)
-  * [playwright.errors](#playwrighterrors)
-  * [playwright.executablePath()](#playwrightexecutablepath)
-  * [playwright.launch([options])](#playwrightlaunchoptions)
+- [class: ChromiumPlaywright](#class-chromiumplaywright)
+  * [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
+  * [chromiumPlaywright.createBrowserFetcher([options])](#chromiumplaywrightcreatebrowserfetcheroptions)
+  * [chromiumPlaywright.defaultArgs([options])](#chromiumplaywrightdefaultargsoptions)
+  * [chromiumPlaywright.devices](#chromiumplaywrightdevices)
+  * [chromiumPlaywright.downloadBrowser([options])](#chromiumplaywrightdownloadbrowseroptions)
+  * [chromiumPlaywright.errors](#chromiumplaywrighterrors)
+  * [chromiumPlaywright.executablePath()](#chromiumplaywrightexecutablepath)
+  * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
 - [class: BrowserFetcher](#class-browserfetcher)
   * [browserFetcher.canDownload(revision)](#browserfetchercandownloadrevision)
   * [browserFetcher.download(revision[, progressCallback])](#browserfetcherdownloadrevision-progresscallback)
@@ -27,16 +26,16 @@
   * [browserFetcher.platform()](#browserfetcherplatform)
   * [browserFetcher.remove(revision)](#browserfetcherremoverevision)
   * [browserFetcher.revisionInfo(revision)](#browserfetcherrevisioninforevision)
-- [class: Browser](#class-browser)
+- [class: ChromiumBrowser](#class-chromiumbrowser)
   * [event: 'disconnected'](#event-disconnected)
-  * [browser.browserContexts()](#browserbrowsercontexts)
-  * [browser.chromium](#browserchromium)
-  * [browser.close()](#browserclose)
-  * [browser.defaultContext()](#browserdefaultcontext)
-  * [browser.disconnect()](#browserdisconnect)
-  * [browser.isConnected()](#browserisconnected)
-  * [browser.newContext(options)](#browsernewcontextoptions)
-  * [browser.process()](#browserprocess)
+  * [chromiumBrowser.browserContexts()](#chromiumbrowserbrowsercontexts)
+  * [chromiumBrowser.chromium](#chromiumbrowserchromium)
+  * [chromiumBrowser.close()](#chromiumbrowserclose)
+  * [chromiumBrowser.defaultContext()](#chromiumbrowserdefaultcontext)
+  * [chromiumBrowser.disconnect()](#chromiumbrowserdisconnect)
+  * [chromiumBrowser.isConnected()](#chromiumbrowserisconnected)
+  * [chromiumBrowser.newContext(options)](#chromiumbrowsernewcontextoptions)
+  * [chromiumBrowser.process()](#chromiumbrowserprocess)
 - [class: BrowserContext](#class-browsercontext)
   * [browserContext.browser()](#browsercontextbrowser)
   * [browserContext.clearCookies()](#browsercontextclearcookies)
@@ -47,11 +46,11 @@
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.permissions](#browsercontextpermissions)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
-- [class: Overrides](#class-overrides)
-  * [overrides.setGeolocation(options)](#overridessetgeolocationoptions)
-- [class: Permissions](#class-permissions)
-  * [permissions.clearOverrides()](#permissionsclearoverrides)
-  * [permissions.override(origin, permissions)](#permissionsoverrideorigin-permissions)
+- [class: ChromiumOverrides](#class-chromiumoverrides)
+  * [chromiumOverrides.setGeolocation(options)](#chromiumoverridessetgeolocationoptions)
+- [class: ChromiumPermissions](#class-chromiumpermissions)
+  * [chromiumPermissions.clearOverrides()](#chromiumpermissionsclearoverrides)
+  * [chromiumPermissions.override(origin, permissions)](#chromiumpermissionsoverrideorigin-permissions)
 - [class: Page](#class-page)
   * [event: 'close'](#event-close)
   * [event: 'console'](#event-console)
@@ -121,17 +120,17 @@
   * [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
   * [page.waitForXPath(xpath[, options])](#pagewaitforxpathxpath-options)
   * [page.workers](#pageworkers)
-- [class: Worker](#class-worker)
-  * [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
-  * [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
-  * [worker.executionContext()](#workerexecutioncontext)
-  * [worker.url()](#workerurl)
-- [class: Workers](#class-workers)
+- [class: ChromiumWorker](#class-chromiumworker)
+  * [chromiumWorker.evaluate(pageFunction[, ...args])](#chromiumworkerevaluatepagefunction-args)
+  * [chromiumWorker.evaluateHandle(pageFunction[, ...args])](#chromiumworkerevaluatehandlepagefunction-args)
+  * [chromiumWorker.executionContext()](#chromiumworkerexecutioncontext)
+  * [chromiumWorker.url()](#chromiumworkerurl)
+- [class: ChromiumWorkers](#class-chromiumworkers)
   * [event: 'workercreated'](#event-workercreated)
   * [event: 'workerdestroyed'](#event-workerdestroyed)
-  * [workers.list()](#workerslist)
-- [class: Accessibility](#class-accessibility)
-  * [accessibility.snapshot([options])](#accessibilitysnapshotoptions)
+  * [chromiumWorkers.list()](#chromiumworkerslist)
+- [class: ChromiumAccessibility](#class-chromiumaccessibility)
+  * [chromiumAccessibility.snapshot([options])](#chromiumaccessibilitysnapshotoptions)
 - [class: Keyboard](#class-keyboard)
   * [keyboard.down(key[, options])](#keyboarddownkey-options)
   * [keyboard.press(key[, options])](#keyboardpresskey-options)
@@ -145,22 +144,22 @@
   * [mouse.move(x, y[, options])](#mousemovex-y-options)
   * [mouse.tripleclick(x, y[, options])](#mousetripleclickx-y-options)
   * [mouse.up([options])](#mouseupoptions)
-- [class: PDF](#class-pdf)
-  * [pdf.generate([options])](#pdfgenerateoptions)
-- [class: Firefox](#class-firefox)
-  * [firefox.wsEndpoint()](#firefoxwsendpoint)
-- [class: Chromium](#class-chromium)
+- [class: ChromiumPDF](#class-chromiumpdf)
+  * [chromiumPDF.generate([options])](#chromiumpdfgenerateoptions)
+- [class: FirefoxBrowser](#class-firefoxbrowser)
+  * [firefoxBrowser.wsEndpoint()](#firefoxbrowserwsendpoint)
+- [class: ChromiumBrowser](#class-chromiumbrowser-1)
   * [event: 'targetchanged'](#event-targetchanged)
   * [event: 'targetcreated'](#event-targetcreated)
   * [event: 'targetdestroyed'](#event-targetdestroyed)
-  * [chromium.browserTarget()](#chromiumbrowsertarget)
-  * [chromium.pageTarget(page)](#chromiumpagetargetpage)
-  * [chromium.serviceWorker(target)](#chromiumserviceworkertarget)
-  * [chromium.startTracing(page, [options])](#chromiumstarttracingpage-options)
-  * [chromium.stopTracing()](#chromiumstoptracing)
-  * [chromium.targets(context)](#chromiumtargetscontext)
-  * [chromium.waitForTarget(predicate[, options])](#chromiumwaitfortargetpredicate-options)
-  * [chromium.wsEndpoint()](#chromiumwsendpoint)
+  * [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
+  * [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
+  * [chromiumBrowser.serviceWorker(target)](#chromiumbrowserserviceworkertarget)
+  * [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
+  * [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
+  * [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
+  * [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
+  * [chromiumBrowser.wsEndpoint()](#chromiumbrowserwsendpoint)
 - [class: Dialog](#class-dialog)
   * [dialog.accept([promptText])](#dialogacceptprompttext)
   * [dialog.defaultValue()](#dialogdefaultvalue)
@@ -209,14 +208,14 @@
   * [executionContext.evaluate(pageFunction[, ...args])](#executioncontextevaluatepagefunction-args)
   * [executionContext.evaluateHandle(pageFunction[, ...args])](#executioncontextevaluatehandlepagefunction-args)
   * [executionContext.frame()](#executioncontextframe)
-- [class: Interception](#class-interception)
-  * [interception.abort(request, [errorCode])](#interceptionabortrequest-errorcode)
-  * [interception.authenticate(credentials)](#interceptionauthenticatecredentials)
-  * [interception.continue(request, [overrides])](#interceptioncontinuerequest-overrides)
-  * [interception.disable()](#interceptiondisable)
-  * [interception.enable()](#interceptionenable)
-  * [interception.fulfill(request, response)](#interceptionfulfillrequest-response)
-  * [interception.setOfflineMode(enabled)](#interceptionsetofflinemodeenabled)
+- [class: ChromiumInterception](#class-chromiuminterception)
+  * [chromiumInterception.abort(request, [errorCode])](#chromiuminterceptionabortrequest-errorcode)
+  * [chromiumInterception.authenticate(credentials)](#chromiuminterceptionauthenticatecredentials)
+  * [chromiumInterception.continue(request, [overrides])](#chromiuminterceptioncontinuerequest-overrides)
+  * [chromiumInterception.disable()](#chromiuminterceptiondisable)
+  * [chromiumInterception.enable()](#chromiuminterceptionenable)
+  * [chromiumInterception.fulfill(request, response)](#chromiuminterceptionfulfillrequest-response)
+  * [chromiumInterception.setOfflineMode(enabled)](#chromiuminterceptionsetofflinemodeenabled)
 - [class: JSHandle](#class-jshandle)
   * [jsHandle.asElement()](#jshandleaselement)
   * [jsHandle.dispose()](#jshandledispose)
@@ -278,26 +277,25 @@
   * [response.statusText()](#responsestatustext)
   * [response.text()](#responsetext)
   * [response.url()](#responseurl)
-- [class: Target](#class-target)
-  * [target.browser()](#targetbrowser)
-  * [target.browserContext()](#targetbrowsercontext)
-  * [target.createCDPSession()](#targetcreatecdpsession)
-  * [target.opener()](#targetopener)
-  * [target.page()](#targetpage)
-  * [target.type()](#targettype)
-  * [target.url()](#targeturl)
-- [class: CDPSession](#class-cdpsession)
-  * [cdpSession.detach()](#cdpsessiondetach)
-  * [cdpSession.send(method[, params])](#cdpsessionsendmethod-params)
-- [class: Coverage](#class-coverage)
-  * [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
-  * [coverage.startJSCoverage([options])](#coveragestartjscoverageoptions)
-  * [coverage.stopCSSCoverage()](#coveragestopcsscoverage)
-  * [coverage.stopJSCoverage()](#coveragestopjscoverage)
+- [class: ChromiumTarget](#class-chromiumtarget)
+  * [chromiumTarget.browser()](#chromiumtargetbrowser)
+  * [chromiumTarget.browserContext()](#chromiumtargetbrowsercontext)
+  * [chromiumTarget.createCDPSession()](#chromiumtargetcreatecdpsession)
+  * [chromiumTarget.opener()](#chromiumtargetopener)
+  * [chromiumTarget.page()](#chromiumtargetpage)
+  * [chromiumTarget.type()](#chromiumtargettype)
+  * [chromiumTarget.url()](#chromiumtargeturl)
+- [class: ChromiumSession](#class-chromiumsession)
+  * [chromiumSession.detach()](#chromiumsessiondetach)
+  * [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
+- [class: ChromiumCoverage](#class-chromiumcoverage)
+  * [chromiumCoverage.startCSSCoverage([options])](#chromiumcoveragestartcsscoverageoptions)
+  * [chromiumCoverage.startJSCoverage([options])](#chromiumcoveragestartjscoverageoptions)
+  * [chromiumCoverage.stopCSSCoverage()](#chromiumcoveragestopcsscoverage)
+  * [chromiumCoverage.stopJSCoverage()](#chromiumcoveragestopjscoverage)
 - [class: TimeoutError](#class-timeouterror)
-- [class: Selector](#class-selector)
-  * [selector.selector](#selectorselector)
-  * [selector.visibility](#selectorvisibility)
+- [Working with selectors](#working-with-selectors)
+- [Working with Chrome Extensions](#working-with-chrome-extensions)
 <!-- GEN:stop -->
 
 ### Overview
@@ -319,36 +317,7 @@ The Playwright API is hierarchical and mirrors the browser structure.
 
 (Diagram source: [link](https://docs.google.com/drawings/d/1Q_AM6KYs9kbyLZF-Lpp5mtpAWth73Cq8IKCsWYgi8MM/edit?usp=sharing))
 
-### Working with Chrome Extensions
-
-Playwright can be used for testing Chrome Extensions.
-
-> **NOTE** Extensions in Chrome / Chromium currently only work in non-headless mode.
-
-The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
-```js
-const playwright = require('playwright');
-
-(async () => {
-  const pathToExtension = require('path').join(__dirname, 'my-extension');
-  const browser = await playwright.launch({
-    headless: false,
-    args: [
-      `--disable-extensions-except=${pathToExtension}`,
-      `--load-extension=${pathToExtension}`
-    ]
-  });
-  const targets = await browser.chromium.targets();
-  const backgroundPageTarget = targets.find(target => target.type() === 'background_page');
-  const backgroundPage = await backgroundPageTarget.page();
-  // Test the background page as you would any other page.
-  await browser.close();
-})();
-```
-
-> **NOTE** It is not yet possible to test extension popups or content scripts.
-
-### class: Playwright
+### class: ChromiumPlaywright
 
 Playwright module provides a method to launch a Chromium instance.
 The following is a typical example of using Playwright to drive automation:
@@ -365,7 +334,7 @@ const playwright = require('playwright');
 })();
 ```
 
-#### playwright.connect(options)
+#### chromiumPlaywright.connect(options)
 - `options` <[Object]>
   - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
   - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
@@ -375,14 +344,14 @@ const playwright = require('playwright');
 
 This methods attaches Playwright to an existing Chromium instance.
 
-#### playwright.createBrowserFetcher([options])
+#### chromiumPlaywright.createBrowserFetcher([options])
 - `options` <[Object]>
   - `host` <[string]> A download host to be used. Defaults to `https://storage.googleapis.com`.
   - `path` <[string]> A path for the downloads folder. Defaults to `<root>/.local-chromium`, where `<root>` is playwright's package root.
   - `platform` <[string]> Possible values are: `mac`, `win32`, `win64`, `linux`. Defaults to the current platform.
 - returns: <[BrowserFetcher]>
 
-#### playwright.defaultArgs([options])
+#### chromiumPlaywright.defaultArgs([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
@@ -392,7 +361,7 @@ This methods attaches Playwright to an existing Chromium instance.
 
 The default flags that Chromium will be launched with.
 
-#### playwright.devices
+#### chromiumPlaywright.devices
 - returns: <[Object]>
 
 Returns a list of devices to be used with [`page.emulate(options)`](#pageemulateoptions). Actual list of
@@ -415,7 +384,7 @@ const iPhone = playwright.devices['iPhone 6'];
 
 > **NOTE** The old way (Playwright versions <= v1.14.0) devices can be obtained with `require('playwright/DeviceDescriptors')`.
 
-#### playwright.downloadBrowser([options])
+#### chromiumPlaywright.downloadBrowser([options])
 - `options` <[Object]>
   - `onProgress` <[function]([number], [number])> A function that will be called with two arguments:
     - `downloadedBytes` <[number]> how many bytes have been downloaded
@@ -429,7 +398,7 @@ const iPhone = playwright.devices['iPhone 6'];
 
 Downloads the default browser that Playwright controls. The browser is usually around 100mb.
 
-#### playwright.errors
+#### chromiumPlaywright.errors
 - returns: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
 
@@ -452,10 +421,10 @@ try {
 
 > **NOTE** The old way (Playwright versions <= v1.14.0) errors can be obtained with `require('playwright/Errors')`.
 
-#### playwright.executablePath()
+#### chromiumPlaywright.executablePath()
 - returns: <[string]> A path where Playwright expects to find bundled Chromium.
 
-#### playwright.launch([options])
+#### chromiumPlaywright.launch([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
@@ -546,7 +515,7 @@ The method initiates a GET request to download the revision from the host.
   - `url` <[string]> URL this revision can be downloaded from
   - `local` <[boolean]> whether the revision is locally available on disk
 
-### class: Browser
+### class: ChromiumBrowser
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
@@ -587,36 +556,36 @@ Emitted when Playwright gets disconnected from the Chromium instance. This might
 - Chromium is closed or crashed
 - The [`browser.disconnect`](#browserdisconnect) method was called
 
-#### browser.browserContexts()
+#### chromiumBrowser.browserContexts()
 - returns: <[Array]<[BrowserContext]>>
 
 Returns an array of all open browser contexts. In a newly created browser, this will return
 a single instance of [BrowserContext].
 
-#### browser.chromium
+#### chromiumBrowser.chromium
 - returns: <[Chromium]>
 
-#### browser.close()
+#### chromiumBrowser.close()
 - returns: <[Promise]>
 
 Closes Chromium and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
-#### browser.defaultContext()
+#### chromiumBrowser.defaultContext()
 - returns: <[BrowserContext]>
 
 Returns the default browser context. The default browser context can not be closed.
 
-#### browser.disconnect()
+#### chromiumBrowser.disconnect()
 
 Disconnects Playwright from the browser, but leaves the Chromium process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
 
-#### browser.isConnected()
+#### chromiumBrowser.isConnected()
 
 - returns: <[boolean]>
 
 Indicates that the browser is connected.
 
-#### browser.newContext(options)
+#### chromiumBrowser.newContext(options)
 - `options` <[Object]>
   - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
@@ -649,7 +618,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 })();
 ```
 
-#### browser.process()
+#### chromiumBrowser.process()
 - returns: <?[ChildProcess]> Spawned browser process. Returns `null` if the browser instance was created with [`playwright.connect`](#playwrightconnectoptions) method.
 
 ### class: BrowserContext
@@ -745,9 +714,9 @@ An array of all pages inside the browser context.
 await browserContext.setCookies([cookieObject1, cookieObject2]);
 ```
 
-### class: Overrides
+### class: ChromiumOverrides
 
-#### overrides.setGeolocation(options)
+#### chromiumOverrides.setGeolocation(options)
 - `options` <[Object]>
   - `latitude` <[number]> Latitude between -90 and 90.
   - `longitude` <[number]> Longitude between -180 and 180.
@@ -762,9 +731,9 @@ await browserContext.overrides.setGeolocation({latitude: 59.95, longitude: 30.31
 
 > **NOTE** Consider using [browserContext.permissions.override](#permissionsoverrideorigin-permissions) to grant permissions for the page to read its geolocation.
 
-### class: Permissions
+### class: ChromiumPermissions
 
-#### permissions.clearOverrides()
+#### chromiumPermissions.clearOverrides()
 - returns: <[Promise]>
 
 Clears all permission overrides for the browser context.
@@ -776,7 +745,7 @@ context.permissions.override('https://example.com', ['clipboard-read']);
 context.permissions.clearOverrides();
 ```
 
-#### permissions.override(origin, permissions)
+#### chromiumPermissions.override(origin, permissions)
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
 - `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
     - `'geolocation'`
@@ -1743,7 +1712,7 @@ Shortcut for [page.mainFrame().waitForXPath(xpath[, options])](#framewaitforxpat
 
 > **NOTE** This does not contain ServiceWorkers
 
-### class: Worker
+### class: ChromiumWorker
 
 The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
 The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
@@ -1757,7 +1726,7 @@ for (const worker of page.workers())
   console.log('  ' + worker.url());
 ```
 
-#### worker.evaluate(pageFunction[, ...args])
+#### chromiumWorker.evaluate(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -1768,7 +1737,7 @@ If the function passed to the `worker.evaluate` returns a non-[Serializable] val
 
 Shortcut for [(await worker.executionContext()).evaluate(pageFunction, ...args)](#executioncontextevaluatepagefunction-args).
 
-#### worker.evaluateHandle(pageFunction[, ...args])
+#### chromiumWorker.evaluateHandle(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
@@ -1779,13 +1748,13 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 
 Shortcut for [(await worker.executionContext()).evaluateHandle(pageFunction, ...args)](#executioncontextevaluatehandlepagefunction-args).
 
-#### worker.executionContext()
+#### chromiumWorker.executionContext()
 - returns: <[Promise]<[ExecutionContext]>>
 
-#### worker.url()
+#### chromiumWorker.url()
 - returns: <[string]>
 
-### class: Workers
+### class: ChromiumWorkers
 
 The Workers class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) collection.
 
@@ -1799,13 +1768,13 @@ Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/We
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
-#### workers.list()
+#### chromiumWorkers.list()
 - returns: <[Array]<[Worker]>>
 This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
 
 > **NOTE** This does not contain ServiceWorkers
 
-### class: Accessibility
+### class: ChromiumAccessibility
 
 The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is used by assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or [switches](https://en.wikipedia.org/wiki/Switch_access).
 
@@ -1816,9 +1785,7 @@ access to the Blink Accessibility Tree.
 
 Most of the accessibility tree gets filtered out when converting from Blink AX Tree to Platform-specific AX-Tree or by assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing only the "interesting" nodes of the tree.
 
-
-
-#### accessibility.snapshot([options])
+#### chromiumAccessibility.snapshot([options])
 - `options` <[Object]>
   - `interestingOnly` <[boolean]> Prune uninteresting nodes from the tree. Defaults to `true`.
   - `root` <[ElementHandle]> The root DOM element for the snapshot. Defaults to the whole page.
@@ -2057,9 +2024,9 @@ Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownopt
 
 Dispatches a `mouseup` event.
 
-### class: PDF
+### class: ChromiumPDF
 
-#### pdf.generate([options])
+#### chromiumPDF.generate([options])
 - `options` <[Object]> Options object which might have the following properties:
   - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the PDF won't be saved to the disk.
   - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
@@ -2127,17 +2094,17 @@ The `format` options are:
 > 1. Script tags inside templates are not evaluated.
 > 2. Page styles are not visible inside templates.
 
-### class: Firefox
+### class: FirefoxBrowser
 
 Firefox-specific features.
 
-#### firefox.wsEndpoint()
+#### firefoxBrowser.wsEndpoint()
 - returns: <[string]> Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to [playwright.connect](#playwrightconnectoptions).
 
 
-### class: Chromium
+### class: ChromiumBrowser
 
 Chromium-specific features including Tracing, service worker support, etc.
 You can use [`chromium.startTracing`](#chromiumstarttracingpage-options) and [`chromium.stopTracing`](#chromiumstoptracing) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
@@ -2170,22 +2137,22 @@ Emitted when a target is destroyed, for example when a page is closed.
 
 > **NOTE** This includes target destructions in incognito browser contexts.
 
-#### chromium.browserTarget()
+#### chromiumBrowser.browserTarget()
 - returns: <[Target]>
 
 Returns browser target.
 
-#### chromium.pageTarget(page)
+#### chromiumBrowser.pageTarget(page)
 - `page` <[Page]> Page to return target for.
 - returns: <[Target]> a target given page was created from.
 
-#### chromium.serviceWorker(target)
+#### chromiumBrowser.serviceWorker(target)
 - `target` <[Target]> Target to treat as a service worker
 - returns: <[Promise]<[Worker]>>
 
 Attaches to the service worker target.
 
-#### chromium.startTracing(page, [options])
+#### chromiumBrowser.startTracing(page, [options])
 - `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
 - `options` <[Object]>
   - `path` <[string]> A path to write the trace file to.
@@ -2195,17 +2162,17 @@ Attaches to the service worker target.
 
 Only one trace can be active at a time per browser.
 
-#### chromium.stopTracing()
+#### chromiumBrowser.stopTracing()
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
 
-#### chromium.targets(context)
+#### chromiumBrowser.targets(context)
 - `context` <[BrowserContext]> Optional, if specified, only targets from this context are returned.
 - returns: <[Array]<[Target]>>
 
 An array of all active targets inside the Browser. In case of multiple browser contexts,
 the method will return an array with all the targets in all browser contexts.
 
-#### chromium.waitForTarget(predicate[, options])
+#### chromiumBrowser.waitForTarget(predicate[, options])
 - `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
@@ -2219,7 +2186,7 @@ await page.evaluate(() => window.open('https://www.example.com/'));
 const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
-#### chromium.wsEndpoint()
+#### chromiumBrowser.wsEndpoint()
 - returns: <[string]> Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to
@@ -2871,9 +2838,9 @@ await resultHandle.dispose();
 
 > **NOTE** Not every execution context is associated with a frame. For example, workers and extensions have execution contexts that are not associated with frames.
 
-### class: Interception
+### class: ChromiumInterception
 
-#### interception.abort(request, [errorCode])
+#### chromiumInterception.abort(request, [errorCode])
 - `request` <[Request]>
 - `errorCode` <[string]> Optional error code. Defaults to `failed`, could be
   one of the following:
@@ -2897,7 +2864,7 @@ await resultHandle.dispose();
 Aborts request. To use this, request interception should be enabled with `page.interception.enable()`.
 Exception is immediately thrown if the request interception is not enabled.
 
-#### interception.authenticate(credentials)
+#### chromiumInterception.authenticate(credentials)
 - `credentials` <?[Object]>
   - `username` <[string]>
   - `password` <[string]>
@@ -2907,7 +2874,7 @@ Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-U
 
 To disable authentication, pass `null`.
 
-#### interception.continue(request, [overrides])
+#### chromiumInterception.continue(request, [overrides])
 - `request` <[Request]>
 - `overrides` <[Object]> Optional request overwrites, which can be one of the following:
   - `url` <[string]> If set, the request url will be changed. This is not a redirect. The request will be silently forwarded to the new url. For example, the address bar will show the original url.
@@ -2931,12 +2898,12 @@ page.on('request', request => {
 });
 ```
 
-#### interception.disable()
+#### chromiumInterception.disable()
 - returns: <[Promise]>
 
 Disables network request interception.
 
-#### interception.enable()
+#### chromiumInterception.enable()
 - returns: <[Promise]>
 
 Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
@@ -2963,7 +2930,7 @@ const playwright = require('playwright');
 
 > **NOTE** Enabling request interception disables page caching.
 
-#### interception.fulfill(request, response)
+#### chromiumInterception.fulfill(request, response)
 - `request` <[Request]>
 - `response` <[Object]> Response that will fulfill this request
   - `status` <[number]> Response status code, defaults to `200`.
@@ -2992,7 +2959,7 @@ page.on('request', request => {
 > **NOTE** Mocking responses for dataURL requests is not supported.
 > Calling `request.respond` for a dataURL request is a noop.
 
-#### interception.setOfflineMode(enabled)
+#### chromiumInterception.setOfflineMode(enabled)
 - `enabled` <[boolean]> When `true`, enables offline mode for the page.
 - returns: <[Promise]>
 
@@ -3530,44 +3497,44 @@ Contains the status text of the response (e.g. usually an "OK" for a success).
 
 Contains the URL of the response.
 
-### class: Target
+### class: ChromiumTarget
 
-#### target.browser()
+#### chromiumTarget.browser()
 
 - returns: <[Browser]>
 
 Get the browser the target belongs to.
 
-#### target.browserContext()
+#### chromiumTarget.browserContext()
 
 - returns: <[BrowserContext]>
 
 The browser context the target belongs to.
 
-#### target.createCDPSession()
+#### chromiumTarget.createCDPSession()
 - returns: <[Promise]<[CDPSession]>>
 
 Creates a Chrome Devtools Protocol session attached to the target.
 
-#### target.opener()
+#### chromiumTarget.opener()
 - returns: <?[Target]>
 
 Get the target that opened this target. Top-level targets return `null`.
 
-#### target.page()
+#### chromiumTarget.page()
 - returns: <[Promise]<?[Page]>>
 
 If the target is not of type `"page"` or `"background_page"`, returns `null`.
 
-#### target.type()
+#### chromiumTarget.type()
 - returns: <"page"|"background_page"|"service_worker"|"shared_worker"|"other"|"browser">
 
 Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](https://developer.chrome.com/extensions/background_pages), `"service_worker"`, `"shared_worker"`, `"browser"` or `"other"`.
 
-#### target.url()
+#### chromiumTarget.url()
 - returns: <[string]>
 
-### class: CDPSession
+### class: ChromiumSession
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
@@ -3590,18 +3557,18 @@ await client.send('Animation.setPlaybackRate', {
 });
 ```
 
-#### cdpSession.detach()
+#### chromiumSession.detach()
 - returns: <[Promise]>
 
 Detaches the cdpSession from the target. Once detached, the cdpSession object won't emit any events and can't be used
 to send messages.
 
-#### cdpSession.send(method[, params])
+#### chromiumSession.send(method[, params])
 - `method` <[string]> protocol method name
 - `params` <[Object]> Optional method parameters
 - returns: <[Promise]<[Object]>>
 
-### class: Coverage
+### class: ChromiumCoverage
 
 Coverage gathers information about parts of JavaScript and CSS that were used by the page.
 
@@ -3635,12 +3602,12 @@ console.log(`Bytes used: ${usedBytes / totalBytes * 100}%`);
 _To output coverage in a form consumable by [Istanbul](https://github.com/istanbuljs),
   see [playwright-to-istanbul](https://github.com/istanbuljs/playwright-to-istanbul)._
 
-#### coverage.startCSSCoverage([options])
+#### chromiumCoverage.startCSSCoverage([options])
 - `options` <[Object]>  Set of configurable options for coverage
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
 - returns: <[Promise]> Promise that resolves when coverage is started
 
-#### coverage.startJSCoverage([options])
+#### chromiumCoverage.startJSCoverage([options])
 - `options` <[Object]>  Set of configurable options for coverage
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
   - `reportAnonymousScripts` <[boolean]> Whether anonymous scripts generated by the page should be reported. Defaults to `false`.
@@ -3648,7 +3615,7 @@ _To output coverage in a form consumable by [Istanbul](https://github.com/istanb
 
 > **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
 
-#### coverage.stopCSSCoverage()
+#### chromiumCoverage.stopCSSCoverage()
 - returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all stylesheets
   - `url` <[string]> StyleSheet URL
   - `text` <[string]> StyleSheet content
@@ -3658,7 +3625,7 @@ _To output coverage in a form consumable by [Istanbul](https://github.com/istanb
 
 > **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
 
-#### coverage.stopJSCoverage()
+#### chromiumCoverage.stopJSCoverage()
 - returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all scripts
   - `url` <[string]> Script URL
   - `text` <[string]> Script content
@@ -3675,14 +3642,11 @@ reported.
 
 TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options) or [playwright.launch([options])](#playwrightlaunchoptions).
 
-### class: Selector
+### Working with selectors
 
 Selector describes an element in the page. It can be used to obtain `ElementHandle` (see [page.$()](#pageselector) for example) or shortcut element operations to avoid intermediate handle (see [page.click()](#pageclickselector-options) for example).
 
-All methods accepting selector also accept a string shorthand which is equivalent to `{selector: 'string'}`.
-
-#### selector.selector
-- returns: <[string]> Selector in the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported selector engines (currently, either `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
+Selector has the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported selector engines (currently, either `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - selector starting with `//` is assumed to be `xpath=selector`;
@@ -3715,27 +3679,34 @@ const handle = await page.$('"foo"');
 const handle = await divHandle.$('css=span');
 ```
 
-#### selector.visibility
-- returns: "visible"|"hidden"|"any"> Defaults to `visible`. Optional visibility to check for. If `visible` or `undefined`, only visible elements match. If `hidden`, only non-visible elements match. If `any`, all elements match.
+### Working with Chrome Extensions
 
-Note that elements are first queried by `selector`, and only after that are checked for visiblity. In particular, [page.$()](#pageselector) will not skip to the first visible element, but instead return `null` if the first matching element is not visible.
+Playwright can be used for testing Chrome Extensions.
 
-Element is defined visible if it does not have `visibility: hidden` CSS property and it's bounding box is not empty.
+> **NOTE** Extensions in Chrome / Chromium currently only work in non-headless mode.
 
+The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
 ```js
-// queries 'div', and only returns it when visible
-const handle = await page.$({selector: 'css=div', visibility: 'visible'});
+const playwright = require('playwright');
 
-// queries 'div', and only returns it when non-visible
-const handle = await page.$({selector: 'css=div', visibility: 'hidden'});
-
-// queries 'div', and returns it no matter the visibility
-const handle = await page.$({selector: 'css=div', visibility: 'any'});
-
-// returns all visible 'div' elements
-const handles = await page.$$({selector: 'css=div', visibility: 'visible'});
+(async () => {
+  const pathToExtension = require('path').join(__dirname, 'my-extension');
+  const browser = await playwright.launch({
+    headless: false,
+    args: [
+      `--disable-extensions-except=${pathToExtension}`,
+      `--load-extension=${pathToExtension}`
+    ]
+  });
+  const targets = await browser.chromium.targets();
+  const backgroundPageTarget = targets.find(target => target.type() === 'background_page');
+  const backgroundPage = await backgroundPageTarget.page();
+  // Test the background page as you would any other page.
+  await browser.close();
+})();
 ```
 
+> **NOTE** It is not yet possible to test extension popups or content scripts.
 
 [AXNode]: #accessibilitysnapshotoptions "AXNode"
 [Accessibility]: #class-accessibility "Accessibility"

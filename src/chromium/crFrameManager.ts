@@ -31,7 +31,7 @@ import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { CRAccessibility } from './features/crAccessibility';
 import { CRCoverage } from './features/crCoverage';
-import { CRPdf } from './features/crPdf';
+import { CRPDF } from './features/crPdf';
 import { CRWorkers } from './features/crWorkers';
 import { CRInterception } from './features/crInterception';
 import { CRBrowser } from './crBrowser';
@@ -62,7 +62,7 @@ export class CRFrameManager implements PageDelegate {
     this._networkManager = new CRNetworkManager(client, this._page);
     (this._page as any).accessibility = new CRAccessibility(client);
     (this._page as any).coverage = new CRCoverage(client);
-    (this._page as any).pdf = new CRPdf(client);
+    (this._page as any).pdf = new CRPDF(client);
     (this._page as any).workers = new CRWorkers(client, this._page._addConsoleMessage.bind(this._page), error => this._page.emit(Events.Page.PageError, error));
     (this._page as any).interception = new CRInterception(this._networkManager);
 
