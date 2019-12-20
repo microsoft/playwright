@@ -431,6 +431,7 @@ export class Frame {
     if (this._page._delegate.needsLifecycleResetOnSetContent())
       this._page._frameManager.frameLifecycleEvent(this._id, 'clear');
     await context.evaluate(html => {
+      window.stop();
       document.open();
       document.write(html);
       document.close();

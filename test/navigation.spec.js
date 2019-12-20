@@ -489,9 +489,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
           return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle2' });
         }, true);
       });
-      xit('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
-        // TODO: there are two issues here which combined fail the test:
-        // - setContent implementation does not cancel all outstanding requests;
+      it.skip(FFOX)('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
+        // TODO: there are two issues here which combined fail the test in firefox:
+        // - calling window.stop() does not cancel all outstanding requests in firefox;
         // - we do not reset inflight request counter on lifecycle clear, so we wait for
         //   the first request indefinitely.
         // Note that we cannot just reset inflight request counter, because the current navigation
@@ -503,7 +503,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
           return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle0' });
         }, true);
       });
-      xit('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
+      it.skip(FFOX)('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
         await page.goto(server.EMPTY_PAGE);
         server.setRoute('/foo.js', () => {});
         await page.setContent(`<script>fetch('foo.js');</script>`);
