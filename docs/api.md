@@ -110,7 +110,7 @@
   * [page.pdf](#pagepdf)
   * [page.reload([options])](#pagereloadoptions)
   * [page.screenshot([options])](#pagescreenshotoptions)
-  * [page.select(selector, ...values)](#pageselectselector-values)
+  * [page.select(selector, value, options)](#pageselectselector-value-options)
   * [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
   * [page.setContent(html[, options])](#pagesetcontenthtml-options)
   * [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
@@ -186,7 +186,7 @@
   * [frame.isDetached()](#frameisdetached)
   * [frame.name()](#framename)
   * [frame.parentFrame()](#frameparentframe)
-  * [frame.select(selector, values, options)](#frameselectselector-values-options)
+  * [frame.select(selector, value, options)](#frameselectselector-value-options)
   * [frame.setContent(html[, options])](#framesetcontenthtml-options)
   * [frame.title()](#frametitle)
   * [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
@@ -514,7 +514,7 @@ Indicates that the browser is connected.
     - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
   - `userAgent` <?[string]> Specific user agent to use in this page
   - `mediaType` <?"screen"|"print"> Changes the CSS media type of the page.
-  - `colorScheme` <?"dark"|"light"> Emulates `'prefers-colors-scheme'` media feature.
+  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
 - returns: <[Promise]<[BrowserContext]>>
