@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chromium from './chromium/api';
-import * as firefox from './firefox/api';
-import * as webkit from './webkit/api';
+import * as chromium from './chromium/crApi';
+import * as firefox from './firefox/ffApi';
+import * as webkit from './webkit/wkApi';
 
 export const Chromium = chromium;
 export const Firefox = firefox;

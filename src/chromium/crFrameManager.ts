@@ -25,7 +25,7 @@ import { CRNetworkManager } from './crNetworkManager';
 import { Page } from '../page';
 import { Protocol } from './protocol';
 import { Events } from '../events';
-import { toConsoleMessageLocation, exceptionToError, releaseObject } from './protocolHelper';
+import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
 import * as dialog from '../dialog';
 import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './crInput';

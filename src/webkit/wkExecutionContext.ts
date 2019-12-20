@@ -17,7 +17,7 @@
 
 import { WKTargetSession, isSwappedOutError } from './wkConnection';
 import { helper } from '../helper';
-import { valueFromRemoteObject, releaseObject } from './protocolHelper';
+import { valueFromRemoteObject, releaseObject } from './wkProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 
@@ -144,7 +144,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       return valueFromRemoteObject(response.result);
     }).catch(rewriteError);
 
-    function unserializableToString(arg) {
+    function unserializableToString(arg: any) {
       if (Object.is(arg, -0))
         return '-0';
       if (Object.is(arg, Infinity))
@@ -161,7 +161,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       throw new Error('Unsupported value: ' + arg + ' (' + (typeof arg) + ')');
     }
 
-    function isUnserializable(arg) {
+    function isUnserializable(arg: any) {
       if (typeof arg === 'bigint')
         return true;
       if (Object.is(arg, -0))
@@ -180,11 +180,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       return false;
     }
 
-    /**
-     * @param {!Error} error
-     * @return {!Protocol.Runtime.evaluateReturnValue}
-     */
-    function rewriteError(error) {
+    function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
       if (error.message.includes('Object couldn\'t be returned by value'))
         return {result: {type: 'undefined'}};
 

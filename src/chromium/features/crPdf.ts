@@ -17,7 +17,7 @@
 
 import { assert, helper } from '../../helper';
 import { CRSession } from '../crConnection';
-import { readProtocolStream } from '../protocolHelper';
+import { readProtocolStream } from '../crProtocolHelper';
 
 type PDFOptions = {
   scale?: number,

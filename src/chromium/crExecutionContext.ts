@@ -17,7 +17,7 @@
 
 import { CRSession } from './crConnection';
 import { helper } from '../helper';
-import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './protocolHelper';
+import { valueFromRemoteObject, getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 

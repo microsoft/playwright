@@ -29,9 +29,9 @@ import * as browser from '../browser';
 import * as network from '../network';
 import { CRPermissions } from './features/crPermissions';
 import { CROverrides } from './features/crOverrides';
-import { Worker } from './features/crWorkers';
+import { CRWorker } from './features/crWorkers';
 import { ConnectionTransport } from '../transport';
-import { readProtocolStream } from './protocolHelper';
+import { readProtocolStream } from './crProtocolHelper';
 
 export class CRBrowser extends EventEmitter implements browser.Browser {
   _connection: CRConnection;
@@ -230,7 +230,7 @@ export class CRBrowser extends EventEmitter implements browser.Browser {
     return [...this._targets.values()].find(t => t.type() === 'browser');
   }
 
-  serviceWorker(target: CRTarget): Promise<Worker | null> {
+  serviceWorker(target: CRTarget): Promise<CRWorker | null> {
     return target._worker();
   }
 

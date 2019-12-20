@@ -19,7 +19,7 @@ import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
 import { CRSession, CRSessionEvents } from './crConnection';
 import { Events } from '../events';
-import { Worker } from './features/crWorkers';
+import { CRWorker } from './features/crWorkers';
 import { Page } from '../page';
 import { Protocol } from './protocol';
 import { debugError } from '../helper';
@@ -35,7 +35,7 @@ export class CRTarget {
   private _sessionFactory: () => Promise<CRSession>;
   private _pagePromise: Promise<Page> | null = null;
   private _frameManager: CRFrameManager | null = null;
-  private _workerPromise: Promise<Worker> | null = null;
+  private _workerPromise: Promise<CRWorker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
@@ -98,13 +98,13 @@ export class CRTarget {
     return this._pagePromise;
   }
 
-  async _worker(): Promise<Worker | null> {
+  async _worker(): Promise<CRWorker | null> {
     if (this._targetInfo.type !== 'service_worker' && this._targetInfo.type !== 'shared_worker')
       return null;
     if (!this._workerPromise) {
       // TODO(einbinder): Make workers send their console logs.
       this._workerPromise = this._sessionFactory()
-          .then(client => new Worker(client, this._targetInfo.url, () => { } /* consoleAPICalled */, () => { } /* exceptionThrown */));
+          .then(client => new CRWorker(client, this._targetInfo.url, () => { } /* consoleAPICalled */, () => { } /* exceptionThrown */));
     }
     return this._workerPromise;
   }

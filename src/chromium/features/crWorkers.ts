@@ -24,13 +24,13 @@ import * as types from '../../types';
 import * as js from '../../javascript';
 import * as console from '../../console';
 import { CRExecutionContext } from '../crExecutionContext';
-import { toConsoleMessageLocation, exceptionToError } from '../protocolHelper';
+import { toConsoleMessageLocation, exceptionToError } from '../crProtocolHelper';
 
 type AddToConsoleCallback = (type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation) => void;
 type HandleExceptionCallback = (error: Error) => void;
 
 export class CRWorkers extends EventEmitter {
-  private _workers = new Map<string, Worker>();
+  private _workers = new Map<string, CRWorker>();
 
   constructor(client: CRSession, addToConsole: AddToConsoleCallback, handleException: HandleExceptionCallback) {
     super();
@@ -39,7 +39,7 @@ export class CRWorkers extends EventEmitter {
       if (event.targetInfo.type !== 'worker')
         return;
       const session = CRConnection.fromSession(client).session(event.sessionId);
-      const worker = new Worker(session, event.targetInfo.url, addToConsole, handleException);
+      const worker = new CRWorker(session, event.targetInfo.url, addToConsole, handleException);
       this._workers.set(event.sessionId, worker);
       this.emit(Events.Workers.WorkerCreated, worker);
     });
@@ -52,12 +52,12 @@ export class CRWorkers extends EventEmitter {
     });
   }
 
-  list(): Worker[] {
+  list(): CRWorker[] {
     return Array.from(this._workers.values());
   }
 }
 
-export class Worker extends EventEmitter {
+export class CRWorker extends EventEmitter {
   private _client: CRSession;
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
