@@ -344,47 +344,10 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       ]);
       expect(request.url()).toBe(server.PREFIX + '/digits/1.png');
     });
-    it('should work with pathname match', async({page, server}) => {
+    it('should work with query params match', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [request] = await Promise.all([
-        page.waitForRequest({ pathname: '/digits/2.png' }),
-        page.evaluate(() => {
-          fetch('/digits/1.png');
-          fetch('/digits/2.png');
-          fetch('/digits/3.png');
-        })
-      ]);
-      expect(request.url()).toBe(server.PREFIX + '/digits/2.png');
-    });
-    it('should work with multiple matches', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      const [request] = await Promise.all([
-        page.waitForRequest({ pathname: '/digits/2.png', url: /\d\.png/, port: String(server.PORT) }),
-        page.evaluate(() => {
-          fetch('/digits/1.png');
-          fetch('/digits/2.png');
-          fetch('/digits/3.png');
-        })
-      ]);
-      expect(request.url()).toBe(server.PREFIX + '/digits/2.png');
-    });
-    it('should work with strict search params match', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      const [request] = await Promise.all([
-        page.waitForRequest({ searchParams: { 'foo': [/^baz$/, 'bar'], 'bar': 'foo' }, strictSearchParams: true }),
-        page.evaluate(() => {
-          fetch('/digits/2.png?foo=bar&foo=baz&bar=foo&key=value');
-          fetch('/digits/1.png?foo=bar&bar=foo');
-          fetch('/digits/4.png?foo=bar&bar=foo&foo=baz');
-          fetch('/digits/3.png?bar=foo');
-        })
-      ]);
-      expect(request.url()).toBe(server.PREFIX + '/digits/4.png?foo=bar&bar=foo&foo=baz');
-    });
-    it('should work with relaxed search params match', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      const [request] = await Promise.all([
-        page.waitForRequest({ searchParams: { 'foo': ['bar', /^baz$/], 'bar': 'foo' }, url: /\.png/ }),
+        page.waitForRequest({ queryParams: { 'foo': /baz|bar/ }, url: /\.png/ }),
         page.evaluate(() => {
           fetch('/digits/1.png?key=value&foo=something');
           fetch('/digits/2.png?foo=baz');
@@ -402,15 +365,15 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       ]);
       expect(error.message).toBe('url match field "url" must be a string or a RegExp, got object');
     });
-    it('should throw for incorrect searchParams match', async({page, server}) => {
+    it('should throw for incorrect queryParams match', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [error] = await Promise.all([
-        page.waitForRequest({ searchParams: { 'foo': 123 }, url: /\.png/ }).catch(e => e),
+        page.waitForRequest({ queryParams: { 'foo': 123 }, url: /\.png/ }).catch(e => e),
         page.evaluate(() => {
           fetch('/digits/1.png?foo=bar');
         })
       ]);
-      expect(error.message).toBe('url match field "searchParams.foo" must be a string or a RegExp, got number');
+      expect(error.message).toBe('url match field "queryParams.foo" must be a string or a RegExp, got number');
     });
   });
 
@@ -459,18 +422,6 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
           fetch('/digits/2.png');
           fetch('/digits/3.png');
         }, 50))
-      ]);
-      expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
-    });
-    it('should work with multiple matches', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      const [response] = await Promise.all([
-        page.waitForResponse({ pathname: '/digits/2.png', url: /\d\.png/, port: String(server.PORT) }),
-        page.evaluate(() => {
-          fetch('/digits/1.png');
-          fetch('/digits/2.png');
-          fetch('/digits/3.png');
-        })
       ]);
       expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
     });
