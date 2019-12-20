@@ -668,9 +668,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       let response1 = null;
       const response1Promise = page.waitForNavigation({ url: /one-style\.html/ }).then(response => response1 = response);
       let response2 = null;
-      const response2Promise = page.waitForNavigation({ pathname: '/frame.html' }).then(response => response2 = response);
+      const response2Promise = page.waitForNavigation({ url: /\/frame.html/ }).then(response => response2 = response);
       let response3 = null;
-      const response3Promise = page.waitForNavigation({ searchParams: { 'foo': 'bar' }, strictSearchParams: true }).then(response => response3 = response);
+      const response3Promise = page.waitForNavigation({ url: url => url.searchParams.get('foo') === 'bar' }).then(response => response3 = response);
       expect(response1).toBe(null);
       expect(response2).toBe(null);
       expect(response3).toBe(null);

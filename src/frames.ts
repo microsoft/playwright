@@ -42,7 +42,7 @@ export type NavigateOptions = {
   waitUntil?: LifecycleEvent | LifecycleEvent[],
 };
 
-export type WaitForNavigationOptions = NavigateOptions & types.URLMatch;
+export type WaitForNavigationOptions = NavigateOptions & { url?: types.URLMatch };
 
 export type GotoOptions = NavigateOptions & {
   referer?: string,
@@ -854,9 +854,9 @@ class LifecycleWatcher {
   private _navigationAbortedCallback: (err: Error) => void;
   private _maximumTimer: NodeJS.Timer;
   private _hasSameDocumentNavigation: boolean;
-  private _targetUrl?: string;
-  private _expectedDocumentId?: string;
-  private _urlMatch?: types.URLMatch;
+  private _targetUrl: string | undefined;
+  private _expectedDocumentId: string | undefined;
+  private _urlMatch: types.URLMatch | undefined;
 
   constructor(frame: Frame, options: WaitForNavigationOptions | undefined, supportUrlMatch: boolean) {
     options = options || {};
@@ -869,7 +869,7 @@ class LifecycleWatcher {
         throw new Error(`Unsupported waitUntil option ${String(event)}`);
     }
     if (supportUrlMatch)
-      this._urlMatch = options;
+      this._urlMatch = options.url;
     this._expectedLifecycle = waitUntil.slice();
     this._frame = frame;
     this.sameDocumentNavigationPromise = new Promise(f => this._sameDocumentNavigationCompleteCallback = f);
