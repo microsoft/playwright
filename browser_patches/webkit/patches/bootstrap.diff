@@ -48,6 +48,22 @@ index e2a36fa8764909abfd0e1896d3a9a7c361f1b23a..e3ed01ae7cf8ce68a4fd8308e0ea2819
      $(JavaScriptCore)/inspector/protocol/Inspector.json \
      $(JavaScriptCore)/inspector/protocol/LayerTree.json \
      $(JavaScriptCore)/inspector/protocol/Network.json \
+diff --git a/Source/JavaScriptCore/bindings/ScriptValue.cpp b/Source/JavaScriptCore/bindings/ScriptValue.cpp
+index dece6ac51e3a85b1e094e405effc6203887ddfd4..9bf7519d894eceb06b40d754c4fb7940399eba84 100644
+--- a/Source/JavaScriptCore/bindings/ScriptValue.cpp
++++ b/Source/JavaScriptCore/bindings/ScriptValue.cpp
+@@ -81,7 +81,10 @@ static RefPtr<JSON::Value> jsToInspectorValue(JSGlobalObject* globalObject, JSVa
+         PropertyNameArray propertyNames(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
+         object.methodTable(vm)->getOwnPropertyNames(&object, globalObject, propertyNames, EnumerationMode());
+         for (auto& name : propertyNames) {
+-            auto inspectorValue = jsToInspectorValue(globalObject, object.get(globalObject, name), maxDepth);
++            JSValue childValue = object.get(globalObject, name);
++            if (childValue.isUndefined())
++                continue;
++            auto inspectorValue = jsToInspectorValue(globalObject, childValue, maxDepth);
+             if (!inspectorValue)
+                 return nullptr;
+             inspectorObject->setValue(name.string(), WTFMove(inspectorValue));
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 index 038cb646d31706905deff8935040d63c0afd00f9..8a01d7679bf11001a2ffd528274ad13e00aa8e19 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
