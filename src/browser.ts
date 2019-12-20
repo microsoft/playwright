@@ -3,15 +3,16 @@
 
 import { BrowserContext, BrowserContextOptions } from './browserContext';
 import { ChildProcess } from 'child_process';
+import { EventEmitter } from 'events';
 
-export interface Browser {
-  newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
-  disconnect(): void;
-  isConnected(): boolean;
+export class Browser extends EventEmitter {
+  newContext(options?: BrowserContextOptions): Promise<BrowserContext> { throw new Error('Not implemented'); }
+  browserContexts(): BrowserContext[] { throw new Error('Not implemented'); }
+  defaultContext(): BrowserContext { throw new Error('Not implemented'); }
 
-  browserContexts(): BrowserContext[];
-  defaultContext(): BrowserContext;
-  close(): Promise<void>;
+  disconnect(): void { throw new Error('Not implemented'); }
+  isConnected(): boolean { throw new Error('Not implemented'); }
+  close(): Promise<void> { throw new Error('Not implemented'); }
 }
 
 export class BrowserServer<T extends Browser> {

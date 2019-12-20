@@ -35,25 +35,25 @@ module.exports.describe = function({testRunner, expect, WEBKIT}) {
     });
     it.skip(WEBKIT)('should deny permission when not listed', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
-      await context.permissions.override(server.EMPTY_PAGE, []);
+      await context.setPermissions(server.EMPTY_PAGE, []);
       expect(await getPermission(page, 'geolocation')).toBe('denied');
     });
     it.skip(WEBKIT)('should fail when bad permission is given', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       let error = {};
-      await context.permissions.override(server.EMPTY_PAGE, ['foo']).catch(e => error = e);
+      await context.setPermissions(server.EMPTY_PAGE, ['foo']).catch(e => error = e);
       expect(error.message).toBe('Unknown permission: foo');
     });
     it.skip(WEBKIT)('should grant permission when listed', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
-      await context.permissions.override(server.EMPTY_PAGE, ['geolocation']);
+      await context.setPermissions(server.EMPTY_PAGE, ['geolocation']);
       expect(await getPermission(page, 'geolocation')).toBe('granted');
     });
     it.skip(WEBKIT)('should reset permissions', async({page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
-      await context.permissions.override(server.EMPTY_PAGE, ['geolocation']);
+      await context.setPermissions(server.EMPTY_PAGE, ['geolocation']);
       expect(await getPermission(page, 'geolocation')).toBe('granted');
-      await context.permissions.clearOverrides();
+      await context.clearPermissions();
       expect(await getPermission(page, 'geolocation')).toBe('prompt');
     });
     it.skip(WEBKIT)('should trigger permission onchange', async({page, server, context}) => {
@@ -68,11 +68,11 @@ module.exports.describe = function({testRunner, expect, WEBKIT}) {
         });
       });
       expect(await page.evaluate(() => window['events'])).toEqual(['prompt']);
-      await context.permissions.override(server.EMPTY_PAGE, []);
+      await context.setPermissions(server.EMPTY_PAGE, []);
       expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied']);
-      await context.permissions.override(server.EMPTY_PAGE, ['geolocation']);
+      await context.setPermissions(server.EMPTY_PAGE, ['geolocation']);
       expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted']);
-      await context.permissions.clearOverrides();
+      await context.clearPermissions();
       expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
     });
     it.skip(WEBKIT)('should isolate permissions between browser contexs', async({page, server, context, newContext}) => {
@@ -83,12 +83,12 @@ module.exports.describe = function({testRunner, expect, WEBKIT}) {
       expect(await getPermission(page, 'geolocation')).toBe('prompt');
       expect(await getPermission(otherPage, 'geolocation')).toBe('prompt');
 
-      await context.permissions.override(server.EMPTY_PAGE, []);
-      await otherContext.permissions.override(server.EMPTY_PAGE, ['geolocation']);
+      await context.setPermissions(server.EMPTY_PAGE, []);
+      await otherContext.setPermissions(server.EMPTY_PAGE, ['geolocation']);
       expect(await getPermission(page, 'geolocation')).toBe('denied');
       expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
 
-      await context.permissions.clearOverrides();
+      await context.clearPermissions();
       expect(await getPermission(page, 'geolocation')).toBe('prompt');
       expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
     });

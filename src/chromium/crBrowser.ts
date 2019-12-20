@@ -27,13 +27,12 @@ import { Protocol } from './protocol';
 import { CRFrameManager } from './crFrameManager';
 import * as browser from '../browser';
 import * as network from '../network';
-import { CRPermissions } from './features/crPermissions';
 import { CROverrides } from './features/crOverrides';
 import { CRWorker } from './features/crWorkers';
 import { ConnectionTransport } from '../transport';
 import { readProtocolStream } from './crProtocolHelper';
 
-export class CRBrowser extends EventEmitter implements browser.Browser {
+export class CRBrowser extends browser.Browser {
   _connection: CRConnection;
   _client: CRSession;
   private _defaultContext: BrowserContext;
@@ -129,9 +128,41 @@ export class CRBrowser extends EventEmitter implements browser.Browser {
       setCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._client.send('Storage.setCookies', { cookies, browserContextId: contextId || undefined });
       },
+
+      setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
+        const webPermissionToProtocol = new Map<string, Protocol.Browser.PermissionType>([
+          ['geolocation', 'geolocation'],
+          ['midi', 'midi'],
+          ['notifications', 'notifications'],
+          ['camera', 'videoCapture'],
+          ['microphone', 'audioCapture'],
+          ['background-sync', 'backgroundSync'],
+          ['ambient-light-sensor', 'sensors'],
+          ['accelerometer', 'sensors'],
+          ['gyroscope', 'sensors'],
+          ['magnetometer', 'sensors'],
+          ['accessibility-events', 'accessibilityEvents'],
+          ['clipboard-read', 'clipboardReadWrite'],
+          ['clipboard-write', 'clipboardSanitizedWrite'],
+          ['payment-handler', 'paymentHandler'],
+          // chrome-specific permissions we have.
+          ['midi-sysex', 'midiSysex'],
+        ]);
+        const filtered = permissions.map(permission => {
+          const protocolPermission = webPermissionToProtocol.get(permission);
+          if (!protocolPermission)
+            throw new Error('Unknown permission: ' + permission);
+          return protocolPermission;
+        });
+        await this._client.send('Browser.grantPermissions', { origin, browserContextId: contextId || undefined, permissions: filtered });
+      },
+    
+      clearPermissions: async () => {
+        await this._client.send('Browser.resetPermissions', { browserContextId: contextId || undefined });
+      }
+    
     }, options);
     overrides = new CROverrides(context);
-    (context as any).permissions = new CRPermissions(this._client, contextId);
     (context as any).overrides = overrides;
     return context;
   }
@@ -161,7 +192,7 @@ export class CRBrowser extends EventEmitter implements browser.Browser {
     this._targets.set(event.targetInfo.targetId, target);
 
     if (target._isInitialized || await target._initializedPromise)
-      this.emit(Events.Browser.TargetCreated, target);
+      this.emit(Events.CRBrowser.TargetCreated, target);
   }
 
   async _targetDestroyed(event: { targetId: string; }) {
@@ -170,7 +201,7 @@ export class CRBrowser extends EventEmitter implements browser.Browser {
     this._targets.delete(event.targetId);
     target._didClose();
     if (await target._initializedPromise)
-      this.emit(Events.Browser.TargetDestroyed, target);
+      this.emit(Events.CRBrowser.TargetDestroyed, target);
   }
 
   _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
@@ -180,7 +211,7 @@ export class CRBrowser extends EventEmitter implements browser.Browser {
     const wasInitialized = target._isInitialized;
     target._targetInfoChanged(event.targetInfo);
     if (wasInitialized && previousURL !== target.url())
-      this.emit(Events.Browser.TargetChanged, target);
+      this.emit(Events.CRBrowser.TargetChanged, target);
   }
 
   async _closePage(page: Page) {
@@ -204,15 +235,15 @@ export class CRBrowser extends EventEmitter implements browser.Browser {
       return existingTarget;
     let resolve: (target: CRTarget) => void;
     const targetPromise = new Promise<CRTarget>(x => resolve = x);
-    this.on(Events.Browser.TargetCreated, check);
-    this.on(Events.Browser.TargetChanged, check);
+    this.on(Events.CRBrowser.TargetCreated, check);
+    this.on(Events.CRBrowser.TargetChanged, check);
     try {
       if (!timeout)
         return await targetPromise;
       return await helper.waitWithTimeout(targetPromise, 'target', timeout);
     } finally {
-      this.removeListener(Events.Browser.TargetCreated, check);
-      this.removeListener(Events.Browser.TargetChanged, check);
+      this.removeListener(Events.CRBrowser.TargetCreated, check);
+      this.removeListener(Events.CRBrowser.TargetChanged, check);
     }
 
     function check(target: CRTarget) {
