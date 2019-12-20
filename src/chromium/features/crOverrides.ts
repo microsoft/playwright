@@ -17,7 +17,7 @@
 
 import { BrowserContext } from '../../browserContext';
 import { CRFrameManager } from '../crFrameManager';
-import { Page } from '../../api';
+import { Page } from '../../page';
 
 export class CROverrides {
   private _context: BrowserContext;
