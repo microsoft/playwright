@@ -1,15 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-export { CRBrowser } from './crBrowser';
-export { CRSession } from './crConnection';
-export { CRPlaywright } from './crPlaywright';
-export { CRTarget } from './crTarget';
-export { CRAccessibility } from './features/crAccessibility';
-export { CRCoverage } from './features/crCoverage';
-export { CRInterception } from './features/crInterception';
-export { CROverrides } from './features/crOverrides';
-export { CRPDF } from './features/crPdf';
-export { CRPermissions } from './features/crPermissions';
-export { CRWorker, CRWorkers } from './features/crWorkers';
-
+export { CRBrowser as ChromiumBrowser } from './crBrowser';
+export { CRSession as ChromiumSession } from './crConnection';
+export { CRPlaywright as Chromium } from './crPlaywright';
+export { CRTarget as ChromiumTarget } from './crTarget';
+export { CRAccessibility as ChromiumAccessibility } from './features/crAccessibility';
+export { CRCoverage as ChromiumCoverage } from './features/crCoverage';
+export { CRInterception as ChromiumInterception } from './features/crInterception';
+export { CROverrides as ChromiumOverrides } from './features/crOverrides';
+export { CRPDF as ChromiumPDF } from './features/crPdf';
+export { CRPermissions as ChromiumPermissions } from './features/crPermissions';
+export { CRWorker as ChromiumWorker, CRWorkers as ChromiumWorkers } from './features/crWorkers';

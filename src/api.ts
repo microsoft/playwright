@@ -12,12 +12,8 @@ export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
 export { Request, Response } from './network';
-export { Page } from './page';
+export { Page, FileChooser } from './page';
 
 export * from './chromium/crApi';
 export * from './firefox/ffApi';
 export * from './webkit/wkApi';
-
-export const Chromium = {};
-export const Firefox = {};
-export const WebKit = {};

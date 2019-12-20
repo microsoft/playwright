@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as chromium from './chromium';
-import * as firefox from './firefox';
-import * as webkit from './webkit';
-declare function pickBrowser(browser: 'chromium'): typeof chromium;
-declare function pickBrowser(browser: 'firefox'): typeof firefox;
-declare function pickBrowser(browser: 'webkit'): typeof webkit;
-export = pickBrowser;
+
+export * from './lib/api';
+export function playwright(browser: 'chromium'): import('./lib/api').Chromium;
+export function playwright(browser: 'firefox'): import('./lib/api').Firefox;
+export function playwright(browser: 'webkit'): import('./lib/api').WebKit;

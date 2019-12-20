@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-export { WKBrowser } from './wkBrowser';
-export { WKPlaywright } from './wkPlaywright';
+export { WKBrowser as WebKitBrowser } from './wkBrowser';
+export { WKPlaywright as WebKit } from './wkPlaywright';
