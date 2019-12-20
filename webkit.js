@@ -14,15 +14,4 @@
  * limitations under the License.
  */
 
-const {helper} = require('./lib/helper');
-const api = require('./lib/api');
-for (const className in api.WebKit) {
-  // Playwright-web excludes certain classes from bundle, e.g. BrowserFetcher.
-  if (typeof api.WebKit[className] === 'function')
-    helper.installAsyncStackHooks(api.WebKit[className]);
-}
-
-const { WKPlaywright } = require('./lib/webkit/wkPlaywright');
-const packageJson = require('./package.json');
-
-module.exports = new WKPlaywright(__dirname, packageJson.playwright.webkit_revision);
+module.exports = require('./index').playwright('webkit');

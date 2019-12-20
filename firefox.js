@@ -14,15 +14,4 @@
  * limitations under the License.
  */
 
-const {helper} = require('./lib/helper');
-const api = require('./lib/api');
-for (const className in api.Firefox) {
-  // Playwright-web excludes certain classes from bundle, e.g. BrowserFetcher.
-  if (typeof api.Firefox[className] === 'function')
-    helper.installAsyncStackHooks(api.Firefox[className]);
-}
-
-const { FFPlaywright } = require('./lib/firefox/ffPlaywright');
-const packageJson = require('./package.json');
-
-module.exports = new FFPlaywright(__dirname, packageJson.playwright.firefox_revision);
+module.exports = require('./index').playwright('firefox');

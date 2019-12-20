@@ -14,15 +14,4 @@
  * limitations under the License.
  */
 
-const {helper} = require('./lib/helper');
-const api = require('./lib/api');
-for (const className in api.Chromium) {
-  // Playwright-web excludes certain classes from bundle, e.g. BrowserFetcher.
-  if (typeof api.Chromium[className] === 'function')
-    helper.installAsyncStackHooks(api.Chromium[className]);
-}
-
-const { CRPlaywright } = require('./lib/chromium/crPlaywright');
-const packageJson = require('./package.json');
-
-module.exports = new CRPlaywright(__dirname, packageJson.playwright.chromium_revision);
+module.exports = require('./index').playwright('chromium');

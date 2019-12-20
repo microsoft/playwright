@@ -651,7 +651,7 @@ export class Frame {
     await handle.dispose();
   }
 
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle | null> {
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
       return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
@@ -691,7 +691,7 @@ export class Frame {
     return result.asElement() as dom.ElementHandle<Element>;
   }
 
-  waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
+  async waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
     const task = dom.waitForFunctionTask(undefined, pageFunction, options, ...args);
     return this._scheduleRerunnableTask(task, 'main', options.timeout);

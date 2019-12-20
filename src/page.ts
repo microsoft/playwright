@@ -177,11 +177,11 @@ export class Page extends EventEmitter {
     return this.mainFrame().evaluateHandle(pageFunction, ...args as any);
   }
 
-  $eval: types.$Eval = (selector, pageFunction, ...args) => {
+  $eval: types.$Eval = async  (selector, pageFunction, ...args) => {
     return this.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval = (selector, pageFunction, ...args) => {
+  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
     return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
@@ -279,15 +279,15 @@ export class Page extends EventEmitter {
     return this.mainFrame().url();
   }
 
-  content(): Promise<string> {
+  async content(): Promise<string> {
     return this.mainFrame().content();
   }
 
-  setContent(html: string, options?: frames.NavigateOptions): Promise<void> {
+  async setContent(html: string, options?: frames.NavigateOptions): Promise<void> {
     return this.mainFrame().setContent(html, options);
   }
 
-  goto(url: string, options?: frames.GotoOptions): Promise<network.Response | null> {
+  async goto(url: string, options?: frames.GotoOptions): Promise<network.Response | null> {
     return this.mainFrame().goto(url, options);
   }
 
@@ -346,7 +346,6 @@ export class Page extends EventEmitter {
     return waitPromise;
   }
 
-
   async emulateMedia(options: { type?: input.MediaType, colorScheme?: input.ColorScheme }) {
     assert(!options.type || input.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
     assert(!options.colorScheme || input.mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
@@ -372,7 +371,7 @@ export class Page extends EventEmitter {
     return this._state.viewport;
   }
 
-  evaluate: types.Evaluate = (pageFunction, ...args) => {
+  evaluate: types.Evaluate = async (pageFunction, ...args) => {
     return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
@@ -392,7 +391,7 @@ export class Page extends EventEmitter {
     return this._screenshotter.screenshotPage(options);
   }
 
-  title(): Promise<string> {
+  async title(): Promise<string> {
     return this.mainFrame().title();
   }
 
@@ -410,39 +409,39 @@ export class Page extends EventEmitter {
     return this._closed;
   }
 
-  click(selector: string, options?: frames.WaitForOptions & input.ClickOptions) {
+  async click(selector: string, options?: frames.WaitForOptions & input.ClickOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  dblclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
+  async dblclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  tripleclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
+  async tripleclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  fill(selector: string, value: string, options?: frames.WaitForOptions) {
+  async fill(selector: string, value: string, options?: frames.WaitForOptions) {
     return this.mainFrame().fill(selector, value, options);
   }
 
-  focus(selector: string, options?: frames.WaitForOptions) {
+  async focus(selector: string, options?: frames.WaitForOptions) {
     return this.mainFrame().focus(selector, options);
   }
 
-  hover(selector: string, options?: frames.WaitForOptions & input.PointerActionOptions) {
+  async hover(selector: string, options?: frames.WaitForOptions & input.PointerActionOptions) {
     return this.mainFrame().hover(selector, options);
   }
 
-  select(selector: string, value: string | dom.ElementHandle | input.SelectOption | string[] | dom.ElementHandle[] | input.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
+  async select(selector: string, value: string | dom.ElementHandle | input.SelectOption | string[] | dom.ElementHandle[] | input.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
     return this.mainFrame().select(selector, value, options);
   }
 
-  type(selector: string, text: string, options?: frames.WaitForOptions & { delay?: number }) {
+  async type(selector: string, text: string, options?: frames.WaitForOptions & { delay?: number }) {
     return this.mainFrame().type(selector, text, options);
   }
 
-  waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { visible?: boolean; hidden?: boolean; timeout?: number; polling?: string | number; } = {}, ...args: any[]): Promise<js.JSHandle> {
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: { visible?: boolean; hidden?: boolean; timeout?: number; polling?: string | number; } = {}, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
