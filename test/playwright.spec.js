@@ -190,6 +190,9 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     if (CHROME) {
       testRunner.loadTests(require('./chromium/browser.spec.js'), testOptions);
     }
+    if (FFOX) {
+      testRunner.loadTests(require('./firefox/browser.spec.js'), testOptions);
+    }
   });
 
   // Top-level tests that launch Browser themselves.

@@ -58,6 +58,7 @@ export class WKLauncher {
       handleSIGTERM = true,
       handleSIGHUP = true,
       slowMo = 0,
+      timeout = 30000
     } = options;
 
     const webkitArguments = [];
@@ -98,7 +99,7 @@ export class WKLauncher {
     try {
       const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
       browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo));
-      await browser._waitForTarget(t => t._type === 'page');
+      await browser._waitForTarget(t => t._type === 'page', {timeout});
       return new BrowserServer(browser, launchedProcess, '');
     } catch (e) {
       if (browser)
@@ -128,6 +129,7 @@ export type LauncherLaunchOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   headless?: boolean,
+  timeout?: number,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
   slowMo?: number,
