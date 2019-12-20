@@ -21,12 +21,12 @@ jobs:
       run: |
         sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0
         sudo apt-get install xvfb
-        cd .local-webkit/linux-1046; ls -1 | LD_LIBRARY_PATH=$PWD xargs ldd
 
     - name: npm install, build, and test
       run: |
         npm install
+        cd .local-webkit/linux-1046; ls -1 | LD_LIBRARY_PATH=$PWD xargs ldd
         npm run build
-        xvfb-run --auto-servernum npm run wunit
+        DUMPIO=1 xvfb-run --auto-servernum npm run wunit
       env:
         CI: true
