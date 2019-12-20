@@ -16,13 +16,13 @@
  */
 
 export const Events = {
-  Browser: {
+  CRBrowser: {
     TargetCreated: 'targetcreated',
     TargetDestroyed: 'targetdestroyed',
     TargetChanged: 'targetchanged',
   },
 
-  Workers: {
+  CRWorkers: {
     WorkerCreated: 'workercreated',
     WorkerDestroyed: 'workerdestroyed',
   }

@@ -41,13 +41,13 @@ export class CRWorkers extends EventEmitter {
       const session = CRConnection.fromSession(client).session(event.sessionId);
       const worker = new CRWorker(session, event.targetInfo.url, addToConsole, handleException);
       this._workers.set(event.sessionId, worker);
-      this.emit(Events.Workers.WorkerCreated, worker);
+      this.emit(Events.CRWorkers.WorkerCreated, worker);
     });
     client.on('Target.detachedFromTarget', event => {
       const worker = this._workers.get(event.sessionId);
       if (!worker)
         return;
-      this.emit(Events.Workers.WorkerDestroyed, worker);
+      this.emit(Events.CRWorkers.WorkerDestroyed, worker);
       this._workers.delete(event.sessionId);
     });
   }

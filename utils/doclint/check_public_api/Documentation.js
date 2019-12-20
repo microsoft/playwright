@@ -37,6 +37,12 @@ Documentation.Class = class {
   constructor(name, membersArray, extendsName = null, comment = '') {
     this.name = name;
     this.membersArray = membersArray;
+    this.comment = comment;
+    this.extends = extendsName;
+    this.index();
+  }
+
+  index() {
     /** @type {!Map<string, !Documentation.Member>} */
     this.members = new Map();
     /** @type {!Map<string, !Documentation.Member>} */
@@ -51,9 +57,8 @@ Documentation.Class = class {
     this.events = new Map();
     /** @type {!Array<!Documentation.Member>} */
     this.eventsArray = [];
-    this.comment = comment;
-    this.extends = extendsName;
-    for (const member of membersArray) {
+
+    for (const member of this.membersArray) {
       this.members.set(member.name, member);
       if (member.kind === 'method') {
         this.methods.set(member.name, member);

@@ -27,7 +27,7 @@ import { Events } from '../events';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { ConnectionTransport } from '../transport';
 
-export class WKBrowser extends EventEmitter implements browser.Browser {
+export class WKBrowser extends browser.Browser {
   readonly _connection: WKConnection;
   private _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
@@ -206,6 +206,14 @@ export class WKBrowser extends EventEmitter implements browser.Browser {
         const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
         await this._connection.send('Browser.setCookies', { cookies: cc, browserContextId });
       },
+
+      setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
+        throw new Error('Permissions are not supported in WebKit');
+      },
+    
+      clearPermissions: async () => {
+        throw new Error('Permissions are not supported in WebKit');
+      }
     }, options);
     return context;
   }

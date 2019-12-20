@@ -24,7 +24,7 @@ module.exports.describe = function ({ testRunner, expect }) {
   // It was removed from WebKit in https://webkit.org/b/126630
   describe('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
-      await context.permissions.override(server.PREFIX, ['geolocation']);
+      await context.setPermissions(server.PREFIX, ['geolocation']);
       await page.goto(server.EMPTY_PAGE);
       await context.overrides.setGeolocation({longitude: 10, latitude: 10});
       const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {

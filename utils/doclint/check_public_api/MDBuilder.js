@@ -299,6 +299,23 @@ module.exports = async function(page, sources) {
     errors.push(...outline.errors);
   }
   const documentation = new Documentation(classes);
+
+
+  // Push base class documentation to derived classes.
+  for (const [name, clazz] of documentation.classes.entries()) {
+    if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
+      continue;
+    const superClass = documentation.classes.get(clazz.extends);
+    if (!superClass) {
+      errors.push(`Undefined superclass: ${superClass} in ${name}`);
+      continue;
+    }
+    for (const memberName of clazz.members.keys()) {
+      if (superClass.members.has(memberName))
+        errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
+    }
+    clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray];
+    clazz.index();
+  }
   return { documentation, errors };
 };
-

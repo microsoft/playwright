@@ -15,19 +15,17 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-import { helper, RegisteredListener, assert } from '../helper';
-import { FFConnection, ConnectionEvents, FFSessionEvents } from './ffConnection';
-import { Events } from '../events';
-import { FFPermissions } from './features/ffPermissions';
-import { Page } from '../page';
-import { FFFrameManager } from './ffFrameManager';
 import * as browser from '../browser';
-import * as network from '../network';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
+import { Events } from '../events';
+import { assert, helper, RegisteredListener } from '../helper';
+import * as network from '../network';
+import { Page } from '../page';
 import { ConnectionTransport } from '../transport';
+import { ConnectionEvents, FFConnection, FFSessionEvents } from './ffConnection';
+import { FFFrameManager } from './ffFrameManager';
 
-export class FFBrowser extends EventEmitter implements browser.Browser {
+export class FFBrowser extends browser.Browser {
   _connection: FFConnection;
   _targets: Map<string, Target>;
   private _defaultContext: BrowserContext;
@@ -196,8 +194,28 @@ export class FFBrowser extends EventEmitter implements browser.Browser {
       setCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         await this._connection.send('Browser.setCookies', { browserContextId: browserContextId || undefined, cookies });
       },
+
+      setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
+        const webPermissionToProtocol = new Map([
+          ['geolocation', 'geo'],
+          ['microphone', 'microphone'],
+          ['camera', 'camera'],
+          ['notifications', 'desktop-notifications'],
+        ]);
+        const filtered = permissions.map(permission => {
+          const protocolPermission = webPermissionToProtocol.get(permission);
+          if (!protocolPermission)
+            throw new Error('Unknown permission: ' + permission);
+          return protocolPermission;
+        });
+        await this._connection.send('Browser.grantPermissions', {origin, browserContextId: browserContextId || undefined, permissions: filtered});
+      },
+    
+      clearPermissions: async () => {
+        await this._connection.send('Browser.resetPermissions', { browserContextId: browserContextId || undefined });
+      }
+    
     }, options);
-    (context as any).permissions = new FFPermissions(this._connection, browserContextId);
     return context;
   }
 }

@@ -24,9 +24,13 @@ export interface BrowserContextDelegate {
   pages(): Promise<Page[]>;
   newPage(): Promise<Page>;
   close(): Promise<void>;
+
   cookies(): Promise<network.NetworkCookie[]>;
-  clearCookies(): Promise<void>;
   setCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
+  clearCookies(): Promise<void>;
+
+  setPermissions(origin: string, permissions: string[]): Promise<void>;
+  clearPermissions(): Promise<void>;
 }
 
 export type BrowserContextOptions = {
@@ -64,12 +68,20 @@ export class BrowserContext {
     return network.filterCookies(await this._delegate.cookies(), urls);
   }
 
+  async setCookies(cookies: network.SetNetworkCookieParam[]) {
+    await this._delegate.setCookies(network.rewriteCookies(cookies));
+  }
+
   async clearCookies() {
     await this._delegate.clearCookies();
   }
 
-  async setCookies(cookies: network.SetNetworkCookieParam[]) {
-    await this._delegate.setCookies(network.rewriteCookies(cookies));
+  async setPermissions(origin: string, permissions: string[]): Promise<void> {
+    await this._delegate.setPermissions(origin, permissions);
+  }
+
+  async clearPermissions() {
+    await this._delegate.clearPermissions();
   }
 
   async close() {

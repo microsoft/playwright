@@ -19,6 +19,14 @@
   * [chromiumPlaywright.errors](#chromiumplaywrighterrors)
   * [chromiumPlaywright.executablePath()](#chromiumplaywrightexecutablepath)
   * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
+- [class: Browser](#class-browser)
+  * [event: 'disconnected'](#event-disconnected)
+  * [browser.browserContexts()](#browserbrowsercontexts)
+  * [browser.close()](#browserclose)
+  * [browser.defaultContext()](#browserdefaultcontext)
+  * [browser.disconnect()](#browserdisconnect)
+  * [browser.isConnected()](#browserisconnected)
+  * [browser.newContext(options)](#browsernewcontextoptions)
 - [class: BrowserFetcher](#class-browserfetcher)
   * [browserFetcher.canDownload(revision)](#browserfetchercandownloadrevision)
   * [browserFetcher.download(revision[, progressCallback])](#browserfetcherdownloadrevision-progresscallback)
@@ -32,18 +40,9 @@
   * [browserServer.process()](#browserserverprocess)
   * [browserServer.wsEndpoint()](#browserserverwsendpoint)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
-  * [event: 'disconnected'](#event-disconnected)
   * [event: 'targetchanged'](#event-targetchanged)
   * [event: 'targetcreated'](#event-targetcreated)
   * [event: 'targetdestroyed'](#event-targetdestroyed)
-  * [chromiumBrowser.browserContexts()](#chromiumbrowserbrowsercontexts)
-  * [chromiumBrowser.chromium](#chromiumbrowserchromium)
-  * [chromiumBrowser.close()](#chromiumbrowserclose)
-  * [chromiumBrowser.defaultContext()](#chromiumbrowserdefaultcontext)
-  * [chromiumBrowser.disconnect()](#chromiumbrowserdisconnect)
-  * [chromiumBrowser.isConnected()](#chromiumbrowserisconnected)
-  * [chromiumBrowser.newContext(options)](#chromiumbrowsernewcontextoptions)
-  * [chromiumBrowser.process()](#chromiumbrowserprocess)
   * [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
   * [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
   * [chromiumBrowser.serviceWorker(target)](#chromiumbrowserserviceworkertarget)
@@ -53,16 +52,15 @@
   * [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
 - [class: BrowserContext](#class-browsercontext)
   * [browserContext.clearCookies()](#browsercontextclearcookies)
+  * [browserContext.clearPermissions()](#browsercontextclearpermissions)
   * [browserContext.close()](#browsercontextclose)
   * [browserContext.cookies([...urls])](#browsercontextcookiesurls)
   * [browserContext.newPage()](#browsercontextnewpage)
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
+  * [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 - [class: ChromiumOverrides](#class-chromiumoverrides)
   * [chromiumOverrides.setGeolocation(options)](#chromiumoverridessetgeolocationoptions)
-- [class: ChromiumPermissions](#class-chromiumpermissions)
-  * [chromiumPermissions.clearOverrides()](#chromiumpermissionsclearoverrides)
-  * [chromiumPermissions.override(origin, permissions)](#chromiumpermissionsoverrideorigin-permissions)
 - [class: Page](#class-page)
   * [event: 'close'](#event-close)
   * [event: 'console'](#event-console)
@@ -159,7 +157,7 @@
 - [class: ChromiumPDF](#class-chromiumpdf)
   * [chromiumPDF.generate([options])](#chromiumpdfgenerateoptions)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
-  * [firefoxBrowser.wsEndpoint()](#firefoxbrowserwsendpoint)
+- [class: WebKitBrowser](#class-webkitbrowser)
 - [class: Dialog](#class-dialog)
   * [dialog.accept([promptText])](#dialogacceptprompttext)
   * [dialog.defaultValue()](#dialogdefaultvalue)
@@ -227,22 +225,14 @@
   * [elementHandle.$$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args)
   * [elementHandle.$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args-1)
   * [elementHandle.$x(expression)](#elementhandlexexpression)
-  * [elementHandle.asElement()](#elementhandleaselement)
   * [elementHandle.boundingBox()](#elementhandleboundingbox)
   * [elementHandle.click([options])](#elementhandleclickoptions)
   * [elementHandle.contentFrame()](#elementhandlecontentframe)
   * [elementHandle.dblclick([options])](#elementhandledblclickoptions)
-  * [elementHandle.dispose()](#elementhandledispose)
-  * [elementHandle.evaluate(pageFunction[, ...args])](#elementhandleevaluatepagefunction-args)
-  * [elementHandle.evaluateHandle(pageFunction[, ...args])](#elementhandleevaluatehandlepagefunction-args)
-  * [elementHandle.executionContext()](#elementhandleexecutioncontext)
   * [elementHandle.fill(value)](#elementhandlefillvalue)
   * [elementHandle.focus()](#elementhandlefocus)
-  * [elementHandle.getProperties()](#elementhandlegetproperties)
-  * [elementHandle.getProperty(propertyName)](#elementhandlegetpropertypropertyname)
   * [elementHandle.hover([options])](#elementhandlehoveroptions)
   * [elementHandle.isIntersectingViewport()](#elementhandleisintersectingviewport)
-  * [elementHandle.jsonValue()](#elementhandlejsonvalue)
   * [elementHandle.press(key[, options])](#elementhandlepresskey-options)
   * [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
   * [elementHandle.select(...values)](#elementhandleselectvalues)
@@ -454,6 +444,102 @@ const browser = await playwright.launch({
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
 
+### class: Browser
+
+* extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+
+A Browser is created when Playwright connects to a browser instance, either through [`playwright.launch`](#playwrightlaunchoptions) or [`playwright.connect`](#playwrightconnectoptions).
+
+An example of using a [Browser] to create a [Page]:
+```js
+const playwright = require('playwright');
+
+(async () => {
+  const browser = await playwright.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto('https://example.com');
+  await browser.close();
+})();
+```
+
+An example of disconnecting from and reconnecting to a [Browser]:
+```js
+const playwright = require('playwright');
+
+(async () => {
+  const browserServer = await playwright.launchServer();
+  const browserWSEndpoint = browserServer.wsEndpoint();
+  // Use the endpoint to establish a connection
+  const browser = await playwright.connect({browserWSEndpoint});
+  // Close Chromium
+  await browser.close();
+})();
+```
+
+#### event: 'disconnected'
+Emitted when Playwright gets disconnected from the Chromium instance. This might happen because of one of the following:
+- Chromium is closed or crashed
+- The [`browser.disconnect`](#browserdisconnect) method was called
+
+#### browser.browserContexts()
+- returns: <[Array]<[BrowserContext]>>
+
+Returns an array of all open browser contexts. In a newly created browser, this will return
+a single instance of [BrowserContext].
+
+#### browser.close()
+- returns: <[Promise]>
+
+Closes Chromium and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
+
+#### browser.defaultContext()
+- returns: <[BrowserContext]>
+
+Returns the default browser context. The default browser context can not be closed.
+
+#### browser.disconnect()
+
+Disconnects Playwright from the browser, but leaves the Chromium process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
+
+#### browser.isConnected()
+
+- returns: <[boolean]>
+
+Indicates that the browser is connected.
+
+#### browser.newContext(options)
+- `options` <[Object]>
+  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
+  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
+    - `width` <[number]> page width in pixels.
+    - `height` <[number]> page height in pixels.
+    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
+    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
+  - `userAgent` <?[string]> Specific user agent to use in this page
+  - `mediaType` <?[string]> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
+  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
+  - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+- returns: <[Promise]<[BrowserContext]>>
+
+Creates a new browser context. It won't share cookies/cache with other browser contexts.
+
+```js
+(async () => {
+  const browser = await playwright.launch();
+  // Create a new incognito browser context.
+  const context = await browser.newContext();
+  // Create a new page in a pristine context.
+  const page = await context.newPage();
+  // Do stuff
+  await page.goto('https://example.com');
+})();
+```
+
 ### class: BrowserFetcher
 
 BrowserFetcher can download and manage different versions of Chromium.
@@ -535,50 +621,16 @@ Learn more about the [devtools protocol](https://chromedevtools.github.io/devtoo
 
 ### class: ChromiumBrowser
 
-* extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
-
-A Browser is created when Playwright connects to a Chromium instance, either through [`playwright.launch`](#playwrightlaunchoptions) or [`playwright.connect`](#playwrightconnectoptions).
-
-An example of using a [Browser] to create a [Page]:
-```js
-const playwright = require('playwright');
-
-(async () => {
-  const browser = await playwright.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('https://example.com');
-  await browser.close();
-})();
-```
-
-An example of disconnecting from and reconnecting to a [Browser]:
-```js
-const playwright = require('playwright');
-
-(async () => {
-  const browserServer = await playwright.launchServer();
-  const browserWSEndpoint = browserServer.wsEndpoint();
-  // Use the endpoint to establish a connection
-  const browser = await playwright.connect({browserWSEndpoint});
-  // Close Chromium
-  await browser.close();
-})();
-```
+* extends: [Browser]
 
 Chromium-specific features including Tracing, service worker support, etc.
-You can use [`chromium.startTracing`](#chromiumstarttracingpage-options) and [`chromium.stopTracing`](#chromiumstoptracing) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
+You can use [`chromiumBrowser.startTracing`](#chromiumbrowserstarttracingpage-options) and [`chromiumBrowser.stopTracing`](#chromiumbrowserstoptracing) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
 
 ```js
-await browser.chromium.startTracing(page, {path: 'trace.json'});
+await browser.startTracing(page, {path: 'trace.json'});
 await page.goto('https://www.google.com');
-await browser.chromium.stopTracing();
+await browser.stopTracing();
 ```
-
-#### event: 'disconnected'
-Emitted when Playwright gets disconnected from the Chromium instance. This might happen because of one of the following:
-- Chromium is closed or crashed
-- The [`browser.disconnect`](#browserdisconnect) method was called
 
 #### event: 'targetchanged'
 - <[Target]>
@@ -601,71 +653,6 @@ Emitted when a target is created, for example when a new page is opened by [`win
 Emitted when a target is destroyed, for example when a page is closed.
 
 > **NOTE** This includes target destructions in incognito browser contexts.
-
-#### chromiumBrowser.browserContexts()
-- returns: <[Array]<[BrowserContext]>>
-
-Returns an array of all open browser contexts. In a newly created browser, this will return
-a single instance of [BrowserContext].
-
-#### chromiumBrowser.chromium
-- returns: <[Chromium]>
-
-#### chromiumBrowser.close()
-- returns: <[Promise]>
-
-Closes Chromium and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
-
-#### chromiumBrowser.defaultContext()
-- returns: <[BrowserContext]>
-
-Returns the default browser context. The default browser context can not be closed.
-
-#### chromiumBrowser.disconnect()
-
-Disconnects Playwright from the browser, but leaves the Chromium process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
-
-#### chromiumBrowser.isConnected()
-
-- returns: <[boolean]>
-
-Indicates that the browser is connected.
-
-#### chromiumBrowser.newContext(options)
-- `options` <[Object]>
-  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
-  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
-    - `width` <[number]> page width in pixels.
-    - `height` <[number]> page height in pixels.
-    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
-  - `userAgent` <?[string]> Specific user agent to use in this page
-  - `mediaType` <?[string]> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
-  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
-  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
-  - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
-
-- returns: <[Promise]<[BrowserContext]>>
-
-Creates a new browser context. It won't share cookies/cache with other browser contexts.
-
-```js
-(async () => {
-  const browser = await playwright.launch();
-  // Create a new incognito browser context.
-  const context = await browser.newContext();
-  // Create a new page in a pristine context.
-  const page = await context.newPage();
-  // Do stuff
-  await page.goto('https://example.com');
-})();
-```
-
-#### chromiumBrowser.process()
-- returns: <?[ChildProcess]> Spawned browser process. Returns `null` if the browser instance was created with [`playwright.connect`](#playwrightconnectoptions) method.
 
 #### chromiumBrowser.browserTarget()
 - returns: <[Target]>
@@ -744,6 +731,18 @@ await context.close();
 
 Clears context bookies.
 
+#### browserContext.clearPermissions()
+- returns: <[Promise]>
+
+Clears all permission overrides for the browser context.
+
+```js
+const context = browser.defaultContext();
+context.setPermissions('https://example.com', ['clipboard-read']);
+// do stuff ..
+context.clearPermissions();
+```
+
 #### browserContext.close()
 - returns: <[Promise]>
 
@@ -798,38 +797,7 @@ An array of all pages inside the browser context.
 await browserContext.setCookies([cookieObject1, cookieObject2]);
 ```
 
-### class: ChromiumOverrides
-
-#### chromiumOverrides.setGeolocation(options)
-- `options` <[Object]>
-  - `latitude` <[number]> Latitude between -90 and 90.
-  - `longitude` <[number]> Longitude between -180 and 180.
-  - `accuracy` <[number]> Optional non-negative accuracy value.
-- returns: <[Promise]>
-
-Sets the page's geolocation.
-
-```js
-await browserContext.overrides.setGeolocation({latitude: 59.95, longitude: 30.31667});
-```
-
-> **NOTE** Consider using [browserContext.permissions.override](#permissionsoverrideorigin-permissions) to grant permissions for the page to read its geolocation.
-
-### class: ChromiumPermissions
-
-#### chromiumPermissions.clearOverrides()
-- returns: <[Promise]>
-
-Clears all permission overrides for the browser context.
-
-```js
-const context = browser.defaultContext();
-context.permissions.override('https://example.com', ['clipboard-read']);
-// do stuff ..
-context.permissions.clearOverrides();
-```
-
-#### chromiumPermissions.override(origin, permissions)
+#### browserContext.setPermissions(origin, permissions[])
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
 - `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
     - `'geolocation'`
@@ -853,8 +821,25 @@ context.permissions.clearOverrides();
 
 ```js
 const context = browser.defaultContext();
-await context.permissions.override('https://html5demos.com', ['geolocation']);
+await context.setPermissions('https://html5demos.com', ['geolocation']);
 ```
+
+### class: ChromiumOverrides
+
+#### chromiumOverrides.setGeolocation(options)
+- `options` <[Object]>
+  - `latitude` <[number]> Latitude between -90 and 90.
+  - `longitude` <[number]> Longitude between -180 and 180.
+  - `accuracy` <[number]> Optional non-negative accuracy value.
+- returns: <[Promise]>
+
+Sets the page's geolocation.
+
+```js
+await browserContext.overrides.setGeolocation({latitude: 59.95, longitude: 30.31667});
+```
+
+> **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
 ### class: Page
 
@@ -2180,12 +2165,15 @@ The `format` options are:
 
 ### class: FirefoxBrowser
 
+* extends: [Browser]
+
 Firefox-specific features.
 
-#### firefoxBrowser.wsEndpoint()
-- returns: <[string]> Browser websocket url.
+### class: WebKitBrowser
 
-Browser websocket endpoint which can be used as an argument to [playwright.connect](#playwrightconnectoptions).
+* extends: [Browser]
+
+WebKit-specific features.
 
 ### class: Dialog
 
@@ -3045,9 +3033,6 @@ expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
 
 The method evaluates the XPath expression relative to the elementHandle. If there are no such elements, the method will resolve to an empty array.
 
-#### elementHandle.asElement()
-- returns: <[ElementHandle]>
-
 #### elementHandle.boundingBox()
 - returns: <[Promise]<?[Object]>>
   - x <[number]> the x coordinate of the element in pixels.
@@ -3091,42 +3076,6 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 
 > **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
-#### elementHandle.dispose()
-- returns: <[Promise]> Promise which resolves when the element handle is successfully disposed.
-
-The `elementHandle.dispose` method stops referencing the element handle.
-
-#### elementHandle.evaluate(pageFunction[, ...args])
-- `pageFunction` <[function]\([Object]\)> Function to be evaluated in browser context
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
-
-This method passes this handle as the first argument to `pageFunction`.
-
-If `pageFunction` returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return its value.
-
-Examples:
-```js
-const tweetHandle = await page.$('.tweet .retweets');
-expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10');
-```
-
-#### elementHandle.evaluateHandle(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
-
-This method passes this handle as the first argument to `pageFunction`.
-
-The only difference between `evaluateHandle.evaluate` and `evaluateHandle.evaluateHandle` is that `executionContext.evaluateHandle` returns in-page object (JSHandle).
-
-If the function passed to the `evaluateHandle.evaluateHandle` returns a [Promise], then `evaluateHandle.evaluateHandle` would wait for the promise to resolve and return its value.
-
-See [Page.evaluateHandle](#pageevaluatehandlepagefunction-args) for more details.
-
-#### elementHandle.executionContext()
-- returns: <[ExecutionContext]>
-
 #### elementHandle.fill(value)
 - `value` <[string]> Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - returns: <[Promise]> Promise which resolves when the element is successfully filled.
@@ -3138,29 +3087,6 @@ If element is not a text `<input>`, `<textarea>` or `[contenteditable]` element,
 - returns: <[Promise]>
 
 Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the element.
-
-#### elementHandle.getProperties()
-- returns: <[Promise]<[Map]<[string], [JSHandle]>>>
-
-The method returns a map with property names as keys and JSHandle instances for the property values.
-
-```js
-const listHandle = await page.evaluateHandle(() => document.body.children);
-const properties = await listHandle.getProperties();
-const children = [];
-for (const property of properties.values()) {
-  const element = property.asElement();
-  if (element)
-    children.push(element);
-}
-children; // holds elementHandles to all children of document.body
-```
-
-#### elementHandle.getProperty(propertyName)
-- `propertyName` <[string]> property to get
-- returns: <[Promise]<[JSHandle]>>
-
-Fetches a single property from the objectHandle.
 
 #### elementHandle.hover([options])
 - `options` <[Object]>
@@ -3175,13 +3101,6 @@ If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.isIntersectingViewport()
 - returns: <[Promise]<[boolean]>> Resolves to true if the element is visible in the current viewport.
-
-#### elementHandle.jsonValue()
-- returns: <[Promise]<[Object]>>
-
-Returns a JSON representation of the object. The JSON is generated by running [`JSON.stringify`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify) on the object in page and consequent [`JSON.parse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse) in playwright.
-
-> **NOTE** The method will throw if the referenced object is not stringifiable.
 
 #### elementHandle.press(key[, options])
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.

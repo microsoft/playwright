@@ -10,5 +10,4 @@ export { CRCoverage as ChromiumCoverage } from './features/crCoverage';
 export { CRInterception as ChromiumInterception } from './features/crInterception';
 export { CROverrides as ChromiumOverrides } from './features/crOverrides';
 export { CRPDF as ChromiumPDF } from './features/crPdf';
-export { CRPermissions as ChromiumPermissions } from './features/crPermissions';
 export { CRWorker as ChromiumWorker, CRWorkers as ChromiumWorkers } from './features/crWorkers';
