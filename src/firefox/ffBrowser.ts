@@ -210,11 +210,11 @@ export class FFBrowser extends browser.Browser {
         });
         await this._connection.send('Browser.grantPermissions', {origin, browserContextId: browserContextId || undefined, permissions: filtered});
       },
-    
+
       clearPermissions: async () => {
         await this._connection.send('Browser.resetPermissions', { browserContextId: browserContextId || undefined });
       }
-    
+
     }, options);
     return context;
   }

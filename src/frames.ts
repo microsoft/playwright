@@ -336,6 +336,17 @@ export class Frame {
     return watcher.navigationResponse();
   }
 
+  async waitForLoadState(options?: NavigateOptions): Promise<void> {
+    const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
+    const error = await Promise.race([
+      watcher.timeoutOrTerminationPromise,
+      watcher.lifecyclePromise
+    ]);
+    watcher.dispose();
+    if (error)
+      throw error;
+  }
+
   _context(contextType: ContextType): Promise<dom.FrameExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
@@ -886,7 +897,7 @@ class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
-  private _urlMatches(urlString: string): boolean {
+  _urlMatches(urlString: string): boolean {
     return !this._urlMatch || helper.urlMatches(urlString, this._urlMatch);
   }
 
@@ -969,12 +980,13 @@ class LifecycleWatcher {
   }
 
   private _checkLifecycleComplete() {
-    // We expect navigation to commit.
     if (!this._checkLifecycleRecursively(this._frame, this._expectedLifecycle))
       return;
-    this._lifecycleCallback();
-    if (this._hasSameDocumentNavigation)
-      this._sameDocumentNavigationCompleteCallback();
+    if (this._urlMatches(this._frame.url())) {
+      this._lifecycleCallback();
+      if (this._hasSameDocumentNavigation)
+        this._sameDocumentNavigationCompleteCallback();
+    }
     if (this._frame._lastDocumentId === this._expectedDocumentId)
       this._newDocumentNavigationCompleteCallback();
   }

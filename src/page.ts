@@ -301,6 +301,10 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitForNavigation(options);
   }
 
+  async waitForLoadState(options?: frames.NavigateOptions): Promise<void> {
+    return this.mainFrame().waitForLoadState(options);
+  }
+
   async waitForEvent(event: string, options: Function | (types.TimeoutOptions & { predicate?: Function }) = {}): Promise<any> {
     if (typeof options === 'function')
       options = { predicate: options };
