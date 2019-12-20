@@ -26,8 +26,16 @@
   * [browserFetcher.platform()](#browserfetcherplatform)
   * [browserFetcher.remove(revision)](#browserfetcherremoverevision)
   * [browserFetcher.revisionInfo(revision)](#browserfetcherrevisioninforevision)
+- [class: BrowserServer](#class-browserserver)
+  * [browserServer.close()](#browserserverclose)
+  * [browserServer.connect()](#browserserverconnect)
+  * [browserServer.process()](#browserserverprocess)
+  * [browserServer.wsEndpoint()](#browserserverwsendpoint)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
   * [event: 'disconnected'](#event-disconnected)
+  * [event: 'targetchanged'](#event-targetchanged)
+  * [event: 'targetcreated'](#event-targetcreated)
+  * [event: 'targetdestroyed'](#event-targetdestroyed)
   * [chromiumBrowser.browserContexts()](#chromiumbrowserbrowsercontexts)
   * [chromiumBrowser.chromium](#chromiumbrowserchromium)
   * [chromiumBrowser.close()](#chromiumbrowserclose)
@@ -36,15 +44,19 @@
   * [chromiumBrowser.isConnected()](#chromiumbrowserisconnected)
   * [chromiumBrowser.newContext(options)](#chromiumbrowsernewcontextoptions)
   * [chromiumBrowser.process()](#chromiumbrowserprocess)
+  * [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
+  * [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
+  * [chromiumBrowser.serviceWorker(target)](#chromiumbrowserserviceworkertarget)
+  * [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
+  * [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
+  * [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
+  * [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
 - [class: BrowserContext](#class-browsercontext)
-  * [browserContext.browser()](#browsercontextbrowser)
   * [browserContext.clearCookies()](#browsercontextclearcookies)
   * [browserContext.close()](#browsercontextclose)
   * [browserContext.cookies([...urls])](#browsercontextcookiesurls)
   * [browserContext.newPage()](#browsercontextnewpage)
-  * [browserContext.overrides](#browsercontextoverrides)
   * [browserContext.pages()](#browsercontextpages)
-  * [browserContext.permissions](#browsercontextpermissions)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [class: ChromiumOverrides](#class-chromiumoverrides)
   * [chromiumOverrides.setGeolocation(options)](#chromiumoverridessetgeolocationoptions)
@@ -148,18 +160,6 @@
   * [chromiumPDF.generate([options])](#chromiumpdfgenerateoptions)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
   * [firefoxBrowser.wsEndpoint()](#firefoxbrowserwsendpoint)
-- [class: ChromiumBrowser](#class-chromiumbrowser-1)
-  * [event: 'targetchanged'](#event-targetchanged)
-  * [event: 'targetcreated'](#event-targetcreated)
-  * [event: 'targetdestroyed'](#event-targetdestroyed)
-  * [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
-  * [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
-  * [chromiumBrowser.serviceWorker(target)](#chromiumbrowserserviceworkertarget)
-  * [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
-  * [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
-  * [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
-  * [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
-  * [chromiumBrowser.wsEndpoint()](#chromiumbrowserwsendpoint)
 - [class: Dialog](#class-dialog)
   * [dialog.accept([promptText])](#dialogacceptprompttext)
   * [dialog.defaultValue()](#dialogdefaultvalue)
@@ -204,10 +204,6 @@
   * [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
   * [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
   * [frame.waitForXPath(xpath[, options])](#framewaitforxpathxpath-options)
-- [class: ExecutionContext](#class-executioncontext)
-  * [executionContext.evaluate(pageFunction[, ...args])](#executioncontextevaluatepagefunction-args)
-  * [executionContext.evaluateHandle(pageFunction[, ...args])](#executioncontextevaluatehandlepagefunction-args)
-  * [executionContext.frame()](#executioncontextframe)
 - [class: ChromiumInterception](#class-chromiuminterception)
   * [chromiumInterception.abort(request, [errorCode])](#chromiuminterceptionabortrequest-errorcode)
   * [chromiumInterception.authenticate(credentials)](#chromiuminterceptionauthenticatecredentials)
@@ -515,6 +511,28 @@ The method initiates a GET request to download the revision from the host.
   - `url` <[string]> URL this revision can be downloaded from
   - `local` <[boolean]> whether the revision is locally available on disk
 
+### class: BrowserServer
+
+#### browserServer.close()
+- returns: <[Promise]>
+
+Closes the browser gracefully and makes sure the process is terminated.
+
+#### browserServer.connect()
+- returns: <[Promise]<[Browser]>>
+
+Connects to the browser server and returns a <[Browser]> object.
+
+#### browserServer.process()
+- returns: <?[ChildProcess]> Spawned browser server process.
+
+#### browserServer.wsEndpoint()
+- returns: <[string]> Browser websocket url.
+
+Browser websocket endpoint which can be used as an argument to `playwright.connect`.
+
+Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
+
 ### class: ChromiumBrowser
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
@@ -539,22 +557,50 @@ An example of disconnecting from and reconnecting to a [Browser]:
 const playwright = require('playwright');
 
 (async () => {
-  const browser = await playwright.launch();
-  // Store the endpoint to be able to reconnect to Chromium
-  const browserWSEndpoint = browser.chromium.wsEndpoint();
-  // Disconnect playwright from Chromium
-  browser.disconnect();
-
-  // Use the endpoint to reestablish a connection
-  const browser2 = await playwright.connect({browserWSEndpoint});
+  const browserServer = await playwright.launchServer();
+  const browserWSEndpoint = browserServer.wsEndpoint();
+  // Use the endpoint to establish a connection
+  const browser = await playwright.connect({browserWSEndpoint});
   // Close Chromium
-  await browser2.close();
+  await browser.close();
 })();
 ```
+
+Chromium-specific features including Tracing, service worker support, etc.
+You can use [`chromium.startTracing`](#chromiumstarttracingpage-options) and [`chromium.stopTracing`](#chromiumstoptracing) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
+
+```js
+await browser.chromium.startTracing(page, {path: 'trace.json'});
+await page.goto('https://www.google.com');
+await browser.chromium.stopTracing();
+```
+
 #### event: 'disconnected'
 Emitted when Playwright gets disconnected from the Chromium instance. This might happen because of one of the following:
 - Chromium is closed or crashed
 - The [`browser.disconnect`](#browserdisconnect) method was called
+
+#### event: 'targetchanged'
+- <[Target]>
+
+Emitted when the url of a target changes.
+
+> **NOTE** This includes target changes in incognito browser contexts.
+
+
+#### event: 'targetcreated'
+- <[Target]>
+
+Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
+
+> **NOTE** This includes target creations in incognito browser contexts.
+
+#### event: 'targetdestroyed'
+- <[Target]>
+
+Emitted when a target is destroyed, for example when a page is closed.
+
+> **NOTE** This includes target destructions in incognito browser contexts.
 
 #### chromiumBrowser.browserContexts()
 - returns: <[Array]<[BrowserContext]>>
@@ -621,6 +667,55 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 #### chromiumBrowser.process()
 - returns: <?[ChildProcess]> Spawned browser process. Returns `null` if the browser instance was created with [`playwright.connect`](#playwrightconnectoptions) method.
 
+#### chromiumBrowser.browserTarget()
+- returns: <[Target]>
+
+Returns browser target.
+
+#### chromiumBrowser.pageTarget(page)
+- `page` <[Page]> Page to return target for.
+- returns: <[Target]> a target given page was created from.
+
+#### chromiumBrowser.serviceWorker(target)
+- `target` <[Target]> Target to treat as a service worker
+- returns: <[Promise]<[Worker]>>
+
+Attaches to the service worker target.
+
+#### chromiumBrowser.startTracing(page, [options])
+- `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
+- `options` <[Object]>
+  - `path` <[string]> A path to write the trace file to.
+  - `screenshots` <[boolean]> captures screenshots in the trace.
+  - `categories` <[Array]<[string]>> specify custom categories to use instead of default.
+- returns: <[Promise]>
+
+Only one trace can be active at a time per browser.
+
+#### chromiumBrowser.stopTracing()
+- returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
+
+#### chromiumBrowser.targets(context)
+- `context` <[BrowserContext]> Optional, if specified, only targets from this context are returned.
+- returns: <[Array]<[Target]>>
+
+An array of all active targets inside the Browser. In case of multiple browser contexts,
+the method will return an array with all the targets in all browser contexts.
+
+#### chromiumBrowser.waitForTarget(predicate[, options])
+- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
+- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
+
+This searches for a target in all browser contexts.
+
+An example of finding a target for a page opened via `window.open`:
+```js
+await page.evaluate(() => window.open('https://www.example.com/'));
+const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
+```
+
 ### class: BrowserContext
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
@@ -643,11 +738,6 @@ await page.goto('https://example.com');
 // Dispose context once it's no longer needed.
 await context.close();
 ```
-
-#### browserContext.browser()
-- returns: <[Browser]>
-
-The browser this browser context belongs to.
 
 #### browserContext.clearCookies()
 - returns: <[Promise]>
@@ -686,16 +776,10 @@ If URLs are specified, only cookies that affect those URLs are returned.
 
 Creates a new page in the browser context.
 
-#### browserContext.overrides
-- returns: <[Overrides]>
-
 #### browserContext.pages()
 - returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
 
 An array of all pages inside the browser context.
-
-#### browserContext.permissions
-- returns: <[Permissions]>
 
 #### browserContext.setCookies(cookies)
 - `cookies` <[Array]<[Object]>>
@@ -919,7 +1003,7 @@ Emitted when a request finishes successfully.
 Emitted when a [response] is received.
 
 #### page.$(selector)
-- `selector` <[string]|[Selector]> A [selector] to query page for
+- `selector` <[string]> A selector to query page for
 - returns: <[Promise]<?[ElementHandle]>>
 
 The method runs `document.querySelector` within the page. If no element matches the selector, the return value resolves to `null`.
@@ -927,7 +1011,7 @@ The method runs `document.querySelector` within the page. If no element matches 
 Shortcut for [page.mainFrame().$(selector)](#frameselector).
 
 #### page.$$(selector)
-- `selector` <[string]|[Selector]> A [selector] to query page for
+- `selector` <[string]> A selector to query page for
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
 The method runs `document.querySelectorAll` within the page. If no elements match the selector, the return value resolves to `[]`.
@@ -935,7 +1019,7 @@ The method runs `document.querySelectorAll` within the page. If no elements matc
 Shortcut for [page.mainFrame().$$(selector)](#frameselector-1).
 
 #### page.$$eval(selector, pageFunction[, ...args])
-- `selector` <[string]|[Selector]> A [selector] to query page for
+- `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -950,7 +1034,7 @@ const divsCounts = await page.$$eval('div', divs => divs.length);
 ```
 
 #### page.$eval(selector, pageFunction[, ...args])
-- `selector` <[string]|[Selector]> A [selector] to query page for
+- `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -1015,7 +1099,7 @@ Get the browser the page belongs to.
 Get the browser context that the page belongs to.
 
 #### page.click(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
+- `selector` <[string]> A selector to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `clickCount` <[number]> defaults to 1. See [UIEvent.detail].
@@ -1062,7 +1146,7 @@ Gets the full HTML contents of the page, including the doctype.
 - returns: <[Coverage]>
 
 #### page.dblclick(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
+- `selector` <[string]> A selector to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -1232,7 +1316,7 @@ const fs = require('fs');
 ```
 
 #### page.fill(selector, value)
-- `selector` <[string]|[Selector]> A [selector] to query page for.
+- `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
@@ -1242,7 +1326,7 @@ If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matchi
 Shortcut for [page.mainFrame().fill()](#framefillselector-value)
 
 #### page.focus(selector)
-- `selector` <[string]|[Selector]> A [selector] of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
+- `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector` and focuses it.
@@ -1307,7 +1391,7 @@ Navigate to the next page in history.
 Shortcut for [page.mainFrame().goto(url, options)](#framegotourl-options)
 
 #### page.hover(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
+- `selector` <[string]> A selector to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
 - `options` <[Object]>
   - `relativePoint` <[Object]> A point to hover relative to the top-left corner of element padding box. If not specified, hovers over some visible point of the element.
     - x <[number]>
@@ -1372,7 +1456,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 > **NOTE** Screenshots take at least 1/6 second on OS X. See https://crbug.com/741689 for discussion.
 
 #### page.select(selector, ...values)
-- `selector` <[string]|[Selector]> A [selector] to query page for.
+- `selector` <[string]> A selector to query page for.
 - `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
@@ -1463,7 +1547,7 @@ The extra HTTP headers will be sent with every request the page initiates.
 Shortcut for [page.mainFrame().title()](#frametitle).
 
 #### page.tripleclick(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
+- `selector` <[string]> A selector to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -1483,7 +1567,7 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 Shortcut for [page.mainFrame().tripleclick(selector[, options])](#frametripleclickselector-options).
 
 #### page.type(selector, text[, options])
-- `selector` <[string]|[Selector]> A [selector] of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
+- `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
@@ -1648,7 +1732,7 @@ return finalResponse.ok();
 ```
 
 #### page.waitForSelector(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] of an element to wait for
+- `selector` <[string]> A selector of an element to wait for
 - `options` <[Object]> Optional waiting parameters
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
@@ -2103,97 +2187,6 @@ Firefox-specific features.
 
 Browser websocket endpoint which can be used as an argument to [playwright.connect](#playwrightconnectoptions).
 
-
-### class: ChromiumBrowser
-
-Chromium-specific features including Tracing, service worker support, etc.
-You can use [`chromium.startTracing`](#chromiumstarttracingpage-options) and [`chromium.stopTracing`](#chromiumstoptracing) to create a trace file which can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
-
-```js
-await browser.chromium.startTracing(page, {path: 'trace.json'});
-await page.goto('https://www.google.com');
-await browser.chromium.stopTracing();
-```
-
-#### event: 'targetchanged'
-- <[Target]>
-
-Emitted when the url of a target changes.
-
-> **NOTE** This includes target changes in incognito browser contexts.
-
-
-#### event: 'targetcreated'
-- <[Target]>
-
-Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
-
-> **NOTE** This includes target creations in incognito browser contexts.
-
-#### event: 'targetdestroyed'
-- <[Target]>
-
-Emitted when a target is destroyed, for example when a page is closed.
-
-> **NOTE** This includes target destructions in incognito browser contexts.
-
-#### chromiumBrowser.browserTarget()
-- returns: <[Target]>
-
-Returns browser target.
-
-#### chromiumBrowser.pageTarget(page)
-- `page` <[Page]> Page to return target for.
-- returns: <[Target]> a target given page was created from.
-
-#### chromiumBrowser.serviceWorker(target)
-- `target` <[Target]> Target to treat as a service worker
-- returns: <[Promise]<[Worker]>>
-
-Attaches to the service worker target.
-
-#### chromiumBrowser.startTracing(page, [options])
-- `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
-- `options` <[Object]>
-  - `path` <[string]> A path to write the trace file to.
-  - `screenshots` <[boolean]> captures screenshots in the trace.
-  - `categories` <[Array]<[string]>> specify custom categories to use instead of default.
-- returns: <[Promise]>
-
-Only one trace can be active at a time per browser.
-
-#### chromiumBrowser.stopTracing()
-- returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
-
-#### chromiumBrowser.targets(context)
-- `context` <[BrowserContext]> Optional, if specified, only targets from this context are returned.
-- returns: <[Array]<[Target]>>
-
-An array of all active targets inside the Browser. In case of multiple browser contexts,
-the method will return an array with all the targets in all browser contexts.
-
-#### chromiumBrowser.waitForTarget(predicate[, options])
-- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
-- `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
-- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
-
-This searches for a target in all browser contexts.
-
-An example of finding a target for a page opened via `window.open`:
-```js
-await page.evaluate(() => window.open('https://www.example.com/'));
-const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
-```
-
-#### chromiumBrowser.wsEndpoint()
-- returns: <[string]> Browser websocket url.
-
-Browser websocket endpoint which can be used as an argument to
-[playwright.connect](#playwrightconnectoptions). The format is `ws://${host}:${port}/devtools/browser/<id>`
-
-You can find the `webSocketDebuggerUrl` from `http://${host}:${port}/json/version`. Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-
 ### class: Dialog
 
 [Dialog] objects are dispatched by page via the ['dialog'](#event-dialog) event.
@@ -2292,19 +2285,19 @@ An example of getting text from an iframe element:
 ```
 
 #### frame.$(selector)
-- `selector` <[string]|[Selector]> A [selector] to query frame for
+- `selector` <[string]> A selector to query frame for
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves to ElementHandle pointing to the frame element.
 
 The method queries frame for the selector. If there's no such element within the frame, the method will resolve to `null`.
 
 #### frame.$$(selector)
-- `selector` <[string]|[Selector]> A [selector] to query frame for
+- `selector` <[string]> A selector to query frame for
 - returns: <[Promise]<[Array]<[ElementHandle]>>> Promise which resolves to ElementHandles pointing to the frame elements.
 
 The method runs `document.querySelectorAll` within the frame. If no elements match the selector, the return value resolves to `[]`.
 
 #### frame.$$eval(selector, pageFunction[, ...args])
-- `selector` <[string]|[Selector]> A [selector] to query frame for
+- `selector` <[string]> A selector to query frame for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -2319,7 +2312,7 @@ const divsCounts = await frame.$$eval('div', divs => divs.length);
 ```
 
 #### frame.$eval(selector, pageFunction[, ...args])
-- `selector` <[string]|[Selector]> A [selector] to query frame for
+- `selector` <[string]> A selector to query frame for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -2364,7 +2357,7 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 - returns: <[Array]<[Frame]>>
 
 #### frame.click(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
+- `selector` <[string]> A selector to search for element to click. If there are multiple elements satisfying the selector, the first will be clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `clickCount` <[number]> defaults to 1. See [UIEvent.detail].
@@ -2393,7 +2386,7 @@ const [response] = await Promise.all([
 Gets the full HTML contents of the frame, including the doctype.
 
 #### frame.dblclick(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
+- `selector` <[string]> A selector to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -2474,7 +2467,7 @@ await resultHandle.dispose();
 Returns promise that resolves to the frame's default execution context.
 
 #### frame.fill(selector, value)
-- `selector` <[string]|[Selector]> A [selector] to query page for.
+- `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
@@ -2482,7 +2475,7 @@ This method focuses the element and triggers an `input` event after filling.
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
 
 #### frame.focus(selector)
-- `selector` <[string]|[Selector]> A [selector] of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
+- `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector` and focuses it.
@@ -2515,7 +2508,7 @@ If there's no element matching `selector`, the method throws an error.
 
 
 #### frame.hover(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
+- `selector` <[string]> A selector to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
 - `options` <[Object]>
   - `relativePoint` <[Object]> A point to hover relative to the top-left corner of element padding box. If not specified, hovers over some visible point of the element.
     - x <[number]>
@@ -2544,7 +2537,7 @@ If the name is empty, returns the id attribute instead.
 - returns: <?[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
 
 #### frame.select(selector, ...values)
-- `selector` <[string]|[Selector]> A [selector] to query frame for.
+- `selector` <[string]> A selector to query frame for.
 - `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
@@ -2583,7 +2576,7 @@ frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 - returns: <[Promise]<[string]>> The page's title.
 
 #### frame.tripleclick(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
+- `selector` <[string]> A selector to search for element to triple click. If there are multiple elements satisfying the selector, the first will be triple clicked.
 - `options` <[Object]>
   - `button` <"left"|"right"|"middle"> Defaults to `left`.
   - `delay` <[number]> Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
@@ -2601,7 +2594,7 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 > **NOTE** `frame.tripleclick()` dispatches three `click` events and a single `dblclick` event.
 
 #### frame.type(selector, text[, options])
-- `selector` <[string]|[Selector]> A [selector] of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
+- `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
@@ -2706,7 +2699,7 @@ const [response] = await Promise.all([
 
 
 #### frame.waitForSelector(selector[, options])
-- `selector` <[string]|[Selector]> A [selector] of an element to wait for
+- `selector` <[string]> A selector of an element to wait for
 - `options` <[Object]> Optional waiting parameters
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
@@ -2762,81 +2755,6 @@ const playwright = require('playwright');
   await browser.close();
 })();
 ```
-
-### class: ExecutionContext
-
-The class represents a context for JavaScript execution. A [Page] might have many execution contexts:
-- each [frame](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe) has "default" execution context that is
-  always created after frame is attached to DOM. This context is returned by the [`frame.executionContext()`](#frameexecutioncontext) method.
-- [Extensions](https://developer.chrome.com/extensions)'s content scripts create additional execution contexts.
-
-Besides pages, execution contexts can be found in [workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
-
-#### executionContext.evaluate(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated in `executionContext`
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
-
-If the function passed to the `executionContext.evaluate` returns a [Promise], then `executionContext.evaluate` would wait for the promise to resolve and return its value.
-
-If the function passed to the `executionContext.evaluate` returns a non-[Serializable] value, then `executionContext.evaluate` resolves to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
-
-```js
-const executionContext = await page.mainFrame().executionContext();
-const result = await executionContext.evaluate(() => Promise.resolve(8 * 7));
-console.log(result); // prints "56"
-```
-
-A string can also be passed in instead of a function.
-
-```js
-console.log(await executionContext.evaluate('1 + 2')); // prints "3"
-```
-
-[JSHandle] instances can be passed as arguments to the `executionContext.evaluate`:
-```js
-const oneHandle = await executionContext.evaluateHandle(() => 1);
-const twoHandle = await executionContext.evaluateHandle(() => 2);
-const result = await executionContext.evaluate((a, b) => a + b, oneHandle, twoHandle);
-await oneHandle.dispose();
-await twoHandle.dispose();
-console.log(result); // prints '3'.
-```
-
-#### executionContext.evaluateHandle(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated in the `executionContext`
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
-
-The only difference between `executionContext.evaluate` and `executionContext.evaluateHandle` is that `executionContext.evaluateHandle` returns in-page object (JSHandle).
-
-If the function passed to the `executionContext.evaluateHandle` returns a [Promise], then `executionContext.evaluateHandle` would wait for the promise to resolve and return its value.
-
-```js
-const context = await page.mainFrame().executionContext();
-const aHandle = await context.evaluateHandle(() => Promise.resolve(self));
-aHandle; // Handle for the global object.
-```
-
-A string can also be passed in instead of a function.
-
-```js
-const aHandle = await context.evaluateHandle('1 + 2'); // Handle for the '3' object.
-```
-
-[JSHandle] instances can be passed as arguments to the `executionContext.evaluateHandle`:
-```js
-const aHandle = await context.evaluateHandle(() => document.body);
-const resultHandle = await context.evaluateHandle(body => body.innerHTML, aHandle);
-console.log(await resultHandle.jsonValue()); // prints body's innerHTML
-await aHandle.dispose();
-await resultHandle.dispose();
-```
-
-#### executionContext.frame()
-- returns: <?[Frame]> Frame associated with this execution context.
-
-> **NOTE** Not every execution context is associated with a frame. For example, workers and extensions have execution contexts that are not associated with frames.
 
 ### class: ChromiumInterception
 
@@ -3071,19 +2989,19 @@ ElementHandle prevents DOM element from garbage collection unless the handle is 
 ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalselector-pagefunction-args) and [`page.evaluate()`](#pageevaluatepagefunction-args) methods.
 
 #### elementHandle.$(selector)
-- `selector` <[string]|[Selector]> A [selector] to query element for
+- `selector` <[string]> A selector to query element for
 - returns: <[Promise]<?[ElementHandle]>>
 
 The method runs `element.querySelector` within the page. If no element matches the selector, the return value resolves to `null`.
 
 #### elementHandle.$$(selector)
-- `selector` <[string]|[Selector]> A [selector] to query element for
+- `selector` <[string]> A selector to query element for
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
 The method runs `element.querySelectorAll` within the page. If no elements match the selector, the return value resolves to `[]`.
 
 #### elementHandle.$$eval(selector, pageFunction[, ...args])
-- `selector` <[string]|[Selector]> A [selector] to query page for
+- `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -3105,7 +3023,7 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
 ```
 
 #### elementHandle.$eval(selector, pageFunction[, ...args])
-- `selector` <[string]|[Selector]> A [selector] to query page for
+- `selector` <[string]> A selector to query page for
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -3726,7 +3644,6 @@ const playwright = require('playwright');
 [ElementHandle]: #class-elementhandle "ElementHandle"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
-[ExecutionContext]: #class-executioncontext "ExecutionContext"
 [File]: #class-file "https://developer.mozilla.org/en-US/docs/Web/API/File"
 [FileChooser]: #class-filechooser "FileChooser"
 [Frame]: #class-frame "Frame"
@@ -3739,7 +3656,6 @@ const playwright = require('playwright');
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [Request]: #class-request  "Request"
 [Response]: #class-response  "Response"
-[Selector]: #class-selector "Selector"
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [Target]: #class-target "Target"
 [TimeoutError]: #class-timeouterror "TimeoutError"
