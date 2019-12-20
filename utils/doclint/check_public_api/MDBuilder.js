@@ -56,10 +56,7 @@ class MDOutline {
         const type = findType(str);
         const properties = [];
         const comment = str.substring(str.indexOf('<') + type.length + 2).trim();
-        const hasNonEnumProperties = type.split('|').some(part => {
-          return part !== 'string' && part !== 'number' && part !== 'Array<string>' && !(part[0] === '"' && part[part.length - 1] === '"');
-        });
-        if (hasNonEnumProperties) {
+        if (!type.includes(`"`)) {
           for (const childElement of element.querySelectorAll(':scope > ul > li')) {
             const property = parseProperty(childElement);
             property.required = property.comment.includes('***required***');

@@ -85,7 +85,6 @@
   * [page.accessibility](#pageaccessibility)
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
   * [page.addStyleTag(options)](#pageaddstyletagoptions)
-  * [page.browser()](#pagebrowser)
   * [page.browserContext()](#pagebrowsercontext)
   * [page.click(selector[, options])](#pageclickselector-options)
   * [page.close([options])](#pagecloseoptions)
@@ -96,8 +95,8 @@
   * [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
   * [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
   * [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
-  * [page.fill(selector, value)](#pagefillselector-value)
-  * [page.focus(selector)](#pagefocusselector)
+  * [page.fill(selector, value, options)](#pagefillselector-value-options)
+  * [page.focus(selector, options)](#pagefocusselector-options)
   * [page.frames()](#pageframes)
   * [page.goBack([options])](#pagegobackoptions)
   * [page.goForward([options])](#pagegoforwardoptions)
@@ -122,18 +121,15 @@
   * [page.type(selector, text[, options])](#pagetypeselector-text-options)
   * [page.url()](#pageurl)
   * [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
-  * [page.waitForFileChooser([options])](#pagewaitforfilechooseroptions)
   * [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
   * [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
   * [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
   * [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
   * [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
-  * [page.waitForXPath(xpath[, options])](#pagewaitforxpathxpath-options)
   * [page.workers](#pageworkers)
 - [class: ChromiumWorker](#class-chromiumworker)
   * [chromiumWorker.evaluate(pageFunction[, ...args])](#chromiumworkerevaluatepagefunction-args)
   * [chromiumWorker.evaluateHandle(pageFunction[, ...args])](#chromiumworkerevaluatehandlepagefunction-args)
-  * [chromiumWorker.executionContext()](#chromiumworkerexecutioncontext)
   * [chromiumWorker.url()](#chromiumworkerurl)
 - [class: ChromiumWorkers](#class-chromiumworkers)
   * [event: 'workercreated'](#event-workercreated)
@@ -183,15 +179,14 @@
   * [frame.dblclick(selector[, options])](#framedblclickselector-options)
   * [frame.evaluate(pageFunction[, ...args])](#frameevaluatepagefunction-args)
   * [frame.evaluateHandle(pageFunction[, ...args])](#frameevaluatehandlepagefunction-args)
-  * [frame.executionContext()](#frameexecutioncontext)
-  * [frame.fill(selector, value)](#framefillselector-value)
-  * [frame.focus(selector)](#framefocusselector)
+  * [frame.fill(selector, value, options)](#framefillselector-value-options)
+  * [frame.focus(selector, options)](#framefocusselector-options)
   * [frame.goto(url[, options])](#framegotourl-options)
   * [frame.hover(selector[, options])](#framehoverselector-options)
   * [frame.isDetached()](#frameisdetached)
   * [frame.name()](#framename)
   * [frame.parentFrame()](#frameparentframe)
-  * [frame.select(selector, ...values)](#frameselectselector-values)
+  * [frame.select(selector, values, options)](#frameselectselector-values-options)
   * [frame.setContent(html[, options])](#framesetcontenthtml-options)
   * [frame.title()](#frametitle)
   * [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
@@ -201,7 +196,6 @@
   * [frame.waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args)
   * [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
   * [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
-  * [frame.waitForXPath(xpath[, options])](#framewaitforxpathxpath-options)
 - [class: ChromiumInterception](#class-chromiuminterception)
   * [chromiumInterception.abort(request, [errorCode])](#chromiuminterceptionabortrequest-errorcode)
   * [chromiumInterception.authenticate(credentials)](#chromiuminterceptionauthenticatecredentials)
@@ -215,7 +209,6 @@
   * [jsHandle.dispose()](#jshandledispose)
   * [jsHandle.evaluate(pageFunction[, ...args])](#jshandleevaluatepagefunction-args)
   * [jsHandle.evaluateHandle(pageFunction[, ...args])](#jshandleevaluatehandlepagefunction-args)
-  * [jsHandle.executionContext()](#jshandleexecutioncontext)
   * [jsHandle.getProperties()](#jshandlegetproperties)
   * [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
   * [jsHandle.jsonValue()](#jshandlejsonvalue)
@@ -1071,12 +1064,6 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 
 Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
 
-#### page.browser()
-
-- returns: <[Browser]>
-
-Get the browser the page belongs to.
-
 #### page.browserContext()
 
 - returns: <[BrowserContext]>
@@ -1092,7 +1079,10 @@ Get the browser context that the page belongs to.
   - `relativePoint` <[Object]> A point to click relative to the top-left corner of element padding box. If not specified, clicks to some visible point of the element.
     - x <[number]>
     - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, 
+  currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to click in the center of the element.
@@ -1139,6 +1129,8 @@ Gets the full HTML contents of the page, including the doctype.
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to double click in the center of the element.
@@ -1204,8 +1196,6 @@ const resultHandle = await page.evaluateHandle(body => body.innerHTML, aHandle);
 console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
-
-Shortcut for [page.mainFrame().executionContext().evaluateHandle(pageFunction, ...args)](#executioncontextevaluatehandlepagefunction-args).
 
 #### page.evaluateOnNewDocument(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
@@ -1300,9 +1290,12 @@ const fs = require('fs');
 })();
 ```
 
-#### page.fill(selector, value)
+#### page.fill(selector, value, options)
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
 This method focuses the element and triggers an `input` event after filling.
@@ -1310,8 +1303,11 @@ If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matchi
 
 Shortcut for [page.mainFrame().fill()](#framefillselector-value)
 
-#### page.focus(selector)
+#### page.focus(selector, options)
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector` and focuses it.
@@ -1382,6 +1378,8 @@ Shortcut for [page.mainFrame().goto(url, options)](#framegotourl-options)
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
@@ -1440,12 +1438,15 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 > **NOTE** Screenshots take at least 1/6 second on OS X. See https://crbug.com/741689 for discussion.
 
-#### page.select(selector, ...values)
-- `selector` <[string]> A selector to query page for.
-- `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+#### page.select(selector, value, options)
+- `selector` <[string]> A selector to query frame for.
+- `value` <[string]|[ElementHandle]|[Object]|<[Array]<[string]>>|<[Array]<[ElementHandle]>>|<[Array]<[Object]>>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
@@ -1478,10 +1479,10 @@ Toggles ignoring cache for each request based on the enabled state. By default, 
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider setting content to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
+    * `load` - consider setting content to be finished when the `load` event is fired.
+    * `domcontentloaded` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
+    * `networkidle0` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
+    * `networkidle2` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]>
 
 #### page.setDefaultNavigationTimeout(timeout)
@@ -1508,13 +1509,11 @@ This setting will change the default maximum time for the following methods and 
 - [page.reload([options])](#pagereloadoptions)
 - [page.setContent(html[, options])](#pagesetcontenthtml-options)
 - [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
-- [page.waitForFileChooser([options])](#pagewaitforfilechooseroptions)
 - [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
 - [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 - [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
 - [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
 - [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
-- [page.waitForXPath(xpath[, options])](#pagewaitforxpathxpath-options)
 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) takes priority over [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout)
 
@@ -1540,6 +1539,8 @@ Shortcut for [page.mainFrame().title()](#frametitle).
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully triple clicked. The Promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to triple click in the center of the element.
@@ -1556,6 +1557,8 @@ Shortcut for [page.mainFrame().tripleclick(selector[, options])](#frametriplecli
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]>
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
@@ -1588,7 +1591,7 @@ This is a shortcut for [page.mainFrame().url()](#frameurl)
 
 This method behaves differently with respect to the type of the first parameter:
 - if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] or [xpath], depending on whether or not it starts with '//', and the method is a shortcut for
-  [page.waitForSelector](#pagewaitforselectorselector-options) or [page.waitForXPath](#pagewaitforxpathxpath-options)
+  [page.waitForSelector](#pagewaitforselectorselector-options)
 - if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [page.waitForFunction()](#pagewaitforfunctionpagefunction-options-args).
 - if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
 - otherwise, an exception is thrown
@@ -1610,29 +1613,6 @@ await page.waitFor(selector => !!document.querySelector(selector), {}, selector)
 ```
 
 Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args).
-
-#### page.waitForFileChooser([options])
-- `options` <[Object]> Optional waiting parameters
-  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-- returns: <[Promise]<[Object]>>
-  - `element` <[ElementHandle]> handle to the input element that was clicked
-  - `multiple` <[boolean]> Whether file chooser allow for [multiple](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#attr-multiple) file selection.
-
-> **NOTE** In non-headless Chromium, this method results in the native file picker dialog **not showing up** for the user.
-
-This method is typically coupled with an action that triggers file choosing.
-The following example clicks a button that issues a file chooser, and then
-responds with `/tmp/myfile.pdf` as if a user has selected this file.
-
-```js
-const [{element, multiple}] = await Promise.all([
-  page.waitForFileChooser(),
-  page.click('#upload-file-button'), // some button that triggers file selection
-]);
-await element.setInputFiles('/tmp/myfile.pdf');
-```
-
-> **NOTE** This must be called *before* the file chooser is launched. It will not return a currently active file chooser.
 
 #### page.waitForFunction(pageFunction[, options[, ...args]])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
@@ -1723,8 +1703,9 @@ return finalResponse.ok();
 
 #### page.waitForSelector(selector[, options])
 - `selector` <[string]> A selector of an element to wait for
-- `options` <[Object]> Optional waiting parameters
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
 Wait for the `selector` to appear in page. If at the moment of calling
@@ -1750,36 +1731,6 @@ const playwright = require('playwright');
 })();
 ```
 Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforselectorselector-options).
-
-#### page.waitForXPath(xpath[, options])
-- `xpath` <[string]> A [xpath] of an element to wait for
-- `options` <[Object]> Optional waiting parameters
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by xpath string is added to DOM. Resolves to `null` if waiting for `hidden: true` and xpath is not found in DOM.
-
-Wait for the `xpath` to appear in page. If at the moment of calling
-the method the `xpath` already exists, the method will return
-immediately. If the xpath doesn't appear after the `timeout` milliseconds of waiting, the function will throw.
-
-This method works across navigations:
-```js
-const playwright = require('playwright');
-
-(async () => {
-  const browser = await playwright.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  let currentURL;
-  page
-    .waitForXPath('//img')
-    .then(() => console.log('First URL with image: ' + currentURL));
-  for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
-    await page.goto(currentURL);
-  }
-  await browser.close();
-})();
-```
-Shortcut for [page.mainFrame().waitForXPath(xpath[, options])](#framewaitforxpathxpath-options).
 
 #### page.workers
 - returns: <[Workers]>
@@ -1809,8 +1760,6 @@ If the function passed to the `worker.evaluate` returns a [Promise], then `worke
 
 If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` resolves to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
-Shortcut for [(await worker.executionContext()).evaluate(pageFunction, ...args)](#executioncontextevaluatepagefunction-args).
-
 #### chromiumWorker.evaluateHandle(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
@@ -1819,11 +1768,6 @@ Shortcut for [(await worker.executionContext()).evaluate(pageFunction, ...args)]
 The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns in-page object (JSHandle).
 
 If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for the promise to resolve and return its value.
-
-Shortcut for [(await worker.executionContext()).evaluateHandle(pageFunction, ...args)](#executioncontextevaluatehandlepagefunction-args).
-
-#### chromiumWorker.executionContext()
-- returns: <[Promise]<[ExecutionContext]>>
 
 #### chromiumWorker.url()
 - returns: <[string]>
@@ -2055,6 +1999,7 @@ Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownopt
   - `relativePoint` <[Object]> Optional relative point
     - `x` <[number]> x coordinate
     - `y` <[number]> y coordinate
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
@@ -2086,6 +2031,7 @@ Dispatches a `mousemove` event.
   - `relativePoint` <[Object]> Optional relative point
     - `x` <[number]> x coordinate
     - `y` <[number]> y coordinate
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
@@ -2359,6 +2305,8 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to click in the center of the element.
@@ -2387,6 +2335,8 @@ Gets the full HTML contents of the frame, including the doctype.
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to double click in the center of the element.
@@ -2453,22 +2403,22 @@ console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
 
-
-#### frame.executionContext()
-- returns: <[Promise]<[ExecutionContext]>>
-
-Returns promise that resolves to the frame's default execution context.
-
-#### frame.fill(selector, value)
+#### frame.fill(selector, value, options)
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
 This method focuses the element and triggers an `input` event after filling.
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
 
-#### frame.focus(selector)
+#### frame.focus(selector, options)
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector` and focuses it.
@@ -2507,6 +2457,8 @@ If there's no element matching `selector`, the method throws an error.
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
@@ -2529,12 +2481,15 @@ If the name is empty, returns the id attribute instead.
 #### frame.parentFrame()
 - returns: <?[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
 
-#### frame.select(selector, ...values)
+#### frame.select(selector, value, options)
 - `selector` <[string]> A selector to query frame for.
-- `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `value` <[string]|[ElementHandle]|[Object]|<[Array]<[string]>>|<[Array]<[ElementHandle]>>|<[Array]<[Object]>>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
@@ -2577,6 +2532,8 @@ frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully triple clicked. The Promise will be rejected if there is no element matching `selector`.
 
 This method fetches an element with `selector`, scrolls it into view if needed, and then uses [page.mouse](#pagemouse) to triple click in the center of the element.
@@ -2591,6 +2548,8 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]>
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
@@ -2615,7 +2574,7 @@ Returns frame's url.
 
 This method behaves differently with respect to the type of the first parameter:
 - if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] or [xpath], depending on whether or not it starts with '//', and the method is a shortcut for
-  [frame.waitForSelector](#framewaitforselectorselector-options) or [frame.waitForXPath](#framewaitforxpathxpath-options)
+  [frame.waitForSelector](#framewaitforselectorselector-options)
 - if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [frame.waitForFunction()](#framewaitforfunctionpagefunction-options-args).
 - if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
 - otherwise, an exception is thrown
@@ -2694,8 +2653,9 @@ const [response] = await Promise.all([
 
 #### frame.waitForSelector(selector[, options])
 - `selector` <[string]> A selector of an element to wait for
-- `options` <[Object]> Optional waiting parameters
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- `options` <[Object]>
+  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
 Wait for the `selector` to appear in page. If at the moment of calling
@@ -2713,35 +2673,6 @@ const playwright = require('playwright');
   let currentURL;
   page.mainFrame()
     .waitForSelector('img')
-    .then(() => console.log('First URL with image: ' + currentURL));
-  for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
-    await page.goto(currentURL);
-  }
-  await browser.close();
-})();
-```
-
-#### frame.waitForXPath(xpath[, options])
-- `xpath` <[string]> A [xpath] of an element to wait for
-- `options` <[Object]> Optional waiting parameters
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by xpath string is added to DOM. Resolves to `null` if waiting for `hidden: true` and xpath is not found in DOM.
-
-Wait for the `xpath` to appear in page. If at the moment of calling
-the method the `xpath` already exists, the method will return
-immediately. If the xpath doesn't appear after the `timeout` milliseconds of waiting, the function will throw.
-
-This method works across navigations:
-```js
-const playwright = require('playwright');
-
-(async () => {
-  const browser = await playwright.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  let currentURL;
-  page.mainFrame()
-    .waitForXPath('//img')
     .then(() => console.log('First URL with image: ' + currentURL));
   for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
     await page.goto(currentURL);
@@ -2920,16 +2851,11 @@ expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10');
 
 This method passes this handle as the first argument to `pageFunction`.
 
-The only difference between `jsHandle.evaluate` and `jsHandle.evaluateHandle` is that `executionContext.evaluateHandle` returns in-page object (JSHandle).
+The only difference between `jsHandle.evaluate` and `jsHandle.evaluateHandle` is that `jsHandle.evaluateHandle` returns in-page object (JSHandle).
 
 If the function passed to the `jsHandle.evaluateHandle` returns a [Promise], then `jsHandle.evaluateHandle` would wait for the promise to resolve and return its value.
 
 See [Page.evaluateHandle](#pageevaluatehandlepagefunction-args) for more details.
-
-#### jsHandle.executionContext()
-- returns: <[ExecutionContext]>
-
-Returns execution context the handle belongs to.
 
 #### jsHandle.getProperties()
 - returns: <[Promise]<[Map]<[string], [JSHandle]>>>

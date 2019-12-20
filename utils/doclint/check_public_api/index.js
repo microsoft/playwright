@@ -256,7 +256,7 @@ function compareDocumentations(actual, expected) {
     const expectedPropertiesMap = new Map(expected.properties.map(property => [property.name, property.type]));
     const propertiesDiff = diff(Array.from(actualPropertiesMap.keys()).sort(), Array.from(expectedPropertiesMap.keys()).sort());
     for (const propertyName of propertiesDiff.extra)
-      errors.push(`${source} has unexpected property ${propertyName}`);
+      errors.push(`${source} has unexpected property '${propertyName}'`);
     for (const propertyName of propertiesDiff.missing)
       errors.push(`${source} is missing property ${propertyName}`);
     for (const propertyName of propertiesDiff.equal)
