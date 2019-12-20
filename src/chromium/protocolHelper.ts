@@ -16,7 +16,7 @@
  */
 import * as fs from 'fs';
 import {helper, assert, debugError} from '../helper';
-import { CDPSession } from './Connection';
+import { CRSession } from './crConnection';
 import { Protocol } from './protocol';
 
 const openAsync = helper.promisify(fs.open);
@@ -59,7 +59,7 @@ export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObjec
   return remoteObject.value;
 }
 
-export async function releaseObject(client: CDPSession, remoteObject: Protocol.Runtime.RemoteObject) {
+export async function releaseObject(client: CRSession, remoteObject: Protocol.Runtime.RemoteObject) {
   if (!remoteObject.objectId)
     return;
   await client.send('Runtime.releaseObject', {objectId: remoteObject.objectId}).catch(error => {
@@ -69,7 +69,7 @@ export async function releaseObject(client: CDPSession, remoteObject: Protocol.R
   });
 }
 
-export async function readProtocolStream(client: CDPSession, handle: string, path: string | null): Promise<Buffer> {
+export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<Buffer> {
   let eof = false;
   let file;
   if (path)

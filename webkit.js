@@ -22,7 +22,7 @@ for (const className in api.WebKit) {
     helper.installAsyncStackHooks(api.WebKit[className]);
 }
 
-const {Playwright} = require('./lib/webkit/Playwright');
+const { WKPlaywright } = require('./lib/webkit/wkPlaywright');
 const packageJson = require('./package.json');
 
-module.exports = new Playwright(__dirname, packageJson.playwright.webkit_revision);
+module.exports = new WKPlaywright(__dirname, packageJson.playwright.webkit_revision);

@@ -16,7 +16,7 @@
  */
 
 import { assert, debugError } from '../helper';
-import { TargetSession } from './Connection';
+import { WKTargetSession } from './wkConnection';
 import { Protocol } from './protocol';
 
 export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObject): any {
@@ -43,7 +43,7 @@ export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObjec
   return remoteObject.value;
 }
 
-export async function releaseObject(client: TargetSession, remoteObject: Protocol.Runtime.RemoteObject) {
+export async function releaseObject(client: WKTargetSession, remoteObject: Protocol.Runtime.RemoteObject) {
   if (!remoteObject.objectId)
     return;
   await client.send('Runtime.releaseObject', {objectId: remoteObject.objectId}).catch(error => {

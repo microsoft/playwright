@@ -22,7 +22,7 @@ for (const className in api.Chromium) {
     helper.installAsyncStackHooks(api.Chromium[className]);
 }
 
-const {Playwright} = require('./lib/chromium/Playwright');
+const { CRPlaywright } = require('./lib/chromium/crPlaywright');
 const packageJson = require('./package.json');
 
-module.exports = new Playwright(__dirname, packageJson.playwright.chromium_revision);
+module.exports = new CRPlaywright(__dirname, packageJson.playwright.chromium_revision);

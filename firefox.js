@@ -22,7 +22,7 @@ for (const className in api.Firefox) {
     helper.installAsyncStackHooks(api.Firefox[className]);
 }
 
-const {Playwright} = require('./lib/firefox/Playwright');
+const { FFPlaywright } = require('./lib/firefox/ffPlaywright');
 const packageJson = require('./package.json');
 
-module.exports = new Playwright(__dirname, packageJson.playwright.firefox_revision);
+module.exports = new FFPlaywright(__dirname, packageJson.playwright.firefox_revision);

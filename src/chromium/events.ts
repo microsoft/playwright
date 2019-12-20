@@ -17,7 +17,6 @@
 
 export const Events = {
   Browser: {
-    Disconnected: 'disconnected',
     TargetCreated: 'targetcreated',
     TargetDestroyed: 'targetdestroyed',
     TargetChanged: 'targetchanged',

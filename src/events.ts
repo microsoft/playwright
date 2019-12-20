@@ -16,6 +16,10 @@
  */
 
 export const Events = {
+  Browser: {
+    Disconnected: 'disconnected'
+  },
+
   Page: {
     Close: 'close',
     Console: 'console',
