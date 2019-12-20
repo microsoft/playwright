@@ -308,21 +308,21 @@ export class Page extends EventEmitter {
     return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, this._disconnectedPromise);
   }
 
-  async waitForRequest(options: string | (types.URLMatch & types.TimeoutOptions) = {}): Promise<Request> {
-    if (helper.isString(options))
-      options = { url: options };
+  async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
-      return helper.urlMatches(request.url(), options as types.URLMatch);
+      if (helper.isString(urlOrPredicate) || urlOrPredicate instanceof RegExp)
+        return helper.urlMatches(request.url(), urlOrPredicate);
+      return urlOrPredicate(request);
     }, timeout, this._disconnectedPromise);
   }
 
-  async waitForResponse(options: string | (types.URLMatch & types.TimeoutOptions) = {}): Promise<Request> {
-    if (helper.isString(options))
-      options = { url: options };
+  async waitForResponse(urlOrPredicate: string | RegExp | ((r: network.Response) => boolean), options: types.TimeoutOptions = {}): Promise<network.Response> {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
-      return helper.urlMatches(response.url(), options as types.URLMatch);
+      if (helper.isString(urlOrPredicate) || urlOrPredicate instanceof RegExp)
+        return helper.urlMatches(response.url(), urlOrPredicate);
+      return urlOrPredicate(response);
     }, timeout, this._disconnectedPromise);
   }
 
