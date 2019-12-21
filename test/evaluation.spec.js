@@ -297,7 +297,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.addScriptTag({content: 'window.e = 10;'}).catch(e => void e);
       expect(await page.evaluate(() => window.e)).toBe(undefined);
     });
-    it.skip(WEBKIT)('should work after a cross origin navigation', async({page, server}) => {
+    it('should work after a cross origin navigation', async({page, server}) => {
       await page.goto(server.CROSS_PROCESS_PREFIX);
       await page.evaluateOnNewDocument(function(){
         window.injected = 123;
