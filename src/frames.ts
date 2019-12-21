@@ -372,11 +372,9 @@ export class Frame {
     return handle;
   }
 
-  async waitForSelector(selector: string, options?: types.TimeoutOptions & { waitFor?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'any' } = (options || {});
-    if ((waitFor as any) === 'nowait')
-      throw new Error('waitForSelector does not support "nowait"');
-    const handle = await this._waitForSelectorInUtilityContext(selector, waitFor as types.Visibility, timeout);
+  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+    const { timeout = this._page._timeoutSettings.timeout(), visibility = 'any' } = (options || {});
+    const handle = await this._waitForSelectorInUtilityContext(selector, visibility, timeout);
     const mainContext = await this._mainContext();
     if (handle && handle._context !== mainContext) {
       const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
@@ -651,7 +649,7 @@ export class Frame {
     await handle.dispose();
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: any = {}, ...args: any[]): Promise<js.JSHandle | null> {
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & { visibility?: types.Visibility } = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
       return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
