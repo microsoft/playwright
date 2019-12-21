@@ -305,10 +305,10 @@ export class Page extends EventEmitter {
     return this.mainFrame().waitForLoadState(options);
   }
 
-  async waitForEvent(event: string, options: Function | (types.TimeoutOptions & { predicate?: Function }) = {}): Promise<any> {
-    if (typeof options === 'function')
-      options = { predicate: options };
-    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = options;
+  async waitForEvent(event: string, optionsOrPredicate: Function | (types.TimeoutOptions & { predicate?: Function }) = {}): Promise<any> {
+    if (typeof optionsOrPredicate === 'function')
+      optionsOrPredicate = { predicate: optionsOrPredicate };
+    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = optionsOrPredicate;
     return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, this._disconnectedPromise);
   }
 

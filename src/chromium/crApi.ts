@@ -3,7 +3,7 @@
 
 export { CRBrowser as ChromiumBrowser } from './crBrowser';
 export { CRSession as ChromiumSession } from './crConnection';
-export { CRPlaywright as Chromium } from './crPlaywright';
+export { CRPlaywright as ChromiumPlaywright } from './crPlaywright';
 export { CRTarget as ChromiumTarget } from './crTarget';
 export { CRAccessibility as ChromiumAccessibility } from './features/crAccessibility';
 export { CRCoverage as ChromiumCoverage } from './features/crCoverage';

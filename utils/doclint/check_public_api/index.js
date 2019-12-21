@@ -193,9 +193,9 @@ function compareDocumentations(actual, expected) {
     if (actual.name.includes('unction') || actual.name.includes('Serializable'))
       return;
     // We don't have nullchecks on for TypeScript
-    const actualName = actual.name.replace(/[\? ]/g, '');
+    const actualName = actual.name.replace(/[\? ]/g, '').replace(/ElementHandle\<Node\>/g, 'ElementHandle');
     // TypeScript likes to add some spaces
-    const expectedName = expected.name.replace(/\ /g, '');
+    const expectedName = expected.name.replace(/\ /g, '').replace(/ElementHandle\<Node\>/g, 'ElementHandle');
     if (expectedName !== actualName)
       errors.push(`${source} ${actualName} != ${expectedName}`);
     const actualPropertiesMap = new Map(actual.properties.map(property => [property.name, property.type]));

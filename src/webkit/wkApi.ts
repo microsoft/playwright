@@ -2,4 +2,4 @@
 // Licensed under the MIT license.
 
 export { WKBrowser as WebKitBrowser } from './wkBrowser';
-export { WKPlaywright as WebKit } from './wkPlaywright';
+export { WKPlaywright as WebKitPlaywright } from './wkPlaywright';

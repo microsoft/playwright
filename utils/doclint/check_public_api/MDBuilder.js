@@ -56,8 +56,14 @@ class MDOutline {
         const type = findType(str);
         const properties = [];
         const comment = str.substring(str.indexOf('<') + type.length + 2).trim();
-        if (!type.includes(`"`)) {
+        const hasNonEnumProperties = type.split('|').some(part => {
+          return part !== 'string' && part !== 'number' && part !== 'Array<string>' && !(part[0] === '"' && part[part.length - 1] === '"');
+        });
+        if (hasNonEnumProperties) {
           for (const childElement of element.querySelectorAll(':scope > ul > li')) {
+            const text = childElement.textContent;
+            if (text.startsWith(`"`) || text.startsWith(`'`))
+              continue;
             const property = parseProperty(childElement);
             property.required = property.comment.includes('***required***');
             properties.push(property);

@@ -3,4 +3,4 @@
 
 export { FFInterception as FirefoxInterception } from './features/ffInterception';
 export { FFBrowser as FirefoxBrowser } from './ffBrowser';
-export { FFPlaywright as Firefox } from './ffPlaywright';
+export { FFPlaywright as FirefoxPlaywright } from './ffPlaywright';

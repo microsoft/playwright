@@ -13,10 +13,10 @@ for (const className in api) {
 
 module.exports.playwright = browser => {
   if (browser === 'chromium')
-    return new api.Chromium(__dirname, packageJson.playwright.chromium_revision);
+    return new api.ChromiumPlaywright(__dirname, packageJson.playwright.chromium_revision);
   if (browser === 'firefox')
-    return new api.Firefox(__dirname, packageJson.playwright.firefox_revision);
+    return new api.FirefoxPlaywright(__dirname, packageJson.playwright.firefox_revision);
   if (browser === 'webkit')
-    return new api.WebKit(__dirname, packageJson.playwright.webkit_revision);
+    return new api.WebKitPlaywright(__dirname, packageJson.playwright.webkit_revision);
   throw new Error(`Unsupported browser "${browser}"`);
 };

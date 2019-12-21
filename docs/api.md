@@ -19,6 +19,7 @@
   * [chromiumPlaywright.errors](#chromiumplaywrighterrors)
   * [chromiumPlaywright.executablePath()](#chromiumplaywrightexecutablepath)
   * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
+  * [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
 - [class: Browser](#class-browser)
   * [event: 'disconnected'](#event-disconnected)
   * [browser.browserContexts()](#browserbrowsercontexts)
@@ -31,7 +32,6 @@
   * [browserFetcher.canDownload(revision)](#browserfetchercandownloadrevision)
   * [browserFetcher.download(revision[, progressCallback])](#browserfetcherdownloadrevision-progresscallback)
   * [browserFetcher.localRevisions()](#browserfetcherlocalrevisions)
-  * [browserFetcher.platform()](#browserfetcherplatform)
   * [browserFetcher.remove(revision)](#browserfetcherremoverevision)
   * [browserFetcher.revisionInfo(revision)](#browserfetcherrevisioninforevision)
 - [class: BrowserServer](#class-browserserver)
@@ -81,6 +81,7 @@
   * [page.$$(selector)](#pageselector-1)
   * [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
   * [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
+  * [page.$wait(selector, pageFunction[, options[, ...args]])](#pagewaitselector-pagefunction-options-args)
   * [page.$x(expression)](#pagexexpression)
   * [page.accessibility](#pageaccessibility)
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
@@ -124,7 +125,9 @@
   * [page.url()](#pageurl)
   * [page.viewport()](#pageviewport)
   * [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
+  * [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
   * [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
+  * [page.waitForLoadState([options])](#pagewaitforloadstateoptions)
   * [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
   * [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
   * [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
@@ -173,6 +176,7 @@
   * [frame.$$(selector)](#frameselector-1)
   * [frame.$$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args)
   * [frame.$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args-1)
+  * [frame.$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args)
   * [frame.$x(expression)](#framexexpression)
   * [frame.addScriptTag(options)](#frameaddscripttagoptions)
   * [frame.addStyleTag(options)](#frameaddstyletagoptions)
@@ -197,6 +201,7 @@
   * [frame.url()](#frameurl)
   * [frame.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args)
   * [frame.waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args)
+  * [frame.waitForLoadState([options])](#framewaitforloadstateoptions)
   * [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
   * [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
 - [class: ChromiumInterception](#class-chromiuminterception)
@@ -229,6 +234,7 @@
   * [elementHandle.focus()](#elementhandlefocus)
   * [elementHandle.hover([options])](#elementhandlehoveroptions)
   * [elementHandle.isIntersectingViewport()](#elementhandleisintersectingviewport)
+  * [elementHandle.ownerFrame()](#elementhandleownerframe)
   * [elementHandle.press(key[, options])](#elementhandlepresskey-options)
   * [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
   * [elementHandle.select(...values)](#elementhandleselectvalues)
@@ -439,6 +445,24 @@ const browser = await playwright.launch({
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
 
+#### chromiumPlaywright.launchServer([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run browser in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
+  - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
+- returns: <[Promise]<[BrowserServer]>> Promise which resolves to browser server instance.
+
 ### class: Browser
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
@@ -576,9 +600,6 @@ The method initiates a GET request to download the revision from the host.
 #### browserFetcher.localRevisions()
 - returns: <[Promise]<[Array]<[string]>>> A list of all revisions available locally on disk.
 
-#### browserFetcher.platform()
-- returns: <[string]> One of `mac`, `linux`, `win32` or `win64`.
-
 #### browserFetcher.remove(revision)
 - `revision` <[string]> a revision to remove. The method will throw if the revision has not been downloaded.
 - returns: <[Promise]> Resolves when the revision has been removed.
@@ -659,8 +680,8 @@ Returns browser target.
 - returns: <[Target]> a target given page was created from.
 
 #### chromiumBrowser.serviceWorker(target)
-- `target` <[Target]> Target to treat as a service worker
-- returns: <[Promise]<[Worker]>>
+- `target` <[ChromiumTarget]> Target to treat as a service worker
+- returns: <[Promise]<[ChromiumWorker]>>
 
 Attaches to the service worker target.
 
@@ -794,7 +815,7 @@ await browserContext.setCookies([cookieObject1, cookieObject2]);
 
 #### browserContext.setPermissions(origin, permissions[])
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
-- `permissions` <[Array]<string>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
+- `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
     - `'geolocation'`
     - `'midi'`
     - `'midi-sysex'` (system-exclusive midi)
@@ -1031,6 +1052,24 @@ const html = await page.$eval('.main-container', e => e.outerHTML);
 ```
 
 Shortcut for [page.mainFrame().$eval(selector, pageFunction)](#frameevalselector-pagefunction-args).
+
+#### page.$wait(selector, pageFunction[, options[, ...args]])
+- `selector` <[string]> A selector to query page for
+- `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
+- `options` <[Object]> Optional waiting parameters
+  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
+    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
+- returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
+
+This method runs `document.querySelector` within the page and passes it as the first argument to `pageFunction`. If there's no element matching `selector`, the method throws an error.
+
+If `pageFunction` returns a [Promise], then `page.$wait` would wait for the promise to resolve and return its value. The function
+is being called on the element periodically until either timeout expires or the function returns the truthy value.
+
+Shortcut for [page.mainFrame().$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args).
 
 #### page.$x(expression)
 - `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
@@ -1359,10 +1398,10 @@ Shortcut for [page.mainFrame().focus(selector)](#framefocusselector).
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">> When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider navigation to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
 can not go back, resolves to `null`.
 
@@ -1372,10 +1411,10 @@ Navigate to the previous page in history.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">> When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider navigation to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
 can not go forward, resolves to `null`.
 
@@ -1386,10 +1425,10 @@ Navigate to the next page in history.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">> When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider navigation to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
@@ -1453,10 +1492,10 @@ Page is guaranteed to have a main frame which persists during navigations.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">> When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider navigation to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 #### page.screenshot([options])
@@ -1477,7 +1516,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 #### page.select(selector, value, options)
 - `selector` <[string]> A selector to query frame for.
-- `value` <[string]|[ElementHandle]|[Object]|<[Array]<[string]>>|<[Array]<[ElementHandle]>>|<[Array]<[Object]>>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `value` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
@@ -1516,10 +1555,10 @@ Toggles ignoring cache for each request based on the enabled state. By default, 
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
-    * `load` - consider setting content to be finished when the `load` event is fired.
-    * `domcontentloaded` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
-    * `networkidle0` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
-    * `networkidle2` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider setting content to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]>
 
 #### page.setDefaultNavigationTimeout(timeout)
@@ -1654,8 +1693,8 @@ This is a shortcut for [page.mainFrame().url()](#frameurl)
 - `options` <[Object]> Optional waiting parameters
   - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
   - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `raf` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `mutation` - to execute `pageFunction` on every DOM mutation.
+    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
@@ -1685,12 +1724,24 @@ await page.waitFor(selector => !!document.querySelector(selector), {}, selector)
 
 Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args).
 
+#### page.waitForEvent(event[, optionsOrPredicate])
+- `event` <[string]> Event name, same one would pass into `page.on(event)`.
+- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
+  - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
+  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
+    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- returns: <[Promise]<[any]>> Promise which resolves to the event data value.
+
+Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value.
+
 #### page.waitForFunction(pageFunction[, options[, ...args]])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
 - `options` <[Object]> Optional waiting parameters
   - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `raf` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `mutation` - to execute `pageFunction` on every DOM mutation.
+    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
@@ -1719,15 +1770,35 @@ await page.waitForFunction(selector => !!document.querySelector(selector), {}, s
 
 Shortcut for [page.mainFrame().waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args).
 
+#### page.waitForLoadState([options])
+- `options` <[Object]> Navigation parameters which might have the following properties:
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+- returns: <[Promise]> Promise which resolves when the load state has been achieved.
+
+This resolves when the page reaches a required load state, `load` by dedault. The navigation can be in progress when it is called.
+If navigation is already at a required state, resolves immediately.
+
+```js
+await page.click('button'); // Click triggers navigation.
+await page.waitForLoadState(); // The promise resolves after navigation has finished.
+```
+
+Shortcut for [page.mainFrame().waitForLoadState([options])](#framewaitforloadstateoptions).
+
 #### page.waitForNavigation([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider navigation to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
 
 This resolves when the page navigates to a new URL or reloads. It is useful for when you run code
@@ -2121,11 +2192,11 @@ Dispatches a `mouseup` event.
   - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
   - `displayHeaderFooter` <[boolean]> Display header and footer. Defaults to `false`.
   - `headerTemplate` <[string]> HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
-    - `date` formatted print date
-    - `title` document title
-    - `url` document location
-    - `pageNumber` current page number
-    - `totalPages` total pages in the document
+    - `'date'` formatted print date
+    - `'title'` document title
+    - `'url'` document location
+    - `'pageNumber'` current page number
+    - `'totalPages'` total pages in the document
   - `footerTemplate` <[string]> HTML template for the print footer. Should use the same format as the `headerTemplate`.
   - `printBackground` <[boolean]> Print background graphics. Defaults to `false`.
   - `landscape` <[boolean]> Paper orientation. Defaults to `false`.
@@ -2336,6 +2407,22 @@ const preloadHref = await frame.$eval('link[rel=preload]', el => el.href);
 const html = await frame.$eval('.main-container', e => e.outerHTML);
 ```
 
+#### frame.$wait(selector, pageFunction[, options[, ...args]])
+- `selector` <[string]> A selector to query page for
+- `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
+- `options` <[Object]> Optional waiting parameters
+  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
+    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
+- returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
+
+This method runs `document.querySelector` within the frame and passes it as the first argument to `pageFunction`. If there's no element matching `selector`, the method throws an error.
+
+If `pageFunction` returns a [Promise], then `page.$wait` would wait for the promise to resolve and return its value. The function
+is being called on the element periodically until either timeout expires or the function returns the truthy value.
+
 #### frame.$x(expression)
 - `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
@@ -2498,10 +2585,10 @@ If there's no element matching `selector`, the method throws an error.
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider navigation to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
@@ -2552,7 +2639,7 @@ If the name is empty, returns the id attribute instead.
 
 #### frame.select(selector, value, options)
 - `selector` <[string]> A selector to query frame for.
-- `value` <[string]|[ElementHandle]|[Object]|<[Array]<[string]>>|<[Array]<[ElementHandle]>>|<[Array]<[Object]>>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `value` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
@@ -2583,10 +2670,10 @@ frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 - `options` <[Object]> Parameters which might have the following properties:
   - `timeout` <[number]> Maximum time in milliseconds for resources to load, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider setting markup succeeded, defaults to `load`. Given an array of event strings, setting content is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider setting content to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider setting content to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider setting content to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider setting content to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider setting content to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]>
 
 #### frame.title()
@@ -2640,8 +2727,8 @@ Returns frame's url.
 - `options` <[Object]> Optional waiting parameters
   - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
   - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `raf` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `mutation` - to execute `pageFunction` on every DOM mutation.
+    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
@@ -2673,8 +2760,8 @@ await page.waitFor(selector => !!document.querySelector(selector), {}, selector)
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
 - `options` <[Object]> Optional waiting parameters
   - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `raf` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `mutation` - to execute `pageFunction` on every DOM mutation.
+    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
@@ -2701,15 +2788,33 @@ const selector = '.foo';
 await page.waitForFunction(selector => !!document.querySelector(selector), {}, selector);
 ```
 
+#### frame.waitForLoadState([options])
+- `options` <[Object]> Navigation parameters which might have the following properties:
+  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+  - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+- returns: <[Promise]> Promise which resolves when the load state has been achieved.
+
+This resolves when the page reaches a required load state, `load` by dedault. The navigation can be in progress when it is called.
+If navigation is already at a required state, resolves immediately.
+
+```js
+await frame.click('button'); // Click triggers navigation.
+await frame.waitForLoadState(); // The promise resolves after navigation has finished.
+```
+
 #### frame.waitForNavigation([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
-    - `load` - consider navigation to be finished when the `load` event is fired.
-    - `domcontentloaded` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
-    - `networkidle0` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `networkidle2` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
 
 This resolves when the frame navigates to a new URL. It is useful for when you run code
@@ -3107,6 +3212,9 @@ If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.isIntersectingViewport()
 - returns: <[Promise]<[boolean]>> Resolves to true if the element is visible in the current viewport.
+
+#### elementHandle.ownerFrame()
+- returns: <[Promise]<[Frame]>> Returns the frame containing the given element.
 
 #### elementHandle.press(key[, options])
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
@@ -3556,6 +3664,7 @@ const playwright = require('playwright');
 [CDPSession]: #class-cdpsession  "CDPSession"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [Chromium]: #class-chromium "Chromium"
+[ChromiumTarget]: #class-chromiumtarget "ChromiumTarget"
 [ConnectionTransport]: ../lib/WebSocketTransport.js "ConnectionTransport"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
 [Coverage]: #class-coverage "Coverage"

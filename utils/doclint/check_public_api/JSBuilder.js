@@ -188,7 +188,7 @@ function checkSources(sources) {
         return new Documentation.Type(type.symbol.name);
       return new Documentation.Type(`${type.symbol.name}<${innerTypeNames.join(', ')}>`, properties);
     }
-    return new Documentation.Type(typeName, []);
+    return new Documentation.Type(expandPrefix(typeName), []);
   }
 
   /**
