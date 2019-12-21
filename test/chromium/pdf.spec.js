@@ -26,7 +26,7 @@ module.exports.describe = function({testRunner, expect, headless, ASSETS_DIR}) {
   describe.skip(!headless)('Page.pdf', function() {
     it('should be able to save file', async({page, server}) => {
       const outputFile = path.join(ASSETS_DIR, 'output.pdf');
-      await page.pdf.generate({path: outputFile});
+      await page.pdf({path: outputFile});
       expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
       fs.unlinkSync(outputFile);
     });

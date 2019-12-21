@@ -208,9 +208,9 @@ export class Page extends EventEmitter {
     await this._delegate.exposeBinding(name, helper.evaluationString(addPageBinding, name));
 
     function addPageBinding(bindingName: string) {
-      const binding = window[bindingName];
-      window[bindingName] = (...args) => {
-        const me = window[bindingName];
+      const binding = (window as any)[bindingName];
+      (window as any)[bindingName] = (...args: any[]) => {
+        const me = (window as any)[bindingName];
         let callbacks = me['callbacks'];
         if (!callbacks) {
           callbacks = new Map();
@@ -250,20 +250,20 @@ export class Page extends EventEmitter {
     context.evaluate(expression).catch(debugError);
 
     function deliverResult(name: string, seq: number, result: any) {
-      window[name]['callbacks'].get(seq).resolve(result);
-      window[name]['callbacks'].delete(seq);
+      (window as any)[name]['callbacks'].get(seq).resolve(result);
+      (window as any)[name]['callbacks'].delete(seq);
     }
 
     function deliverError(name: string, seq: number, message: string, stack: string) {
       const error = new Error(message);
       error.stack = stack;
-      window[name]['callbacks'].get(seq).reject(error);
-      window[name]['callbacks'].delete(seq);
+      (window as any)[name]['callbacks'].get(seq).reject(error);
+      (window as any)[name]['callbacks'].delete(seq);
     }
 
     function deliverErrorValue(name: string, seq: number, value: any) {
-      window[name]['callbacks'].get(seq).reject(value);
-      window[name]['callbacks'].delete(seq);
+      (window as any)[name]['callbacks'].get(seq).reject(value);
+      (window as any)[name]['callbacks'].delete(seq);
     }
   }
 

@@ -31,8 +31,8 @@ import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { CRAccessibility } from './features/crAccessibility';
 import { CRCoverage } from './features/crCoverage';
-import { CRPDF } from './features/crPdf';
-import { CRWorkers } from './features/crWorkers';
+import { CRPDF, PDFOptions } from './features/crPdf';
+import { CRWorkers, CRWorker } from './features/crWorkers';
 import { CRInterception } from './features/crInterception';
 import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
@@ -44,7 +44,7 @@ const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class CRFrameManager implements PageDelegate {
   _client: CRSession;
-  private _page: Page;
+  private _page: CRPage;
   readonly _networkManager: CRNetworkManager;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
@@ -58,13 +58,8 @@ export class CRFrameManager implements PageDelegate {
     this._browser = browser;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
-    this._page = new Page(this, browserContext);
-    this._networkManager = new CRNetworkManager(client, this._page);
-    (this._page as any).accessibility = new CRAccessibility(client);
-    (this._page as any).coverage = new CRCoverage(client);
-    (this._page as any).pdf = new CRPDF(client);
-    (this._page as any).workers = new CRWorkers(client, this._page._addConsoleMessage.bind(this._page), error => this._page.emit(Events.Page.PageError, error));
-    (this._page as any).interception = new CRInterception(this._networkManager);
+    this._page = new CRPage(client, this, browserContext);
+    this._networkManager = this._page._networkManager;
 
     this._eventListeners = [
       helper.addEventListener(client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
@@ -451,6 +446,33 @@ export class CRFrameManager implements PageDelegate {
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object).asElement()!;
+  }
+}
+
+export class CRPage extends Page {
+  readonly accessibility: CRAccessibility;
+  readonly coverage: CRCoverage;
+  readonly interception: CRInterception;
+  private _pdf: CRPDF;
+  private _workers: CRWorkers;
+  _networkManager: CRNetworkManager;
+
+  constructor(client: CRSession, delegate: CRFrameManager, browserContext: BrowserContext) {
+    super(delegate, browserContext);
+    this.accessibility = new CRAccessibility(client);
+    this.coverage = new CRCoverage(client);
+    this._pdf = new CRPDF(client);
+    this._workers = new CRWorkers(client, this, this._addConsoleMessage.bind(this), error => this.emit(Events.Page.PageError, error));
+    this._networkManager = new CRNetworkManager(client, this);
+    this.interception = new CRInterception(this._networkManager);
+  }
+
+  async pdf(options?: PDFOptions): Promise<Buffer> {
+    return this._pdf.generate(options);
+  }
+
+  workers(): CRWorker[] {
+    return this._workers.list();
   }
 }
 
