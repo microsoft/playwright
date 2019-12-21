@@ -68,6 +68,10 @@ export class WKFrameManager implements PageDelegate {
     this._addSessionListeners();
     this._networkManager.setSession(session);
     this._isolatedWorlds = new Set();
+    // New bootstrap scripts may have been added during provisional load, push them
+    // again to be on the safe side.
+    if (this._setBootstrapScripts.length)
+      this._setBootstrapScripts(session);
   }
 
   // This method is called for provisional targets as well. The session passed as the parameter
@@ -95,6 +99,8 @@ export class WKFrameManager implements PageDelegate {
       promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
     if (contextOptions.javaScriptEnabled === false)
       promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: false }));
+    if (this._setBootstrapScripts.length && session.isProvisional())
+      this._setBootstrapScripts(session);
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
@@ -322,16 +328,18 @@ export class WKFrameManager implements PageDelegate {
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {
     const script = `self.${name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${bindingFunction}`;
     this._bootstrapScripts.unshift(script);
-    const source = this._bootstrapScripts.join(';');
-    await this._session.send('Page.setBootstrapScript', { source });
+    await this._setBootstrapScripts(this._session);
     await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(debugError)));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
     this._bootstrapScripts.push(script);
+    await this._setBootstrapScripts(this._session);
+  }
+
+  private async _setBootstrapScripts(session: WKTargetSession) {
     const source = this._bootstrapScripts.join(';');
-    // TODO(yurys): support process swap on navigation.
-    await this._session.send('Page.setBootstrapScript', { source });
+    await session.send('Page.setBootstrapScript', { source });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
