@@ -91,6 +91,7 @@
   * [page.content()](#pagecontent)
   * [page.coverage](#pagecoverage)
   * [page.dblclick(selector[, options])](#pagedblclickselector-options)
+  * [page.emulateMedia(options)](#pageemulatemediaoptions)
   * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
   * [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
   * [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
@@ -116,10 +117,12 @@
   * [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
   * [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
   * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
+  * [page.setViewport(viewport)](#pagesetviewportviewport)
   * [page.title()](#pagetitle)
   * [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
   * [page.type(selector, text[, options])](#pagetypeselector-text-options)
   * [page.url()](#pageurl)
+  * [page.viewport()](#pageviewport)
   * [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
   * [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
   * [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
@@ -257,7 +260,6 @@
   * [response.text()](#responsetext)
   * [response.url()](#responseurl)
 - [class: ChromiumTarget](#class-chromiumtarget)
-  * [chromiumTarget.browser()](#chromiumtargetbrowser)
   * [chromiumTarget.browserContext()](#chromiumtargetbrowsercontext)
   * [chromiumTarget.createCDPSession()](#chromiumtargetcreatecdpsession)
   * [chromiumTarget.opener()](#chromiumtargetopener)
@@ -792,7 +794,7 @@ await browserContext.setCookies([cookieObject1, cookieObject2]);
 
 #### browserContext.setPermissions(origin, permissions[])
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
-- `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
+- `permissions` <[Array]<string>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
     - `'geolocation'`
     - `'midi'`
     - `'midi-sysex'` (system-exclusive midi)
@@ -1141,6 +1143,41 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
 Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclickselector-options).
+
+#### page.emulateMedia(options)
+- `options` <[Object]>
+  - `type` <"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
+  - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
+- returns: <[Promise]>
+
+```js
+await page.evaluate(() => matchMedia('screen').matches));
+// → true
+await page.evaluate(() => matchMedia('print').matches));
+// → true
+
+await page.emulateMedia({ type: 'print' });
+await page.evaluate(() => matchMedia('screen').matches));
+// → false
+await page.evaluate(() => matchMedia('print').matches));
+// → true
+
+await page.emulateMedia({});
+await page.evaluate(() => matchMedia('screen').matches));
+// → true
+await page.evaluate(() => matchMedia('print').matches));
+// → true
+```
+
+```js
+await page.emulateMedia({ colorScheme: 'dark' }] });
+await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches));
+// → true
+await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches));
+// → false
+await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches));
+// → false
+```
 
 #### page.evaluate(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
@@ -1525,6 +1562,32 @@ The extra HTTP headers will be sent with every request the page initiates.
 
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
 
+#### page.setViewport(viewport)
+- `viewport` <[Object]>
+  - `width` <[number]> page width in pixels. **required**
+  - `height` <[number]> page height in pixels. **required**
+  - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+  - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
+  - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
+- returns: <[Promise]>
+
+> **NOTE** in certain cases, setting viewport will reload the page in order to set the `isMobile` or `hasTouch` properties.
+
+In the case of multiple pages in a single browser, each page can have its own viewport size.
+
+`page.setViewport` will resize the page. A lot of websites don't expect phones to change size, so you should set the viewport before navigating to the page.
+
+```js
+const page = await browser.newPage();
+await page.setViewport({
+  width: 640,
+  height: 480,
+  deviceScaleFactor: 1,
+});
+await page.goto('https://example.com');
+```
+
 #### page.title()
 - returns: <[Promise]<[string]>> The page's title.
 
@@ -1577,15 +1640,23 @@ Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselect
 
 This is a shortcut for [page.mainFrame().url()](#frameurl)
 
+#### page.viewport()
+- returns: <?[Object]>
+  - `width` <[number]> page width in pixels.
+  - `height` <[number]> page height in pixels.
+  - `deviceScaleFactor` <[number]> Specify device scale factor (can be though of as dpr). Defaults to `1`.
+  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+  - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
+  - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
+
 #### page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])
 - `selectorOrFunctionOrTimeout` <[string]|[number]|[function]> A [selector], predicate or timeout to wait for
 - `options` <[Object]> Optional waiting parameters
-  - `visible` <[boolean]> wait for element to be present in DOM and to be visible. Defaults to `false`.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-  - `hidden` <[boolean]> wait for element to not be found in the DOM or to be hidden. Defaults to `false`.
-  - `polling` <[string]|[number]> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
+  - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
+  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
     - `raf` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
     - `mutation` - to execute `pageFunction` on every DOM mutation.
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
@@ -1704,7 +1775,7 @@ return finalResponse.ok();
 #### page.waitForSelector(selector[, options])
 - `selector` <[string]> A selector of an element to wait for
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
@@ -1999,7 +2070,6 @@ Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownopt
   - `relativePoint` <[Object]> Optional relative point
     - `x` <[number]> x coordinate
     - `y` <[number]> y coordinate
-  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
@@ -2031,7 +2101,6 @@ Dispatches a `mousemove` event.
   - `relativePoint` <[Object]> Optional relative point
     - `x` <[number]> x coordinate
     - `y` <[number]> y coordinate
-  - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]>
 
 Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
@@ -2080,7 +2149,7 @@ Dispatches a `mouseup` event.
 
 ```js
 // Generates a PDF with 'screen' media type.
-await page.emulateMedia({ type: 'screen' });
+await page.emulateMedia({type: 'screen'});
 await page.pdf.generate({path: 'page.pdf'});
 ```
 
@@ -2569,6 +2638,11 @@ Returns frame's url.
 #### frame.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])
 - `selectorOrFunctionOrTimeout` <[string]|[number]|[function]> A [selector], predicate or timeout to wait for
 - `options` <[Object]> Optional waiting parameters
+  - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
+  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
+    - `raf` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
+    - `mutation` - to execute `pageFunction` on every DOM mutation.
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
@@ -2654,7 +2728,7 @@ const [response] = await Promise.all([
 #### frame.waitForSelector(selector[, options])
 - `selector` <[string]> A selector of an element to wait for
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
@@ -3267,12 +3341,6 @@ Contains the status text of the response (e.g. usually an "OK" for a success).
 Contains the URL of the response.
 
 ### class: ChromiumTarget
-
-#### chromiumTarget.browser()
-
-- returns: <[Browser]>
-
-Get the browser the target belongs to.
 
 #### chromiumTarget.browserContext()
 

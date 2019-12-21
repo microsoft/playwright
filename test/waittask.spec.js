@@ -331,7 +331,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     });
     it('should wait for visible recursively', async({page, server}) => {
       let divVisible = false;
-      const waitForSelector = page.waitForSelector('div#inner', { waitFor: 'visible' }).then(() => divVisible = true);
+      const waitForSelector = page.waitForSelector('div#inner', { visibility: 'visible' }).then(() => divVisible = true);
       await page.setContent(`<div style='display: none; visibility: hidden;'><div id="inner">hi</div></div>`);
       expect(divVisible).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
@@ -343,7 +343,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('hidden should wait for visibility: hidden', async({page, server}) => {
       let divHidden = false;
       await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', { waitFor: 'hidden' }).then(() => divHidden = true);
+      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divHidden = true);
       await page.waitForSelector('div'); // do a round trip
       expect(divHidden).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.setProperty('visibility', 'hidden'));
@@ -353,7 +353,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('hidden should wait for display: none', async({page, server}) => {
       let divHidden = false;
       await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', { waitFor: 'hidden' }).then(() => divHidden = true);
+      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divHidden = true);
       await page.waitForSelector('div'); // do a round trip
       expect(divHidden).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.setProperty('display', 'none'));
@@ -363,7 +363,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('hidden should wait for removal', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let divRemoved = false;
-      const waitForSelector = page.waitForSelector('div', { waitFor: 'hidden' }).then(() => divRemoved = true);
+      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divRemoved = true);
       await page.waitForSelector('div'); // do a round trip
       expect(divRemoved).toBe(false);
       await page.evaluate(() => document.querySelector('div').remove());
@@ -371,7 +371,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       expect(divRemoved).toBe(true);
     });
     it('should return null if waiting to hide non-existing element', async({page, server}) => {
-      const handle = await page.waitForSelector('non-existing', { waitFor: 'hidden' });
+      const handle = await page.waitForSelector('non-existing', { visibility: 'hidden' });
       expect(handle).toBe(null);
     });
     it('should respect timeout', async({page, server}) => {
@@ -384,7 +384,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('should have an error message specifically for awaiting an element to be hidden', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let error = null;
-      await page.waitForSelector('div', { waitFor: 'hidden', timeout: 10 }).catch(e => error = e);
+      await page.waitForSelector('div', { visibility: 'hidden', timeout: 10 }).catch(e => error = e);
       expect(error).toBeTruthy();
       expect(error.message).toContain('waiting for selector "[hidden] div" failed: timeout');
     });
@@ -407,33 +407,24 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
       expect(error.stack).toContain('waittask.spec.js');
     });
-    it('should throw for waitFor nowait', async({page, server}) => {
-      let error;
-      try {
-        await page.waitForSelector('non-existing-element', { waitFor: 'nowait' });
-      } catch (e) {
-        error = e;
-      }
-      expect(error.message).toBe('waitForSelector does not support "nowait"');
-    });
     it('should throw for unknown waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { waitFor: 'foo' }).catch(e => e);
+      const error = await page.waitForSelector('section', { visibility: 'foo' }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should throw for numeric waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { waitFor: 123 }).catch(e => e);
+      const error = await page.waitForSelector('section', { visibility: 123 }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should throw for true waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { waitFor: true }).catch(e => e);
+      const error = await page.waitForSelector('section', { visibility: true }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should throw for false waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { waitFor: false }).catch(e => e);
+      const error = await page.waitForSelector('section', { visibility: false }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should support >> selector syntax', async({page, server}) => {

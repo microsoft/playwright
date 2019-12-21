@@ -300,6 +300,8 @@ module.exports = async function(page, sources) {
 
   // Push base class documentation to derived classes.
   for (const [name, clazz] of documentation.classes.entries()) {
+    clazz.validateOrder(errors);
+
     if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
       continue;
     const superClass = documentation.classes.get(clazz.extends);
@@ -311,6 +313,7 @@ module.exports = async function(page, sources) {
       if (superClass.members.has(memberName))
         errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
     }
+
     clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray];
     clazz.index();
   }

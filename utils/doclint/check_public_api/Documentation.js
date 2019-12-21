@@ -72,6 +72,50 @@ Documentation.Class = class {
       }
     }
   }
+
+  validateOrder(errors) {
+    const members = this.membersArray;
+    // Events should go first.
+    let eventIndex = 0;
+    for (; eventIndex < members.length && members[eventIndex].kind === 'event'; ++eventIndex);
+    for (; eventIndex < members.length && members[eventIndex].kind !== 'event'; ++eventIndex);
+    if (eventIndex < members.length)
+      errors.push(`Events should go first. Event '${members[eventIndex].name}' in class ${cls.name} breaks order`);
+
+    // Constructor should be right after events and before all other members.
+    const constructorIndex = members.findIndex(member => member.kind === 'method' && member.name === 'constructor');
+    if (constructorIndex > 0 && members[constructorIndex - 1].kind !== 'event')
+      errors.push(`Constructor of ${cls.name} should go before other methods`);
+
+    // Events should be sorted alphabetically.
+    for (let i = 0; i < members.length - 1; ++i) {
+      const member1 = this.membersArray[i];
+      const member2 = this.membersArray[i + 1];
+      if (member1.kind !== 'event' || member2.kind !== 'event')
+        continue;
+      if (member1.name > member2.name)
+        errors.push(`Event '${member1.name}' in class ${this.name} breaks alphabetic ordering of events`);
+    }
+
+    // All other members should be sorted alphabetically.
+    for (let i = 0; i < members.length - 1; ++i) {
+      const member1 = this.membersArray[i];
+      const member2 = this.membersArray[i + 1];
+      if (member1.kind === 'event' || member2.kind === 'event')
+        continue;
+      if (member1.kind === 'method' && member1.name === 'constructor')
+        continue;
+      if (member1.name > member2.name) {
+        let memberName1 = `${this.name}.${member1.name}`;
+        if (member1.kind === 'method')
+          memberName1 += '()';
+        let memberName2 = `${this.name}.${member2.name}`;
+        if (member2.kind === 'method')
+          memberName2 += '()';
+        errors.push(`Bad alphabetic ordering of ${this.name} members: ${memberName1} should go after ${memberName2}`);
+      }
+    }
+  }
 };
 
 Documentation.Member = class {
