@@ -22,7 +22,7 @@ export const Events = {
     TargetChanged: 'targetchanged',
   },
 
-  CRWorkers: {
+  CRPage: {
     WorkerCreated: 'workercreated',
     WorkerDestroyed: 'workerdestroyed',
   }

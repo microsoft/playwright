@@ -19,7 +19,7 @@ import { assert, helper } from '../../helper';
 import { CRSession } from '../crConnection';
 import { readProtocolStream } from '../crProtocolHelper';
 
-type PDFOptions = {
+export type PDFOptions = {
   scale?: number,
   displayHeaderFooter?: boolean,
   headerTemplate?: string,

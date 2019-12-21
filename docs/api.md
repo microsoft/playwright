@@ -142,14 +142,12 @@
   * [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
   * [page.$wait(selector, pageFunction[, options[, ...args]])](#pagewaitselector-pagefunction-options-args)
   * [page.$x(expression)](#pagexexpression)
-  * [page.accessibility](#pageaccessibility)
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
   * [page.addStyleTag(options)](#pageaddstyletagoptions)
   * [page.browserContext()](#pagebrowsercontext)
   * [page.click(selector[, options])](#pageclickselector-options)
   * [page.close([options])](#pagecloseoptions)
   * [page.content()](#pagecontent)
-  * [page.coverage](#pagecoverage)
   * [page.dblclick(selector[, options])](#pagedblclickselector-options)
   * [page.emulateMedia(options)](#pageemulatemediaoptions)
   * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
@@ -163,12 +161,10 @@
   * [page.goForward([options])](#pagegoforwardoptions)
   * [page.goto(url[, options])](#pagegotourl-options)
   * [page.hover(selector[, options])](#pagehoverselector-options)
-  * [page.interception](#pageinterception)
   * [page.isClosed()](#pageisclosed)
   * [page.keyboard](#pagekeyboard)
   * [page.mainFrame()](#pagemainframe)
   * [page.mouse](#pagemouse)
-  * [page.pdf](#pagepdf)
   * [page.reload([options])](#pagereloadoptions)
   * [page.screenshot([options])](#pagescreenshotoptions)
   * [page.select(selector, value, options)](#pageselectselector-value-options)
@@ -191,7 +187,6 @@
   * [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
   * [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
   * [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
-  * [page.workers](#pageworkers)
 - [class: Request](#class-request)
   * [request.failure()](#requestfailure)
   * [request.frame()](#requestframe)
@@ -244,8 +239,6 @@
   * [chromiumInterception.setOfflineMode(enabled)](#chromiuminterceptionsetofflinemodeenabled)
 - [class: ChromiumOverrides](#class-chromiumoverrides)
   * [chromiumOverrides.setGeolocation(options)](#chromiumoverridessetgeolocationoptions)
-- [class: ChromiumPDF](#class-chromiumpdf)
-  * [chromiumPDF.generate([options])](#chromiumpdfgenerateoptions)
 - [class: ChromiumPlaywright](#class-chromiumplaywright)
   * [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
   * [chromiumPlaywright.createBrowserFetcher([options])](#chromiumplaywrightcreatebrowserfetcheroptions)
@@ -256,6 +249,14 @@
   * [chromiumPlaywright.executablePath()](#chromiumplaywrightexecutablepath)
   * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
   * [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
+- [class: ChromiumPage](#class-chromiumpage)
+  * [event: 'workercreated'](#event-workercreated)
+  * [event: 'workerdestroyed'](#event-workerdestroyed)
+  * [chromiumPage.accessibility](#chromiumpageaccessibility)
+  * [chromiumPage.coverage](#chromiumpagecoverage)
+  * [chromiumPage.interception](#chromiumpageinterception)
+  * [chromiumPage.pdf([options])](#chromiumpagepdfoptions)
+  * [chromiumPage.workers()](#chromiumpageworkers)
 - [class: ChromiumSession](#class-chromiumsession)
   * [chromiumSession.detach()](#chromiumsessiondetach)
   * [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
@@ -270,10 +271,6 @@
   * [chromiumWorker.evaluate(pageFunction[, ...args])](#chromiumworkerevaluatepagefunction-args)
   * [chromiumWorker.evaluateHandle(pageFunction[, ...args])](#chromiumworkerevaluatehandlepagefunction-args)
   * [chromiumWorker.url()](#chromiumworkerurl)
-- [class: ChromiumWorkers](#class-chromiumworkers)
-  * [event: 'workercreated'](#event-workercreated)
-  * [event: 'workerdestroyed'](#event-workerdestroyed)
-  * [chromiumWorkers.list()](#chromiumworkerslist)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: WebKitBrowser](#class-webkitbrowser)
 - [Working with selectors](#working-with-selectors)
@@ -1897,9 +1894,6 @@ The method evaluates the XPath expression.
 
 Shortcut for [page.mainFrame().$x(expression)](#framexexpression)
 
-#### page.accessibility
-- returns: <[Accessibility]>
-
 #### page.addScriptTag(options)
 - `options` <[Object]>
   - `url` <[string]> URL of a script to be added.
@@ -1974,10 +1968,6 @@ By default, `page.close()` **does not** run beforeunload handlers.
 - returns: <[Promise]<[string]>>
 
 Gets the full HTML contents of the page, including the doctype.
-
-#### page.coverage
-
-- returns: <[Coverage]>
 
 #### page.dblclick(selector[, options])
 - `selector` <[string]> A selector to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
@@ -2281,9 +2271,6 @@ If there's no element matching `selector`, the method throws an error.
 
 Shortcut for [page.mainFrame().hover(selector)](#framehoverselector).
 
-#### page.interception
-- returns: <[Interception]>
-
 #### page.isClosed()
 
 - returns: <[boolean]>
@@ -2302,9 +2289,6 @@ Page is guaranteed to have a main frame which persists during navigations.
 #### page.mouse
 
 - returns: <[Mouse]>
-
-#### page.pdf
-- returns: <[PDF]>
 
 #### page.reload([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
@@ -2691,11 +2675,6 @@ const playwright = require('playwright');
 })();
 ```
 Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforselectorselector-options).
-
-#### page.workers
-- returns: <[Workers]>
-
-> **NOTE** This does not contain ServiceWorkers
 
 ### class: Request
 
@@ -3202,76 +3181,6 @@ await browserContext.overrides.setGeolocation({latitude: 59.95, longitude: 30.31
 
 > **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
-### class: ChromiumPDF
-
-#### chromiumPDF.generate([options])
-- `options` <[Object]> Options object which might have the following properties:
-  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the PDF won't be saved to the disk.
-  - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
-  - `displayHeaderFooter` <[boolean]> Display header and footer. Defaults to `false`.
-  - `headerTemplate` <[string]> HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
-    - `'date'` formatted print date
-    - `'title'` document title
-    - `'url'` document location
-    - `'pageNumber'` current page number
-    - `'totalPages'` total pages in the document
-  - `footerTemplate` <[string]> HTML template for the print footer. Should use the same format as the `headerTemplate`.
-  - `printBackground` <[boolean]> Print background graphics. Defaults to `false`.
-  - `landscape` <[boolean]> Paper orientation. Defaults to `false`.
-  - `pageRanges` <[string]> Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
-  - `format` <[string]> Paper format. If set, takes priority over `width` or `height` options. Defaults to 'Letter'.
-  - `width` <[string]|[number]> Paper width, accepts values labeled with units.
-  - `height` <[string]|[number]> Paper height, accepts values labeled with units.
-  - `margin` <[Object]> Paper margins, defaults to none.
-    - `top` <[string]|[number]> Top margin, accepts values labeled with units.
-    - `right` <[string]|[number]> Right margin, accepts values labeled with units.
-    - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units.
-    - `left` <[string]|[number]> Left margin, accepts values labeled with units.
-  - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
-- returns: <[Promise]<[Buffer]>> Promise which resolves with PDF buffer.
-
-> **NOTE** Generating a pdf is currently only supported in Chrome headless.
-
-`pdf.generate()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia({ type: 'screen' })](#pageemulatemedia) before calling `pdf.generate()`:
-
-> **NOTE** By default, `pdf.generate()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
-
-```js
-// Generates a PDF with 'screen' media type.
-await page.emulateMedia({type: 'screen'});
-await page.pdf.generate({path: 'page.pdf'});
-```
-
-The `width`, `height`, and `margin` options accept values labeled with units. Unlabeled values are treated as pixels.
-
-A few examples:
-- `page.pdf.generate({width: 100})` - prints with width set to 100 pixels
-- `page.pdf.generate({width: '100px'})` - prints with width set to 100 pixels
-- `page.pdf.generate({width: '10cm'})` - prints with width set to 10 centimeters.
-
-All possible units are:
-- `px` - pixel
-- `in` - inch
-- `cm` - centimeter
-- `mm` - millimeter
-
-The `format` options are:
-- `Letter`: 8.5in x 11in
-- `Legal`: 8.5in x 14in
-- `Tabloid`: 11in x 17in
-- `Ledger`: 17in x 11in
-- `A0`: 33.1in x 46.8in
-- `A1`: 23.4in x 33.1in
-- `A2`: 16.54in x 23.4in
-- `A3`: 11.7in x 16.54in
-- `A4`: 8.27in x 11.7in
-- `A5`: 5.83in x 8.27in
-- `A6`: 4.13in x 5.83in
-
-> **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
-> 1. Script tags inside templates are not evaluated.
-> 2. Page styles are not visible inside templates.
-
 ### class: ChromiumPlaywright
 
 Playwright module provides a method to launch a Chromium instance.
@@ -3431,6 +3340,105 @@ const browser = await playwright.launch({
   - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
 - returns: <[Promise]<[BrowserServer]>> Promise which resolves to browser server instance.
 
+### class: ChromiumPage
+* extends: [Page]
+
+The ChromiumPage class represents a Chromium-specific extension of the page.
+
+#### event: 'workercreated'
+- <[Worker]>
+
+Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
+
+#### event: 'workerdestroyed'
+- <[Worker]>
+
+Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
+
+#### chromiumPage.accessibility
+- returns: <[Accessibility]>
+
+#### chromiumPage.coverage
+
+- returns: <[Coverage]>
+
+#### chromiumPage.interception
+- returns: <[Interception]>
+
+#### chromiumPage.pdf([options])
+- `options` <[Object]> Options object which might have the following properties:
+  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the PDF won't be saved to the disk.
+  - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
+  - `displayHeaderFooter` <[boolean]> Display header and footer. Defaults to `false`.
+  - `headerTemplate` <[string]> HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
+    - `'date'` formatted print date
+    - `'title'` document title
+    - `'url'` document location
+    - `'pageNumber'` current page number
+    - `'totalPages'` total pages in the document
+  - `footerTemplate` <[string]> HTML template for the print footer. Should use the same format as the `headerTemplate`.
+  - `printBackground` <[boolean]> Print background graphics. Defaults to `false`.
+  - `landscape` <[boolean]> Paper orientation. Defaults to `false`.
+  - `pageRanges` <[string]> Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
+  - `format` <[string]> Paper format. If set, takes priority over `width` or `height` options. Defaults to 'Letter'.
+  - `width` <[string]|[number]> Paper width, accepts values labeled with units.
+  - `height` <[string]|[number]> Paper height, accepts values labeled with units.
+  - `margin` <[Object]> Paper margins, defaults to none.
+    - `top` <[string]|[number]> Top margin, accepts values labeled with units.
+    - `right` <[string]|[number]> Right margin, accepts values labeled with units.
+    - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units.
+    - `left` <[string]|[number]> Left margin, accepts values labeled with units.
+  - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
+- returns: <[Promise]<[Buffer]>> Promise which resolves with PDF buffer.
+
+> **NOTE** Generating a pdf is currently only supported in Chrome headless.
+
+`page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia({ type: 'screen' })](#pageemulatemedia) before calling `page.pdf()`:
+
+> **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
+
+```js
+// Generates a PDF with 'screen' media type.
+await page.emulateMedia({type: 'screen'});
+await page.pdf({path: 'page.pdf'});
+```
+
+The `width`, `height`, and `margin` options accept values labeled with units. Unlabeled values are treated as pixels.
+
+A few examples:
+- `page.pdf({width: 100})` - prints with width set to 100 pixels
+- `page.pdf({width: '100px'})` - prints with width set to 100 pixels
+- `page.pdf({width: '10cm'})` - prints with width set to 10 centimeters.
+
+All possible units are:
+- `px` - pixel
+- `in` - inch
+- `cm` - centimeter
+- `mm` - millimeter
+
+The `format` options are:
+- `Letter`: 8.5in x 11in
+- `Legal`: 8.5in x 14in
+- `Tabloid`: 11in x 17in
+- `Ledger`: 17in x 11in
+- `A0`: 33.1in x 46.8in
+- `A1`: 23.4in x 33.1in
+- `A2`: 16.54in x 23.4in
+- `A3`: 11.7in x 16.54in
+- `A4`: 8.27in x 11.7in
+- `A5`: 5.83in x 8.27in
+- `A6`: 4.13in x 5.83in
+
+> **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
+> 1. Script tags inside templates are not evaluated.
+> 2. Page styles are not visible inside templates.
+
+#### chromiumPage.workers()
+- returns: <[Array]<[Worker]>>
+This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
+
+> **NOTE** This does not contain ServiceWorkers
+
 ### class: ChromiumSession
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
@@ -3502,8 +3510,8 @@ The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/do
 The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
 
 ```js
-page.workers.on('workercreated', worker => console.log('Worker created: ' + worker.url()));
-page.workers.on('workerdestroyed', worker => console.log('Worker destroyed: ' + worker.url()));
+page.on('workercreated', worker => console.log('Worker created: ' + worker.url()));
+page.on('workerdestroyed', worker => console.log('Worker destroyed: ' + worker.url()));
 
 console.log('Current workers:');
 for (const worker of page.workers())
@@ -3530,26 +3538,6 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 
 #### chromiumWorker.url()
 - returns: <[string]>
-
-### class: ChromiumWorkers
-
-The Workers class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) collection.
-
-#### event: 'workercreated'
-- <[Worker]>
-
-Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
-
-#### event: 'workerdestroyed'
-- <[Worker]>
-
-Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
-
-#### chromiumWorkers.list()
-- returns: <[Array]<[Worker]>>
-This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
-
-> **NOTE** This does not contain ServiceWorkers
 
 ### class: FirefoxBrowser
 

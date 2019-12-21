@@ -25,29 +25,28 @@ import * as js from '../../javascript';
 import * as console from '../../console';
 import { CRExecutionContext } from '../crExecutionContext';
 import { toConsoleMessageLocation, exceptionToError } from '../crProtocolHelper';
+import { CRPage } from '../crFrameManager';
 
 type AddToConsoleCallback = (type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation) => void;
 type HandleExceptionCallback = (error: Error) => void;
 
-export class CRWorkers extends EventEmitter {
+export class CRWorkers {
   private _workers = new Map<string, CRWorker>();
 
-  constructor(client: CRSession, addToConsole: AddToConsoleCallback, handleException: HandleExceptionCallback) {
-    super();
-
+  constructor(client: CRSession, page: CRPage, addToConsole: AddToConsoleCallback, handleException: HandleExceptionCallback) {
     client.on('Target.attachedToTarget', event => {
       if (event.targetInfo.type !== 'worker')
         return;
       const session = CRConnection.fromSession(client).session(event.sessionId);
       const worker = new CRWorker(session, event.targetInfo.url, addToConsole, handleException);
       this._workers.set(event.sessionId, worker);
-      this.emit(Events.CRWorkers.WorkerCreated, worker);
+      page.emit(Events.CRPage.WorkerCreated, worker);
     });
     client.on('Target.detachedFromTarget', event => {
       const worker = this._workers.get(event.sessionId);
       if (!worker)
         return;
-      this.emit(Events.CRWorkers.WorkerDestroyed, worker);
+      page.emit(Events.CRPage.WorkerDestroyed, worker);
       this._workers.delete(event.sessionId);
     });
   }
