@@ -23,7 +23,7 @@ import { CRWorker } from './features/crWorkers';
 import { Page } from '../page';
 import { Protocol } from './protocol';
 import { debugError } from '../helper';
-import { CRFrameManager } from './crFrameManager';
+import { CRPage } from './crPage';
 
 const targetSymbol = Symbol('target');
 
@@ -34,7 +34,7 @@ export class CRTarget {
   _targetId: string;
   private _sessionFactory: () => Promise<CRSession>;
   private _pagePromise: Promise<Page> | null = null;
-  private _frameManager: CRFrameManager | null = null;
+  private _crPage: CRPage | null = null;
   private _workerPromise: Promise<CRWorker> | null = null;
   _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
@@ -73,15 +73,15 @@ export class CRTarget {
   }
 
   _didClose() {
-    if (this._frameManager)
-      this._frameManager.didClose();
+    if (this._crPage)
+      this._crPage.didClose();
   }
 
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
       this._pagePromise = this._sessionFactory().then(async client => {
-        this._frameManager = new CRFrameManager(client, this._browser, this._browserContext);
-        const page = this._frameManager.page();
+        this._crPage = new CRPage(client, this._browser, this._browserContext);
+        const page = this._crPage.page();
         (page as any)[targetSymbol] = this;
         client.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
         client.on('Target.attachedToTarget', event => {
@@ -90,7 +90,7 @@ export class CRTarget {
             client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
           }
         });
-        await this._frameManager.initialize();
+        await this._crPage.initialize();
         await client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true});
         return page;
       });

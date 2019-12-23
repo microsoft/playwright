@@ -33,7 +33,7 @@ import { FFAccessibility } from './features/ffAccessibility';
 import * as network from '../network';
 import * as types from '../types';
 
-export class FFFrameManager implements PageDelegate {
+export class FFPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly _session: FFSession;

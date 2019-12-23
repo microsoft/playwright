@@ -42,9 +42,9 @@ import { ConsoleMessage } from '../console';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-export class CRFrameManager implements PageDelegate {
+export class CRPage implements PageDelegate {
   _client: CRSession;
-  private _page: CRPage;
+  private _page: ChromiumPage;
   readonly _networkManager: CRNetworkManager;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
@@ -58,7 +58,7 @@ export class CRFrameManager implements PageDelegate {
     this._browser = browser;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
-    this._page = new CRPage(client, this, browserContext);
+    this._page = new ChromiumPage(client, this, browserContext);
     this._networkManager = this._page._networkManager;
 
     this._eventListeners = [
@@ -449,7 +449,7 @@ export class CRFrameManager implements PageDelegate {
   }
 }
 
-export class CRPage extends Page {
+export class ChromiumPage extends Page {
   readonly accessibility: CRAccessibility;
   readonly coverage: CRCoverage;
   readonly interception: CRInterception;
@@ -457,7 +457,7 @@ export class CRPage extends Page {
   private _workers: CRWorkers;
   _networkManager: CRNetworkManager;
 
-  constructor(client: CRSession, delegate: CRFrameManager, browserContext: BrowserContext) {
+  constructor(client: CRSession, delegate: CRPage, browserContext: BrowserContext) {
     super(delegate, browserContext);
     this.accessibility = new CRAccessibility(client);
     this.coverage = new CRCoverage(client);

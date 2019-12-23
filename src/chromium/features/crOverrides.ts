@@ -16,7 +16,7 @@
  */
 
 import { BrowserContext } from '../../browserContext';
-import { CRFrameManager } from '../crFrameManager';
+import { CRPage } from '../crPage';
 import { Page } from '../../page';
 
 export class CROverrides {
@@ -30,7 +30,7 @@ export class CROverrides {
   async setGeolocation(options: { longitude?: number; latitude?: number; accuracy?: (number | undefined); } | null) {
     if (!options) {
       for (const page of await this._context.pages())
-        await (page._delegate as CRFrameManager)._client.send('Emulation.clearGeolocationOverride', {});
+        await (page._delegate as CRPage)._client.send('Emulation.clearGeolocationOverride', {});
       this._geolocation = null;
       return;
     }
@@ -44,11 +44,11 @@ export class CROverrides {
       throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
     this._geolocation = { longitude, latitude, accuracy };
     for (const page of await this._context.pages())
-      await (page._delegate as CRFrameManager)._client.send('Emulation.setGeolocationOverride', this._geolocation);
+      await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', this._geolocation);
   }
 
   async _applyOverrides(page: Page): Promise<void> {
     if (this._geolocation)
-      await (page._delegate as CRFrameManager)._client.send('Emulation.setGeolocationOverride', this._geolocation);
+      await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', this._geolocation);
   }
 }

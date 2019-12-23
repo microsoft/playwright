@@ -23,7 +23,7 @@ import * as network from '../network';
 import { Page } from '../page';
 import { ConnectionTransport } from '../transport';
 import { ConnectionEvents, FFConnection, FFSessionEvents } from './ffConnection';
-import { FFFrameManager } from './ffFrameManager';
+import { FFPage } from './ffPage';
 
 export class FFBrowser extends browser.Browser {
   _connection: FFConnection;
@@ -156,7 +156,7 @@ export class FFBrowser extends browser.Browser {
         });
         const target = this._targets.get(targetId);
         const page = await target.page();
-        const session = (page._delegate as FFFrameManager)._session;
+        const session = (page._delegate as FFPage)._session;
         const promises: Promise<any>[] = [];
         if (options.viewport)
           promises.push(page._delegate.setViewport(options.viewport));
@@ -222,7 +222,7 @@ export class FFBrowser extends browser.Browser {
 
 export class Target {
   _pagePromise?: Promise<Page>;
-  private _frameManager: FFFrameManager | null = null;
+  private _ffPage: FFPage | null = null;
   private _browser: FFBrowser;
   _context: BrowserContext;
   private _connection: FFConnection;
@@ -242,8 +242,8 @@ export class Target {
   }
 
   _didClose() {
-    if (this._frameManager)
-      this._frameManager.didClose();
+    if (this._ffPage)
+      this._ffPage.didClose();
   }
 
   opener(): Target | null {
@@ -266,10 +266,10 @@ export class Target {
     if (this._type === 'page' && !this._pagePromise) {
       this._pagePromise = new Promise(async f => {
         const session = await this._connection.createSession(this._targetId);
-        this._frameManager = new FFFrameManager(session, this._context);
-        const page = this._frameManager._page;
+        this._ffPage = new FFPage(session, this._context);
+        const page = this._ffPage._page;
         session.once(FFSessionEvents.Disconnected, () => page._didDisconnect());
-        await this._frameManager._initialize();
+        await this._ffPage._initialize();
         f(page);
       });
     }
