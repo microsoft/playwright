@@ -37,7 +37,7 @@ import { PNG } from 'pngjs';
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 
-export class WKFrameManager implements PageDelegate {
+export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   _session: WKTargetSession;
@@ -106,7 +106,7 @@ export class WKFrameManager implements PageDelegate {
     if (this._page._state.extraHTTPHeaders !== null)
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
     if (this._page._state.viewport)
-      promises.push(WKFrameManager._setViewport(session, this._page._state.viewport));
+      promises.push(WKPage._setViewport(session, this._page._state.viewport));
     await Promise.all(promises);
   }
 
@@ -290,7 +290,7 @@ export class WKFrameManager implements PageDelegate {
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
-    return WKFrameManager._setViewport(this._session, viewport);
+    return WKPage._setViewport(this._session, viewport);
   }
 
   private static async _setViewport(session: WKTargetSession, viewport: types.Viewport): Promise<void> {

@@ -23,7 +23,7 @@ import { CRConnection, ConnectionEvents, CRSession } from './crConnection';
 import { Page } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
-import { CRFrameManager } from './crFrameManager';
+import { CRPage } from './crPage';
 import * as browser from '../browser';
 import * as network from '../network';
 import { CROverrides } from './features/crOverrides';
@@ -82,7 +82,7 @@ export class CRBrowser extends browser.Browser {
         const target = this._targets.get(targetId);
         assert(await target._initializedPromise, 'Failed to create target for page');
         const page = await target.page();
-        const session = (page._delegate as CRFrameManager)._client;
+        const session = (page._delegate as CRPage)._client;
         const promises: Promise<any>[] = [ overrides._applyOverrides(page) ];
         if (options.bypassCSP)
           promises.push(session.send('Page.setBypassCSP', { enabled: true }));
@@ -93,7 +93,7 @@ export class CRBrowser extends browser.Browser {
         if (options.javaScriptEnabled === false)
           promises.push(session.send('Emulation.setScriptExecutionDisabled', { value: true }));
         if (options.userAgent)
-          (page._delegate as CRFrameManager)._networkManager.setUserAgent(options.userAgent);
+          (page._delegate as CRPage)._networkManager.setUserAgent(options.userAgent);
         if (options.mediaType || options.colorScheme) {
           const features = options.colorScheme ? [{ name: 'prefers-color-scheme', value: options.colorScheme }] : [];
           promises.push(session.send('Emulation.setEmulatedMedia', { media: options.mediaType || '', features }));
@@ -262,7 +262,7 @@ export class CRBrowser extends browser.Browser {
 
   async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._tracingRecording, 'Cannot start recording trace while already recording trace.');
-    this._tracingClient = page ? (page._delegate as CRFrameManager)._client : this._client;
+    this._tracingClient = page ? (page._delegate as CRPage)._client : this._client;
 
     const defaultCategories = [
       '-*', 'devtools.timeline', 'v8.execute', 'disabled-by-default-devtools.timeline',

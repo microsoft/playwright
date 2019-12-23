@@ -125,7 +125,7 @@ export class WKBrowser extends browser.Browser {
       const opener = this._targets.get(targetInfo.openerId);
       if (!opener)
         return;
-      const openerPage = opener._frameManager ? opener._frameManager._page : null;
+      const openerPage = opener._wkPage ? opener._wkPage._page : null;
       if (!openerPage || !openerPage.listenerCount(Events.Page.Popup))
         return;
       target.page().then(page => openerPage.emit(Events.Page.Popup, page));

@@ -25,7 +25,7 @@ import * as js from '../../javascript';
 import * as console from '../../console';
 import { CRExecutionContext } from '../crExecutionContext';
 import { toConsoleMessageLocation, exceptionToError } from '../crProtocolHelper';
-import { CRPage } from '../crFrameManager';
+import { ChromiumPage } from '../crPage';
 
 type AddToConsoleCallback = (type: string, args: js.JSHandle[], location: console.ConsoleMessageLocation) => void;
 type HandleExceptionCallback = (error: Error) => void;
@@ -33,7 +33,7 @@ type HandleExceptionCallback = (error: Error) => void;
 export class CRWorkers {
   private _workers = new Map<string, CRWorker>();
 
-  constructor(client: CRSession, page: CRPage, addToConsole: AddToConsoleCallback, handleException: HandleExceptionCallback) {
+  constructor(client: CRSession, page: ChromiumPage, addToConsole: AddToConsoleCallback, handleException: HandleExceptionCallback) {
     client.on('Target.attachedToTarget', event => {
       if (event.targetInfo.type !== 'worker')
         return;
