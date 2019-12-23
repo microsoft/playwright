@@ -7,13 +7,13 @@ cd "$(dirname $0)"
 cd "checkout"
 
 if [[ "$(uname)" == "Darwin" ]]; then
-  ./Tools/Scripts/build-webkit --release
+  ./Tools/Scripts/build-webkit --release --touch-events
 elif [[ "$(uname)" == "Linux" ]]; then
   # Check that WebKitBuild exists and is not empty.
   if ! [[ (-d ./WebKitBuild) && (-n $(ls -1 ./WebKitBuild/)) ]]; then
     yes | DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
   fi
-  ./Tools/Scripts/build-webkit --gtk --release MiniBrowser
+  ./Tools/Scripts/build-webkit --gtk --release --touch-events MiniBrowser
 else
   echo "ERROR: cannot upload on this platform!" 1>&2
   exit 1;

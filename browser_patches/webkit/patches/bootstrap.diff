@@ -1014,6 +1014,144 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..5849e4fbea626570389d27037f4fd2d9
          }
      ],
      "events": [
+diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
+index 22e0dff0de6a8d38b0ef08c4b8a10f91241f319b..6bd0eef8d7d1be3bdac6ecfb13070316916dd40a 100644
+--- a/Source/WebCore/SourcesCocoa.txt
++++ b/Source/WebCore/SourcesCocoa.txt
+@@ -639,7 +639,7 @@ WHLSLStandardLibraryFunctionMap.cpp
+ 
+ #endif
+ 
+-#if ENABLE_IOS_TOUCH_EVENTS
++#if ENABLE_TOUCH_EVENTS
+ 
+     JSTouch.cpp
+     JSTouchEvent.cpp
+diff --git a/Source/WebCore/WebCore.xcodeproj/project.pbxproj b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
+index 8a67f881de2b4f8d27efe85d14c167b00655a50e..117fb9a9b829f06cf94e960beaf3ad66c1bed801 100644
+--- a/Source/WebCore/WebCore.xcodeproj/project.pbxproj
++++ b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
+@@ -4924,6 +4924,14 @@
+ 		EDE3A5000C7A430600956A37 /* ColorMac.h in Headers */ = {isa = PBXBuildFile; fileRef = EDE3A4FF0C7A430600956A37 /* ColorMac.h */; settings = {ATTRIBUTES = (Private, ); }; };
+ 		EDEC98030AED7E170059137F /* WebCorePrefix.h in Headers */ = {isa = PBXBuildFile; fileRef = EDEC98020AED7E170059137F /* WebCorePrefix.h */; };
+ 		EFCC6C8F20FE914400A2321B /* CanvasActivityRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */; settings = {ATTRIBUTES = (Private, ); }; };
++		F050E16823AC9C080011CE47 /* PlatformTouchEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = F050E16623AC9C070011CE47 /* PlatformTouchEvent.h */; settings = {ATTRIBUTES = (Private, ); }; };
++		F050E16A23AD660C0011CE47 /* Touch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F050E16923AD660C0011CE47 /* Touch.cpp */; };
++		F050E16D23AD66630011CE47 /* TouchList.h in Headers */ = {isa = PBXBuildFile; fileRef = F050E16B23AD66620011CE47 /* TouchList.h */; settings = {ATTRIBUTES = (Private, ); }; };
++		F050E16E23AD66630011CE47 /* TouchList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F050E16C23AD66630011CE47 /* TouchList.cpp */; };
++		F050E17123AD669F0011CE47 /* TouchEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F050E16F23AD669E0011CE47 /* TouchEvent.cpp */; };
++		F050E17223AD669F0011CE47 /* TouchEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = F050E17023AD669F0011CE47 /* TouchEvent.h */; settings = {ATTRIBUTES = (Private, ); }; };
++		F050E17423AD6A800011CE47 /* DocumentTouch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F050E17323AD6A800011CE47 /* DocumentTouch.cpp */; };
++		F050E17823AD70C50011CE47 /* PlatformTouchPoint.h in Headers */ = {isa = PBXBuildFile; fileRef = F050E17623AD70C40011CE47 /* PlatformTouchPoint.h */; settings = {ATTRIBUTES = (Private, ); }; };
+ 		F12171F516A8CED2000053CA /* WebVTTElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F12171F316A8BC63000053CA /* WebVTTElement.cpp */; };
+ 		F12171F616A8CF0B000053CA /* WebVTTElement.h in Headers */ = {isa = PBXBuildFile; fileRef = F12171F416A8BC63000053CA /* WebVTTElement.h */; };
+ 		F32BDCD92363AACA0073B6AE /* UserGestureEmulationScope.h in Headers */ = {isa = PBXBuildFile; fileRef = F32BDCD72363AACA0073B6AE /* UserGestureEmulationScope.h */; };
+@@ -15371,6 +15379,14 @@
+ 		EDEC98020AED7E170059137F /* WebCorePrefix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = WebCorePrefix.h; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
+ 		EFB7287B2124C73D005C2558 /* CanvasActivityRecord.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CanvasActivityRecord.cpp; sourceTree = "<group>"; };
+ 		EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CanvasActivityRecord.h; sourceTree = "<group>"; };
++		F050E16623AC9C070011CE47 /* PlatformTouchEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformTouchEvent.h; sourceTree = "<group>"; };
++		F050E16923AD660C0011CE47 /* Touch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Touch.cpp; path = dom/Touch.cpp; sourceTree = SOURCE_ROOT; };
++		F050E16B23AD66620011CE47 /* TouchList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TouchList.h; path = dom/TouchList.h; sourceTree = SOURCE_ROOT; };
++		F050E16C23AD66630011CE47 /* TouchList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TouchList.cpp; path = dom/TouchList.cpp; sourceTree = SOURCE_ROOT; };
++		F050E16F23AD669E0011CE47 /* TouchEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TouchEvent.cpp; path = dom/TouchEvent.cpp; sourceTree = SOURCE_ROOT; };
++		F050E17023AD669F0011CE47 /* TouchEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TouchEvent.h; path = dom/TouchEvent.h; sourceTree = SOURCE_ROOT; };
++		F050E17323AD6A800011CE47 /* DocumentTouch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DocumentTouch.cpp; sourceTree = "<group>"; };
++		F050E17623AD70C40011CE47 /* PlatformTouchPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformTouchPoint.h; sourceTree = "<group>"; };
+ 		F12171F316A8BC63000053CA /* WebVTTElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebVTTElement.cpp; sourceTree = "<group>"; };
+ 		F12171F416A8BC63000053CA /* WebVTTElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebVTTElement.h; sourceTree = "<group>"; };
+ 		F32BDCD52363AAC90073B6AE /* UserGestureEmulationScope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UserGestureEmulationScope.cpp; sourceTree = "<group>"; };
+@@ -20640,7 +20656,12 @@
+ 				2D2E34A921A4E191004598B5 /* EditableImageReference.h */,
+ 				1AF326770D78B9440068F0C4 /* EditorClient.h */,
+ 				93C09A800B064F00005ABD4D /* EventHandler.cpp */,
++				F050E16F23AD669E0011CE47 /* TouchEvent.cpp */,
++				F050E17023AD669F0011CE47 /* TouchEvent.h */,
+ 				93C09A520B064DB3005ABD4D /* EventHandler.h */,
++				F050E16923AD660C0011CE47 /* Touch.cpp */,
++				F050E16C23AD66630011CE47 /* TouchList.cpp */,
++				F050E16B23AD66620011CE47 /* TouchList.h */,
+ 				E0FEF371B27C53EAC1C1FBEE /* EventSource.cpp */,
+ 				E0FEF371B17C53EAC1C1FBEE /* EventSource.h */,
+ 				E0FEF371B07C53EAC1C1FBEE /* EventSource.idl */,
+@@ -25834,7 +25855,9 @@
+ 				B2C3D9EC0D006C1D00EF6F26 /* text */,
+ 				E188235F2031F50F00B42DF3 /* vr */,
+ 				DFDB912CF8E88A6DA1AD264F /* AbortableTaskQueue.h */,
++				F050E16623AC9C070011CE47 /* PlatformTouchEvent.h */,
+ 				49AE2D94134EE5F90072920A /* CalculationValue.cpp */,
++				F050E17623AD70C40011CE47 /* PlatformTouchPoint.h */,
+ 				49AE2D95134EE5F90072920A /* CalculationValue.h */,
+ 				C330A22113EC196B0000B45B /* ColorChooser.h */,
+ 				C37CDEBC149EF2030042090D /* ColorChooserClient.h */,
+@@ -28053,6 +28076,7 @@
+ 				BCCFBAE70B5152ED0001F1D7 /* DocumentParser.h */,
+ 				AD6E71AA1668899D00320C13 /* DocumentSharedObjectPool.cpp */,
+ 				AD6E71AB1668899D00320C13 /* DocumentSharedObjectPool.h */,
++				F050E17323AD6A800011CE47 /* DocumentTouch.cpp */,
+ 				6BDB5DC1227BD3B800919770 /* DocumentStorageAccess.cpp */,
+ 				6BDB5DC0227BD3B800919770 /* DocumentStorageAccess.h */,
+ 				6BDB5DC5227CA0EB00919770 /* DocumentStorageAccess.idl */,
+@@ -28931,6 +28955,7 @@
+ 				93C4F6EB1108F9A50099D0DB /* AccessibilityScrollbar.h in Headers */,
+ 				29489FC712C00F0300D83F0F /* AccessibilityScrollView.h in Headers */,
+ 				0709FC4E1025DEE30059CDBA /* AccessibilitySlider.h in Headers */,
++				F050E16D23AD66630011CE47 /* TouchList.h in Headers */,
+ 				29D7BCFA1444AF7D0070619C /* AccessibilitySpinButton.h in Headers */,
+ 				69A6CBAD1C6BE42C00B836E9 /* AccessibilitySVGElement.h in Headers */,
+ 				AAC08CF315F941FD00F1E188 /* AccessibilitySVGRoot.h in Headers */,
+@@ -30754,6 +30779,7 @@
+ 				6E4ABCD5138EA0B70071D291 /* JSHTMLUnknownElement.h in Headers */,
+ 				E44614170CD6826900FADA75 /* JSHTMLVideoElement.h in Headers */,
+ 				81BE20D311F4BC3200915DFA /* JSIDBCursor.h in Headers */,
++				F050E17823AD70C50011CE47 /* PlatformTouchPoint.h in Headers */,
+ 				7C3D8EF01E0B21430023B084 /* JSIDBCursorDirection.h in Headers */,
+ 				C585A68311D4FB08004C3E4B /* JSIDBDatabase.h in Headers */,
+ 				C585A69711D4FB13004C3E4B /* JSIDBFactory.h in Headers */,
+@@ -32654,9 +32680,11 @@
+ 				A7DBF8DE1276919C006B6008 /* TextCheckingHelper.h in Headers */,
+ 				B2C3DA3A0D006C1D00EF6F26 /* TextCodec.h in Headers */,
+ 				26E98A10130A9FCA008EB7B2 /* TextCodecASCIIFastPath.h in Headers */,
++				F050E16823AC9C080011CE47 /* PlatformTouchEvent.h in Headers */,
+ 				B2C3DA3C0D006C1D00EF6F26 /* TextCodecICU.h in Headers */,
+ 				B2C3DA3E0D006C1D00EF6F26 /* TextCodecLatin1.h in Headers */,
+ 				57EF5E601D20C83900171E60 /* TextCodecReplacement.h in Headers */,
++				F050E17223AD669F0011CE47 /* TouchEvent.h in Headers */,
+ 				B2C3DA400D006C1D00EF6F26 /* TextCodecUserDefined.h in Headers */,
+ 				B2C3DA420D006C1D00EF6F26 /* TextCodecUTF16.h in Headers */,
+ 				9343CB8212F25E510033C5EE /* TextCodecUTF8.h in Headers */,
+@@ -33545,6 +33573,7 @@
+ 				CDDE02ED18B3ED6D00CF7FF1 /* CDMSessionAVFoundationObjC.mm in Sources */,
+ 				CDDE02F018B5651300CF7FF1 /* CDMSessionAVStreamSession.mm in Sources */,
+ 				CDE5959D1BF2757100A1CBE8 /* CDMSessionMediaSourceAVFObjC.mm in Sources */,
++				F050E17123AD669F0011CE47 /* TouchEvent.cpp in Sources */,
+ 				A14090FB1AA51E1D0091191A /* ContentFilterUnblockHandlerCocoa.mm in Sources */,
+ 				07AFF4231EFB144900B545B3 /* CoreAudioCaptureSourceIOS.mm in Sources */,
+ 				46C696CC1E7205FC00597937 /* CPUMonitor.cpp in Sources */,
+@@ -33618,6 +33647,7 @@
+ 				51058ADF1D67C229009A538C /* MockGamepad.cpp in Sources */,
+ 				51058AE11D67C229009A538C /* MockGamepadProvider.cpp in Sources */,
+ 				CDF2B0121820540600F2B424 /* MockMediaPlayerMediaSource.cpp in Sources */,
++				F050E17423AD6A800011CE47 /* DocumentTouch.cpp in Sources */,
+ 				CDF2B0141820540600F2B424 /* MockMediaSourcePrivate.cpp in Sources */,
+ 				CDF2B0161820540700F2B424 /* MockSourceBufferPrivate.cpp in Sources */,
+ 				2D9BF7421DBFDC27007A7D99 /* NavigatorEME.cpp in Sources */,
+@@ -33702,6 +33732,7 @@
+ 				538EC8881F993F9C004D22A8 /* UnifiedSource23.cpp in Sources */,
+ 				DE5F85801FA1ABF4006DB63A /* UnifiedSource24-mm.mm in Sources */,
+ 				538EC8891F993F9D004D22A8 /* UnifiedSource24.cpp in Sources */,
++				F050E16E23AD66630011CE47 /* TouchList.cpp in Sources */,
+ 				DE5F85811FA1ABF4006DB63A /* UnifiedSource25-mm.mm in Sources */,
+ 				538EC88A1F993F9D004D22A8 /* UnifiedSource25.cpp in Sources */,
+ 				DE5F85821FA1ABF4006DB63A /* UnifiedSource26-mm.mm in Sources */,
+@@ -34234,6 +34265,7 @@
+ 				2D8B92F1203D13E1009C868F /* UnifiedSource516.cpp in Sources */,
+ 				2D8B92F2203D13E1009C868F /* UnifiedSource517.cpp in Sources */,
+ 				2D8B92F3203D13E1009C868F /* UnifiedSource518.cpp in Sources */,
++				F050E16A23AD660C0011CE47 /* Touch.cpp in Sources */,
+ 				2D8B92F4203D13E1009C868F /* UnifiedSource519.cpp in Sources */,
+ 				2D8B92F5203D13E1009C868F /* UnifiedSource520.cpp in Sources */,
+ 				2D8B92F6203D13E1009C868F /* UnifiedSource521.cpp in Sources */,
 diff --git a/Source/WebCore/html/FileInputType.cpp b/Source/WebCore/html/FileInputType.cpp
 index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337bce57055 100644
 --- a/Source/WebCore/html/FileInputType.cpp
@@ -2739,6 +2877,19 @@ index 346ad796f3dbdb1fbf007fd62b5a03b773f04aa5..8cef134fca9d8539c9f8cf9d959df905
          static String singleCharacterString(unsigned);
  #endif
  
+diff --git a/Source/WebCore/platform/ScrollableArea.h b/Source/WebCore/platform/ScrollableArea.h
+index d7438c15cd51d6660c0f738ac2e97fabf5abdc23..f9c711e0ceb1a19cd839cb25a1a0ccaeefb4bacf 100644
+--- a/Source/WebCore/platform/ScrollableArea.h
++++ b/Source/WebCore/platform/ScrollableArea.h
+@@ -99,7 +99,7 @@ public:
+     void updateScrollSnapState();
+ 
+ #if ENABLE(TOUCH_EVENTS)
+-    virtual bool handleTouchEvent(const PlatformTouchEvent&);
++    WEBCORE_EXPORT virtual bool handleTouchEvent(const PlatformTouchEvent&);
+ #endif
+ 
+ #if PLATFORM(IOS_FAMILY)
 diff --git a/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp b/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp
 index 356b09f2fbafa9c770efd57f00db0911ca479d3a..8f0c19b603127ea3273987e912eba2e5014af2ba 100644
 --- a/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp
@@ -3667,6 +3818,44 @@ index 58e37fe3827cdb08d36ef0c85b8d4a968dee001a..429d245ea99fdee1b598a5caf51de8ce
  {
  }
  
+diff --git a/Source/WebKit/Shared/ios/WebPlatformTouchPointIOS.cpp b/Source/WebKit/Shared/ios/WebPlatformTouchPointIOS.cpp
+index 7b5eb372880d8662544334cd4697276d543de45b..ba06ecbb2cf5088a4c8c0824b50cb7797605dc57 100644
+--- a/Source/WebKit/Shared/ios/WebPlatformTouchPointIOS.cpp
++++ b/Source/WebKit/Shared/ios/WebPlatformTouchPointIOS.cpp
+@@ -26,7 +26,7 @@
+ #include "config.h"
+ #include "WebEvent.h"
+ 
+-#if ENABLE(TOUCH_EVENTS)
++#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+ 
+ #include "WebCoreArgumentCoders.h"
+ 
+@@ -79,4 +79,4 @@ Optional<WebPlatformTouchPoint> WebPlatformTouchPoint::decode(IPC::Decoder& deco
+ 
+ } // namespace WebKit
+ 
+-#endif // ENABLE(TOUCH_EVENTS)
++#endif // ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebKit/Shared/ios/WebTouchEventIOS.cpp b/Source/WebKit/Shared/ios/WebTouchEventIOS.cpp
+index 45a56eb3b0fda13c3b78d57594a0092e4e1866f6..5e29e15813be6abe82790e6a98d3947e7a6fae44 100644
+--- a/Source/WebKit/Shared/ios/WebTouchEventIOS.cpp
++++ b/Source/WebKit/Shared/ios/WebTouchEventIOS.cpp
+@@ -26,7 +26,7 @@
+ #include "config.h"
+ #include "WebEvent.h"
+ 
+-#if ENABLE(TOUCH_EVENTS)
++#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+ 
+ #include "ArgumentCoders.h"
+ #include "WebCoreArgumentCoders.h"
+@@ -71,4 +71,4 @@ bool WebTouchEvent::decode(IPC::Decoder& decoder, WebTouchEvent& result)
+ 
+ } // namespace WebKit
+ 
+-#endif // ENABLE(TOUCH_EVENTS)
++#endif // ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
 index 5424e5dfbb152010b0b32d6f5ea6d5358914e56b..5c335d03f4196ee4f3b001e7c77f3faa2d4fb2be 100644
 --- a/Source/WebKit/Sources.txt
@@ -6553,7 +6742,7 @@ index 0000000000000000000000000000000000000000..033f936d9d3caf594b78bb6ad39249d6
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 9b868717128b9f0b592c94c3b325507d99d6797b..432e9cb03e64a85878939812faaf9898ce6afd14 100644
+index 9b868717128b9f0b592c94c3b325507d99d6797b..7dbc5494d8cf459c69bcbac1a198846aa020942b 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -889,6 +889,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -6576,6 +6765,24 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..432e9cb03e64a85878939812faaf9898
  void WebPageProxy::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      m_inspectorController->createInspectorTarget(targetId, type);
+@@ -2716,7 +2722,7 @@ static TrackingType mergeTrackingTypes(TrackingType a, TrackingType b)
+ 
+ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent)
+ {
+-#if ENABLE(ASYNC_SCROLLING) && PLATFORM(COCOA)
++#if ENABLE(ASYNC_SCROLLING) && PLATFORM(IOS_FAMILY)
+     const EventNames& names = eventNames();
+     for (auto& touchPoint : touchStartEvent.touchPoints()) {
+         IntPoint location = touchPoint.location();
+@@ -2749,7 +2755,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
+     m_touchAndPointerEventTracking.touchStartTracking = TrackingType::Synchronous;
+     m_touchAndPointerEventTracking.touchMoveTracking = TrackingType::Synchronous;
+     m_touchAndPointerEventTracking.touchEndTracking = TrackingType::Synchronous;
+-#endif // ENABLE(ASYNC_SCROLLING)
++#endif // ENABLE(ASYNC_SCROLLING) && PLATFORM(IOS_FAMILY)
+ }
+ 
+ TrackingType WebPageProxy::touchEventTrackingType(const WebTouchEvent& touchStartEvent) const
 @@ -5404,6 +5410,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
@@ -7152,7 +7359,7 @@ index 0000000000000000000000000000000000000000..e3062b3651f3a42314650e5d5c448d18
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.h b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
-index 8016b56c160acc7b4269600f07f737b3793767bb..bf5422a3a635a3a5f018d7df6e2cc99c843bc3ed 100644
+index 8016b56c160acc7b4269600f07f737b3793767bb..651a86c41af3305e215d7baf7f149cc7f401c470 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.h
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
 @@ -53,6 +53,8 @@ class PageClientImpl final : public PageClientImplCocoa
@@ -7164,11 +7371,30 @@ index 8016b56c160acc7b4269600f07f737b3793767bb..bf5422a3a635a3a5f018d7df6e2cc99c
      PageClientImpl(NSView *, WKWebView *);
      virtual ~PageClientImpl();
  
+@@ -206,6 +208,10 @@ private:
+     void beganExitFullScreen(const WebCore::IntRect& initialFrame, const WebCore::IntRect& finalFrame) override;
+ #endif
+ 
++#if ENABLE(TOUCH_EVENTS)
++    void doneWithTouchEvent(const NativeWebTouchEvent&, bool wasEventHandled) override;
++#endif
++
+     void navigationGestureDidBegin() override;
+     void navigationGestureWillEnd(bool willNavigate, WebBackForwardListItem&) override;
+     void navigationGestureDidEnd(bool willNavigate, WebBackForwardListItem&) override;
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..6e495df29b067ae452246bb6c00b423b59b1b285 100644
+index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..63eb41bc3e52c97b933e6bd8288f6824f71ca675 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-@@ -105,6 +105,13 @@ static NSString * const kAXLoadCompleteNotification = @"AXLoadComplete";
+@@ -78,6 +78,7 @@
+ #import <WebCore/TextUndoInsertionMarkupMac.h>
+ #import <WebCore/ValidationBubble.h>
+ #import <WebCore/WebCoreCALayerExtras.h>
++#import <WebCore/NotImplemented.h>
+ #import <wtf/ProcessPrivilege.h>
+ #import <wtf/text/CString.h>
+ #import <wtf/text/WTFString.h>
+@@ -105,6 +106,13 @@ static NSString * const kAXLoadCompleteNotification = @"AXLoadComplete";
  namespace WebKit {
  using namespace WebCore;
  
@@ -7182,7 +7408,7 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..6e495df29b067ae452246bb6c00b423b
  PageClientImpl::PageClientImpl(NSView* view, WKWebView *webView)
      : PageClientImplCocoa(webView)
      , m_view(view)
-@@ -163,6 +170,9 @@ NSWindow *PageClientImpl::activeWindow() const
+@@ -163,6 +171,9 @@ NSWindow *PageClientImpl::activeWindow() const
  
  bool PageClientImpl::isViewWindowActive()
  {
@@ -7192,7 +7418,7 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..6e495df29b067ae452246bb6c00b423b
      ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
      NSWindow *activeViewWindow = activeWindow();
      return activeViewWindow.isKeyWindow || [NSApp keyWindow] == activeViewWindow;
-@@ -170,6 +180,9 @@ bool PageClientImpl::isViewWindowActive()
+@@ -170,6 +181,9 @@ bool PageClientImpl::isViewWindowActive()
  
  bool PageClientImpl::isViewFocused()
  {
@@ -7202,7 +7428,7 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..6e495df29b067ae452246bb6c00b423b
      // FIXME: This is called from the WebPageProxy constructor before we have a WebViewImpl.
      // Once WebViewImpl and PageClient merge, this won't be a problem.
      if (!m_impl)
-@@ -193,6 +206,9 @@ void PageClientImpl::makeFirstResponder()
+@@ -193,6 +207,9 @@ void PageClientImpl::makeFirstResponder()
      
  bool PageClientImpl::isViewVisible()
  {
@@ -7212,7 +7438,7 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..6e495df29b067ae452246bb6c00b423b
      NSView *activeView = this->activeView();
      NSWindow *activeViewWindow = activeWindow();
  
-@@ -456,6 +472,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
+@@ -456,6 +473,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
  {
@@ -7221,7 +7447,21 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..6e495df29b067ae452246bb6c00b423b
      m_impl->doneWithKeyEvent(event.nativeEvent(), eventWasHandled);
  }
  
-@@ -931,6 +949,9 @@ void PageClientImpl::didRestoreScrollPosition()
+@@ -760,6 +779,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
+ 
+ #endif // ENABLE(FULLSCREEN_API)
+ 
++#if ENABLE(TOUCH_EVENTS)
++void PageClientImpl::doneWithTouchEvent(const NativeWebTouchEvent& event, bool wasEventHandled)
++{
++    notImplemented();
++}
++#endif // ENABLE(TOUCH_EVENTS)
++
+ void PageClientImpl::navigationGestureDidBegin()
+ {
+     m_impl->dismissContentRelativeChildWindowsWithAnimation(true);
+@@ -931,6 +957,9 @@ void PageClientImpl::didRestoreScrollPosition()
  
  bool PageClientImpl::windowIsFrontWindowUnderMouse(const NativeWebMouseEvent& event)
  {
@@ -7744,6 +7984,41 @@ index 6cbd7fad5ff91afd858da346adbfeed6424b0b2b..176c46f186bc925fd28492d14d8d9e11
  
      void connect(Inspector::FrontendChannel::ConnectionType) override;
      void disconnect() override;
+diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
+index 0ff9e315b063c1fff273946018b60f5a02b72875..18dc8a4e40194d596db1ff7fb0cdbca363024706 100644
+--- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
++++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
+@@ -4243,7 +4243,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+     _private->handlingMouseDownEvent = NO;
+ }
+ 
+-#if ENABLE(TOUCH_EVENTS)
++#if ENABLE(IOS_TOUCH_EVENTS)
+ 
+ - (void)touch:(WebEvent *)event
+ {
+diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/mac/WebView/WebView.mm
+index 85f14ebd9b7dddef8f9cb649f81b7abfa7448980..6443dc27fd5b74df6148b943fcc7d03d962caf5e 100644
+--- a/Source/WebKitLegacy/mac/WebView/WebView.mm
++++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
+@@ -4326,7 +4326,7 @@ IGNORE_WARNINGS_END
+ }
+ #endif // PLATFORM(IOS_FAMILY)
+ 
+-#if ENABLE(TOUCH_EVENTS)
++#if ENABLE(IOS_TOUCH_EVENTS)
+ - (NSArray *)_touchEventRegions
+ {
+     auto* frame = [self _mainCoreFrame];
+@@ -4372,7 +4372,7 @@ IGNORE_WARNINGS_END
+ 
+     return eventRegionArray;
+ }
+-#endif // ENABLE(TOUCH_EVENTS)
++#endif // ENABLE(IOS_TOUCH_EVENTS)
+ 
+ // For backwards compatibility with the WebBackForwardList API, we honor both
+ // a per-WebView and a per-preferences setting for whether to use the back/forward cache.
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.h b/Tools/MiniBrowser/gtk/BrowserWindow.h
 index 1570d65effb5d601ee3c44a2a7461436f4691c2c..456f96cf589320efa70a76f76e230b6795886b5a 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.h
