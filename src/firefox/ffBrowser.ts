@@ -156,7 +156,7 @@ export class FFBrowser extends browser.Browser {
         });
         const target = this._targets.get(targetId);
         const page = await target.page();
-        const session = (page._delegate as FFPage)._session;
+        const session = target._ffPage._session;
         const promises: Promise<any>[] = [];
         if (options.viewport)
           promises.push(page._delegate.setViewport(options.viewport));
@@ -222,14 +222,14 @@ export class FFBrowser extends browser.Browser {
 
 export class Target {
   _pagePromise?: Promise<Page>;
-  private _ffPage: FFPage | null = null;
-  private _browser: FFBrowser;
-  _context: BrowserContext;
-  private _connection: FFConnection;
-  private _targetId: string;
-  private _type: 'page' | 'browser';
+  _ffPage: FFPage | null = null;
+  private readonly _browser: FFBrowser;
+  private readonly _context: BrowserContext;
+  private readonly _connection: FFConnection;
+  private readonly _targetId: string;
+  private readonly _type: 'page' | 'browser';
   _url: string;
-  private _openerId: string;
+  private readonly _openerId: string;
 
   constructor(connection: any, browser: FFBrowser, context: BrowserContext, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
     this._browser = browser;

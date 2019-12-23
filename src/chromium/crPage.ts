@@ -44,7 +44,7 @@ const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class CRPage implements PageDelegate {
   _client: CRSession;
-  private _page: ChromiumPage;
+  private readonly _page: ChromiumPage;
   readonly _networkManager: CRNetworkManager;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
