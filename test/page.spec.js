@@ -487,7 +487,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       });
       expect(result).toBe(15);
     });
-    it.skip(WEBKIT)('should work after cross origin navigation', async({page, server}) => {
+    it('should work after cross origin navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.exposeFunction('compute', function(a, b) {
         return a * b;
