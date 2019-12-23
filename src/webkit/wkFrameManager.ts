@@ -71,7 +71,7 @@ export class WKFrameManager implements PageDelegate {
     // New bootstrap scripts may have been added during provisional load, push them
     // again to be on the safe side.
     if (this._setBootstrapScripts.length)
-      this._setBootstrapScripts(session);
+      this._setBootstrapScripts(session).catch(e => debugError(e));
   }
 
   // This method is called for provisional targets as well. The session passed as the parameter
@@ -100,7 +100,7 @@ export class WKFrameManager implements PageDelegate {
     if (contextOptions.javaScriptEnabled === false)
       promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: false }));
     if (this._setBootstrapScripts.length && session.isProvisional())
-      this._setBootstrapScripts(session);
+      promises.push(this._setBootstrapScripts(session));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
