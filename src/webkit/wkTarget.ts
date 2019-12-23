@@ -22,8 +22,6 @@ import { WKTargetSession, WKTargetSessionEvents } from './wkConnection';
 import { WKFrameManager } from './wkFrameManager';
 import { WKBrowser } from './wkBrowser';
 
-const targetSymbol = Symbol('target');
-
 export class WKTarget {
   readonly _browserContext: BrowserContext;
   readonly _targetId: string;
@@ -32,10 +30,6 @@ export class WKTarget {
   private _pagePromise: Promise<Page> | null = null;
   private _browser: WKBrowser;
   _frameManager: WKFrameManager | null = null;
-
-  static fromPage(page: Page): WKTarget {
-    return (page as any)[targetSymbol];
-  }
 
   constructor(browser: WKBrowser, session: WKTargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
     const {targetId, type} = targetInfo;
@@ -77,7 +71,6 @@ export class WKTarget {
   }
 
   private _adoptPage() {
-    (this._frameManager._page as any)[targetSymbol] = this;
     this._session.once(WKTargetSessionEvents.Disconnected, () => {
       // Once swapped out, we reset _page and won't call _didDisconnect for old session.
       if (this._frameManager)

@@ -140,15 +140,11 @@ export class WKBrowser extends browser.Browser {
     target._didClose();
   }
 
-  _closePage(page: Page, runBeforeUnload: boolean) {
+  _closePage(targetId: string, runBeforeUnload: boolean) {
     this._connection.send('Target.close', {
-      targetId: WKTarget.fromPage(page)._targetId,
+      targetId,
       runBeforeUnload
     }).catch(debugError);
-  }
-
-  async _activatePage(page: Page): Promise<void> {
-    await this._connection.send('Target.activate', { targetId: WKTarget.fromPage(page)._targetId });
   }
 
   async _onProvisionalTargetCommitted({oldTargetId, newTargetId}) {

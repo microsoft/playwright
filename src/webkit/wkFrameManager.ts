@@ -343,7 +343,7 @@ export class WKFrameManager implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    this._browser._closePage(this._page, runBeforeUnload);
+    this._browser._closePage(this._session._sessionId, runBeforeUnload);
   }
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {

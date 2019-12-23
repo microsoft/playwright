@@ -221,10 +221,6 @@ export class CRBrowser extends browser.Browser {
     return Array.from(this._targets.values()).filter(target => target._isInitialized);
   }
 
-  async _activatePage(page: Page) {
-    await (page._delegate as CRFrameManager)._client.send('Target.activateTarget', {targetId: CRTarget.fromPage(page)._targetId});
-  }
-
   async waitForTarget(predicate: (arg0: CRTarget) => boolean, options: { timeout?: number; } | undefined = {}): Promise<CRTarget> {
     const {
       timeout = 30000
