@@ -47,8 +47,8 @@ export class CROverrides {
       await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', this._geolocation);
   }
 
-  async _applyOverrides(page: Page): Promise<void> {
+  async _applyOverrides(page: CRPage): Promise<void> {
     if (this._geolocation)
-      await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', this._geolocation);
+      await page._client.send('Emulation.setGeolocationOverride', this._geolocation);
   }
 }

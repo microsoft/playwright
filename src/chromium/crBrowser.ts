@@ -82,18 +82,19 @@ export class CRBrowser extends browser.Browser {
         const target = this._targets.get(targetId);
         assert(await target._initializedPromise, 'Failed to create target for page');
         const page = await target.page();
-        const session = (page._delegate as CRPage)._client;
-        const promises: Promise<any>[] = [ overrides._applyOverrides(page) ];
+        const crPage = target._crPage;
+        const session = crPage._client;
+        const promises: Promise<any>[] = [ overrides._applyOverrides(crPage) ];
         if (options.bypassCSP)
           promises.push(session.send('Page.setBypassCSP', { enabled: true }));
         if (options.ignoreHTTPSErrors)
           promises.push(session.send('Security.setIgnoreCertificateErrors', { ignore: true }));
         if (options.viewport)
-          promises.push(page._delegate.setViewport(options.viewport));
+          promises.push(crPage.setViewport(options.viewport));
         if (options.javaScriptEnabled === false)
           promises.push(session.send('Emulation.setScriptExecutionDisabled', { value: true }));
         if (options.userAgent)
-          (page._delegate as CRPage)._networkManager.setUserAgent(options.userAgent);
+          crPage._networkManager.setUserAgent(options.userAgent);
         if (options.mediaType || options.colorScheme) {
           const features = options.colorScheme ? [{ name: 'prefers-color-scheme', value: options.colorScheme }] : [];
           promises.push(session.send('Emulation.setEmulatedMedia', { media: options.mediaType || '', features }));

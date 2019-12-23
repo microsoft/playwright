@@ -29,14 +29,14 @@ const targetSymbol = Symbol('target');
 
 export class CRTarget {
   private _targetInfo: Protocol.Target.TargetInfo;
-  private _browser: CRBrowser;
-  private _browserContext: BrowserContext;
-  _targetId: string;
+  private readonly _browser: CRBrowser;
+  private readonly _browserContext: BrowserContext;
+  readonly _targetId: string;
   private _sessionFactory: () => Promise<CRSession>;
   private _pagePromise: Promise<Page> | null = null;
-  private _crPage: CRPage | null = null;
+  _crPage: CRPage | null = null;
   private _workerPromise: Promise<CRWorker> | null = null;
-  _initializedPromise: Promise<boolean>;
+  readonly _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
 
