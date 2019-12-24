@@ -169,22 +169,23 @@ index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..6f96f174dffd7c5c42561487e1627ef9
      // Note that 'unused' is a workaround so the compiler can pick the right sendResponse based on arity.
      // When <http://webkit.org/b/179847> is fixed or this class is renamed for the JSON::Object case,
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
-index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..cecc44dd00bab6aa4f302274cc88af41bf0a8c03 100644
+index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..48ea596ab47c98c988e4707a6574de1a88a96543 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
 +++ b/Source/JavaScriptCore/inspector/InspectorTarget.h
-@@ -45,8 +45,11 @@ public:
+@@ -45,8 +45,12 @@ public:
      // State.
      virtual String identifier() const = 0;
      virtual InspectorTargetType type() const = 0;
 +    virtual String url() const = 0;
  
      virtual bool isProvisional() const { return false; }
++    virtual String navigationID() const { return String(); }
 +    virtual String oldTargetID() const { return String(); }
 +    virtual String openerID() const { return String(); }
      bool isPaused() const { return m_isPaused; }
      void pause();
      void resume();
-@@ -56,6 +59,8 @@ public:
+@@ -56,6 +60,8 @@ public:
      virtual void connect(FrontendChannel::ConnectionType) = 0;
      virtual void disconnect() = 0;
      virtual void sendMessageToTargetBackend(const String&) = 0;
@@ -194,7 +195,7 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..cecc44dd00bab6aa4f302274cc88af41
  private:
      WTF::Function<void()> m_resumeCallback;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8ef7b410c 100644
+index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..e5e5b78010666a4897d31bb6d0285b1c66423ba1 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 @@ -30,11 +30,12 @@
@@ -240,7 +241,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
  void InspectorTargetAgent::sendMessageFromTargetToFrontend(const String& targetId, const String& message)
  {
      ASSERT_WITH_MESSAGE(m_targets.get(targetId), "Sending a message from an untracked target to the frontend.");
-@@ -109,16 +132,23 @@ static Protocol::Target::TargetInfo::Type targetTypeToProtocolType(InspectorTarg
+@@ -109,16 +132,24 @@ static Protocol::Target::TargetInfo::Type targetTypeToProtocolType(InspectorTarg
      return Protocol::Target::TargetInfo::Type::Page;
  }
  
@@ -255,6 +256,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
 -    if (target.isProvisional())
 +    if (target.isProvisional()) {
          result->setIsProvisional(true);
++        result->setNavigationId(target.navigationID());
 +        result->setOldTargetId(target.oldTargetID());
 +    }
      if (target.isPaused())
@@ -266,7 +268,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
      return result;
  }
  
-@@ -134,7 +164,7 @@ void InspectorTargetAgent::targetCreated(InspectorTarget& target)
+@@ -134,7 +165,7 @@ void InspectorTargetAgent::targetCreated(InspectorTarget& target)
          target.pause();
      target.connect(connectionType());
  
@@ -275,7 +277,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
  }
  
  void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
-@@ -159,6 +189,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
+@@ -159,6 +190,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
      m_frontendDispatcher->didCommitProvisionalTarget(oldTargetID, committedTargetID);
  }
  
@@ -294,7 +296,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
  FrontendChannel::ConnectionType InspectorTargetAgent::connectionType() const
  {
      return m_router.hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
-@@ -168,7 +210,7 @@ void InspectorTargetAgent::connectToTargets()
+@@ -168,7 +211,7 @@ void InspectorTargetAgent::connectToTargets()
  {
      for (InspectorTarget* target : m_targets.values()) {
          target->connect(connectionType());
@@ -773,13 +775,18 @@ index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80ca
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4530e2412 100644
+index a8fc5332ac92424b00a3dec62152fd3c5f28544e..5c0dde36dcb75d937896f004f8325e737a8b9c5b 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
-@@ -110,6 +110,40 @@
+@@ -110,6 +110,45 @@
                  { "name": "session", "type": "boolean", "description": "True in case of session cookie." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
              ]
++        },
++        {
++            "id": "NavigationId",
++            "type": "string",
++            "description": "Frame navigation identifier that survives web process swaps."
 +        },
 +        {
 +            "id": "AXNode",
@@ -817,7 +824,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
          }
      ],
      "commands": [
-@@ -129,11 +163,21 @@
+@@ -129,11 +168,24 @@
                  { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
              ]
          },
@@ -837,10 +844,13 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
 +                { "name": "url", "type": "string", "description": "URL to navigate the page to." },
 +                { "name": "frameId", "$ref": "Network.FrameId", "optional": true, "description": "Id of the frame to navigate."},
 +                { "name": "referrer", "type": "string", "optional": true, "description": "Referrer URL." }
++            ],
++            "returns": [
++                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with the navigation." }
              ]
          },
          {
-@@ -246,6 +290,13 @@
+@@ -246,6 +298,13 @@
                  { "name": "appearance", "$ref": "Appearance", "description": "Appearance name to force. Empty string disables the override." }
              ]
          },
@@ -854,7 +864,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -276,19 +327,64 @@
+@@ -276,19 +335,73 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -918,10 +928,19 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
 -                { "name": "timestamp", "type": "number" }
 +              { "name": "timestamp", "type": "number" },
 +              { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has fired load event." }
++            ]
++        },
++        {
++            "name": "didSetNavigationId",
++            "description": "Fired when document loader is assigned a navigation ID.",
++            "parameters": [
++                { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame owning loader." },
++                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with this frame." },
++                { "name": "navigationId", "$ref": "NavigationId", "description": "Identifier of the navigation assigned to the loader." }
              ]
          },
          {
-@@ -298,6 +394,14 @@
+@@ -298,6 +411,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -936,7 +955,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -334,12 +438,36 @@
+@@ -334,12 +455,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -974,16 +993,17 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
      ]
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
-index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..5849e4fbea626570389d27037f4fd2d99c3526ce 100644
+index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..a9fca49b4fc55360ff7c65866077b9989979fbe3 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Target.json
-@@ -10,8 +10,12 @@
+@@ -10,8 +10,13 @@
              "properties": [
                  { "name": "targetId", "type": "string", "description": "Unique identifier for the target." },
                  { "name": "type", "type": "string", "enum": ["page", "service-worker", "worker"] },
 -                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "Whether this is a provisional page target." },
 -                { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." }
 +                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "True value indicates that this is a provisional page target i.e. Such target may be created when current page starts cross-origin navigation. Eventually each provisional target is either committed and swaps with the current target or gets destroyed, e.g. in case of load request failure." },
++                { "name": "navigationId", "$ref": "Page.NavigationId", "optional": true, "description": "Unique identifier of the navigation for which the provisional page is created." },
 +                { "name": "oldTargetId", "type": "string", "optional": true, "description": "Unique identifier of the target which is going to be replaced if this target is committed. Only set for provisional targets." },
 +                { "name": "openerId", "type": "string", "optional": true, "description": "Unique identifier of the opening target. Only set for pages created by window.open()." },
 +                { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." },
@@ -992,7 +1012,7 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..5849e4fbea626570389d27037f4fd2d9
              ]
          }
      ],
-@@ -37,6 +41,21 @@
+@@ -37,6 +42,21 @@
                  { "name": "targetId", "type": "string" },
                  { "name": "message", "type": "string", "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
              ]
@@ -1177,7 +1197,7 @@ index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f6043b6a3c50 100644
+index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..4100dbd896e39ba2f4533c0bde0e1bd09cc49fde 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1189,7 +1209,20 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f604
          return;
  
      if (auto* pageDebuggerAgent = instrumentingAgents.pageDebuggerAgent())
-@@ -624,6 +624,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
+@@ -563,6 +563,12 @@ void InspectorInstrumentation::applyEmulatedMediaImpl(InstrumentingAgents& instr
+         pageAgent->applyEmulatedMedia(media);
+ }
+ 
++void InspectorInstrumentation::didSetNavigationIDImpl(InstrumentingAgents& instrumentingAgents, Frame& frame, DocumentLoader& loader, uint64_t navigationID)
++{
++    if (auto* pageAgent = instrumentingAgents.inspectorPageAgent())
++        pageAgent->didSetNavigationID(frame, loader, navigationID);
++}
++
+ void InspectorInstrumentation::willSendRequestImpl(InstrumentingAgents& instrumentingAgents, unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse)
+ {
+     if (InspectorNetworkAgent* networkAgent = instrumentingAgents.inspectorNetworkAgent())
+@@ -624,6 +630,12 @@ void InspectorInstrumentation::didFailLoadingImpl(InstrumentingAgents& instrumen
          consoleAgent->didFailLoading(identifier, error); // This should come AFTER resource notification, front-end relies on this.
  }
  
@@ -1202,7 +1235,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f604
  void InspectorInstrumentation::willLoadXHRSynchronouslyImpl(InstrumentingAgents& instrumentingAgents)
  {
      if (InspectorNetworkAgent* networkAgent = instrumentingAgents.inspectorNetworkAgent())
-@@ -656,20 +662,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
+@@ -656,20 +668,17 @@ void InspectorInstrumentation::didReceiveScriptResponseImpl(InstrumentingAgents&
  
  void InspectorInstrumentation::domContentLoadedEventFiredImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
  {
@@ -1226,7 +1259,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f604
  }
  
  void InspectorInstrumentation::frameDetachedFromParentImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
-@@ -786,6 +789,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
+@@ -786,6 +795,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
  
@@ -1239,7 +1272,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f604
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1266,6 +1275,24 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1266,6 +1281,24 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -1265,7 +1298,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f604
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f77e54d7c 100644
+index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..1f238906418de727b9883b94158d28ca2d608337 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -77,6 +77,7 @@ class DOMWrapperWorld;
@@ -1276,7 +1309,15 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -197,6 +198,7 @@ public:
+@@ -190,6 +191,7 @@ public:
+     static void applyUserAgentOverride(Frame&, String&);
+     static void applyEmulatedMedia(Frame&, String&);
+ 
++    static void didSetNavigationID(Frame&, DocumentLoader&, uint64_t navigationID);
+     static void willSendRequest(Frame*, unsigned long identifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse);
+     static void didLoadResourceFromMemoryCache(Page&, DocumentLoader*, CachedResource*);
+     static void didReceiveResourceResponse(Frame&, unsigned long identifier, DocumentLoader*, const ResourceResponse&, ResourceLoader*);
+@@ -197,6 +199,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -1284,7 +1325,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -228,6 +230,7 @@ public:
+@@ -228,6 +231,7 @@ public:
      static void frameStoppedLoading(Frame&);
      static void frameScheduledNavigation(Frame&, Seconds delay);
      static void frameClearedScheduledNavigation(Frame&);
@@ -1292,7 +1333,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -314,6 +317,10 @@ public:
+@@ -314,6 +318,10 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -1303,7 +1344,15 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -414,6 +421,7 @@ private:
+@@ -405,6 +413,7 @@ private:
+     static void applyUserAgentOverrideImpl(InstrumentingAgents&, String&);
+     static void applyEmulatedMediaImpl(InstrumentingAgents&, String&);
+ 
++    static void didSetNavigationIDImpl(InstrumentingAgents&, Frame&, DocumentLoader&, uint64_t navigationID);
+     static void willSendRequestImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse);
+     static void willSendRequestOfTypeImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, ResourceRequest&, LoadType);
+     static void markResourceAsCachedImpl(InstrumentingAgents&, unsigned long identifier);
+@@ -414,6 +423,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -1311,7 +1360,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -429,6 +437,7 @@ private:
+@@ -429,6 +439,7 @@ private:
      static void frameStoppedLoadingImpl(InstrumentingAgents&, Frame&);
      static void frameScheduledNavigationImpl(InstrumentingAgents&, Frame&, Seconds delay);
      static void frameClearedScheduledNavigationImpl(InstrumentingAgents&, Frame&);
@@ -1319,7 +1368,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -511,6 +520,10 @@ private:
+@@ -511,6 +522,10 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -1330,7 +1379,21 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1091,6 +1104,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1015,6 +1030,13 @@ inline void InspectorInstrumentation::applyEmulatedMedia(Frame& frame, String& m
+         applyEmulatedMediaImpl(*instrumentingAgents, media);
+ }
+ 
++inline void InspectorInstrumentation::didSetNavigationID(Frame& frame, DocumentLoader& loader, uint64_t navigationID)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(void());
++    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(frame))
++        didSetNavigationIDImpl(*instrumentingAgents, frame, loader, navigationID);
++}
++
+ inline void InspectorInstrumentation::willSendRequest(Frame* frame, unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse)
+ {
+     FAST_RETURN_IF_NO_FRONTENDS(void());
+@@ -1091,6 +1113,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -1344,7 +1407,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1221,6 +1241,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1221,6 +1250,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -1358,7 +1421,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1650,6 +1677,28 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1650,6 +1686,28 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -1387,6 +1450,48 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgentsForContext(ScriptExecutionContext* context)
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
+diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
+index 954aaf121a9fa507d83bc10ae37de1f128f7dcfc..7ada711d50b54a8d9c44de1adf63dee78cea6bac 100644
+--- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
++++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
+@@ -40,4 +40,9 @@ void InspectorInstrumentationWebKit::interceptResponseInternal(const Frame& fram
+     InspectorInstrumentation::interceptResponse(frame, response, identifier, WTFMove(handler));
+ }
+ 
++void InspectorInstrumentationWebKit::didSetNavigationIDInternal(Frame& frame, DocumentLoader& loader, uint64_t navigationID)
++{
++    InspectorInstrumentation::didSetNavigationID(frame, loader, navigationID);
++}
++
+ } // namespace WebCore
+diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
+index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..30731de1636ff9e0a6c16f07f32a3b103d521469 100644
+--- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
++++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
+@@ -39,9 +39,12 @@ public:
+     static bool shouldInterceptResponse(const Frame*, const ResourceResponse&);
+     static void interceptResponse(const Frame*, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
+ 
++    static void didSetNavigationID(Frame&, DocumentLoader&, uint64_t navigationID);
++
+ private:
+     static bool shouldInterceptResponseInternal(const Frame&, const ResourceResponse&);
+     static void interceptResponseInternal(const Frame&, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
++    static void didSetNavigationIDInternal(Frame&, DocumentLoader&, uint64_t navigationID);
+ };
+ 
+ inline bool InspectorInstrumentationWebKit::shouldInterceptResponse(const Frame* frame, const ResourceResponse& response)
+@@ -59,4 +62,10 @@ inline void InspectorInstrumentationWebKit::interceptResponse(const Frame* frame
+     interceptResponseInternal(*frame, response, identifier, WTFMove(handler));
+ }
+ 
++inline void InspectorInstrumentationWebKit::didSetNavigationID(Frame& frame, DocumentLoader& loader, uint64_t navigationID)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(void());
++    didSetNavigationIDInternal(frame, loader, navigationID);
++}
++
+ }
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a8552279250967e615c43 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
@@ -1783,7 +1888,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..364dd6793f0f35134a302827a72f6c9b
      InspectorNetworkAgent(WebAgentContext&);
  
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae9045320427 100644
+index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..689e8c6711097360de6be65cb8a722bfb012462d 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -1858,7 +1963,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
  
  #define DISABLE_INSPECTOR_OVERRIDE_SETTING(name) \
      m_inspectedPage.settings().set##name##InspectorOverride(WTF::nullopt);
-@@ -414,14 +427,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -414,14 +427,37 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -1875,7 +1980,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
 +        errorString = "Failed to go forward"_s;
 +}
 +
-+void InspectorPageAgent::navigate(ErrorString& errorString, const String& url, const String* frameId, const String* referrer)
++void InspectorPageAgent::navigate(ErrorString& errorString, const String& url, const String* frameId, const String* referrer, String* loaderId)
  {
      UserGestureIndicator indicator { ProcessingUserGesture };
 -    Frame& frame = m_inspectedPage.mainFrame();
@@ -1884,27 +1989,33 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
 +        return;
 +
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
- 
--    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
--    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
--    frame.loader().changeLocation(WTFMove(frameLoadRequest));
++
 +    if (!resourceRequest.url().isValid()) {
 +        errorString = "Cannot navigate to invalid URL"_s;
 +        return;
 +    }
-+
+ 
+-    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
+-    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
+-    frame.loader().changeLocation(WTFMove(frameLoadRequest));
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 +    frame->loader().changeLocation(WTFMove(frameLoadRequest));
++    *loaderId = this->loaderId(frame->loader().policyDocumentLoader());
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -682,15 +717,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -682,15 +718,21 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
 -void InspectorPageAgent::domContentEventFired()
++void InspectorPageAgent::didSetNavigationID(Frame& frame, DocumentLoader& loader, uint64_t navigationID)
++{
++    m_frontendDispatcher->didSetNavigationId(frameId(&frame), loaderId(&loader), String::number(navigationID));
++}
++
 +void InspectorPageAgent::domContentEventFired(Frame& frame)
  {
 -    m_isFirstLayoutAfterOnLoad = true;
@@ -1922,7 +2033,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -765,6 +801,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -765,6 +807,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -1935,7 +2046,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -819,6 +861,38 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -819,6 +867,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -1974,7 +2085,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -962,6 +1036,17 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -962,6 +1042,17 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -1992,7 +2103,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -979,4 +1064,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -979,4 +1070,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2485,7 +2596,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae90
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..fcf144e8c2d2e8a5ceabea7f6497430ef92d08d5 100644
+index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..4eab24379cc69b1acd29f17af7012ab3c3418231 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2511,11 +2622,11 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..fcf144e8c2d2e8a5ceabea7f6497430e
 -    void navigate(ErrorString&, const String& url) override;
 +    void goBack(ErrorString&) override;
 +    void goForward(ErrorString&) override;
-+    void navigate(ErrorString&, const String& url, const String* frameId, const String* referrer) override;
++    void navigate(ErrorString&, const String& url, const String* frameId, const String* referrer, String* loaderId) override;
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -110,13 +117,20 @@ public:
+@@ -110,13 +117,21 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -2534,12 +2645,13 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..fcf144e8c2d2e8a5ceabea7f6497430e
      // InspectorInstrumentation
 -    void domContentEventFired();
 -    void loadEventFired();
++    void didSetNavigationID(Frame&, DocumentLoader&, uint64_t navigationID);
 +    void domContentEventFired(Frame&);
 +    void loadEventFired(Frame&);
      void frameNavigated(Frame&);
      void frameDetached(Frame&);
      void loaderDetachedFromFrame(DocumentLoader&);
-@@ -124,6 +138,7 @@ public:
+@@ -124,6 +139,7 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -2547,7 +2659,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..fcf144e8c2d2e8a5ceabea7f6497430e
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -132,11 +147,15 @@ public:
+@@ -132,11 +148,15 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -2563,7 +2675,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..fcf144e8c2d2e8a5ceabea7f6497430e
  
  private:
      double timestamp();
-@@ -151,6 +170,7 @@ private:
+@@ -151,6 +171,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -2571,7 +2683,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..fcf144e8c2d2e8a5ceabea7f6497430e
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -161,8 +181,11 @@ private:
+@@ -161,8 +182,11 @@ private:
      String m_emulatedMedia;
      String m_forcedAppearance;
      String m_bootstrapScript;
@@ -5604,7 +5716,7 @@ index 0000000000000000000000000000000000000000..203c203a0e223a33c10c02db4b76f6dd
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
-index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a80eef613f485a84e523b4365ebab298104fe512 100644
+index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..092dda1006af5534bc1df6024c726454c8e36781 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
 @@ -26,12 +26,15 @@
@@ -5658,10 +5770,17 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a80eef613f485a84e523b4365ebab298
  void InspectorTargetProxy::connect(Inspector::FrontendChannel::ConnectionType connectionType)
  {
      if (m_provisionalPage) {
-@@ -102,4 +111,19 @@ bool InspectorTargetProxy::isProvisional() const
+@@ -102,4 +111,26 @@ bool InspectorTargetProxy::isProvisional() const
      return !!m_provisionalPage;
  }
  
++String InspectorTargetProxy::navigationID() const
++{
++    if (!m_provisionalPage)
++        return String();
++    return String::number(m_provisionalPage->navigationID());
++}
++
 +String InspectorTargetProxy::oldTargetID() const
 +{
 +    if (!m_provisionalPage)
@@ -5679,10 +5798,10 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a80eef613f485a84e523b4365ebab298
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.h b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..3985edf2081566b3dee85273b326e0fa81b16863 100644
+index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..690c670f4b2bf3159b81bfdb693b128fa0a112e6 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.h
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-@@ -37,30 +37,35 @@ class WebPageProxy;
+@@ -37,30 +37,36 @@ class WebPageProxy;
  // NOTE: This UIProcess side InspectorTarget doesn't care about the frontend channel, since
  // any target -> frontend messages will be routed to the WebPageProxy with a targetId.
  
@@ -5703,6 +5822,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..3985edf2081566b3dee85273b326e0fa
  
      void didCommitProvisionalTarget();
      bool isProvisional() const override;
++    String navigationID() const override;
 +    String oldTargetID() const override;
 +    String openerID() const override;
  
@@ -7947,6 +8067,50 @@ index 1c5c6ca4bacba4b134d44af9200b0b1e8b4ca2b3..49bfaecf5c2f7cd704c7ef91952303e7
  				2D11B7532126A282006F8878 /* UnifiedSource2-mm.mm in Sources */,
  				2D11B7562126A282006F8878 /* UnifiedSource3.cpp in Sources */,
  				2D11B7552126A282006F8878 /* UnifiedSource3-mm.mm in Sources */,
+diff --git a/Source/WebKit/WebProcess/WebPage/WebFrame.cpp b/Source/WebKit/WebProcess/WebPage/WebFrame.cpp
+index 9fbb1fdf0d827884665cec7737b310b5031d40c5..ae5a4dc56fe1b1c974c85376d78a34bb6b4db0ee 100644
+--- a/Source/WebKit/WebProcess/WebPage/WebFrame.cpp
++++ b/Source/WebKit/WebProcess/WebPage/WebFrame.cpp
+@@ -67,6 +67,7 @@
+ #include <WebCore/HTMLSelectElement.h>
+ #include <WebCore/HTMLTextAreaElement.h>
+ #include <WebCore/ImageBuffer.h>
++#include <WebCore/InspectorInstrumentationWebKit.h>
+ #include <WebCore/JSCSSStyleDeclaration.h>
+ #include <WebCore/JSElement.h>
+ #include <WebCore/JSFile.h>
+@@ -270,8 +271,10 @@ void WebFrame::didReceivePolicyDecision(uint64_t listenerID, WebCore::PolicyChec
+ 
+     m_policyDownloadID = downloadID;
+     if (navigationID) {
+-        if (WebDocumentLoader* documentLoader = static_cast<WebDocumentLoader*>(m_coreFrame->loader().policyDocumentLoader()))
++        if (WebDocumentLoader* documentLoader = static_cast<WebDocumentLoader*>(m_coreFrame->loader().policyDocumentLoader())) {
+             documentLoader->setNavigationID(navigationID);
++            InspectorInstrumentationWebKit::didSetNavigationID(*m_coreFrame, *documentLoader, navigationID);
++        }
+     }
+ 
+     function(action, identifier);
+diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
+index 1b93fa320f1bcc6f2c3c53cba21acc33cc45904a..5b3bc5ec02d5e251b2e68e400062f856615e2207 100644
+--- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
++++ b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
+@@ -185,6 +185,7 @@
+ #include <WebCore/HistoryItem.h>
+ #include <WebCore/HitTestResult.h>
+ #include <WebCore/InspectorController.h>
++#include <WebCore/InspectorInstrumentationWebKit.h>
+ #include <WebCore/JSDOMExceptionHandling.h>
+ #include <WebCore/JSDOMWindow.h>
+ #include <WebCore/KeyboardEvent.h>
+@@ -6225,6 +6226,7 @@ Ref<DocumentLoader> WebPage::createDocumentLoader(Frame& frame, const ResourceRe
+     if (frame.isMainFrame()) {
+         if (m_pendingNavigationID) {
+             documentLoader->setNavigationID(m_pendingNavigationID);
++            InspectorInstrumentationWebKit::didSetNavigationID(frame, documentLoader, m_pendingNavigationID);
+             m_pendingNavigationID = 0;
+         }
+ 
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
 index a70f6fd52096a5dca901ea70a3755f14d6b4a0fd..f02e5c774a49d3e67860adb3b011531313eaf8d1 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
