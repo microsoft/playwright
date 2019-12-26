@@ -1,18 +1,13 @@
 #!/bin/bash
 
-BUILD_TYPE=Release
-if [[ -v WKDEBUG ]]; then
-  BUILD_TYPE=Debug
-fi
-
 function runOSX() {
   # if script is run as-is
-  if [ -d $SCRIPT_PATH/checkout/WebKitBuild/$BUILD_TYPE/MiniBrowser.app ]; then
-    DYLIB_PATH="$SCRIPT_PATH/checkout/WebKitBuild/$BUILD_TYPE"
+  if [ -d $SCRIPT_PATH/checkout/WebKitBuild/Release/MiniBrowser.app ]; then
+    DYLIB_PATH="$SCRIPT_PATH/checkout/WebKitBuild/Release"
   elif [ -d $SCRIPT_PATH/MiniBrowser.app ]; then
     DYLIB_PATH="$SCRIPT_PATH"
-  elif [ -d $SCRIPT_PATH/WebKitBuild/$BUILD_TYPE/MiniBrowser.app ]; then
-    DYLIB_PATH="$SCRIPT_PATH/WebKitBuild/$BUILD_TYPE"
+  elif [ -d $SCRIPT_PATH/WebKitBuild/Release/MiniBrowser.app ]; then
+    DYLIB_PATH="$SCRIPT_PATH/WebKitBuild/Release"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1
@@ -24,14 +19,14 @@ function runOSX() {
 function runLinux() {
   # if script is run as-is
   if [ -d $SCRIPT_PATH/checkout/WebKitBuild ]; then
-    LD_PATH="$SCRIPT_PATH/checkout/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/checkout/WebKitBuild/$BUILD_TYPE/bin"
-    MINIBROWSER="$SCRIPT_PATH/checkout/WebKitBuild/$BUILD_TYPE/bin/MiniBrowser"
+    LD_PATH="$SCRIPT_PATH/checkout/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/checkout/WebKitBuild/Release/bin"
+    MINIBROWSER="$SCRIPT_PATH/checkout/WebKitBuild/Release/bin/MiniBrowser"
   elif [ -f $SCRIPT_PATH/MiniBrowser ]; then
     LD_PATH="$SCRIPT_PATH"
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
   elif [ -d $SCRIPT_PATH/WebKitBuild ]; then
-    LD_PATH="$SCRIPT_PATH/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/WebKitBuild/$BUILD_TYPE/bin"
-    MINIBROWSER="$SCRIPT_PATH/WebKitBuild/$BUILD_TYPE/bin/MiniBrowser"
+    LD_PATH="$SCRIPT_PATH/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/WebKitBuild/Release/bin"
+    MINIBROWSER="$SCRIPT_PATH/WebKitBuild/Release/bin/MiniBrowser"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1
