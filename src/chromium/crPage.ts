@@ -29,7 +29,7 @@ import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crP
 import * as dialog from '../dialog';
 import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './crInput';
-import { CRAccessibility } from './features/crAccessibility';
+import { getAccessibilityTree } from './crAccessibility';
 import { CRCoverage } from './features/crCoverage';
 import { CRPDF, PDFOptions } from './features/crPdf';
 import { CRWorkers, CRWorker } from './features/crWorkers';
@@ -38,6 +38,7 @@ import { BrowserContext } from '../browserContext';
 import * as types from '../types';
 import * as input from '../input';
 import { ConsoleMessage } from '../console';
+import * as accessibility from '../accessibility';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -458,10 +459,13 @@ export class CRPage implements PageDelegate {
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object).asElement()!;
   }
+
+  async getAccessibilityTree(): Promise<accessibility.AXNode> {
+    return getAccessibilityTree(this._client);
+  }
 }
 
 export class ChromiumPage extends Page {
-  readonly accessibility: CRAccessibility;
   readonly coverage: CRCoverage;
   private _pdf: CRPDF;
   private _workers: CRWorkers;
@@ -469,7 +473,6 @@ export class ChromiumPage extends Page {
 
   constructor(client: CRSession, delegate: CRPage, browserContext: BrowserContext) {
     super(delegate, browserContext);
-    this.accessibility = new CRAccessibility(client);
     this.coverage = new CRCoverage(client);
     this._pdf = new CRPDF(client);
     this._workers = new CRWorkers(client, this, this._addConsoleMessage.bind(this), error => this.emit(Events.Page.PageError, error));

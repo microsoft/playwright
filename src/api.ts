@@ -13,6 +13,7 @@ export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
 export { Request, Response } from './network';
 export { Page, FileChooser } from './page';
+export { Accessibility } from './accessibility';
 
 export * from './chromium/crApi';
 export * from './firefox/ffApi';

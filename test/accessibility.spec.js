@@ -20,7 +20,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(WEBKIT)('Accessibility', function() {
+  fdescribe('Accessibility', function() {
     it('should work', async function({page}) {
       await page.setContent(`
       <head>

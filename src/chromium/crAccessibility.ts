@@ -15,111 +15,17 @@
  * limitations under the License.
  */
 
-import { CRSession } from '../crConnection';
-import { Protocol } from '../protocol';
-import * as dom from '../../dom';
+import { CRSession } from './crConnection';
+import { Protocol } from './protocol';
+import * as dom from '../dom';
+import * as accessibility from '../accessibility';
 
-type SerializedAXNode = {
-  role: string,
-  name?: string,
-  value?: string|number,
-  description?: string,
-
-  keyshortcuts?: string,
-  roledescription?: string,
-  valuetext?: string,
-
-  disabled?: boolean,
-  expanded?: boolean,
-  focused?: boolean,
-  modal?: boolean,
-  multiline?: boolean,
-  multiselectable?: boolean,
-  readonly?: boolean,
-  required?: boolean,
-  selected?: boolean,
-
-  checked?: boolean|'mixed',
-  pressed?: boolean|'mixed',
-
-  level?: number,
-  valuemin?: number,
-  valuemax?: number,
-
-  autocomplete?: string,
-  haspopup?: string,
-  invalid?: string,
-  orientation?: string,
-
-  children?: SerializedAXNode[]
-};
-
-export class CRAccessibility {
-  private _client: CRSession;
-
-  constructor(client: CRSession) {
-    this._client = client;
-  }
-
-  async snapshot(options: {
-      interestingOnly?: boolean;
-      root?: dom.ElementHandle | null;
-    } = {}): Promise<SerializedAXNode> {
-    const {
-      interestingOnly = true,
-      root = null,
-    } = options;
-    const {nodes} = await this._client.send('Accessibility.getFullAXTree');
-    let backendNodeId: number | null = null;
-    if (root) {
-      const remoteObject = root._remoteObject as Protocol.Runtime.RemoteObject;
-      const {node} = await this._client.send('DOM.describeNode', {objectId: remoteObject.objectId});
-      backendNodeId = node.backendNodeId;
-    }
-    const defaultRoot = CRAXNode.createTree(nodes);
-    let needle = defaultRoot;
-    if (backendNodeId) {
-      needle = defaultRoot.find(node => node._payload.backendDOMNodeId === backendNodeId);
-      if (!needle)
-        return null;
-    }
-    if (!interestingOnly)
-      return serializeTree(needle)[0];
-
-    const interestingNodes: Set<CRAXNode> = new Set();
-    collectInterestingNodes(interestingNodes, defaultRoot, false);
-    if (!interestingNodes.has(needle))
-      return null;
-    return serializeTree(needle, interestingNodes)[0];
-  }
+export async function getAccessibilityTree(client: CRSession) : Promise<accessibility.AXNode> {
+  const {nodes} = await client.send('Accessibility.getFullAXTree');
+  return CRAXNode.createTree(client, nodes);
 }
 
-function collectInterestingNodes(collection: Set<CRAXNode>, node: CRAXNode, insideControl: boolean) {
-  if (node.isInteresting(insideControl))
-    collection.add(node);
-  if (node.isLeafNode())
-    return;
-  insideControl = insideControl || node.isControl();
-  for (const child of node._children)
-    collectInterestingNodes(collection, child, insideControl);
-}
-
-function serializeTree(node: CRAXNode, whitelistedNodes?: Set<CRAXNode>): SerializedAXNode[] {
-  const children: SerializedAXNode[] = [];
-  for (const child of node._children)
-    children.push(...serializeTree(child, whitelistedNodes));
-
-  if (whitelistedNodes && !whitelistedNodes.has(node))
-    return children;
-
-  const serializedNode = node.serialize();
-  if (children.length)
-    serializedNode.children = children;
-  return [serializedNode];
-}
-
-
-class CRAXNode {
+class CRAXNode implements accessibility.AXNode {
   _payload: Protocol.Accessibility.AXNode;
   _children: CRAXNode[] = [];
   private _richlyEditable = false;
@@ -130,8 +36,10 @@ class CRAXNode {
   private _name: string;
   private _role: string;
   private _cachedHasFocusableChild: boolean | undefined;
+  private _client: CRSession;
 
-  constructor(payload: Protocol.Accessibility.AXNode) {
+  constructor(client: CRSession, payload: Protocol.Accessibility.AXNode) {
+    this._client = client;
     this._payload = payload;
 
     this._name = this._payload.name ? this._payload.name.value : '';
@@ -176,6 +84,17 @@ class CRAXNode {
       }
     }
     return this._cachedHasFocusableChild;
+  }
+
+  children() {
+    return this._children;
+  }
+
+  async findElement(element: dom.ElementHandle): Promise<CRAXNode | null> {
+    const remoteObject = element._remoteObject as Protocol.Runtime.RemoteObject;
+    const {node: {backendNodeId}} = await this._client.send('DOM.describeNode', {objectId: remoteObject.objectId});
+    const needle = this.find(node => node._payload.backendDOMNodeId === backendNodeId);
+    return needle || null;
   }
 
   find(predicate: (arg0: CRAXNode) => boolean): CRAXNode | null {
@@ -275,7 +194,7 @@ class CRAXNode {
     return this.isLeafNode() && !!this._name;
   }
 
-  serialize(): SerializedAXNode {
+  serialize(): accessibility.SerializedAXNode {
     const properties: Map<string, number | string | boolean> = new Map();
     for (const property of this._payload.properties || [])
       properties.set(property.name.toLowerCase(), property.value.value);
@@ -286,11 +205,11 @@ class CRAXNode {
     if (this._payload.description)
       properties.set('description', this._payload.description.value);
 
-    const node: {[x in keyof SerializedAXNode]: any} = {
+    const node: {[x in keyof accessibility.SerializedAXNode]: any} = {
       role: this._role
     };
 
-    const userStringProperties: Array<keyof SerializedAXNode> = [
+    const userStringProperties: Array<keyof accessibility.SerializedAXNode> = [
       'name',
       'value',
       'description',
@@ -304,7 +223,7 @@ class CRAXNode {
       node[userStringProperty] = properties.get(userStringProperty);
     }
 
-    const booleanProperties: Array<keyof SerializedAXNode> = [
+    const booleanProperties: Array<keyof accessibility.SerializedAXNode> = [
       'disabled',
       'expanded',
       'focused',
@@ -326,7 +245,7 @@ class CRAXNode {
       node[booleanProperty] = value;
     }
 
-    const tristateProperties: Array<keyof SerializedAXNode> = [
+    const tristateProperties: Array<keyof accessibility.SerializedAXNode> = [
       'checked',
       'pressed',
     ];
@@ -336,7 +255,7 @@ class CRAXNode {
       const value = properties.get(tristateProperty);
       node[tristateProperty] = value === 'mixed' ? 'mixed' : value === 'true' ? true : false;
     }
-    const numericalProperties: Array<keyof SerializedAXNode> = [
+    const numericalProperties: Array<keyof accessibility.SerializedAXNode> = [
       'level',
       'valuemax',
       'valuemin',
@@ -346,7 +265,7 @@ class CRAXNode {
         continue;
       node[numericalProperty] = properties.get(numericalProperty);
     }
-    const tokenProperties: Array<keyof SerializedAXNode> = [
+    const tokenProperties: Array<keyof accessibility.SerializedAXNode> = [
       'autocomplete',
       'haspopup',
       'invalid',
@@ -358,13 +277,13 @@ class CRAXNode {
         continue;
       node[tokenProperty] = value;
     }
-    return node as SerializedAXNode;
+    return node as accessibility.SerializedAXNode;
   }
 
-  static createTree(payloads: Protocol.Accessibility.AXNode[]): CRAXNode {
+  static createTree(client: CRSession, payloads: Protocol.Accessibility.AXNode[]): CRAXNode {
     const nodeById: Map<string, CRAXNode> = new Map();
     for (const payload of payloads)
-      nodeById.set(payload.nodeId, new CRAXNode(payload));
+      nodeById.set(payload.nodeId, new CRAXNode(client, payload));
     for (const node of nodeById.values()) {
       for (const childId of node._payload.childIds || [])
         node._children.push(nodeById.get(childId));

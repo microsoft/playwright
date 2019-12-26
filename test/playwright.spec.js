@@ -148,6 +148,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
       // Page-level tests that are given a browser, a context and a page.
       // Each test is launched in a new browser context.
+      testRunner.loadTests(require('./accessibility.spec.js'), testOptions);
       testRunner.loadTests(require('./click.spec.js'), testOptions);
       testRunner.loadTests(require('./cookies.spec.js'), testOptions);
       testRunner.loadTests(require('./dialog.spec.js'), testOptions);
@@ -177,7 +178,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       }
 
       if (CHROME || FFOX) {
-        testRunner.loadTests(require('./features/accessibility.spec.js'), testOptions);
         testRunner.loadTests(require('./features/permissions.spec.js'), testOptions);
       }
 
