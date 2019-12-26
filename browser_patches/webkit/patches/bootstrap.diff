@@ -460,7 +460,7 @@ index 0000000000000000000000000000000000000000..a51c3e1a6fe60353a51bbe95b3f0a8cc
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/DOM.json b/Source/JavaScriptCore/inspector/protocol/DOM.json
-index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..a89aa3290972df4dfd8136cbcfa354ad1e0513c9 100644
+index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..3baff411b0a97b27146d130d4b1c77910372bd60 100644
 --- a/Source/JavaScriptCore/inspector/protocol/DOM.json
 +++ b/Source/JavaScriptCore/inspector/protocol/DOM.json
 @@ -167,6 +167,16 @@
@@ -491,7 +491,7 @@ index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..a89aa3290972df4dfd8136cbcfa354ad
                  { "name": "objectGroup", "type": "string", "optional": true, "description": "Symbolic group name that can be used to release multiple objects." }
              ],
              "returns": [
-@@ -542,6 +554,38 @@
+@@ -542,6 +554,37 @@
              "parameters": [
                  { "name": "allow", "type": "boolean" }
              ]
@@ -503,9 +503,8 @@ index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..a89aa3290972df4dfd8136cbcfa354ad
 +                { "name": "objectId", "$ref": "Runtime.RemoteObjectId", "description": "JavaScript object id of the node wrapper." }
 +            ],
 +            "returns": [
-+                {
-+                    "name": "contentFrameId", "$ref": "Network.FrameId", "optional": true, "description": "Frame ID for frame owner elements."
-+                }
++                { "name": "contentFrameId", "$ref": "Network.FrameId", "optional": true, "description": "Frame ID for frame owner elements." },
++                { "name": "ownerFrameId", "$ref": "Network.FrameId", "optional": true, "description": "ID of the owning frame element." }
 +            ]
 +        },
 +        {
@@ -1388,7 +1387,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a8552279250967e615c43 100644
+index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c1270e4ba7c 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -1480,7 +1479,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a855227925096
      if (!node)
          return;
  
-@@ -1475,18 +1487,96 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -1475,18 +1487,103 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
@@ -1522,7 +1521,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a855227925096
 +    return result;
 +}
 +
-+void InspectorDOMAgent::describeNode(ErrorString& errorString, const String& objectId, Optional<String>& contentFrameId)
++void InspectorDOMAgent::describeNode(ErrorString& errorString, const String& objectId, Optional<String>& contentFrameId, Optional<String>& ownerFrameId)
 +{
 +    Node* node = nodeForObjectId(objectId);
 +    if (!node) {
@@ -1530,14 +1529,21 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a855227925096
 +        return;
 +    }
 +
++    auto* pageAgent = m_instrumentingAgents.inspectorPageAgent();
++    if (!pageAgent) {
++        errorString = "Page agent must be enabled"_s;
++        return;
++    }
++
++    String frameId = pageAgent->frameId(node->document().frame());
++    if (!frameId.isEmpty())
++        ownerFrameId = frameId;
++
 +    if (is<HTMLFrameOwnerElement>(*node)) {
-+        auto* pageAgent = m_instrumentingAgents.inspectorPageAgent();
-+        if (pageAgent) {
-+            const auto& frameOwner = downcast<HTMLFrameOwnerElement>(*node);
-+            String frameId = pageAgent->frameId(frameOwner.contentFrame());
-+            if (!frameId.isEmpty())
-+                contentFrameId = frameId;
-+        }
++        const auto& frameOwner = downcast<HTMLFrameOwnerElement>(*node);
++        String frameId = pageAgent->frameId(frameOwner.contentFrame());
++        if (!frameId.isEmpty())
++            contentFrameId = frameId;
 +    }
 +}
 +
@@ -1583,7 +1589,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a855227925096
  }
  
  void InspectorDOMAgent::getAttributes(ErrorString& errorString, int nodeId, RefPtr<JSON::ArrayOf<String>>& result)
-@@ -2651,7 +2741,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
+@@ -2651,7 +2748,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
          errorString = "Missing node for given path"_s;
  }
  
@@ -1592,7 +1598,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a855227925096
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2660,12 +2750,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
+@@ -2660,12 +2757,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
      if (!frame)
          return nullptr;
  
@@ -1612,7 +1618,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a855227925096
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2686,4 +2780,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+@@ -2686,4 +2787,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
@@ -1660,7 +1666,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..6dbfcb08d0675b34876a855227925096
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..30f79d572821c36232de6d44cb421285bb17f182 100644
+index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..d651c0ceb58774d446f0201fc1a1bc8646c04860 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 @@ -54,6 +54,7 @@ namespace WebCore {
@@ -1692,7 +1698,7 @@ index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..30f79d572821c36232de6d44cb421285
      void focus(ErrorString&, int nodeId) override;
      void setInspectedNode(ErrorString&, int nodeId) override;
      void setAllowEditingUserAgentShadowTrees(ErrorString&, bool allow) final;
-+    void describeNode(ErrorString&, const String& objectId, Optional<String>& contentFrameId) override;
++    void describeNode(ErrorString&, const String& objectId, Optional<String>& contentFrameId, Optional<String>& ownerFrameId) override;
 +    void getContentQuads(ErrorString&, const String& objectId, RefPtr<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>&) override;
 +    void setInputFiles(ErrorString&, const String& objectId, const JSON::Array& files) override;
  
