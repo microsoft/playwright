@@ -43,10 +43,10 @@ cd "$(dirname "$0")"
 
 IS_FIRST_RUN_FILE="/tmp/pw-buildbot-first-run.txt";
 if ! [[ -f $IS_FIRST_RUN_FILE ]]; then
-  touch "$IS_FIRST_RUN_FILE"
   source ./send_telegram_message.sh
   send_telegram_message '**Linux Buildbot Is Active**'
 fi
+touch "$IS_FIRST_RUN_FILE"
 
 # Check if git repo is dirty.
 if [[ -n $(git status -s) ]]; then
