@@ -134,7 +134,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const elementHandle = await frame.evaluateHandle(() => document.querySelector('#frame1'));
       expect(await elementHandle.ownerFrame()).toBe(frame);
     });
-    it.skip(FFOX || WEBKIT)('should work for cross-frame evaluations', async({page,server}) => {
+    it.skip(FFOX)('should work for cross-frame evaluations', async({page,server}) => {
       await page.goto(server.EMPTY_PAGE);
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       const frame = page.mainFrame();
