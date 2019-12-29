@@ -771,6 +771,54 @@ index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80ca
 +        }
 +    ]
 +}
+diff --git a/Source/JavaScriptCore/inspector/protocol/Network.json b/Source/JavaScriptCore/inspector/protocol/Network.json
+index 658f14f8af68073b99a01dd7332628223b67fcd7..20303ab38deb601cb7b8120803d896863dfbfbd4 100644
+--- a/Source/JavaScriptCore/inspector/protocol/Network.json
++++ b/Source/JavaScriptCore/inspector/protocol/Network.json
+@@ -258,7 +258,16 @@
+             "name": "interceptContinue",
+             "description": "Continue an interception with no modifications.",
+             "parameters": [
+-                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request or response to continue." }
++                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request or response to continue." },
++                { "name": "headers", "$ref": "Headers", "optional": true, "description": "HTTP response headers. Pass through original values if unmodified." }
++            ]
++        },
++        {
++            "name": "interceptAsError",
++            "description": "Abort the intercepted request with given reason.",
++            "parameters": [
++                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request." },
++                { "name": "reason", "type": "string", "description": "Deliver error reason for the request." }
+             ]
+         },
+         {
+@@ -266,8 +275,8 @@
+             "description": "Provide response content for an intercepted response.",
+             "parameters": [
+                 { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network response to modify." },
+-                { "name": "content", "type": "string" },
+-                { "name": "base64Encoded", "type": "boolean", "description": "True, if content was sent as base64." },
++                { "name": "content", "type": "string", "optional": true },
++                { "name": "base64Encoded", "type": "boolean", "optional": true, "description": "True, if content was sent as base64." },
+                 { "name": "mimeType", "type": "string", "optional": true, "description": "MIME Type for the data." },
+                 { "name": "status", "type": "integer", "optional": true, "description": "HTTP response status code. Pass through original values if unmodified." },
+                 { "name": "statusText", "type": "string", "optional": true, "description": "HTTP response status text. Pass through original values if unmodified." },
+@@ -356,6 +365,14 @@
+                 { "name": "response", "$ref": "Response", "description": "Original response content that would proceed if this is continued." }
+             ]
+         },
++        {
++            "name": "requestIntercepted",
++            "description": "Fired when HTTP request has been intercepted. The frontend must response with <code>Network.interceptContinue</code> or <code>Network.interceptWithRespons</code>` to continue this response.",
++            "parameters": [
++                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for this intercepted network. Corresponds with an earlier <code>Network.requestWillBeSent</code>." },
++                { "name": "request", "$ref": "Request", "description": "Original request content that would proceed if this is continued." }
++            ]
++        },
+         {
+             "name": "webSocketWillSendHandshakeRequest",
+             "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
 index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4530e2412 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
@@ -1176,7 +1224,7 @@ index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f6043b6a3c50 100644
+index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..49982ebf5c3b6f0a898e7f1757eb9c1df5d4afe4 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1238,7 +1286,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f604
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1266,6 +1275,24 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1266,6 +1275,31 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -1260,14 +1308,29 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..a63f5e7dd61a6b15753f9c4de900f604
 +    return false;
 +}
 +
++bool InspectorInstrumentation::interceptRequestImpl(InstrumentingAgents& instrumentingAgents, ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++{
++    if (InspectorNetworkAgent* networkAgent = instrumentingAgents.inspectorNetworkAgent())
++        return networkAgent->interceptRequest(loader, WTFMove(handler));
++    return false;
++}
++
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope& workerGlobalScope)
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f77e54d7c 100644
+index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323cd15f080 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
-@@ -77,6 +77,7 @@ class DOMWrapperWorld;
+@@ -45,6 +45,7 @@
+ #include "HitTestResult.h"
+ #include "InspectorInstrumentationPublic.h"
+ #include "Page.h"
++#include "ResourceLoader.h"
+ #include "StorageArea.h"
+ #include "WebAnimation.h"
+ #include <JavaScriptCore/ConsoleMessage.h>
+@@ -77,6 +78,7 @@ class DOMWrapperWorld;
  class Document;
  class DocumentLoader;
  class EventListener;
@@ -1275,7 +1338,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -197,6 +198,7 @@ public:
+@@ -197,6 +199,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -1283,7 +1346,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -228,6 +230,7 @@ public:
+@@ -228,6 +231,7 @@ public:
      static void frameStoppedLoading(Frame&);
      static void frameScheduledNavigation(Frame&, Seconds delay);
      static void frameClearedScheduledNavigation(Frame&);
@@ -1291,18 +1354,19 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -314,6 +317,10 @@ public:
+@@ -314,6 +318,11 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
 +    static void runOpenPanel(Frame*, HTMLInputElement*, bool*);
 +    static void frameAttached(Frame*);
 +    static bool shouldBypassCSP(ScriptExecutionContext*);
++    static bool interceptRequest(ResourceLoader&, CompletionHandler<void(bool handled)>&&);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -414,6 +421,7 @@ private:
+@@ -414,6 +423,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -1310,7 +1374,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -429,6 +437,7 @@ private:
+@@ -429,6 +439,7 @@ private:
      static void frameStoppedLoadingImpl(InstrumentingAgents&, Frame&);
      static void frameScheduledNavigationImpl(InstrumentingAgents&, Frame&, Seconds delay);
      static void frameClearedScheduledNavigationImpl(InstrumentingAgents&, Frame&);
@@ -1318,18 +1382,19 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -511,6 +520,10 @@ private:
+@@ -511,6 +522,11 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
 +    static void runOpenPanelImpl(InstrumentingAgents&, HTMLInputElement*, bool*);
 +    static void frameAttachedImpl(InstrumentingAgents&, Frame&);
 +    static bool shouldBypassCSPImpl(InstrumentingAgents&);
++    static bool interceptRequestImpl(InstrumentingAgents&, ResourceLoader&, CompletionHandler<void(bool handled)>&&);
 +
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1091,6 +1104,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1091,6 +1107,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -1343,7 +1408,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1221,6 +1241,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1221,6 +1244,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -1357,7 +1422,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1650,6 +1677,28 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1650,6 +1680,36 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -1383,9 +1448,60 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..b323d29ac8da2b557db618b2143b4c7f
 +    return false;
 +}
 +
++inline bool InspectorInstrumentation::interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(false);
++    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(loader.frame()))
++        return interceptRequestImpl(*instrumentingAgents, loader, WTFMove(handler));
++    return false;
++}
++
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgentsForContext(ScriptExecutionContext* context)
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
+diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
+index 954aaf121a9fa507d83bc10ae37de1f128f7dcfc..043bfa8b5302e599e3fd2ad729e09acb211a0ec3 100644
+--- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
++++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
+@@ -30,6 +30,11 @@
+ 
+ namespace WebCore {
+ 
++bool InspectorInstrumentationWebKit::interceptRequestInternal(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++{
++    return InspectorInstrumentation::interceptRequest(loader, WTFMove(handler));
++}
++
+ bool InspectorInstrumentationWebKit::shouldInterceptResponseInternal(const Frame& frame, const ResourceResponse& response)
+ {
+     return InspectorInstrumentation::shouldInterceptResponse(frame, response);
+diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
+index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..e7b2cebbe0054802fb5378f269570c28497ed0ff 100644
+--- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
++++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
+@@ -36,14 +36,22 @@ class SharedBuffer;
+ 
+ class WEBCORE_EXPORT InspectorInstrumentationWebKit {
+ public:
++    static bool interceptRequest(ResourceLoader&, CompletionHandler<void(bool handled)>&&);
+     static bool shouldInterceptResponse(const Frame*, const ResourceResponse&);
+     static void interceptResponse(const Frame*, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
+ 
+ private:
++    static bool interceptRequestInternal(ResourceLoader&, CompletionHandler<void(bool handled)>&&);
+     static bool shouldInterceptResponseInternal(const Frame&, const ResourceResponse&);
+     static void interceptResponseInternal(const Frame&, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
+ };
+ 
++inline bool InspectorInstrumentationWebKit::interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(false);
++    return interceptRequestInternal(loader, WTFMove(handler));
++}
++
+ inline bool InspectorInstrumentationWebKit::shouldInterceptResponse(const Frame* frame, const ResourceResponse& response)
+ {
+     FAST_RETURN_IF_NO_FRONTENDS(false);
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c1270e4ba7c 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
@@ -1734,7 +1850,7 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index ca8f169d18a697a4dea405c933398e67feef01c6..539263dd036da49441df8bcb98242d555c157428 100644
+index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1ef74f48c4 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -99,6 +99,11 @@ using namespace Inspector;
@@ -1763,7 +1879,153 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..539263dd036da49441df8bcb98242d55
      auto protocolResourceType = InspectorPageAgent::resourceTypeJSON(type);
  
      Document* document = loader && loader->frame() ? loader->frame()->document() : nullptr;
-@@ -1292,6 +1304,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
+@@ -1109,19 +1121,117 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
+     m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
+ }
+ 
+-void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId)
+-{
++bool InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler) {
++    if (!m_interceptionEnabled)
++        return false;
++    String requestId = IdentifiersFactory::requestId(loader.identifier());
++    auto pendingRequest = makeUnique<PendingInterceptRequest>();
++    pendingRequest->m_loader = &loader;
++    pendingRequest->m_callback = WTFMove(handler);
++    m_pendingInterceptRequests.set(requestId, WTFMove(pendingRequest));
++    m_frontendDispatcher->requestIntercepted(requestId, buildObjectForResourceRequest(loader.request()));
++    return true;
++}
++
++void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId, const JSON::Object* headers)
++{
++    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
++    if (pendingRequest) {
++        ResourceLoader* loader = pendingRequest->m_loader.get();
++        if (!loader->identifier()) {
++            // Do not throw upon continue of canceled requests.
++            return;
++        }
++        if (headers) {
++            // Safe to const cast at this point, we are only adjusting the headers.
++            ResourceRequest* request = const_cast<ResourceRequest*>(&loader->request());
++            HTTPHeaderMap explicitHeaders;
++            for (auto& header : *headers) {
++                String headerValue;
++                if (header.value->asString(headerValue))
++                    explicitHeaders.add(header.key, headerValue);
++            }
++            request->setHTTPHeaderFields(WTFMove(explicitHeaders));
++        }
++        pendingRequest->m_callback(false);
++        return;
++    }
++
+     auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
+-    if (!pendingInterceptResponse) {
+-        errorString = "Missing pending intercept response for given requestId"_s;
++    if (pendingInterceptResponse) {
++        pendingInterceptResponse->respondWithOriginalResponse();
++        return;
++    }
++
++    errorString = "Missing pending intercept response for given requestId"_s;
++}
++
++void InspectorNetworkAgent::interceptAsError(ErrorString& errorString, const String& requestId, const String& reason)
++{
++    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
++    if (pendingRequest) {
++        ResourceLoader* loader = pendingRequest->m_loader.get();
++        if (!loader->identifier()) {
++            errorString = "Unable to abort request, it has already been processed"_s;
++            return;
++        }
++        ResourceError error(errorDomainWebKitInternal, 0, loader->url(), "Request intercepted"_s, ResourceError::Type::General);
++        if (reason == "AccessControl")
++            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Access denied"_s, ResourceError::Type::AccessControl);
++        else if (reason == "Cancellation")
++            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Request canceled"_s, ResourceError::Type::Cancellation);
++        else if (reason == "Timeout")
++            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Request timed out"_s, ResourceError::Type::Timeout);
++        loader->didFail(error);
++        pendingRequest->m_callback(true);
+         return;
+     }
+ 
+-    pendingInterceptResponse->respondWithOriginalResponse();
++    errorString = "Missing pending intercept response for given requestId"_s;
+ }
+ 
+-void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
++void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
+ {
++    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
++    if (pendingRequest && status && statusText && mimeType && headers) {
++        RefPtr<ResourceLoader> loader = pendingRequest->m_loader.get();
++        if (!loader->identifier()) {
++            errorString = "Unable to fulfill request, it has already been processed"_s;
++            return;
++        }
++        RefPtr<SharedBuffer> data;
++        if (base64Encoded && *base64Encoded && content) {
++            Vector<uint8_t> buffer;
++            if (!base64Decode(*content, buffer)) {
++                errorString = "Unable to decode given content"_s;
++                return;
++            }
++            data = SharedBuffer::create(WTFMove(buffer));
++        } else if (content) {
++            data = SharedBuffer::create(content->utf8().data(), content->utf8().length());
++        }
++
++        ResourceResponse response(pendingRequest->m_loader->url(), *mimeType, data->size(), String());
++        response.setSource(ResourceResponse::Source::InspectorOverride);
++        response.setHTTPStatusCode(*status);
++        response.setHTTPStatusText(*statusText);
++        HTTPHeaderMap explicitHeaders;
++        for (auto& header : *headers) {
++            String headerValue;
++            if (header.value->asString(headerValue))
++                explicitHeaders.add(header.key, headerValue);
++        }
++        response.setHTTPHeaderFields(WTFMove(explicitHeaders));
++        response.setHTTPHeaderField(HTTPHeaderName::ContentType, response.mimeType());
++        loader->didReceiveResponse(response, [loader, data = data.releaseNonNull()]() mutable {
++            if (data->size())
++                loader->didReceiveBuffer(WTFMove(data), data->size(), DataPayloadWholeResource);
++            loader->didFinishLoading(NetworkLoadMetrics());
++        });
++        pendingRequest->m_callback(true);
++        return;
++    }
++
+     auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
+     if (!pendingInterceptResponse) {
+         errorString = "Missing pending intercept response for given requestId"_s;
+@@ -1149,16 +1259,17 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
+     }
+ 
+     RefPtr<SharedBuffer> overrideData;
+-    if (base64Encoded) {
++    if (base64Encoded && *base64Encoded && content) {
+         Vector<uint8_t> buffer;
+-        if (!base64Decode(content, buffer)) {
++        if (!base64Decode(*content, buffer)) {
+             errorString = "Unable to decode given content"_s;
+             pendingInterceptResponse->respondWithOriginalResponse();
+             return;
+         }
+         overrideData = SharedBuffer::create(WTFMove(buffer));
+-    } else
+-        overrideData = SharedBuffer::create(content.utf8().data(), content.utf8().length());
++    } else if (content) {
++        overrideData = SharedBuffer::create(content->utf8().data(), content->utf8().length());
++    }
+ 
+     pendingInterceptResponse->respond(overrideResponse, overrideData);
+ }
+@@ -1292,6 +1403,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
      results = ContentSearchUtilities::searchInTextByLines(resourceData->content(), query, caseSensitive, isRegex);
  }
  
@@ -1776,10 +2038,27 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..539263dd036da49441df8bcb98242d55
  {
      m_resourcesData->clear(loaderIdentifier(&loader));
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index a68f84520736977c8b9216616c5a178fbf5275d6..364dd6793f0f35134a302827a72f6c9b0bd388cd 100644
+index a68f84520736977c8b9216616c5a178fbf5275d6..1a69942522052106bf44148b07d39d65964818d1 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-@@ -125,6 +125,8 @@ public:
+@@ -90,8 +90,9 @@ public:
+     void setInterceptionEnabled(ErrorString&, bool enabled) final;
+     void addInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
+     void removeInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
+-    void interceptContinue(ErrorString&, const String& requestId) final;
+-    void interceptWithResponse(ErrorString&, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers) final;
++    void interceptContinue(ErrorString&, const String& requestId, const JSON::Object* headers) final;
++    void interceptAsError(ErrorString&, const String& requestId, const String& reason) final;
++    void interceptWithResponse(ErrorString&, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers) final;
+ 
+     // InspectorInstrumentation
+     void willRecalculateStyle();
+@@ -121,10 +122,13 @@ public:
+     bool willInterceptRequest(const ResourceRequest&);
+     bool shouldInterceptResponse(const ResourceResponse&);
+     void interceptResponse(const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
++    bool interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&&);
+ 
      void searchOtherRequests(const JSC::Yarr::RegularExpression&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>&);
      void searchInRequest(ErrorString&, const String& requestId, const String& query, bool caseSensitive, bool isRegex, RefPtr<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>&);
  
@@ -1788,6 +2067,30 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..364dd6793f0f35134a302827a72f6c9b
  protected:
      InspectorNetworkAgent(WebAgentContext&);
  
+@@ -191,6 +195,15 @@ private:
+         bool m_responded { false };
+     };
+ 
++    class PendingInterceptRequest {
++        WTF_MAKE_NONCOPYABLE(PendingInterceptRequest);
++        WTF_MAKE_FAST_ALLOCATED;
++    public:
++        PendingInterceptRequest() = default;
++        RefPtr<ResourceLoader> m_loader;
++        CompletionHandler<void(bool handled)> m_callback;
++    };
++
+     std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
+     RefPtr<Inspector::NetworkBackendDispatcher> m_backendDispatcher;
+     Inspector::InjectedScriptManager& m_injectedScriptManager;
+@@ -214,6 +227,7 @@ private:
+     };
+     Vector<Intercept> m_intercepts;
+     HashMap<String, std::unique_ptr<PendingInterceptResponse>> m_pendingInterceptResponses;
++    HashMap<String, std::unique_ptr<PendingInterceptRequest>> m_pendingInterceptRequests;
+ 
+     // FIXME: InspectorNetworkAgent should not be aware of style recalculation.
+     RefPtr<Inspector::Protocol::Network::Initiator> m_styleRecalculationInitiator;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..f098efafd98f734f04f54d5ca56bae9045320427 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
@@ -7953,6 +8256,34 @@ index 1c5c6ca4bacba4b134d44af9200b0b1e8b4ca2b3..49bfaecf5c2f7cd704c7ef91952303e7
  				2D11B7532126A282006F8878 /* UnifiedSource2-mm.mm in Sources */,
  				2D11B7562126A282006F8878 /* UnifiedSource3.cpp in Sources */,
  				2D11B7552126A282006F8878 /* UnifiedSource3-mm.mm in Sources */,
+diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
+index d723cae3331551dff866171a859c641820a6376e..07c84938d2313d83715a27aea77a2c230e937e66 100644
+--- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
++++ b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
+@@ -57,6 +57,7 @@
+ #include <WebCore/FetchOptions.h>
+ #include <WebCore/Frame.h>
+ #include <WebCore/FrameLoader.h>
++#include <WebCore/InspectorInstrumentationWebKit.h>
+ #include <WebCore/NetscapePlugInStreamLoader.h>
+ #include <WebCore/NetworkLoadInformation.h>
+ #include <WebCore/PlatformStrategies.h>
+@@ -216,6 +217,15 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
+ 
+     if (!tryLoadingUsingURLSchemeHandler(resourceLoader)) {
+         RELEASE_LOG_IF_ALLOWED("scheduleLoad: URL will be scheduled with the NetworkProcess (frame=%p, webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ")", resourceLoader.frame(), trackingParameters.pageID.toUInt64(), trackingParameters.frameID.toUInt64(), identifier);
++
++        RefPtr<ResourceLoader> coreLoader = &resourceLoader;
++        if (InspectorInstrumentationWebKit::interceptRequest(resourceLoader, [this, coreLoader, trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, resource](bool handled) mutable {
++                if (!handled)
++                    scheduleLoadFromNetworkProcess(*coreLoader, coreLoader->request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
++                })) {
++            return;
++        }
++
+         scheduleLoadFromNetworkProcess(resourceLoader, resourceLoader.request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
+         return;
+     }
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
 index a70f6fd52096a5dca901ea70a3755f14d6b4a0fd..f02e5c774a49d3e67860adb3b011531313eaf8d1 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
