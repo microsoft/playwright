@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { debugError, helper, RegisteredListener } from '../helper';
 import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';
@@ -139,41 +139,24 @@ const causeToResourceType = {
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
-const interceptableRequestSymbol = Symbol('interceptableRequest');
-
-export function toInterceptableRequest(request: network.Request): InterceptableRequest {
-  return (request as any)[interceptableRequestSymbol];
-}
-
-class InterceptableRequest {
+class InterceptableRequest implements network.RequestDelegate {
   readonly request: network.Request;
   _id: string;
   private _session: FFSession;
-  private _suspended: boolean;
-  private _interceptionHandled: boolean;
 
   constructor(session: FFSession, frame: frames.Frame, redirectChain: network.Request[], payload: any) {
     this._id = payload.requestId;
     this._session = session;
-    this._suspended = payload.suspended;
-    this._interceptionHandled = false;
 
     const headers: network.Headers = {};
     for (const {name, value} of payload.headers)
       headers[name.toLowerCase()] = value;
 
-    this.request = new network.Request(frame, redirectChain, payload.navigationId,
+    this.request = new network.Request(payload.suspended ? this : null, frame, redirectChain, payload.navigationId,
         payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData, headers);
-    (this.request as any)[interceptableRequestSymbol] = this;
   }
 
-  async continue(overrides: {url?: string, method?: string, postData?: string, headers?: {[key: string]: string}} = {}) {
-    assert(!overrides.url, 'Playwright-Firefox does not support overriding URL');
-    assert(!overrides.method, 'Playwright-Firefox does not support overriding method');
-    assert(!overrides.postData, 'Playwright-Firefox does not support overriding postData');
-    assert(this._suspended, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    this._interceptionHandled = true;
+  async continue(overrides: { headers?: { [key: string]: string } } = {}) {
     const {
       headers,
     } = overrides;
@@ -185,10 +168,11 @@ class InterceptableRequest {
     });
   }
 
+  async fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
+    throw new Error('Fulfill is not supported in Firefox');
+  }
+
   async abort() {
-    assert(this._suspended, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    this._interceptionHandled = true;
     await this._session.send('Network.abortSuspendedRequest', {
       requestId: this._id,
     }).catch(error => {

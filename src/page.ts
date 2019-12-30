@@ -48,6 +48,7 @@ export interface PageDelegate {
   setViewport(viewport: types.Viewport): Promise<void>;
   setEmulateMedia(mediaType: input.MediaType | null, colorScheme: input.ColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
+  setRequestInterception(enabled: boolean): Promise<void>;
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
   canScreenshotOutsideViewport(): boolean;
@@ -71,6 +72,7 @@ type PageState = {
   colorScheme: input.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
   cacheEnabled: boolean | null;
+  interceptNetwork: boolean | null;
 };
 
 export type FileChooser = {
@@ -107,6 +109,7 @@ export class Page extends EventEmitter {
       colorScheme: browserContext._options.colorScheme || null,
       extraHTTPHeaders: null,
       cacheEnabled: null,
+      interceptNetwork: null
     };
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
     this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
@@ -389,6 +392,13 @@ export class Page extends EventEmitter {
       return;
     this._state.cacheEnabled = enabled;
     await this._delegate.setCacheEnabled(enabled);
+  }
+
+  async setRequestInterception(enabled: boolean) {
+    if (this._state.interceptNetwork === enabled)
+      return;
+    this._state.interceptNetwork = enabled;
+    await this._delegate.setRequestInterception(enabled);
   }
 
   async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {

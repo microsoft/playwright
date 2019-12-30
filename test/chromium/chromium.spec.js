@@ -238,8 +238,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
         res.end('console.log(1);');
       });
 
-      await page.interception.enable();
-      page.on('request', request => page.interception.continue(request));
+      await page.setRequestInterception(true);
+      page.on('request', request => request.continue());
       await page.goto(server.PREFIX + '/intervention');
       // Check for feature URL substring rather than https://www.chromestatus.com to
       // make it work with Edgium.
