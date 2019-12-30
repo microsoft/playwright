@@ -144,6 +144,7 @@
   * [page.$x(expression)](#pagexexpression)
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
   * [page.addStyleTag(options)](#pageaddstyletagoptions)
+  * [page.authenticate(credentials)](#pageauthenticatecredentials)
   * [page.browserContext()](#pagebrowsercontext)
   * [page.click(selector[, options])](#pageclickselector-options)
   * [page.close([options])](#pagecloseoptions)
@@ -173,6 +174,7 @@
   * [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
   * [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
   * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
+  * [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
   * [page.setRequestInterception(enabled)](#pagesetrequestinterceptionenabled)
   * [page.setViewport(viewport)](#pagesetviewportviewport)
   * [page.title()](#pagetitle)
@@ -233,9 +235,6 @@
   * [chromiumCoverage.startJSCoverage([options])](#chromiumcoveragestartjscoverageoptions)
   * [chromiumCoverage.stopCSSCoverage()](#chromiumcoveragestopcsscoverage)
   * [chromiumCoverage.stopJSCoverage()](#chromiumcoveragestopjscoverage)
-- [class: ChromiumInterception](#class-chromiuminterception)
-  * [chromiumInterception.authenticate(credentials)](#chromiuminterceptionauthenticatecredentials)
-  * [chromiumInterception.setOfflineMode(enabled)](#chromiuminterceptionsetofflinemodeenabled)
 - [class: ChromiumOverrides](#class-chromiumoverrides)
   * [chromiumOverrides.setGeolocation(options)](#chromiumoverridessetgeolocationoptions)
 - [class: ChromiumPlaywright](#class-chromiumplaywright)
@@ -1916,6 +1915,16 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 
 Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
 
+#### page.authenticate(credentials)
+- `credentials` <?[Object]>
+  - `username` <[string]>
+  - `password` <[string]>
+- returns: <[Promise]>
+
+Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+
+To disable authentication, pass `null`.
+
 #### page.browserContext()
 
 - returns: <[BrowserContext]>
@@ -2401,6 +2410,10 @@ This setting will change the default maximum time for the following methods and 
 The extra HTTP headers will be sent with every request the page initiates.
 
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
+
+#### page.setOfflineMode(enabled)
+- `enabled` <[boolean]> When `true`, enables offline mode for the page.
+- returns: <[Promise]>
 
 #### page.setRequestInterception(enabled)
 - `enabled` <[boolean]> Whether to enable request interception.
@@ -3133,22 +3146,6 @@ _To output coverage in a form consumable by [Istanbul](https://github.com/istanb
 
 > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
 reported.
-
-### class: ChromiumInterception
-
-#### chromiumInterception.authenticate(credentials)
-- `credentials` <?[Object]>
-  - `username` <[string]>
-  - `password` <[string]>
-- returns: <[Promise]>
-
-Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
-
-To disable authentication, pass `null`.
-
-#### chromiumInterception.setOfflineMode(enabled)
-- `enabled` <[boolean]> When `true`, enables offline mode for the page.
-- returns: <[Promise]>
 
 ### class: ChromiumOverrides
 

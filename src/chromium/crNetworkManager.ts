@@ -21,6 +21,7 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
+import { Credentials } from '../types';
 
 export class CRNetworkManager {
   private _client: CRSession;
@@ -58,14 +59,12 @@ export class CRNetworkManager {
     helper.removeEventListeners(this._eventListeners);
   }
 
-  async authenticate(credentials: { username: string; password: string; } | null) {
+  async authenticate(credentials: Credentials | null) {
     this._credentials = credentials;
     await this._updateProtocolRequestInterception();
   }
 
   async setOfflineMode(value: boolean) {
-    if (this._offline === value)
-      return;
     this._offline = value;
     await this._client.send('Network.emulateNetworkConditions', {
       offline: this._offline,

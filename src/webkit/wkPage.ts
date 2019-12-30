@@ -85,7 +85,7 @@ export class WKPage implements PageDelegate {
       session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       session.send('Console.enable'),
       session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
-      this._networkManager.initializeSession(session, this._page._state.interceptNetwork),
+      this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode, this._page._state.credentials),
     ];
     if (!session.isProvisional()) {
       // FIXME: move dialog agent to web process.
@@ -307,6 +307,14 @@ export class WKPage implements PageDelegate {
 
   setRequestInterception(enabled: boolean): Promise<void> {
     return this._networkManager.setRequestInterception(enabled);
+  }
+
+  async setOfflineMode(value: boolean) {
+    await this._networkManager.setOfflineMode(value);
+  }
+
+  async authenticate(credentials: types.Credentials | null) {
+    await this._networkManager.authenticate(credentials);
   }
 
   async reload(): Promise<void> {

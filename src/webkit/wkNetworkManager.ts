@@ -21,6 +21,7 @@ import { helper, RegisteredListener, assert } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
+import * as types from '../types';
 
 export class WKNetworkManager {
   private _session: WKTargetSession;
@@ -45,11 +46,15 @@ export class WKNetworkManager {
     ];
   }
 
-  async initializeSession(session: WKTargetSession, enableInterception: boolean) {
+  async initializeSession(session: WKTargetSession, interceptNetwork: boolean | null, offlineMode: boolean | null, credentials: types.Credentials | null) {
     const promises = [];
     promises.push(session.send('Network.enable'));
-    if (enableInterception)
+    if (interceptNetwork)
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
+    if (offlineMode)
+      promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
+    if (credentials)
+      promises.push(session.send('Emulation.setAuthCredentials', { ...credentials }));
     await Promise.all(promises);
   }
 
@@ -151,12 +156,12 @@ export class WKNetworkManager {
     this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
   }
 
-  authenticate(credentials: { username: string; password: string; }) {
-    throw new Error('Not implemented');
+  async authenticate(credentials: types.Credentials | null) {
+    await this._session.send('Emulation.setAuthCredentials', { ...(credentials || {}) });
   }
 
-  setOfflineMode(enabled: boolean) {
-    throw new Error('Not implemented');
+  async setOfflineMode(value: boolean): Promise<void> {
+    await this._session.send('Network.setEmulateOfflineState', { offline: value });
   }
 }
 

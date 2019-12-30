@@ -216,6 +216,14 @@ export class FFPage implements PageDelegate {
     await this._networkManager.setRequestInterception(enabled);
   }
 
+  async setOfflineMode(enabled: boolean): Promise<void> {
+    throw new Error('Offline mode not implemented in Firefox');
+  }
+
+  async authenticate(credentials: types.Credentials): Promise<void> {
+    throw new Error('Offline mode not implemented in Firefox');
+  }
+
   async reload(): Promise<void> {
     await this._session.send('Page.reload', { frameId: this._page.mainFrame()._id });
   }

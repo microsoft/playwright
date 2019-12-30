@@ -33,7 +33,6 @@ import { CRAccessibility } from './features/crAccessibility';
 import { CRCoverage } from './features/crCoverage';
 import { CRPDF, PDFOptions } from './features/crPdf';
 import { CRWorkers, CRWorker } from './features/crWorkers';
-import { CRInterception } from './features/crInterception';
 import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
 import * as types from '../types';
@@ -302,6 +301,14 @@ export class CRPage implements PageDelegate {
     await this._networkManager.setRequestInterception(enabled);
   }
 
+  async setOfflineMode(value: boolean) {
+    await this._networkManager.setOfflineMode(value);
+  }
+
+  async authenticate(credentials: types.Credentials | null) {
+    await this._networkManager.authenticate(credentials);
+  }
+
   async reload(): Promise<void> {
     await this._client.send('Page.reload');
   }
@@ -456,7 +463,6 @@ export class CRPage implements PageDelegate {
 export class ChromiumPage extends Page {
   readonly accessibility: CRAccessibility;
   readonly coverage: CRCoverage;
-  readonly interception: CRInterception;
   private _pdf: CRPDF;
   private _workers: CRWorkers;
   _networkManager: CRNetworkManager;
@@ -468,7 +474,6 @@ export class ChromiumPage extends Page {
     this._pdf = new CRPDF(client);
     this._workers = new CRWorkers(client, this, this._addConsoleMessage.bind(this), error => this.emit(Events.Page.PageError, error));
     this._networkManager = new CRNetworkManager(client, this);
-    this.interception = new CRInterception(this._networkManager);
   }
 
   async pdf(options?: PDFOptions): Promise<Buffer> {
