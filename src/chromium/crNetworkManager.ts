@@ -245,52 +245,27 @@ export class CRNetworkManager {
   }
 }
 
-const interceptableRequestSymbol = Symbol('interceptableRequest');
-
-export function toInterceptableRequest(request: network.Request): InterceptableRequest {
-  return (request as any)[interceptableRequestSymbol];
-}
-
-class InterceptableRequest {
+class InterceptableRequest implements network.RequestDelegate {
   readonly request: network.Request;
   _requestId: string;
   _interceptionId: string;
   _documentId: string;
   private _client: CRSession;
-  private _allowInterception: boolean;
-  private _interceptionHandled = false;
 
   constructor(client: CRSession, frame: frames.Frame | null, interceptionId: string, documentId: string | undefined, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
     this._client = client;
     this._requestId = event.requestId;
     this._interceptionId = interceptionId;
     this._documentId = documentId;
-    this._allowInterception = allowInterception;
 
-    this.request = new network.Request(frame, redirectChain, documentId,
+    this.request = new network.Request(allowInterception ? this : null, frame, redirectChain, documentId,
         event.request.url, event.type.toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
-    (this.request as any)[interceptableRequestSymbol] = this;
   }
 
-  async continue(overrides: { url?: string; method?: string; postData?: string; headers?: {[key: string]: string}; } = {}) {
-    // Request interception is not supported for data: urls.
-    if (this.request.url().startsWith('data:'))
-      return;
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    const {
-      url,
-      method,
-      postData,
-      headers
-    } = overrides;
-    this._interceptionHandled = true;
+  async continue(overrides: { headers?: {[key: string]: string}; } = {}) {
     await this._client.send('Fetch.continueRequest', {
       requestId: this._interceptionId,
-      url,
-      method,
-      postData,
-      headers: headers ? headersArray(headers) : undefined,
+      headers: overrides.headers ? headersArray(overrides.headers) : undefined,
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
@@ -299,13 +274,6 @@ class InterceptableRequest {
   }
 
   async fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
-    // Mocking responses for dataURL requests is not currently supported.
-    if (this.request.url().startsWith('data:'))
-      return;
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    this._interceptionHandled = true;
-
     const responseBody = response.body && helper.isString(response.body) ? Buffer.from(/** @type {string} */(response.body)) : /** @type {?Buffer} */(response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};
@@ -321,7 +289,7 @@ class InterceptableRequest {
     await this._client.send('Fetch.fulfillRequest', {
       requestId: this._interceptionId,
       responseCode: response.status || 200,
-      responsePhrase: STATUS_TEXTS[String(response.status || 200)],
+      responsePhrase: network.STATUS_TEXTS[String(response.status || 200)],
       responseHeaders: headersArray(responseHeaders),
       body: responseBody ? responseBody.toString('base64') : undefined,
     }).catch(error => {
@@ -332,14 +300,8 @@ class InterceptableRequest {
   }
 
   async abort(errorCode: string = 'failed') {
-    // Request interception is not supported for data: urls.
-    if (this.request.url().startsWith('data:'))
-      return;
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    assert(!this._interceptionHandled, 'Request is already handled!');
-    this._interceptionHandled = true;
     await this._client.send('Fetch.failRequest', {
       requestId: this._interceptionId,
       errorReason
@@ -384,69 +346,3 @@ function headersObject(headers: Protocol.Network.Headers): network.Headers {
   return result;
 }
 
-// List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.
-const STATUS_TEXTS: { [status: string]: string } = {
-  '100': 'Continue',
-  '101': 'Switching Protocols',
-  '102': 'Processing',
-  '103': 'Early Hints',
-  '200': 'OK',
-  '201': 'Created',
-  '202': 'Accepted',
-  '203': 'Non-Authoritative Information',
-  '204': 'No Content',
-  '205': 'Reset Content',
-  '206': 'Partial Content',
-  '207': 'Multi-Status',
-  '208': 'Already Reported',
-  '226': 'IM Used',
-  '300': 'Multiple Choices',
-  '301': 'Moved Permanently',
-  '302': 'Found',
-  '303': 'See Other',
-  '304': 'Not Modified',
-  '305': 'Use Proxy',
-  '306': 'Switch Proxy',
-  '307': 'Temporary Redirect',
-  '308': 'Permanent Redirect',
-  '400': 'Bad Request',
-  '401': 'Unauthorized',
-  '402': 'Payment Required',
-  '403': 'Forbidden',
-  '404': 'Not Found',
-  '405': 'Method Not Allowed',
-  '406': 'Not Acceptable',
-  '407': 'Proxy Authentication Required',
-  '408': 'Request Timeout',
-  '409': 'Conflict',
-  '410': 'Gone',
-  '411': 'Length Required',
-  '412': 'Precondition Failed',
-  '413': 'Payload Too Large',
-  '414': 'URI Too Long',
-  '415': 'Unsupported Media Type',
-  '416': 'Range Not Satisfiable',
-  '417': 'Expectation Failed',
-  '418': 'I\'m a teapot',
-  '421': 'Misdirected Request',
-  '422': 'Unprocessable Entity',
-  '423': 'Locked',
-  '424': 'Failed Dependency',
-  '425': 'Too Early',
-  '426': 'Upgrade Required',
-  '428': 'Precondition Required',
-  '429': 'Too Many Requests',
-  '431': 'Request Header Fields Too Large',
-  '451': 'Unavailable For Legal Reasons',
-  '500': 'Internal Server Error',
-  '501': 'Not Implemented',
-  '502': 'Bad Gateway',
-  '503': 'Service Unavailable',
-  '504': 'Gateway Timeout',
-  '505': 'HTTP Version Not Supported',
-  '506': 'Variant Also Negotiates',
-  '507': 'Insufficient Storage',
-  '508': 'Loop Detected',
-  '510': 'Not Extended',
-  '511': 'Network Authentication Required',
-};

@@ -165,6 +165,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       testRunner.loadTests(require('./queryselector.spec.js'), testOptions);
       testRunner.loadTests(require('./screenshot.spec.js'), testOptions);
       testRunner.loadTests(require('./waittask.spec.js'), testOptions);
+      testRunner.loadTests(require('./interception.spec.js'), testOptions);
 
       if (CHROME) {
         testRunner.loadTests(require('./chromium/chromium.spec.js'), testOptions);
@@ -178,7 +179,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       if (CHROME || FFOX) {
         testRunner.loadTests(require('./features/accessibility.spec.js'), testOptions);
         testRunner.loadTests(require('./features/permissions.spec.js'), testOptions);
-        testRunner.loadTests(require('./features/interception.spec.js'), testOptions);
       }
 
     });

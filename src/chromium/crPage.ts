@@ -298,6 +298,10 @@ export class CRPage implements PageDelegate {
     return this._networkManager.setCacheEnabled(enabled);
   }
 
+  async setRequestInterception(enabled: boolean): Promise<void> {
+    await this._networkManager.setRequestInterception(enabled);
+  }
+
   async reload(): Promise<void> {
     await this._client.send('Page.reload');
   }

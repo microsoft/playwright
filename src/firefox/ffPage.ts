@@ -28,7 +28,6 @@ import { Protocol } from './protocol';
 import * as input from '../input';
 import { RawMouseImpl, RawKeyboardImpl } from './ffInput';
 import { BrowserContext } from '../browserContext';
-import { FFInterception } from './features/ffInterception';
 import { FFAccessibility } from './features/ffAccessibility';
 import * as network from '../network';
 import * as types from '../types';
@@ -38,7 +37,7 @@ export class FFPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   readonly _session: FFSession;
   readonly _page: Page;
-  private readonly _networkManager: FFNetworkManager;
+  readonly _networkManager: FFNetworkManager;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
 
@@ -65,7 +64,6 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
     ];
-    (this._page as any).interception = new FFInterception(this._networkManager);
     (this._page as any).accessibility = new FFAccessibility(session);
   }
 
@@ -212,6 +210,10 @@ export class FFPage implements PageDelegate {
 
   async setCacheEnabled(enabled: boolean): Promise<void> {
     await this._session.send('Page.setCacheDisabled', {cacheDisabled: !enabled});
+  }
+
+  async setRequestInterception(enabled: boolean): Promise<void> {
+    await this._networkManager.setRequestInterception(enabled);
   }
 
   async reload(): Promise<void> {
