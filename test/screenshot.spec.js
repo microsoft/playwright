@@ -201,7 +201,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       expect(await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }))).toEqual({ w: 500, h: 500 });
     });
     // Fails on GTK due to async setViewport.
-    it.skip(WEBKIT)('should capture full element when larger than viewport', async({page, server}) => {
+    it('should capture full element when larger than viewport', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
 
       await page.setContent(`

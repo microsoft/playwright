@@ -51,3 +51,8 @@ export type Viewport = {
 };
 
 export type URLMatch = string | RegExp | ((url: kurl.URL) => boolean);
+
+export type Credentials = {
+  username: string;
+  password: string;
+}

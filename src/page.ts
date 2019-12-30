@@ -49,6 +49,8 @@ export interface PageDelegate {
   setEmulateMedia(mediaType: input.MediaType | null, colorScheme: input.ColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
   setRequestInterception(enabled: boolean): Promise<void>;
+  setOfflineMode(enabled: boolean): Promise<void>;
+  authenticate(credentials: types.Credentials | null): Promise<void>;
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
   canScreenshotOutsideViewport(): boolean;
@@ -73,6 +75,8 @@ type PageState = {
   extraHTTPHeaders: network.Headers | null;
   cacheEnabled: boolean | null;
   interceptNetwork: boolean | null;
+  offlineMode: boolean | null;
+  credentials: types.Credentials | null;
 };
 
 export type FileChooser = {
@@ -109,7 +113,9 @@ export class Page extends EventEmitter {
       colorScheme: browserContext._options.colorScheme || null,
       extraHTTPHeaders: null,
       cacheEnabled: null,
-      interceptNetwork: null
+      interceptNetwork: null,
+      offlineMode: null,
+      credentials: null
     };
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
     this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
@@ -399,6 +405,18 @@ export class Page extends EventEmitter {
       return;
     this._state.interceptNetwork = enabled;
     await this._delegate.setRequestInterception(enabled);
+  }
+
+  async setOfflineMode(enabled: boolean) {
+    if (this._state.offlineMode === enabled)
+      return;
+    this._state.offlineMode = enabled;
+    await this._delegate.setOfflineMode(enabled);
+  }
+
+  async authenticate(credentials: types.Credentials | null) {
+    this._state.credentials = credentials;
+    await this._delegate.authenticate(credentials);
   }
 
   async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
