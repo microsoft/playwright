@@ -772,7 +772,7 @@ index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80ca
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Network.json b/Source/JavaScriptCore/inspector/protocol/Network.json
-index 658f14f8af68073b99a01dd7332628223b67fcd7..20303ab38deb601cb7b8120803d896863dfbfbd4 100644
+index 658f14f8af68073b99a01dd7332628223b67fcd7..a8558f5093cedcec7884c6acc03b8bc3dc407163 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Network.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Network.json
 @@ -258,7 +258,16 @@
@@ -793,7 +793,7 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..20303ab38deb601cb7b8120803d89686
              ]
          },
          {
-@@ -266,8 +275,8 @@
+@@ -266,13 +275,20 @@
              "description": "Provide response content for an intercepted response.",
              "parameters": [
                  { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network response to modify." },
@@ -804,7 +804,19 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..20303ab38deb601cb7b8120803d89686
                  { "name": "mimeType", "type": "string", "optional": true, "description": "MIME Type for the data." },
                  { "name": "status", "type": "integer", "optional": true, "description": "HTTP response status code. Pass through original values if unmodified." },
                  { "name": "statusText", "type": "string", "optional": true, "description": "HTTP response status text. Pass through original values if unmodified." },
-@@ -356,6 +365,14 @@
+                 { "name": "headers", "$ref": "Headers", "optional": true, "description": "HTTP response headers. Pass through original values if unmodified." }
+             ]
++        },
++        {
++            "name": "setEmulateOfflineState",
++            "description": "Emulate offline state overriding the actual state.",
++            "parameters": [
++                { "name": "offline", "type": "boolean", "description": "True to emulate offline." }
++            ]
+         }
+     ],
+     "events": [
+@@ -356,6 +372,14 @@
                  { "name": "response", "$ref": "Response", "description": "Original response content that would proceed if this is continued." }
              ]
          },
@@ -1850,10 +1862,18 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1ef74f48c4 100644
+index ca8f169d18a697a4dea405c933398e67feef01c6..25ec31140dd0f163f6e815428c0e4673c8d9b49c 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-@@ -99,6 +99,11 @@ using namespace Inspector;
+@@ -56,6 +56,7 @@
+ #include "MIMETypeRegistry.h"
+ #include "MemoryCache.h"
+ #include "NetworkResourcesData.h"
++#include "NetworkStateNotifier.h"
+ #include "Page.h"
+ #include "PlatformStrategies.h"
+ #include "ProgressTracker.h"
+@@ -99,6 +100,11 @@ using namespace Inspector;
  
  namespace {
  
@@ -1865,7 +1885,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1e
  class InspectorThreadableLoaderClient final : public ThreadableLoaderClient {
      WTF_MAKE_NONCOPYABLE(InspectorThreadableLoaderClient);
  public:
-@@ -437,6 +442,13 @@ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLo
+@@ -437,6 +443,13 @@ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLo
      for (auto& entry : m_extraRequestHeaders)
          request.setHTTPHeaderField(entry.key, entry.value);
  
@@ -1879,7 +1899,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1e
      auto protocolResourceType = InspectorPageAgent::resourceTypeJSON(type);
  
      Document* document = loader && loader->frame() ? loader->frame()->document() : nullptr;
-@@ -1109,19 +1121,117 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
+@@ -1109,19 +1122,117 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
      m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
  }
  
@@ -1926,14 +1946,16 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1e
 -        errorString = "Missing pending intercept response for given requestId"_s;
 +    if (pendingInterceptResponse) {
 +        pendingInterceptResponse->respondWithOriginalResponse();
-+        return;
-+    }
-+
+         return;
+     }
+ 
+-    pendingInterceptResponse->respondWithOriginalResponse();
 +    errorString = "Missing pending intercept response for given requestId"_s;
-+}
-+
+ }
+ 
+-void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
 +void InspectorNetworkAgent::interceptAsError(ErrorString& errorString, const String& requestId, const String& reason)
-+{
+ {
 +    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
 +    if (pendingRequest) {
 +        ResourceLoader* loader = pendingRequest->m_loader.get();
@@ -1950,16 +1972,14 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1e
 +            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Request timed out"_s, ResourceError::Type::Timeout);
 +        loader->didFail(error);
 +        pendingRequest->m_callback(true);
-         return;
-     }
- 
--    pendingInterceptResponse->respondWithOriginalResponse();
++        return;
++    }
++
 +    errorString = "Missing pending intercept response for given requestId"_s;
- }
- 
--void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
++}
++
 +void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
- {
++{
 +    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
 +    if (pendingRequest && status && statusText && mimeType && headers) {
 +        RefPtr<ResourceLoader> loader = pendingRequest->m_loader.get();
@@ -2003,7 +2023,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1e
      auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
      if (!pendingInterceptResponse) {
          errorString = "Missing pending intercept response for given requestId"_s;
-@@ -1149,16 +1259,17 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
+@@ -1149,20 +1260,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
      }
  
      RefPtr<SharedBuffer> overrideData;
@@ -2025,7 +2045,16 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1e
  
      pendingInterceptResponse->respond(overrideResponse, overrideData);
  }
-@@ -1292,6 +1403,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
+ 
++void InspectorNetworkAgent::setEmulateOfflineState(ErrorString&, bool offline)
++{
++    platformStrategies()->loaderStrategy()->setEmulateOfflineState(offline);
++}
++
+ bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
+ {
+     return startsWithLettersIgnoringASCIICase(mimeType, "text/")
+@@ -1292,6 +1409,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
      results = ContentSearchUtilities::searchInTextByLines(resourceData->content(), query, caseSensitive, isRegex);
  }
  
@@ -2038,10 +2067,10 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..2a6e57a9e5a781c41b45115d977acc1e
  {
      m_resourcesData->clear(loaderIdentifier(&loader));
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index a68f84520736977c8b9216616c5a178fbf5275d6..1a69942522052106bf44148b07d39d65964818d1 100644
+index a68f84520736977c8b9216616c5a178fbf5275d6..c36811c04d95c78b7747e6e625bf79ea33cfa0d9 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-@@ -90,8 +90,9 @@ public:
+@@ -90,8 +90,10 @@ public:
      void setInterceptionEnabled(ErrorString&, bool enabled) final;
      void addInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
      void removeInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
@@ -2050,10 +2079,11 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..1a69942522052106bf44148b07d39d65
 +    void interceptContinue(ErrorString&, const String& requestId, const JSON::Object* headers) final;
 +    void interceptAsError(ErrorString&, const String& requestId, const String& reason) final;
 +    void interceptWithResponse(ErrorString&, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers) final;
++    void setEmulateOfflineState(ErrorString&, bool offline) final;
  
      // InspectorInstrumentation
      void willRecalculateStyle();
-@@ -121,10 +122,13 @@ public:
+@@ -121,10 +123,13 @@ public:
      bool willInterceptRequest(const ResourceRequest&);
      bool shouldInterceptResponse(const ResourceResponse&);
      void interceptResponse(const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
@@ -2067,7 +2097,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..1a69942522052106bf44148b07d39d65
  protected:
      InspectorNetworkAgent(WebAgentContext&);
  
-@@ -191,6 +195,15 @@ private:
+@@ -191,6 +196,15 @@ private:
          bool m_responded { false };
      };
  
@@ -2083,7 +2113,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..1a69942522052106bf44148b07d39d65
      std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
      RefPtr<Inspector::NetworkBackendDispatcher> m_backendDispatcher;
      Inspector::InjectedScriptManager& m_injectedScriptManager;
-@@ -214,6 +227,7 @@ private:
+@@ -214,6 +228,7 @@ private:
      };
      Vector<Intercept> m_intercepts;
      HashMap<String, std::unique_ptr<PendingInterceptResponse>> m_pendingInterceptResponses;
@@ -3089,6 +3119,18 @@ index 5310d3586b9b5a9c4a925383ee2c796616724b8d..eb03b0483f006dae09ea003616ad5418
  
      InspectorInstrumentation::didClearWindowObjectInWorld(m_frame, world);
  }
+diff --git a/Source/WebCore/loader/LoaderStrategy.h b/Source/WebCore/loader/LoaderStrategy.h
+index 0644fec509e60f7a4cf59a352f32335c2d164d99..acf628996ea020a8f0a2239ef72f5c241d108840 100644
+--- a/Source/WebCore/loader/LoaderStrategy.h
++++ b/Source/WebCore/loader/LoaderStrategy.h
+@@ -79,6 +79,7 @@ public:
+ 
+     virtual bool isOnLine() const = 0;
+     virtual void addOnlineStateChangeListener(WTF::Function<void(bool)>&&) = 0;
++    virtual void setEmulateOfflineState(bool) {};
+ 
+     virtual bool shouldPerformSecurityChecks() const { return false; }
+     virtual bool havePerformedSecurityChecks(const ResourceResponse&) const { return false; }
 diff --git a/Source/WebCore/loader/ProgressTracker.cpp b/Source/WebCore/loader/ProgressTracker.cpp
 index e24fded2225f1c1918f454017566717e20484eab..30e4b7a986418c4b4f6c799b858b608206e22bb5 100644
 --- a/Source/WebCore/loader/ProgressTracker.cpp
@@ -3712,6 +3754,18 @@ index cf46da150838fb0ff79337b05e5ae533d8c291f2..efbda20f28b421d0f3f2b6d6ccd279fe
  String PlatformKeyboardEvent::singleCharacterString(unsigned val)
  {
      switch (val) {
+diff --git a/Source/WebCore/platform/network/NetworkStateNotifier.h b/Source/WebCore/platform/network/NetworkStateNotifier.h
+index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b8145bc5f932 100644
+--- a/Source/WebCore/platform/network/NetworkStateNotifier.h
++++ b/Source/WebCore/platform/network/NetworkStateNotifier.h
+@@ -72,6 +72,7 @@ private:
+ #endif
+ 
+     Optional<bool> m_isOnLine;
++    Optional<bool> m_emulatedIsOnLine;
+     Vector<WTF::Function<void(bool)>> m_listeners;
+     Timer m_updateStateTimer;
+ 
 diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 index 3fb8892c79fd5e4f670cac4884f9ef0b5371b2a5..974cd5d8cc3772a1964897f5134ec7b055252ebc 100644
 --- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
@@ -8257,7 +8311,7 @@ index 1c5c6ca4bacba4b134d44af9200b0b1e8b4ca2b3..49bfaecf5c2f7cd704c7ef91952303e7
  				2D11B7562126A282006F8878 /* UnifiedSource3.cpp in Sources */,
  				2D11B7552126A282006F8878 /* UnifiedSource3-mm.mm in Sources */,
 diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
-index d723cae3331551dff866171a859c641820a6376e..07c84938d2313d83715a27aea77a2c230e937e66 100644
+index d723cae3331551dff866171a859c641820a6376e..522dec8bc563f903fc84df14c041c7f46872e81a 100644
 --- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 +++ b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 @@ -57,6 +57,7 @@
@@ -8268,8 +8322,15 @@ index d723cae3331551dff866171a859c641820a6376e..07c84938d2313d83715a27aea77a2c23
  #include <WebCore/NetscapePlugInStreamLoader.h>
  #include <WebCore/NetworkLoadInformation.h>
  #include <WebCore/PlatformStrategies.h>
-@@ -216,6 +217,15 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
+@@ -214,8 +215,22 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
+     }
+ #endif
  
++    if (m_emulateOfflineState) {
++        scheduleInternallyFailedLoad(resourceLoader);
++        return;
++    }
++
      if (!tryLoadingUsingURLSchemeHandler(resourceLoader)) {
          RELEASE_LOG_IF_ALLOWED("scheduleLoad: URL will be scheduled with the NetworkProcess (frame=%p, webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ")", resourceLoader.frame(), trackingParameters.pageID.toUInt64(), trackingParameters.frameID.toUInt64(), identifier);
 +
@@ -8284,6 +8345,60 @@ index d723cae3331551dff866171a859c641820a6376e..07c84938d2313d83715a27aea77a2c23
          scheduleLoadFromNetworkProcess(resourceLoader, resourceLoader.request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
          return;
      }
+@@ -699,7 +714,7 @@ void WebLoaderStrategy::didFinishPreconnection(uint64_t preconnectionIdentifier,
+ 
+ bool WebLoaderStrategy::isOnLine() const
+ {
+-    return m_isOnLine;
++    return m_emulateOfflineState ? false : m_isOnLine;
+ }
+ 
+ void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& listener)
+@@ -710,6 +725,11 @@ void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& list
+ 
+ void WebLoaderStrategy::setOnLineState(bool isOnLine)
+ {
++    if (m_emulateOfflineState) {
++        m_isOnLine = isOnLine;
++        return;
++    }
++
+     if (m_isOnLine == isOnLine)
+         return;
+ 
+@@ -718,6 +738,12 @@ void WebLoaderStrategy::setOnLineState(bool isOnLine)
+         listener(isOnLine);
+ }
+ 
++void WebLoaderStrategy::setEmulateOfflineState(bool offline) {
++    m_emulateOfflineState = offline;
++    for (auto& listener : m_onlineStateChangeListeners)
++        listener(offline ? false : m_isOnLine);
++}
++
+ void WebLoaderStrategy::setCaptureExtraNetworkLoadMetricsEnabled(bool enabled)
+ {
+     WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::SetCaptureExtraNetworkLoadMetricsEnabled(enabled), 0);
+diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h
+index f4d5a3f80659ae77f97e613bd492ca4981ac98c5..7eecda77c64ce4f1547c9fb5d4ed3fa5de7d3a81 100644
+--- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h
++++ b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.h
+@@ -87,6 +87,7 @@ public:
+     bool isOnLine() const final;
+     void addOnlineStateChangeListener(Function<void(bool)>&&) final;
+     void setOnLineState(bool);
++    void setEmulateOfflineState(bool) final;
+ 
+ private:
+     void scheduleLoad(WebCore::ResourceLoader&, WebCore::CachedResource*, bool shouldClearReferrerOnHTTPSToHTTPRedirect);
+@@ -125,6 +126,7 @@ private:
+     HashMap<unsigned long, PreconnectCompletionHandler> m_preconnectCompletionHandlers;
+     Vector<Function<void(bool)>> m_onlineStateChangeListeners;
+     bool m_isOnLine { true };
++    bool m_emulateOfflineState { false };
+     HashSet<WebResourceLoader*> m_loadersWithUploads;
+ };
+ 
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
 index a70f6fd52096a5dca901ea70a3755f14d6b4a0fd..f02e5c774a49d3e67860adb3b011531313eaf8d1 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
