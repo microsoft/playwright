@@ -573,10 +573,10 @@ index 0000000000000000000000000000000000000000..79edea03fed4e9be5da96e1275e182a4
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..ef5e1e4f164f441d433c1ad4d7faabf02dff970e
+index 0000000000000000000000000000000000000000..bcf863e4bba3b99f66e75dabfc4d8c1289cc2b78
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,32 @@
 +{
 +    "domain": "Emulation",
 +    "availability": ["web"],
@@ -588,7 +588,8 @@ index 0000000000000000000000000000000000000000..ef5e1e4f164f441d433c1ad4d7faabf0
 +            "parameters": [
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
-+                { "name": "deviceScaleFactor", "type": "number" }
++                { "name": "deviceScaleFactor", "type": "number" },
++                { "name": "fixedLayout", "type": "boolean" }
 +            ]
 +        },
 +        {
@@ -6525,10 +6526,10 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..a380d778c36fdd718dc506c28fee2349
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ee6c2948efa31473f4f54b126bc07113a49a6582
+index 0000000000000000000000000000000000000000..f9a2ee2a6843ba8bd896ae1ace9b7f78e6059643
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,61 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -6564,8 +6565,9 @@ index 0000000000000000000000000000000000000000..ee6c2948efa31473f4f54b126bc07113
 +{
 +}
 +
-+void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&& callback) {
++void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, bool fixedlayout, Ref<SetDeviceMetricsOverrideCallback>&& callback) {
 +    m_page.setCustomDeviceScaleFactor(deviceScaleFactor);
++    m_page.setUseFixedLayout(fixedlayout);
 +    platformSetSize(width, height, [callback = WTFMove(callback)](const String& error) {
 +        if (error.isEmpty())
 +            callback->sendSuccess();
@@ -6591,7 +6593,7 @@ index 0000000000000000000000000000000000000000..ee6c2948efa31473f4f54b126bc07113
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..f519b0716798ac2f0682ad350592503057330f99
+index 0000000000000000000000000000000000000000..6f43602a1d6f52d435646ecfc917223e1b44832a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 @@ -0,0 +1,44 @@
@@ -6627,7 +6629,7 @@ index 0000000000000000000000000000000000000000..f519b0716798ac2f0682ad3505925030
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
-+    void setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&&) override;
++    void setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, bool fixedLayout, Ref<SetDeviceMetricsOverrideCallback>&&) override;
 +    void setJavaScriptEnabled(Inspector::ErrorString&, bool enabled) override;
 +    void setAuthCredentials(Inspector::ErrorString&, const String*, const String*) override;
 +
