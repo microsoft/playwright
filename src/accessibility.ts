@@ -4,7 +4,7 @@ import * as dom from './dom';
 
 export type SerializedAXNode = {
   role: string,
-  name?: string,
+  name: string,
   value?: string|number,
   description?: string,
 
@@ -72,7 +72,7 @@ export class Accessibility {
 
     const interestingNodes: Set<AXNode> = new Set();
     collectInterestingNodes(interestingNodes, defaultRoot, false);
-    if (!interestingNodes.has(needle))
+    if (root && !interestingNodes.has(needle))
       return null;
     return serializeTree(needle, interestingNodes)[0];
   }

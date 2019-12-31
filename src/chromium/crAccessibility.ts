@@ -206,11 +206,11 @@ class CRAXNode implements accessibility.AXNode {
       properties.set('description', this._payload.description.value);
 
     const node: {[x in keyof accessibility.SerializedAXNode]: any} = {
-      role: this._role
+      role: this._role,
+      name: this._payload.name.value || ''
     };
 
     const userStringProperties: Array<keyof accessibility.SerializedAXNode> = [
-      'name',
       'value',
       'description',
       'keyshortcuts',

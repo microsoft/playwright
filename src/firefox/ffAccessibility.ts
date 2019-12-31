@@ -158,7 +158,8 @@ class FFAXNode implements accessibility.AXNode {
 
   serialize(): accessibility.SerializedAXNode {
     const node: {[x in keyof accessibility.SerializedAXNode]: any} = {
-      role: this._role
+      role: this._role,
+      name: this._name || ''
     };
     const userStringProperties: Array<keyof accessibility.SerializedAXNode> = [
       'name',
