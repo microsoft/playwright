@@ -341,10 +341,10 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..a32d4235005ecd1d68fac132b3879e10
      bool m_shouldPauseOnStart { false };
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..a51c3e1a6fe60353a51bbe95b3f0a8ccc0581bcf
+index 0000000000000000000000000000000000000000..78d7a339aa8141a94540f59c371aabdf39fddd33
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,149 @@
 +{
 +    "domain": "Browser",
 +    "availability": ["web"],
@@ -390,6 +390,17 @@ index 0000000000000000000000000000000000000000..a51c3e1a6fe60353a51bbe95b3f0a8cc
 +                { "name": "secure", "type": "boolean", "optional": true, "description": "True if cookie is secure." },
 +                { "name": "session", "type": "boolean", "optional": true, "description": "True if cookie is session cookie." },
 +                { "name": "sameSite", "$ref": "CookieSameSitePolicy", "optional": true, "description": "Cookie Same-Site policy." }
++            ]
++        },
++        {
++            "id": "Geolocation",
++            "type": "object",
++            "description": "Geolocation",
++            "properties": [
++                { "name": "timestamp", "type": "number", "description": "Mock latitude" },
++                { "name": "latitude", "type": "number", "description": "Mock latitude" },
++                { "name": "longitude", "type": "number", "description": "Mock longitude" },
++                { "name": "accuracy", "type": "number", "description": "Mock accuracy" }
 +            ]
 +        }
 +    ],
@@ -456,6 +467,30 @@ index 0000000000000000000000000000000000000000..a51c3e1a6fe60353a51bbe95b3f0a8cc
 +            "parameters": [
 +                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
 +            ]
++        },
++        {
++            "name": "setGeolocationOverride",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "geolocation", "$ref": "Geolocation", "optional": true, "description": "Geolocation to set, if missing emulates position unavailable." }
++            ],
++            "description": "Overrides the geolocation position or error."
++        },
++        {
++            "name": "grantPermissions",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." },
++                { "name": "origin", "type": "string" },
++                { "name": "permissions", "type": "array", "items": { "type": "string" } }
++            ],
++            "description": "Overrides the permissions."
++        },
++        {
++            "name": "resetPermissions",
++            "parameters": [
++                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
++            ],
++            "description": "Clears permission overrides."
 +        }
 +    ]
 +}
@@ -573,10 +608,10 @@ index 0000000000000000000000000000000000000000..79edea03fed4e9be5da96e1275e182a4
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Emulation.json b/Source/JavaScriptCore/inspector/protocol/Emulation.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..bcf863e4bba3b99f66e75dabfc4d8c1289cc2b78
+index 0000000000000000000000000000000000000000..ef5e1e4f164f441d433c1ad4d7faabf02dff970e
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,31 @@
 +{
 +    "domain": "Emulation",
 +    "availability": ["web"],
@@ -588,8 +623,7 @@ index 0000000000000000000000000000000000000000..bcf863e4bba3b99f66e75dabfc4d8c12
 +            "parameters": [
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
-+                { "name": "deviceScaleFactor", "type": "number" },
-+                { "name": "fixedLayout", "type": "boolean" }
++                { "name": "deviceScaleFactor", "type": "number" }
 +            ]
 +        },
 +        {
@@ -1082,6 +1116,21 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..5849e4fbea626570389d27037f4fd2d9
          }
      ],
      "events": [
+diff --git a/Source/WebCore/Modules/geolocation/Geolocation.cpp b/Source/WebCore/Modules/geolocation/Geolocation.cpp
+index a256d2f8a42548c42ae3c955d9502cc0ad893d91..7e30dfcec151304b21b39286a841e38e35fa3ecf 100644
+--- a/Source/WebCore/Modules/geolocation/Geolocation.cpp
++++ b/Source/WebCore/Modules/geolocation/Geolocation.cpp
+@@ -355,8 +355,9 @@ bool Geolocation::shouldBlockGeolocationRequests()
+     bool isSecure = SecurityOrigin::isSecure(document()->url());
+     bool hasMixedContent = !document()->foundMixedContent().isEmpty();
+     bool isLocalOrigin = securityOrigin()->isLocal();
++    bool isPotentiallyTrustworthy = securityOrigin()->isPotentiallyTrustworthy();
+     if (securityOrigin()->canRequestGeolocation()) {
+-        if (isLocalOrigin || (isSecure && !hasMixedContent) || isRequestFromIBooks())
++        if (isLocalOrigin || isPotentiallyTrustworthy || (isSecure && !hasMixedContent) || isRequestFromIBooks())
+             return false;
+     }
+     
 diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
 index 22e0dff0de6a8d38b0ef08c4b8a10f91241f319b..6bd0eef8d7d1be3bdac6ecfb13070316916dd40a 100644
 --- a/Source/WebCore/SourcesCocoa.txt
@@ -5475,10 +5524,10 @@ index d7695088e7cfc4f638f157338754f9f157489749..fd0e1db93b4b6fc094ff47565ca19e83
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e0474a86aed2d9ea67a2ef58ef0ae3218c1b779d
+index 0000000000000000000000000000000000000000..2eed920f0c5c162875f431abb532379d896dd310
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,263 @@
+@@ -0,0 +1,333 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5490,9 +5539,12 @@ index 0000000000000000000000000000000000000000..e0474a86aed2d9ea67a2ef58ef0ae321
 +#include "InspectorBrowserAgentClient.h"
 +#include "NetworkProcessMessages.h"
 +#include "NetworkProcessProxy.h"
++#include "WebGeolocationManagerProxy.h"
++#include "WebGeolocationPosition.h"
 +#include "WebPageInspectorTarget.h"
 +#include "WebPageProxy.h"
 +#include "WebProcessPool.h"
++#include <WebCore/GeolocationPositionData.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +#include <pal/SessionID.h>
 +#include <wtf/HashMap.h>
@@ -5603,6 +5655,7 @@ index 0000000000000000000000000000000000000000..e0474a86aed2d9ea67a2ef58ef0ae321
 +    RefPtr<WebPageProxy> page = m_client->createPage(errorString, sessionID);
 +    if (page == nullptr)
 +        return;
++    page->setPermissionsForAutomation(m_permissions.get(browserContextID ? *browserContextID : String()));
 +    *targetID = WebPageInspectorTarget::toTargetID(page->webPageID());
 +}
 +
@@ -5714,6 +5767,71 @@ index 0000000000000000000000000000000000000000..e0474a86aed2d9ea67a2ef58ef0ae321
 +        }, 0);
 +}
 +
++void InspectorBrowserAgent::grantPermissions(Inspector::ErrorString& errorString, const String* browserContextID, const String& origin, const JSON::Array& values)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    HashSet<String> set;
++    for (const auto& value : values) {
++        String name;
++        if (!value->asString(name)) {
++            errorString = "Permission must be a string"_s;
++            return;
++        }
++        set.add(name);
++    }
++    String key = browserContextID ? *browserContextID : String();
++    auto it = m_permissions.add(key, Permissions()).iterator;
++    it->value.set(origin, WTFMove(set));
++    Vector<WebPageProxy*> pages;
++    for (auto& process : browserContext.processPool->processes()) {
++        for (auto* page : process->pages())
++            page->setPermissionsForAutomation(it->value);
++    }
++}
++
++void InspectorBrowserAgent::resetPermissions(Inspector::ErrorString& errorString, const String* browserContextID)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    m_permissions.clear();
++    for (auto& process : browserContext.processPool->processes()) {
++        for (auto* page : process->pages())
++            page->setPermissionsForAutomation(HashMap<String, HashSet<String>>());
++    }
++}
++
++void InspectorBrowserAgent::setGeolocationOverride(Inspector::ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
++{
++    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
++    if (!errorString.isEmpty())
++        return;
++    auto* geoManager = browserContext.processPool->supplement<WebGeolocationManagerProxy>();
++    if (!geoManager) {
++        errorString = "Internal error: geolocation manager is not available.";
++        return;
++    }
++    if (geolocation) {
++        double timestamp;
++        double latitude;
++        double longitude;
++        double accuracy;
++        if (!geolocation->getDouble("timestamp", timestamp) ||
++            !geolocation->getDouble("latitude", latitude) ||
++            !geolocation->getDouble("longitude", longitude) ||
++            !geolocation->getDouble("accuracy", accuracy)) {
++            errorString = "Invalid geolocation format"_s;
++            return;
++        }
++        auto position = WebGeolocationPosition::create(WebCore::GeolocationPositionData(timestamp, latitude, longitude, accuracy));
++        geoManager->providerDidChangePosition(&position.get());
++    } else {
++        geoManager->providerDidFailToDeterminePosition("Position unavailable"_s);
++    }
++}
++
 +String InspectorBrowserAgent::toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
 +{
 +    StringBuilder builder;
@@ -5721,7 +5839,8 @@ index 0000000000000000000000000000000000000000..e0474a86aed2d9ea67a2ef58ef0ae321
 +    return builder.toString();
 +}
 +
-+BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID) {
++BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
++{
 +    if (!browserContextID) {
 +        for (auto& pool : WebProcessPool::allProcessPools()) {
 +            BrowserContext context;
@@ -5744,10 +5863,10 @@ index 0000000000000000000000000000000000000000..e0474a86aed2d9ea67a2ef58ef0ae321
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..5f11df16618a669327909bdc44d7066a28f5bee6
+index 0000000000000000000000000000000000000000..ce203cb1ca47ec1f478ed296ecee6bf3f890be7f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,70 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5800,12 +5919,18 @@ index 0000000000000000000000000000000000000000..5f11df16618a669327909bdc44d7066a
 +    void setCookies(const String* browserContextID, const JSON::Array& in_cookies, Ref<SetCookiesCallback>&&) override;
 +    void deleteAllCookies(const String* browserContextID, Ref<DeleteAllCookiesCallback>&&) override;
 +
++    void grantPermissions(Inspector::ErrorString&, const String* browserContextID, const String& origin, const JSON::Array& permissions) override;
++    void resetPermissions(Inspector::ErrorString&, const String* browserContextID) override;
++    void setGeolocationOverride(Inspector::ErrorString&, const String* browserContextID, const JSON::Object* geolocation) override;
++
 +    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
 +
 +private:
 +    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
 +    Ref<Inspector::BrowserBackendDispatcher> m_backendDispatcher;
 +    InspectorBrowserAgentClient* m_client;
++    using Permissions = HashMap<String, HashSet<String>>;
++    HashMap<String, Permissions> m_permissions;
 +    HashMap<String, BrowserContext> m_browserContexts;
 +};
 +
@@ -6309,6 +6434,20 @@ index 2c4f9ddabf01e22610d0728a00c47530fd60e90a..ae9e0b80708c30d4dc057b4dde94709c
  }
  
  } // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp b/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp
+index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace49d127a08 100644
+--- a/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp
++++ b/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp
+@@ -118,7 +118,8 @@ void WebGeolocationManagerProxy::startUpdating(IPC::Connection& connection)
+     if (!wasUpdating) {
+         m_provider->setEnableHighAccuracy(*this, isHighAccuracyEnabled());
+         m_provider->startUpdating(*this);
+-    } else if (m_lastPosition)
++    }
++    if (m_lastPosition)
+         connection.send(Messages::WebGeolocationManager::DidChangePosition(m_lastPosition.value()), 0);
+ }
+ 
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aefeedd9d7c 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
@@ -6526,10 +6665,10 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..a380d778c36fdd718dc506c28fee2349
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f9a2ee2a6843ba8bd896ae1ace9b7f78e6059643
+index 0000000000000000000000000000000000000000..9d5245ec9f6708a41048e3c3d1663b99c0be7ba7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,62 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -6565,9 +6704,9 @@ index 0000000000000000000000000000000000000000..f9a2ee2a6843ba8bd896ae1ace9b7f78
 +{
 +}
 +
-+void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, bool fixedlayout, Ref<SetDeviceMetricsOverrideCallback>&& callback) {
++void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&& callback)
++{
 +    m_page.setCustomDeviceScaleFactor(deviceScaleFactor);
-+    m_page.setUseFixedLayout(fixedlayout);
 +    platformSetSize(width, height, [callback = WTFMove(callback)](const String& error) {
 +        if (error.isEmpty())
 +            callback->sendSuccess();
@@ -6583,7 +6722,8 @@ index 0000000000000000000000000000000000000000..f9a2ee2a6843ba8bd896ae1ace9b7f78
 +    m_page.setPreferences(copy);
 +}
 +
-+void WebPageInspectorEmulationAgent::setAuthCredentials(Inspector::ErrorString&, const String* username, const String* password) {
++void WebPageInspectorEmulationAgent::setAuthCredentials(Inspector::ErrorString&, const String* username, const String* password)
++{
 +    if (username && password)
 +        m_page.setAuthCredentialsForAutomation(WebCore::Credential(*username, *password, CredentialPersistencePermanent));
 +    else
@@ -6593,7 +6733,7 @@ index 0000000000000000000000000000000000000000..f9a2ee2a6843ba8bd896ae1ace9b7f78
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..6f43602a1d6f52d435646ecfc917223e1b44832a
+index 0000000000000000000000000000000000000000..f519b0716798ac2f0682ad350592503057330f99
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 @@ -0,0 +1,44 @@
@@ -6629,7 +6769,7 @@ index 0000000000000000000000000000000000000000..6f43602a1d6f52d435646ecfc917223e
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
-+    void setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, bool fixedLayout, Ref<SetDeviceMetricsOverrideCallback>&&) override;
++    void setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&&) override;
 +    void setJavaScriptEnabled(Inspector::ErrorString&, bool enabled) override;
 +    void setAuthCredentials(Inspector::ErrorString&, const String*, const String*) override;
 +
@@ -7124,7 +7264,7 @@ index 0000000000000000000000000000000000000000..033f936d9d3caf594b78bb6ad39249d6
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df735159815d3f 100644
+index 9b868717128b9f0b592c94c3b325507d99d6797b..aedb135c4f1f26eb34af1571e23ad9a3713fac7b 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -889,6 +889,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -7135,7 +7275,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
  }
  
  void WebPageProxy::didAttachToRunningProcess()
-@@ -1660,6 +1661,15 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
+@@ -1660,6 +1661,19 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
      m_process->processPool().sendToNetworkingProcess(Messages::NetworkProcess::SetSessionIsControlledByAutomation(m_websiteDataStore->sessionID(), m_controlledByAutomation));
  }
  
@@ -7148,10 +7288,14 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
 +    m_credentialsForAutomation = WTFMove(credentials);
 +}
 +
++void WebPageProxy::setPermissionsForAutomation(const HashMap<String, HashSet<String>>& permissions) {
++    m_permissionsForAutomation = permissions;
++}
++
  void WebPageProxy::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      m_inspectorController->createInspectorTarget(targetId, type);
-@@ -2716,7 +2726,7 @@ static TrackingType mergeTrackingTypes(TrackingType a, TrackingType b)
+@@ -2716,7 +2730,7 @@ static TrackingType mergeTrackingTypes(TrackingType a, TrackingType b)
  
  void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent)
  {
@@ -7160,7 +7304,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
      const EventNames& names = eventNames();
      for (auto& touchPoint : touchStartEvent.touchPoints()) {
          IntPoint location = touchPoint.location();
-@@ -2749,7 +2759,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
+@@ -2749,7 +2763,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
      m_touchAndPointerEventTracking.touchStartTracking = TrackingType::Synchronous;
      m_touchAndPointerEventTracking.touchMoveTracking = TrackingType::Synchronous;
      m_touchAndPointerEventTracking.touchEndTracking = TrackingType::Synchronous;
@@ -7169,7 +7313,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
  }
  
  TrackingType WebPageProxy::touchEventTrackingType(const WebTouchEvent& touchStartEvent) const
-@@ -5404,6 +5414,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
+@@ -5404,6 +5418,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -7178,7 +7322,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
      m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
  
-@@ -5423,6 +5435,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
+@@ -5423,6 +5439,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -7187,7 +7331,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
  
      m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5442,6 +5456,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
+@@ -5442,6 +5460,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -7196,7 +7340,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
  
      m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5601,6 +5617,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
+@@ -5601,6 +5621,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
              return;
          }
      }
@@ -7205,7 +7349,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer.
      m_process->responsivenessTimer().stop();
-@@ -6625,6 +6643,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6625,6 +6647,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              pageClient().didFinishProcessingAllPendingMouseEvents();
@@ -7214,7 +7358,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
          }
  
          break;
-@@ -6651,7 +6671,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6651,7 +6675,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -7222,7 +7366,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -6671,7 +6690,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6671,7 +6694,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -7230,7 +7374,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -6680,6 +6698,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6680,6 +6702,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -7239,7 +7383,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
          }
          break;
      }
-@@ -7595,6 +7615,10 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
+@@ -7595,6 +7619,10 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge)
  {
@@ -7250,8 +7394,30 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..7abd9db5f0e44cbd72d50b9eb2df7351
      m_navigationClient->didReceiveAuthenticationChallenge(*this, authenticationChallenge.get());
  }
  
+@@ -7656,7 +7684,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+     MESSAGE_CHECK(m_process, frame);
+ 
+     // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
+-    auto origin = API::SecurityOrigin::create(SecurityOriginData::fromDatabaseIdentifier(originIdentifier)->securityOrigin());
++    auto securityOrigin = SecurityOriginData::fromDatabaseIdentifier(originIdentifier)->securityOrigin();
++    auto origin = API::SecurityOrigin::create(securityOrigin);
+     auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
+     Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
+         if (allowed)
+@@ -7664,6 +7693,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+         else
+             request->deny();
+     };
++    auto permissions = m_permissionsForAutomation.find(securityOrigin->toString());
++    if (permissions != m_permissionsForAutomation.end()) {
++        completionHandler(permissions->value.contains("geolocation"));
++        return;
++    }
+ 
+     // FIXME: Once iOS migrates to the new WKUIDelegate SPI, clean this up
+     // and make it one UIClient call that calls the completionHandler with false
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 8189e085e43ea304b38ff84e41e6e49f10c8da20..5f807e8a7376ac4200e3711ab36903cc17a18622 100644
+index 8189e085e43ea304b38ff84e41e6e49f10c8da20..dc1eeb8cd5c35c1ee5020cbe72639de559d7f952 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -35,6 +35,7 @@
@@ -7271,7 +7437,7 @@ index 8189e085e43ea304b38ff84e41e6e49f10c8da20..5f807e8a7376ac4200e3711ab36903cc
  
  #if PLATFORM(IOS_FAMILY)
      void showInspectorIndication();
-@@ -537,6 +540,15 @@ public:
+@@ -537,6 +540,16 @@ public:
  
      void setPageLoadStateObserver(std::unique_ptr<PageLoadState::Observer>&&);
  
@@ -7283,11 +7449,12 @@ index 8189e085e43ea304b38ff84e41e6e49f10c8da20..5f807e8a7376ac4200e3711ab36903cc
 +    };
 +    void setObserber(InputProcessingObserver*);
 +    void setAuthCredentialsForAutomation(WebCore::Credential&&);
++    void setPermissionsForAutomation(const HashMap<String, HashSet<String>>&);
 +
      void initializeWebPage();
      void setDrawingArea(std::unique_ptr<DrawingAreaProxy>&&);
  
-@@ -2246,6 +2258,7 @@ private:
+@@ -2246,6 +2259,7 @@ private:
      bool m_treatsSHA1CertificatesAsInsecure { true };
  
      RefPtr<WebInspectorProxy> m_inspector;
@@ -7295,7 +7462,7 @@ index 8189e085e43ea304b38ff84e41e6e49f10c8da20..5f807e8a7376ac4200e3711ab36903cc
  
  #if ENABLE(FULLSCREEN_API)
      std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
-@@ -2597,6 +2610,7 @@ private:
+@@ -2597,6 +2611,7 @@ private:
  #if ENABLE(REMOTE_INSPECTOR)
      std::unique_ptr<WebPageDebuggable> m_inspectorDebuggable;
  #endif
@@ -7303,11 +7470,12 @@ index 8189e085e43ea304b38ff84e41e6e49f10c8da20..5f807e8a7376ac4200e3711ab36903cc
  
      Optional<SpellDocumentTag> m_spellDocumentTag;
  
-@@ -2647,6 +2661,7 @@ private:
+@@ -2647,6 +2662,8 @@ private:
      bool m_isLayerTreeFrozenDueToSwipeAnimation { false };
      
      String m_overriddenMediaType;
 +    WebCore::Credential m_credentialsForAutomation;
++    HashMap<String, HashSet<String>> m_permissionsForAutomation;
          
  #if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
      std::unique_ptr<WebDeviceOrientationUpdateProviderProxy> m_webDeviceOrientationUpdateProviderProxy;
