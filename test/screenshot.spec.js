@@ -145,6 +145,16 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       });
       expect(Buffer.from(screenshot, 'base64')).toBeGolden('screenshot-sanity.png');
     });
+    it.skip(WEBKIT || FFOX)('should work with a mobile viewport', async({page, server}) => {
+      await page.setViewport({
+        width: 320,
+        height: 480,
+        isMobile: true
+      });
+      await page.goto(server.PREFIX + '/grid.html');
+      const screenshot = await page.screenshot();
+      expect(screenshot).toBeGolden('screenshot-mobile.png');
+    });
   });
 
   describe('ElementHandle.screenshot', function() {
