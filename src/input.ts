@@ -339,7 +339,7 @@ export const fillFunction = (node: Node) => {
   if (element.nodeName.toLowerCase() === 'input') {
     const input = element as HTMLInputElement;
     const type = input.getAttribute('type') || '';
-    const kTextInputTypes = new Set(['', 'password', 'search', 'tel', 'text', 'url']);
+    const kTextInputTypes = new Set(['', 'email', 'password', 'search', 'tel', 'text', 'url']);
     if (!kTextInputTypes.has(type.toLowerCase()))
       return 'Cannot fill input of type "' + type + '".';
     if (input.disabled)

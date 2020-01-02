@@ -977,7 +977,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
     it('should throw on non-text inputs', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      for (const type of ['email', 'number', 'date']) {
+      for (const type of ['color', 'number', 'date']) {
         await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
         let error = null;
         await page.fill('input', '').catch(e => error = e);
