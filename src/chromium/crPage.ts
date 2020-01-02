@@ -38,6 +38,7 @@ import { BrowserContext } from '../browserContext';
 import * as types from '../types';
 import * as input from '../input';
 import { ConsoleMessage } from '../console';
+import { CROverrides } from './features/crOverrides';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -86,13 +87,32 @@ export class CRPage implements PageDelegate {
       this._client.send('Page.getFrameTree'),
     ]);
     this._handleFrameTree(frameTree);
-    await Promise.all([
+    const promises: Promise<any>[] = [
       this._client.send('Log.enable', {}),
       this._client.send('Page.setInterceptFileChooserDialog', {enabled: true}),
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._networkManager.initialize(),
-    ]);
+      ((this._page.browserContext() as any).overrides as CROverrides)._applyOverrides(this),
+    ];
+    const options = this._page.browserContext()._options;
+    if (options.bypassCSP)
+      promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
+    if (options.ignoreHTTPSErrors)
+      promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
+    if (options.viewport)
+      promises.push(this.setViewport(options.viewport));
+    if (options.javaScriptEnabled === false)
+      promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
+    if (options.userAgent)
+      this._networkManager.setUserAgent(options.userAgent);
+    if (options.mediaType || options.colorScheme) {
+      const features = options.colorScheme ? [{ name: 'prefers-color-scheme', value: options.colorScheme }] : [];
+      promises.push(this._client.send('Emulation.setEmulatedMedia', { media: options.mediaType || '', features }));
+    }
+    if (options.timezoneId)
+      promises.push(emulateTimezone(this._client, options.timezoneId));
+    await Promise.all(promises);
   }
 
   didClose() {
@@ -487,4 +507,14 @@ export class ChromiumPage extends Page {
 
 function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
   return handle._remoteObject as Protocol.Runtime.RemoteObject;
+}
+
+async function emulateTimezone(session: CRSession, timezoneId: string) {
+  try {
+    await session.send('Emulation.setTimezoneOverride', { timezoneId: timezoneId });
+  } catch (exception) {
+    if (exception.message.includes('Invalid timezone'))
+      throw new Error(`Invalid timezone ID: ${timezoneId}`);
+    throw exception;
+  }
 }

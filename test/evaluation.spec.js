@@ -259,10 +259,10 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       })).catch(e => error = e);
       expect(error.message).toContain('Error in promise');
     });
-    it.skip(FFOX || WEBKIT)('should work even when JSON is set to null', async({page, server}) => {
+    it('should work even when JSON is set to null', async ({ page }) => {
       await page.evaluate(() => { window.JSON.stringify = null; window.JSON = null; });
       const result = await page.evaluate(() => ({abc: 123}));
-      expect(result).toEqual({abc: 123}); 
+      expect(result).toEqual({abc: 123});
     })
   });
 
