@@ -69,7 +69,6 @@ export class CRBrowser extends browser.Browser {
   }
 
   _createBrowserContext(contextId: string | null, options: BrowserContextOptions): BrowserContext {
-    let overrides: CROverrides | null = null;
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
@@ -81,28 +80,7 @@ export class CRBrowser extends browser.Browser {
         const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
         const target = this._targets.get(targetId);
         assert(await target._initializedPromise, 'Failed to create target for page');
-        const page = await target.page();
-        const crPage = target._crPage;
-        const session = crPage._client;
-        const promises: Promise<any>[] = [ overrides._applyOverrides(crPage) ];
-        if (options.bypassCSP)
-          promises.push(session.send('Page.setBypassCSP', { enabled: true }));
-        if (options.ignoreHTTPSErrors)
-          promises.push(session.send('Security.setIgnoreCertificateErrors', { ignore: true }));
-        if (options.viewport)
-          promises.push(crPage.setViewport(options.viewport));
-        if (options.javaScriptEnabled === false)
-          promises.push(session.send('Emulation.setScriptExecutionDisabled', { value: true }));
-        if (options.userAgent)
-          crPage._networkManager.setUserAgent(options.userAgent);
-        if (options.mediaType || options.colorScheme) {
-          const features = options.colorScheme ? [{ name: 'prefers-color-scheme', value: options.colorScheme }] : [];
-          promises.push(session.send('Emulation.setEmulatedMedia', { media: options.mediaType || '', features }));
-        }
-        if (options.timezoneId)
-          promises.push(emulateTimezone(session, options.timezoneId));
-        await Promise.all(promises);
-        return page;
+        return target.page();
       },
 
       close: async (): Promise<void> => {
@@ -162,8 +140,7 @@ export class CRBrowser extends browser.Browser {
       }
 
     }, options);
-    overrides = new CROverrides(context);
-    (context as any).overrides = overrides;
+    (context as any).overrides = new CROverrides(context);
     return context;
   }
 
@@ -315,15 +292,5 @@ export class CRBrowser extends browser.Browser {
 
   isConnected(): boolean {
     return !this._connection._closed;
-  }
-}
-
-async function emulateTimezone(session: CRSession, timezoneId: string) {
-  try {
-    await session.send('Emulation.setTimezoneOverride', { timezoneId: timezoneId });
-  } catch (exception) {
-    if (exception.message.includes('Invalid timezone'))
-      throw new Error(`Invalid timezone ID: ${timezoneId}`);
-    throw exception;
   }
 }

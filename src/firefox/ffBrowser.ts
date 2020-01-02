@@ -155,21 +155,7 @@ export class FFBrowser extends browser.Browser {
           browserContextId: browserContextId || undefined
         });
         const target = this._targets.get(targetId);
-        const page = await target.page();
-        const session = target._ffPage._session;
-        const promises: Promise<any>[] = [];
-        if (options.viewport)
-          promises.push(page._delegate.setViewport(options.viewport));
-        if (options.bypassCSP)
-          promises.push(session.send('Page.setBypassCSP', { enabled: true }));
-        if (options.javaScriptEnabled === false)
-          promises.push(session.send('Page.setJavascriptEnabled', { enabled: false }));
-        if (options.userAgent)
-          promises.push(session.send('Page.setUserAgent', { userAgent: options.userAgent }));
-        if (options.mediaType || options.colorScheme)
-          promises.push(session.send('Page.setEmulatedMedia', { type: options.mediaType, colorScheme: options.colorScheme }));
-        await Promise.all(promises);
-        return page;
+        return target.page();
       },
 
       close: async (): Promise<void> => {

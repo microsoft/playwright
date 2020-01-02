@@ -36,6 +36,8 @@ import { PNG } from 'pngjs';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
+const JSON_CALL_MESSAGE = '__playwright_json_call__';
+const JSON_SAVE_SCRIPT = `console.debug('${JSON_CALL_MESSAGE}', JSON)`;
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -47,7 +49,7 @@ export class WKPage implements PageDelegate {
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
-  private readonly _bootstrapScripts: string[] = [];
+  private readonly _bootstrapScripts: string[] = [ JSON_SAVE_SCRIPT ];
 
   constructor(browser: WKBrowser, browserContext: BrowserContext) {
     this._browser = browser;
@@ -70,7 +72,7 @@ export class WKPage implements PageDelegate {
     this._isolatedWorlds = new Set();
     // New bootstrap scripts may have been added during provisional load, push them
     // again to be on the safe side.
-    if (this._setBootstrapScripts.length)
+    if (this._bootstrapScripts.length)
       this._setBootstrapScripts(session).catch(e => debugError(e));
   }
 
@@ -107,6 +109,8 @@ export class WKPage implements PageDelegate {
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
     if (this._page._state.viewport)
       promises.push(WKPage._setViewport(session, this._page._state.viewport));
+    if (contextOptions.javaScriptEnabled !== false)
+      promises.push(session.send('Page.setBootstrapScript', { source: JSON_SAVE_SCRIPT }));
     await Promise.all(promises);
   }
 
@@ -215,6 +219,12 @@ export class WKPage implements PageDelegate {
       const parsedObjectId = JSON.parse(parameters[1].objectId);
       const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
       this._page._onBindingCalled(parameters[2].value, context);
+      return;
+    }
+    if (level === 'debug' && parameters && parameters[0].value === JSON_CALL_MESSAGE) {
+      const parsedObjectId = JSON.parse(parameters[1].objectId);
+      const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
+      (context._delegate as WKExecutionContext)._jsonObjectId = parameters[1].objectId;
       return;
     }
     let derivedType: string = type;

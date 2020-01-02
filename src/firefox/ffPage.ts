@@ -68,12 +68,24 @@ export class FFPage implements PageDelegate {
   }
 
   async _initialize() {
-    await Promise.all([
+    const promises: Promise<any>[] = [
       this._session.send('Runtime.enable'),
       this._session.send('Network.enable'),
       this._session.send('Page.enable'),
       this._session.send('Page.setInterceptFileChooserDialog', { enabled: true })
-    ]);
+    ];
+    const options = this._page.browserContext()._options;
+    if (options.viewport)
+      promises.push(this.setViewport(options.viewport));
+    if (options.bypassCSP)
+      promises.push(this._session.send('Page.setBypassCSP', { enabled: true }));
+    if (options.javaScriptEnabled === false)
+      promises.push(this._session.send('Page.setJavascriptEnabled', { enabled: false }));
+    if (options.userAgent)
+      promises.push(this._session.send('Page.setUserAgent', { userAgent: options.userAgent }));
+    if (options.mediaType || options.colorScheme)
+      promises.push(this._session.send('Page.setEmulatedMedia', { type: options.mediaType, colorScheme: options.colorScheme }));
+    await Promise.all(promises);
   }
 
   _onExecutionContextCreated({executionContextId, auxData}) {
