@@ -2448,10 +2448,10 @@ index 0000000000000000000000000000000000000000..0031ff4cad5d479db52122f69c1cb6b0
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a8f017a071334c73aa96160c96018e6f5ac65d1f
+index 0000000000000000000000000000000000000000..b43df14b060682711a59221f67fd2c3bba3a0f62
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
-@@ -0,0 +1,468 @@
+@@ -0,0 +1,466 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -2677,7 +2677,6 @@ index 0000000000000000000000000000000000000000..a8f017a071334c73aa96160c96018e6f
 +    let result = await executionContext.evaluateScript(expression, exceptionDetails);
 +    if (!result)
 +      return {exceptionDetails};
-+    let isNode = undefined;
 +    if (returnByValue)
 +      result = executionContext.ensureSerializedToValue(result);
 +    return {result};
@@ -2691,7 +2690,6 @@ index 0000000000000000000000000000000000000000..a8f017a071334c73aa96160c96018e6f
 +    let result = await executionContext.evaluateFunction(functionDeclaration, args, exceptionDetails);
 +    if (!result)
 +      return {exceptionDetails};
-+    let isNode = undefined;
 +    if (returnByValue)
 +      result = executionContext.ensureSerializedToValue(result);
 +    return {result};
@@ -2720,6 +2718,7 @@ index 0000000000000000000000000000000000000000..a8f017a071334c73aa96160c96018e6f
 +    this._remoteObjects = new Map();
 +    this._id = helper.generateId();
 +    this._auxData = auxData;
++    this._jsonStringifyObject = this._global.executeInGlobal('JSON.stringify.bind(JSON)').return;
 +  }
 +
 +  id() {
@@ -2824,7 +2823,6 @@ index 0000000000000000000000000000000000000000..a8f017a071334c73aa96160c96018e6f
 +               (rawObj instanceof this._domWindow.Float64Array)) {
 +        subtype = 'typedarray';
 +      }
-+      const isNode = debuggerObj.unsafeDereference() instanceof this._domWindow.Node;
 +      return {objectId, type, subtype};
 +    }
 +    if (typeof debuggerObj === 'symbol') {
@@ -2871,7 +2869,7 @@ index 0000000000000000000000000000000000000000..a8f017a071334c73aa96160c96018e6f
 +  }
 +
 +  _serialize(obj) {
-+    const result = this._global.executeInGlobalWithBindings('JSON.stringify(e)', {e: obj});
++    const result = this._global.executeInGlobalWithBindings('stringify(e)', {e: obj, stringify: this._jsonStringifyObject});
 +    if (result.throw)
 +      throw new Error('Object is not serializable');
 +    return JSON.parse(result.return);
