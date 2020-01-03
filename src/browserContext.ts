@@ -53,9 +53,13 @@ export class BrowserContext {
 
   constructor(delegate: BrowserContextDelegate, options: BrowserContextOptions) {
     this._delegate = delegate;
-    this._options = options;
-    if (!options.viewport && options.viewport !== null)
-      options.viewport = { width: 800, height: 600 };
+    this._options = { ...options };
+    if (!this._options.viewport && this._options.viewport !== null)
+      this._options.viewport = { width: 800, height: 600 };
+    if (this._options.viewport)
+      this._options.viewport = { ...this._options.viewport };
+    if (this._options.geolocation)
+      this._options.geolocation = { ...this._options.geolocation };
   }
 
   async pages(): Promise<Page[]> {

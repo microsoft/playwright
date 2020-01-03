@@ -131,6 +131,16 @@ module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBK
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
     });
+    it('should make a copy of default viewport', async({ newContext }) => {
+      const viewport = { width: 456, height: 789 };
+      const context = await newContext({ viewport });
+      viewport.width = 567;
+      const page = await context.newPage();
+      expect(page.viewport().width).toBe(456);
+      expect(page.viewport().height).toBe(789);
+      expect(await page.evaluate('window.innerWidth')).toBe(456);
+      expect(await page.evaluate('window.innerHeight')).toBe(789);
+    });
   });
 
   describe('BrowserContext({setUserAgent})', function() {
@@ -173,6 +183,17 @@ module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBK
         await page.goto(server.PREFIX + '/mobile.html');
         expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
       }
+    });
+    it('should make a copy of default options', async({newContext, server}) => {
+      const options = { userAgent: 'foobar' };
+      const context = await newContext(options);
+      options.userAgent = 'wrong';
+      const page = await context.newPage();
+      const [request] = await Promise.all([
+        server.waitForRequest('/empty.html'),
+        page.goto(server.EMPTY_PAGE),
+      ]);
+      expect(request.headers['user-agent']).toBe('foobar');
     });
   });
 

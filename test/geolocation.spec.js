@@ -44,6 +44,12 @@ module.exports.describe = function ({ testRunner, expect, FFOX }) {
       }
       expect(error.message).toContain('Invalid longitude "200"');
     });
+    it('should not modify passed default options object', async({newContext}) => {
+      const geolocation = { longitude: 10, latitude: 10 };
+      const options = { geolocation };
+      const context = await newContext(options);
+      await context.setGeolocation({ longitude: 20, latitude: 20 });
+      expect(options.geolocation).toBe(geolocation);
+    });
   });
-
 };

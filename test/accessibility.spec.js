@@ -193,7 +193,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         expect(await page.accessibility.snapshot()).toEqual(golden);
       });
       // WebKit rich text accessibility is iffy
-      !WEBKIT && fit('rich text editable fields should have children', async function({page}) {
+      !WEBKIT && it('rich text editable fields should have children', async function({page}) {
         await page.setContent(`
         <div contenteditable="true">
           Edit this image: <img src="fakeimage.png" alt="my fake image">
