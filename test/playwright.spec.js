@@ -127,7 +127,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
       state.newPage = async (options) => {
         const context = await state.newContext(options);
-        return await context.newPage(options);
+        return await context.newPage();
       };
     });
 
