@@ -367,7 +367,10 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    this._browser._closePage(this._session._sessionId, runBeforeUnload);
+    this._session._pageProxySession.send('Target.close', {
+      targetId: this._session._sessionId,
+      runBeforeUnload
+    }).catch(debugError);
   }
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
