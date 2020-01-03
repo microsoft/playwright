@@ -426,7 +426,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
         }
 
         const response = await actionPromise;
-        expect(performance.now() - lastResponseFinished).not.toBeLessThan(499);
+        expect(performance.now() - lastResponseFinished).not.toBeLessThan(450);
         if (!isSetContent)
           expect(response.ok()).toBe(true);
 
@@ -490,12 +490,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
         }, true);
       });
       it.skip(FFOX)('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
-        // TODO: there are two issues here which combined fail the test in firefox:
-        // - calling window.stop() does not cancel all outstanding requests in firefox;
-        // - we do not reset inflight request counter on lifecycle clear, so we wait for
-        //   the first request indefinitely.
-        // Note that we cannot just reset inflight request counter, because the current navigation
-        // request is already inflight at that moment.
+        // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
+        // therefore we don't clear inglight requests at the right time.
         await page.goto(server.EMPTY_PAGE);
         server.setRoute('/foo.js', () => {});
         await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -504,6 +500,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
         }, true);
       });
       it.skip(FFOX)('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
+        // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
+        // therefore we don't clear inglight requests at the right time.
         await page.goto(server.EMPTY_PAGE);
         server.setRoute('/foo.js', () => {});
         await page.setContent(`<script>fetch('foo.js');</script>`);

@@ -117,6 +117,7 @@ export class FrameManager {
     frame._name = name;
     frame._lastDocumentId = documentId;
     this.frameLifecycleEvent(frameId, 'clear');
+    this.clearInflightRequests(frame);
     if (!initial) {
       for (const watcher of this._lifecycleWatchers)
         watcher._onCommittedNewDocumentNavigation(frame);
@@ -162,12 +163,6 @@ export class FrameManager {
       return;
     if (event === 'clear') {
       frame._firedLifecycleEvents.clear();
-      this._stopNetworkIdleTimer(frame, 'networkidle0');
-      if (frame._inflightRequests === 0)
-        this._startNetworkIdleTimer(frame, 'networkidle0');
-      this._stopNetworkIdleTimer(frame, 'networkidle2');
-      if (frame._inflightRequests <= 2)
-        this._startNetworkIdleTimer(frame, 'networkidle2');
     } else {
       frame._firedLifecycleEvents.add(event);
       for (const watcher of this._lifecycleWatchers)
@@ -179,9 +174,19 @@ export class FrameManager {
       this._page.emit(Events.Page.DOMContentLoaded);
   }
 
+  clearInflightRequests(frame: Frame) {
+    // Keep the current navigation request if any.
+    frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request._documentId === frame._lastDocumentId));
+    this._stopNetworkIdleTimer(frame, 'networkidle0');
+    if (frame._inflightRequests.size === 0)
+      this._startNetworkIdleTimer(frame, 'networkidle0');
+    this._stopNetworkIdleTimer(frame, 'networkidle2');
+    if (frame._inflightRequests.size <= 2)
+      this._startNetworkIdleTimer(frame, 'networkidle2');
+  }
+
   requestStarted(request: network.Request) {
-    if (request.frame())
-      this._incrementRequestCount(request.frame());
+    this._inflightRequestStarted(request);
     if (request._documentId && request.frame() && !request.redirectChain().length) {
       for (const watcher of this._lifecycleWatchers)
         watcher._onNavigationRequest(request.frame(), request);
@@ -194,14 +199,12 @@ export class FrameManager {
   }
 
   requestFinished(request: network.Request) {
-    if (request.frame())
-      this._decrementRequestCount(request.frame());
+    this._inflightRequestFinished(request);
     this._page.emit(Events.Page.RequestFinished, request);
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
-    if (request.frame())
-      this._decrementRequestCount(request.frame());
+    this._inflightRequestFinished(request);
     if (request._documentId && request.frame()) {
       const isCurrentDocument = request.frame()._lastDocumentId === request._documentId;
       if (!isCurrentDocument) {
@@ -225,19 +228,27 @@ export class FrameManager {
     this._page.emit(Events.Page.FrameDetached, frame);
   }
 
-  private _decrementRequestCount(frame: Frame) {
-    frame._inflightRequests--;
-    if (frame._inflightRequests === 0)
+  private _inflightRequestFinished(request: network.Request) {
+    if (!request.frame() || request.url().endsWith('favicon.ico'))
+      return;
+    const frame = request.frame();
+    if (!frame._inflightRequests.has(request))
+      return;
+    frame._inflightRequests.delete(request);
+    if (frame._inflightRequests.size === 0)
       this._startNetworkIdleTimer(frame, 'networkidle0');
-    if (frame._inflightRequests === 2)
+    if (frame._inflightRequests.size === 2)
       this._startNetworkIdleTimer(frame, 'networkidle2');
   }
 
-  private _incrementRequestCount(frame: Frame) {
-    frame._inflightRequests++;
-    if (frame._inflightRequests === 1)
+  private _inflightRequestStarted(request: network.Request) {
+    if (!request.frame() || request.url().endsWith('favicon.ico'))
+      return;
+    const frame = request.frame();
+    frame._inflightRequests.add(request);
+    if (frame._inflightRequests.size === 1)
       this._stopNetworkIdleTimer(frame, 'networkidle0');
-    if (frame._inflightRequests === 3)
+    if (frame._inflightRequests.size === 3)
       this._stopNetworkIdleTimer(frame, 'networkidle2');
   }
 
@@ -267,7 +278,7 @@ export class Frame {
   private _contextData = new Map<ContextType, ContextData>();
   private _childFrames = new Set<Frame>();
   _name: string;
-  _inflightRequests = 0;
+  _inflightRequests = new Set<network.Request>();
   readonly _networkIdleTimers = new Map<LifecycleEvent, NodeJS.Timer>();
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
@@ -437,8 +448,10 @@ export class Frame {
 
   async setContent(html: string, options?: NavigateOptions): Promise<void> {
     const context = await this._utilityContext();
-    if (this._page._delegate.needsLifecycleResetOnSetContent())
+    if (this._page._delegate.needsLifecycleResetOnSetContent()) {
       this._page._frameManager.frameLifecycleEvent(this._id, 'clear');
+      this._page._frameManager.clearInflightRequests(this);
+    }
     await context.evaluate(html => {
       window.stop();
       document.open();
