@@ -29,6 +29,7 @@ import { Events } from './events';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import Injected from './injected/injected';
+import * as accessibility from './accessibility';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -66,6 +67,8 @@ export interface PageDelegate {
   layoutViewport(): Promise<{ width: number, height: number }>;
   setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
+
+  getAccessibilityTree(): Promise<accessibility.AXNode>;
 }
 
 type PageState = {
@@ -100,6 +103,7 @@ export class Page extends EventEmitter {
   private _pageBindings = new Map<string, Function>();
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
+  readonly accessibility: accessibility.Accessibility;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -117,6 +121,7 @@ export class Page extends EventEmitter {
       offlineMode: null,
       credentials: null
     };
+    this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
     this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
     this._timeoutSettings = new TimeoutSettings();

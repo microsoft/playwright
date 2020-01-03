@@ -33,6 +33,8 @@ import * as input from '../input';
 import * as types from '../types';
 import * as jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
+import * as accessibility from '../accessibility';
+import { getAccessibilityTree } from './wkAccessibility';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -479,6 +481,10 @@ export class WKPage implements PageDelegate {
     if (!result || result.object.subtype === 'null')
       throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.object) as dom.ElementHandle<T>;
+  }
+
+  async getAccessibilityTree() : Promise<accessibility.AXNode> {
+    return getAccessibilityTree(this._session);
   }
 }
 

@@ -20,7 +20,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(WEBKIT)('Accessibility', function() {
+  describe('Accessibility', function() {
     it('should work', async function({page}) {
       await page.setContent(`
       <head>
@@ -62,7 +62,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
             {role: 'combobox option', name: 'First Option', selected: true},
             {role: 'combobox option', name: 'Second Option'}]
           }]
-      } : {
+      } : CHROME ? {
         role: 'WebArea',
         name: 'Accessibility Test',
         children: [
@@ -79,6 +79,23 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
             {role: 'menuitem', name: 'First Option', selected: true},
             {role: 'menuitem', name: 'Second Option'}]
           }]
+      } : {
+        role: 'WebArea',
+        name: 'Accessibility Test',
+        children: [
+          {role: 'heading', name: 'Inputs', level: 1 },
+          {role: 'TextField', name: 'Empty input', focused: true, readonly: true},
+          {role: 'TextField', name: 'readonly input', readonly: true },
+          {role: 'TextField', name: 'disabled input', disabled: true, readonly: true},
+          {role: 'TextField', name: 'Input with whitespace', value: '  ', description: 'Input with whitespace', readonly: true},
+          {role: 'TextField', name: '', value: 'value only', readonly: true },
+          {role: 'TextField', name: 'placeholder',value: 'and a value',readonly: true},
+          {role: 'TextField', name: 'This is a description!',value: 'and a value',readonly: true},
+          {role: 'button', name: '', value: 'First Option', children: [
+            { role: 'MenuListOption', name: '', value: 'First Option', selected: true },
+            { role: 'MenuListOption', name: '', value: 'Second Option' }]
+          }
+        ]
       };
       expect(await page.accessibility.snapshot()).toEqual(golden);
     });
@@ -96,7 +113,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           role: 'text leaf',
           name: 'hi'
         }]
-      } : {
+      } : CHROME ? {
         role: 'textbox',
         name: '',
         value: 'hi',
@@ -109,10 +126,16 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
             role: 'text', name: 'hi'
           }]
         }]
+      } : {
+        role: 'textbox',
+        name: '',
+        value: 'hi',
+        focused: true,
+        multiline: true
       };
       expect(findFocusedNode(await page.accessibility.snapshot({interestingOnly: false}))).toEqual(golden);
     });
-    it('roledescription', async({page}) => {
+    it.skip(WEBKIT)('roledescription', async({page}) => {
       await page.setContent('<div tabIndex=-1 aria-roledescription="foo">Hi</div>');
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0].roledescription).toEqual('foo');
@@ -122,7 +145,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0].orientation).toEqual('vertical');
     });
-    it.skip(FFOX)('autocomplete', async({page}) => {
+    it.skip(FFOX || WEBKIT)('autocomplete', async({page}) => {
       await page.setContent('<input type="number" aria-autocomplete="list" />');
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0].autocomplete).toEqual('list');
@@ -169,7 +192,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         };
         expect(await page.accessibility.snapshot()).toEqual(golden);
       });
-      it('rich text editable fields should have children', async function({page}) {
+      // WebKit rich text accessibility is iffy
+      !WEBKIT && fit('rich text editable fields should have children', async function({page}) {
         await page.setContent(`
         <div contenteditable="true">
           Edit this image: <img src="fakeimage.png" alt="my fake image">
@@ -199,7 +223,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         const snapshot = await page.accessibility.snapshot();
         expect(snapshot.children[0]).toEqual(golden);
       });
-      it('rich text editable fields with role should have children', async function({page}) {
+      // WebKit rich text accessibility is iffy
+      !WEBKIT && it('rich text editable fields with role should have children', async function({page}) {
         await page.setContent(`
         <div contenteditable="true" role='textbox'>
           Edit this image: <img src="fakeimage.png" alt="my fake image">
@@ -228,7 +253,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         expect(snapshot.children[0]).toEqual(golden);
       });
       // Firefox does not support contenteditable="plaintext-only".
-      !FFOX && describe('plaintext contenteditable', function() {
+      // WebKit rich text accessibility is iffy
+      !FFOX && !WEBKIT && describe('plaintext contenteditable', function() {
         it('plain text field with role should not have children', async function({page}) {
           await page.setContent(`
           <div contenteditable="plaintext-only" role='textbox'>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
@@ -268,10 +294,15 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           role: 'entry',
           name: 'my favorite textbox',
           value: 'this is the inner content yo'
-        } : {
+        } : CHROME ? {
           role: 'textbox',
           name: 'my favorite textbox',
           value: 'this is the inner content '
+        } : {
+          role: 'TextField',
+          name: 'my favorite textbox',
+          value: 'this is the inner content  ',
+          description: 'my favorite textbox'
         };
         const snapshot = await page.accessibility.snapshot();
         expect(snapshot.children[0]).toEqual(golden);
@@ -286,9 +317,14 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           role: 'checkbutton',
           name: 'my favorite checkbox',
           checked: true
+        } : CHROME ? {
+          role: 'checkbox',
+          name: 'my favorite checkbox',
+          checked: true
         } : {
           role: 'checkbox',
           name: 'my favorite checkbox',
+          description: "my favorite checkbox",
           checked: true
         };
         const snapshot = await page.accessibility.snapshot();
@@ -313,7 +349,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
         expect(snapshot.children[0]).toEqual(golden);
       });
 
-      describe.skip(FFOX)('root option', function() {
+      describe.skip(FFOX || WEBKIT)('root option', function() {
         it('should work a button', async({page}) => {
           await page.setContent(`<button>My Button</button>`);
 

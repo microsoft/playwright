@@ -28,9 +28,10 @@ import { Protocol } from './protocol';
 import * as input from '../input';
 import { RawMouseImpl, RawKeyboardImpl } from './ffInput';
 import { BrowserContext } from '../browserContext';
-import { FFAccessibility } from './features/ffAccessibility';
+import { getAccessibilityTree } from './ffAccessibility';
 import * as network from '../network';
 import * as types from '../types';
+import * as accessibility from '../accessibility';
 
 export class FFPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -64,7 +65,6 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
     ];
-    (this._page as any).accessibility = new FFAccessibility(session);
   }
 
   async _initialize() {
@@ -346,6 +346,10 @@ export class FFPage implements PageDelegate {
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     assert(false, 'Multiple isolated worlds are not implemented');
     return handle;
+  }
+
+  async getAccessibilityTree() : Promise<accessibility.AXNode> {
+    return getAccessibilityTree(this._session);
   }
 }
 

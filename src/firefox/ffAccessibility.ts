@@ -14,78 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as accessibility from '../accessibility';
+import { FFSession } from './ffConnection';
 
-interface SerializedAXNode {
-  role: string;
-
-  name?: string;
-  value?: string|number;
-  description?: string;
-
-  keyshortcuts?: string;
-  roledescription?: string;
-  valuetext?: string;
-
-  disabled?: boolean;
-  expanded?: boolean;
-  focused?: boolean;
-  modal?: boolean;
-  multiline?: boolean;
-  multiselectable?: boolean;
-  readonly?: boolean;
-  required?: boolean;
-  selected?: boolean;
-
-  checked?: boolean|'mixed';
-  pressed?: boolean|'mixed';
-
-  level?: number;
-
-  autocomplete?: string;
-  haspopup?: string;
-  invalid?: string;
-  orientation?: string;
-
-  children?: Array<SerializedAXNode>;
+export async function getAccessibilityTree(session: FFSession) : Promise<accessibility.AXNode> {
+  const { tree } = await session.send('Accessibility.getFullAXTree');
+  return new FFAXNode(tree);
 }
-export class FFAccessibility {
-  _session: any;
-  constructor(session) {
-    this._session = session;
-  }
-  async snapshot(options: { interestingOnly?: boolean; } | undefined = {}): Promise<SerializedAXNode> {
-    const { interestingOnly = true } = options;
-    const { tree } = await this._session.send('Accessibility.getFullAXTree');
-    const root = new AXNode(tree);
-    if (!interestingOnly)
-      return serializeTree(root)[0];
-    const interestingNodes: Set<AXNode> = new Set();
-    collectInterestingNodes(interestingNodes, root, false);
-    return serializeTree(root, interestingNodes)[0];
-  }
-}
-function collectInterestingNodes(collection: Set<AXNode>, node: AXNode, insideControl: boolean) {
-  if (node.isInteresting(insideControl))
-    collection.add(node);
-  if (node.isLeafNode())
-    return;
-  insideControl = insideControl || node.isControl();
-  for (const child of node._children)
-    collectInterestingNodes(collection, child, insideControl);
-}
-function serializeTree(node: AXNode, whitelistedNodes?: Set<AXNode>): Array<SerializedAXNode> {
-  const children: Array<SerializedAXNode> = [];
-  for (const child of node._children)
-    children.push(...serializeTree(child, whitelistedNodes));
-  if (whitelistedNodes && !whitelistedNodes.has(node))
-    return children;
-  const serializedNode = node.serialize();
-  if (children.length)
-    serializedNode.children = children;
-  return [serializedNode];
-}
-class AXNode {
-  _children: AXNode[];
+
+class FFAXNode implements accessibility.AXNode {
+  _children: FFAXNode[];
   private _payload: any;
   private _editable: boolean;
   private _richlyEditable: boolean;
@@ -97,7 +35,7 @@ class AXNode {
 
   constructor(payload) {
     this._payload = payload;
-    this._children = (payload.children || []).map(x => new AXNode(x));
+    this._children = (payload.children || []).map(x => new FFAXNode(x));
     this._editable = payload.editable;
     this._richlyEditable = this._editable && (payload.tag !== 'textarea' && payload.tag !== 'input');
     this._focusable = payload.focusable;
@@ -131,6 +69,14 @@ class AXNode {
       }
     }
     return this._cachedHasFocusableChild;
+  }
+
+  children() {
+    return this._children;
+  }
+
+  async findElement(): Promise<FFAXNode | null> {
+    throw new Error('Not implimented');
   }
 
   isLeafNode(): boolean {
@@ -210,11 +156,12 @@ class AXNode {
     return this.isLeafNode() && !!this._name.trim();
   }
 
-  serialize(): SerializedAXNode {
-    const node: {[x in keyof SerializedAXNode]: any} = {
-      role: this._role
+  serialize(): accessibility.SerializedAXNode {
+    const node: {[x in keyof accessibility.SerializedAXNode]: any} = {
+      role: this._role,
+      name: this._name || ''
     };
-    const userStringProperties: Array<keyof SerializedAXNode> = [
+    const userStringProperties: Array<keyof accessibility.SerializedAXNode> = [
       'name',
       'value',
       'description',
@@ -227,7 +174,7 @@ class AXNode {
         continue;
       node[userStringProperty] = this._payload[userStringProperty];
     }
-    const booleanProperties: Array<keyof SerializedAXNode> = [
+    const booleanProperties: Array<keyof accessibility.SerializedAXNode> = [
       'disabled',
       'expanded',
       'focused',
@@ -246,7 +193,7 @@ class AXNode {
         continue;
       node[booleanProperty] = value;
     }
-    const tristateProperties: Array<keyof SerializedAXNode> = [
+    const tristateProperties: Array<keyof accessibility.SerializedAXNode> = [
       'checked',
       'pressed',
     ];
@@ -256,7 +203,7 @@ class AXNode {
       const value = this._payload[tristateProperty];
       node[tristateProperty] = value;
     }
-    const numericalProperties: Array<keyof SerializedAXNode> = [
+    const numericalProperties: Array<keyof accessibility.SerializedAXNode> = [
       'level'
     ];
     for (const numericalProperty of numericalProperties) {
@@ -264,7 +211,7 @@ class AXNode {
         continue;
       node[numericalProperty] = this._payload[numericalProperty];
     }
-    const tokenProperties: Array<keyof SerializedAXNode> = [
+    const tokenProperties: Array<keyof accessibility.SerializedAXNode> = [
       'autocomplete',
       'haspopup',
       'invalid',
