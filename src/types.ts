@@ -55,10 +55,28 @@ export type URLMatch = string | RegExp | ((url: kurl.URL) => boolean);
 export type Credentials = {
   username: string;
   password: string;
-}
+};
 
 export type Geolocation = {
   longitude?: number;
   latitude?: number;
   accuracy?: number | undefined;
-}
+};
+
+export type SelectOption = {
+  value?: string;
+  label?: string;
+  index?: number;
+};
+
+export type FilePayload = {
+  name: string,
+  type: string,
+  data: string,
+};
+
+export type MediaType = 'screen' | 'print';
+export const mediaTypes: Set<MediaType> = new Set(['screen', 'print']);
+
+export type ColorScheme = 'dark' | 'light' | 'no-preference';
+export const colorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-preference']);

@@ -21,7 +21,7 @@ import * as js from './javascript';
 import * as dom from './dom';
 import * as network from './network';
 import { helper, assert, RegisteredListener } from './helper';
-import { ClickOptions, MultiClickOptions, PointerActionOptions, SelectOption } from './input';
+import { ClickOptions, MultiClickOptions, PointerActionOptions } from './input';
 import { TimeoutError } from './errors';
 import { Events } from './events';
 import { Page } from './page';
@@ -646,7 +646,7 @@ export class Frame {
     await handle.dispose();
   }
 
-  async select(selector: string, value: string | dom.ElementHandle | SelectOption | string[] | dom.ElementHandle[] | SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
+  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
     const result = await handle.select(...values);

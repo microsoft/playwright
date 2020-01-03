@@ -29,7 +29,6 @@ import * as dialog from '../dialog';
 import { WKBrowser } from './wkBrowser';
 import { BrowserContext } from '../browserContext';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
-import * as input from '../input';
 import * as types from '../types';
 import * as jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
@@ -288,12 +287,12 @@ export class WKPage implements PageDelegate {
     await session.send('Network.setExtraHTTPHeaders', { headers });
   }
 
-  private async _setEmulateMedia(session: WKTargetSession, mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
+  private async _setEmulateMedia(session: WKTargetSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
-    if (mediaColorScheme !== null) {
+    if (colorScheme !== null) {
       let appearance: any = '';
-      switch (mediaColorScheme) {
+      switch (colorScheme) {
         case 'light': appearance = 'Light'; break;
         case 'dark': appearance = 'Dark'; break;
       }
@@ -306,8 +305,8 @@ export class WKPage implements PageDelegate {
     await this._setExtraHTTPHeaders(this._session, headers);
   }
 
-  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
-    await this._setEmulateMedia(this._session, mediaType, mediaColorScheme);
+  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+    await this._setEmulateMedia(this._session, mediaType, colorScheme);
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
@@ -468,7 +467,7 @@ export class WKPage implements PageDelegate {
     return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
-  async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
+  async setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void> {
     const objectId = toRemoteObject(handle).objectId;
     await this._session.send('DOM.setInputFiles', { objectId, files });
   }

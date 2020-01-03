@@ -1,13 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { assert, helper } from './helper';
+import { assert } from './helper';
 import * as types from './types';
 import * as keyboardLayout from './usKeyboardLayout';
-
-const readFileAsync = helper.promisify(fs.readFile);
 
 export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 export type Button = 'left' | 'right' | 'middle';
@@ -26,12 +22,6 @@ export type ClickOptions = PointerActionOptions & {
 export type MultiClickOptions = PointerActionOptions & {
   delay?: number;
   button?: Button;
-};
-
-export type SelectOption = {
-  value?: string;
-  label?: string;
-  index?: number;
 };
 
 export const keypadLocation = keyboardLayout.keypadLocation;
@@ -292,119 +282,3 @@ export class Mouse {
     }
   }
 }
-
-export const selectFunction = (node: Node, ...optionsToSelect: (Node | SelectOption)[]) => {
-  if (node.nodeName.toLowerCase() !== 'select')
-    throw new Error('Element is not a <select> element.');
-  const element = node as HTMLSelectElement;
-
-  const options = Array.from(element.options);
-  element.value = undefined;
-  for (let index = 0; index < options.length; index++) {
-    const option = options[index];
-    option.selected = optionsToSelect.some(optionToSelect => {
-      if (optionToSelect instanceof Node)
-        return option === optionToSelect;
-      let matches = true;
-      if (optionToSelect.value !== undefined)
-        matches = matches && optionToSelect.value === option.value;
-      if (optionToSelect.label !== undefined)
-        matches = matches && optionToSelect.label === option.label;
-      if (optionToSelect.index !== undefined)
-        matches = matches && optionToSelect.index === index;
-      return matches;
-    });
-    if (option.selected && !element.multiple)
-      break;
-  }
-  element.dispatchEvent(new Event('input', { 'bubbles': true }));
-  element.dispatchEvent(new Event('change', { 'bubbles': true }));
-  return options.filter(option => option.selected).map(option => option.value);
-};
-
-export const fillFunction = (node: Node) => {
-  if (node.nodeType !== Node.ELEMENT_NODE)
-    return 'Node is not of type HTMLElement';
-  const element = node as HTMLElement;
-  if (!element.isConnected)
-    return 'Element is not attached to the DOM';
-  if (!element.ownerDocument || !element.ownerDocument.defaultView)
-    return 'Element does not belong to a window';
-
-  const style = element.ownerDocument.defaultView.getComputedStyle(element);
-  if (!style || style.visibility === 'hidden')
-    return 'Element is hidden';
-  if (!element.offsetParent && element.tagName !== 'BODY')
-    return 'Element is not visible';
-  if (element.nodeName.toLowerCase() === 'input') {
-    const input = element as HTMLInputElement;
-    const type = input.getAttribute('type') || '';
-    const kTextInputTypes = new Set(['', 'email', 'password', 'search', 'tel', 'text', 'url']);
-    if (!kTextInputTypes.has(type.toLowerCase()))
-      return 'Cannot fill input of type "' + type + '".';
-    if (input.disabled)
-      return 'Cannot fill a disabled input.';
-    if (input.readOnly)
-      return 'Cannot fill a readonly input.';
-    input.selectionStart = 0;
-    input.selectionEnd = input.value.length;
-    input.focus();
-  } else if (element.nodeName.toLowerCase() === 'textarea') {
-    const textarea = element as HTMLTextAreaElement;
-    if (textarea.disabled)
-      return 'Cannot fill a disabled textarea.';
-    if (textarea.readOnly)
-      return 'Cannot fill a readonly textarea.';
-    textarea.selectionStart = 0;
-    textarea.selectionEnd = textarea.value.length;
-    textarea.focus();
-  } else if (element.isContentEditable) {
-    const range = element.ownerDocument.createRange();
-    range.selectNodeContents(element);
-    const selection = element.ownerDocument.defaultView.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    element.focus();
-  } else {
-    return 'Element is not an <input>, <textarea> or [contenteditable] element.';
-  }
-  return false;
-};
-
-export const loadFiles = async (items: (string|FilePayload)[]): Promise<FilePayload[]> => {
-  return Promise.all(items.map(async item => {
-    if (typeof item === 'string') {
-      const file: FilePayload = {
-        name: path.basename(item),
-        type: 'application/octet-stream',
-        data: (await readFileAsync(item)).toString('base64')
-      };
-      return file;
-    } else {
-      return item as FilePayload;
-    }
-  }));
-};
-
-export const setFileInputFunction = async (element: HTMLInputElement, payloads: FilePayload[]) => {
-  const files = await Promise.all(payloads.map(async (file: FilePayload) => {
-    const result = await fetch(`data:${file.type};base64,${file.data}`);
-    return new File([await result.blob()], file.name);
-  }));
-  const dt = new DataTransfer();
-  for (const file of files)
-    dt.items.add(file);
-  element.files = dt.files;
-  element.dispatchEvent(new Event('input', { 'bubbles': true }));
-};
-
-export type FilePayload = {
-  name: string,
-  type: string,
-  data: string
-};
-
-export type MediaType = 'screen' | 'print';
-export const mediaTypes: Set<MediaType> = new Set(['screen', 'print']);
-export type ColorScheme = 'dark' | 'light' | 'no-preference';
-export const mediaColorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-preference']);

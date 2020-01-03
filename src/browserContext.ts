@@ -16,7 +16,6 @@
  */
 
 import { Page } from './page';
-import * as input from './input';
 import * as network from './network';
 import * as types from './types';
 
@@ -40,8 +39,8 @@ export type BrowserContextOptions = {
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
-  mediaType?: input.MediaType,
-  colorScheme?: input.ColorScheme,
+  mediaType?: types.MediaType,
+  colorScheme?: types.ColorScheme,
   userAgent?: string,
   timezoneId?: string,
   geolocation?: types.Geolocation
