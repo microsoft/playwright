@@ -219,9 +219,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   private _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) {
-    const serializeFunction = function(stringify: (o: any) => string) {
+    const serializeFunction = function() {
       try {
-        return stringify(this);
+        return JSON.stringify(this);
       } catch (e) {
         if (e instanceof TypeError)
           return void 0;
@@ -232,7 +232,6 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       // Serialize object using standard JSON implementation to correctly pass 'undefined'.
       functionDeclaration: serializeFunction + '\n' + suffix + '\n',
       objectId: objectId,
-      arguments: [ { objectId: this._jsonStringifyObjectId } ],
       returnByValue: true
     }).catch(e => {
       if (isSwappedOutError(e))

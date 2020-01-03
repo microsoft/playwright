@@ -37,8 +37,6 @@ import { getAccessibilityTree } from './wkAccessibility';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
-const JSON_CALL_MESSAGE = '__playwright_json_call__';
-const JSON_SAVE_SCRIPT = `console.debug('${JSON_CALL_MESSAGE}', JSON.stringify.bind(JSON))`;
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -50,7 +48,7 @@ export class WKPage implements PageDelegate {
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
-  private readonly _bootstrapScripts: string[] = [ JSON_SAVE_SCRIPT ];
+  private readonly _bootstrapScripts: string[] = [];
 
   constructor(browser: WKBrowser, browserContext: BrowserContext) {
     this._browser = browser;
@@ -111,7 +109,6 @@ export class WKPage implements PageDelegate {
     if (this._page._state.viewport)
       promises.push(WKPage._setViewport(session, this._page._state.viewport));
     await Promise.all(promises);
-    await this._page.evaluate(JSON_SAVE_SCRIPT);
   }
 
   didClose(crashed: boolean) {
@@ -222,12 +219,6 @@ export class WKPage implements PageDelegate {
       const parsedObjectId = JSON.parse(parameters[1].objectId);
       const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
       this._page._onBindingCalled(parameters[2].value, context);
-      return;
-    }
-    if (level === 'debug' && parameters && parameters[0].value === JSON_CALL_MESSAGE) {
-      const parsedObjectId = JSON.parse(parameters[1].objectId);
-      const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
-      (context._delegate as WKExecutionContext)._jsonStringifyObjectId = parameters[1].objectId;
       return;
     }
     if (level === 'error' && source === 'javascript') {
