@@ -36,7 +36,6 @@ import { CRWorkers, CRWorker } from './features/crWorkers';
 import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
 import * as types from '../types';
-import * as input from '../input';
 import { ConsoleMessage } from '../console';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -308,8 +307,8 @@ export class CRPage implements PageDelegate {
     ]);
   }
 
-  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
-    const features = mediaColorScheme ? [{ name: 'prefers-color-scheme', value: mediaColorScheme }] : [];
+  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+    const features = colorScheme ? [{ name: 'prefers-color-scheme', value: colorScheme }] : [];
     await this._client.send('Emulation.setEmulatedMedia', { media: mediaType || '', features });
   }
 
@@ -458,8 +457,8 @@ export class CRPage implements PageDelegate {
     return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
   }
 
-  async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
-    await handle.evaluate(input.setFileInputFunction, files);
+  async setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void> {
+    await handle.evaluate(dom.setFileInputFunction, files);
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {

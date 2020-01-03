@@ -46,7 +46,7 @@ export interface PageDelegate {
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
   setViewport(viewport: types.Viewport): Promise<void>;
-  setEmulateMedia(mediaType: input.MediaType | null, colorScheme: input.ColorScheme | null): Promise<void>;
+  setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
   setRequestInterception(enabled: boolean): Promise<void>;
   setOfflineMode(enabled: boolean): Promise<void>;
@@ -64,14 +64,14 @@ export interface PageDelegate {
   getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;
   getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null>;
   layoutViewport(): Promise<{ width: number, height: number }>;
-  setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void>;
+  setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
 }
 
 type PageState = {
   viewport: types.Viewport | null;
-  mediaType: input.MediaType | null;
-  colorScheme: input.ColorScheme | null;
+  mediaType: types.MediaType | null;
+  colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
   cacheEnabled: boolean | null;
   interceptNetwork: boolean | null;
@@ -359,9 +359,9 @@ export class Page extends EventEmitter {
     return waitPromise;
   }
 
-  async emulateMedia(options: { type?: input.MediaType, colorScheme?: input.ColorScheme }) {
-    assert(!options.type || input.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
-    assert(!options.colorScheme || input.mediaColorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
+  async emulateMedia(options: { type?: types.MediaType, colorScheme?: types.ColorScheme }) {
+    assert(!options.type || types.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
+    assert(!options.colorScheme || types.colorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
     if (options.type !== undefined)
       this._state.mediaType = options.type;
     if (options.colorScheme !== undefined)
@@ -465,7 +465,7 @@ export class Page extends EventEmitter {
     return this.mainFrame().hover(selector, options);
   }
 
-  async select(selector: string, value: string | dom.ElementHandle | input.SelectOption | string[] | dom.ElementHandle[] | input.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
+  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
     return this.mainFrame().select(selector, value, options);
   }
 

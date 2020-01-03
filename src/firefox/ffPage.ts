@@ -25,7 +25,6 @@ import { FFNetworkManager } from './ffNetworkManager';
 import { Events } from '../events';
 import * as dialog from '../dialog';
 import { Protocol } from './protocol';
-import * as input from '../input';
 import { RawMouseImpl, RawKeyboardImpl } from './ffInput';
 import { BrowserContext } from '../browserContext';
 import { FFAccessibility } from './features/ffAccessibility';
@@ -213,10 +212,10 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setEmulateMedia(mediaType: input.MediaType | null, mediaColorScheme: input.ColorScheme | null): Promise<void> {
+  async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
     await this._session.send('Page.setEmulatedMedia', {
       type: mediaType === null ? undefined : mediaType,
-      colorScheme: mediaColorScheme === null ? undefined : mediaColorScheme
+      colorScheme: colorScheme === null ? undefined : colorScheme
     });
   }
 
@@ -339,8 +338,8 @@ export class FFPage implements PageDelegate {
     return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
-  async setInputFiles(handle: dom.ElementHandle, files: input.FilePayload[]): Promise<void> {
-    await handle.evaluate(input.setFileInputFunction, files);
+  async setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void> {
+    await handle.evaluate(dom.setFileInputFunction, files);
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {

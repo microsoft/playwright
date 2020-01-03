@@ -10,6 +10,10 @@ import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 import { Page } from './page';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const readFileAsync = helper.promisify(fs.readFile);
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -284,7 +288,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
-  async select(...values: (string | ElementHandle | input.SelectOption)[]): Promise<string[]> {
+  async select(...values: (string | ElementHandle | types.SelectOption)[]): Promise<string[]> {
     const options = values.map(value => typeof value === 'object' ? value : { value });
     for (const option of options) {
       if (option instanceof ElementHandle)
@@ -296,18 +300,92 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this._evaluateInUtility(input.selectFunction, ...options);
+    return this._evaluateInUtility((node: Node, ...optionsToSelect: (Node | types.SelectOption)[]) => {
+      if (node.nodeName.toLowerCase() !== 'select')
+        throw new Error('Element is not a <select> element.');
+      const element = node as HTMLSelectElement;
+
+      const options = Array.from(element.options);
+      element.value = undefined;
+      for (let index = 0; index < options.length; index++) {
+        const option = options[index];
+        option.selected = optionsToSelect.some(optionToSelect => {
+          if (optionToSelect instanceof Node)
+            return option === optionToSelect;
+          let matches = true;
+          if (optionToSelect.value !== undefined)
+            matches = matches && optionToSelect.value === option.value;
+          if (optionToSelect.label !== undefined)
+            matches = matches && optionToSelect.label === option.label;
+          if (optionToSelect.index !== undefined)
+            matches = matches && optionToSelect.index === index;
+          return matches;
+        });
+        if (option.selected && !element.multiple)
+          break;
+      }
+      element.dispatchEvent(new Event('input', { 'bubbles': true }));
+      element.dispatchEvent(new Event('change', { 'bubbles': true }));
+      return options.filter(option => option.selected).map(option => option.value);
+    }, ...options);
   }
 
   async fill(value: string): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this._evaluateInUtility(input.fillFunction);
+    const error = await this._evaluateInUtility((node: Node) => {
+      if (node.nodeType !== Node.ELEMENT_NODE)
+        return 'Node is not of type HTMLElement';
+      const element = node as HTMLElement;
+      if (!element.isConnected)
+        return 'Element is not attached to the DOM';
+      if (!element.ownerDocument || !element.ownerDocument.defaultView)
+        return 'Element does not belong to a window';
+
+      const style = element.ownerDocument.defaultView.getComputedStyle(element);
+      if (!style || style.visibility === 'hidden')
+        return 'Element is hidden';
+      if (!element.offsetParent && element.tagName !== 'BODY')
+        return 'Element is not visible';
+      if (element.nodeName.toLowerCase() === 'input') {
+        const input = element as HTMLInputElement;
+        const type = input.getAttribute('type') || '';
+        const kTextInputTypes = new Set(['', 'email', 'password', 'search', 'tel', 'text', 'url']);
+        if (!kTextInputTypes.has(type.toLowerCase()))
+          return 'Cannot fill input of type "' + type + '".';
+        if (input.disabled)
+          return 'Cannot fill a disabled input.';
+        if (input.readOnly)
+          return 'Cannot fill a readonly input.';
+        input.selectionStart = 0;
+        input.selectionEnd = input.value.length;
+        input.focus();
+      } else if (element.nodeName.toLowerCase() === 'textarea') {
+        const textarea = element as HTMLTextAreaElement;
+        if (textarea.disabled)
+          return 'Cannot fill a disabled textarea.';
+        if (textarea.readOnly)
+          return 'Cannot fill a readonly textarea.';
+        textarea.selectionStart = 0;
+        textarea.selectionEnd = textarea.value.length;
+        textarea.focus();
+      } else if (element.isContentEditable) {
+        const range = element.ownerDocument.createRange();
+        range.selectNodeContents(element);
+        const selection = element.ownerDocument.defaultView.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        element.focus();
+      } else {
+        return 'Element is not an <input>, <textarea> or [contenteditable] element.';
+      }
+      return false;
+    });
     if (error)
       throw new Error(error);
     await this._page.keyboard.sendCharacters(value);
   }
 
-  async setInputFiles(...files: (string | input.FilePayload)[]) {
+  async setInputFiles(...files: (string | types.FilePayload)[]) {
     const multiple = await this._evaluateInUtility((node: Node) => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Element).tagName !== 'INPUT')
         throw new Error('Node is not an HTMLInputElement');
@@ -315,7 +393,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return input.multiple;
     });
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    await this._page._delegate.setInputFiles(this, await input.loadFiles(files));
+    const filePayloads = await Promise.all(files.map(async item => {
+      if (typeof item === 'string') {
+        const file: types.FilePayload = {
+          name: path.basename(item),
+          type: 'application/octet-stream',
+          data: (await readFileAsync(item)).toString('base64')
+        };
+        return file;
+      }
+      return item;
+    }));
+    await this._page._delegate.setInputFiles(this, filePayloads);
   }
 
   async focus() {
@@ -454,3 +543,15 @@ export function waitForSelectorTask(selector: string, visibility: types.Visibili
     }, await context._injected(), selector, visibility, timeout);
   };
 }
+
+export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {
+  const files = await Promise.all(payloads.map(async (file: types.FilePayload) => {
+    const result = await fetch(`data:${file.type};base64,${file.data}`);
+    return new File([await result.blob()], file.name);
+  }));
+  const dt = new DataTransfer();
+  for (const file of files)
+    dt.items.add(file);
+  element.files = dt.files;
+  element.dispatchEvent(new Event('input', { 'bubbles': true }));
+};
