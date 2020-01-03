@@ -26,7 +26,7 @@ import { Protocol } from './protocol';
 import { CRPage } from './crPage';
 import * as browser from '../browser';
 import * as network from '../network';
-import { CROverrides } from './features/crOverrides';
+import * as types from '../types';
 import { CRWorker } from './features/crWorkers';
 import { ConnectionTransport } from '../transport';
 import { readProtocolStream } from './crProtocolHelper';
@@ -137,10 +137,13 @@ export class CRBrowser extends browser.Browser {
 
       clearPermissions: async () => {
         await this._client.send('Browser.resetPermissions', { browserContextId: contextId || undefined });
-      }
+      },
 
+      setGeolocation: async (geolocation: types.Geolocation | null): Promise<void> => {
+        for (const page of await context.pages())
+          await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', geolocation || {});
+      }
     }, options);
-    (context as any).overrides = new CROverrides(context);
     return context;
   }
 

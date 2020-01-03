@@ -19,6 +19,7 @@ import { EventEmitter } from 'events';
 import { helper, RegisteredListener, debugError, assert } from '../helper';
 import * as browser from '../browser';
 import * as network from '../network';
+import * as types from '../types';
 import { WKConnection, WKConnectionEvents, WKTargetSession } from './wkConnection';
 import { Page } from '../page';
 import { WKTarget } from './wkTarget';
@@ -203,12 +204,27 @@ export class WKBrowser extends browser.Browser {
         await this._connection.send('Browser.setCookies', { cookies: cc, browserContextId });
       },
 
+
       setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
-        throw new Error('Permissions are not supported in WebKit');
+        const webPermissionToProtocol = new Map<string, string>([
+          ['geolocation', 'geolocation'],
+        ]);
+        const filtered = permissions.map(permission => {
+          const protocolPermission = webPermissionToProtocol.get(permission);
+          if (!protocolPermission)
+            throw new Error('Unknown permission: ' + permission);
+          return protocolPermission;
+        });
+        await this._connection.send('Browser.grantPermissions', { origin, browserContextId, permissions: filtered });
       },
 
       clearPermissions: async () => {
-        throw new Error('Permissions are not supported in WebKit');
+        await this._connection.send('Browser.resetPermissions', { browserContextId });
+      },
+
+      setGeolocation: async (geolocation: types.Geolocation | null): Promise<void> => {
+        const payload: any = geolocation ? { ...geolocation, timestamp: Date.now() } : undefined;
+        await this._connection.send('Browser.setGeolocationOverride', { browserContextId, geolocation: payload });
       }
     }, options);
     return context;

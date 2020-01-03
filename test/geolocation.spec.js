@@ -15,18 +15,18 @@
  * limitations under the License.
  */
 
-module.exports.describe = function ({ testRunner, expect }) {
+module.exports.describe = function ({ testRunner, expect, FFOX }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   // FIXME: not supported in WebKit (as well as Emulation domain in general).
   // It was removed from WebKit in https://webkit.org/b/126630
-  describe('Overrides.setGeolocation', function() {
+  describe.skip(FFOX)('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
       await context.setPermissions(server.PREFIX, ['geolocation']);
       await page.goto(server.EMPTY_PAGE);
-      await context.overrides.setGeolocation({longitude: 10, latitude: 10});
+      await context.setGeolocation({longitude: 10, latitude: 10});
       const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
         resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
       })));
@@ -38,7 +38,7 @@ module.exports.describe = function ({ testRunner, expect }) {
     it('should throw when invalid longitude', async({context}) => {
       let error = null;
       try {
-        await context.overrides.setGeolocation({longitude: 200, latitude: 10});
+        await context.setGeolocation({longitude: 200, latitude: 10});
       } catch (e) {
         error = e;
       }

@@ -31,6 +31,8 @@ export interface BrowserContextDelegate {
 
   setPermissions(origin: string, permissions: string[]): Promise<void>;
   clearPermissions(): Promise<void>;
+
+  setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
 }
 
 export type BrowserContextOptions = {
@@ -41,7 +43,8 @@ export type BrowserContextOptions = {
   mediaType?: input.MediaType,
   colorScheme?: input.ColorScheme,
   userAgent?: string,
-  timezoneId?: string
+  timezoneId?: string,
+  geolocation?: types.Geolocation
 };
 
 export class BrowserContext {
@@ -82,6 +85,21 @@ export class BrowserContext {
 
   async clearPermissions() {
     await this._delegate.clearPermissions();
+  }
+
+  async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
+    if (geolocation) {
+      geolocation.accuracy = geolocation.accuracy || 0;
+      const { longitude, latitude, accuracy } = geolocation;
+      if (longitude < -180 || longitude > 180)
+        throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
+      if (latitude < -90 || latitude > 90)
+        throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
+      if (accuracy < 0)
+        throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
+    }
+    this._options.geolocation = geolocation;
+    await this._delegate.setGeolocation(geolocation);
   }
 
   async close() {

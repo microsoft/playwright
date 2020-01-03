@@ -20,6 +20,7 @@ import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
+import * as types from '../types';
 import { Page } from '../page';
 import { ConnectionTransport } from '../transport';
 import { ConnectionEvents, FFConnection, FFSessionEvents } from './ffConnection';
@@ -199,8 +200,11 @@ export class FFBrowser extends browser.Browser {
 
       clearPermissions: async () => {
         await this._connection.send('Browser.resetPermissions', { browserContextId: browserContextId || undefined });
-      }
+      },
 
+      setGeolocation: async (geolocation: types.Geolocation | null): Promise<void> => {
+        throw new Error('Geolocation emulation is not supported in Firefox');
+      }
     }, options);
     return context;
   }
