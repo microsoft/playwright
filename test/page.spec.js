@@ -779,12 +779,11 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
   });
 
   describe('Page.setCacheEnabled', function() {
-    // FIXME: 'if-modified-since' is not set for some reason even if cache is on.
-    it.skip(WEBKIT)('should enable or disable the cache based on the state passed', async({page, server}) => {
+    it('should enable or disable the cache based on the state passed', async({page, server}) => {
       await page.goto(server.PREFIX + '/cached/one-style.html');
       const [cachedRequest] = await Promise.all([
         server.waitForRequest('/cached/one-style.html'),
-        page.reload(),
+        page.goto(server.PREFIX + '/cached/one-style.html'),
       ]);
       // Rely on "if-modified-since" caching in our test server.
       expect(cachedRequest.headers['if-modified-since']).not.toBe(undefined);
@@ -792,7 +791,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.setCacheEnabled(false);
       const [nonCachedRequest] = await Promise.all([
         server.waitForRequest('/cached/one-style.html'),
-        page.reload(),
+        page.goto(server.PREFIX + '/cached/one-style.html'),
       ]);
       expect(nonCachedRequest.headers['if-modified-since']).toBe(undefined);
     });
