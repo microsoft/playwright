@@ -234,7 +234,7 @@ class TestServer {
         response.end();
         return;
       }
-      response.setHeader('Cache-Control', 'public, max-age=31536000');
+      response.setHeader('Cache-Control', 'public, max-age=31536000, no-cache');
       response.setHeader('Last-Modified', this._startTime.toISOString());
     } else {
       response.setHeader('Cache-Control', 'no-cache, no-store');
