@@ -509,7 +509,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
   });
 
   describe('Page.Events.PageError', function() {
-    it.skip(WEBKIT)('should fire', async({page, server}) => {
+    it('should fire', async({page, server}) => {
       let error = null;
       page.once('pageerror', e => error = e);
       await Promise.all([
