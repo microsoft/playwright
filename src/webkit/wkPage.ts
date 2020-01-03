@@ -37,7 +37,7 @@ import { PNG } from 'pngjs';
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 const JSON_CALL_MESSAGE = '__playwright_json_call__';
-const JSON_SAVE_SCRIPT = `console.debug('${JSON_CALL_MESSAGE}', JSON)`;
+const JSON_SAVE_SCRIPT = `console.debug('${JSON_CALL_MESSAGE}', JSON.stringify.bind(JSON))`;
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -101,7 +101,7 @@ export class WKPage implements PageDelegate {
       promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
     if (contextOptions.javaScriptEnabled === false)
       promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: false }));
-    if (this._setBootstrapScripts.length && session.isProvisional())
+    if (session.isProvisional())
       promises.push(this._setBootstrapScripts(session));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
@@ -109,9 +109,8 @@ export class WKPage implements PageDelegate {
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
     if (this._page._state.viewport)
       promises.push(WKPage._setViewport(session, this._page._state.viewport));
-    if (contextOptions.javaScriptEnabled !== false)
-      promises.push(session.send('Page.setBootstrapScript', { source: JSON_SAVE_SCRIPT }));
     await Promise.all(promises);
+    await this._page.evaluate(JSON_SAVE_SCRIPT);
   }
 
   didClose() {
@@ -224,7 +223,7 @@ export class WKPage implements PageDelegate {
     if (level === 'debug' && parameters && parameters[0].value === JSON_CALL_MESSAGE) {
       const parsedObjectId = JSON.parse(parameters[1].objectId);
       const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
-      (context._delegate as WKExecutionContext)._jsonObjectId = parameters[1].objectId;
+      (context._delegate as WKExecutionContext)._jsonStringifyObjectId = parameters[1].objectId;
       return;
     }
     let derivedType: string = type;
@@ -308,7 +307,7 @@ export class WKPage implements PageDelegate {
       throw new Error('Not implemented');
     const width = viewport.width;
     const height = viewport.height;
-    await session.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
+    await session.send('Emulation.setDeviceMetricsOverride', { width, height, fixedLayout: false, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
   }
 
   setCacheEnabled(enabled: boolean): Promise<void> {
@@ -392,7 +391,7 @@ export class WKPage implements PageDelegate {
   }
 
   async resetViewport(oldSize: types.Size): Promise<void> {
-    await this._session.send('Emulation.setDeviceMetricsOverride', { ...oldSize, deviceScaleFactor: 0 });
+    await this._session.send('Emulation.setDeviceMetricsOverride', { ...oldSize, fixedLayout: false, deviceScaleFactor: 0 });
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

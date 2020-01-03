@@ -30,7 +30,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   _contextId: number;
   private _contextDestroyedCallback: () => void;
   private _executionContextDestroyedPromise: Promise<unknown>;
-  _jsonObjectId: Protocol.Runtime.RemoteObjectId | undefined;
+  _jsonStringifyObjectId: Protocol.Runtime.RemoteObjectId | undefined;
 
   constructor(client: WKTargetSession, contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     this._session = client;
@@ -219,9 +219,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   private _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) {
-    const serializeFunction = function(JSON: { stringify: (o: any) => string }) {
+    const serializeFunction = function(stringify: (o: any) => string) {
       try {
-        return JSON.stringify(this);
+        return stringify(this);
       } catch (e) {
         if (e instanceof TypeError)
           return void 0;
@@ -232,7 +232,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       // Serialize object using standard JSON implementation to correctly pass 'undefined'.
       functionDeclaration: serializeFunction + '\n' + suffix + '\n',
       objectId: objectId,
-      arguments: [ { objectId: this._jsonObjectId } ],
+      arguments: [ { objectId: this._jsonStringifyObjectId } ],
       returnByValue: true
     }).catch(e => {
       if (isSwappedOutError(e))
