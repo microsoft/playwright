@@ -141,7 +141,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       if (!returnByValue)
         return context._createHandle(response.result);
       if (response.result.objectId)
-        return this._returnObjectByValue(response.result.objectId);
+        return this._returnObjectByValue(response.result.objectId).catch(() => undefined);
       return valueFromRemoteObject(response.result);
     }).catch(rewriteError);
 
@@ -182,9 +182,6 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
 
     function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
-      if (error.message.includes('Object couldn\'t be returned by value'))
-        return {result: {type: 'undefined'}};
-
       if (error.message.includes('Missing injected script for given'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
       throw error;
@@ -219,18 +216,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   private _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) {
-    const serializeFunction = function() {
-      try {
-        return JSON.stringify(this);
-      } catch (e) {
-        if (e instanceof TypeError)
-          return void 0;
-        throw e;
-      }
-    };
     return this._session.send('Runtime.callFunctionOn', {
       // Serialize object using standard JSON implementation to correctly pass 'undefined'.
-      functionDeclaration: serializeFunction + '\n' + suffix + '\n',
+      functionDeclaration: 'function(){return this}\n' + suffix + '\n',
       objectId: objectId,
       returnByValue: true
     }).catch(e => {
@@ -240,12 +228,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }).then(serializeResponse => {
       if (serializeResponse.wasThrown)
         throw new Error('Serialization failed: ' + serializeResponse.result.description);
-      // This is the case of too long property chain, not serializable to json string.
-      if (serializeResponse.result.type === 'undefined')
-        return undefined;
-      if (serializeResponse.result.type !== 'string')
-        throw new Error('Unexpected result of JSON.stringify: ' + JSON.stringify(serializeResponse, null, 2));
-      return JSON.parse(serializeResponse.result.value);
+      return serializeResponse.result.value;
     });
   }
 

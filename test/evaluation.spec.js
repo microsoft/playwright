@@ -61,7 +61,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.PREFIX + '/global-var.html');
       expect(await page.evaluate('globalVar')).toBe(123);
     });
-    it.skip(FFOX || WEBKIT)('should return undefined for objects with symbols', async({page, server}) => {
+    it.skip(FFOX)('should return undefined for objects with symbols', async({page, server}) => {
       expect(await page.evaluate(() => [Symbol('foo4')])).toBe(undefined);
     });
     it('should work with function shorthands', async({page, server}) => {
@@ -259,7 +259,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       })).catch(e => error = e);
       expect(error.message).toContain('Error in promise');
     });
-    it.skip(WEBKIT)('should work even when JSON is set to null', async ({ page }) => {
+    it('should work even when JSON is set to null', async ({ page }) => {
       await page.evaluate(() => { window.JSON.stringify = null; window.JSON = null; });
       const result = await page.evaluate(() => ({abc: 123}));
       expect(result).toEqual({abc: 123});
