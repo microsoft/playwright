@@ -45,10 +45,6 @@ export class WKConnection extends EventEmitter {
     this._transport.onclose = this._onClose.bind(this);
   }
 
-  static fromSession(session: WKTargetSession): WKConnection {
-    return session._connection;
-  }
-
   send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
@@ -150,7 +146,7 @@ export const WKTargetSessionEvents = {
 };
 
 export class WKTargetSession extends EventEmitter {
-  _connection: WKConnection;
+  private _connection: WKConnection;
   private _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private _targetType: string;
   _sessionId: string;
