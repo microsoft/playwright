@@ -93,10 +93,17 @@ module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBK
       ]);
       expect(browser.browserContexts().length).toBe(1);
     });
-    it('should set the default viewport', async({ newPage }) => {
+    it('should propagate default viewport to the page', async({ newPage }) => {
       const page = await newPage({ viewport: { width: 456, height: 789 } });
+      expect(page.viewport().width).toBe(456);
+      expect(page.viewport().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
+    });
+    it.skip(WEBKIT)('should propagate default mediaType and colorScheme to the page', async({ newPage }) => {
+      const page = await newPage({ mediaType: 'print', colorScheme: 'dark' });
+      expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
     });
     it('should take fullPage screenshots when default viewport is null', async({server, newPage}) => {
       const page = await newPage({ viewport: null });
@@ -110,6 +117,19 @@ module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBK
       const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
       expect(sizeBefore.width).toBe(sizeAfter.width);
       expect(sizeBefore.height).toBe(sizeAfter.height);
+    });
+    it('should restore default viewport after fullPage screenshot', async({ newPage }) => {
+      const page = await newPage({ viewport: { width: 456, height: 789 } });
+      expect(page.viewport().width).toBe(456);
+      expect(page.viewport().height).toBe(789);
+      expect(await page.evaluate('window.innerWidth')).toBe(456);
+      expect(await page.evaluate('window.innerHeight')).toBe(789);
+      const screenshot = await page.screenshot({ fullPage: true });
+      expect(screenshot).toBeInstanceOf(Buffer);
+      expect(page.viewport().width).toBe(456);
+      expect(page.viewport().height).toBe(789);
+      expect(await page.evaluate('window.innerWidth')).toBe(456);
+      expect(await page.evaluate('window.innerHeight')).toBe(789);
     });
   });
 
@@ -125,7 +145,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBK
           server.waitForRequest('/empty.html'),
           page.goto(server.EMPTY_PAGE),
         ]);
-        expect(request.headers['user-agent']).toBe('foobar');  
+        expect(request.headers['user-agent']).toBe('foobar');
       }
     });
     it('should work for subframes', async({newPage, server}) => {
@@ -139,7 +159,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBK
           server.waitForRequest('/empty.html'),
           utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
         ]);
-        expect(request.headers['user-agent']).toBe('foobar');  
+        expect(request.headers['user-agent']).toBe('foobar');
       }
     });
     it('should emulate device user-agent', async({newPage, server}) => {

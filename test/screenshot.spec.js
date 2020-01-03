@@ -91,6 +91,14 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       });
       expect(screenshot).toBeGolden('screenshot-grid-fullpage.png');
     });
+    it('should restore viewport after fullPage screenshot', async({page, server}) => {
+      await page.setViewport({width: 500, height: 500});
+      await page.goto(server.PREFIX + '/grid.html');
+      const screenshot = await page.screenshot({ fullPage: true });
+      expect(screenshot).toBeInstanceOf(Buffer);
+      expect(page.viewport().width).toBe(500);
+      expect(page.viewport().height).toBe(500);
+    });
     it('should run in parallel in multiple pages', async({page, server, context}) => {
       const N = 2;
       const pages = await Promise.all(Array(N).fill(0).map(async() => {
