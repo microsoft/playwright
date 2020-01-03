@@ -21,6 +21,7 @@
   * [browserContext.newPage()](#browsercontextnewpage)
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
+  * [browserContext.setGeolocation(options)](#browsercontextsetgeolocationoptions)
   * [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 - [class: BrowserFetcher](#class-browserfetcher)
   * [browserFetcher.canDownload(revision)](#browserfetchercandownloadrevision)
@@ -235,8 +236,6 @@
   * [chromiumCoverage.startJSCoverage([options])](#chromiumcoveragestartjscoverageoptions)
   * [chromiumCoverage.stopCSSCoverage()](#chromiumcoveragestopcsscoverage)
   * [chromiumCoverage.stopJSCoverage()](#chromiumcoveragestopjscoverage)
-- [class: ChromiumOverrides](#class-chromiumoverrides)
-  * [chromiumOverrides.setGeolocation(options)](#chromiumoverridessetgeolocationoptions)
 - [class: ChromiumPlaywright](#class-chromiumplaywright)
   * [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
   * [chromiumPlaywright.createBrowserFetcher([options])](#chromiumplaywrightcreatebrowserfetcheroptions)
@@ -464,6 +463,21 @@ An array of all pages inside the browser context.
 ```js
 await browserContext.setCookies([cookieObject1, cookieObject2]);
 ```
+
+#### browserContext.setGeolocation(options)
+- `options` <[Object]>
+  - `latitude` <[number]> Latitude between -90 and 90.
+  - `longitude` <[number]> Longitude between -180 and 180.
+  - `accuracy` <[number]> Optional non-negative accuracy value.
+- returns: <[Promise]>
+
+Sets the page's geolocation. Passing null or undefined emulates position unavailable.
+
+```js
+await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
+```
+
+> **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
 #### browserContext.setPermissions(origin, permissions[])
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
@@ -3146,23 +3160,6 @@ _To output coverage in a form consumable by [Istanbul](https://github.com/istanb
 
 > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
 reported.
-
-### class: ChromiumOverrides
-
-#### chromiumOverrides.setGeolocation(options)
-- `options` <[Object]>
-  - `latitude` <[number]> Latitude between -90 and 90.
-  - `longitude` <[number]> Longitude between -180 and 180.
-  - `accuracy` <[number]> Optional non-negative accuracy value.
-- returns: <[Promise]>
-
-Sets the page's geolocation.
-
-```js
-await browserContext.overrides.setGeolocation({latitude: 59.95, longitude: 30.31667});
-```
-
-> **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
 ### class: ChromiumPlaywright
 

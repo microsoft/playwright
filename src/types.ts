@@ -56,3 +56,9 @@ export type Credentials = {
   username: string;
   password: string;
 }
+
+export type Geolocation = {
+  longitude?: number;
+  latitude?: number;
+  accuracy?: number | undefined;
+}

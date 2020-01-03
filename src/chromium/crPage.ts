@@ -38,7 +38,6 @@ import { BrowserContext } from '../browserContext';
 import * as types from '../types';
 import * as input from '../input';
 import { ConsoleMessage } from '../console';
-import { CROverrides } from './features/crOverrides';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -93,7 +92,6 @@ export class CRPage implements PageDelegate {
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._networkManager.initialize(),
-      ((this._page.browserContext() as any).overrides as CROverrides)._applyOverrides(this),
     ];
     const options = this._page.browserContext()._options;
     if (options.bypassCSP)
@@ -112,6 +110,8 @@ export class CRPage implements PageDelegate {
     }
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
+    if (options.geolocation)
+      promises.push(this._client.send('Emulation.setGeolocationOverride', options.geolocation));
     await Promise.all(promises);
   }
 
