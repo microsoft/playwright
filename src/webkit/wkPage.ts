@@ -113,11 +113,14 @@ export class WKPage implements PageDelegate {
     await this._page.evaluate(JSON_SAVE_SCRIPT);
   }
 
-  didClose() {
+  didClose(crashed: boolean) {
     helper.removeEventListeners(this._sessionListeners);
     this._networkManager.dispose();
     this.disconnectFromTarget();
-    this._page._didClose();
+    if (crashed)
+      this._page._didCrash();
+    else
+      this._page._didClose();
   }
 
   _addSessionListeners() {

@@ -42,9 +42,9 @@ export class WKTarget {
     this._pagePromise = null;
   }
 
-  _didClose() {
+  _didClose(crashed: boolean) {
     if (this._wkPage)
-      this._wkPage.didClose();
+      this._wkPage.didClose(crashed);
   }
 
   async _initializeSession(session: WKTargetSession) {

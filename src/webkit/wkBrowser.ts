@@ -135,10 +135,10 @@ export class WKBrowser extends browser.Browser {
       this._connection.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
   }
 
-  _onTargetDestroyed({targetId}) {
+  _onTargetDestroyed({targetId, crashed}) {
     const target = this._targets.get(targetId);
     this._targets.delete(targetId);
-    target._didClose();
+    target._didClose(crashed);
   }
 
   _closePage(targetId: string, runBeforeUnload: boolean) {

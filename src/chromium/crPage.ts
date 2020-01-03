@@ -268,7 +268,7 @@ export class CRPage implements PageDelegate {
   }
 
   _onTargetCrashed() {
-    this._page.emit('error', new Error('Page crashed!'));
+    this._page._didCrash();
   }
 
   _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
