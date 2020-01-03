@@ -439,25 +439,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.statusText()).toBe('Unprocessable Entity');
       expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
     });
-    it.skip(WEBKIT)('should redirect', async({page, server}) => {
-      await page.setRequestInterception(true);
-      page.on('request', request => {
-        if (!request.url().includes('rrredirect')) {
-          request.continue();
-          return;
-        }
-        request.fulfill({
-          status: 302,
-          headers: {
-            location: server.EMPTY_PAGE,
-          },
-        });
-      });
-      const response = await page.goto(server.PREFIX + '/rrredirect');
-      expect(response.request().redirectChain().length).toBe(1);
-      expect(response.request().redirectChain()[0].url()).toBe(server.PREFIX + '/rrredirect');
-      expect(response.url()).toBe(server.EMPTY_PAGE);
-    });
     it('should allow mocking binary responses', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => {

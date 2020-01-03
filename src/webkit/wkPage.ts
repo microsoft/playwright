@@ -213,7 +213,7 @@ export class WKPage implements PageDelegate {
   }
 
   async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
-    const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
+    const { type, level, text, parameters, url, line: lineNumber, column: columnNumber, source } = event.message;
     if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
       const parsedObjectId = JSON.parse(parameters[1].objectId);
       const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
@@ -226,6 +226,13 @@ export class WKPage implements PageDelegate {
       (context._delegate as WKExecutionContext)._jsonStringifyObjectId = parameters[1].objectId;
       return;
     }
+    if (level === 'error' && source === 'javascript') {
+      const error = new Error(text);
+      error.stack = '';
+      this._page.emit(Events.Page.PageError, error);
+      return;
+    }
+
     let derivedType: string = type;
     if (type === 'log')
       derivedType = level;
