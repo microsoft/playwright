@@ -131,6 +131,12 @@ export class Page extends EventEmitter {
     this._closedCallback();
   }
 
+  _didCrash() {
+    const error = new Error('Page crashed!');
+    error.stack = '';
+    this.emit('error', error);
+  }
+
   _didDisconnect() {
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;

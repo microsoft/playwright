@@ -96,7 +96,7 @@ export class WKConnection extends EventEmitter {
         session._onClosed();
         this._sessions.delete(object.params.targetId);
       }
-      Promise.resolve().then(() => this.emit(WKConnectionEvents.TargetDestroyed, { targetId: object.params.targetId }));
+      Promise.resolve().then(() => this.emit(WKConnectionEvents.TargetDestroyed, { targetId: object.params.targetId, crashed: object.params.crashed }));
     } else if (object.method === 'Target.dispatchMessageFromTarget') {
       const {targetId, message} = object.params as Protocol.Target.dispatchMessageFromTargetPayload;
       const session = this._sessions.get(targetId);
