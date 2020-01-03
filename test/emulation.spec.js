@@ -78,6 +78,22 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       await page.setViewport({width: 100, height: 100});
       expect(await page.evaluate(() => screen.orientation.type)).toBe('portrait-primary');
     });
+    it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({page, server}) => {
+      await page.goto(server.PREFIX + '/mobile.html');
+      await page.setViewport(iPhone.viewport);
+      await page.evaluate(() => {
+        window.counter = 0;
+        window.addEventListener('orientationchange', () => console.log(++window.counter));
+      });
+
+      const event1 = page.waitForEvent('console');
+      await page.setViewport(iPhoneLandscape.viewport);
+      expect((await event1).text()).toBe('1');
+
+      const event2 = page.waitForEvent('console');
+      await page.setViewport(iPhone.viewport);
+      expect((await event2).text()).toBe('2');
+    });
   });
 
   describe('Page.emulate', function() {
