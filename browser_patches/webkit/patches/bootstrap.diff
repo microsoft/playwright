@@ -194,7 +194,7 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..cecc44dd00bab6aa4f302274cc88af41
  private:
      WTF::Function<void()> m_resumeCallback;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8ef7b410c 100644
+index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..b0e22f247818f981e9dbd0981c09d46830cd338e 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 @@ -30,11 +30,12 @@
@@ -275,7 +275,26 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
  }
  
  void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
-@@ -159,6 +189,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
+@@ -144,7 +174,17 @@ void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
+     if (!m_isConnected)
+         return;
+ 
+-    m_frontendDispatcher->targetDestroyed(target.identifier());
++    m_frontendDispatcher->targetDestroyed(target.identifier(), false);
++}
++
++void InspectorTargetAgent::targetCrashed(InspectorTarget& target)
++{
++    m_targets.remove(target.identifier());
++
++    if (!m_isConnected)
++        return;
++
++    m_frontendDispatcher->targetDestroyed(target.identifier(), true);
+ }
+ 
+ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID, const String& committedTargetID)
+@@ -159,6 +199,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
      m_frontendDispatcher->didCommitProvisionalTarget(oldTargetID, committedTargetID);
  }
  
@@ -294,7 +313,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
  FrontendChannel::ConnectionType InspectorTargetAgent::connectionType() const
  {
      return m_router.hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
-@@ -168,7 +210,7 @@ void InspectorTargetAgent::connectToTargets()
+@@ -168,7 +220,7 @@ void InspectorTargetAgent::connectToTargets()
  {
      for (InspectorTarget* target : m_targets.values()) {
          target->connect(connectionType());
@@ -304,7 +323,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..18f07dcedd2477ab35d765445aa41fb8
  }
  
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..a32d4235005ecd1d68fac132b3879e106d2a7e56 100644
+index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..b10dd23de692fd5f447a9b845b5695ac369e8496 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
 @@ -41,7 +41,7 @@ class JS_EXPORT_PRIVATE InspectorTargetAgent : public InspectorAgentBase, public
@@ -316,7 +335,7 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..a32d4235005ecd1d68fac132b3879e10
      ~InspectorTargetAgent() override;
  
      // InspectorAgentBase
-@@ -52,11 +52,14 @@ public:
+@@ -52,15 +52,21 @@ public:
      void setPauseOnStart(ErrorString&, bool pauseOnStart) override;
      void resume(ErrorString&, const String& targetId) override;
      void sendMessageToTarget(ErrorString&, const String& targetId, const String& message) final;
@@ -326,12 +345,19 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..a32d4235005ecd1d68fac132b3879e10
      // Target lifecycle.
      void targetCreated(InspectorTarget&);
      void targetDestroyed(InspectorTarget&);
++    void targetCrashed(InspectorTarget&);
      void didCommitProvisionalTarget(const String& oldTargetID, const String& committedTargetID);
 +    void ensureConnected(const String& targetID);
  
      // Target messages.
      void sendMessageFromTargetToFrontend(const String& targetId, const String& message);
-@@ -70,6 +73,7 @@ private:
+ 
++    bool isConnected() { return m_isConnected; }
++
+ private:
+     // FrontendChannel
+     FrontendChannel::ConnectionType connectionType() const;
+@@ -70,6 +76,7 @@ private:
      Inspector::FrontendRouter& m_router;
      std::unique_ptr<TargetFrontendDispatcher> m_frontendDispatcher;
      Ref<TargetBackendDispatcher> m_backendDispatcher;
@@ -876,7 +902,7 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..a8558f5093cedcec7884c6acc03b8bc3
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4530e2412 100644
+index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def546edc3ca7 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -110,6 +110,40 @@
@@ -957,7 +983,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -276,19 +327,64 @@
+@@ -276,19 +327,68 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -1004,6 +1030,10 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
 +            "parameters": [
 +                { "name": "enabled", "type": "boolean", "description": "Whether to bypass page CSP." }
 +            ]
++        },
++        {
++            "name": "crash",
++            "description": "Crashes the page process"
          }
      ],
      "events": [
@@ -1024,7 +1054,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
              ]
          },
          {
-@@ -298,6 +394,14 @@
+@@ -298,6 +398,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1039,7 +1069,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -334,12 +438,36 @@
+@@ -334,12 +442,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1077,7 +1107,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..653498e9033b1e55f04ec1a0126500c4
      ]
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
-index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..5849e4fbea626570389d27037f4fd2d99c3526ce 100644
+index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..a1bf5f930ac3d58a97397a7a6b918919b4d55c60 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Target.json
 @@ -10,8 +10,12 @@
@@ -1117,6 +1147,16 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..5849e4fbea626570389d27037f4fd2d9
          }
      ],
      "events": [
+@@ -49,7 +68,8 @@
+         {
+             "name": "targetDestroyed",
+             "parameters": [
+-                { "name": "targetId", "type": "string" }
++                { "name": "targetId", "type": "string" },
++                { "name": "crashed", "type": "boolean" }
+             ]
+         },
+         {
 diff --git a/Source/WebCore/Modules/geolocation/Geolocation.cpp b/Source/WebCore/Modules/geolocation/Geolocation.cpp
 index a256d2f8a42548c42ae3c955d9502cc0ad893d91..7e30dfcec151304b21b39286a841e38e35fa3ecf 100644
 --- a/Source/WebCore/Modules/geolocation/Geolocation.cpp
@@ -2191,7 +2231,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..c36811c04d95c78b7747e6e625bf79ea
      // FIXME: InspectorNetworkAgent should not be aware of style recalculation.
      RefPtr<Inspector::Protocol::Network::Initiator> m_styleRecalculationInitiator;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..4c1aa6ad59eac80443846af519e72a0e0a0b6ad8 100644
+index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c320b9b062 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2410,7 +2450,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..4c1aa6ad59eac80443846af519e72a0e
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -979,4 +1056,491 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -979,4 +1056,495 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2901,9 +2941,13 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..4c1aa6ad59eac80443846af519e72a0e
 +    m_bypassCSP = enabled;
 +}
 +
++void InspectorPageAgent::crash(ErrorString&) {
++    CRASH();
++}
++
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..8ff517017877ce69fcdc468527831b4ac6ca2e8d 100644
+index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..1fcc543029bbc041a3a52e412b0b071e1070d36a 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -2933,7 +2977,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..8ff517017877ce69fcdc468527831b4a
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -110,13 +117,20 @@ public:
+@@ -110,13 +117,21 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -2948,6 +2992,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..8ff517017877ce69fcdc468527831b4a
 +    void setDefaultBackgroundColorOverride(ErrorString&, const JSON::Object*) override;
 +    void createIsolatedWorld(ErrorString&, const String&, const String*) override;
 +    void setBypassCSP(ErrorString&, bool) override;
++    void crash(ErrorString&) override;
  
      // InspectorInstrumentation
 -    void domContentEventFired();
@@ -2957,7 +3002,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..8ff517017877ce69fcdc468527831b4a
      void frameNavigated(Frame&);
      void frameDetached(Frame&);
      void loaderDetachedFromFrame(DocumentLoader&);
-@@ -124,19 +138,24 @@ public:
+@@ -124,19 +139,24 @@ public:
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -2983,7 +3028,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..8ff517017877ce69fcdc468527831b4a
  
  private:
      double timestamp();
-@@ -151,6 +170,7 @@ private:
+@@ -151,6 +171,7 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -2991,7 +3036,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..8ff517017877ce69fcdc468527831b4a
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -161,8 +181,11 @@ private:
+@@ -161,8 +182,11 @@ private:
      String m_emulatedMedia;
      String m_forcedAppearance;
      String m_bootstrapScript;
@@ -6478,7 +6523,7 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aefeedd9d7c 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2fe4997f1d 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,13 @@
@@ -6495,7 +6540,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aef
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -46,26 +49,56 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -46,31 +49,75 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -6553,7 +6598,26 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aef
      disconnectAllFrontends();
  
      m_agents.discardValues();
-@@ -80,6 +113,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+ }
+ 
++bool WebPageInspectorController::pageCrashed(ProcessTerminationReason reason)
++{
++    if (reason != ProcessTerminationReason::Crash)
++        return false;
++    String targetId = WebPageInspectorTarget::toTargetID(m_page.webPageID());
++    auto it = m_targets.find(targetId);
++    if (it == m_targets.end())
++        return false;
++    m_targetAgent->targetCrashed(*it->value);
++    m_targets.remove(it);
++
++    return m_targetAgent->isConnected();
++}
++
+ bool WebPageInspectorController::hasLocalFrontend() const
+ {
+     return m_frontendRouter->hasLocalFrontend();
+@@ -80,6 +127,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  {
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -6563,7 +6627,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aef
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -134,6 +170,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +184,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -6580,7 +6644,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aef
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -150,7 +196,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,7 +210,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
  
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
@@ -6594,7 +6658,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aef
  }
  
  void WebPageInspectorController::destroyInspectorTarget(const String& targetId)
-@@ -186,7 +237,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +251,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -6603,7 +6667,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aef
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -214,8 +265,22 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
+@@ -214,8 +279,22 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
  
  void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>&& target)
  {
@@ -6627,10 +6691,18 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1c918d6e2adc8d389219cf05e626aef
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0ce83675569502d150fcc44e5f9868c..a380d778c36fdd718dc506c28fee23498cabd17a 100644
+index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82fbffda83 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
-@@ -37,10 +37,22 @@ namespace Inspector {
+@@ -26,6 +26,7 @@
+ #pragma once
+ 
+ #include "InspectorTargetProxy.h"
++#include "ProcessTerminationReason.h"
+ #include <JavaScriptCore/InspectorAgentRegistry.h>
+ #include <JavaScriptCore/InspectorTargetAgent.h>
+ #include <WebCore/PageIdentifier.h>
+@@ -37,10 +38,22 @@ namespace Inspector {
  class BackendDispatcher;
  class FrontendChannel;
  class FrontendRouter;
@@ -6653,7 +6725,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..a380d778c36fdd718dc506c28fee2349
  class WebPageInspectorController {
      WTF_MAKE_NONCOPYABLE(WebPageInspectorController);
      WTF_MAKE_FAST_ALLOCATED;
-@@ -48,7 +60,12 @@ public:
+@@ -48,7 +61,13 @@ public:
      WebPageInspectorController(WebPageProxy&);
  
      void init();
@@ -6662,11 +6734,12 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..a380d778c36fdd718dc506c28fee2349
 +    static void setObserver(WebPageInspectorControllerObserver*);
 +
      void pageClosed();
++    bool pageCrashed(ProcessTerminationReason);
 +    void didProcessAllPendingKeyboardEvents();
  
      bool hasLocalFrontend() const;
  
-@@ -57,6 +74,8 @@ public:
+@@ -57,6 +76,8 @@ public:
      void disconnectAllFrontends();
  
      void dispatchMessageFromFrontend(const String& message);
@@ -6675,7 +6748,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..a380d778c36fdd718dc506c28fee2349
  
  #if ENABLE(REMOTE_INSPECTOR)
      void setIndicating(bool);
-@@ -75,6 +94,7 @@ public:
+@@ -75,6 +96,7 @@ public:
  
  private:
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -6683,7 +6756,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..a380d778c36fdd718dc506c28fee2349
  
      WebPageProxy& m_page;
      Ref<Inspector::FrontendRouter> m_frontendRouter;
-@@ -82,6 +102,8 @@ private:
+@@ -82,6 +104,8 @@ private:
      Inspector::AgentRegistry m_agents;
      Inspector::InspectorTargetAgent* m_targetAgent;
      HashMap<String, std::unique_ptr<InspectorTargetProxy>> m_targets;
@@ -7294,7 +7367,7 @@ index 0000000000000000000000000000000000000000..033f936d9d3caf594b78bb6ad39249d6
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 9b868717128b9f0b592c94c3b325507d99d6797b..aedb135c4f1f26eb34af1571e23ad9a3713fac7b 100644
+index 9b868717128b9f0b592c94c3b325507d99d6797b..3790500d0c6018c994d5fd5ba4e2eec77be5817a 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -889,6 +889,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -7413,7 +7486,19 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..aedb135c4f1f26eb34af1571e23ad9a3
          }
          break;
      }
-@@ -7595,6 +7619,10 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
+@@ -7148,8 +7172,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
+ void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
+ {
+     RELEASE_LOG_IF_ALLOWED(Loading, "dispatchProcessDidTerminate: reason = %d", reason);
++    bool handledByClient = m_inspectorController->pageCrashed(reason);
++    if (handledByClient)
++        return;
+ 
+-    bool handledByClient = false;
+     if (m_loaderClient)
+         handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
+     else
+@@ -7595,6 +7621,10 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge)
  {
@@ -7424,7 +7509,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..aedb135c4f1f26eb34af1571e23ad9a3
      m_navigationClient->didReceiveAuthenticationChallenge(*this, authenticationChallenge.get());
  }
  
-@@ -7656,7 +7684,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7656,7 +7686,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
      MESSAGE_CHECK(m_process, frame);
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
@@ -7434,7 +7519,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..aedb135c4f1f26eb34af1571e23ad9a3
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -7664,6 +7693,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7664,6 +7695,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
          else
              request->deny();
      };
