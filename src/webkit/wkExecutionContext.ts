@@ -219,9 +219,15 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   private _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) {
-    const serializeFunction = function(stringify: (o: any) => string) {
+    const serializeFunction = function(stringify: (o: any, replacer: (key: any, value: any) => any) => string) {
       try {
-        return stringify(this);
+        let hasSymbol = false;
+        const result = stringify(this, (key, value) => {
+          if (typeof value === 'symbol')
+            hasSymbol = true;
+          return value;
+        });
+        return hasSymbol ? undefined : result;
       } catch (e) {
         if (e instanceof TypeError)
           return void 0;

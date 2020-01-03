@@ -61,8 +61,16 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.PREFIX + '/global-var.html');
       expect(await page.evaluate('globalVar')).toBe(123);
     });
-    it.skip(FFOX || WEBKIT)('should return undefined for objects with symbols', async({page, server}) => {
+    it.skip(FFOX)('should return undefined for objects with symbols', async({page, server}) => {
       expect(await page.evaluate(() => [Symbol('foo4')])).toBe(undefined);
+      expect(await page.evaluate(() => {
+        const a = { };
+        a[Symbol('foo4')] = 42;
+        return a;
+      })).toEqual({});
+      expect(await page.evaluate(() => {
+        return { foo: [{ a: Symbol('foo4') }] };
+      })).toBe(undefined);
     });
     it('should work with function shorthands', async({page, server}) => {
       const a = {
