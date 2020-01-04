@@ -81,15 +81,12 @@ export class WKBrowser extends browser.Browser {
   }
 
   async _waitForFirstPageTarget(timeout: number): Promise<void> {
-    console.assert(!this._targets.size);
+    assert(!this._targets.size);
     await helper.waitWithTimeout(this._firstTargetPromise, 'target', timeout);
   }
 
   _onTargetCreated(session: WKTargetSession, targetInfo: Protocol.Target.TargetInfo) {
-    if (targetInfo.type !== 'page') {
-      console.assert(false, 'Unexpected target type: ' + targetInfo.type);
-      return;
-    }
+    assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
     let context = null;
     if (targetInfo.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
