@@ -25,19 +25,16 @@ import { WKBrowser } from './wkBrowser';
 export class WKTarget {
   readonly _browserContext: BrowserContext;
   readonly _targetId: string;
-  readonly _type: 'page' | 'service-worker' | 'worker';
-  private readonly _session: WKTargetSession;
+  readonly _session: WKTargetSession;
   private _pagePromise: Promise<Page> | null = null;
   private _browser: WKBrowser;
   _wkPage: WKPage | null = null;
 
   constructor(browser: WKBrowser, session: WKTargetSession, targetInfo: Protocol.Target.TargetInfo, browserContext: BrowserContext) {
-    const {targetId, type} = targetInfo;
     this._browser = browser;
     this._session = session;
     this._browserContext = browserContext;
-    this._targetId = targetId;
-    this._type = type;
+    this._targetId = targetInfo.targetId;
     /** @type {?Promise<!Page>} */
     this._pagePromise = null;
   }
@@ -80,7 +77,7 @@ export class WKTarget {
   }
 
   async page(): Promise<Page> {
-    if (this._type === 'page' && !this._pagePromise) {
+    if (!this._pagePromise) {
       this._wkPage = new WKPage(this._browser, this._browserContext);
       // Reference local page variable as |this._frameManager| may be
       // cleared on swap.
