@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import { helper, RegisteredListener, debugError, assert } from '../helper';
 import * as browser from '../browser';
 import * as network from '../network';
@@ -30,11 +29,13 @@ import { ConnectionTransport } from '../transport';
 
 export class WKBrowser extends browser.Browser {
   readonly _connection: WKConnection;
-  private _defaultContext: BrowserContext;
-  private _contexts = new Map<string, BrowserContext>();
-  _targets = new Map<string, WKTarget>();
-  private _eventListeners: RegisteredListener[];
-  private _privateEvents = new EventEmitter();
+  private readonly _defaultContext: BrowserContext;
+  private readonly _contexts = new Map<string, BrowserContext>();
+  private readonly _targets = new Map<string, WKTarget>();
+  private readonly _eventListeners: RegisteredListener[];
+
+  private _firstTargetCallback?: () => void;
+  private readonly _firstTargetPromise: Promise<void>;
 
   constructor(transport: ConnectionTransport) {
     super();
@@ -52,6 +53,8 @@ export class WKBrowser extends browser.Browser {
       helper.addEventListener(this._connection, WKConnectionEvents.TargetDestroyed, this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._connection, WKConnectionEvents.DidCommitProvisionalTarget, this._onProvisionalTargetCommitted.bind(this)),
     ];
+
+    this._firstTargetPromise = new Promise<void>(resolve => this._firstTargetCallback = resolve);
 
     // Intercept provisional targets during cross-process navigation.
     this._connection.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
@@ -77,31 +80,13 @@ export class WKBrowser extends browser.Browser {
     return this._defaultContext;
   }
 
-  async _waitForTarget(predicate: (arg0: WKTarget) => boolean, options: { timeout?: number; } | undefined = {}): Promise<WKTarget> {
-    const {
-      timeout = 30000
-    } = options;
-    const existingTarget = Array.from(this._targets.values()).find(predicate);
-    if (existingTarget)
-      return existingTarget;
-    let resolve : (a: WKTarget) => void;
-    const targetPromise = new Promise<WKTarget>(x => resolve = x);
-    this._privateEvents.on(BrowserEvents.TargetCreated, check);
-    try {
-      if (!timeout)
-        return await targetPromise;
-      return await helper.waitWithTimeout(targetPromise, 'target', timeout);
-    } finally {
-      this._privateEvents.removeListener(BrowserEvents.TargetCreated, check);
-    }
-
-    function check(target: WKTarget) {
-      if (predicate(target))
-        resolve(target);
-    }
+  async _waitForFirstPageTarget(timeout: number): Promise<void> {
+    assert(!this._targets.size);
+    await helper.waitWithTimeout(this._firstTargetPromise, 'target', timeout);
   }
 
   _onTargetCreated(session: WKTargetSession, targetInfo: Protocol.Target.TargetInfo) {
+    assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
     let context = null;
     if (targetInfo.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
@@ -121,7 +106,10 @@ export class WKBrowser extends browser.Browser {
       if (oldTarget)
         oldTarget._initializeSession(session);
     }
-    this._privateEvents.emit(BrowserEvents.TargetCreated, target);
+    if (this._firstTargetCallback) {
+      this._firstTargetCallback();
+      this._firstTargetCallback = null;
+    }
     if (!targetInfo.oldTargetId && targetInfo.openerId) {
       const opener = this._targets.get(targetInfo.openerId);
       if (!opener)
@@ -170,7 +158,7 @@ export class WKBrowser extends browser.Browser {
   _createBrowserContext(browserContextId: string | undefined, options: BrowserContextOptions): BrowserContext {
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
-        const targets = Array.from(this._targets.values()).filter(target => target._browserContext === context && target._type === 'page');
+        const targets = Array.from(this._targets.values()).filter(target => target._browserContext === context && !target._session.isProvisional());
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page);
       },
@@ -230,8 +218,3 @@ export class WKBrowser extends browser.Browser {
     return context;
   }
 }
-
-const BrowserEvents = {
-  TargetCreated: Symbol('BrowserEvents.TargetCreated'),
-  TargetDestroyed: Symbol('BrowserEvents.TargetDestroyed'),
-};
