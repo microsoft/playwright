@@ -2015,7 +2015,7 @@ Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclicksele
 
 #### page.emulateMedia(options)
 - `options` <[Object]>
-  - `type` <"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
+  - `media` <"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation.
   - `colorScheme` <"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
 - returns: <[Promise]>
 
@@ -2025,7 +2025,7 @@ await page.evaluate(() => matchMedia('screen').matches));
 await page.evaluate(() => matchMedia('print').matches));
 // → true
 
-await page.emulateMedia({ type: 'print' });
+await page.emulateMedia({ media: 'print' });
 await page.evaluate(() => matchMedia('screen').matches));
 // → false
 await page.evaluate(() => matchMedia('print').matches));

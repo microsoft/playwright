@@ -113,8 +113,8 @@ export class Page extends EventEmitter {
     this._browserContext = browserContext;
     this._state = {
       viewport: browserContext._options.viewport || null,
-      mediaType: browserContext._options.mediaType || null,
-      colorScheme: browserContext._options.colorScheme || null,
+      mediaType: null,
+      colorScheme: null,
       extraHTTPHeaders: null,
       cacheEnabled: null,
       interceptNetwork: null,
@@ -370,11 +370,11 @@ export class Page extends EventEmitter {
     return waitPromise;
   }
 
-  async emulateMedia(options: { type?: types.MediaType, colorScheme?: types.ColorScheme }) {
-    assert(!options.type || types.mediaTypes.has(options.type), 'Unsupported media type: ' + options.type);
+  async emulateMedia(options: { media?: types.MediaType, colorScheme?: types.ColorScheme }) {
+    assert(!options.media || types.mediaTypes.has(options.media), 'Unsupported media: ' + options.media);
     assert(!options.colorScheme || types.colorSchemes.has(options.colorScheme), 'Unsupported color scheme: ' + options.colorScheme);
-    if (options.type !== undefined)
-      this._state.mediaType = options.type;
+    if (options.media !== undefined)
+      this._state.mediaType = options.media;
     if (options.colorScheme !== undefined)
       this._state.colorScheme = options.colorScheme;
     await this._delegate.setEmulateMedia(this._state.mediaType, this._state.colorScheme);

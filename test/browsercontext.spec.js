@@ -100,11 +100,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROME, WEBK
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
     });
-    it.skip(WEBKIT)('should propagate default mediaType and colorScheme to the page', async({ newPage }) => {
-      const page = await newPage({ mediaType: 'print', colorScheme: 'dark' });
-      expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
-      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
-    });
     it('should take fullPage screenshots when default viewport is null', async({server, newPage}) => {
       const page = await newPage({ viewport: null });
       await page.goto(server.PREFIX + '/grid.html');
