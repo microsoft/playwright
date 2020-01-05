@@ -21,7 +21,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Accessibility', function() {
-    it('should work', async function({page}) {
+    it.skip(WEBKIT)('should work', async function({page}) {
       await page.setContent(`
       <head>
         <title>Accessibility Test</title>
@@ -99,7 +99,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       };
       expect(await page.accessibility.snapshot()).toEqual(golden);
     });
-    it('should report uninteresting nodes', async function({page}) {
+    it.skip(WEBKIT)('should report uninteresting nodes', async function({page}) {
       await page.setContent(`<textarea autofocus>hi</textarea>`);
       // autofocus happens after a delay in chrome these days
       await page.waitForFunction(() => document.activeElement.hasAttribute('autofocus'));

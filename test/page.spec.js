@@ -269,11 +269,13 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.evaluate(async() => {
         // 1. Create a popup that Playwright is not connected to.
         const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=200,top=0,left=0');
-        await new Promise(x => win.onload = x);
+        while (window.document.readyState !== 'complete')
+          await new Promise(f => setTimeout(f, 100));
         // 2. In this popup, create an iframe that console.logs a message.
         win.document.body.innerHTML = `<iframe src='/consolelog.html'></iframe>`;
         const frame = win.document.querySelector('iframe');
-        await new Promise(x => frame.onload = x);
+        while (frame.contentDocument.readyState !== 'complete')
+          await new Promise(f => setTimeout(f, 100));
         // 3. After that, remove the iframe.
         frame.remove();
       });
