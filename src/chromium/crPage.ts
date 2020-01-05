@@ -104,10 +104,6 @@ export class CRPage implements PageDelegate {
       promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
     if (options.userAgent)
       this._networkManager.setUserAgent(options.userAgent);
-    if (options.mediaType || options.colorScheme) {
-      const features = options.colorScheme ? [{ name: 'prefers-color-scheme', value: options.colorScheme }] : [];
-      promises.push(this._client.send('Emulation.setEmulatedMedia', { media: options.mediaType || '', features }));
-    }
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
     if (options.geolocation)

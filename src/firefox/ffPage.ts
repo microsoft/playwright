@@ -82,8 +82,6 @@ export class FFPage implements PageDelegate {
       promises.push(this._session.send('Page.setJavascriptEnabled', { enabled: false }));
     if (options.userAgent)
       promises.push(this._session.send('Page.setUserAgent', { userAgent: options.userAgent }));
-    if (options.mediaType || options.colorScheme)
-      promises.push(this._session.send('Page.setEmulatedMedia', { type: options.mediaType, colorScheme: options.colorScheme }));
     await Promise.all(promises);
   }
 

@@ -117,20 +117,20 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
     it('should work', async({page, server}) => {
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
-      await page.emulateMedia({ type: 'print' });
+      await page.emulateMedia({ media: 'print' });
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
       await page.emulateMedia({});
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
-      await page.emulateMedia({ type: '' });
+      await page.emulateMedia({ media: '' });
       expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
       expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
     });
     it('should throw in case of bad type argument', async({page, server}) => {
       let error = null;
-      await page.emulateMedia({ type: 'bad' }).catch(e => error = e);
-      expect(error.message).toBe('Unsupported media type: bad');
+      await page.emulateMedia({ media: 'bad' }).catch(e => error = e);
+      expect(error.message).toBe('Unsupported media: bad');
     });
   });
 

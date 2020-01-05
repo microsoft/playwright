@@ -39,8 +39,6 @@ export type BrowserContextOptions = {
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
-  mediaType?: types.MediaType,
-  colorScheme?: types.ColorScheme,
   userAgent?: string,
   timezoneId?: string,
   geolocation?: types.Geolocation
