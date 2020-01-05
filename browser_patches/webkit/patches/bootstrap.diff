@@ -8914,7 +8914,7 @@ index 45ef1a6424ea3a01cef14b88d6610aabe98446aa..30964dbd4ccfca341585c2c2ae06a403
  
      IBOutlet NSMenuItem *_newWebKit1WindowItem;
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index b6af4ef724fbc3641efa1c7135c1faf405b0a79d..0afe6ceec4fdd46c0b12f0fec94975365aa76b07 100644
+index b6af4ef724fbc3641efa1c7135c1faf405b0a79d..8dc5e82221092b2b59862c70af65c2d2a10d0a74 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
 @@ -33,7 +33,9 @@
@@ -9105,7 +9105,7 @@ index b6af4ef724fbc3641efa1c7135c1faf405b0a79d..0afe6ceec4fdd46c0b12f0fec9497536
      [_extensionManagerWindowController showWindow:sender];
  }
  
-@@ -345,4 +406,148 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
+@@ -345,4 +406,159 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
      }];
  }
  
@@ -9233,6 +9233,17 @@ index b6af4ef724fbc3641efa1c7135c1faf405b0a79d..0afe6ceec4fdd46c0b12f0fec9497536
 +    dialog.webView = webView;
 +    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
 +        completionHandler(accept && value ? value : nil);
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)_webView:(WKWebView *)webView runBeforeUnloadConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler(accept);
 +        [_dialogs removeObject:dialog];
 +    };
 +    [_dialogs addObject:dialog];
