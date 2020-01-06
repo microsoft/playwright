@@ -476,7 +476,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.skip(FFOX)('Interception.authenticate', function() {
+  describe.skip(FFOX || (WEBKIT && process.platform === 'linux'))('Interception.authenticate', function() {
     it('should work', async({page, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       let response = await page.goto(server.EMPTY_PAGE);
