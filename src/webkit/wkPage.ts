@@ -19,7 +19,7 @@ import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
-import { WKTargetSession } from './wkConnection';
+import { WKTargetSession, WKTargetSessionEvents } from './wkConnection';
 import { Events } from '../events';
 import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
 import { WKNetworkManager } from './wkNetworkManager';
@@ -133,7 +133,8 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
-      helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event))
+      helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
+      helper.addEventListener(this._session, WKTargetSessionEvents.Disconnected, event => this._page._didDisconnect()),
     ];
   }
 

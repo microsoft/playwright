@@ -64,29 +64,17 @@ export class WKTarget {
     // old target does not close the page on connection reset.
     oldTarget._pagePromise = null;
     oldTarget._wkPage = null;
-    this._adoptPage();
-  }
-
-  private _adoptPage() {
-    this._session.once(WKTargetSessionEvents.Disconnected, () => {
-      // Once swapped out, we reset _page and won't call _didDisconnect for old session.
-      if (this._wkPage)
-        this._wkPage._page._didDisconnect();
-    });
     this._wkPage.setSession(this._session);
   }
 
   async page(): Promise<Page> {
     if (!this._pagePromise) {
       this._wkPage = new WKPage(this._browser, this._browserContext);
+      this._wkPage.setSession(this._session);
       // Reference local page variable as |this._frameManager| may be
       // cleared on swap.
       const page = this._wkPage._page;
-      this._pagePromise = new Promise(async f => {
-        this._adoptPage();
-        await this._initializeSession(this._session);
-        f(page);
-      });
+      this._pagePromise = this._initializeSession(this._session).then(() => page);
     }
     return this._pagePromise;
   }
