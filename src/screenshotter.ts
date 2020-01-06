@@ -105,7 +105,7 @@ export class Screenshotter {
           await this._page.setViewport(overridenViewport);
         }
 
-        await handle._scrollIntoViewIfNeeded();
+        await handle.scrollIntoViewIfNeeded();
         boundingBox = enclosingIntRect(await this._page._delegate.getBoundingBoxForScreenshot(handle));
       }
 

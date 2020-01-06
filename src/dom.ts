@@ -134,7 +134,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getContentFrame(this);
   }
 
-  async _scrollIntoViewIfNeeded() {
+  async scrollIntoViewIfNeeded() {
     const error = await this._evaluateInUtility(async (node: Node, pageJavascriptEnabled: boolean) => {
       if (!node.isConnected)
         return 'Node is detached from document';
@@ -168,7 +168,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   private async _ensurePointerActionPoint(relativePoint?: types.Point): Promise<types.Point> {
-    await this._scrollIntoViewIfNeeded();
+    await this.scrollIntoViewIfNeeded();
     if (!relativePoint)
       return this._clickablePoint();
     let r = await this._viewportPointAndScroll(relativePoint);
@@ -464,12 +464,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._context._$$('xpath=' + expression, this);
   }
 
-  isIntersectingViewport(): Promise<boolean> {
+  visibleRatio(): Promise<number> {
     return this._evaluateInUtility(async (node: Node) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         throw new Error('Node is not of type HTMLElement');
       const element = node as Element;
-      const visibleRatio = await new Promise(resolve => {
+      const visibleRatio = await new Promise<number>(resolve => {
         const observer = new IntersectionObserver(entries => {
           resolve(entries[0].intersectionRatio);
           observer.disconnect();
@@ -479,7 +479,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         // there are rafs.
         requestAnimationFrame(() => {});
       });
-      return visibleRatio > 0;
+      return visibleRatio;
     });
   }
 }

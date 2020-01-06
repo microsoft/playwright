@@ -248,14 +248,13 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     });
   });
 
-  describe('ElementHandle.isIntersectingViewport', function() {
+  describe('ElementHandle.visibleRatio', function() {
     it('should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/offscreenbuttons.html');
       for (let i = 0; i < 11; ++i) {
         const button = await page.$('#btn' + i);
-        // All but last button are visible.
-        const visible = i < 10;
-        expect(await button.isIntersectingViewport()).toBe(visible);
+        const ratio = await button.visibleRatio();
+        expect(Math.round(ratio * 10)).toBe(10 - i);
       }
     });
     it.skip(FFOX)('should work when Node is removed', async({page, server}) => {
@@ -263,9 +262,23 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.evaluate(() => delete window['Node']);
       for (let i = 0; i < 11; ++i) {
         const button = await page.$('#btn' + i);
-        // All but last button are visible.
-        const visible = i < 10;
-        expect(await button.isIntersectingViewport()).toBe(visible);
+        const ratio = await button.visibleRatio();
+        expect(Math.round(ratio * 10)).toBe(10 - i);
+      }
+    });
+  });
+
+  describe('ElementHandle.scrollIntoViewIfNeeded', function() {
+    it('should work', async({page, server}) => {
+      await page.goto(server.PREFIX + '/offscreenbuttons.html');
+      for (let i = 0; i < 11; ++i) {
+        const button = await page.$('#btn' + i);
+        const before = await button.visibleRatio();
+        expect(Math.round(before * 10)).toBe(10 - i);
+        await button.scrollIntoViewIfNeeded();
+        const after = await button.visibleRatio();
+        expect(Math.round(after * 10)).toBe(10);
+        await page.evaluate(() => window.scrollTo(0, 0));
       }
     });
   });
