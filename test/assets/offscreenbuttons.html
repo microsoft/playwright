@@ -3,6 +3,23 @@
     position: absolute;
     width: 100px;
     height: 20px;
+    margin: 0;
+  }
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    position: relative;
+  }
+
+  div {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
   }
 
   #btn0 { right: 0px; top: 0; }
@@ -17,6 +34,7 @@
   #btn9 { right: -90px; top: 225px; }
   #btn10 { right: -100px; top: 250px; }
 </style>
+<div>
 <button id=btn0>0</button>
 <button id=btn1>1</button>
 <button id=btn2>2</button>
@@ -28,6 +46,7 @@
 <button id=btn8>8</button>
 <button id=btn9>9</button>
 <button id=btn10>10</button>
+</div>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
   for (const button of Array.from(document.querySelectorAll('button')))

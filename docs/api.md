@@ -58,15 +58,16 @@
   * [elementHandle.fill(value)](#elementhandlefillvalue)
   * [elementHandle.focus()](#elementhandlefocus)
   * [elementHandle.hover([options])](#elementhandlehoveroptions)
-  * [elementHandle.isIntersectingViewport()](#elementhandleisintersectingviewport)
   * [elementHandle.ownerFrame()](#elementhandleownerframe)
   * [elementHandle.press(key[, options])](#elementhandlepresskey-options)
   * [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
+  * [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
   * [elementHandle.select(...values)](#elementhandleselectvalues)
   * [elementHandle.setInputFiles(...files)](#elementhandlesetinputfilesfiles)
   * [elementHandle.toString()](#elementhandletostring)
   * [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
   * [elementHandle.type(text[, options])](#elementhandletypetext-options)
+  * [elementHandle.visibleRatio()](#elementhandlevisibleratio)
 - [class: Frame](#class-frame)
   * [frame.$(selector)](#frameselector)
   * [frame.$$(selector)](#frameselector-1)
@@ -786,9 +787,6 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 This method scrolls element into view if needed, and then uses [page.mouse](#pagemouse) to hover over the center of the element.
 If the element is detached from DOM, the method throws an error.
 
-#### elementHandle.isIntersectingViewport()
-- returns: <[Promise]<[boolean]>> Resolves to true if the element is visible in the current viewport.
-
 #### elementHandle.ownerFrame()
 - returns: <[Promise]<[Frame]>> Returns the frame containing the given element.
 
@@ -815,6 +813,15 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 
 This method scrolls element into view if needed, and then uses [page.screenshot](#pagescreenshotoptions) to take a screenshot of the element.
 If the element is detached from DOM, the method throws an error.
+
+#### elementHandle.scrollIntoViewIfNeeded()
+- returns: <[Promise]> Resolves after the element has been scrolled into view.
+
+This method tries to scroll element into view, unless it is completely visible as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```. See also [elementHandle.visibleRatio()](#elementhandlevisibleratio).
+
+Throws when ```elementHandle``` does not point to an element [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
+
+> **NOTE** If javascript is disabled, element is scrolled into view even when already completely visible.
 
 #### elementHandle.select(...values)
 - `...values` <...[string]|[ElementHandle]|[Object]> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
@@ -890,6 +897,11 @@ const elementHandle = await page.$('input');
 await elementHandle.type('some text');
 await elementHandle.press('Enter');
 ```
+
+#### elementHandle.visibleRatio()
+- returns: <[Promise]<[number]>> Returns the visible ratio as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+
+Positive ratio means that some part of the element is visible in the current viewport. Ratio equal to one means that element is completely visible.
 
 ### class: Frame
 
@@ -1954,8 +1966,7 @@ Get the browser context that the page belongs to.
   - `relativePoint` <[Object]> A point to click relative to the top-left corner of element padding box. If not specified, clicks to some visible point of the element.
     - x <[number]>
     - y <[number]>
-  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, 
-  currently pressed modifiers are used.
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
