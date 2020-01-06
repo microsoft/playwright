@@ -173,11 +173,11 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     });
     // Crashes with Target closed on WebKit / Linux.
-    it.skip(WEBKIT || FFOX)('should not treat navigations as new popups', async({page, server}) => {
+    it('should not treat navigations as new popups', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(popup => { popup.waitForLoadState(); return popup; }),
         page.click('a'),
       ]);
       let badSecondPopup = false;
