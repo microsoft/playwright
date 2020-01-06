@@ -55,6 +55,8 @@ export class WKNetworkManager {
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
     if (credentials)
       promises.push(session.send('Emulation.setAuthCredentials', { ...credentials }));
+    else
+      promises.push(session.send('Emulation.setAuthCredentials', { username: '', password: '' }));
     await Promise.all(promises);
   }
 
