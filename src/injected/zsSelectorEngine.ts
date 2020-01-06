@@ -563,7 +563,8 @@ class Engine {
           appendCue(JSON.stringify(value), 'text', textScore, element, lca, value);
       }
 
-      appendCue(nodeName, 'tag', this.options.genericTagScore, element, lca, '');
+      if (!nodeName.startsWith('<pseudo') && !nodeName.startsWith('::'))
+        appendCue(nodeName, 'tag', this.options.genericTagScore, element, lca, '');
       if (this.options.imgAltScore && nodeName === 'IMG') {
         const alt = element.getAttribute('alt');
         if (alt)
