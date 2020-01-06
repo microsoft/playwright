@@ -6936,7 +6936,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..ae6b43a49986380a521dcfbe8d5dc9e3
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..58e69943a8978790fbe6fa0f478c64dd2895a551
+index 0000000000000000000000000000000000000000..ca238991a6fed35f2b18d46735fbac7243794a5f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 @@ -0,0 +1,63 @@
@@ -6999,7 +6999,7 @@ index 0000000000000000000000000000000000000000..58e69943a8978790fbe6fa0f478c64dd
 +    if (username && password)
 +        m_page.setAuthCredentialsForAutomation(WebCore::Credential(*username, *password, CredentialPersistencePermanent));
 +    else
-+        m_page.setAuthCredentialsForAutomation(WebCore::Credential());
++        m_page.setAuthCredentialsForAutomation(Optional<WebCore::Credential>());
 +}
 +
 +} // namespace WebKit
@@ -7536,7 +7536,7 @@ index 0000000000000000000000000000000000000000..033f936d9d3caf594b78bb6ad39249d6
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 9b868717128b9f0b592c94c3b325507d99d6797b..3790500d0c6018c994d5fd5ba4e2eec77be5817a 100644
+index 9b868717128b9f0b592c94c3b325507d99d6797b..876cd00e9e9c5d95d7d3069012653d4c4584deea 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -889,6 +889,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -7556,7 +7556,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..3790500d0c6018c994d5fd5ba4e2eec7
 +    m_inputProcessingObserver = observer;
 +}
 +
-+void WebPageProxy::setAuthCredentialsForAutomation(WebCore::Credential&& credentials) {
++void WebPageProxy::setAuthCredentialsForAutomation(Optional<WebCore::Credential>&& credentials) {
 +    m_credentialsForAutomation = WTFMove(credentials);
 +}
 +
@@ -7667,18 +7667,22 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..3790500d0c6018c994d5fd5ba4e2eec7
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -7595,6 +7621,10 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
+@@ -7595,6 +7621,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge)
  {
-+    if (!m_credentialsForAutomation.isEmpty() && !authenticationChallenge->core().previousFailureCount()) {
-+        authenticationChallenge->listener().completeChallenge(AuthenticationChallengeDisposition::UseCredential, m_credentialsForAutomation);
++    if (m_credentialsForAutomation.hasValue()) {
++        if (m_credentialsForAutomation->isEmpty() || authenticationChallenge->core().previousFailureCount()) {
++            authenticationChallenge->listener().completeChallenge(AuthenticationChallengeDisposition::PerformDefaultHandling);
++            return;
++        }
++        authenticationChallenge->listener().completeChallenge(AuthenticationChallengeDisposition::UseCredential, *m_credentialsForAutomation);
 +        return;
 +    }
      m_navigationClient->didReceiveAuthenticationChallenge(*this, authenticationChallenge.get());
  }
  
-@@ -7656,7 +7686,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7656,7 +7690,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
      MESSAGE_CHECK(m_process, frame);
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
@@ -7688,7 +7692,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..3790500d0c6018c994d5fd5ba4e2eec7
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -7664,6 +7695,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7664,6 +7699,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
          else
              request->deny();
      };
@@ -7701,7 +7705,7 @@ index 9b868717128b9f0b592c94c3b325507d99d6797b..3790500d0c6018c994d5fd5ba4e2eec7
      // FIXME: Once iOS migrates to the new WKUIDelegate SPI, clean this up
      // and make it one UIClient call that calls the completionHandler with false
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 8189e085e43ea304b38ff84e41e6e49f10c8da20..dc1eeb8cd5c35c1ee5020cbe72639de559d7f952 100644
+index 8189e085e43ea304b38ff84e41e6e49f10c8da20..c07e4bca568d77d842695c206eb21108b3b98d71 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -35,6 +35,7 @@
@@ -7732,7 +7736,7 @@ index 8189e085e43ea304b38ff84e41e6e49f10c8da20..dc1eeb8cd5c35c1ee5020cbe72639de5
 +        virtual void didProcessAllPendingMouseEvents() = 0;
 +    };
 +    void setObserber(InputProcessingObserver*);
-+    void setAuthCredentialsForAutomation(WebCore::Credential&&);
++    void setAuthCredentialsForAutomation(Optional<WebCore::Credential>&&);
 +    void setPermissionsForAutomation(const HashMap<String, HashSet<String>>&);
 +
      void initializeWebPage();
@@ -7758,7 +7762,7 @@ index 8189e085e43ea304b38ff84e41e6e49f10c8da20..dc1eeb8cd5c35c1ee5020cbe72639de5
      bool m_isLayerTreeFrozenDueToSwipeAnimation { false };
      
      String m_overriddenMediaType;
-+    WebCore::Credential m_credentialsForAutomation;
++    Optional<WebCore::Credential> m_credentialsForAutomation;
 +    HashMap<String, HashSet<String>> m_permissionsForAutomation;
          
  #if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
