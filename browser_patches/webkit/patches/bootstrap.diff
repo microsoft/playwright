@@ -65,7 +65,7 @@ index dece6ac51e3a85b1e094e405effc6203887ddfd4..9bf7519d894eceb06b40d754c4fb7940
                  return nullptr;
              inspectorObject->setValue(name.string(), WTFMove(inspectorValue));
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
-index 038cb646d31706905deff8935040d63c0afd00f9..8a01d7679bf11001a2ffd528274ad13e00aa8e19 100644
+index 038cb646d31706905deff8935040d63c0afd00f9..2fca7b043f15a8cce3819cc827912fb719a345db 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 +++ b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 @@ -102,7 +102,7 @@ void BackendDispatcher::registerDispatcherForDomain(const String& domain, Supple
@@ -73,11 +73,11 @@ index 038cb646d31706905deff8935040d63c0afd00f9..8a01d7679bf11001a2ffd528274ad13e
  }
  
 -void BackendDispatcher::dispatch(const String& message)
-+BackendDispatcher::DispatchResult BackendDispatcher::dispatch(const String& message, Mode mode)
++BackendDispatcher::DispatchResult BackendDispatcher::dispatch(const String& message, Mode mode, Interceptor&& interceptor)
  {
      Ref<BackendDispatcher> protect(*this);
  
-@@ -120,26 +120,26 @@ void BackendDispatcher::dispatch(const String& message)
+@@ -120,29 +120,32 @@ void BackendDispatcher::dispatch(const String& message)
          if (!JSON::Value::parseJSON(message, parsedMessage)) {
              reportProtocolError(ParseError, "Message must be in JSON format"_s);
              sendPendingErrors();
@@ -108,7 +108,13 @@ index 038cb646d31706905deff8935040d63c0afd00f9..8a01d7679bf11001a2ffd528274ad13e
          }
      }
  
-@@ -151,29 +151,31 @@ void BackendDispatcher::dispatch(const String& message)
++    if (interceptor && interceptor(messageObject) == DispatchResult::Finished)
++        return DispatchResult::Finished;
++
+     {
+         // We could be called re-entrantly from a nested run loop, so restore the previous id.
+         SetForScope<Optional<long>> scopedRequestId(m_currentRequestId, requestId);
+@@ -151,29 +154,31 @@ void BackendDispatcher::dispatch(const String& message)
          if (!messageObject->getValue("method"_s, methodValue)) {
              reportProtocolError(InvalidRequest, "'method' property wasn't found"_s);
              sendPendingErrors();
@@ -144,7 +150,7 @@ index 038cb646d31706905deff8935040d63c0afd00f9..8a01d7679bf11001a2ffd528274ad13e
          }
  
          String method = domainAndMethod[1];
-@@ -182,6 +184,7 @@ void BackendDispatcher::dispatch(const String& message)
+@@ -182,6 +187,7 @@ void BackendDispatcher::dispatch(const String& message)
          if (m_protocolErrors.size())
              sendPendingErrors();
      }
@@ -153,10 +159,10 @@ index 038cb646d31706905deff8935040d63c0afd00f9..8a01d7679bf11001a2ffd528274ad13e
  
  // FIXME: remove this function when legacy InspectorObject symbols are no longer needed <http://webkit.org/b/179847>.
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h
-index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..6f96f174dffd7c5c42561487e1627ef960ae955e 100644
+index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..4c67ce34302f74e0d07f64ae53a4eaf18df6669a 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h
 +++ b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.h
-@@ -82,7 +82,10 @@ public:
+@@ -82,7 +82,11 @@ public:
      };
  
      void registerDispatcherForDomain(const String& domain, SupplementalBackendDispatcher*);
@@ -164,7 +170,8 @@ index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..6f96f174dffd7c5c42561487e1627ef9
 +
 +    enum class DispatchResult { Finished, Continue };
 +    enum class Mode { FailIfDomainIsMissing, ContinueIfDomainIsMissing };
-+    DispatchResult dispatch(const String& message, Mode mode = Mode::FailIfDomainIsMissing);
++    using Interceptor = WTF::Function<DispatchResult(const RefPtr<JSON::Object>&)>;
++    DispatchResult dispatch(const String& message, Mode mode = Mode::FailIfDomainIsMissing, Interceptor&& interceptor = Interceptor());
  
      // Note that 'unused' is a workaround so the compiler can pick the right sendResponse based on arity.
      // When <http://webkit.org/b/179847> is fixed or this class is renamed for the JSON::Object case,
@@ -367,10 +374,10 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..b10dd23de692fd5f447a9b845b5695ac
      bool m_shouldPauseOnStart { false };
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..78d7a339aa8141a94540f59c371aabdf39fddd33
+index 0000000000000000000000000000000000000000..a0b5806920078bbaa0bd5efb6f589bf1da461b4a
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
-@@ -0,0 +1,149 @@
+@@ -0,0 +1,177 @@
 +{
 +    "domain": "Browser",
 +    "availability": ["web"],
@@ -379,6 +386,20 @@ index 0000000000000000000000000000000000000000..78d7a339aa8141a94540f59c371aabdf
 +            "id": "ContextID",
 +            "type": "string",
 +            "description": "Id of Browser context."
++        },
++        {
++            "id": "PageProxyID",
++            "type": "string",
++            "description": "Id of WebPageProxy."
++        },
++        {
++            "id": "PageProxyInfo",
++            "type": "object",
++            "description": "Tab info object",
++            "properties": [
++                { "name": "pageProxyId", "$ref": "PageProxyID" },
++                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." }
++            ]
 +        },
 +        {
 +            "id": "CookieSameSitePolicy",
@@ -517,6 +538,20 @@ index 0000000000000000000000000000000000000000..78d7a339aa8141a94540f59c371aabdf
 +                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
 +            ],
 +            "description": "Clears permission overrides."
++        }
++    ],
++    "events": [
++        {
++            "name": "pageProxyCreated",
++            "parameters": [
++                { "name": "pageProxyInfo", "$ref": "PageProxyInfo" }
++            ]
++        },
++        {
++            "name": "pageProxyDestroyed",
++            "parameters": [
++                { "name": "pageProxyId", "$ref": "PageProxyID" }
++            ]
 +        }
 +    ]
 +}
@@ -5006,10 +5041,10 @@ index 15a4c1ff1c4aeee7d807856db0b3a74002e421dd..92212f1b5befe0f3b8c5222e81221a8a
  #include <wpe/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..260916b29cf0fb69afb28539238585346d693425
+index 0000000000000000000000000000000000000000..11040688e00c2dd522167824b4a2912c54ff38a9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,208 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5049,13 +5084,63 @@ index 0000000000000000000000000000000000000000..260916b29cf0fb69afb2853923858534
 +    return result;
 +}
 +
++class BrowserInspectorController::PageProxyChannel : public FrontendChannel {
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    PageProxyChannel(FrontendChannel& frontendChannel, String pageProxyID, WebPageProxy& page)
++        : m_pageProxyID(pageProxyID)
++        , m_frontendChannel(frontendChannel)
++        , m_page(page)
++    {
++    }
++
++    ~PageProxyChannel() override = default;
++
++    void dispatchMessageFromFrontend(const String& message)
++    {
++        m_page.inspectorController().dispatchMessageFromFrontend(message);
++    }
++
++    void disconnect()
++    {
++        m_page.inspectorController().disconnectFrontend(*this);
++    }
++
++private:
++    ConnectionType connectionType() const override { return m_frontendChannel.connectionType(); }
++    void sendMessageToFrontend(const String& message) override
++    {
++        m_frontendChannel.sendMessageToFrontend(addTabIdToMessage(message));
++    }
++
++    String addTabIdToMessage(const String& message) {
++        RefPtr<JSON::Value> parsedMessage;
++        if (!JSON::Value::parseJSON(message, parsedMessage))
++            return message;
++
++        RefPtr<JSON::Object> messageObject;
++        if (!parsedMessage->asObject(messageObject))
++            return message;
++
++        messageObject->setString("pageProxyId"_s, m_pageProxyID);
++        return messageObject->toJSONString();
++    }
++
++    String m_pageProxyID;
++    FrontendChannel& m_frontendChannel;
++    WebPageProxy& m_page;
++};
++
 +BrowserInspectorController::BrowserInspectorController(std::unique_ptr<InspectorBrowserAgentClient> client)
 +    : m_frontendChannel(nullptr)
 +    , m_frontendRouter(FrontendRouter::create())
 +    , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
 +    , m_browserAgentClient(std::move(client))
 +{
-+    m_agents.append(makeUnique<InspectorBrowserAgent>(m_backendDispatcher, m_browserAgentClient.get()));
++    auto browserAgent = makeUnique<InspectorBrowserAgent>(m_frontendRouter, m_backendDispatcher, m_browserAgentClient.get());
++    m_browserAgent = browserAgent.get();
++    m_agents.append(WTFMove(browserAgent));
++
 +    auto targetAgent = makeUnique<BrowserInspectorTargetAgent>(m_backendDispatcher);
 +    m_browserTargetAgent = targetAgent.get();
 +    m_agents.append(WTFMove(targetAgent));
@@ -5096,26 +5181,68 @@ index 0000000000000000000000000000000000000000..260916b29cf0fb69afb2853923858534
 +
 +void BrowserInspectorController::dispatchMessageFromFrontend(const String& message)
 +{
-+    m_backendDispatcher->dispatch(message);
++    m_backendDispatcher->dispatch(message, BackendDispatcher::Mode::FailIfDomainIsMissing, [&](const RefPtr<JSON::Object>& messageObject) {
++        RefPtr<JSON::Value> pageProxyIDValue;
++        if (!messageObject->getValue("pageProxyId"_s, pageProxyIDValue))
++            return BackendDispatcher::DispatchResult::Continue;
++
++        String pageProxyID;
++        if (!pageProxyIDValue->asString(pageProxyID)) {
++            m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "The type of 'pageProxyId' must be string"_s);
++            m_backendDispatcher->sendPendingErrors();
++            return BackendDispatcher::DispatchResult::Finished;
++        }
++
++
++        if (auto pageProxyChannel = m_pageProxyChannels.get(pageProxyID)) {
++            pageProxyChannel->dispatchMessageFromFrontend(message);
++            return BackendDispatcher::DispatchResult::Finished;
++        }
++
++        m_backendDispatcher->reportProtocolError(BackendDispatcher::InvalidRequest, "Cannot find page proxy with provided 'pageProxyId'"_s);
++        m_backendDispatcher->sendPendingErrors();
++        return BackendDispatcher::DispatchResult::Finished;
++    });
 +}
 +
 +void BrowserInspectorController::connectToAllPages()
 +{
 +    for (auto* page : allPages())
-+        page->inspectorController().connectFrontend(*m_frontendChannel);
++        connectToPage(*page);
 +}
 +
 +void BrowserInspectorController::disconnectFromAllPages()
 +{
-+    for (auto* page : allPages())
-+        page->inspectorController().disconnectFrontend(*m_frontendChannel);
++    for (auto it = m_pageProxyChannels.begin(); it != m_pageProxyChannels.end(); ++it)
++        it->value->disconnect();
++    m_pageProxyChannels.clear();
 +}
 +
-+void BrowserInspectorController::didCreateInspectorController(WebPageInspectorController& inspectorController)
++void BrowserInspectorController::connectToPage(WebPageProxy& page)
++{
++    String pageProxyID = InspectorBrowserAgent::toPageProxyIDProtocolString(page);
++    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, pageProxyID, page);
++    page.inspectorController().connectFrontend(*pageProxyChannel);
++    m_pageProxyChannels.set(pageProxyID, WTFMove(pageProxyChannel));
++}
++
++void BrowserInspectorController::didCreateInspectorController(WebPageProxy& page)
 +{
 +    ASSERT(m_frontendChannel);
 +    // Auto-connect to all new pages.
-+    inspectorController.connectFrontend(*m_frontendChannel);
++    connectToPage(page);
++    m_browserAgent->didCreateWebPageProxy(page);
++}
++
++void BrowserInspectorController::willDestroyInspectorController(WebPageProxy& page)
++{
++    m_browserAgent->willDestroyWebPageProxy(page);
++
++    String pageProxyID = InspectorBrowserAgent::toPageProxyIDProtocolString(page);
++    auto it = m_pageProxyChannels.find(pageProxyID);
++    ASSERT(ti != m_pageProxyChannels.end());
++    it->value->disconnect();
++    m_pageProxyChannels.remove(it);
 +}
 +
 +void BrowserInspectorController::didCreateTarget(InspectorTarget& target)
@@ -5128,10 +5255,10 @@ index 0000000000000000000000000000000000000000..260916b29cf0fb69afb2853923858534
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.h b/Source/WebKit/UIProcess/BrowserInspectorController.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..c487dd06ce47cf2d5d80de5851c525af22e390a9
+index 0000000000000000000000000000000000000000..3b0ac3fc7b63d772be95aba35a7d4cfed7f8fb49
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.h
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,61 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5153,6 +5280,7 @@ index 0000000000000000000000000000000000000000..c487dd06ce47cf2d5d80de5851c525af
 +namespace WebKit {
 +
 +class BrowserInspectorTargetAgent;
++class InspectorBrowserAgent;
 +class InspectorBrowserAgentClient;
 +
 +class BrowserInspectorController : private WebPageInspectorControllerObserver {
@@ -5168,20 +5296,25 @@ index 0000000000000000000000000000000000000000..c487dd06ce47cf2d5d80de5851c525af
 +
 +private:
 +    class TargetHandler;
++    class PageProxyChannel;
 +
 +    // WebPageInspectorControllerObserver
-+    void didCreateInspectorController(WebPageInspectorController&) override;
++    void didCreateInspectorController(WebPageProxy&) override;
++    void willDestroyInspectorController(WebPageProxy&) override;
 +    void didCreateTarget(Inspector::InspectorTarget&) override;
 +
 +    void connectToAllPages();
 +    void disconnectFromAllPages();
++    void connectToPage(WebPageProxy&);
 +
 +    Inspector::FrontendChannel* m_frontendChannel { nullptr };
 +    Ref<Inspector::FrontendRouter> m_frontendRouter;
 +    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
 +    std::unique_ptr<InspectorBrowserAgentClient> m_browserAgentClient;
 +    Inspector::AgentRegistry m_agents;
++    InspectorBrowserAgent* m_browserAgent { nullptr };
 +    BrowserInspectorTargetAgent* m_browserTargetAgent { nullptr };
++    HashMap<String, std::unique_ptr<PageProxyChannel>> m_pageProxyChannels;
 +};
 +
 +} // namespace WebKit
@@ -5598,10 +5731,10 @@ index d7695088e7cfc4f638f157338754f9f157489749..fd0e1db93b4b6fc094ff47565ca19e83
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..60d53cf6af3faa6f484a0a1efa935c505492576b
+index 0000000000000000000000000000000000000000..0424d39ac80f5b5a85f99da4406edaa8bb179c57
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,333 @@
+@@ -0,0 +1,361 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5611,6 +5744,7 @@ index 0000000000000000000000000000000000000000..60d53cf6af3faa6f484a0a1efa935c50
 +#if ENABLE(REMOTE_INSPECTOR)
 +
 +#include "InspectorBrowserAgentClient.h"
++#include "InspectorTargetProxy.h"
 +#include "NetworkProcessMessages.h"
 +#include "NetworkProcessProxy.h"
 +#include "WebGeolocationManagerProxy.h"
@@ -5660,10 +5794,18 @@ index 0000000000000000000000000000000000000000..60d53cf6af3faa6f484a0a1efa935c50
 +        .release();
 +}
 +
++Ref<Inspector::Protocol::Browser::PageProxyInfo> buildPageProxyInfo(const WebPageProxy& page) {
++    return Inspector::Protocol::Browser::PageProxyInfo::create()
++        .setPageProxyId(InspectorBrowserAgent::toPageProxyIDProtocolString(page))
++        .setBrowserContextId(InspectorBrowserAgent::toBrowserContextIDProtocolString(page.sessionID()))
++        .release();
++}
++
 +}  // namespace
 +
-+InspectorBrowserAgent::InspectorBrowserAgent(Inspector::BackendDispatcher& backendDispatcher, InspectorBrowserAgentClient* client)
++InspectorBrowserAgent::InspectorBrowserAgent(Inspector::FrontendRouter& frontendRouter, Inspector::BackendDispatcher& backendDispatcher, InspectorBrowserAgentClient* client)
 +    : InspectorAgentBase("Browser"_s)
++    , m_frontendDispatcher(makeUnique<BrowserFrontendDispatcher>(frontendRouter))
 +    , m_backendDispatcher(BrowserBackendDispatcher::create(backendDispatcher, this))
 +    , m_client(client)
 +{
@@ -5671,12 +5813,26 @@ index 0000000000000000000000000000000000000000..60d53cf6af3faa6f484a0a1efa935c50
 +
 +InspectorBrowserAgent::~InspectorBrowserAgent() = default;
 +
++void InspectorBrowserAgent::didCreateWebPageProxy(const WebPageProxy& page)
++{
++    if (m_isConnected)
++        m_frontendDispatcher->pageProxyCreated(buildPageProxyInfo(page));
++}
++
++void InspectorBrowserAgent::willDestroyWebPageProxy(const WebPageProxy& page)
++{
++    if (m_isConnected)
++        m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
++}
++
 +void InspectorBrowserAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
 +{
++    m_isConnected = true;
 +}
 +
 +void InspectorBrowserAgent::willDestroyFrontendAndBackend(DisconnectReason)
 +{
++    m_isConnected = false;
 +}
 +
 +void InspectorBrowserAgent::close(ErrorString& errorString)
@@ -5913,6 +6069,11 @@ index 0000000000000000000000000000000000000000..60d53cf6af3faa6f484a0a1efa935c50
 +    return builder.toString();
 +}
 +
++String InspectorBrowserAgent::toPageProxyIDProtocolString(const WebPageProxy& page)
++{
++    return makeString("page-proxy-", page.identifier().toUInt64());
++}
++
 +BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
 +{
 +    if (!browserContextID) {
@@ -5937,10 +6098,10 @@ index 0000000000000000000000000000000000000000..60d53cf6af3faa6f484a0a1efa935c50
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..ce203cb1ca47ec1f478ed296ecee6bf3f890be7f
+index 0000000000000000000000000000000000000000..1f2776965b9e070556d0861caad5935fc8729298
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-@@ -0,0 +1,70 @@
+@@ -0,0 +1,77 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT license.
 +
@@ -5958,6 +6119,7 @@ index 0000000000000000000000000000000000000000..ce203cb1ca47ec1f478ed296ecee6bf3
 +
 +namespace Inspector {
 +class BackendDispatcher;
++class BrowserFrontendDispatcher;
 +class FrontendChannel;
 +class FrontendRouter;
 +}
@@ -5975,8 +6137,11 @@ index 0000000000000000000000000000000000000000..ce203cb1ca47ec1f478ed296ecee6bf3
 +    WTF_MAKE_NONCOPYABLE(InspectorBrowserAgent);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
-+    InspectorBrowserAgent(Inspector::BackendDispatcher&, InspectorBrowserAgentClient*);
++    InspectorBrowserAgent(Inspector::FrontendRouter&, Inspector::BackendDispatcher&, InspectorBrowserAgentClient*);
 +    ~InspectorBrowserAgent() override;
++
++    void didCreateWebPageProxy(const WebPageProxy&);
++    void willDestroyWebPageProxy(const WebPageProxy&);
 +
 +    // InspectorAgentBase
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
@@ -5998,14 +6163,17 @@ index 0000000000000000000000000000000000000000..ce203cb1ca47ec1f478ed296ecee6bf3
 +    void setGeolocationOverride(Inspector::ErrorString&, const String* browserContextID, const JSON::Object* geolocation) override;
 +
 +    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
++    static String toPageProxyIDProtocolString(const WebPageProxy&);
 +
 +private:
 +    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
++    std::unique_ptr<Inspector::BrowserFrontendDispatcher> m_frontendDispatcher;
 +    Ref<Inspector::BrowserBackendDispatcher> m_backendDispatcher;
 +    InspectorBrowserAgentClient* m_client;
 +    using Permissions = HashMap<String, HashSet<String>>;
 +    HashMap<String, Permissions> m_permissions;
 +    HashMap<String, BrowserContext> m_browserContexts;
++    bool m_isConnected { false };
 +};
 +
 +} // namespace WebKit
@@ -6523,7 +6691,7 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2fe4997f1d 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..d33dae4a49f477eed3e4706bbeabfee631fe739b 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,13 @@
@@ -6540,7 +6708,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -46,31 +49,75 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -46,12 +49,23 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -6565,14 +6733,13 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
  
      m_targetAgent = targetAgent.get();
  
-     m_agents.append(WTFMove(targetAgent));
-+
-+    if (s_observer)
-+        s_observer->didCreateInspectorController(*this);
- }
+@@ -60,15 +74,51 @@ WebPageInspectorController::WebPageInspectorController(WebPageProxy& page)
  
  void WebPageInspectorController::init()
  {
++    if (s_observer)
++        s_observer->didCreateInspectorController(m_page);
++
 +    // window.open will create page with already running process.
 +    if (!m_page.hasRunningProcess())
 +        return;
@@ -6598,8 +6765,11 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
      disconnectAllFrontends();
  
      m_agents.discardValues();
- }
- 
++
++    if (s_observer)
++        s_observer->willDestroyInspectorController(m_page);
++}
++
 +bool WebPageInspectorController::pageCrashed(ProcessTerminationReason reason)
 +{
 +    if (reason != ProcessTerminationReason::Crash)
@@ -6612,12 +6782,10 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
 +    m_targets.remove(it);
 +
 +    return m_targetAgent->isConnected();
-+}
-+
+ }
+ 
  bool WebPageInspectorController::hasLocalFrontend() const
- {
-     return m_frontendRouter->hasLocalFrontend();
-@@ -80,6 +127,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -80,6 +130,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  {
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -6627,7 +6795,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -134,6 +184,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +187,16 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -6644,7 +6812,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -150,7 +210,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,7 +213,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
  
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
@@ -6658,7 +6826,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
  }
  
  void WebPageInspectorController::destroyInspectorTarget(const String& targetId)
-@@ -186,7 +251,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +254,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -6667,7 +6835,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -214,8 +279,22 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
+@@ -214,8 +282,22 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
  
  void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>&& target)
  {
@@ -6691,7 +6859,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..598e7f52d498eca6544a2bdbb9718b2f
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82fbffda83 100644
+index 78caedf0c0ce83675569502d150fcc44e5f9868c..ae6b43a49986380a521dcfbe8d5dc9e388121694 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
 @@ -26,6 +26,7 @@
@@ -6702,7 +6870,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82
  #include <JavaScriptCore/InspectorAgentRegistry.h>
  #include <JavaScriptCore/InspectorTargetAgent.h>
  #include <WebCore/PageIdentifier.h>
-@@ -37,10 +38,22 @@ namespace Inspector {
+@@ -37,10 +38,23 @@ namespace Inspector {
  class BackendDispatcher;
  class FrontendChannel;
  class FrontendRouter;
@@ -6715,7 +6883,8 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82
 +
 +class WebPageInspectorControllerObserver {
 +public:
-+    virtual void didCreateInspectorController(WebPageInspectorController&) = 0;
++    virtual void didCreateInspectorController(WebPageProxy&) = 0;
++    virtual void willDestroyInspectorController(WebPageProxy&) = 0;
 +    virtual void didCreateTarget(Inspector::InspectorTarget&) = 0;
 +
 +protected:
@@ -6725,7 +6894,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82
  class WebPageInspectorController {
      WTF_MAKE_NONCOPYABLE(WebPageInspectorController);
      WTF_MAKE_FAST_ALLOCATED;
-@@ -48,7 +61,13 @@ public:
+@@ -48,7 +62,13 @@ public:
      WebPageInspectorController(WebPageProxy&);
  
      void init();
@@ -6739,7 +6908,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82
  
      bool hasLocalFrontend() const;
  
-@@ -57,6 +76,8 @@ public:
+@@ -57,6 +77,8 @@ public:
      void disconnectAllFrontends();
  
      void dispatchMessageFromFrontend(const String& message);
@@ -6748,7 +6917,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82
  
  #if ENABLE(REMOTE_INSPECTOR)
      void setIndicating(bool);
-@@ -75,6 +96,7 @@ public:
+@@ -75,6 +97,7 @@ public:
  
  private:
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -6756,7 +6925,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..9bc67fcf707bc191ccc3ac1372afef82
  
      WebPageProxy& m_page;
      Ref<Inspector::FrontendRouter> m_frontendRouter;
-@@ -82,6 +104,8 @@ private:
+@@ -82,6 +105,8 @@ private:
      Inspector::AgentRegistry m_agents;
      Inspector::InspectorTargetAgent* m_targetAgent;
      HashMap<String, std::unique_ptr<InspectorTargetProxy>> m_targets;
