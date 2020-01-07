@@ -19,11 +19,11 @@ import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
 import { CRSession, CRSessionEvents } from './crConnection';
 import { Events } from '../events';
-import { CRWorker } from './features/crWorkers';
-import { Page } from '../page';
+import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
 import { debugError } from '../helper';
 import { CRPage } from './crPage';
+import { CRExecutionContext } from './crExecutionContext';
 
 const targetSymbol = Symbol('target');
 
@@ -35,7 +35,7 @@ export class CRTarget {
   private _sessionFactory: () => Promise<CRSession>;
   private _pagePromise: Promise<Page> | null = null;
   _crPage: CRPage | null = null;
-  private _workerPromise: Promise<CRWorker> | null = null;
+  private _workerPromise: Promise<Worker> | null = null;
   readonly _initializedPromise: Promise<boolean>;
   _initializedCallback: (value?: unknown) => void;
   _isInitialized: boolean;
@@ -98,13 +98,20 @@ export class CRTarget {
     return this._pagePromise;
   }
 
-  async _worker(): Promise<CRWorker | null> {
+  async _worker(): Promise<Worker | null> {
     if (this._targetInfo.type !== 'service_worker' && this._targetInfo.type !== 'shared_worker')
       return null;
     if (!this._workerPromise) {
       // TODO(einbinder): Make workers send their console logs.
-      this._workerPromise = this._sessionFactory()
-          .then(client => new CRWorker(client, this._targetInfo.url, () => { } /* consoleAPICalled */, () => { } /* exceptionThrown */));
+      this._workerPromise = this._sessionFactory().then(session => {
+        const worker = new Worker(this._targetInfo.url);
+        session.once('Runtime.executionContextCreated', async event => {
+          worker._createExecutionContext(new CRExecutionContext(session, event.context));
+        });
+        // This might fail if the target is closed before we recieve all execution contexts.
+        session.send('Runtime.enable', {}).catch(debugError);
+        return worker;
+      });
     }
     return this._workerPromise;
   }

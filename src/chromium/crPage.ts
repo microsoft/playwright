@@ -30,9 +30,9 @@ import * as dialog from '../dialog';
 import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { getAccessibilityTree } from './crAccessibility';
-import { CRCoverage } from './features/crCoverage';
-import { CRPDF, PDFOptions } from './features/crPdf';
-import { CRWorkers, CRWorker } from './features/crWorkers';
+import { CRCoverage } from './crCoverage';
+import { CRPDF, PDFOptions } from './crPdf';
+import { CRWorkers } from './crWorkers';
 import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
 import * as types from '../types';
@@ -46,6 +46,7 @@ export class CRPage implements PageDelegate {
   _client: CRSession;
   private readonly _page: ChromiumPage;
   readonly _networkManager: CRNetworkManager;
+  private _workers: CRWorkers;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
   private _eventListeners: RegisteredListener[];
@@ -59,7 +60,8 @@ export class CRPage implements PageDelegate {
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
     this._page = new ChromiumPage(client, this, browserContext);
-    this._networkManager = this._page._networkManager;
+    this._networkManager = new CRNetworkManager(client, this._page);
+    this._workers = new CRWorkers(client, this._page);
 
     this._eventListeners = [
       helper.addEventListener(client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
@@ -484,23 +486,15 @@ export class CRPage implements PageDelegate {
 export class ChromiumPage extends Page {
   readonly coverage: CRCoverage;
   private _pdf: CRPDF;
-  private _workers: CRWorkers;
-  _networkManager: CRNetworkManager;
 
   constructor(client: CRSession, delegate: CRPage, browserContext: BrowserContext) {
     super(delegate, browserContext);
     this.coverage = new CRCoverage(client);
     this._pdf = new CRPDF(client);
-    this._workers = new CRWorkers(client, this, this._addConsoleMessage.bind(this), error => this.emit(Events.Page.PageError, error));
-    this._networkManager = new CRNetworkManager(client, this);
   }
 
   async pdf(options?: PDFOptions): Promise<platform.BufferType> {
     return this._pdf.generate(options);
-  }
-
-  workers(): CRWorker[] {
-    return this._workers.list();
   }
 }
 

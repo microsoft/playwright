@@ -168,13 +168,13 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       testRunner.loadTests(require('./waittask.spec.js'), testOptions);
       testRunner.loadTests(require('./interception.spec.js'), testOptions);
       testRunner.loadTests(require('./geolocation.spec.js'), testOptions);
+      testRunner.loadTests(require('./workers.spec.js'), testOptions);
 
       if (CHROME) {
         testRunner.loadTests(require('./chromium/chromium.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/coverage.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/pdf.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/session.spec.js'), testOptions);
-        testRunner.loadTests(require('./chromium/workers.spec.js'), testOptions);
       }
 
       if (CHROME || FFOX) {

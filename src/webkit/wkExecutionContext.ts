@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { WKTargetSession, isSwappedOutError } from './wkConnection';
+import { WKSession, isSwappedOutError } from './wkConnection';
 import { helper } from '../helper';
 import { valueFromRemoteObject, releaseObject } from './wkProtocolHelper';
 import { Protocol } from './protocol';
@@ -26,15 +26,15 @@ const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private _globalObjectId?: Promise<string>;
-  _session: WKTargetSession;
-  _contextId: number;
+  _session: WKSession;
+  _contextId: number | undefined;
   private _contextDestroyedCallback: () => void;
   private _executionContextDestroyedPromise: Promise<unknown>;
   _jsonStringifyObjectId: Protocol.Runtime.RemoteObjectId | undefined;
 
-  constructor(client: WKTargetSession, contextPayload: Protocol.Runtime.ExecutionContextDescription) {
+  constructor(client: WKSession, contextId: number | undefined) {
     this._session = client;
-    this._contextId = contextPayload.id;
+    this._contextId = contextId;
     this._contextDestroyedCallback = null;
     this._executionContextDestroyedPromise = new Promise((resolve, reject) => {
       this._contextDestroyedCallback = resolve;

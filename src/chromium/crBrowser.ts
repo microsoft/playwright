@@ -20,7 +20,7 @@ import { Events as CommonEvents } from '../events';
 import { assert, helper } from '../helper';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { CRConnection, ConnectionEvents, CRSession } from './crConnection';
-import { Page } from '../page';
+import { Page, Worker } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
@@ -28,7 +28,6 @@ import * as browser from '../browser';
 import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
-import { CRWorker } from './features/crWorkers';
 import { ConnectionTransport } from '../transport';
 import { readProtocolStream } from './crProtocolHelper';
 
@@ -238,7 +237,7 @@ export class CRBrowser extends browser.Browser {
     return [...this._targets.values()].find(t => t.type() === 'browser');
   }
 
-  serviceWorker(target: CRTarget): Promise<CRWorker | null> {
+  serviceWorker(target: CRTarget): Promise<Worker | null> {
     return target._worker();
   }
 
