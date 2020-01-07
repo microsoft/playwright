@@ -1781,10 +1781,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..0031ff4cad5d479db52122f69c1cb6b0d278dbd6
+index 0000000000000000000000000000000000000000..6514d6e912e51268a2a4bd08024190bb1c449e7a
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,661 @@
+@@ -0,0 +1,671 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2306,7 +2306,15 @@ index 0000000000000000000000000000000000000000..0031ff4cad5d479db52122f69c1cb6b0
 +    frame.textInputProcessor().commitCompositionWith(text);
 +  }
 +
-+  async getFullAXTree() {
++  async getFullAXTree({objectId}) {
++    let unsafeObject = null;
++    if (objectId) {
++      const executionContext = this._ensureExecutionContext(this._frameTree.mainFrame());
++      unsafeObject = executionContext.unsafeObject(objectId);
++      if (!unsafeObject)
++        throw new Error(`No object found for id "${objectId}"`);
++    }
++
 +    const service = Cc["@mozilla.org/accessibilityService;1"]
 +      .getService(Ci.nsIAccessibilityService);
 +    const document = this._frameTree.mainFrame().domWindow().document;
@@ -2351,6 +2359,8 @@ index 0000000000000000000000000000000000000000..0031ff4cad5d479db52122f69c1cb6b0
 +        role: service.getStringRole(accElement.role),
 +        name: accElement.name || '',
 +      };
++      if (unsafeObject && unsafeObject === accElement.DOMNode)
++        tree.foundObject = true;
 +      for (const userStringProperty of [
 +        'value',
 +        'description'
@@ -2388,7 +2398,7 @@ index 0000000000000000000000000000000000000000..0031ff4cad5d479db52122f69c1cb6b0
 +      if (states['expanded'])
 +        tree['expanded'] = true;
 +      else if (states['collapsed'])
-+        tree['expanded'] = false
++        tree['expanded'] = false;
 +      if (!states['enabled'])
 +        tree['disabled'] = true;
 +
@@ -3184,7 +3194,7 @@ index 0000000000000000000000000000000000000000..1a0a3130bf9509829744fadc692a7975
 +
 diff --git a/testing/juggler/protocol/AccessibilityHandler.js b/testing/juggler/protocol/AccessibilityHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..fc8a7397e50a3316760bd0b4fee74ef7fb97e1c5
+index 0000000000000000000000000000000000000000..a2d3b79469566ca2edb7d864621f708537d48301
 --- /dev/null
 +++ b/testing/juggler/protocol/AccessibilityHandler.js
 @@ -0,0 +1,15 @@
@@ -3194,8 +3204,8 @@ index 0000000000000000000000000000000000000000..fc8a7397e50a3316760bd0b4fee74ef7
 +    this._contentSession = contentSession;
 +  }
 +
-+  async getFullAXTree() {
-+    return await this._contentSession.send('Page.getFullAXTree');
++  async getFullAXTree(params) {
++    return await this._contentSession.send('Page.getFullAXTree', params);
 +  }
 +
 +  dispose() { }
@@ -4134,10 +4144,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..fbffd5bc1c20d012aec35e9f651b8fb3bfb7e2af
+index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79f6f1bd6b
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,669 @@
+@@ -0,0 +1,673 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4216,6 +4226,8 @@ index 0000000000000000000000000000000000000000..fbffd5bc1c20d012aec35e9f651b8fb3
 +  level: t.Optional(t.Number),
 +
 +  tag: t.Optional(t.String),
++
++  foundObject: t.Optional(t.Boolean),
 +}
 +
 +const Browser = {
@@ -4794,7 +4806,9 @@ index 0000000000000000000000000000000000000000..fbffd5bc1c20d012aec35e9f651b8fb3
 +  events: {},
 +  methods: {
 +    'getFullAXTree': {
-+      params: {},
++      params: {
++        objectId: t.Optional(t.String),
++      },
 +      returns: {
 +        tree:types.AXTree
 +      },
