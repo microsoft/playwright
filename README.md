@@ -1,5 +1,41 @@
+# Playwright
 
-# Contributing
+[![npm version](https://badge.fury.io/js/playwright.svg)](https://badge.fury.io/js/playwright)
+
+Playwright is a Node library to automate web browsers (Chromium, Webkit and Firefox).
+
+## Getting started
+
+### Installation
+
+```
+npm i playwright
+```
+
+### Usage
+
+Playwright can be used to create a browser instance, open pages, and then manipulate them. See [API docs](https://github.com/microsoft/playwright/blob/master/docs/api.md) for a comprehensive list.
+
+#### Example
+
+This code snippet navigates to example.com in the Webkit browser, and saves a screenshot.
+
+```js
+const pw = require('playwright');
+
+(async () => {
+    const browser = await pw.playwright('webkit').launch(); // or 'chromium', 'firefox'
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    await page.goto('https://www.example.com/');
+    await page.screenshot({ path: 'example.png' });
+
+    await browser.close();
+})();
+```
+
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
