@@ -4600,24 +4600,8 @@ index 0000000000000000000000000000000000000000..7ed58e5755340cf1233831afd2841fc1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.h
 @@ -0,0 +1,33 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#import <WebKit/WKFoundation.h>
 +#import <WebKit/WKProcessPool.h>
@@ -4655,24 +4639,8 @@ index 0000000000000000000000000000000000000000..b0bdfb97e28f3c6f5a205ab8a9ae0d45
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 @@ -0,0 +1,30 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "_WKBrowserInspector.h"
@@ -4719,24 +4687,8 @@ index 0000000000000000000000000000000000000000..c21192686c92d516778dba23ab920802
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 @@ -0,0 +1,114 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebKitBrowserInspector.h"
@@ -4855,24 +4807,8 @@ index 0000000000000000000000000000000000000000..ab6b7621d1024319f6568ebd164f22f8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspectorPrivate.h
 @@ -0,0 +1,9 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -4962,24 +4898,8 @@ index 0000000000000000000000000000000000000000..9bd1cd6c216ca24ee1a4b48da0602e67
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/gtk/WebKitBrowserInspector.h
 @@ -0,0 +1,57 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#if !defined(__WEBKIT2_H_INSIDE__) && !defined(WEBKIT2_COMPILATION)
 +#error "Only <webkit2/webkit2.h> can be included directly."
@@ -5053,24 +4973,8 @@ index 0000000000000000000000000000000000000000..11fde7598a3791335478f8072e1e3f14
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 @@ -0,0 +1,54 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#if !defined(__WEBKIT_H_INSIDE__) && !defined(WEBKIT2_COMPILATION)
 +#error "Only <wpe/webkit.h> can be included directly."
@@ -5141,24 +5045,8 @@ index 0000000000000000000000000000000000000000..11040688e00c2dd522167824b4a2912c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 @@ -0,0 +1,208 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "BrowserInspectorController.h"
@@ -5371,24 +5259,8 @@ index 0000000000000000000000000000000000000000..3b0ac3fc7b63d772be95aba35a7d4cfe
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.h
 @@ -0,0 +1,61 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -5454,24 +5326,8 @@ index 0000000000000000000000000000000000000000..46f05a2a45f4b8c3ecbdc2c606a74619
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 @@ -0,0 +1,35 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "BrowserInspectorPipe.h"
@@ -5511,24 +5367,8 @@ index 0000000000000000000000000000000000000000..ac0caaabaed9373e08c94954b853871c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorPipe.h
 @@ -0,0 +1,16 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -5549,24 +5389,8 @@ index 0000000000000000000000000000000000000000..51e2627159a743a77c38a1a7445becf9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.cpp
 @@ -0,0 +1,111 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "BrowserInspectorTargetAgent.h"
@@ -5682,24 +5506,8 @@ index 0000000000000000000000000000000000000000..65ad2cf398700345fe1fc483e153ba3d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorTargetAgent.h
 @@ -0,0 +1,44 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -5927,24 +5735,8 @@ index 0000000000000000000000000000000000000000..0424d39ac80f5b5a85f99da4406edaa8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 @@ -0,0 +1,361 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "InspectorBrowserAgent.h"
@@ -6310,24 +6102,8 @@ index 0000000000000000000000000000000000000000..1f2776965b9e070556d0861caad5935f
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 @@ -0,0 +1,77 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -6409,24 +6185,8 @@ index 0000000000000000000000000000000000000000..866db590d590db86d744434539bac4b5
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
 @@ -0,0 +1,33 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -6464,24 +6224,8 @@ index 0000000000000000000000000000000000000000..121b5969d4aae05423cca65d78880a0c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorDialogAgent.cpp
 @@ -0,0 +1,64 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "InspectorDialogAgent.h"
@@ -6550,24 +6294,8 @@ index 0000000000000000000000000000000000000000..203c203a0e223a33c10c02db4b76f6dd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorDialogAgent.h
 @@ -0,0 +1,48 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -6739,24 +6467,8 @@ index 0000000000000000000000000000000000000000..a3a3bb02dcde291ddceb7ec8a2ae865e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 @@ -0,0 +1,132 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "RemoteInspectorPipe.h"
@@ -6893,24 +6605,8 @@ index 0000000000000000000000000000000000000000..426eb17d0129e5c269639636baec1ad3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.h
 @@ -0,0 +1,43 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -7244,24 +6940,8 @@ index 0000000000000000000000000000000000000000..ca238991a6fed35f2b18d46735fbac72
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 @@ -0,0 +1,63 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -7329,24 +7009,8 @@ index 0000000000000000000000000000000000000000..71b6e3788c64ae07ef1aeba972dd859d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.h
 @@ -0,0 +1,44 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -7395,24 +7059,8 @@ index 0000000000000000000000000000000000000000..f1ebdafbfa8571bc480d00c2869a1b25
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 @@ -0,0 +1,245 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
@@ -7662,24 +7310,8 @@ index 0000000000000000000000000000000000000000..91edccac67b1efeff41ccdf922de3f03
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 @@ -0,0 +1,56 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -7740,24 +7372,8 @@ index 0000000000000000000000000000000000000000..e63ce5c577c48fef022e911092fd1755
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp
 @@ -0,0 +1,112 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorTargetProxy.h"
@@ -7874,24 +7490,8 @@ index 0000000000000000000000000000000000000000..033f936d9d3caf594b78bb6ad39249d6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
 @@ -0,0 +1,45 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -8195,24 +7795,8 @@ index 0000000000000000000000000000000000000000..e632fe864cbad952c3cc73ed9f241736
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 @@ -0,0 +1,103 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "InspectorBrowserAgentClientGLib.h"
@@ -8320,24 +7904,8 @@ index 0000000000000000000000000000000000000000..37a5e7ad390607668ff3f7eb7dba25e4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
 @@ -0,0 +1,36 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -8378,24 +7946,8 @@ index 0000000000000000000000000000000000000000..6e1b2ab05623f187a16eeed78601fa12
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 @@ -0,0 +1,47 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "DrawingAreaProxyCoordinatedGraphics.h"
@@ -8447,24 +7999,8 @@ index 0000000000000000000000000000000000000000..e9af79dad57ce75cd00799ccb0fc3c11
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
 @@ -0,0 +1,85 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
@@ -8554,24 +8090,8 @@ index 0000000000000000000000000000000000000000..5805ee6fdf4fefc31af983dd402f5735
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
 @@ -0,0 +1,22 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorTargetProxy.h"
@@ -8611,24 +8131,8 @@ index 0000000000000000000000000000000000000000..03aff71e9f98e9f10742102f16ed2126
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
 @@ -0,0 +1,29 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#pragma once
 +
@@ -8662,24 +8166,8 @@ index 0000000000000000000000000000000000000000..e3062b3651f3a42314650e5d5c448d18
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
 @@ -0,0 +1,54 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#import "config.h"
 +#import "InspectorBrowserAgentClientMac.h"
@@ -8851,24 +8339,8 @@ index 0000000000000000000000000000000000000000..71d742789cbc6bcec05ca1e7051992f4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorEmulationAgentMac.mm
 @@ -0,0 +1,22 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#import "config.h"
 +#import "WebPageInspectorEmulationAgent.h"
@@ -8895,24 +8367,8 @@ index 0000000000000000000000000000000000000000..08394ef65f304f373e922bade00b404c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 @@ -0,0 +1,91 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#import "config.h"
 +#import "NativeWebMouseEvent.h"
@@ -9008,24 +8464,8 @@ index 0000000000000000000000000000000000000000..2061f6d129bffbfab0dddbf2caf94870
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
 @@ -0,0 +1,20 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#import "config.h"
 +#import "WebPageInspectorTargetProxy.h"
@@ -9050,24 +8490,8 @@ index 0000000000000000000000000000000000000000..2fef19fd5ee354951c4c2fc06ff63f58
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
 @@ -0,0 +1,18 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -9090,24 +8514,8 @@ index 0000000000000000000000000000000000000000..bbcba6f0a654dd317264408a2d275e60
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
 @@ -0,0 +1,76 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
@@ -9188,24 +8596,8 @@ index 0000000000000000000000000000000000000000..74dace1cc7c96a039e2095d38da305be
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp
 @@ -0,0 +1,18 @@
-+/**
-+ * Copyright (c) Microsoft Corporation.
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Library General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Library General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Library General Public License
-+ * along with this library; see the file COPYING.LIB. If not, write to
-+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-+ * Boston, MA 02110-1301, USA.
-+ */
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT license.
 +
 +#include "config.h"
 +#include "WebPageInspectorTargetProxy.h"
