@@ -127,8 +127,7 @@ export class WKBrowser extends browser.Browser {
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
         const pageProxies = Array.from(this._pageProxies.values()).filter(proxy => proxy._browserContext === context);
-        const pages = await Promise.all(pageProxies.map(proxy => proxy.page()));
-        return pages.filter(page => !!page);
+        return await Promise.all(pageProxies.map(proxy => proxy.page()));
       },
 
       newPage: async (): Promise<Page> => {
