@@ -577,7 +577,7 @@ Connects to the browser server and returns a <[Browser]> object.
 - returns: <?[ChildProcess]> Spawned browser server process.
 
 #### browserServer.wsEndpoint()
-- returns: <[string]> Browser websocket url.
+- returns: <?[string]> Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to `playwright.connect`.
 
