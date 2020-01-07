@@ -161,8 +161,11 @@ function compareDocumentations(actual, expected) {
     const propertyDiff = diff(actualProperties, expectedProperties);
     for (const propertyName of propertyDiff.extra)
       errors.push(`Non-existing property found: ${className}.${propertyName}`);
-    for (const propertyName of propertyDiff.missing)
+    for (const propertyName of propertyDiff.missing) {
+      if (propertyName === 'T')
+        continue;
       errors.push(`Property not found: ${className}.${propertyName}`);
+    }
 
     const actualEvents = Array.from(actualClass.events.keys()).sort();
     const expectedEvents = Array.from(expectedClass.events.keys()).sort();
@@ -191,6 +194,8 @@ function compareDocumentations(actual, expected) {
   function checkType(source, actual, expected) {
     // TODO(@JoelEinbinder): check functions and Serializable
     if (actual.name.includes('unction') || actual.name.includes('Serializable'))
+      return;
+    if (expected.name === 'T' || expected.name.includes('[T]'))
       return;
     // We don't have nullchecks on for TypeScript
     const actualName = actual.name.replace(/[\? ]/g, '').replace(/ElementHandle\<Node\>/g, 'ElementHandle');
