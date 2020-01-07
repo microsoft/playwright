@@ -20,6 +20,7 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 
 import { EVALUATION_SCRIPT_URL } from './crExecutionContext';
+import { Coverage } from '../page';
 
 type CoverageEntry = {
   url: string,
@@ -27,11 +28,12 @@ type CoverageEntry = {
   ranges : {start: number, end: number}[]
 };
 
-export class CRCoverage {
+export class CRCoverage extends Coverage {
   private _jsCoverage: JSCoverage;
   private _cssCoverage: CSSCoverage;
 
   constructor(client: CRSession) {
+    super();
     this._jsCoverage = new JSCoverage(client);
     this._cssCoverage = new CSSCoverage(client);
   }

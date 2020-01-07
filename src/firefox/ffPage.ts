@@ -20,7 +20,7 @@ import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as dom from '../dom';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
-import { Page, PageDelegate } from '../page';
+import { Page, PageDelegate, Coverage } from '../page';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Events } from '../events';
 import * as dialog from '../dialog';
@@ -348,6 +348,10 @@ export class FFPage implements PageDelegate {
 
   async getAccessibilityTree() : Promise<accessibility.AXNode> {
     return getAccessibilityTree(this._session);
+  }
+
+  coverage(): Coverage | undefined {
+    return undefined;
   }
 }
 

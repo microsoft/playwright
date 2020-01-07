@@ -69,6 +69,8 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
 
   getAccessibilityTree(): Promise<accessibility.AXNode>;
+  pdf?: (options?: types.PDFOptions) => Promise<platform.BufferType>;
+  coverage(): Coverage | undefined;
 }
 
 type PageState = {
@@ -105,6 +107,8 @@ export class Page extends platform.EventEmitter {
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
   private _workers = new Map<string, Worker>();
+  readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
+  readonly coverage: Coverage | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -128,6 +132,9 @@ export class Page extends platform.EventEmitter {
     this._timeoutSettings = new TimeoutSettings();
     this._screenshotter = new Screenshotter(this);
     this._frameManager = new frames.FrameManager(this);
+    if (delegate.pdf)
+      this.pdf = delegate.pdf.bind(delegate);
+    this.coverage = delegate.coverage();
   }
 
   _didClose() {
@@ -544,5 +551,26 @@ export class Worker {
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
+  }
+}
+
+export class Coverage {
+  startJSCoverage(options: {
+    resetOnNavigation?: boolean;
+    reportAnonymousScripts?: boolean;
+  }): Promise<void> {
+    throw new Error('not implemented');
+  }
+
+  stopJSCoverage(): Promise<types.CoverageEntry[]> {
+    throw new Error('not implemented');
+  }
+
+  startCSSCoverage(options: { resetOnNavigation?: boolean; } = {}): Promise<void> {
+    throw new Error('not implemented');
+  }
+
+  stopCSSCoverage(): Promise<types.CoverageEntry[]> {
+    throw new Error('not implemented');
   }
 }

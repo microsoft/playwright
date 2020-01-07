@@ -17,14 +17,13 @@
 
 import { Events } from '../events';
 import { debugError } from '../helper';
-import { Worker } from '../page';
+import { Page, Worker } from '../page';
 import { CRConnection, CRSession } from './crConnection';
 import { CRExecutionContext } from './crExecutionContext';
-import { ChromiumPage } from './crPage';
 import { exceptionToError, toConsoleMessageLocation } from './crProtocolHelper';
 
 export class CRWorkers {
-  constructor(client: CRSession, page: ChromiumPage) {
+  constructor(client: CRSession, page: Page) {
     client.on('Target.attachedToTarget', event => {
       if (event.targetInfo.type !== 'worker')
         return;
