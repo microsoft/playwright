@@ -33,7 +33,7 @@
   "author": {
     "name": "Microsoft Corporation"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "debug": "^4.1.0",
     "extract-zip": "^1.6.6",
