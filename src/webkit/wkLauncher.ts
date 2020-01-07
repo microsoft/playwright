@@ -76,7 +76,7 @@ export class WKLauncher {
     }
     webkitArguments.push('--inspector-pipe');
     // Headless options is only implemented on Mac at the moment.
-//    if (process.platform === 'darwin' && options.headless !== false)
+    if (process.platform === 'darwin' && options.headless !== false)
       webkitArguments.push('--headless');
 
     const launchedProcess = await launchProcess({
