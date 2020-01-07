@@ -163,7 +163,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const browserServer = await playwright.launchServer(options);
         const browser = await browserServer.connect();
         expect((await browser.defaultContext().pages()).length).toBe(1);
-        expect(browserServer.wsEndpoint()).toBe('');
+        expect(browserServer.wsEndpoint()).toBe(null);
         const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
@@ -174,7 +174,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         options.args = ['--remote-debugging-pipe'].concat(options.args || []);
         const browserServer = await playwright.launchServer(options);
         const browser = await browserServer.connect();
-        expect(browserServer.wsEndpoint()).toBe('');
+        expect(browserServer.wsEndpoint()).toBe(null);
         const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
