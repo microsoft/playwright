@@ -20,6 +20,7 @@ import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
+import * as platform from '../platform';
 
 export class FFNetworkManager {
   private _session: FFSession;
@@ -76,7 +77,7 @@ export class FFNetworkManager {
       });
       if (response.evicted)
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
-      return Buffer.from(response.base64body, 'base64');
+      return platform.Buffer.from(response.base64body, 'base64');
     };
     const headers: network.Headers = {};
     for (const {name, value} of event.headers)
@@ -168,7 +169,7 @@ class InterceptableRequest implements network.RequestDelegate {
     });
   }
 
-  async fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
+  async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
     throw new Error('Fulfill is not supported in Firefox');
   }
 

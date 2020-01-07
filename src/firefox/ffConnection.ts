@@ -16,17 +16,17 @@
  */
 
 import {assert} from '../helper';
-import {EventEmitter} from 'events';
-import * as debug from 'debug';
+import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
-const debugProtocol = debug('playwright:protocol');
+
+const debugProtocol = platform.debug('playwright:protocol');
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
 };
 
-export class FFConnection extends EventEmitter {
+export class FFConnection extends platform.EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
@@ -131,7 +131,7 @@ export const FFSessionEvents = {
   Disconnected: Symbol('Disconnected')
 };
 
-export class FFSession extends EventEmitter {
+export class FFSession extends platform.EventEmitter {
   _connection: FFConnection;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _targetType: string;

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 import * as dom from './dom';
 import * as frames from './frames';
 import { assert, debugError, helper } from './helper';
@@ -30,6 +29,7 @@ import { BrowserContext } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import Injected from './injected/injected';
 import * as accessibility from './accessibility';
+import * as platform from './platform';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -56,7 +56,7 @@ export interface PageDelegate {
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
   canScreenshotOutsideViewport(): boolean;
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
-  takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer>;
+  takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType>;
   resetViewport(oldSize: types.Size): Promise<void>;
 
   isElementHandle(remoteObject: any): boolean;
@@ -87,7 +87,7 @@ export type FileChooser = {
   multiple: boolean
 };
 
-export class Page extends EventEmitter {
+export class Page extends platform.EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -336,7 +336,7 @@ export class Page extends EventEmitter {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
       if (helper.isString(urlOrPredicate) || urlOrPredicate instanceof RegExp)
-        return helper.urlMatches(request.url(), urlOrPredicate);
+        return platform.urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
     }, timeout, this._disconnectedPromise);
   }
@@ -345,7 +345,7 @@ export class Page extends EventEmitter {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
       if (helper.isString(urlOrPredicate) || urlOrPredicate instanceof RegExp)
-        return helper.urlMatches(response.url(), urlOrPredicate);
+        return platform.urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
     }, timeout, this._disconnectedPromise);
   }
@@ -430,7 +430,7 @@ export class Page extends EventEmitter {
     await this._delegate.authenticate(credentials);
   }
 
-  async screenshot(options?: types.ScreenshotOptions): Promise<Buffer> {
+  async screenshot(options?: types.ScreenshotOptions): Promise<platform.BufferType> {
     return this._screenshotter.screenshotPage(options);
   }
 

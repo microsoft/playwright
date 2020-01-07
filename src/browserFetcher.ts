@@ -19,16 +19,17 @@ import * as extract from 'extract-zip';
 import * as fs from 'fs';
 import * as ProxyAgent from 'https-proxy-agent';
 import * as path from 'path';
+import * as platform from './platform';
 // @ts-ignore
 import { getProxyForUrl } from 'proxy-from-env';
 import * as removeRecursive from 'rimraf';
 import * as URL from 'url';
-import { assert, helper } from './helper';
+import { assert } from './helper';
 
-const readdirAsync = helper.promisify(fs.readdir.bind(fs));
-const mkdirAsync = helper.promisify(fs.mkdir.bind(fs));
-const unlinkAsync = helper.promisify(fs.unlink.bind(fs));
-const chmodAsync = helper.promisify(fs.chmod.bind(fs));
+const readdirAsync = platform.promisify(fs.readdir.bind(fs));
+const mkdirAsync = platform.promisify(fs.mkdir.bind(fs));
+const unlinkAsync = platform.promisify(fs.unlink.bind(fs));
+const chmodAsync = platform.promisify(fs.chmod.bind(fs));
 
 function existsAsync(filePath) {
   let fulfill = null;

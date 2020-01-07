@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
-import * as types from './types';
-import * as kurl from 'url';
 import { TimeoutError } from './errors';
+import * as platform from './platform';
 
-export const debugError = debug(`playwright:error`);
+export const debugError = platform.debug(`playwright:error`);
 
 export type RegisteredListener = {
-  emitter: NodeJS.EventEmitter;
+  emitter: platform.EventEmitterType;
   eventName: (string | symbol);
   handler: (...args: any[]) => void;
 };
@@ -63,7 +61,7 @@ class Helper {
   }
 
   static addEventListener(
-    emitter: NodeJS.EventEmitter,
+    emitter: platform.EventEmitterType,
     eventName: (string | symbol),
     handler: (...args: any[]) => void): RegisteredListener {
     emitter.on(eventName, handler);
@@ -71,7 +69,7 @@ class Helper {
   }
 
   static removeEventListeners(listeners: Array<{
-      emitter: NodeJS.EventEmitter;
+      emitter: platform.EventEmitterType;
       eventName: (string | symbol);
       handler: (...args: any[]) => void;
     }>) {
@@ -88,24 +86,8 @@ class Helper {
     return typeof obj === 'number' || obj instanceof Number;
   }
 
-  static promisify(nodeFunction: Function): Function {
-    function promisified(...args) {
-      return new Promise((resolve, reject) => {
-        function callback(err, ...result) {
-          if (err)
-            return reject(err);
-          if (result.length === 1)
-            return resolve(result[0]);
-          return resolve(result);
-        }
-        nodeFunction.call(null, ...args, callback);
-      });
-    }
-    return promisified;
-  }
-
   static async waitForEvent(
-    emitter: NodeJS.EventEmitter,
+    emitter: platform.EventEmitterType,
     eventName: (string | symbol),
     predicate: Function,
     timeout: number,
@@ -158,22 +140,6 @@ class Helper {
       if (timeoutTimer)
         clearTimeout(timeoutTimer);
     }
-  }
-
-  static urlMatches(urlString: string, match: types.URLMatch | undefined): boolean {
-    if (match === undefined)
-      return true;
-    if (typeof match === 'string')
-      return match === urlString;
-    if (match instanceof RegExp)
-      return match.test(urlString);
-    assert(typeof match === 'function', 'url parameter should be string, RegExp or function');
-
-    try {
-      return match(new kurl.URL(urlString));
-    } catch (e) {
-    }
-    return false;
   }
 }
 

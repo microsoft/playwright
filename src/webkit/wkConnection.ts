@@ -16,13 +16,12 @@
  */
 
 import { assert } from '../helper';
-import * as debug from 'debug';
-import { EventEmitter } from 'events';
+import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
-const debugProtocol = debug('playwright:protocol');
-const debugWrappedMessage = require('debug')('wrapped');
+const debugProtocol = platform.debug('playwright:protocol');
+const debugWrappedMessage = platform.debug('wrapped');
 
 export const WKConnectionEvents = {
   PageProxyCreated: Symbol('ConnectionEvents.PageProxyCreated'),
@@ -35,7 +34,7 @@ export const WKPageProxySessionEvents = {
   DidCommitProvisionalTarget: Symbol('PageProxyEvents.DidCommitProvisionalTarget'),
 };
 
-export class WKConnection extends EventEmitter {
+export class WKConnection extends platform.EventEmitter {
   private _lastId = 0;
   private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject:  (e: Error) => void, error: Error, method: string}>();
   private readonly _transport: ConnectionTransport;
@@ -137,7 +136,7 @@ export const WKTargetSessionEvents = {
   Disconnected: Symbol('TargetSessionEvents.Disconnected')
 };
 
-export class WKPageProxySession extends EventEmitter {
+export class WKPageProxySession extends platform.EventEmitter {
   _connection: WKConnection;
   private readonly _sessions = new Map<string, WKTargetSession>();
   private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
@@ -215,7 +214,7 @@ export class WKPageProxySession extends EventEmitter {
   }
 }
 
-export class WKTargetSession extends EventEmitter {
+export class WKTargetSession extends platform.EventEmitter {
   _pageProxySession: WKPageProxySession;
   private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private readonly _targetType: string;

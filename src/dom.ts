@@ -23,10 +23,7 @@ import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 import { Page } from './page';
-import * as path from 'path';
-import * as fs from 'fs';
-
-const readFileAsync = helper.promisify(fs.readFile);
+import * as platform from './platform';
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -409,9 +406,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const filePayloads = await Promise.all(files.map(async item => {
       if (typeof item === 'string') {
         const file: types.FilePayload = {
-          name: path.basename(item),
+          name: platform.basename(item),
           type: 'application/octet-stream',
-          data: (await readFileAsync(item)).toString('base64')
+          data: await platform.readFileAsync(item, 'base64')
         };
         return file;
       }
@@ -445,7 +442,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async screenshot(options?: types.ElementScreenshotOptions): Promise<string | Buffer> {
+  async screenshot(options?: types.ElementScreenshotOptions): Promise<string | platform.BufferType> {
     return this._page._screenshotter.screenshotElement(this, options);
   }
 

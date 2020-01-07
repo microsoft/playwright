@@ -15,19 +15,18 @@
  * limitations under the License.
  */
 
-import * as debug from 'debug';
-import { EventEmitter } from 'events';
+import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
 import { assert } from '../helper';
 import { Protocol } from './protocol';
 
-const debugProtocol = debug('playwright:protocol');
+const debugProtocol = platform.debug('playwright:protocol');
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
 };
 
-export class CRConnection extends EventEmitter {
+export class CRConnection extends platform.EventEmitter {
   private _lastId = 0;
   private _transport: ConnectionTransport;
   private _sessions = new Map<string, CRSession>();
@@ -113,7 +112,7 @@ export const CRSessionEvents = {
   Disconnected: Symbol('Events.CDPSession.Disconnected')
 };
 
-export class CRSession extends EventEmitter {
+export class CRSession extends platform.EventEmitter {
   _connection: CRConnection;
   private _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private _targetType: string;

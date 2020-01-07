@@ -16,7 +16,7 @@
 
 import { BrowserContext, BrowserContextOptions } from './browserContext';
 import { ChildProcess } from 'child_process';
-import { EventEmitter } from 'events';
+import { EventEmitter } from './platform';
 
 export class Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext> { throw new Error('Not implemented'); }
