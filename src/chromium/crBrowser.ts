@@ -305,15 +305,14 @@ export class CRBrowser extends browser.Browser {
 }
 
 export async function createTransport(options: CRConnectOptions): Promise<ConnectionTransport> {
-  assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
+  assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to connect');
   let transport: ConnectionTransport | undefined;
-  let connectionURL: string = '';
   if (options.transport) {
     transport = options.transport;
   } else if (options.browserWSEndpoint) {
-    connectionURL = options.browserWSEndpoint;
     transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
   } else if (options.browserURL) {
+    let connectionURL: string;
     try {
       const data = await platform.fetchUrl(new URL('/json/version', options.browserURL).href);
       connectionURL = JSON.parse(data).webSocketDebuggerUrl;

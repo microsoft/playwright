@@ -22,9 +22,16 @@ import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import * as types from '../types';
 import { Page } from '../page';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 import { ConnectionEvents, FFConnection, FFSessionEvents } from './ffConnection';
 import { FFPage } from './ffPage';
+import * as platform from '../platform';
+
+export type FFConnectOptions = {
+  slowMo?: number,
+  browserWSEndpoint?: string;
+  transport?: ConnectionTransport;
+};
 
 export class FFBrowser extends browser.Browser {
   _connection: FFConnection;
@@ -33,11 +40,13 @@ export class FFBrowser extends browser.Browser {
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
 
-  static async create(transport: ConnectionTransport) {
+  static async connect(options: FFConnectOptions): Promise<FFBrowser> {
+    const transport = await createTransport(options);
     const connection = new FFConnection(transport);
     const {browserContextIds} = await connection.send('Target.getBrowserContexts');
     const browser = new FFBrowser(connection, browserContextIds);
     await connection.send('Target.enable');
+    await browser._waitForTarget(t => t.type() === 'page');
     return browser;
   }
 
@@ -269,4 +278,14 @@ export class Target {
   browser() {
     return this._browser;
   }
+}
+
+export async function createTransport(options: FFConnectOptions): Promise<ConnectionTransport> {
+  assert(Number(!!options.browserWSEndpoint) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint or transport must be passed to connect');
+  let transport: ConnectionTransport | undefined;
+  if (options.transport)
+    transport = options.transport;
+  else if (options.browserWSEndpoint)
+    transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
+  return SlowMoTransport.wrap(transport, options.slowMo);
 }

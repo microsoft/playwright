@@ -37,5 +37,7 @@ module.exports.playwright = browser => {
 module.exports.connect = browser => {
   if (browser === 'chromium')
     return api.ChromiumBrowser.connect;
+  if (browser === 'firefox')
+    return api.FirefoxBrowser.connect;
   throw new Error(`Unsupported browser "${browser}"`);
 };
