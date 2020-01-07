@@ -25,7 +25,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Page.evaluate', function() {
-    fit('should work', async({page, server}) => {
+    it('should work', async({page, server}) => {
       const result = await page.evaluate(() => 7 * 3);
       expect(result).toBe(21);
     });
