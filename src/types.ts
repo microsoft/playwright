@@ -16,7 +16,6 @@
 
 import * as js from './javascript';
 import * as dom from './dom';
-import * as kurl from 'url';
 
 type Boxed<Args extends any[]> = { [Index in keyof Args]: Args[Index] | js.JSHandle<Args[Index]> };
 type PageFunction<Args extends any[], R = any> = string | ((...args: Args) => R | Promise<R>);
@@ -63,7 +62,7 @@ export type Viewport = {
   hasTouch?: boolean;
 };
 
-export type URLMatch = string | RegExp | ((url: kurl.URL) => boolean);
+export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
 export type Credentials = {
   username: string;

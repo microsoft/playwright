@@ -15,14 +15,11 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as mime from 'mime';
 import * as dom from './dom';
-import { assert, helper } from './helper';
+import { assert } from './helper';
 import * as types from './types';
 import { Page } from './page';
-
-const writeFileAsync = helper.promisify(fs.writeFile);
+import * as platform from './platform';
 
 export class Screenshotter {
   private _queue = new TaskQueue();
@@ -39,7 +36,7 @@ export class Screenshotter {
     }
   }
 
-  async screenshotPage(options: types.ScreenshotOptions = {}): Promise<Buffer> {
+  async screenshotPage(options: types.ScreenshotOptions = {}): Promise<platform.BufferType> {
     const format = validateScreeshotOptions(options);
     return this._queue.postTask(async () => {
       let overridenViewport: types.Viewport | undefined;
@@ -82,7 +79,7 @@ export class Screenshotter {
     });
   }
 
-  async screenshotElement(handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
+  async screenshotElement(handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<platform.BufferType> {
     const format = validateScreeshotOptions(options);
     const rewrittenOptions: types.ScreenshotOptions = { ...options };
     return this._queue.postTask(async () => {
@@ -121,7 +118,7 @@ export class Screenshotter {
     });
   }
 
-  private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer> {
+  private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType> {
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
@@ -129,7 +126,7 @@ export class Screenshotter {
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();
     if (options.path)
-      await writeFileAsync(options.path, buffer);
+      await platform.writeFileAsync(options.path, buffer);
     return buffer;
   }
 }
@@ -168,7 +165,7 @@ function validateScreeshotOptions(options: types.ScreenshotOptions): 'png' | 'jp
     assert(options.type === 'png' || options.type === 'jpeg', 'Unknown options.type value: ' + options.type);
     format = options.type;
   } else if (options.path) {
-    const mimeType = mime.getType(options.path);
+    const mimeType = platform.getMimeType(options.path);
     if (mimeType === 'image/png')
       format = 'png';
     else if (mimeType === 'image/jpeg')

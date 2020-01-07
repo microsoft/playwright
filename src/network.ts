@@ -16,6 +16,7 @@
 
 import * as frames from './frames';
 import { assert } from './helper';
+import * as platform from './platform';
 
 export type NetworkCookie = {
   name: string,
@@ -202,7 +203,7 @@ export class Request {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {    // Mocking responses for dataURL requests is not currently supported.
+  async fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }) {    // Mocking responses for dataURL requests is not currently supported.
     if (this.url().startsWith('data:'))
       return;
     assert(this._delegate, 'Request Interception is not enabled!');
@@ -226,11 +227,11 @@ export type RemoteAddress = {
   port: number,
 };
 
-type GetResponseBodyCallback = () => Promise<Buffer>;
+type GetResponseBodyCallback = () => Promise<platform.BufferType>;
 
 export class Response {
   private _request: Request;
-  private _contentPromise: Promise<Buffer> | null = null;
+  private _contentPromise: Promise<platform.BufferType> | null = null;
   _finishedPromise: Promise<Error | null>;
   private _finishedPromiseCallback: any;
   private _remoteAddress: RemoteAddress;
@@ -282,7 +283,7 @@ export class Response {
     return this._headers;
   }
 
-  buffer(): Promise<Buffer> {
+  buffer(): Promise<platform.BufferType> {
     if (!this._contentPromise) {
       this._contentPromise = this._finishedPromise.then(async error => {
         if (error)
@@ -314,8 +315,8 @@ export class Response {
 
 export interface RequestDelegate {
   abort(errorCode: string): Promise<void>;
-  fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }): Promise<void>;
-  continue(overrides: { url?: string; method?: string; postData?: string; headers?: { [key: string]: string; }; }): Promise<void>;
+  fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }): Promise<void>;
+  continue(overrides: { url?: string; method?: string; postData?: string; headers?: Headers; }): Promise<void>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

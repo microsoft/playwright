@@ -14,15 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as fs from 'fs';
-import {helper, assert, debugError} from '../helper';
+
+import { assert, debugError } from '../helper';
 import { CRSession } from './crConnection';
 import { Protocol } from './protocol';
-
-const openAsync = helper.promisify(fs.open);
-const writeAsync = helper.promisify(fs.write);
-const closeAsync = helper.promisify(fs.close);
-
+import * as platform from '../platform';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)
@@ -69,26 +65,26 @@ export async function releaseObject(client: CRSession, remoteObject: Protocol.Ru
   });
 }
 
-export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<Buffer> {
+export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<platform.BufferType> {
   let eof = false;
-  let file;
+  let fd;
   if (path)
-    file = await openAsync(path, 'w');
+    fd = await platform.openFdAsync(path, 'w');
   const bufs = [];
   while (!eof) {
     const response = await client.send('IO.read', {handle});
     eof = response.eof;
-    const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
+    const buf = platform.Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
     bufs.push(buf);
     if (path)
-      await writeAsync(file, buf);
+      await platform.writeFdAsync(fd, buf);
   }
   if (path)
-    await closeAsync(file);
+    await platform.closeFdAsync(fd);
   await client.send('IO.close', {handle});
   let resultBuffer = null;
   try {
-    resultBuffer = Buffer.concat(bufs);
+    resultBuffer = platform.Buffer.concat(bufs);
   } finally {
     return resultBuffer;
   }

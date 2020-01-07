@@ -30,9 +30,8 @@ import { WKBrowser } from './wkBrowser';
 import { BrowserContext } from '../browserContext';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
 import * as types from '../types';
-import * as jpeg from 'jpeg-js';
-import { PNG } from 'pngjs';
 import * as accessibility from '../accessibility';
+import * as platform from '../platform';
 import { getAccessibilityTree } from './wkAccessibility';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -386,13 +385,13 @@ export class WKPage implements PageDelegate {
     this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<Buffer> {
+  async takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType> {
     const rect = options.clip || { x: 0, y: 0, width: viewport.width, height: viewport.height };
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
     const prefix = 'data:image/png;base64,';
-    let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
+    let buffer = platform.Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
-      buffer = jpeg.encode(PNG.sync.read(buffer)).data;
+      buffer = platform.pngToJpeg(buffer);
     return buffer;
   }
 

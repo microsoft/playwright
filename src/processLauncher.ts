@@ -21,8 +21,9 @@ import * as removeFolder from 'rimraf';
 import { helper } from './helper';
 import * as readline from 'readline';
 import { TimeoutError } from './errors';
+import * as platform from './platform';
 
-const removeFolderAsync = helper.promisify(removeFolder);
+const removeFolderAsync = platform.promisify(removeFolder);
 
 export type LaunchProcessOptions = {
   executablePath: string,

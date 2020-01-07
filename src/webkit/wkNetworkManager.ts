@@ -22,6 +22,7 @@ import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
 import * as types from '../types';
+import * as platform from '../platform';
 
 export class WKNetworkManager {
   private _session: WKTargetSession;
@@ -106,7 +107,7 @@ export class WKNetworkManager {
     const remoteAddress: network.RemoteAddress = { ip: '', port: 0 };
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', { requestId: request._requestId });
-      return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+      return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
     return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), remoteAddress, getResponseBody);
   }
@@ -208,7 +209,7 @@ class InterceptableRequest implements network.RequestDelegate {
     await this._session.send('Network.interceptAsError', { requestId: this._requestId, reason });
   }
 
-  async fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
+  async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
     await this._interceptedPromise;
 
     const base64Encoded = !!response.body && !helper.isString(response.body);
@@ -222,7 +223,7 @@ class InterceptableRequest implements network.RequestDelegate {
     if (response.contentType)
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
-      responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
+      responseHeaders['content-length'] = String(platform.Buffer.byteLength(responseBody));
 
     await this._session.send('Network.interceptWithResponse', {
       requestId: this._requestId,

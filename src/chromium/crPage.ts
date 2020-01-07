@@ -38,6 +38,7 @@ import { BrowserContext } from '../browserContext';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import * as accessibility from '../accessibility';
+import * as platform from '../platform';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -375,11 +376,11 @@ export class CRPage implements PageDelegate {
     await this._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<Buffer> {
+  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<platform.BufferType> {
     await this._client.send('Page.bringToFront', {});
     const clip = options.clip ? { ...options.clip, scale: 1 } : undefined;
     const result = await this._client.send('Page.captureScreenshot', { format, quality: options.quality, clip });
-    return Buffer.from(result.data, 'base64');
+    return platform.Buffer.from(result.data, 'base64');
   }
 
   async resetViewport(): Promise<void> {
@@ -494,7 +495,7 @@ export class ChromiumPage extends Page {
     this._networkManager = new CRNetworkManager(client, this);
   }
 
-  async pdf(options?: PDFOptions): Promise<Buffer> {
+  async pdf(options?: PDFOptions): Promise<platform.BufferType> {
     return this._pdf.generate(options);
   }
 

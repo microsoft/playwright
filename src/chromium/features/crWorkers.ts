@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from '../../platform';
 import { CRSession, CRConnection } from '../crConnection';
 import { debugError } from '../../helper';
 import { Protocol } from '../protocol';

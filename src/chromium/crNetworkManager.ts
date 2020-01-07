@@ -21,6 +21,7 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
+import * as platform from '../platform';
 import { Credentials } from '../types';
 
 export class CRNetworkManager {
@@ -188,7 +189,7 @@ export class CRNetworkManager {
     const remoteAddress: network.RemoteAddress = { ip: responsePayload.remoteIPAddress, port: responsePayload.remotePort };
     const getResponseBody = async () => {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
-      return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+      return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
     return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), remoteAddress, getResponseBody);
   }
@@ -261,7 +262,7 @@ class InterceptableRequest implements network.RequestDelegate {
         event.request.url, event.type.toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
   }
 
-  async continue(overrides: { headers?: {[key: string]: string}; } = {}) {
+  async continue(overrides: { headers?: network.Headers; } = {}) {
     await this._client.send('Fetch.continueRequest', {
       requestId: this._interceptionId,
       headers: overrides.headers ? headersArray(overrides.headers) : undefined,
@@ -272,8 +273,8 @@ class InterceptableRequest implements network.RequestDelegate {
     });
   }
 
-  async fulfill(response: { status: number; headers: {[key: string]: string}; contentType: string; body: (string | Buffer); }) {
-    const responseBody = response.body && helper.isString(response.body) ? Buffer.from(/** @type {string} */(response.body)) : /** @type {?Buffer} */(response.body || null);
+  async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
+    const responseBody = response.body && helper.isString(response.body) ? platform.Buffer.from(response.body) : (response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};
     if (response.headers) {
@@ -283,7 +284,7 @@ class InterceptableRequest implements network.RequestDelegate {
     if (response.contentType)
       responseHeaders['content-type'] = response.contentType;
     if (responseBody && !('content-length' in responseHeaders))
-      responseHeaders['content-length'] = String(Buffer.byteLength(responseBody));
+      responseHeaders['content-length'] = String(platform.Buffer.byteLength(responseBody));
 
     await this._client.send('Fetch.fulfillRequest', {
       requestId: this._interceptionId,

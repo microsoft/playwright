@@ -44,12 +44,12 @@ function checkSources(sources) {
   });
   const checker = program.getTypeChecker();
   const sourceFiles = program.getSourceFiles();
+  const errors = [];
   /** @type {!Array<!Documentation.Class>} */
   const classes = [];
   /** @type {!Map<string, string>} */
   const inheritance = new Map();
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x));
-  const errors = [];
   const documentation = new Documentation(recreateClassesWithInheritance(classes, inheritance));
 
   return {errors, documentation};
@@ -96,6 +96,30 @@ function checkSources(sources) {
         if (parentClassName)
           inheritance.set(className, parentClassName);
         excludeClasses.add(className);
+      }
+    }
+    if (!node.getSourceFile().fileName.endsWith('platform.ts')) {
+      // Only relative imports.
+      if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+        const module = node.moduleSpecifier.text;
+        if (!module.startsWith('.')) {
+          const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.moduleSpecifier.pos);
+          errors.push(`Disallowed import "${module}" at ${node.getSourceFile().fileName}:${lac.line + 1}`);
+        }
+      }
+      // No references to external types.
+      if (ts.isTypeReferenceNode(node)) {
+        const isPlatformReference = ts.isQualifiedName(node.typeName) && ts.isIdentifier(node.typeName.left) && node.typeName.left.escapedText === 'platform';
+        if (!isPlatformReference) {
+          const type = checker.getTypeAtLocation(node);
+          if (type.symbol && type.symbol.valueDeclaration) {
+            const source = type.symbol.valueDeclaration.getSourceFile();
+            if (source.fileName.includes('@types')) {
+              const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.pos);
+              errors.push(`Disallowed type reference "${type.symbol.escapedName}" at ${node.getSourceFile().fileName}:${lac.line + 1}:${lac.character + 1}`);
+            }
+          }
+        }
       }
     }
     ts.forEachChild(node, visit);

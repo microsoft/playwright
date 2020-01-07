@@ -16,7 +16,6 @@
  */
 
 import * as types from './types';
-import * as fs from 'fs';
 import * as js from './javascript';
 import * as dom from './dom';
 import * as network from './network';
@@ -26,8 +25,7 @@ import { TimeoutError } from './errors';
 import { Events } from './events';
 import { Page } from './page';
 import { ConsoleMessage } from './console';
-
-const readFileAsync = helper.promisify(fs.readFile);
+import * as platform from './platform';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -507,7 +505,7 @@ export class Frame {
       if (url !== null)
         return (await context.evaluateHandle(addScriptUrl, url, type)).asElement();
       if (path !== null) {
-        let contents = await readFileAsync(path, 'utf8');
+        let contents = await platform.readFileAsync(path, 'utf8');
         contents += '//# sourceURL=' + path.replace(/\n/g, '');
         return (await context.evaluateHandle(addScriptContent, contents, type)).asElement();
       }
@@ -557,7 +555,7 @@ export class Frame {
         return (await context.evaluateHandle(addStyleUrl, url)).asElement();
 
       if (path !== null) {
-        let contents = await readFileAsync(path, 'utf8');
+        let contents = await platform.readFileAsync(path, 'utf8');
         contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
         return (await context.evaluateHandle(addStyleContent, contents)).asElement();
       }
@@ -909,7 +907,7 @@ class LifecycleWatcher {
   }
 
   _urlMatches(urlString: string): boolean {
-    return !this._urlMatch || helper.urlMatches(urlString, this._urlMatch);
+    return !this._urlMatch || platform.urlMatches(urlString, this._urlMatch);
   }
 
   setExpectedDocumentId(documentId: string, url: string) {

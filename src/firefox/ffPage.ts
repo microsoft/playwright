@@ -31,6 +31,7 @@ import { getAccessibilityTree } from './ffAccessibility';
 import * as network from '../network';
 import * as types from '../types';
 import * as accessibility from '../accessibility';
+import * as platform from '../platform';
 
 export class FFPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -272,13 +273,13 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<Buffer> {
+  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<platform.BufferType> {
     const { data } = await this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
       fullPage: options.fullPage,
       clip: options.clip,
     });
-    return Buffer.from(data, 'base64');
+    return platform.Buffer.from(data, 'base64');
   }
 
   async resetViewport(): Promise<void> {

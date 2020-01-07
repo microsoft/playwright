@@ -27,6 +27,7 @@ import { CRPage } from './crPage';
 import * as browser from '../browser';
 import * as network from '../network';
 import * as types from '../types';
+import * as platform from '../platform';
 import { CRWorker } from './features/crWorkers';
 import { ConnectionTransport } from '../transport';
 import { readProtocolStream } from './crProtocolHelper';
@@ -268,10 +269,10 @@ export class CRBrowser extends browser.Browser {
     });
   }
 
-  async stopTracing(): Promise<Buffer> {
+  async stopTracing(): Promise<platform.BufferType> {
     assert(this._tracingClient, 'Tracing was not started.');
-    let fulfill: (buffer: Buffer) => void;
-    const contentPromise = new Promise<Buffer>(x => fulfill = x);
+    let fulfill: (buffer: platform.BufferType) => void;
+    const contentPromise = new Promise<platform.BufferType>(x => fulfill = x);
     this._tracingClient.once('Tracing.tracingComplete', event => {
       readProtocolStream(this._tracingClient, event.stream, this._tracingPath).then(fulfill);
     });

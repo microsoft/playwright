@@ -19,15 +19,16 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
+import * as platform from '../platform';
 import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
 import { TimeoutError } from '../errors';
-import { assert, helper } from '../helper';
+import { assert } from '../helper';
 import { launchProcess, waitForLine } from '../processLauncher';
 import { ConnectionTransport, PipeTransport, SlowMoTransport, WebSocketTransport } from '../transport';
 import { CRBrowser } from './crBrowser';
 import { BrowserServer } from '../browser';
 
-const mkdtempAsync = helper.promisify(fs.mkdtemp);
+const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
 const CHROME_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 

@@ -15,12 +15,7 @@
  * limitations under the License.
  */
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
-const {helper} = require('../lib/helper');
-const rmAsync = helper.promisify(require('rimraf'));
-const mkdtempAsync = helper.promisify(fs.mkdtemp);
-const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 const utils = require('./utils');
 
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, WEBKIT}) {

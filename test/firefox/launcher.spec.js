@@ -17,9 +17,9 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const {helper} = require('../../lib/helper');
-const rmAsync = helper.promisify(require('rimraf'));
-const mkdtempAsync = helper.promisify(fs.mkdtemp);
+const utils = require('../utils');
+const rmAsync = utils.promisify(require('rimraf'));
+const mkdtempAsync = utils.promisify(fs.mkdtemp);
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
 module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, playwright }) {
