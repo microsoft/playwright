@@ -18,24 +18,51 @@
 import * as http from 'http';
 import * as https from 'https';
 import * as URL from 'url';
-import * as browsers from '../browser';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as util from 'util';
+import { BrowserServer } from '../browser';
 import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnProgressCallback } from '../browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import * as types from '../types';
 import { assert } from '../helper';
-import { ConnectionTransport, WebSocketTransport, SlowMoTransport } from '../transport';
-import { ConnectionOptions, createBrowserFetcher, CRLauncher, LauncherChromeArgOptions, LauncherLaunchOptions } from './crLauncher';
+import { ConnectionTransport, WebSocketTransport, SlowMoTransport, PipeTransport } from '../transport';
 import { CRBrowser } from './crBrowser';
+import * as platform from '../platform';
+import { TimeoutError } from '../errors';
+import { launchProcess, waitForLine } from '../processLauncher';
+
+export type LauncherChromeArgOptions = {
+  headless?: boolean,
+  args?: string[],
+  userDataDir?: string,
+  devtools?: boolean,
+};
+
+export type LauncherLaunchOptions = {
+  executablePath?: string,
+  ignoreDefaultArgs?: boolean|string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  dumpio?: boolean,
+  env?: {[key: string]: string} | undefined,
+  pipe?: boolean,
+};
+
+export type ConnectionOptions = {
+  slowMo?: number,
+};
 
 export class CRPlaywright {
   private _projectRoot: string;
-  private _launcher: CRLauncher;
   readonly _revision: string;
 
   constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
-    this._launcher = new CRLauncher(projectRoot, preferredRevision);
     this._revision = preferredRevision;
   }
 
@@ -47,12 +74,88 @@ export class CRPlaywright {
   }
 
   async launch(options?: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) | undefined): Promise<CRBrowser> {
-    const server = await this._launcher.launch(options);
+    const server = await this.launchServer(options);
     return server.connect();
   }
 
-  async launchServer(options: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) = {}): Promise<browsers.BrowserServer<CRBrowser>> {
-    return this._launcher.launch(options);
+  async launchServer(options: (LauncherLaunchOptions & LauncherChromeArgOptions & ConnectionOptions) = {}): Promise<BrowserServer<CRBrowser>> {
+    const {
+      ignoreDefaultArgs = false,
+      args = [],
+      dumpio = false,
+      executablePath = null,
+      pipe = false,
+      env = process.env,
+      handleSIGINT = true,
+      handleSIGTERM = true,
+      handleSIGHUP = true,
+      slowMo = 0,
+      timeout = 30000
+    } = options;
+
+    const chromeArguments = [];
+    if (!ignoreDefaultArgs)
+      chromeArguments.push(...this.defaultArgs(options));
+    else if (Array.isArray(ignoreDefaultArgs))
+      chromeArguments.push(...this.defaultArgs(options).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+    else
+      chromeArguments.push(...args);
+
+    let temporaryUserDataDir: string | null = null;
+
+    if (!chromeArguments.some(argument => argument.startsWith('--remote-debugging-')))
+      chromeArguments.push(pipe ? '--remote-debugging-pipe' : '--remote-debugging-port=0');
+    if (!chromeArguments.some(arg => arg.startsWith('--user-data-dir'))) {
+      temporaryUserDataDir = await mkdtempAsync(CHROME_PROFILE_PATH);
+      chromeArguments.push(`--user-data-dir=${temporaryUserDataDir}`);
+    }
+
+    let chromeExecutable = executablePath;
+    if (!executablePath) {
+      const {missingText, executablePath} = this._resolveExecutablePath();
+      if (missingText)
+        throw new Error(missingText);
+      chromeExecutable = executablePath;
+    }
+
+    const usePipe = chromeArguments.includes('--remote-debugging-pipe');
+
+    const launchedProcess = await launchProcess({
+      executablePath: chromeExecutable,
+      args: chromeArguments,
+      env,
+      handleSIGINT,
+      handleSIGTERM,
+      handleSIGHUP,
+      dumpio,
+      pipe: usePipe,
+      tempDir: temporaryUserDataDir
+    }, () => {
+      if (temporaryUserDataDir || !browser)
+        return Promise.reject();
+      return browser.close();
+    });
+
+    let browser: CRBrowser | undefined;
+    try {
+      let transport: ConnectionTransport | null = null;
+      let browserWSEndpoint: string = '';
+      if (!usePipe) {
+        const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${this._revision}`);
+        const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
+        browserWSEndpoint = match[1];
+        transport = await WebSocketTransport.create(browserWSEndpoint);
+      } else {
+        transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+      }
+
+      browser = await CRBrowser.create(SlowMoTransport.wrap(transport, slowMo));
+      return new BrowserServer(browser, launchedProcess, browserWSEndpoint);
+    } catch (e) {
+      if (browser)
+        await browser.close();
+      throw e;
+    }
   }
 
   async connect(options: (ConnectionOptions & {
@@ -76,7 +179,7 @@ export class CRPlaywright {
   }
 
   executablePath(): string {
-    return this._launcher.executablePath();
+    return this._resolveExecutablePath().executablePath;
   }
 
   get devices(): types.Devices {
@@ -87,14 +190,118 @@ export class CRPlaywright {
     return Errors;
   }
 
-  defaultArgs(options: LauncherChromeArgOptions | undefined): string[] {
-    return this._launcher.defaultArgs(options);
+  defaultArgs(options: LauncherChromeArgOptions = {}): string[] {
+    const {
+      devtools = false,
+      headless = !devtools,
+      args = [],
+      userDataDir = null
+    } = options;
+    const chromeArguments = [...DEFAULT_ARGS];
+    if (userDataDir)
+      chromeArguments.push(`--user-data-dir=${userDataDir}`);
+    if (devtools)
+      chromeArguments.push('--auto-open-devtools-for-tabs');
+    if (headless) {
+      chromeArguments.push(
+          '--headless',
+          '--hide-scrollbars',
+          '--mute-audio'
+      );
+    }
+    if (args.every(arg => arg.startsWith('-')))
+      chromeArguments.push('about:blank');
+    chromeArguments.push(...args);
+    return chromeArguments;
   }
 
-  createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher {
-    return createBrowserFetcher(this._projectRoot, options);
+  createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
+    const downloadURLs = {
+      linux: '%s/chromium-browser-snapshots/Linux_x64/%d/%s.zip',
+      mac: '%s/chromium-browser-snapshots/Mac/%d/%s.zip',
+      win32: '%s/chromium-browser-snapshots/Win/%d/%s.zip',
+      win64: '%s/chromium-browser-snapshots/Win_x64/%d/%s.zip',
+    };
+
+    const defaultOptions = {
+      path: path.join(this._projectRoot, '.local-chromium'),
+      host: 'https://storage.googleapis.com',
+      platform: (() => {
+        const platform = os.platform();
+        if (platform === 'darwin')
+          return 'mac';
+        if (platform === 'linux')
+          return 'linux';
+        if (platform === 'win32')
+          return os.arch() === 'x64' ? 'win64' : 'win32';
+        return platform;
+      })()
+    };
+    options = {
+      ...defaultOptions,
+      ...options,
+    };
+    assert(!!(downloadURLs as any)[options.platform], 'Unsupported platform: ' + options.platform);
+
+    return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+      let archiveName = '';
+      let executablePath = '';
+      if (platform === 'linux') {
+        archiveName = 'chrome-linux';
+        executablePath = path.join(archiveName, 'chrome');
+      } else if (platform === 'mac') {
+        archiveName = 'chrome-mac';
+        executablePath = path.join(archiveName, 'Chromium.app', 'Contents', 'MacOS', 'Chromium');
+      } else if (platform === 'win32' || platform === 'win64') {
+        // Windows archive name changed at r591479.
+        archiveName = parseInt(revision, 10) > 591479 ? 'chrome-win' : 'chrome-win32';
+        executablePath = path.join(archiveName, 'chrome.exe');
+      }
+      return {
+        downloadUrl: util.format((downloadURLs as any)[platform], options.host, revision, archiveName),
+        executablePath
+      };
+    });
+  }
+
+  _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
+    const browserFetcher = this.createBrowserFetcher();
+    const revisionInfo = browserFetcher.revisionInfo(this._revision);
+    const missingText = !revisionInfo.local ? `Chromium revision is not downloaded. Run "npm install" or "yarn install"` : null;
+    return { executablePath: revisionInfo.executablePath, missingText };
   }
 }
+
+const mkdtempAsync = platform.promisify(fs.mkdtemp);
+
+const CHROME_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
+
+const DEFAULT_ARGS = [
+  '--disable-background-networking',
+  '--enable-features=NetworkService,NetworkServiceInProcess',
+  '--disable-background-timer-throttling',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-breakpad',
+  '--disable-client-side-phishing-detection',
+  '--disable-component-extensions-with-background-pages',
+  '--disable-default-apps',
+  '--disable-dev-shm-usage',
+  '--disable-extensions',
+  // BlinkGenPropertyTrees disabled due to crbug.com/937609
+  '--disable-features=TranslateUI,BlinkGenPropertyTrees',
+  '--disable-hang-monitor',
+  '--disable-ipc-flooding-protection',
+  '--disable-popup-blocking',
+  '--disable-prompt-on-repost',
+  '--disable-renderer-backgrounding',
+  '--disable-sync',
+  '--force-color-profile=srgb',
+  '--metrics-recording-only',
+  '--no-first-run',
+  '--enable-automation',
+  '--password-store=basic',
+  '--use-mock-keychain',
+];
 
 function getWSEndpoint(browserURL: string): Promise<string> {
   let resolve: (url: string) => void;
