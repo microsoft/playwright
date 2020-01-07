@@ -15,25 +15,22 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
-import * as https from 'https';
-import * as URL from 'url';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnProgressCallback } from '../browserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnProgressCallback } from '../server/browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import * as types from '../types';
 import { assert } from '../helper';
-import { ConnectionTransport, WebSocketTransport, SlowMoTransport, PipeTransport } from '../transport';
-import { CRBrowser } from './crBrowser';
+import { CRBrowser, CRConnectOptions, createTransport } from '../chromium/crBrowser';
 import * as platform from '../platform';
 import { TimeoutError } from '../errors';
-import { launchProcess, waitForLine } from '../processLauncher';
+import { launchProcess, waitForLine } from '../server/processLauncher';
 import { ChildProcess } from 'child_process';
-import { CRConnection } from './crConnection';
+import { CRConnection } from '../chromium/crConnection';
+import { PipeTransport } from './pipeTransport';
 
 export type SlowMoOptions = {
   slowMo?: number,
@@ -58,24 +55,17 @@ export type LaunchOptions = ChromeArgOptions & SlowMoOptions & {
   pipe?: boolean,
 };
 
-export type ConnectOptions = SlowMoOptions & {
-  browserWSEndpoint?: string;
-  browserURL?: string;
-  transport?: ConnectionTransport;
-};
-
 export class CRBrowserServer {
   private _process: ChildProcess;
-  private _connectOptions: ConnectOptions;
+  private _connectOptions: CRConnectOptions;
 
-  constructor(process: ChildProcess, connectOptions: ConnectOptions) {
+  constructor(process: ChildProcess, connectOptions: CRConnectOptions) {
     this._process = process;
     this._connectOptions = connectOptions;
   }
 
   async connect(): Promise<CRBrowser> {
-    const transport = await createTransport(this._connectOptions);
-    return CRBrowser.create(transport);
+    return CRBrowser.connect(this._connectOptions);
   }
 
   process(): ChildProcess {
@@ -86,7 +76,7 @@ export class CRBrowserServer {
     return this._connectOptions.browserWSEndpoint || null;
   }
 
-  connectOptions(): ConnectOptions {
+  connectOptions(): CRConnectOptions {
     return this._connectOptions;
   }
 
@@ -179,7 +169,7 @@ export class CRPlaywright {
 
     let server: CRBrowserServer | undefined;
     try {
-      let connectOptions: ConnectOptions | undefined;
+      let connectOptions: CRConnectOptions | undefined;
       let browserWSEndpoint: string = '';
       if (!usePipe) {
         const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${this._revision}`);
@@ -199,9 +189,8 @@ export class CRPlaywright {
     }
   }
 
-  async connect(options: ConnectOptions): Promise<CRBrowser> {
-    const transport = await createTransport(options);
-    return CRBrowser.create(transport);
+  async connect(options: CRConnectOptions): Promise<CRBrowser> {
+    return CRBrowser.connect(options);
   }
 
   executablePath(): string {
@@ -328,49 +317,3 @@ const DEFAULT_ARGS = [
   '--password-store=basic',
   '--use-mock-keychain',
 ];
-
-function getWSEndpoint(browserURL: string): Promise<string> {
-  let resolve: (url: string) => void;
-  let reject: (e: Error) => void;
-  const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
-
-  const endpointURL = URL.resolve(browserURL, '/json/version');
-  const protocol = endpointURL.startsWith('https') ? https : http;
-  const requestOptions = Object.assign(URL.parse(endpointURL), { method: 'GET' });
-  const request = protocol.request(requestOptions, res => {
-    let data = '';
-    if (res.statusCode !== 200) {
-      // Consume response data to free up memory.
-      res.resume();
-      reject(new Error('HTTP ' + res.statusCode));
-      return;
-    }
-    res.setEncoding('utf8');
-    res.on('data', chunk => data += chunk);
-    res.on('end', () => resolve(JSON.parse(data).webSocketDebuggerUrl));
-  });
-
-  request.on('error', reject);
-  request.end();
-
-  return promise.catch(e => {
-    e.message = `Failed to fetch browser webSocket url from ${endpointURL}: ` + e.message;
-    throw e;
-  });
-}
-
-async function createTransport(options: ConnectOptions): Promise<ConnectionTransport> {
-  assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
-  let transport: ConnectionTransport | undefined;
-  let connectionURL: string = '';
-  if (options.transport) {
-    transport = options.transport;
-  } else if (options.browserWSEndpoint) {
-    connectionURL = options.browserWSEndpoint;
-    transport = await WebSocketTransport.create(options.browserWSEndpoint);
-  } else if (options.browserURL) {
-    connectionURL = await getWSEndpoint(options.browserURL);
-    transport = await WebSocketTransport.create(connectionURL);
-  }
-  return SlowMoTransport.wrap(transport, options.slowMo);
-}

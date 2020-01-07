@@ -18,14 +18,15 @@
 import * as os from 'os';
 import * as path from 'path';
 import { FFBrowser } from './ffBrowser';
-import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions } from '../server/browserFetcher';
 import * as fs from 'fs';
 import * as util from 'util';
 import { assert } from '../helper';
 import { TimeoutError } from '../errors';
-import { WebSocketTransport, SlowMoTransport } from '../transport';
-import { launchProcess, waitForLine } from '../processLauncher';
+import { SlowMoTransport } from '../transport';
+import { launchProcess, waitForLine } from '../server/processLauncher';
 import { BrowserServer } from '../browser';
+import * as platform from '../platform';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const writeFileAsync = util.promisify(fs.writeFile);
@@ -122,7 +123,7 @@ export class FFLauncher {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
       const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
       const url = match[1];
-      const transport = await WebSocketTransport.create(url);
+      const transport = await platform.createWebSocketTransport(url);
       browser = await FFBrowser.create(SlowMoTransport.wrap(transport, slowMo));
       await browser._waitForTarget(t => t.type() === 'page');
       return new BrowserServer(browser, launchedProcess, url);

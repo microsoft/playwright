@@ -9,9 +9,13 @@ import * as nodeBuffer from 'buffer';
 import * as mime from 'mime';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
+import * as http from 'http';
+import * as https from 'https';
+import * as NodeWebSocket from 'ws';
 
 import { assert, helper } from './helper';
 import * as types from './types';
+import { ConnectionTransport } from './transport';
 
 export const isNode = typeof process === 'object' && !!process && typeof process.versions === 'object' && !!process.versions && !!process.versions.node;
 
@@ -218,4 +222,80 @@ export function urlMatches(urlString: string, match: types.URLMatch | undefined)
 export function pngToJpeg(buffer: Buffer): Buffer {
   assert(isNode, 'Converting from png to jpeg is only supported in Node.js');
   return jpeg.encode(png.PNG.sync.read(buffer)).data;
+}
+
+function nodeFetch(url: string): Promise<string> {
+  let resolve: (url: string) => void;
+  let reject: (e: Error) => void;
+  const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
+
+  const endpointURL = new URL(url);
+  const protocol = endpointURL.protocol === 'https:' ? https : http;
+  const request = protocol.request(endpointURL, res => {
+    let data = '';
+    if (res.statusCode !== 200) {
+      // Consume response data to free up memory.
+      res.resume();
+      reject(new Error('HTTP ' + res.statusCode));
+      return;
+    }
+    res.setEncoding('utf8');
+    res.on('data', chunk => data += chunk);
+    res.on('end', () => resolve(data));
+  });
+
+  request.on('error', reject);
+  request.end();
+
+  return promise;
+}
+
+export function fetchUrl(url: string): Promise<string> {
+  if (isNode)
+    return nodeFetch(url);
+  return fetch(url).then(response => {
+    if (!response.ok)
+      throw new Error('HTTP ' + response.status + ' ' + response.statusText);
+    return response.text();
+  });
+}
+
+class WebSocketTransport implements ConnectionTransport {
+  private _ws: WebSocket;
+
+  onmessage?: (message: string) => void;
+  onclose?: () => void;
+
+  constructor(ws: WebSocket) {
+    this._ws = ws;
+    this._ws.addEventListener('message', event => {
+      if (this.onmessage)
+        this.onmessage.call(null, event.data);
+    });
+    this._ws.addEventListener('close', event => {
+      if (this.onclose)
+        this.onclose.call(null);
+    });
+    // Silently ignore all errors - we don't know what to do with them.
+    this._ws.addEventListener('error', () => {});
+  }
+
+  send(message: string) {
+    this._ws.send(message);
+  }
+
+  close() {
+    this._ws.close();
+  }
+}
+
+export function createWebSocketTransport(url: string): Promise<ConnectionTransport> {
+  return new Promise((resolve, reject) => {
+    const ws = (isNode ? new NodeWebSocket(url, [], {
+      perMessageDeflate: false,
+      maxPayload: 256 * 1024 * 1024, // 256Mb
+    }) : new WebSocket(url)) as WebSocket;
+    ws.addEventListener('open', () => resolve(new WebSocketTransport(ws)));
+    ws.addEventListener('error', reject);
+  });
 }

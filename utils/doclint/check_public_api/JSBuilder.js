@@ -98,11 +98,12 @@ function checkSources(sources) {
         excludeClasses.add(className);
       }
     }
-    if (!node.getSourceFile().fileName.endsWith('platform.ts')) {
+    const fileName = node.getSourceFile().fileName;
+    if (!fileName.endsWith('platform.ts') && !fileName.includes('src/server/')) {
       // Only relative imports.
       if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
         const module = node.moduleSpecifier.text;
-        if (!module.startsWith('.')) {
+        if (!module.startsWith('.') || path.resolve(path.dirname(fileName), module).includes('src/server')) {
           const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.moduleSpecifier.pos);
           errors.push(`Disallowed import "${module}" at ${node.getSourceFile().fileName}:${lac.line + 1}`);
         }

@@ -28,8 +28,15 @@ import * as browser from '../browser';
 import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 import { readProtocolStream } from './crProtocolHelper';
+
+export type CRConnectOptions = {
+  slowMo?: number,
+  browserWSEndpoint?: string;
+  browserURL?: string;
+  transport?: ConnectionTransport;
+};
 
 export class CRBrowser extends browser.Browser {
   _connection: CRConnection;
@@ -42,10 +49,9 @@ export class CRBrowser extends browser.Browser {
   private _tracingPath = '';
   private _tracingClient: CRSession | undefined;
 
-  static async create(
-    transport: ConnectionTransport) {
+  static async connect(options: CRConnectOptions): Promise<CRBrowser> {
+    const transport = await createTransport(options);
     const connection = new CRConnection(transport);
-
     const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
     const browser = new CRBrowser(connection, browserContextIds);
     await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
@@ -296,4 +302,26 @@ export class CRBrowser extends browser.Browser {
   isConnected(): boolean {
     return !this._connection._closed;
   }
+}
+
+export async function createTransport(options: CRConnectOptions): Promise<ConnectionTransport> {
+  assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to playwright.connect');
+  let transport: ConnectionTransport | undefined;
+  let connectionURL: string = '';
+  if (options.transport) {
+    transport = options.transport;
+  } else if (options.browserWSEndpoint) {
+    connectionURL = options.browserWSEndpoint;
+    transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
+  } else if (options.browserURL) {
+    try {
+      const data = await platform.fetchUrl(new URL('/json/version', options.browserURL).href);
+      connectionURL = JSON.parse(data).webSocketDebuggerUrl;
+    } catch (e) {
+      e.message = `Failed to fetch browser webSocket url from ${options.browserURL}: ` + e.message;
+      throw e;
+    }
+    transport = await platform.createWebSocketTransport(connectionURL);
+  }
+  return SlowMoTransport.wrap(transport, options.slowMo);
 }

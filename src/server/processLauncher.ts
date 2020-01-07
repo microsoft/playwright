@@ -18,10 +18,10 @@
 import * as childProcess from 'child_process';
 import * as stream from 'stream';
 import * as removeFolder from 'rimraf';
-import { helper } from './helper';
+import { helper } from '../helper';
 import * as readline from 'readline';
-import { TimeoutError } from './errors';
-import * as platform from './platform';
+import { TimeoutError } from '../errors';
+import * as platform from '../platform';
 
 const removeFolderAsync = platform.promisify(removeFolder);
 

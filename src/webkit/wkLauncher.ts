@@ -17,14 +17,15 @@
 
 import { assert } from '../helper';
 import { WKBrowser } from './wkBrowser';
-import { BrowserFetcher, BrowserFetcherOptions } from '../browserFetcher';
-import { PipeTransport, SlowMoTransport } from '../transport';
+import { BrowserFetcher, BrowserFetcherOptions } from '../server/browserFetcher';
+import { SlowMoTransport } from '../transport';
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as util from 'util';
 import * as os from 'os';
-import { launchProcess } from '../processLauncher';
+import { launchProcess } from '../server/processLauncher';
 import { BrowserServer } from '../browser';
+import { PipeTransport } from '../server/pipeTransport';
 
 const DEFAULT_ARGS = [
 ];
