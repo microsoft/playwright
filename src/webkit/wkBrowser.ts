@@ -17,7 +17,7 @@
 
 import * as browser from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
-import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page } from '../page';
 import { ConnectionTransport } from '../transport';

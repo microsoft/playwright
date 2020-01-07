@@ -22,7 +22,7 @@ import * as network from '../network';
 import { CRSession } from './crConnection';
 import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
-import { Page } from '../page';
+import { Page, Coverage } from '../page';
 import { Protocol } from './protocol';
 import { Events } from '../events';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
@@ -31,7 +31,7 @@ import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRCoverage } from './crCoverage';
-import { CRPDF, PDFOptions } from './crPdf';
+import { CRPDF } from './crPdf';
 import { CRWorkers } from './crWorkers';
 import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
@@ -44,7 +44,7 @@ const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class CRPage implements PageDelegate {
   _client: CRSession;
-  private readonly _page: ChromiumPage;
+  private readonly _page: Page;
   readonly _networkManager: CRNetworkManager;
   private _workers: CRWorkers;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
@@ -53,13 +53,17 @@ export class CRPage implements PageDelegate {
   rawMouse: RawMouseImpl;
   rawKeyboard: RawKeyboardImpl;
   private _browser: CRBrowser;
+  private _pdf: CRPDF;
+  private _coverage: CRCoverage;
 
   constructor(client: CRSession, browser: CRBrowser, browserContext: BrowserContext) {
     this._client = client;
     this._browser = browser;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
-    this._page = new ChromiumPage(client, this, browserContext);
+    this._pdf = new CRPDF(client);
+    this._coverage = new CRCoverage(client);
+    this._page = new Page(this, browserContext);
     this._networkManager = new CRNetworkManager(client, this._page);
     this._workers = new CRWorkers(client, this._page);
 
@@ -481,20 +485,13 @@ export class CRPage implements PageDelegate {
   async getAccessibilityTree(): Promise<accessibility.AXNode> {
     return getAccessibilityTree(this._client);
   }
-}
 
-export class ChromiumPage extends Page {
-  readonly coverage: CRCoverage;
-  private _pdf: CRPDF;
-
-  constructor(client: CRSession, delegate: CRPage, browserContext: BrowserContext) {
-    super(delegate, browserContext);
-    this.coverage = new CRCoverage(client);
-    this._pdf = new CRPDF(client);
+  async pdf(options?: types.PDFOptions): Promise<platform.BufferType> {
+    return this._pdf.generate(options);
   }
 
-  async pdf(options?: PDFOptions): Promise<platform.BufferType> {
-    return this._pdf.generate(options);
+  coverage(): Coverage | undefined {
+    return this._coverage;
   }
 }
 

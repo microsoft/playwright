@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+export { Accessibility } from './accessibility';
 export { Browser, BrowserServer } from './browser';
 export { BrowserContext } from './browserContext';
 export { BrowserFetcher } from './browserFetcher';
@@ -25,8 +26,7 @@ export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
 export { Request, Response } from './network';
-export { Page, FileChooser } from './page';
-export { Accessibility } from './accessibility';
+export { Coverage, FileChooser, Page, Worker } from './page';
 
 export * from './chromium/crApi';
 export * from './firefox/ffApi';

@@ -17,24 +17,9 @@
 
 import { assert, helper } from '../helper';
 import * as platform from '../platform';
+import * as types from '../types';
 import { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
-
-export type PDFOptions = {
-  scale?: number,
-  displayHeaderFooter?: boolean,
-  headerTemplate?: string,
-  footerTemplate?: string,
-  printBackground?: boolean,
-  landscape?: boolean,
-  pageRanges?: string,
-  format?: string,
-  width?: string|number,
-  height?: string|number,
-  preferCSSPageSize?: boolean,
-  margin?: {top?: string|number, bottom?: string|number, left?: string|number, right?: string|number},
-  path?: string,
-}
 
 const PagePaperFormats: { [key: string]: { width: number, height: number }} = {
   letter: {width: 8.5, height: 11},
@@ -92,7 +77,7 @@ export class CRPDF {
     this._client = client;
   }
 
-  async generate(options: PDFOptions = {}): Promise<platform.BufferType> {
+  async generate(options: types.PDFOptions = {}): Promise<platform.BufferType> {
     const {
       scale = 1,
       displayHeaderFooter = false,

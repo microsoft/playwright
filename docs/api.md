@@ -21,7 +21,7 @@
   * [browserContext.newPage()](#browsercontextnewpage)
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
-  * [browserContext.setGeolocation(options)](#browsercontextsetgeolocationoptions)
+  * [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
   * [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 - [class: BrowserFetcher](#class-browserfetcher)
   * [browserFetcher.canDownload(revision)](#browserfetchercandownloadrevision)
@@ -146,6 +146,7 @@
   * [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
   * [page.$wait(selector, pageFunction[, options[, ...args]])](#pagewaitselector-pagefunction-options-args)
   * [page.$x(expression)](#pagexexpression)
+  * [page.accessibility](#pageaccessibility)
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
   * [page.addStyleTag(options)](#pageaddstyletagoptions)
   * [page.authenticate(credentials)](#pageauthenticatecredentials)
@@ -153,6 +154,7 @@
   * [page.click(selector[, options])](#pageclickselector-options)
   * [page.close([options])](#pagecloseoptions)
   * [page.content()](#pagecontent)
+  * [page.coverage](#pagecoverage)
   * [page.dblclick(selector[, options])](#pagedblclickselector-options)
   * [page.emulateMedia(options)](#pageemulatemediaoptions)
   * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
@@ -170,6 +172,7 @@
   * [page.keyboard](#pagekeyboard)
   * [page.mainFrame()](#pagemainframe)
   * [page.mouse](#pagemouse)
+  * [page.pdf([options])](#pagepdfoptions)
   * [page.reload([options])](#pagereloadoptions)
   * [page.screenshot([options])](#pagescreenshotoptions)
   * [page.select(selector, value, options)](#pageselectselector-value-options)
@@ -222,8 +225,8 @@
   * [response.text()](#responsetext)
   * [response.url()](#responseurl)
 - [class: TimeoutError](#class-timeouterror)
-- [class: ChromiumAccessibility](#class-chromiumaccessibility)
-  * [chromiumAccessibility.snapshot([options])](#chromiumaccessibilitysnapshotoptions)
+- [class: Accessibility](#class-accessibility)
+  * [accessibility.snapshot([options])](#accessibilitysnapshotoptions)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
   * [event: 'targetchanged'](#event-targetchanged)
   * [event: 'targetcreated'](#event-targetcreated)
@@ -235,11 +238,11 @@
   * [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
   * [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
   * [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
-- [class: ChromiumCoverage](#class-chromiumcoverage)
-  * [chromiumCoverage.startCSSCoverage([options])](#chromiumcoveragestartcsscoverageoptions)
-  * [chromiumCoverage.startJSCoverage([options])](#chromiumcoveragestartjscoverageoptions)
-  * [chromiumCoverage.stopCSSCoverage()](#chromiumcoveragestopcsscoverage)
-  * [chromiumCoverage.stopJSCoverage()](#chromiumcoveragestopjscoverage)
+- [class: Coverage](#class-coverage)
+  * [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
+  * [coverage.startJSCoverage([options])](#coveragestartjscoverageoptions)
+  * [coverage.stopCSSCoverage()](#coveragestopcsscoverage)
+  * [coverage.stopJSCoverage()](#coveragestopjscoverage)
 - [class: ChromiumPlaywright](#class-chromiumplaywright)
   * [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
   * [chromiumPlaywright.createBrowserFetcher([options])](#chromiumplaywrightcreatebrowserfetcheroptions)
@@ -250,11 +253,6 @@
   * [chromiumPlaywright.executablePath()](#chromiumplaywrightexecutablepath)
   * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
   * [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
-- [class: ChromiumPage](#class-chromiumpage)
-  * [chromiumPage.accessibility](#chromiumpageaccessibility)
-  * [chromiumPage.coverage](#chromiumpagecoverage)
-  * [chromiumPage.interception](#chromiumpageinterception)
-  * [chromiumPage.pdf([options])](#chromiumpagepdfoptions)
 - [class: ChromiumSession](#class-chromiumsession)
   * [chromiumSession.detach()](#chromiumsessiondetach)
   * [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
@@ -265,10 +263,10 @@
   * [chromiumTarget.page()](#chromiumtargetpage)
   * [chromiumTarget.type()](#chromiumtargettype)
   * [chromiumTarget.url()](#chromiumtargeturl)
-- [class: ChromiumWorker](#class-chromiumworker)
-  * [chromiumWorker.evaluate(pageFunction[, ...args])](#chromiumworkerevaluatepagefunction-args)
-  * [chromiumWorker.evaluateHandle(pageFunction[, ...args])](#chromiumworkerevaluatehandlepagefunction-args)
-  * [chromiumWorker.url()](#chromiumworkerurl)
+- [class: Worker](#class-worker)
+  * [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
+  * [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
+  * [worker.url()](#workerurl)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: WebKitBrowser](#class-webkitbrowser)
 - [Working with selectors](#working-with-selectors)
@@ -351,10 +349,12 @@ Indicates that the browser is connected.
     - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
     - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
   - `userAgent` <?[string]> Specific user agent to use in this page
-  - `mediaType` <?"screen"|"print"> Changes the CSS media type of the page.
-  - `colorScheme` <?"dark"|"light"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `geolocation` <[Object]>
+    - `latitude` <[number]> Latitude between -90 and 90.
+    - `longitude` <[number]> Longitude between -180 and 180.
+    - `accuracy` <[number]> Optional non-negative accuracy value.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -465,8 +465,8 @@ An array of all pages inside the browser context.
 await browserContext.setCookies([cookieObject1, cookieObject2]);
 ```
 
-#### browserContext.setGeolocation(options)
-- `options` <[Object]>
+#### browserContext.setGeolocation(geolocation)
+- `geolocation` <[Object]>
   - `latitude` <[number]> Latitude between -90 and 90.
   - `longitude` <[number]> Longitude between -180 and 180.
   - `accuracy` <[number]> Optional non-negative accuracy value.
@@ -1218,7 +1218,7 @@ If the name is empty, returns the id attribute instead.
 
 #### frame.select(selector, value, options)
 - `selector` <[string]> A selector to query frame for.
-- `value` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `value` <[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
@@ -1928,6 +1928,9 @@ The method evaluates the XPath expression.
 
 Shortcut for [page.mainFrame().$x(expression)](#framexexpression)
 
+#### page.accessibility
+- returns: <[Accessibility]>
+
 #### page.addScriptTag(options)
 - `options` <[Object]>
   - `url` <[string]> URL of a script to be added.
@@ -2011,6 +2014,10 @@ By default, `page.close()` **does not** run beforeunload handlers.
 - returns: <[Promise]<[string]>>
 
 Gets the full HTML contents of the page, including the doctype.
+
+#### page.coverage
+
+- returns: <[Coverage]>
 
 #### page.dblclick(selector[, options])
 - `selector` <[string]> A selector to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
@@ -2333,6 +2340,74 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 - returns: <[Mouse]>
 
+#### page.pdf([options])
+- `options` <[Object]> Options object which might have the following properties:
+  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the PDF won't be saved to the disk.
+  - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
+  - `displayHeaderFooter` <[boolean]> Display header and footer. Defaults to `false`.
+  - `headerTemplate` <[string]> HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
+    - `'date'` formatted print date
+    - `'title'` document title
+    - `'url'` document location
+    - `'pageNumber'` current page number
+    - `'totalPages'` total pages in the document
+  - `footerTemplate` <[string]> HTML template for the print footer. Should use the same format as the `headerTemplate`.
+  - `printBackground` <[boolean]> Print background graphics. Defaults to `false`.
+  - `landscape` <[boolean]> Paper orientation. Defaults to `false`.
+  - `pageRanges` <[string]> Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
+  - `format` <[string]> Paper format. If set, takes priority over `width` or `height` options. Defaults to 'Letter'.
+  - `width` <[string]|[number]> Paper width, accepts values labeled with units.
+  - `height` <[string]|[number]> Paper height, accepts values labeled with units.
+  - `margin` <[Object]> Paper margins, defaults to none.
+    - `top` <[string]|[number]> Top margin, accepts values labeled with units.
+    - `right` <[string]|[number]> Right margin, accepts values labeled with units.
+    - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units.
+    - `left` <[string]|[number]> Left margin, accepts values labeled with units.
+  - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
+- returns: <[Promise]<[Buffer]>> Promise which resolves with PDF buffer.
+
+> **NOTE** Generating a pdf is currently only supported in Chrome headless.
+
+`page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia({ type: 'screen' })](#pageemulatemedia) before calling `page.pdf()`:
+
+> **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
+
+```js
+// Generates a PDF with 'screen' media type.
+await page.emulateMedia({type: 'screen'});
+await page.pdf({path: 'page.pdf'});
+```
+
+The `width`, `height`, and `margin` options accept values labeled with units. Unlabeled values are treated as pixels.
+
+A few examples:
+- `page.pdf({width: 100})` - prints with width set to 100 pixels
+- `page.pdf({width: '100px'})` - prints with width set to 100 pixels
+- `page.pdf({width: '10cm'})` - prints with width set to 10 centimeters.
+
+All possible units are:
+- `px` - pixel
+- `in` - inch
+- `cm` - centimeter
+- `mm` - millimeter
+
+The `format` options are:
+- `Letter`: 8.5in x 11in
+- `Legal`: 8.5in x 14in
+- `Tabloid`: 11in x 17in
+- `Ledger`: 17in x 11in
+- `A0`: 33.1in x 46.8in
+- `A1`: 23.4in x 33.1in
+- `A2`: 16.54in x 23.4in
+- `A3`: 11.7in x 16.54in
+- `A4`: 8.27in x 11.7in
+- `A5`: 5.83in x 8.27in
+- `A6`: 4.13in x 5.83in
+
+> **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
+> 1. Script tags inside templates are not evaluated.
+> 2. Page styles are not visible inside templates.
+
 #### page.reload([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
@@ -2361,7 +2436,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 #### page.select(selector, value, options)
 - `selector` <[string]> A selector to query frame for.
-- `value` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
+- `value` <[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
@@ -2964,7 +3039,7 @@ Contains the URL of the response.
 
 TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options) or [playwright.launch([options])](#playwrightlaunchoptions).
 
-### class: ChromiumAccessibility
+### class: Accessibility
 
 The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is used by assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or [switches](https://en.wikipedia.org/wiki/Switch_access).
 
@@ -2975,7 +3050,7 @@ access to the Blink Accessibility Tree.
 
 Most of the accessibility tree gets filtered out when converting from Blink AX Tree to Platform-specific AX-Tree or by assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing only the "interesting" nodes of the tree.
 
-#### chromiumAccessibility.snapshot([options])
+#### accessibility.snapshot([options])
 - `options` <[Object]>
   - `interestingOnly` <[boolean]> Prune uninteresting nodes from the tree. Defaults to `true`.
   - `root` <[ElementHandle]> The root DOM element for the snapshot. Defaults to the whole page.
@@ -3120,7 +3195,7 @@ await page.evaluate(() => window.open('https://www.example.com/'));
 const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
-### class: ChromiumCoverage
+### class: Coverage
 
 Coverage gathers information about parts of JavaScript and CSS that were used by the page.
 
@@ -3154,12 +3229,12 @@ console.log(`Bytes used: ${usedBytes / totalBytes * 100}%`);
 _To output coverage in a form consumable by [Istanbul](https://github.com/istanbuljs),
   see [playwright-to-istanbul](https://github.com/istanbuljs/playwright-to-istanbul)._
 
-#### chromiumCoverage.startCSSCoverage([options])
+#### coverage.startCSSCoverage([options])
 - `options` <[Object]>  Set of configurable options for coverage
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
 - returns: <[Promise]> Promise that resolves when coverage is started
 
-#### chromiumCoverage.startJSCoverage([options])
+#### coverage.startJSCoverage([options])
 - `options` <[Object]>  Set of configurable options for coverage
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
   - `reportAnonymousScripts` <[boolean]> Whether anonymous scripts generated by the page should be reported. Defaults to `false`.
@@ -3167,7 +3242,7 @@ _To output coverage in a form consumable by [Istanbul](https://github.com/istanb
 
 > **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
 
-#### chromiumCoverage.stopCSSCoverage()
+#### coverage.stopCSSCoverage()
 - returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all stylesheets
   - `url` <[string]> StyleSheet URL
   - `text` <[string]> StyleSheet content
@@ -3177,7 +3252,7 @@ _To output coverage in a form consumable by [Istanbul](https://github.com/istanb
 
 > **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
 
-#### chromiumCoverage.stopJSCoverage()
+#### coverage.stopJSCoverage()
 - returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all scripts
   - `url` <[string]> Script URL
   - `text` <[string]> Script content
@@ -3347,89 +3422,6 @@ const browser = await playwright.launch({
   - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
 - returns: <[Promise]<[BrowserServer]>> Promise which resolves to browser server instance.
 
-### class: ChromiumPage
-* extends: [Page]
-
-The ChromiumPage class represents a Chromium-specific extension of the page.
-
-#### chromiumPage.accessibility
-- returns: <[Accessibility]>
-
-#### chromiumPage.coverage
-
-- returns: <[Coverage]>
-
-#### chromiumPage.interception
-- returns: <[Interception]>
-
-#### chromiumPage.pdf([options])
-- `options` <[Object]> Options object which might have the following properties:
-  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the PDF won't be saved to the disk.
-  - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
-  - `displayHeaderFooter` <[boolean]> Display header and footer. Defaults to `false`.
-  - `headerTemplate` <[string]> HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
-    - `'date'` formatted print date
-    - `'title'` document title
-    - `'url'` document location
-    - `'pageNumber'` current page number
-    - `'totalPages'` total pages in the document
-  - `footerTemplate` <[string]> HTML template for the print footer. Should use the same format as the `headerTemplate`.
-  - `printBackground` <[boolean]> Print background graphics. Defaults to `false`.
-  - `landscape` <[boolean]> Paper orientation. Defaults to `false`.
-  - `pageRanges` <[string]> Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
-  - `format` <[string]> Paper format. If set, takes priority over `width` or `height` options. Defaults to 'Letter'.
-  - `width` <[string]|[number]> Paper width, accepts values labeled with units.
-  - `height` <[string]|[number]> Paper height, accepts values labeled with units.
-  - `margin` <[Object]> Paper margins, defaults to none.
-    - `top` <[string]|[number]> Top margin, accepts values labeled with units.
-    - `right` <[string]|[number]> Right margin, accepts values labeled with units.
-    - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units.
-    - `left` <[string]|[number]> Left margin, accepts values labeled with units.
-  - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
-- returns: <[Promise]<[Buffer]>> Promise which resolves with PDF buffer.
-
-> **NOTE** Generating a pdf is currently only supported in Chrome headless.
-
-`page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [page.emulateMedia({ type: 'screen' })](#pageemulatemedia) before calling `page.pdf()`:
-
-> **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to force rendering of exact colors.
-
-```js
-// Generates a PDF with 'screen' media type.
-await page.emulateMedia({type: 'screen'});
-await page.pdf({path: 'page.pdf'});
-```
-
-The `width`, `height`, and `margin` options accept values labeled with units. Unlabeled values are treated as pixels.
-
-A few examples:
-- `page.pdf({width: 100})` - prints with width set to 100 pixels
-- `page.pdf({width: '100px'})` - prints with width set to 100 pixels
-- `page.pdf({width: '10cm'})` - prints with width set to 10 centimeters.
-
-All possible units are:
-- `px` - pixel
-- `in` - inch
-- `cm` - centimeter
-- `mm` - millimeter
-
-The `format` options are:
-- `Letter`: 8.5in x 11in
-- `Legal`: 8.5in x 14in
-- `Tabloid`: 11in x 17in
-- `Ledger`: 17in x 11in
-- `A0`: 33.1in x 46.8in
-- `A1`: 23.4in x 33.1in
-- `A2`: 16.54in x 23.4in
-- `A3`: 11.7in x 16.54in
-- `A4`: 8.27in x 11.7in
-- `A5`: 5.83in x 8.27in
-- `A6`: 4.13in x 5.83in
-
-> **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
-> 1. Script tags inside templates are not evaluated.
-> 2. Page styles are not visible inside templates.
-
 ### class: ChromiumSession
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
@@ -3495,7 +3487,7 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 #### chromiumTarget.url()
 - returns: <[string]>
 
-### class: ChromiumWorker
+### class: Worker
 
 The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
 The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
@@ -3509,7 +3501,7 @@ for (const worker of page.workers())
   console.log('  ' + worker.url());
 ```
 
-#### chromiumWorker.evaluate(pageFunction[, ...args])
+#### worker.evaluate(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
@@ -3518,7 +3510,7 @@ If the function passed to the `worker.evaluate` returns a [Promise], then `worke
 
 If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` resolves to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
-#### chromiumWorker.evaluateHandle(pageFunction[, ...args])
+#### worker.evaluateHandle(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
@@ -3527,7 +3519,7 @@ The only difference between `worker.evaluate` and `worker.evaluateHandle` is tha
 
 If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for the promise to resolve and return its value.
 
-#### chromiumWorker.url()
+#### worker.url()
 - returns: <[string]>
 
 ### class: FirefoxBrowser

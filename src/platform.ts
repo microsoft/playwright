@@ -158,7 +158,7 @@ export const Buffer: typeof nodeBuffer.Buffer = isNode ? nodeBuffer.Buffer : (
     }
   }
 ) as any as typeof nodeBuffer.Buffer;
-export type BufferType = NodeBuffer;
+export type BufferType = Buffer;
 
 function assertFileAccess() {
   assert(isNode, 'Working with filesystem using "path" is only supported in Node.js');

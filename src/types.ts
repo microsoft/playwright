@@ -99,3 +99,25 @@ export type DeviceDescriptor = {
   viewport: Viewport,
 };
 export type Devices = { [name: string]: DeviceDescriptor } & DeviceDescriptor[];
+
+export type PDFOptions = {
+  scale?: number,
+  displayHeaderFooter?: boolean,
+  headerTemplate?: string,
+  footerTemplate?: string,
+  printBackground?: boolean,
+  landscape?: boolean,
+  pageRanges?: string,
+  format?: string,
+  width?: string|number,
+  height?: string|number,
+  preferCSSPageSize?: boolean,
+  margin?: {top?: string|number, bottom?: string|number, left?: string|number, right?: string|number},
+  path?: string,
+}
+
+export type CoverageEntry = {
+  url: string,
+  text: string,
+  ranges : {start: number, end: number}[]
+};
