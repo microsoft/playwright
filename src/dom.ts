@@ -366,8 +366,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
           return 'Cannot fill a disabled input.';
         if (input.readOnly)
           return 'Cannot fill a readonly input.';
-        input.selectionStart = 0;
-        input.selectionEnd = input.value.length;
+        input.select();
         input.focus();
       } else if (element.nodeName.toLowerCase() === 'textarea') {
         const textarea = element as HTMLTextAreaElement;
