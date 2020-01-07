@@ -177,7 +177,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(popup => { popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
         page.click('a'),
       ]);
       let badSecondPopup = false;
