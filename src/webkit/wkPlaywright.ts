@@ -18,6 +18,7 @@ import * as browsers from '../browser';
 import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
+import * as types from '../types';
 import { WKLauncher, LauncherLaunchOptions, createBrowserFetcher } from './wkLauncher';
 import { WKBrowser } from './wkBrowser';
 
@@ -52,11 +53,8 @@ export class WKPlaywright {
     return this._launcher.executablePath();
   }
 
-  get devices(): any {
-    const result = DeviceDescriptors.slice();
-    for (const device of DeviceDescriptors)
-      result[device.name] = device;
-    return result;
+  get devices(): types.Devices {
+    return DeviceDescriptors;
   }
 
   get errors(): any {

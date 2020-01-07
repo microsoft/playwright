@@ -17,7 +17,4 @@
 
 const {DeviceDescriptors} = require('./lib/deviceDescriptors');
 
-const descriptors = DeviceDescriptors.slice();
-module.exports = descriptors;
-for (const device of descriptors)
-  module.exports[device.name] = device;
+module.exports = DeviceDescriptors;
