@@ -92,3 +92,10 @@ export const mediaTypes: Set<MediaType> = new Set(['screen', 'print']);
 
 export type ColorScheme = 'dark' | 'light' | 'no-preference';
 export const colorSchemes: Set<ColorScheme> = new Set(['dark', 'light', 'no-preference']);
+
+export type DeviceDescriptor = {
+  name: string,
+  userAgent: string,
+  viewport: Viewport,
+};
+export type Devices = { [name: string]: DeviceDescriptor } & DeviceDescriptor[];

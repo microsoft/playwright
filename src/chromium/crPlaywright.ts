@@ -20,14 +20,13 @@ import * as https from 'https';
 import * as URL from 'url';
 import * as browsers from '../browser';
 import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnProgressCallback } from '../browserFetcher';
-import { DeviceDescriptor, DeviceDescriptors } from '../deviceDescriptors';
+import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
+import * as types from '../types';
 import { assert } from '../helper';
 import { ConnectionTransport, WebSocketTransport, SlowMoTransport } from '../transport';
 import { ConnectionOptions, createBrowserFetcher, CRLauncher, LauncherChromeArgOptions, LauncherLaunchOptions } from './crLauncher';
 import { CRBrowser } from './crBrowser';
-
-type Devices = { [name: string]: DeviceDescriptor } & DeviceDescriptor[];
 
 export class CRPlaywright {
   private _projectRoot: string;
@@ -80,11 +79,8 @@ export class CRPlaywright {
     return this._launcher.executablePath();
   }
 
-  get devices(): Devices {
-    const result = DeviceDescriptors.slice() as Devices;
-    for (const device of DeviceDescriptors)
-      result[device.name] = device;
-    return result;
+  get devices(): types.Devices {
+    return DeviceDescriptors;
   }
 
   get errors(): any {

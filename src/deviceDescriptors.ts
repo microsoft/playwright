@@ -17,13 +17,7 @@
 
 import * as types from './types';
 
-export type DeviceDescriptor = {
-  name: string,
-  userAgent: string,
-  viewport: types.Viewport,
-};
-
-export const DeviceDescriptors: DeviceDescriptor[] = [
+const descriptors: types.DeviceDescriptor[] = [
   {
     'name': 'Blackberry PlayBook',
     'userAgent': 'Mozilla/5.0 (PlayBook; U; RIM Tablet OS 2.1.0; en-US) AppleWebKit/536.2+ (KHTML like Gecko) Version/7.2.1.0 Safari/536.2+',
@@ -877,3 +871,7 @@ export const DeviceDescriptors: DeviceDescriptor[] = [
     }
   }
 ];
+
+export const DeviceDescriptors = descriptors as types.Devices;
+for (const device of descriptors)
+  DeviceDescriptors[device.name] = device;
