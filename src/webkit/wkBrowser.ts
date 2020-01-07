@@ -48,12 +48,6 @@ export class WKBrowser extends browser.Browser {
     ];
 
     this._firstPageProxyPromise = new Promise<void>(resolve => this._firstPageProxyCallback = resolve);
-
-    // Intercept provisional targets during cross-process navigation.
-    this._connection.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
-      debugError(e);
-      throw e;
-    });
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
