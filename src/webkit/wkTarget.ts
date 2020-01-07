@@ -18,7 +18,7 @@
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
-import { WKTargetSession, WKTargetSessionEvents } from './wkConnection';
+import { WKTargetSession } from './wkConnection';
 import { WKPage } from './wkPage';
 import { WKBrowser } from './wkBrowser';
 
