@@ -32,6 +32,12 @@ export class WKPageProxy {
       helper.addEventListener(this._pageProxySession, WKPageProxySessionEvents.TargetDestroyed, this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._pageProxySession, WKPageProxySessionEvents.DidCommitProvisionalTarget, this._onProvisionalTargetCommitted.bind(this))
     ];
+
+    // Intercept provisional targets during cross-process navigation.
+    this._pageProxySession.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
+      debugError(e);
+      throw e;
+    });
   }
 
   dispose() {
