@@ -17,12 +17,13 @@
 
 import * as browsers from '../browser';
 import { FFBrowser } from './ffBrowser';
-import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
-import { WebSocketTransport, SlowMoTransport } from '../transport';
+import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../server/browserFetcher';
+import { SlowMoTransport } from '../transport';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import * as types from '../types';
 import { FFLauncher, createBrowserFetcher } from './ffLauncher';
+import * as platform from '../platform';
 
 export class FFPlaywright {
   private _projectRoot: string;
@@ -52,7 +53,7 @@ export class FFPlaywright {
   }
 
   async connect(options: { slowMo?: number, browserWSEndpoint: string }): Promise<FFBrowser> {
-    const transport = await WebSocketTransport.create(options.browserWSEndpoint);
+    const transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
     return FFBrowser.create(SlowMoTransport.wrap(transport, options.slowMo || 0));
   }
 

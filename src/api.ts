@@ -17,7 +17,6 @@
 export { Accessibility } from './accessibility';
 export { Browser, BrowserServer } from './browser';
 export { BrowserContext } from './browserContext';
-export { BrowserFetcher } from './browserFetcher';
 export { ConsoleMessage } from './console';
 export { Dialog } from './dialog';
 export { ElementHandle } from './dom';
@@ -27,6 +26,9 @@ export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
 export { Request, Response } from './network';
 export { Coverage, FileChooser, Page, Worker } from './page';
+
+export { BrowserFetcher } from './server/browserFetcher';
+export { CRPlaywright as ChromiumPlaywright, CRBrowserServer as ChromiumBrowserServer } from './server/crPlaywright';
 
 export * from './chromium/crApi';
 export * from './firefox/ffApi';

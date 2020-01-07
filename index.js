@@ -33,3 +33,9 @@ module.exports.playwright = browser => {
     return new api.WebKitPlaywright(__dirname, packageJson.playwright.webkit_revision);
   throw new Error(`Unsupported browser "${browser}"`);
 };
+
+module.exports.connect = browser => {
+  if (browser === 'chromium')
+    return api.ChromiumBrowser.connect;
+  throw new Error(`Unsupported browser "${browser}"`);
+};

@@ -19,21 +19,20 @@ import * as extract from 'extract-zip';
 import * as fs from 'fs';
 import * as ProxyAgent from 'https-proxy-agent';
 import * as path from 'path';
-import * as platform from './platform';
-// @ts-ignore
+import * as platform from '../platform';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as removeRecursive from 'rimraf';
 import * as URL from 'url';
-import { assert } from './helper';
+import { assert } from '../helper';
 
 const readdirAsync = platform.promisify(fs.readdir.bind(fs));
 const mkdirAsync = platform.promisify(fs.mkdir.bind(fs));
 const unlinkAsync = platform.promisify(fs.unlink.bind(fs));
 const chmodAsync = platform.promisify(fs.chmod.bind(fs));
 
-function existsAsync(filePath) {
-  let fulfill = null;
-  const promise = new Promise(x => fulfill = x);
+function existsAsync(filePath: string): Promise<boolean> {
+  let fulfill: (exists: boolean) => void;
+  const promise = new Promise<boolean>(x => fulfill = x);
   fs.access(filePath, err => fulfill(!err));
   return promise;
 }

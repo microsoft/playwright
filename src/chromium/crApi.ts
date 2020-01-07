@@ -16,5 +16,4 @@
 
 export { CRBrowser as ChromiumBrowser } from './crBrowser';
 export { CRSession as ChromiumSession } from './crConnection';
-export { CRPlaywright as ChromiumPlaywright } from './crPlaywright';
 export { CRTarget as ChromiumTarget } from './crTarget';

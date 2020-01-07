@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import * as browsers from '../browser';
-import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../browserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../server/browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import * as types from '../types';
