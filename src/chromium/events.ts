@@ -20,10 +20,5 @@ export const Events = {
     TargetCreated: 'targetcreated',
     TargetDestroyed: 'targetdestroyed',
     TargetChanged: 'targetchanged',
-  },
-
-  CRPage: {
-    WorkerCreated: 'workercreated',
-    WorkerDestroyed: 'workerdestroyed',
   }
 };

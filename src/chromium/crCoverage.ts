@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { CRSession } from '../crConnection';
-import { assert, debugError, helper, RegisteredListener } from '../../helper';
-import { Protocol } from '../protocol';
+import { CRSession } from './crConnection';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { Protocol } from './protocol';
 
-import { EVALUATION_SCRIPT_URL } from '../crExecutionContext';
+import { EVALUATION_SCRIPT_URL } from './crExecutionContext';
 
 type CoverageEntry = {
   url: string,

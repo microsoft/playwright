@@ -104,6 +104,7 @@ export class Page extends platform.EventEmitter {
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
+  private _workers = new Map<string, Worker>();
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -494,5 +495,54 @@ export class Page extends platform.EventEmitter {
 
   async $wait(selector: string, pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().$wait(selector, pageFunction, options, ...args);
+  }
+
+  workers(): Worker[] {
+    return [...this._workers.values()];
+  }
+
+  _addWorker(workerId: string, worker: Worker) {
+    this._workers.set(workerId, worker);
+    this.emit(Events.Page.WorkerCreated, worker);
+  }
+
+  _removeWorker(workerId: string) {
+    const worker = this._workers.get(workerId);
+    if (!worker)
+      return;
+    this.emit(Events.Page.WorkerDestroyed, worker);
+    this._workers.delete(workerId);
+  }
+
+  _clearWorkers() {
+    this._workers.clear();
+  }
+}
+
+export class Worker {
+  private _url: string;
+  private _executionContextPromise: Promise<js.ExecutionContext>;
+  private _executionContextCallback: (value?: js.ExecutionContext) => void;
+  _existingExecutionContext: js.ExecutionContext | null;
+
+  constructor(url: string) {
+    this._url = url;
+    this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
+  }
+  _createExecutionContext(delegate: js.ExecutionContextDelegate) {
+    this._existingExecutionContext = new js.ExecutionContext(delegate);
+    this._executionContextCallback(this._existingExecutionContext);
+  }
+
+  url(): string {
+    return this._url;
+  }
+
+  evaluate: types.Evaluate = async (pageFunction, ...args) => {
+    return (await this._executionContextPromise).evaluate(pageFunction, ...args as any);
+  }
+
+  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
+    return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
   }
 }

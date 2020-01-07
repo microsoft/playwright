@@ -214,18 +214,44 @@ export class WKPageProxySession extends platform.EventEmitter {
   }
 }
 
-export class WKTargetSession extends platform.EventEmitter {
-  _pageProxySession: WKPageProxySession;
-  private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
-  private readonly _targetType: string;
-  readonly _sessionId: string;
-  _swappedOut = false;
-  private _provisionalMessages?: string[];
+export class WKSession extends platform.EventEmitter {
+  readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+
+  send<T extends keyof Protocol.CommandParameters>(
+    method: T,
+    params?: Protocol.CommandParameters[T]
+  ): Promise<Protocol.CommandReturnValues[T]> {
+    throw new Error('Not implemented');
+  }
+
+  protected _dispatchMessage(message: string) {
+    const object = JSON.parse(message);
+    debugWrappedMessage('◀ RECV ' + JSON.stringify(object, null, 2));
+    if (object.id && this._callbacks.has(object.id)) {
+      const callback = this._callbacks.get(object.id);
+      this._callbacks.delete(object.id);
+      if (object.error)
+        callback.reject(createProtocolError(callback.error, callback.method, object));
+      else
+        callback.resolve(object.result);
+    } else {
+      assert(!object.id);
+      Promise.resolve().then(() => this.emit(object.method, object.params));
+    }
+  }
+}
+
+export class WKTargetSession extends WKSession {
+  _pageProxySession: WKPageProxySession;
+  private readonly _targetType: string;
+  readonly _sessionId: string;
+  _swappedOut = false;
+  private _provisionalMessages?: string[];
 
   constructor(pageProxySession: WKPageProxySession, targetInfo: Protocol.Target.TargetInfo) {
     super();
@@ -287,19 +313,7 @@ export class WKTargetSession extends platform.EventEmitter {
 
   _dispatchMessageFromTarget(message: string) {
     console.assert(!this.isProvisional());
-    const object = JSON.parse(message);
-    debugWrappedMessage('◀ RECV ' + JSON.stringify(object, null, 2));
-    if (object.id && this._callbacks.has(object.id)) {
-      const callback = this._callbacks.get(object.id);
-      this._callbacks.delete(object.id);
-      if (object.error)
-        callback.reject(createProtocolError(callback.error, callback.method, object));
-      else
-        callback.resolve(object.result);
-    } else {
-      assert(!object.id);
-      Promise.resolve().then(() => this.emit(object.method, object.params));
-    }
+    this._dispatchMessage(message);
   }
 
   _onClosed() {
@@ -316,14 +330,14 @@ export class WKTargetSession extends platform.EventEmitter {
   }
 }
 
-function createProtocolError(error: Error, method: string, object: { error: { message: string; data: any; }; }): Error {
+export function createProtocolError(error: Error, method: string, object: { error: { message: string; data: any; }; }): Error {
   let message = `Protocol error (${method}): ${object.error.message}`;
   if ('data' in object.error)
     message += ` ${object.error.data}`;
   return rewriteError(error, message);
 }
 
-function rewriteError(error: Error, message: string): Error {
+export function rewriteError(error: Error, message: string): Error {
   error.message = message;
   return error;
 }

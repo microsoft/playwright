@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { assert, helper } from '../../helper';
-import { CRSession } from '../crConnection';
-import { readProtocolStream } from '../crProtocolHelper';
-import * as platform from '../../platform';
+import { assert, helper } from '../helper';
+import * as platform from '../platform';
+import { CRSession } from './crConnection';
+import { readProtocolStream } from './crProtocolHelper';
 
 export type PDFOptions = {
   scale?: number,

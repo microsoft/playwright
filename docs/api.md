@@ -138,6 +138,8 @@
   * [event: 'requestfailed'](#event-requestfailed)
   * [event: 'requestfinished'](#event-requestfinished)
   * [event: 'response'](#event-response)
+  * [event: 'workercreated'](#event-workercreated)
+  * [event: 'workerdestroyed'](#event-workerdestroyed)
   * [page.$(selector)](#pageselector)
   * [page.$$(selector)](#pageselector-1)
   * [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
@@ -192,6 +194,7 @@
   * [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
   * [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
   * [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
+  * [page.workers()](#pageworkers)
 - [class: Request](#class-request)
   * [request.abort([errorCode])](#requestaborterrorcode)
   * [request.continue([overrides])](#requestcontinueoverrides)
@@ -248,13 +251,10 @@
   * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
   * [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
 - [class: ChromiumPage](#class-chromiumpage)
-  * [event: 'workercreated'](#event-workercreated)
-  * [event: 'workerdestroyed'](#event-workerdestroyed)
   * [chromiumPage.accessibility](#chromiumpageaccessibility)
   * [chromiumPage.coverage](#chromiumpagecoverage)
   * [chromiumPage.interception](#chromiumpageinterception)
   * [chromiumPage.pdf([options])](#chromiumpagepdfoptions)
-  * [chromiumPage.workers()](#chromiumpageworkers)
 - [class: ChromiumSession](#class-chromiumsession)
   * [chromiumSession.detach()](#chromiumsessiondetach)
   * [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
@@ -1842,6 +1842,16 @@ Emitted when a request finishes successfully.
 
 Emitted when a [response] is received.
 
+#### event: 'workercreated'
+- <[Worker]>
+
+Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
+
+#### event: 'workerdestroyed'
+- <[Worker]>
+
+Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
+
 #### page.$(selector)
 - `selector` <[string]> A selector to query page for
 - returns: <[Promise]<?[ElementHandle]>>
@@ -2738,6 +2748,12 @@ const playwright = require('playwright');
 ```
 Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforselectorselector-options).
 
+#### page.workers()
+- returns: <[Array]<[Worker]>>
+This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
+
+> **NOTE** This does not contain ServiceWorkers
+
 ### class: Request
 
 Whenever the page sends a request, such as for a network resource, the following events are emitted by playwright's page:
@@ -3336,16 +3352,6 @@ const browser = await playwright.launch({
 
 The ChromiumPage class represents a Chromium-specific extension of the page.
 
-#### event: 'workercreated'
-- <[Worker]>
-
-Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
-
-#### event: 'workerdestroyed'
-- <[Worker]>
-
-Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
-
 #### chromiumPage.accessibility
 - returns: <[Accessibility]>
 
@@ -3423,12 +3429,6 @@ The `format` options are:
 > **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
 > 1. Script tags inside templates are not evaluated.
 > 2. Page styles are not visible inside templates.
-
-#### chromiumPage.workers()
-- returns: <[Array]<[Worker]>>
-This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
-
-> **NOTE** This does not contain ServiceWorkers
 
 ### class: ChromiumSession
 

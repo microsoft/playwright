@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('../utils');
+const utils = require('./utils');
 const { waitEvent } = utils;
 
 module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
@@ -23,10 +23,10 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Workers', function() {
+  describe.skip(FFOX)('Workers', function() {
     it('Page.workers', async function({page, server}) {
       await Promise.all([
-        new Promise(x => page.once('workercreated', x)),
+        page.waitForEvent('workercreated'),
         page.goto(server.PREFIX + '/worker/worker.html')]);
       const worker = page.workers()[0];
       expect(worker.url()).toContain('worker.js');
@@ -37,8 +37,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(page.workers().length).toBe(0);
     });
     it('should emit created and destroyed events', async function({page}) {
-      const workerCreatedPromise = new Promise(x => page.once('workercreated', x));
-      const workerObj = await page.evaluateHandle(() => new Worker('data:text/javascript,1'));
+      const workerCreatedPromise = page.waitForEvent('workercreated');
+      const workerObj = await page.evaluateHandle(() => new Worker(URL.createObjectURL(new Blob(['1'], {type: 'application/javascript'}))));
       const worker = await workerCreatedPromise;
       const workerThisObj = await worker.evaluateHandle(() => this);
       const workerDestroyedPromise = new Promise(x => page.once('workerdestroyed', x));
@@ -50,34 +50,38 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
     it('should report console logs', async function({page}) {
       const [message] = await Promise.all([
         waitEvent(page, 'console'),
-        page.evaluate(() => new Worker(`data:text/javascript,console.log(1)`)),
+        page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'})))),
       ]);
       expect(message.text()).toBe('1');
-      expect(message.location()).toEqual({
-        url: 'data:text/javascript,console.log(1)',
-        lineNumber: 0,
-        columnNumber: 8,
-      });
     });
     it('should have JSHandles for console logs', async function({page}) {
       const logPromise = new Promise(x => page.on('console', x));
-      await page.evaluate(() => new Worker(`data:text/javascript,console.log(1,2,3,this)`));
+      await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1,2,3,this)'], {type: 'application/javascript'}))));
       const log = await logPromise;
       expect(log.text()).toBe('1 2 3 JSHandle@object');
       expect(log.args().length).toBe(4);
       expect(await (await log.args()[3].getProperty('origin')).jsonValue()).toBe('null');
     });
     it('should evaluate', async function({page}) {
-      const workerCreatedPromise = new Promise(x => page.once('workercreated', x));
-      await page.evaluate(() => new Worker(`data:text/javascript,console.log(1)`));
+      const workerCreatedPromise = page.waitForEvent('workercreated');
+      page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
       const worker = await workerCreatedPromise;
       expect(await worker.evaluate('1+1')).toBe(2);
     });
     it('should report errors', async function({page}) {
       const errorPromise = new Promise(x => page.on('pageerror', x));
-      await page.evaluate(() => new Worker(`data:text/javascript, throw new Error('this is my error');`));
+      page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`setTimeout(() => { throw new Error('this is my error'); })`], {type: 'application/javascript'}))));
       const errorLog = await errorPromise;
       expect(errorLog.message).toContain('this is my error');
+    });
+    it('should clear upon navigation', async function({server, page}) {
+      await page.goto(server.EMPTY_PAGE);
+      const workerCreatedPromise = page.waitForEvent('workercreated');
+      page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
+      await workerCreatedPromise;
+      expect(page.workers().length).toBe(1);
+      await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      expect(page.workers().length).toBe(0);
     });
   });
 };

@@ -23,6 +23,7 @@ import { WKTargetSession, WKTargetSessionEvents } from './wkConnection';
 import { Events } from '../events';
 import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
 import { WKNetworkManager } from './wkNetworkManager';
+import { WKWorkers } from './wkWorkers';
 import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
@@ -43,11 +44,12 @@ export class WKPage implements PageDelegate {
   _session: WKTargetSession;
   readonly _page: Page;
   private _browser: WKBrowser;
-  private readonly _networkManager: WKNetworkManager;
-  private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
+  private _networkManager: WKNetworkManager;
+  private _workers: WKWorkers;
+  private _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
-  private readonly _bootstrapScripts: string[] = [];
+  private _bootstrapScripts: string[] = [];
 
   constructor(browser: WKBrowser, browserContext: BrowserContext) {
     this._browser = browser;
@@ -57,6 +59,7 @@ export class WKPage implements PageDelegate {
     this._isolatedWorlds = new Set();
     this._page = new Page(this, browserContext);
     this._networkManager = new WKNetworkManager(this._page);
+    this._workers = new WKWorkers(this._page);
   }
 
   setSession(session: WKTargetSession) {
@@ -67,6 +70,8 @@ export class WKPage implements PageDelegate {
     this.rawMouse.setSession(session);
     this._addSessionListeners();
     this._networkManager.setSession(session);
+    this._workers.setSession(session);
+    this._page._clearWorkers();
     this._isolatedWorlds = new Set();
     // New bootstrap scripts may have been added during provisional load, push them
     // again to be on the safe side.
@@ -86,6 +91,7 @@ export class WKPage implements PageDelegate {
       session.send('Console.enable'),
       session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
       this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode, this._page._state.credentials),
+      this._workers.initializeSession(session)
     ];
     if (!session.isProvisional()) {
       // FIXME: move dialog agent to web process.
@@ -195,7 +201,7 @@ export class WKPage implements PageDelegate {
     const frame = this._page._frameManager.frame(contextPayload.frameId);
     if (!frame)
       return;
-    const delegate = new WKExecutionContext(this._session, contextPayload);
+    const delegate = new WKExecutionContext(this._session, contextPayload.id);
     const context = new dom.FrameExecutionContext(delegate, frame);
     if (contextPayload.isPageContext)
       frame._contextCreated('main', context);
