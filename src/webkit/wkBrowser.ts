@@ -83,7 +83,7 @@ export class WKBrowser extends browser.Browser {
     }
     if (!context)
       context =  this._defaultContext;
-    const pageProxy = new WKPageProxy(this, session, context);
+    const pageProxy = new WKPageProxy(session, context);
     this._pageProxies.set(pageProxyInfo.pageProxyId, pageProxy);
 
     if (pageProxyInfo.openerId) {

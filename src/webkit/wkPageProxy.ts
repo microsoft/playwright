@@ -7,12 +7,10 @@ import { Page } from '../page';
 import { Protocol } from './protocol';
 import { WKPageProxySession, WKPageProxySessionEvents, WKTargetSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { WKBrowser } from './wkBrowser';
 import { RegisteredListener, helper, assert, debugError } from '../helper';
 import { Events } from '../events';
 
 export class WKPageProxy {
-  private readonly _browser: WKBrowser;
   private readonly _pageProxySession: WKPageProxySession;
   readonly _browserContext: BrowserContext;
   private _pagePromise: Promise<Page> | null = null;
@@ -22,8 +20,7 @@ export class WKPageProxy {
   private readonly _targetSessions = new Map<string, WKTargetSession>();
   private readonly _eventListeners: RegisteredListener[];
 
-  constructor(browser: WKBrowser, session: WKPageProxySession, browserContext: BrowserContext) {
-    this._browser = browser;
+  constructor(session: WKPageProxySession, browserContext: BrowserContext) {
     this._pageProxySession = session;
     this._browserContext = browserContext;
     this._firstTargetPromise = new Promise(r => this._firstTargetCallback = r);
@@ -35,6 +32,8 @@ export class WKPageProxy {
 
     // Intercept provisional targets during cross-process navigation.
     this._pageProxySession.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
+      if (this._pageProxySession.isClosed())
+        return;
       debugError(e);
       throw e;
     });
@@ -68,21 +67,13 @@ export class WKPageProxy {
       }
     }
     assert(session, 'One non-provisional target session must exist');
-    this._wkPage = new WKPage(this._browser, this._browserContext);
+    this._wkPage = new WKPage(this._browserContext, this._pageProxySession);
     this._wkPage.setSession(session);
-    await this._initializeSession(session);
+    await Promise.all([
+      this._wkPage._initializePageProxySession(),
+      this._wkPage._initializeSession(session)
+    ]);
     return this._wkPage._page;
-  }
-
-  private _initializeSession(session: WKTargetSession) : Promise<void> {
-    return this._wkPage._initializeSession(session).catch(e => {
-      if (session.isClosed())
-        return;
-      // Swallow initialization errors due to newer target swap in,
-      // since we will reinitialize again.
-      if (this._wkPage._session === session)
-        throw e;
-    });
   }
 
   private _onTargetCreated(session: WKTargetSession, targetInfo: Protocol.Target.TargetInfo) {
@@ -93,7 +84,7 @@ export class WKPageProxy {
       this._firstTargetCallback = null;
     }
     if (targetInfo.isProvisional && this._wkPage)
-      this._initializeSession(session);
+      this._wkPage._initializeSession(session);
     if (targetInfo.isPaused)
       this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
   }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { WKTargetSession } from './wkConnection';
+import { WKTargetSession, WKPageProxySession } from './wkConnection';
 import { Page } from '../page';
 import { helper, RegisteredListener, assert } from '../helper';
 import { Protocol } from './protocol';
@@ -25,14 +25,20 @@ import * as types from '../types';
 import * as platform from '../platform';
 
 export class WKNetworkManager {
+  private readonly _page: Page;
+  private readonly _pageProxySession: WKPageProxySession;
   private _session: WKTargetSession;
-  _page: Page;
-  private _requestIdToRequest = new Map<string, InterceptableRequest>();
+  private readonly _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
 
-  constructor(page: Page) {
+  constructor(page: Page, pageProxySession: WKPageProxySession) {
     this._page = page;
+    this._pageProxySession = pageProxySession;
+  }
+
+  async initializePageProxySession(credentials: types.Credentials | null) {
+    await this.authenticate(credentials);
   }
 
   setSession(session: WKTargetSession) {
@@ -47,17 +53,13 @@ export class WKNetworkManager {
     ];
   }
 
-  async initializeSession(session: WKTargetSession, interceptNetwork: boolean | null, offlineMode: boolean | null, credentials: types.Credentials | null) {
+  async initializeSession(session: WKTargetSession, interceptNetwork: boolean | null, offlineMode: boolean | null) {
     const promises = [];
     promises.push(session.send('Network.enable'));
     if (interceptNetwork)
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
     if (offlineMode)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
-    if (credentials)
-      promises.push(session.send('Emulation.setAuthCredentials', { ...credentials }));
-    else
-      promises.push(session.send('Emulation.setAuthCredentials', { username: '', password: '' }));
     await Promise.all(promises);
   }
 
@@ -160,7 +162,7 @@ export class WKNetworkManager {
   }
 
   async authenticate(credentials: types.Credentials | null) {
-    await this._session.send('Emulation.setAuthCredentials', { ...(credentials || {}) });
+    await this._pageProxySession.send('Emulation.setAuthCredentials', { ...(credentials || { username: '', password: '' }) });
   }
 
   async setOfflineMode(value: boolean): Promise<void> {
