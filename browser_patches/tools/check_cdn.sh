@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit]"
+  echo "usage: $(basename $0) [firefox|webkit] [--full-history]"
   echo
   echo "List CDN status for browser"
   exit 0
@@ -69,12 +69,17 @@ else
   exit 1
 fi
 
+STOP_REVISION=$((REVISION - 3))
+if [[ $* == *--full-history*  ]]; then
+  STOP_REVISION=0
+fi
+
 printf "%7s" ""
 for i in "${ALIASES[@]}"; do
   printf $COLUMN $i
 done
 printf "\n"
-while (( REVISION > 0 )); do
+while (( REVISION > $STOP_REVISION )); do
   printf "%-7s" ${REVISION}
   for i in "${ARCHIVES[@]}"; do
     URL=$(printf $i $REVISION)
