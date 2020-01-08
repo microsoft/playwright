@@ -4158,6 +4158,18 @@ index fcb9e8ddb8c3a804aa27339cab1b0039eb136f53..633a4efd58ac5c6a8999fa8d75d88342
      const String& host = challenge.protectionSpace().host();
      NSArray *certificates = [NSURLRequest allowsSpecificHTTPSCertificateForHost:host];
      if (!certificates)
+diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
+index a8a95f4b0db4a50a8ef5b72039c51cc5818ed304..324504696770fb095a70153aa830a87b46b77327 100644
+--- a/Source/WebKit/PlatformWPE.cmake
++++ b/Source/WebKit/PlatformWPE.cmake
+@@ -248,6 +248,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
+     "${WEBKIT_DIR}/UIProcess/API/wpe"
+     "${WEBKIT_DIR}/UIProcess/CoordinatedGraphics"
+     "${WEBKIT_DIR}/UIProcess/geoclue"
++    "${WEBKIT_DIR}/UIProcess/glib"
+     "${WEBKIT_DIR}/UIProcess/gstreamer"
+     "${WEBKIT_DIR}/UIProcess/linux"
+     "${WEBKIT_DIR}/UIProcess/soup"
 diff --git a/Source/WebKit/Shared/API/c/wpe/WebKit.h b/Source/WebKit/Shared/API/c/wpe/WebKit.h
 index 898e30b370db8176e886fbbde0cd960e38a64818..74945e06fac0eb14936578de6a599a123364a63a 100644
 --- a/Source/WebKit/Shared/API/c/wpe/WebKit.h
@@ -5075,10 +5087,10 @@ index 930b17b6629e04d0dfa2222bbc3217877c6e1812..395462e5f01c195231e9296d1204167c
  #include <webkit2/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..773cbab35accf562349a133fe14ac84c22d32cc6
+index 0000000000000000000000000000000000000000..b9392bc9f232f1f8a5be1e9668ec31e11bd8e3f8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,79 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -5151,6 +5163,9 @@ index 0000000000000000000000000000000000000000..773cbab35accf562349a133fe14ac84c
 +
 +WEBKIT_API WebKitBrowserInspector *
 +webkit_browser_inspector_get_default                  (void);
++
++WEBKIT_API void
++webkit_browser_inspector_initialize_pipe              (void);
 +
 +G_END_DECLS
 +
@@ -7898,7 +7913,7 @@ index b7c955a5f3ebe5805ad7095bc06878e128d11568..ab65f14db987e4e03e0474c9127efad6
  
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..92a1eb339c2b760e9c5e84dc76fe323845bd81ac
+index 0000000000000000000000000000000000000000..72217b9b7f4516f4d883c26286690a798c6dedc6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 @@ -0,0 +1,125 @@
@@ -8007,7 +8022,7 @@ index 0000000000000000000000000000000000000000..92a1eb339c2b760e9c5e84dc76fe3238
 +{
 +    BrowserContext browserContext;
 +    GRefPtr<WebKitWebsiteDataManager> data_manager = adoptGRef(webkit_website_data_manager_new_ephemeral());
-+    GRefPtr<WebKitWebContext> context = adoptGRef(WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", data_manager.get(), "process-swap-on-cross-site-navigation-enabled", true, nullptr)));
++    GRefPtr<WebKitWebContext> context = adoptGRef(WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", data_manager.get(), nullptr)));
 +    if (!context) {
 +        error = "Failed to create GLib ephemeral context";
 +        return browserContext;
@@ -8859,10 +8874,10 @@ index 0000000000000000000000000000000000000000..7453194ca6f032ba86a4c67f5bf12688
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..db8eb05b6e9e738e61e04823929bbdf44373c5b0
+index 0000000000000000000000000000000000000000..5dc76aa302cb574307059e66a1b73730efe920da
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
-@@ -0,0 +1,40 @@
+@@ -0,0 +1,41 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8896,19 +8911,20 @@ index 0000000000000000000000000000000000000000..db8eb05b6e9e738e61e04823929bbdf4
 +
 +namespace WebKit {
 +
-+void WebPageInspectorEmulationAgent::platformSetSize(String& error, int width, int height)
++void WebPageInspectorEmulationAgent::platformSetSize(int width, int height, Function<void (const String& error)>&& callback)
 +{
 +    struct wpe_view_backend* backend = m_page.viewBackend();
 +    wpe_view_backend_dispatch_set_size(backend, width, height);
++    callback(String());
 +}
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3850c53812149aac3258f9d5c7fc852b02231c1e
+index 0000000000000000000000000000000000000000..be4d3436bd66359d3de795bf368359bad0fe785d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,94 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8943,10 +8959,6 @@ index 0000000000000000000000000000000000000000..3850c53812149aac3258f9d5c7fc852b
 +#include <wpe/wpe.h>
 +
 +namespace WebKit {
-+
-+void WebPageInspectorInputAgent::platformDispatchKeyEvent(String& error, const String& type, const String& keyRef)
-+{
-+}
 +
 +static unsigned toWPEButton(WebMouseEvent::Button button)
 +{
@@ -9976,11 +9988,39 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
 +}
 +
  @end
+diff --git a/Tools/MiniBrowser/wpe/CMakeLists.txt b/Tools/MiniBrowser/wpe/CMakeLists.txt
+index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed91d47fc8 100644
+--- a/Tools/MiniBrowser/wpe/CMakeLists.txt
++++ b/Tools/MiniBrowser/wpe/CMakeLists.txt
+@@ -13,6 +13,7 @@ set(MiniBrowser_INCLUDE_DIRECTORIES
+ 
+ set(MiniBrowser_SYSTEM_INCLUDE_DIRECTORIES
+     ${ATK_INCLUDE_DIRS}
++    ${GLIB_INCLUDE_DIRS}
+     ${WPE_INCLUDE_DIRS}
+     ${WPEBACKEND_FDO_INCLUDE_DIRS}
+ )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..d94d4f06fc5be9ab9cd732ceb612a1676089ab82 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..cbb04fc5d5d713368fdb659b8a14678db89e8eb3 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
-@@ -172,6 +172,41 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -43,6 +43,7 @@ static gboolean headlessMode;
+ static gboolean privateMode;
+ static gboolean automationMode;
+ static gboolean ignoreTLSErrors;
++static gboolean inspectorPipe;
+ static const char* contentFilter;
+ static const char* cookiesFile;
+ static const char* cookiesPolicy;
+@@ -63,6 +64,7 @@ static const GOptionEntry commandLineOptions[] =
+     { "content-filter", 0, 0, G_OPTION_ARG_FILENAME, &contentFilter, "JSON with content filtering rules", "FILE" },
+     { "bg-color", 0, 0, G_OPTION_ARG_STRING, &bgColor, "Window background color. Default: white", "COLOR" },
+     { "version", 'v', 0, G_OPTION_ARG_NONE, &printVersion, "Print the WPE version", nullptr },
++    { "inspector-pipe", 'v', 0, G_OPTION_ARG_NONE, &inspectorPipe, "Expose remote debugging protocol over pipe", nullptr },
+     { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, nullptr, "[URL]" },
+     { nullptr, 0, 0, G_OPTION_ARG_NONE, nullptr, nullptr, nullptr }
+ };
+@@ -172,6 +174,42 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
      return newWebView;
  }
  
@@ -10017,16 +10057,18 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..d94d4f06fc5be9ab9cd732ceb612a167
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
 +    // FIXME: This signal is received only when closeAll is called. We should not rely on that.
 +    g_signal_connect(firstWebView, "close", G_CALLBACK(closeAll), mainLoop);
++    webkit_browser_inspector_initialize_pipe();
 +}
 +
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -301,6 +336,8 @@ int main(int argc, char *argv[])
+@@ -301,6 +339,9 @@ int main(int argc, char *argv[])
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
      g_signal_connect(webView, "create", G_CALLBACK(createWebView), nullptr);
  
-+    configureBrowserInspector(loop, webView);
++    if (inspectorPipe)
++        configureBrowserInspector(loop, webView);
 +
      if (ignoreTLSErrors)
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
