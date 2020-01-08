@@ -5929,7 +5929,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..fd0e1db93b4b6fc094ff47565ca19e83
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..7d8f2f4c767becde3ef05cc418b237e17ec0ac34
+index 0000000000000000000000000000000000000000..cf7832855e823cea9b3773e47e88499dc7727d1d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 @@ -0,0 +1,388 @@
@@ -6296,7 +6296,7 @@ index 0000000000000000000000000000000000000000..7d8f2f4c767becde3ef05cc418b237e1
 +
 +String InspectorBrowserAgent::toPageProxyIDProtocolString(const WebPageProxy& page)
 +{
-+    return makeString("page-proxy-", page.identifier().toUInt64());
++    return makeString(page.identifier().toUInt64());
 +}
 +
 +BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
@@ -7467,10 +7467,10 @@ index 0000000000000000000000000000000000000000..77dff2c191fee081773bc5705d80168c
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d84e2831aeada920eefc0cb62b865e304b2587f2
+index 0000000000000000000000000000000000000000..5bba231872fef0330710ca6af3513bb3fc0f1f22
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,249 @@
+@@ -0,0 +1,246 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7499,12 +7499,9 @@ index 0000000000000000000000000000000000000000..d84e2831aeada920eefc0cb62b865e30
 +#include "config.h"
 +#include "WebPageInspectorInputAgent.h"
 +
-+#include "APINavigation.h"
 +#include "NativeWebKeyboardEvent.h"
 +#include "NativeWebMouseEvent.h"
 +#include "WebPageProxy.h"
-+#include <JavaScriptCore/InspectorFrontendRouter.h>
-+
 +
 +namespace WebKit {
 +
@@ -7577,143 +7574,143 @@ index 0000000000000000000000000000000000000000..d84e2831aeada920eefc0cb62b865e30
 +    m_mouseCallbacks = nullptr;
 +}
 +
-+void WebPageInspectorInputAgent::dispatchKeyEvent(const String& in_type, const int* opt_in_modifiers, const String* opt_in_text, const String* opt_in_unmodifiedText, const String* opt_in_code, const String* opt_in_key, const int* opt_in_windowsVirtualKeyCode, const int* opt_in_nativeVirtualKeyCode, const bool* opt_in_autoRepeat, const bool* opt_in_isKeypad, const bool* opt_in_isSystemKey, const JSON::Array* opt_in_mac_commands, Ref<Inspector::InputBackendDispatcherHandler::DispatchKeyEventCallback>&& callback)
++void WebPageInspectorInputAgent::dispatchKeyEvent(const String& type, const int* modifiers, const String* text, const String* unmodifiedText, const String* code, const String* key, const int* windowsVirtualKeyCode, const int* nativeVirtualKeyCode, const bool* autoRepeat, const bool* isKeypad, const bool* isSystemKey, const JSON::Array* commands, Ref<Inspector::InputBackendDispatcherHandler::DispatchKeyEventCallback>&& callback)
 +{
-+    WebKit::WebEvent::Type type;
-+    if (in_type == "keyDown") {
-+        type = WebKit::WebEvent::KeyDown;
-+    } else if (in_type == "keyUp") {
-+        type = WebKit::WebEvent::KeyUp;
++    WebKit::WebEvent::Type eventType;
++    if (type == "keyDown") {
++        eventType = WebKit::WebEvent::KeyDown;
++    } else if (type == "keyUp") {
++        eventType = WebKit::WebEvent::KeyUp;
 +    } else {
 +        callback->sendFailure("Unsupported event type.");
 +        return;
 +    }
-+    OptionSet<WebEvent::Modifier> modifiers;
-+    if (opt_in_modifiers)
-+        modifiers = modifiers.fromRaw(*opt_in_modifiers);
-+    String text;
-+    if (opt_in_text)
-+        text = *opt_in_text;
-+    String unmodifiedText;
-+    if (opt_in_unmodifiedText)
-+        unmodifiedText = *opt_in_unmodifiedText;
-+    String code;
-+    if (opt_in_code)
-+        code = *opt_in_code;
-+    String key;
-+    if (opt_in_key)
-+        key = *opt_in_key;
-+    int windowsVirtualKeyCode = 0;
-+    if (opt_in_windowsVirtualKeyCode)
-+        windowsVirtualKeyCode = *opt_in_windowsVirtualKeyCode;
-+    int nativeVirtualKeyCode = 0;
-+    if (opt_in_nativeVirtualKeyCode)
-+        nativeVirtualKeyCode = *opt_in_nativeVirtualKeyCode;
-+    Vector<String> commands;
-+    if (opt_in_mac_commands) {
-+      for (const auto& value : *opt_in_mac_commands) {
++    OptionSet<WebEvent::Modifier> eventModifiers;
++    if (modifiers)
++        eventModifiers = eventModifiers.fromRaw(*modifiers);
++    String eventText;
++    if (text)
++        eventText = *text;
++    String eventUnmodifiedText;
++    if (unmodifiedText)
++        eventUnmodifiedText = *unmodifiedText;
++    String eventCode;
++    if (code)
++        eventCode = *code;
++    String eventKey;
++    if (key)
++        eventKey = *key;
++    int eventWindowsVirtualKeyCode = 0;
++    if (windowsVirtualKeyCode)
++        eventWindowsVirtualKeyCode = *windowsVirtualKeyCode;
++    int eventNativeVirtualKeyCode = 0;
++    if (nativeVirtualKeyCode)
++        eventNativeVirtualKeyCode = *nativeVirtualKeyCode;
++    Vector<String> eventCommands;
++    if (commands) {
++      for (const auto& value : *commands) {
 +        String command;
 +        if (!value->asString(command)) {
 +          callback->sendFailure("Command must be string");
 +          return;
 +        }
-+        commands.append(command);
++        eventCommands.append(command);
 +      }
 +    }
 +
-+    bool isAutoRepeat = false;
-+    if (opt_in_autoRepeat)
-+        isAutoRepeat = *opt_in_autoRepeat;
-+    bool isKeypad = false;
-+    if (opt_in_isKeypad)
-+        isKeypad = *opt_in_isKeypad;
-+    bool isSystemKey = false;
-+    if (opt_in_isSystemKey)
-+        isSystemKey = *opt_in_isSystemKey;
++    bool eventIsAutoRepeat = false;
++    if (autoRepeat)
++        eventIsAutoRepeat = *autoRepeat;
++    bool eventIsKeypad = false;
++    if (isKeypad)
++        eventIsKeypad = *isKeypad;
++    bool eventIsSystemKey = false;
++    if (isSystemKey)
++        eventIsSystemKey = *isSystemKey;
 +    WallTime timestamp = WallTime::now();
 +
 +    m_keyboardCallbacks->append(WTFMove(callback));
 +    platformDispatchKeyEvent(
-+        type,
-+        text,
-+        unmodifiedText,
-+        key,
-+        code,
-+        windowsVirtualKeyCode,
-+        nativeVirtualKeyCode,
-+        isAutoRepeat,
-+        isKeypad,
-+        isSystemKey,
-+        modifiers,
-+        commands,
++        eventType,
++        eventText,
++        eventUnmodifiedText,
++        eventKey,
++        eventCode,
++        eventWindowsVirtualKeyCode,
++        eventNativeVirtualKeyCode,
++        eventIsAutoRepeat,
++        eventIsKeypad,
++        eventIsSystemKey,
++        eventModifiers,
++        eventCommands,
 +        timestamp);
 +}
 +
-+void WebPageInspectorInputAgent::dispatchMouseEvent(const String& in_type, int in_x, int in_y, const int* opt_in_modifiers, const String* opt_in_button, const int* opt_in_buttons, const int* opt_in_clickCount, const int* opt_in_deltaX, const int* opt_in_deltaY, Ref<DispatchMouseEventCallback>&& callback)
++void WebPageInspectorInputAgent::dispatchMouseEvent(const String& type, int x, int y, const int* modifiers, const String* button, const int* buttons, const int* clickCount, const int* deltaX, const int* deltaY, Ref<DispatchMouseEventCallback>&& callback)
 +{
-+    WebEvent::Type type = WebEvent::NoType;
-+    if (in_type == "down")
-+        type = WebEvent::MouseDown;
-+    else if (in_type == "up")
-+        type = WebEvent::MouseUp;
-+    else if (in_type == "move")
-+        type = WebEvent::MouseMove;
++    WebEvent::Type eventType = WebEvent::NoType;
++    if (type == "down")
++        eventType = WebEvent::MouseDown;
++    else if (type == "up")
++        eventType = WebEvent::MouseUp;
++    else if (type == "move")
++        eventType = WebEvent::MouseMove;
 +    else {
 +        callback->sendFailure("Unsupported event type");
 +        return;
 +    }
 +
-+    OptionSet<WebEvent::Modifier> modifiers;
-+    if (opt_in_modifiers)
-+        modifiers = modifiers.fromRaw(*opt_in_modifiers);
++    OptionSet<WebEvent::Modifier> eventModifiers;
++    if (modifiers)
++        eventModifiers = eventModifiers.fromRaw(*modifiers);
 +
-+    WebMouseEvent::Button button = WebMouseEvent::NoButton;
-+    if (opt_in_button) {
-+        if (*opt_in_button == "left")
-+            button = WebMouseEvent::LeftButton;
-+        else if (*opt_in_button == "middle")
-+            button = WebMouseEvent::MiddleButton;
-+        else if (*opt_in_button == "right")
-+            button = WebMouseEvent::RightButton;
-+        else if (*opt_in_button == "none")
-+            button = WebMouseEvent::NoButton;
++    WebMouseEvent::Button eventButton = WebMouseEvent::NoButton;
++    if (button) {
++        if (*button == "left")
++            eventButton = WebMouseEvent::LeftButton;
++        else if (*button == "middle")
++            eventButton = WebMouseEvent::MiddleButton;
++        else if (*button == "right")
++            eventButton = WebMouseEvent::RightButton;
++        else if (*button == "none")
++            eventButton = WebMouseEvent::NoButton;
 +        else {
-+            callback->sendFailure("Unsupported button");
++            callback->sendFailure("Unsupported eventButton");
 +            return;
 +        }
 +    }
 +
-+    unsigned short buttons = 0;
-+    if (opt_in_buttons)
-+        buttons = *opt_in_buttons;
++    unsigned short eventButtons = 0;
++    if (buttons)
++        eventButtons = *buttons;
 +
-+    int clickCount = 0;
-+    if (opt_in_clickCount)
-+        clickCount = *opt_in_clickCount;
-+    int deltaX = 0;
-+    if (opt_in_deltaX)
-+        deltaX = *opt_in_deltaX;
-+    int deltaY = 0;
-+    if (opt_in_deltaY)
-+        deltaY = *opt_in_deltaY;
++    int eventClickCount = 0;
++    if (clickCount)
++        eventClickCount = *clickCount;
++    int eventDeltaX = 0;
++    if (deltaX)
++        eventDeltaX = *deltaX;
++    int eventDeltaY = 0;
++    if (deltaY)
++        eventDeltaY = *deltaY;
 +    m_mouseCallbacks->append(WTFMove(callback));
 +#if PLATFORM(WPE)
-+    platformDispatchMouseEvent(type, in_x, in_y, button, modifiers);
++    platformDispatchMouseEvent(eventType, x, y, eventButton, eventModifiers);
 +#elif PLATFORM(MAC)
-+    platformDispatchMouseEvent(in_type, in_x, in_y, opt_in_modifiers, opt_in_button, opt_in_clickCount);
++    platformDispatchMouseEvent(type, x, y, modifiers, button, clickCount);
 +#elif PLATFORM(GTK)
 +    WallTime timestamp = WallTime::now();
 +    NativeWebMouseEvent event(
-+        type,
-+        button,
-+        buttons,
-+        {in_x, in_y},
++        eventType,
++        eventButton,
++        eventButtons,
++        {x, y},
 +        WebCore::IntPoint(),
-+        deltaX,
-+        deltaY,
++        eventDeltaX,
++        eventDeltaY,
 +        0,
-+        clickCount,
-+        modifiers,
++        eventClickCount,
++        eventModifiers,
 +        timestamp);
 +    m_page.handleMouseEvent(event);
 +#endif
@@ -7722,7 +7719,7 @@ index 0000000000000000000000000000000000000000..d84e2831aeada920eefc0cb62b865e30
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..a5b8a858b918332c272660b5d4de05be9f3123e3
+index 0000000000000000000000000000000000000000..76290475097e756e3d932d22be4d8c797be4aa0c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 @@ -0,0 +1,84 @@
@@ -7786,8 +7783,8 @@ index 0000000000000000000000000000000000000000..a5b8a858b918332c272660b5d4de05be
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
 +    // Protocol handler
-+    void dispatchKeyEvent(const String& in_type, const int* opt_in_modifiers, const String* opt_in_text, const String* opt_in_unmodifiedText, const String* opt_in_code, const String* opt_in_key, const int* opt_in_windowsVirtualKeyCode, const int* opt_in_nativeVirtualKeyCode, const bool* opt_in_autoRepeat, const bool* opt_in_isKeypad, const bool* opt_in_isSystemKey, const JSON::Array*, Ref<DispatchKeyEventCallback>&& callback) override;
-+    void dispatchMouseEvent(const String& in_type, int in_x, int in_y, const int* opt_in_modifiers, const String* opt_in_button, const int* opt_in_buttons, const int* opt_in_clickCount, const int* opt_in_deltaX, const int* opt_in_deltaY, Ref<DispatchMouseEventCallback>&& callback) override;
++    void dispatchKeyEvent(const String& type, const int* modifiers, const String* text, const String* unmodifiedText, const String* code, const String* key, const int* windowsVirtualKeyCode, const int* nativeVirtualKeyCode, const bool* autoRepeat, const bool* isKeypad, const bool* isSystemKey, const JSON::Array*, Ref<DispatchKeyEventCallback>&& callback) override;
++    void dispatchMouseEvent(const String& type, int x, int y, const int* modifiers, const String* button, const int* buttons, const int* clickCount, const int* deltaX, const int* deltaY, Ref<DispatchMouseEventCallback>&& callback) override;
 +
 +private:
 +    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp);
