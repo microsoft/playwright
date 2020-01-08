@@ -139,8 +139,9 @@ export const WKTargetSessionEvents = {
 export class WKPageProxySession extends platform.EventEmitter {
   _connection: WKConnection;
   private readonly _sessions = new Map<string, WKTargetSession>();
-  private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private readonly _pageProxyId: string;
+  private readonly _closePromise: Promise<void>;
+  private _closePromiseCallback: () => void;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -151,6 +152,7 @@ export class WKPageProxySession extends platform.EventEmitter {
     super();
     this._connection = connection;
     this._pageProxyId = pageProxyId;
+    this._closePromise = new Promise(r => this._closePromiseCallback = r);
   }
 
   send<T extends keyof Protocol.CommandParameters>(
@@ -159,11 +161,10 @@ export class WKPageProxySession extends platform.EventEmitter {
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (!this._connection)
       return Promise.reject(new Error(`Protocol error (${method}): Session closed. Most likely the pageProxy has been closed.`));
-    return this._connection.send(method, params, this._pageProxyId).catch(e => {
-      // There is a possible race of the connection closure. We may have received
-      // targetDestroyed notification before response for the command, in that
-      // case it's safe to swallow the exception.
-    }) as Promise<Protocol.CommandReturnValues[T]>;
+    return Promise.race([
+      this._closePromise.then(() => { throw new Error('Page proxy closed'); }),
+      this._connection.send(method, params, this._pageProxyId)
+    ]);
   }
 
   _dispatchEvent(object: {method: string, params: any, pageProxyId?: string}, wrappedMessage: string) {
@@ -205,11 +206,16 @@ export class WKPageProxySession extends platform.EventEmitter {
     }
   }
 
+  isClosed() {
+    return !this._connection;
+  }
+
   dispose() {
     for (const session of this._sessions.values())
       session._onClosed();
     this._sessions.clear();
 
+    this._closePromiseCallback();
     this._connection = null;
   }
 }

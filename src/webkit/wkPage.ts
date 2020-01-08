@@ -19,7 +19,7 @@ import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
-import { WKTargetSession, WKTargetSessionEvents } from './wkConnection';
+import { WKTargetSession, WKTargetSessionEvents, WKPageProxySession } from './wkConnection';
 import { Events } from '../events';
 import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
 import { WKNetworkManager } from './wkNetworkManager';
@@ -43,23 +43,36 @@ export class WKPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   _session: WKTargetSession;
   readonly _page: Page;
-  private _browser: WKBrowser;
-  private _networkManager: WKNetworkManager;
-  private _workers: WKWorkers;
-  private _contextIdToContext: Map<number, dom.FrameExecutionContext>;
+  private readonly _pageProxySession: WKPageProxySession;
+  private readonly _networkManager: WKNetworkManager;
+  private readonly _workers: WKWorkers;
+  private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
-  private _bootstrapScripts: string[] = [];
+  private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browser: WKBrowser, browserContext: BrowserContext) {
-    this._browser = browser;
-    this.rawKeyboard = new RawKeyboardImpl();
-    this.rawMouse = new RawMouseImpl();
+  constructor(browserContext: BrowserContext, pageProxySession: WKPageProxySession) {
+    this._pageProxySession = pageProxySession;
+    this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
+    this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
     this._isolatedWorlds = new Set();
     this._page = new Page(this, browserContext);
-    this._networkManager = new WKNetworkManager(this._page);
+    this._networkManager = new WKNetworkManager(this._page, pageProxySession);
     this._workers = new WKWorkers(this._page);
+  }
+
+  async _initializePageProxySession() {
+    const promises : Promise<any>[] = [
+      this._pageProxySession.send('Dialog.enable'),
+      this._networkManager.initializePageProxySession(this._page._state.credentials)
+    ];
+    const contextOptions = this._page.browserContext()._options;
+    if (contextOptions.javaScriptEnabled === false)
+      promises.push(this._pageProxySession.send('Emulation.setJavaScriptEnabled', { enabled: false }));
+    if (this._page._state.viewport)
+      promises.push(this.setViewport(this._page._state.viewport));
+    await Promise.all(promises);
   }
 
   setSession(session: WKTargetSession) {
@@ -67,7 +80,6 @@ export class WKPage implements PageDelegate {
     this.disconnectFromTarget();
     this._session = session;
     this.rawKeyboard.setSession(session);
-    this.rawMouse.setSession(session);
     this._addSessionListeners();
     this._networkManager.setSession(session);
     this._workers.setSession(session);
@@ -90,30 +102,28 @@ export class WKPage implements PageDelegate {
       session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       session.send('Console.enable'),
       session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
-      this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode, this._page._state.credentials),
-      this._workers.initializeSession(session)
+      this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode),
+      this._workers.initializeSession(session),
     ];
-    if (!session.isProvisional()) {
-      // FIXME: move dialog agent to web process.
-      // Dialog agent resides in the UI process and should not be re-enabled on navigation.
-      promises.push(session.send('Dialog.enable'));
-    }
     const contextOptions = this._page.browserContext()._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
-    if (contextOptions.javaScriptEnabled === false)
-      promises.push(session.send('Emulation.setJavaScriptEnabled', { enabled: false }));
     if (session.isProvisional())
       promises.push(this._setBootstrapScripts(session));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
-    if (this._page._state.viewport)
-      promises.push(WKPage._setViewport(session, this._page._state.viewport));
-    await Promise.all(promises);
+    await Promise.all(promises).catch(e => {
+      if (session.isClosed())
+        return;
+      // Swallow initialization errors due to newer target swap in,
+      // since we will reinitialize again.
+      if (this._session === session)
+        throw e;
+    });
   }
 
   didClose(crashed: boolean) {
@@ -137,7 +147,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
-      helper.addEventListener(this._session, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
+      helper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       helper.addEventListener(this._session, WKTargetSessionEvents.Disconnected, event => this._page._didDisconnect()),
     ];
@@ -259,7 +269,7 @@ export class WKPage implements PageDelegate {
       event.type as dialog.DialogType,
       event.message,
       async (accept: boolean, promptText?: string) => {
-        await this._session.send('Dialog.handleJavaScriptDialog', { accept, promptText });
+        await this._pageProxySession.send('Dialog.handleJavaScriptDialog', { accept, promptText });
       },
       event.defaultPrompt));
   }
@@ -307,15 +317,11 @@ export class WKPage implements PageDelegate {
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
-    return WKPage._setViewport(this._session, viewport);
-  }
-
-  private static async _setViewport(session: WKTargetSession, viewport: types.Viewport): Promise<void> {
     if (viewport.isMobile || viewport.isLandscape || viewport.hasTouch)
       throw new Error('Not implemented');
     const width = viewport.width;
     const height = viewport.height;
-    await session.send('Emulation.setDeviceMetricsOverride', { width, height, fixedLayout: false, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
+    await this._pageProxySession.send('Emulation.setDeviceMetricsOverride', { width, height, fixedLayout: false, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
   }
 
   setCacheEnabled(enabled: boolean): Promise<void> {
@@ -402,7 +408,7 @@ export class WKPage implements PageDelegate {
   }
 
   async resetViewport(oldSize: types.Size): Promise<void> {
-    await this._session.send('Emulation.setDeviceMetricsOverride', { ...oldSize, fixedLayout: false, deviceScaleFactor: 0 });
+    await this._pageProxySession.send('Emulation.setDeviceMetricsOverride', { ...oldSize, fixedLayout: false, deviceScaleFactor: 0 });
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

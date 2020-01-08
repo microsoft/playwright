@@ -18,7 +18,7 @@
 import * as input from '../input';
 import { helper } from '../helper';
 import { macEditingCommands } from '../usKeyboardLayout';
-import { WKTargetSession } from './wkConnection';
+import { WKPageProxySession, WKTargetSession } from './wkConnection';
 
 function toModifiersMask(modifiers: Set<input.Modifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
@@ -35,7 +35,12 @@ function toModifiersMask(modifiers: Set<input.Modifier>): number {
 }
 
 export class RawKeyboardImpl implements input.RawKeyboard {
+  private readonly _pageProxySession: WKPageProxySession;
   private _session: WKTargetSession;
+
+  constructor(session: WKPageProxySession) {
+    this._pageProxySession = session;
+  }
 
   setSession(session: WKTargetSession) {
     this._session = session;
@@ -52,7 +57,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     let commands = macEditingCommands[shortcut];
     if (helper.isString(commands))
       commands = [commands];
-    await this._session.send('Input.dispatchKeyEvent', {
+    await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyDown',
       modifiers: toModifiersMask(modifiers),
       windowsVirtualKeyCode: keyCode,
@@ -67,7 +72,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async keyup(modifiers: Set<input.Modifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
-    await this._session.send('Input.dispatchKeyEvent', {
+    await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),
       key,
@@ -83,14 +88,14 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 }
 
 export class RawMouseImpl implements input.RawMouse {
-  private _client: WKTargetSession;
+  private readonly _pageProxySession: WKPageProxySession;
 
-  setSession(client: WKTargetSession) {
-    this._client = client;
+  constructor(session: WKPageProxySession) {
+    this._pageProxySession = session;
   }
 
   async move(x: number, y: number, button: input.Button | 'none', buttons: Set<input.Button>, modifiers: Set<input.Modifier>): Promise<void> {
-    await this._client.send('Input.dispatchMouseEvent', {
+    await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'move',
       button,
       x,
@@ -100,7 +105,7 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async down(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
-    await this._client.send('Input.dispatchMouseEvent', {
+    await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'down',
       button,
       x,
@@ -111,7 +116,7 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async up(x: number, y: number, button: input.Button, buttons: Set<input.Button>, modifiers: Set<input.Modifier>, clickCount: number): Promise<void> {
-    await this._client.send('Input.dispatchMouseEvent', {
+    await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'up',
       button,
       x,
