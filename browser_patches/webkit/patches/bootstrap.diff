@@ -7304,10 +7304,10 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..02b057160948455c3c78efb18e902808
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..22472e27a29b8791e4177edaebc19e842bf96892
+index 0000000000000000000000000000000000000000..78815bc17978a23ca811ff99039b4fe86e6fb4a0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,95 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7367,6 +7367,16 @@ index 0000000000000000000000000000000000000000..22472e27a29b8791e4177edaebc19e84
 +
 +void WebPageInspectorEmulationAgent::setDeviceMetricsOverride(int width, int height, double deviceScaleFactor, bool fixedlayout, Ref<SetDeviceMetricsOverrideCallback>&& callback)
 +{
++#if PLATFORM(GTK)
++    // On gtk, fixed layout doesn't work with compositing enabled
++    // FIXME: This turns off compositing forever, even if fixedLayout is disabled.
++    if (fixedlayout) {
++        auto copy = m_page.preferences().copy();
++        copy->setAcceleratedCompositingEnabled(false);
++        m_page.setPreferences(copy);
++    }
++#endif
++
 +    m_page.setCustomDeviceScaleFactor(deviceScaleFactor);
 +    m_page.setUseFixedLayout(fixedlayout);
 +    platformSetSize(width, height, [callback = WTFMove(callback)](const String& error) {
@@ -9422,6 +9432,89 @@ index 9a78a5fe24da78b34ebefa785a07b5049ba473ba..17f4f626641629cb6c97d36b7361305a
      HashSet<WebResourceLoader*> m_loadersWithUploads;
  };
  
+diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
+index a360fe5674b3065197ffe9eaa5853f559b35be63..41fcd6db05c844d935aff6589cb069e3d4b9eb4c 100644
+--- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
++++ b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
+@@ -1721,13 +1721,10 @@ void WebPage::setSize(const WebCore::IntSize& viewSize)
+     view->resize(viewSize);
+     m_drawingArea->setNeedsDisplay();
+ 
+-#if USE(COORDINATED_GRAPHICS)
+     if (view->useFixedLayout())
+         sendViewportAttributesChanged(m_page->viewportArguments());
+-#endif
+ }
+ 
+-#if USE(COORDINATED_GRAPHICS)
+ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArguments)
+ {
+     FrameView* view = m_page->mainFrame().view();
+@@ -1748,6 +1745,7 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
+ 
+     ViewportAttributes attr = computeViewportAttributes(viewportArguments, minimumLayoutFallbackWidth, deviceWidth, deviceHeight, 1, m_viewSize);
+ 
++#if USE(COORDINATED_GRAPHICS)
+     // If no layout was done yet set contentFixedOrigin to (0,0).
+     IntPoint contentFixedOrigin = view->didFirstLayout() ? view->fixedVisibleContentRect().location() : IntPoint();
+ 
+@@ -1763,11 +1761,15 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
+ 
+     contentFixedSize.scale(1 / attr.initialScale);
+     view->setFixedVisibleContentRect(IntRect(contentFixedOrigin, roundedIntSize(contentFixedSize)));
++#else
++    UNUSED_PARAM(view);
++#endif // USE(COORDINATED_GRAPHICS)
+ 
+     attr.initialScale = m_page->viewportArguments().zoom; // Resets auto (-1) if no value was set by user.
+ 
+     // This also takes care of the relayout.
+     setFixedLayoutSize(roundedIntSize(attr.layoutSize));
++    scaleView(deviceWidth / attr.layoutSize.width());
+ 
+ #if USE(COORDINATED_GRAPHICS)
+     m_drawingArea->didChangeViewportAttributes(WTFMove(attr));
+@@ -1775,7 +1777,6 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
+     send(Messages::WebPageProxy::DidChangeViewportProperties(attr));
+ #endif
+ }
+-#endif
+ 
+ void WebPage::scrollMainFrameIfNotAtMaxScrollPosition(const IntSize& scrollOffset)
+ {
+@@ -2157,17 +2158,13 @@ void WebPage::viewportPropertiesDidChange(const ViewportArguments& viewportArgum
+         viewportConfigurationChanged();
+ #endif
+ 
+-#if USE(COORDINATED_GRAPHICS)
+     FrameView* view = m_page->mainFrame().view();
+     if (view && view->useFixedLayout())
+         sendViewportAttributesChanged(viewportArguments);
++#if USE(COORDINATED_GRAPHICS)
+     else
+         m_drawingArea->didChangeViewportAttributes(ViewportAttributes());
+ #endif
+-
+-#if !PLATFORM(IOS_FAMILY) && !USE(COORDINATED_GRAPHICS)
+-    UNUSED_PARAM(viewportArguments);
+-#endif
+ }
+ 
+ void WebPage::listenForLayoutMilestones(OptionSet<WebCore::LayoutMilestone> milestones)
+diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.h b/Source/WebKit/WebProcess/WebPage/WebPage.h
+index b07cf17f1b22c7119f5cbddd1bae8c29cf9d9ad0..51fa89e597c2dc8fd9eaf07d6c40fa060ed16b1b 100644
+--- a/Source/WebKit/WebProcess/WebPage/WebPage.h
++++ b/Source/WebKit/WebProcess/WebPage/WebPage.h
+@@ -1491,9 +1491,7 @@ private:
+     void countStringMatches(const String&, uint32_t findOptions, uint32_t maxMatchCount);
+     void replaceMatches(const Vector<uint32_t>& matchIndices, const String& replacementText, bool selectionOnly, CallbackID);
+ 
+-#if USE(COORDINATED_GRAPHICS)
+     void sendViewportAttributesChanged(const WebCore::ViewportArguments&);
+-#endif
+ 
+     void didChangeSelectedIndexForActivePopupMenu(int32_t newIndex);
+     void setTextForActivePopupMenu(int32_t index);
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
 index a70f6fd52096a5dca901ea70a3755f14d6b4a0fd..f02e5c774a49d3e67860adb3b011531313eaf8d1 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
