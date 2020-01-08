@@ -16,9 +16,9 @@
  */
 
 import { FFBrowser, FFConnectOptions, createTransport } from '../firefox/ffBrowser';
-import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../server/browserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
-import { launchProcess, waitForLine } from '../server/processLauncher';
+import { launchProcess, waitForLine } from './processLauncher';
 import * as Errors from '../errors';
 import * as types from '../types';
 import * as platform from '../platform';

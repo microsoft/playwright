@@ -20,3 +20,4 @@ export function playwright(browser: 'firefox'): import('./lib/api').FirefoxPlayw
 export function playwright(browser: 'webkit'): import('./lib/api').WebKitPlaywright;
 export function connect(browser: 'chromium'): import('./lib/api').ChromiumBrowser.connect;
 export function connect(browser: 'firefox'): import('./lib/api').FirefoxBrowser.connect;
+export function connect(browser: 'webkit'): import('./lib/api').WebKitBrowser.connect;

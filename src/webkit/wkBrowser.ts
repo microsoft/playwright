@@ -20,11 +20,16 @@ import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page } from '../page';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKConnection, WKConnectionEvents, WKPageProxySession } from './wkConnection';
 import { WKPageProxy } from './wkPageProxy';
+
+export type WKConnectOptions = {
+  slowMo?: number,
+  transport: ConnectionTransport;
+};
 
 export class WKBrowser extends browser.Browser {
   readonly _connection: WKConnection;
@@ -35,6 +40,14 @@ export class WKBrowser extends browser.Browser {
 
   private _firstPageProxyCallback?: () => void;
   private readonly _firstPageProxyPromise: Promise<void>;
+
+  static async connect(options: WKConnectOptions): Promise<WKBrowser> {
+    const transport = await createTransport(options);
+    const browser = new WKBrowser(transport);
+    // TODO: figure out the timeout.
+    await browser._waitForFirstPageTarget(30000);
+    return browser;
+  }
 
   constructor(transport: ConnectionTransport) {
     super();
@@ -178,4 +191,9 @@ export class WKBrowser extends browser.Browser {
     }, options);
     return context;
   }
+}
+
+export async function createTransport(options: WKConnectOptions): Promise<ConnectionTransport> {
+  assert(!!options.transport, 'Transport must be passed to connect');
+  return SlowMoTransport.wrap(options.transport, options.slowMo);
 }
