@@ -29,6 +29,7 @@ export { Coverage, FileChooser, Page, Worker } from './page';
 
 export { BrowserFetcher } from './server/browserFetcher';
 export { CRPlaywright as ChromiumPlaywright, CRBrowserServer as ChromiumBrowserServer } from './server/crPlaywright';
+export { FFPlaywright as FirefoxPlaywright, FFBrowserServer as FirefoxBrowserServer } from './server/ffPlaywright';
 
 export * from './chromium/crApi';
 export * from './firefox/ffApi';

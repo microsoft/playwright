@@ -15,4 +15,3 @@
  */
 
 export { FFBrowser as FirefoxBrowser } from './ffBrowser';
-export { FFPlaywright as FirefoxPlaywright } from './ffPlaywright';

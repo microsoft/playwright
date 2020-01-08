@@ -15,52 +15,77 @@
  * limitations under the License.
  */
 
+import { FFBrowser, FFConnectOptions, createTransport } from '../firefox/ffBrowser';
+import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from '../server/browserFetcher';
+import { DeviceDescriptors } from '../deviceDescriptors';
+import { launchProcess, waitForLine } from '../server/processLauncher';
+import * as Errors from '../errors';
+import * as types from '../types';
+import * as platform from '../platform';
+import { FFConnection } from '../firefox/ffConnection';
+import { ChildProcess } from 'child_process';
+import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { FFBrowser } from './ffBrowser';
-import { BrowserFetcher, BrowserFetcherOptions } from '../server/browserFetcher';
-import * as fs from 'fs';
 import * as util from 'util';
-import { assert } from '../helper';
 import { TimeoutError } from '../errors';
-import { SlowMoTransport } from '../transport';
-import { launchProcess, waitForLine } from '../server/processLauncher';
-import { BrowserServer } from '../browser';
-import * as platform from '../platform';
+import { assert } from '../helper';
 
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-const writeFileAsync = util.promisify(fs.writeFile);
+export class FFBrowserServer {
+  private _process: ChildProcess;
+  private _connectOptions: FFConnectOptions;
 
-const DEFAULT_ARGS = [
-  '-no-remote',
-];
+  constructor(process: ChildProcess, connectOptions: FFConnectOptions) {
+    this._process = process;
+    this._connectOptions = connectOptions;
+  }
 
-export class FFLauncher {
+  async connect(): Promise<FFBrowser> {
+    return FFBrowser.connect(this._connectOptions);
+  }
+
+  process(): ChildProcess {
+    return this._process;
+  }
+
+  wsEndpoint(): string | null {
+    return this._connectOptions.browserWSEndpoint || null;
+  }
+
+  connectOptions(): FFConnectOptions {
+    return this._connectOptions;
+  }
+
+  async close(): Promise<void> {
+    const transport = await createTransport(this._connectOptions);
+    const connection = new FFConnection(transport);
+    await connection.send('Browser.close');
+    connection.dispose();
+  }
+}
+
+export class FFPlaywright {
   private _projectRoot: string;
-  private _preferredRevision: string;
-  constructor(projectRoot, preferredRevision) {
+  readonly _revision: string;
+
+  constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
-    this._preferredRevision = preferredRevision;
+    this._revision = preferredRevision;
   }
 
-  defaultArgs(options: any = {}) {
-    const {
-      headless = true,
-      args = [],
-      userDataDir = null,
-    } = options;
-    const firefoxArguments = [...DEFAULT_ARGS];
-    if (userDataDir)
-      firefoxArguments.push('-profile', userDataDir);
-    if (headless)
-      firefoxArguments.push('-headless');
-    firefoxArguments.push(...args);
-    if (args.every(arg => arg.startsWith('-')))
-      firefoxArguments.push('about:blank');
-    return firefoxArguments;
+  async downloadBrowser(options?: BrowserFetcherOptions & { onProgress?: OnProgressCallback }): Promise<BrowserFetcherRevisionInfo> {
+    const fetcher = this.createBrowserFetcher(options);
+    const revisionInfo = fetcher.revisionInfo(this._revision);
+    await fetcher.download(this._revision, options ? options.onProgress : undefined);
+    return revisionInfo;
   }
 
-  async launch(options: any = {}): Promise<BrowserServer<FFBrowser>> {
+  async launch(options: any): Promise<FFBrowser> {
+    const server = await this.launchServer(options);
+    return server.connect();
+  }
+
+  async launchServer(options: any = {}): Promise<FFBrowserServer> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -113,81 +138,115 @@ export class FFLauncher {
       pipe: false,
       tempDir: temporaryProfileDir
     }, () => {
-      if (temporaryProfileDir || !browser)
+      if (temporaryProfileDir || !server)
         return Promise.reject();
-      browser.close();
+      server.close();
     });
 
-    let browser: FFBrowser | undefined;
+    let server: FFBrowserServer | undefined;
     try {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
       const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
       const url = match[1];
-      const transport = await platform.createWebSocketTransport(url);
-      browser = await FFBrowser.create(SlowMoTransport.wrap(transport, slowMo));
-      await browser._waitForTarget(t => t.type() === 'page');
-      return new BrowserServer(browser, launchedProcess, url);
+      server = new FFBrowserServer(launchedProcess, { browserWSEndpoint: url, slowMo });
+      return server;
     } catch (e) {
-      if (browser)
-        await browser.close();
+      if (server)
+        await server.close();
       throw e;
     }
+  }
+
+  async connect(options: FFConnectOptions): Promise<FFBrowser> {
+    return FFBrowser.connect(options);
   }
 
   executablePath(): string {
     return this._resolveExecutablePath().executablePath;
   }
 
+  get devices(): types.Devices {
+    return DeviceDescriptors;
+  }
+
+  get errors(): any {
+    return Errors;
+  }
+
+  defaultArgs(options: any = {}): string[] {
+    const {
+      headless = true,
+      args = [],
+      userDataDir = null,
+    } = options;
+    const firefoxArguments = [...DEFAULT_ARGS];
+    if (userDataDir)
+      firefoxArguments.push('-profile', userDataDir);
+    if (headless)
+      firefoxArguments.push('-headless');
+    firefoxArguments.push(...args);
+    if (args.every(arg => arg.startsWith('-')))
+      firefoxArguments.push('about:blank');
+    return firefoxArguments;
+  }
+
+  createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
+    const downloadURLs = {
+      linux: '%s/builds/firefox/%s/firefox-linux.zip',
+      mac: '%s/builds/firefox/%s/firefox-mac.zip',
+      win32: '%s/builds/firefox/%s/firefox-win32.zip',
+      win64: '%s/builds/firefox/%s/firefox-win64.zip',
+    };
+
+    const defaultOptions = {
+      path: path.join(this._projectRoot, '.local-firefox'),
+      host: 'https://playwrightaccount.blob.core.windows.net',
+      platform: (() => {
+        const platform = os.platform();
+        if (platform === 'darwin')
+          return 'mac';
+        if (platform === 'linux')
+          return 'linux';
+        if (platform === 'win32')
+          return os.arch() === 'x64' ? 'win64' : 'win32';
+        return platform;
+      })()
+    };
+    options = {
+      ...defaultOptions,
+      ...options,
+    };
+    assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
+
+    return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+      let executablePath = '';
+      if (platform === 'linux')
+        executablePath = path.join('firefox', 'firefox');
+      else if (platform === 'mac')
+        executablePath = path.join('firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox');
+      else if (platform === 'win32' || platform === 'win64')
+        executablePath = path.join('firefox', 'firefox.exe');
+      return {
+        downloadUrl: util.format(downloadURLs[platform], options.host, revision),
+        executablePath
+      };
+    });
+  }
+
   _resolveExecutablePath() {
-    const browserFetcher = createBrowserFetcher(this._projectRoot);
-    const revisionInfo = browserFetcher.revisionInfo(this._preferredRevision);
+    const browserFetcher = this.createBrowserFetcher();
+    const revisionInfo = browserFetcher.revisionInfo(this._revision);
     const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install" or "yarn install"` : null;
-    return {executablePath: revisionInfo.executablePath, missingText};
+    return { executablePath: revisionInfo.executablePath, missingText };
   }
 }
 
-export function createBrowserFetcher(projectRoot: string, options: BrowserFetcherOptions = {}): BrowserFetcher {
-  const downloadURLs = {
-    linux: '%s/builds/firefox/%s/firefox-linux.zip',
-    mac: '%s/builds/firefox/%s/firefox-mac.zip',
-    win32: '%s/builds/firefox/%s/firefox-win32.zip',
-    win64: '%s/builds/firefox/%s/firefox-win64.zip',
-  };
+const mkdtempAsync = platform.promisify(fs.mkdtemp);
+const writeFileAsync = platform.promisify(fs.writeFile);
 
-  const defaultOptions = {
-    path: path.join(projectRoot, '.local-firefox'),
-    host: 'https://playwrightaccount.blob.core.windows.net',
-    platform: (() => {
-      const platform = os.platform();
-      if (platform === 'darwin')
-        return 'mac';
-      if (platform === 'linux')
-        return 'linux';
-      if (platform === 'win32')
-        return os.arch() === 'x64' ? 'win64' : 'win32';
-      return platform;
-    })()
-  };
-  options = {
-    ...defaultOptions,
-    ...options,
-  };
-  assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
-
-  return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
-    let executablePath = '';
-    if (platform === 'linux')
-      executablePath = path.join('firefox', 'firefox');
-    else if (platform === 'mac')
-      executablePath = path.join('firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox');
-    else if (platform === 'win32' || platform === 'win64')
-      executablePath = path.join('firefox', 'firefox.exe');
-    return {
-      downloadUrl: util.format(downloadURLs[platform], options.host, revision),
-      executablePath
-    };
-  });
-}
+const DEFAULT_ARGS = [
+  '-no-remote',
+];
 
 const DUMMY_UMA_SERVER = 'dummy.test';
 const DEFAULT_PREFERENCES = {
