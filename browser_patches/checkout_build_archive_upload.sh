@@ -68,36 +68,37 @@ fi
 cd -
 
 source ./buildbots/send_telegram_message.sh
-BUILD_ALIAS=$(./upload.sh $BROWSER_NAME --show-alias $FFOX_WIN64)
-send_telegram_message "$BUILD_ALIAS: started ..."
+LAST_COMMIT_MESSAGE=$(git log --format=%B -n 1 HEAD)
+BUILD_ALIAS="<b>[[$(./upload.sh $BROWSER_NAME --show-alias $FFOX_WIN64)]]</b> $LAST_COMMIT_MESSAGE"
+send_telegram_message "$BUILD_ALIAS -- started ⏳"
 
 echo "-- preparing checkout"
 if ! ./prepare_checkout.sh $BROWSER_NAME; then
-  send_telegram_message "$BUILD_ALIAS: ./prepare_checkout.sh failed! ❌"
+  send_telegram_message "$BUILD_ALIAS -- ./prepare_checkout.sh failed! ❌"
   exit 1
 fi
 
 echo "-- cleaning"
 if ! ./$BROWSER_NAME/clean.sh; then
-  send_telegram_message "$BUILD_ALIAS: ./clean.sh failed! ❌"
+  send_telegram_message "$BUILD_ALIAS -- ./clean.sh failed! ❌"
   exit 1
 fi
 
 echo "-- building"
 if ! ./$BROWSER_NAME/build.sh $FFOX_WIN64; then
-  send_telegram_message "$BUILD_ALIAS: ./build.sh failed! ❌"
+  send_telegram_message "$BUILD_ALIAS -- ./build.sh failed! ❌"
   exit 1
 fi
 
 echo "-- archiving to $ZIP_PATH"
 if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH; then
-  send_telegram_message "$BUILD_ALIAS: ./archive.sh failed! ❌"
+  send_telegram_message "$BUILD_ALIAS -- ./archive.sh failed! ❌"
   exit 1
 fi
 
 echo "-- uploading"
 if ! ./upload.sh $BROWSER_NAME $ZIP_PATH $FFOX_WIN64; then
-  send_telegram_message "$BUILD_ALIAS: ./upload.sh failed! ❌"
+  send_telegram_message "$BUILD_ALIAS -- ./upload.sh failed! ❌"
   exit 1
 fi
-send_telegram_message "$BUILD_ALIAS: uploaded ✅"
+send_telegram_message "$BUILD_ALIAS -- uploaded ✅"
