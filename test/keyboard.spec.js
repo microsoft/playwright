@@ -280,7 +280,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT, MA
         expect(metaKey).toBe(true);
 
     });
-    it.skip(WEBKIT)('should work after a cross origin navigation', async({page, server}) => {
+    it('should work after a cross origin navigation', async({page, server}) => {
       await page.goto(server.PREFIX + '/empty.html');
       await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       await page.evaluate(() => {
