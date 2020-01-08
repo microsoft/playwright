@@ -57,7 +57,7 @@ export class WKNetworkManager {
     const promises = [];
     promises.push(session.send('Network.enable'));
     if (interceptNetwork)
-      promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
+      promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
     if (offlineMode)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
     await Promise.all(promises);
@@ -73,7 +73,7 @@ export class WKNetworkManager {
   }
 
   async setRequestInterception(enabled: boolean): Promise<void> {
-    await this._session.send('Network.setInterceptionEnabled', { enabled });
+    await this._session.send('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
   }
 
   async _updateProtocolCacheDisabled() {
