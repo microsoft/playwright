@@ -17,7 +17,7 @@
   if (playwrightRoot.includes('firefox'))
     options.args.push('-juggler', '-profile');
   try {
-    await require(playwrightRoot).launch(options);
+    await require(playwrightRoot).launchServer(options);
     console.error('Browser launch unexpectedly succeeded.');
   } catch (e) {
   }

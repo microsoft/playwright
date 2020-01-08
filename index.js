@@ -39,5 +39,7 @@ module.exports.connect = browser => {
     return api.ChromiumBrowser.connect;
   if (browser === 'firefox')
     return api.FirefoxBrowser.connect;
+  if (browser === 'webkit')
+    return api.WebKitBrowser.connect;
   throw new Error(`Unsupported browser "${browser}"`);
 };

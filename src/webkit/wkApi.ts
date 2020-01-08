@@ -15,4 +15,3 @@
  */
 
 export { WKBrowser as WebKitBrowser } from './wkBrowser';
-export { WKPlaywright as WebKitPlaywright } from './wkPlaywright';
