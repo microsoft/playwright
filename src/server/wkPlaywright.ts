@@ -120,8 +120,7 @@ export class WKPlaywright {
       webkitExecutable = executablePath;
     }
     webkitArguments.push('--inspector-pipe');
-    // Headless options is only implemented on Mac at the moment.
-    if (process.platform === 'darwin' && options.headless !== false)
+    if (options.headless !== false)
       webkitArguments.push('--headless');
 
     let connectOptions: WKConnectOptions | undefined = undefined;
