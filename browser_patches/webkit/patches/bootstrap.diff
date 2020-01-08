@@ -875,10 +875,20 @@ index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80ca
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Network.json b/Source/JavaScriptCore/inspector/protocol/Network.json
-index 658f14f8af68073b99a01dd7332628223b67fcd7..a8558f5093cedcec7884c6acc03b8bc3dc407163 100644
+index 658f14f8af68073b99a01dd7332628223b67fcd7..bf7c6b49ac403a3b877f60b0f2e236971dc3b592 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Network.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Network.json
-@@ -258,7 +258,16 @@
+@@ -231,7 +231,8 @@
+             "name": "setInterceptionEnabled",
+             "description": "Enable interception of network requests.",
+             "parameters": [
+-                { "name": "enabled", "type": "boolean" }
++                { "name": "enabled", "type": "boolean" },
++                { "name": "interceptRequests", "type": "boolean", "optional": true }
+             ]
+         },
+         {
+@@ -258,7 +259,16 @@
              "name": "interceptContinue",
              "description": "Continue an interception with no modifications.",
              "parameters": [
@@ -896,7 +906,7 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..a8558f5093cedcec7884c6acc03b8bc3
              ]
          },
          {
-@@ -266,13 +275,20 @@
+@@ -266,13 +276,20 @@
              "description": "Provide response content for an intercepted response.",
              "parameters": [
                  { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network response to modify." },
@@ -919,7 +929,7 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..a8558f5093cedcec7884c6acc03b8bc3
          }
      ],
      "events": [
-@@ -356,6 +372,14 @@
+@@ -356,6 +373,14 @@
                  { "name": "response", "$ref": "Response", "description": "Original response content that would proceed if this is continued." }
              ]
          },
@@ -2003,7 +2013,7 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index ca8f169d18a697a4dea405c933398e67feef01c6..25ec31140dd0f163f6e815428c0e4673c8d9b49c 100644
+index ca8f169d18a697a4dea405c933398e67feef01c6..f5bb8f4580cb1e1c1121b47063ce4da66aa27aef 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -56,6 +56,7 @@
@@ -2040,14 +2050,61 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..25ec31140dd0f163f6e815428c0e4673
      auto protocolResourceType = InspectorPageAgent::resourceTypeJSON(type);
  
      Document* document = loader && loader->frame() ? loader->frame()->document() : nullptr;
-@@ -1109,19 +1122,117 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
+@@ -838,6 +851,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
+     m_resourcesData->clear();
+     m_extraRequestHeaders.clear();
+ 
++    continuePendingRequests();
+     continuePendingResponses();
+ 
+     setResourceCachingDisabled(false);
+@@ -861,6 +875,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
+     return false;
+ }
+ 
++void InspectorNetworkAgent::continuePendingRequests()
++{
++    for (auto& pendingRequest : m_pendingInterceptRequests.values()) {
++        ResourceLoader* loader = pendingRequest->m_loader.get();
++        if (loader->identifier())
++            pendingRequest->m_callback(false);
++    }
++    m_pendingInterceptRequests.clear();
++}
++
+ void InspectorNetworkAgent::continuePendingResponses()
+ {
+     for (auto& pendingInterceptResponse : m_pendingInterceptResponses.values())
+@@ -1017,17 +1041,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
+     result = injectedScript.wrapObject(webSocketAsScriptValue(state, webSocket), objectGroupName);
+ }
+ 
+-void InspectorNetworkAgent::setInterceptionEnabled(ErrorString& errorString, bool enabled)
++void InspectorNetworkAgent::setInterceptionEnabled(ErrorString&, bool enabled, const bool* interceptRequests)
+ {
+-    if (m_interceptionEnabled == enabled) {
+-        errorString = m_interceptionEnabled ? "Interception already enabled"_s : "Interception already disabled"_s;
+-        return;
+-    }
+-
+     m_interceptionEnabled = enabled;
++    m_interceptRequests = interceptRequests && *interceptRequests;
+ 
+     if (!m_interceptionEnabled)
+         continuePendingResponses();
++    if (!m_interceptionEnabled || !m_interceptRequests)
++        continuePendingRequests();
+ }
+ 
+ void InspectorNetworkAgent::addInterception(ErrorString& errorString, const String& url, const bool* optionalCaseSensitive, const bool* optionalIsRegex, const String* networkStageString)
+@@ -1109,19 +1131,117 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
      m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
  }
  
 -void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId)
 -{
 +bool InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler) {
-+    if (!m_interceptionEnabled)
++    if (!m_interceptionEnabled || !m_interceptRequests)
 +        return false;
 +    String requestId = IdentifiersFactory::requestId(loader.identifier());
 +    auto pendingRequest = makeUnique<PendingInterceptRequest>();
@@ -2164,7 +2221,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..25ec31140dd0f163f6e815428c0e4673
      auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
      if (!pendingInterceptResponse) {
          errorString = "Missing pending intercept response for given requestId"_s;
-@@ -1149,20 +1260,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
+@@ -1149,20 +1269,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
      }
  
      RefPtr<SharedBuffer> overrideData;
@@ -2195,7 +2252,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..25ec31140dd0f163f6e815428c0e4673
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1292,6 +1409,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
+@@ -1292,6 +1418,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
      results = ContentSearchUtilities::searchInTextByLines(resourceData->content(), query, caseSensitive, isRegex);
  }
  
@@ -2208,11 +2265,15 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..25ec31140dd0f163f6e815428c0e4673
  {
      m_resourcesData->clear(loaderIdentifier(&loader));
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index a68f84520736977c8b9216616c5a178fbf5275d6..c36811c04d95c78b7747e6e625bf79ea33cfa0d9 100644
+index a68f84520736977c8b9216616c5a178fbf5275d6..bee832c4c65f9a4487c0d0b7c6fd6985ae17f885 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-@@ -90,8 +90,10 @@ public:
-     void setInterceptionEnabled(ErrorString&, bool enabled) final;
+@@ -87,11 +87,13 @@ public:
+     void loadResource(const String& frameId, const String& url, Ref<LoadResourceCallback>&&) final;
+     void getSerializedCertificate(ErrorString&, const String& requestId, String* serializedCertificate) final;
+     void resolveWebSocket(ErrorString&, const String& requestId, const String* objectGroup, RefPtr<Inspector::Protocol::Runtime::RemoteObject>&) final;
+-    void setInterceptionEnabled(ErrorString&, bool enabled) final;
++    void setInterceptionEnabled(ErrorString&, bool enabled, const bool* interceptRequests) final;
      void addInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
      void removeInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
 -    void interceptContinue(ErrorString&, const String& requestId) final;
@@ -2238,7 +2299,15 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..c36811c04d95c78b7747e6e625bf79ea
  protected:
      InspectorNetworkAgent(WebAgentContext&);
  
-@@ -191,6 +196,15 @@ private:
+@@ -141,6 +146,7 @@ private:
+     void willSendRequest(unsigned long identifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse, InspectorPageAgent::ResourceType);
+ 
+     bool shouldIntercept(URL);
++    void continuePendingRequests();
+     void continuePendingResponses();
+ 
+     WebSocket* webSocketForRequestId(const String& requestId);
+@@ -191,6 +197,15 @@ private:
          bool m_responded { false };
      };
  
@@ -2254,7 +2323,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..c36811c04d95c78b7747e6e625bf79ea
      std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
      RefPtr<Inspector::NetworkBackendDispatcher> m_backendDispatcher;
      Inspector::InjectedScriptManager& m_injectedScriptManager;
-@@ -214,6 +228,7 @@ private:
+@@ -214,6 +229,7 @@ private:
      };
      Vector<Intercept> m_intercepts;
      HashMap<String, std::unique_ptr<PendingInterceptResponse>> m_pendingInterceptResponses;
@@ -2262,6 +2331,14 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..c36811c04d95c78b7747e6e625bf79ea
  
      // FIXME: InspectorNetworkAgent should not be aware of style recalculation.
      RefPtr<Inspector::Protocol::Network::Initiator> m_styleRecalculationInitiator;
+@@ -222,6 +238,7 @@ private:
+     bool m_enabled { false };
+     bool m_loadingXHRSynchronously { false };
+     bool m_interceptionEnabled { false };
++    bool m_interceptRequests { false };
+ };
+ 
+ } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c320b9b062 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
