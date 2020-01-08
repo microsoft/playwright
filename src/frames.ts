@@ -119,8 +119,8 @@ export class FrameManager {
     if (!initial) {
       for (const watcher of this._lifecycleWatchers)
         watcher._onCommittedNewDocumentNavigation(frame);
+      this._page.emit(Events.Page.FrameNavigated, frame);
     }
-    this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {

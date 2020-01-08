@@ -97,7 +97,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       await page.goto(server.EMPTY_PAGE);
       expect(await frameEvaluation).toBe(42);
     });
-    it.skip(WEBKIT)('should work right after a cross-origin navigation', async({page, server}) => {
+    it('should work right after a cross-origin navigation', async({page, server}) => {
         await page.goto(server.EMPTY_PAGE);
         let frameEvaluation = null;
         page.on('framenavigated', async frame => {
