@@ -67,7 +67,7 @@ export class WKBrowserServer {
 
   async close(): Promise<void> {
     const transport = await createTransport(this._connectOptions);
-    const connection = new WKConnection(transport);
+    const connection = WKConnection.from(transport);
     await connection.send('Browser.close');
     connection.dispose();
   }

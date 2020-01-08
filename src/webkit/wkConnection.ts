@@ -34,6 +34,8 @@ export const WKPageProxySessionEvents = {
   DidCommitProvisionalTarget: Symbol('PageProxyEvents.DidCommitProvisionalTarget'),
 };
 
+const kConnectionSymbol = Symbol();
+
 export class WKConnection extends platform.EventEmitter {
   private _lastId = 0;
   private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject:  (e: Error) => void, error: Error, method: string}>();
@@ -41,6 +43,15 @@ export class WKConnection extends platform.EventEmitter {
   private readonly _pageProxySessions = new Map<string, WKPageProxySession>();
 
   private _closed = false;
+
+  static from(transport: ConnectionTransport): WKConnection {
+    let connection = (transport as any)[kConnectionSymbol];
+    if (!connection) {
+      connection = new WKConnection(transport);
+      (transport as any)[kConnectionSymbol] = connection;
+    }
+    return connection;
+  }
 
   constructor(transport: ConnectionTransport) {
     super();
