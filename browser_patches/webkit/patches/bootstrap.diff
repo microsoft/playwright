@@ -7058,7 +7058,7 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5ef32a1d95 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..da2cd76c2b3b13e1f7bcb7e22dbf995052e00383 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,15 @@
@@ -7077,7 +7077,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5e
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -46,29 +51,80 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -46,29 +51,94 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -7109,7 +7109,9 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5e
      m_agents.append(WTFMove(targetAgent));
 -}
 +    m_agents.append(makeUnique<WebPageInspectorEmulationAgent>(m_backendDispatcher.get(), m_page));
-+    m_agents.append(makeUnique<WebPageInspectorInputAgent>(m_backendDispatcher.get(), m_page));
++    auto inputAgent = makeUnique<WebPageInspectorInputAgent>(m_backendDispatcher.get(), m_page);
++    m_inputAgent = inputAgent.get();
++    m_agents.append(WTFMove(inputAgent));
 +    m_agents.append(makeUnique<InspectorDialogAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), m_page));
  
 -void WebPageInspectorController::init()
@@ -7159,10 +7161,22 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5e
 +    m_targets.remove(it);
 +
 +    return m_targetAgent->isConnected();
++}
++
++void WebPageInspectorController::didProcessAllPendingKeyboardEvents()
++{
++    if (m_frontendRouter->hasFrontends())
++        m_inputAgent->didProcessAllPendingKeyboardEvents();
++}
++
++void WebPageInspectorController::didProcessAllPendingMouseEvents()
++{
++    if (m_frontendRouter->hasFrontends())
++        m_inputAgent->didProcessAllPendingMouseEvents();
  }
  
  bool WebPageInspectorController::hasLocalFrontend() const
-@@ -80,6 +136,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -80,6 +150,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  {
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -7172,7 +7186,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5e
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -134,6 +193,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +207,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -7184,7 +7198,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5e
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -186,7 +250,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +264,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -7193,7 +7207,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5e
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +282,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +296,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -7211,7 +7225,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5e
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0ce83675569502d150fcc44e5f9868c..31e6d25992f4424bf527cbf377fa6b18aa38aa19 100644
+index 78caedf0c0ce83675569502d150fcc44e5f9868c..02b057160948455c3c78efb18e90280893b02a2a 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
 @@ -26,6 +26,7 @@
@@ -7231,7 +7245,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..31e6d25992f4424bf527cbf377fa6b18
  
  namespace WebKit {
  
-+class WebPageInspectorController;
++class WebPageInspectorInputAgent;
 +
 +class WebPageInspectorControllerObserver {
 +public:
@@ -7245,7 +7259,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..31e6d25992f4424bf527cbf377fa6b18
  class WebPageInspectorController {
      WTF_MAKE_NONCOPYABLE(WebPageInspectorController);
      WTF_MAKE_FAST_ALLOCATED;
-@@ -48,7 +61,13 @@ public:
+@@ -48,7 +61,15 @@ public:
      WebPageInspectorController(WebPageProxy&);
  
      void init();
@@ -7255,11 +7269,13 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..31e6d25992f4424bf527cbf377fa6b18
 +
      void pageClosed();
 +    bool pageCrashed(ProcessTerminationReason);
++
 +    void didProcessAllPendingKeyboardEvents();
++    void didProcessAllPendingMouseEvents();
  
      bool hasLocalFrontend() const;
  
-@@ -57,6 +76,7 @@ public:
+@@ -57,6 +78,7 @@ public:
      void disconnectAllFrontends();
  
      void dispatchMessageFromFrontend(const String& message);
@@ -7267,7 +7283,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..31e6d25992f4424bf527cbf377fa6b18
  
  #if ENABLE(REMOTE_INSPECTOR)
      void setIndicating(bool);
-@@ -75,6 +95,7 @@ public:
+@@ -75,13 +97,17 @@ public:
  
  private:
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -7275,9 +7291,11 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..31e6d25992f4424bf527cbf377fa6b18
  
      WebPageProxy& m_page;
      Ref<Inspector::FrontendRouter> m_frontendRouter;
-@@ -82,6 +103,8 @@ private:
+     Ref<Inspector::BackendDispatcher> m_backendDispatcher;
      Inspector::AgentRegistry m_agents;
-     Inspector::InspectorTargetAgent* m_targetAgent;
+-    Inspector::InspectorTargetAgent* m_targetAgent;
++    Inspector::InspectorTargetAgent* m_targetAgent { nullptr };
++    WebPageInspectorInputAgent* m_inputAgent { nullptr };
      HashMap<String, std::unique_ptr<InspectorTargetProxy>> m_targets;
 +
 +    static WebPageInspectorControllerObserver* s_observer;
@@ -7449,10 +7467,10 @@ index 0000000000000000000000000000000000000000..77dff2c191fee081773bc5705d80168c
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..584ea564b828b8b078a4e8f8ca7dcf65464b33f6
+index 0000000000000000000000000000000000000000..d84e2831aeada920eefc0cb62b865e304b2587f2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,267 @@
+@@ -0,0 +1,249 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7522,59 +7540,41 @@ index 0000000000000000000000000000000000000000..584ea564b828b8b078a4e8f8ca7dcf65
 +
 +} // namespace
 +
-+class WebPageInspectorInputAgent::InspectorInputObserver : public WebPageProxy::InputProcessingObserver {
-+    WTF_MAKE_FAST_ALLOCATED;
-+public:
-+    using KeyboardCallback = Inspector::InputBackendDispatcherHandler::DispatchKeyEventCallback;
-+    using MouseCallback = Inspector::InputBackendDispatcherHandler::DispatchMouseEventCallback;
++class WebPageInspectorInputAgent::KeyboardCallbacks : public CallbackList<Inspector::InputBackendDispatcherHandler::DispatchKeyEventCallback> {
++};
 +
-+    ~InspectorInputObserver() override = default;
-+
-+    void didProcessAllPendingKeyboardEvents() override
-+    {
-+        m_keyboardCallbacks.sendSuccess();
-+    }
-+
-+    void didProcessAllPendingMouseEvents() override
-+    {
-+        m_mouseCallbacks.sendSuccess();
-+    }
-+
-+    void addMouseCallback(Ref<MouseCallback>&& callback)
-+    {
-+        m_mouseCallbacks.append(WTFMove(callback));
-+    }
-+
-+    void addKeyboardCallback(Ref<KeyboardCallback>&& callback)
-+    {
-+        m_keyboardCallbacks.append(WTFMove(callback));
-+    }
-+
-+private:
-+    CallbackList<KeyboardCallback> m_keyboardCallbacks;
-+    CallbackList<MouseCallback> m_mouseCallbacks;
++class WebPageInspectorInputAgent::MouseCallbacks : public CallbackList<Inspector::InputBackendDispatcherHandler::DispatchMouseEventCallback> {
 +};
 +
 +WebPageInspectorInputAgent::WebPageInspectorInputAgent(Inspector::BackendDispatcher& backendDispatcher, WebPageProxy& page)
 +    : InspectorAgentBase("Input"_s)
 +    , m_backendDispatcher(InputBackendDispatcher::create(backendDispatcher, this))
 +    , m_page(page)
-+    , m_inputObserver(makeUnique<InspectorInputObserver>())
 +{
-+    m_page.setObserber(m_inputObserver.get());
 +}
 +
-+WebPageInspectorInputAgent::~WebPageInspectorInputAgent()
++WebPageInspectorInputAgent::~WebPageInspectorInputAgent() = default;
++
++void WebPageInspectorInputAgent::didProcessAllPendingKeyboardEvents()
 +{
-+    m_page.setObserber(nullptr);
++    m_keyboardCallbacks->sendSuccess();
++}
++
++void WebPageInspectorInputAgent::didProcessAllPendingMouseEvents()
++{
++    m_mouseCallbacks->sendSuccess();
 +}
 +
 +void WebPageInspectorInputAgent::didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*)
 +{
++    m_keyboardCallbacks = makeUnique<KeyboardCallbacks>();
++    m_mouseCallbacks = makeUnique<MouseCallbacks>();
 +}
 +
 +void WebPageInspectorInputAgent::willDestroyFrontendAndBackend(Inspector::DisconnectReason)
 +{
++    m_keyboardCallbacks = nullptr;
++    m_mouseCallbacks = nullptr;
 +}
 +
 +void WebPageInspectorInputAgent::dispatchKeyEvent(const String& in_type, const int* opt_in_modifiers, const String* opt_in_text, const String* opt_in_unmodifiedText, const String* opt_in_code, const String* opt_in_key, const int* opt_in_windowsVirtualKeyCode, const int* opt_in_nativeVirtualKeyCode, const bool* opt_in_autoRepeat, const bool* opt_in_isKeypad, const bool* opt_in_isSystemKey, const JSON::Array* opt_in_mac_commands, Ref<Inspector::InputBackendDispatcherHandler::DispatchKeyEventCallback>&& callback)
@@ -7632,7 +7632,7 @@ index 0000000000000000000000000000000000000000..584ea564b828b8b078a4e8f8ca7dcf65
 +        isSystemKey = *opt_in_isSystemKey;
 +    WallTime timestamp = WallTime::now();
 +
-+    m_inputObserver->addKeyboardCallback(WTFMove(callback));
++    m_keyboardCallbacks->append(WTFMove(callback));
 +    platformDispatchKeyEvent(
 +        type,
 +        text,
@@ -7696,7 +7696,7 @@ index 0000000000000000000000000000000000000000..584ea564b828b8b078a4e8f8ca7dcf65
 +    int deltaY = 0;
 +    if (opt_in_deltaY)
 +        deltaY = *opt_in_deltaY;
-+    m_inputObserver->addMouseCallback(WTFMove(callback));
++    m_mouseCallbacks->append(WTFMove(callback));
 +#if PLATFORM(WPE)
 +    platformDispatchMouseEvent(type, in_x, in_y, button, modifiers);
 +#elif PLATFORM(MAC)
@@ -7722,10 +7722,10 @@ index 0000000000000000000000000000000000000000..584ea564b828b8b078a4e8f8ca7dcf65
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..7d7bfd78828ee56de6b08eca4b7d3ff4205d8721
+index 0000000000000000000000000000000000000000..a5b8a858b918332c272660b5d4de05be9f3123e3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,84 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7779,9 +7779,13 @@ index 0000000000000000000000000000000000000000..7d7bfd78828ee56de6b08eca4b7d3ff4
 +    WebPageInspectorInputAgent(Inspector::BackendDispatcher& backendDispatcher, WebPageProxy& page);
 +    ~WebPageInspectorInputAgent() override;
 +
++    void didProcessAllPendingKeyboardEvents();
++    void didProcessAllPendingMouseEvents();
++
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
++    // Protocol handler
 +    void dispatchKeyEvent(const String& in_type, const int* opt_in_modifiers, const String* opt_in_text, const String* opt_in_unmodifiedText, const String* opt_in_code, const String* opt_in_key, const int* opt_in_windowsVirtualKeyCode, const int* opt_in_nativeVirtualKeyCode, const bool* opt_in_autoRepeat, const bool* opt_in_isKeypad, const bool* opt_in_isSystemKey, const JSON::Array*, Ref<DispatchKeyEventCallback>&& callback) override;
 +    void dispatchMouseEvent(const String& in_type, int in_x, int in_y, const int* opt_in_modifiers, const String* opt_in_button, const int* opt_in_buttons, const int* opt_in_clickCount, const int* opt_in_deltaX, const int* opt_in_deltaY, Ref<DispatchMouseEventCallback>&& callback) override;
 +
@@ -7799,13 +7803,15 @@ index 0000000000000000000000000000000000000000..7d7bfd78828ee56de6b08eca4b7d3ff4
 +    // Keep track of currently active modifiers across multiple keystrokes.
 +    // Most platforms do not track current modifiers from synthesized events.
 +    unsigned m_currentModifiers { 0 };
-+    class InspectorInputObserver;
-+    std::unique_ptr<InspectorInputObserver> m_inputObserver;
++    class KeyboardCallbacks;
++    std::unique_ptr<KeyboardCallbacks> m_keyboardCallbacks;
++    class MouseCallbacks;
++    std::unique_ptr<MouseCallbacks> m_mouseCallbacks;
 +};
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d3120faa5be4 100644
+index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..7775168a12a7f4078555bc311e47279ea0e9f093 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -889,6 +889,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -7816,15 +7822,10 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
  }
  
  void WebPageProxy::didAttachToRunningProcess()
-@@ -1660,6 +1661,19 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
+@@ -1660,6 +1661,14 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
      m_process->processPool().sendToNetworkingProcess(Messages::NetworkProcess::SetSessionIsControlledByAutomation(m_websiteDataStore->sessionID(), m_controlledByAutomation));
  }
  
-+void WebPageProxy::setObserber(InputProcessingObserver* observer)
-+{
-+    m_inputProcessingObserver = observer;
-+}
-+
 +void WebPageProxy::setAuthCredentialsForAutomation(Optional<WebCore::Credential>&& credentials) {
 +    m_credentialsForAutomation = WTFMove(credentials);
 +}
@@ -7836,7 +7837,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
  void WebPageProxy::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      m_inspectorController->createInspectorTarget(targetId, type);
-@@ -2716,7 +2730,7 @@ static TrackingType mergeTrackingTypes(TrackingType a, TrackingType b)
+@@ -2716,7 +2725,7 @@ static TrackingType mergeTrackingTypes(TrackingType a, TrackingType b)
  
  void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent)
  {
@@ -7845,7 +7846,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
      const EventNames& names = eventNames();
      for (auto& touchPoint : touchStartEvent.touchPoints()) {
          IntPoint location = touchPoint.location();
-@@ -2749,7 +2763,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
+@@ -2749,7 +2758,7 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
      m_touchAndPointerEventTracking.touchStartTracking = TrackingType::Synchronous;
      m_touchAndPointerEventTracking.touchMoveTracking = TrackingType::Synchronous;
      m_touchAndPointerEventTracking.touchEndTracking = TrackingType::Synchronous;
@@ -7854,7 +7855,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
  }
  
  TrackingType WebPageProxy::touchEventTrackingType(const WebTouchEvent& touchStartEvent) const
-@@ -5404,6 +5418,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
+@@ -5404,6 +5413,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -7863,7 +7864,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
      m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
  
-@@ -5423,6 +5439,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
+@@ -5423,6 +5434,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -7872,7 +7873,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
  
      m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5442,6 +5460,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
+@@ -5442,6 +5455,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -7881,7 +7882,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
  
      m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5601,6 +5621,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
+@@ -5601,6 +5616,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
              return;
          }
      }
@@ -7890,16 +7891,15 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer.
      m_process->responsivenessTimer().stop();
-@@ -6625,6 +6647,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6625,6 +6642,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              pageClient().didFinishProcessingAllPendingMouseEvents();
-+            if (m_inputProcessingObserver)
-+                m_inputProcessingObserver->didProcessAllPendingMouseEvents();
++            m_inspectorController->didProcessAllPendingMouseEvents();
          }
  
          break;
-@@ -6651,7 +6675,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6651,7 +6669,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -7907,7 +7907,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -6671,7 +6694,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6671,7 +6688,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -7915,16 +7915,15 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -6680,6 +6702,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6680,6 +6696,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
-+            if (m_inputProcessingObserver)
-+                m_inputProcessingObserver->didProcessAllPendingKeyboardEvents();
++            m_inspectorController->didProcessAllPendingKeyboardEvents();
          }
          break;
      }
-@@ -7148,8 +7172,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
+@@ -7148,8 +7165,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
  void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
  {
      RELEASE_LOG_IF_ALLOWED(Loading, "dispatchProcessDidTerminate: reason = %d", reason);
@@ -7936,7 +7935,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -7596,6 +7622,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
+@@ -7596,6 +7615,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge)
  {
@@ -7951,7 +7950,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
      m_navigationClient->didReceiveAuthenticationChallenge(*this, authenticationChallenge.get());
  }
  
-@@ -7657,7 +7691,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7657,7 +7684,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
      MESSAGE_CHECK(m_process, frame);
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
@@ -7961,7 +7960,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -7665,6 +7700,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7665,6 +7693,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
          else
              request->deny();
      };
@@ -7974,7 +7973,7 @@ index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d312
      // FIXME: Once iOS migrates to the new WKUIDelegate SPI, clean this up
      // and make it one UIClient call that calls the completionHandler with false
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 2c87b48e73c2fd361a2a0da8c8e766cd2c57e325..a9c5882682abbc55f7d7d017b19b035f4d16271e 100644
+index 2c87b48e73c2fd361a2a0da8c8e766cd2c57e325..948ed5e74828f4c9ed4a5f90536489a515d0a952 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -35,6 +35,7 @@
@@ -7994,24 +7993,17 @@ index 2c87b48e73c2fd361a2a0da8c8e766cd2c57e325..a9c5882682abbc55f7d7d017b19b035f
  
  #if PLATFORM(IOS_FAMILY)
      void showInspectorIndication();
-@@ -538,6 +541,16 @@ public:
+@@ -538,6 +541,9 @@ public:
  
      void setPageLoadStateObserver(std::unique_ptr<PageLoadState::Observer>&&);
  
-+    class InputProcessingObserver {
-+    public:
-+        virtual ~InputProcessingObserver() = default;
-+        virtual void didProcessAllPendingKeyboardEvents() = 0;
-+        virtual void didProcessAllPendingMouseEvents() = 0;
-+    };
-+    void setObserber(InputProcessingObserver*);
 +    void setAuthCredentialsForAutomation(Optional<WebCore::Credential>&&);
 +    void setPermissionsForAutomation(const HashMap<String, HashSet<String>>&);
 +
      void initializeWebPage();
      void setDrawingArea(std::unique_ptr<DrawingAreaProxy>&&);
  
-@@ -2248,6 +2261,7 @@ private:
+@@ -2248,6 +2254,7 @@ private:
      bool m_treatsSHA1CertificatesAsInsecure { true };
  
      RefPtr<WebInspectorProxy> m_inspector;
@@ -8019,15 +8011,7 @@ index 2c87b48e73c2fd361a2a0da8c8e766cd2c57e325..a9c5882682abbc55f7d7d017b19b035f
  
  #if ENABLE(FULLSCREEN_API)
      std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
-@@ -2599,6 +2613,7 @@ private:
- #if ENABLE(REMOTE_INSPECTOR)
-     std::unique_ptr<WebPageDebuggable> m_inspectorDebuggable;
- #endif
-+    InputProcessingObserver* m_inputProcessingObserver { nullptr };
- 
-     Optional<SpellDocumentTag> m_spellDocumentTag;
- 
-@@ -2649,6 +2664,8 @@ private:
+@@ -2649,6 +2656,8 @@ private:
      bool m_isLayerTreeFrozenDueToSwipeAnimation { false };
      
      String m_overriddenMediaType;
