@@ -4260,7 +4260,7 @@ index 898e30b370db8176e886fbbde0cd960e38a64818..74945e06fac0eb14936578de6a599a12
  #include <WebKit/WKContextConfigurationRef.h>
  #include <WebKit/WKCredential.h>
 diff --git a/Source/WebKit/Shared/NativeWebKeyboardEvent.h b/Source/WebKit/Shared/NativeWebKeyboardEvent.h
-index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..f3ec649261051e3c7fd50052dd988181ba065466 100644
+index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..785febdfc72027ea002db6b64b85301838a299d3 100644
 --- a/Source/WebKit/Shared/NativeWebKeyboardEvent.h
 +++ b/Source/WebKit/Shared/NativeWebKeyboardEvent.h
 @@ -34,6 +34,7 @@
@@ -4271,7 +4271,7 @@ index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..f3ec649261051e3c7fd50052dd988181
  
  namespace WebCore {
  struct CompositionUnderline;
-@@ -67,10 +68,18 @@ public:
+@@ -67,16 +68,28 @@ public:
  #if USE(APPKIT)
      // FIXME: Share iOS's HandledByInputMethod enum here instead of passing a boolean.
      NativeWebKeyboardEvent(NSEvent *, bool handledByInputMethod, bool replacesSoftSpace, const Vector<WebCore::KeypressCommand>&);
@@ -4290,21 +4290,34 @@ index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..f3ec649261051e3c7fd50052dd988181
  #elif PLATFORM(IOS_FAMILY)
      enum class HandledByInputMethod : bool { No, Yes };
      NativeWebKeyboardEvent(::WebEvent *, HandledByInputMethod);
+ #elif USE(LIBWPE)
+     enum class HandledByInputMethod : bool { No, Yes };
+     NativeWebKeyboardEvent(struct wpe_input_keyboard_event*, const String&, HandledByInputMethod, Optional<Vector<WebCore::CompositionUnderline>>&&, Optional<EditingRange>&&);
++    NativeWebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
++        : WebKeyboardEvent(type, text, unmodifiedText, key, code, keyIdentifier, windowsVirtualKeyCode, nativeVirtualKeyCode, isAutoRepeat, isKeypad, isSystemKey, modifiers, timestamp)
++    {
++    }
+ #elif PLATFORM(WIN)
+     NativeWebKeyboardEvent(HWND, UINT message, WPARAM, LPARAM, Vector<MSG>&& pendingCharEvents);
+ #endif
 diff --git a/Source/WebKit/Shared/NativeWebMouseEvent.h b/Source/WebKit/Shared/NativeWebMouseEvent.h
-index 0fa557e9faa34ba81a7a4f7da5e32f30cbfad5d2..60ebade975bd50f1e32ad0e02a696dd1c8b06bbe 100644
+index 0fa557e9faa34ba81a7a4f7da5e32f30cbfad5d2..d6c1ae7811cf002d374ec2e8f268a6c475e85a95 100644
 --- a/Source/WebKit/Shared/NativeWebMouseEvent.h
 +++ b/Source/WebKit/Shared/NativeWebMouseEvent.h
-@@ -61,6 +61,8 @@ public:
- #elif PLATFORM(GTK)
-     NativeWebMouseEvent(const NativeWebMouseEvent&);
-     NativeWebMouseEvent(GdkEvent*, int, Optional<WebCore::IntPoint>);
+@@ -70,6 +70,11 @@ public:
+     NativeWebMouseEvent(HWND, UINT message, WPARAM, LPARAM, bool);
+ #endif
+ 
++#if PLATFORM(GTK) || USE(LIBWPE)
 +    NativeWebMouseEvent(Type type, Button button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier> modifiers, WallTime timestamp)
 +       : WebMouseEvent(type, button, buttons, position, globalPosition, deltaX, deltaY, deltaZ, clickCount, modifiers, timestamp) { }
- #elif PLATFORM(IOS_FAMILY)
-     NativeWebMouseEvent(::WebEvent *);
-     NativeWebMouseEvent(Type, Button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier>, WallTime timestamp, double force);
++#endif
++
+ #if USE(APPKIT)
+     NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
+ #elif PLATFORM(GTK)
 diff --git a/Source/WebKit/Shared/WebEvent.h b/Source/WebKit/Shared/WebEvent.h
-index 93d0bf22b5083d5a0027458d11ce241627b10c3b..6ee97a5c8c028db59240658757c01699bacc9a3d 100644
+index 93d0bf22b5083d5a0027458d11ce241627b10c3b..567c9ddd635b704611d1b94aae65ceb47f14ef16 100644
 --- a/Source/WebKit/Shared/WebEvent.h
 +++ b/Source/WebKit/Shared/WebEvent.h
 @@ -37,6 +37,7 @@
@@ -4315,7 +4328,7 @@ index 93d0bf22b5083d5a0027458d11ce241627b10c3b..6ee97a5c8c028db59240658757c01699
  #include <wtf/WallTime.h>
  #include <wtf/text/WTFString.h>
  
-@@ -258,8 +259,10 @@ public:
+@@ -258,12 +259,15 @@ public:
  
  #if USE(APPKIT)
      WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool handledByInputMethod, const Vector<WebCore::KeypressCommand>&, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
@@ -4326,7 +4339,12 @@ index 93d0bf22b5083d5a0027458d11ce241627b10c3b..6ee97a5c8c028db59240658757c01699
  #elif PLATFORM(IOS_FAMILY)
      WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool handledByInputMethod, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
  #elif USE(LIBWPE)
-@@ -307,7 +310,7 @@ private:
+     WebKeyboardEvent(Type, const String& text, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool handledByInputMethod, Optional<Vector<WebCore::CompositionUnderline>>&&, Optional<EditingRange>&&, bool isKeypad, OptionSet<Modifier>, WallTime timestamp);
++    WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
+ #else
+     WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
+ #endif
+@@ -307,7 +311,7 @@ private:
      int32_t m_nativeVirtualKeyCode;
      int32_t m_macCharCode;
  #if USE(APPKIT) || USE(UIKIT_KEYBOARD_ADDITIONS) || PLATFORM(GTK) || USE(LIBWPE)
@@ -4336,7 +4354,7 @@ index 93d0bf22b5083d5a0027458d11ce241627b10c3b..6ee97a5c8c028db59240658757c01699
  #if PLATFORM(GTK) || USE(LIBWPE)
      Optional<Vector<WebCore::CompositionUnderline>> m_preeditUnderlines;
 diff --git a/Source/WebKit/Shared/WebKeyboardEvent.cpp b/Source/WebKit/Shared/WebKeyboardEvent.cpp
-index cccb560418f32fad40587ac083b95f398eb1399d..e5af7920b1cbfca4bef6b17fa7b0f3226943b955 100644
+index cccb560418f32fad40587ac083b95f398eb1399d..fb91afeaa595fa123eea32b0b6427ca345971205 100644
 --- a/Source/WebKit/Shared/WebKeyboardEvent.cpp
 +++ b/Source/WebKit/Shared/WebKeyboardEvent.cpp
 @@ -35,6 +35,7 @@ WebKeyboardEvent::WebKeyboardEvent()
@@ -4397,6 +4415,30 @@ index cccb560418f32fad40587ac083b95f398eb1399d..e5af7920b1cbfca4bef6b17fa7b0f322
  #elif PLATFORM(IOS_FAMILY)
  
  WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool handledByInputMethod, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
+@@ -123,6 +160,23 @@ WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String&
+     ASSERT(isKeyboardEventType(type));
+ }
+ 
++WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
++    : WebEvent(type, modifiers, timestamp)
++    , m_text(text)
++    , m_unmodifiedText(text)
++    , m_key(key)
++    , m_code(code)
++    , m_keyIdentifier(keyIdentifier)
++    , m_windowsVirtualKeyCode(windowsVirtualKeyCode)
++    , m_nativeVirtualKeyCode(nativeVirtualKeyCode)
++    , m_macCharCode(0)
++    , m_isAutoRepeat(isAutoRepeat)
++    , m_isKeypad(isKeypad)
++    , m_isSystemKey(isSystemKey)
++{
++    ASSERT(isKeyboardEventType(type));
++}
++
+ #else
+ 
+ WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
 diff --git a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp b/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
 index 2357f3d58415fae78e48b0f8a25bddad85c786bf..f3941a74922f5a0a3bf59a11cd4c42fbfd33d0af 100644
 --- a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
@@ -7477,10 +7519,10 @@ index 0000000000000000000000000000000000000000..77dff2c191fee081773bc5705d80168c
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5bba231872fef0330710ca6af3513bb3fc0f1f22
+index 0000000000000000000000000000000000000000..9a0668f9fc450e09a43cce3073fdb5584c6e7ba7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,244 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7704,11 +7746,9 @@ index 0000000000000000000000000000000000000000..5bba231872fef0330710ca6af3513bb3
 +    if (deltaY)
 +        eventDeltaY = *deltaY;
 +    m_mouseCallbacks->append(WTFMove(callback));
-+#if PLATFORM(WPE)
-+    platformDispatchMouseEvent(eventType, x, y, eventButton, eventModifiers);
-+#elif PLATFORM(MAC)
++#if PLATFORM(MAC)
 +    platformDispatchMouseEvent(type, x, y, modifiers, button, clickCount);
-+#elif PLATFORM(GTK)
++#elif PLATFORM(GTK) || PLATFORM(WPE)
 +    WallTime timestamp = WallTime::now();
 +    NativeWebMouseEvent event(
 +        eventType,
@@ -9059,10 +9099,10 @@ index 0000000000000000000000000000000000000000..5dc76aa302cb574307059e66a1b73730
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..be4d3436bd66359d3de795bf368359bad0fe785d
+index 0000000000000000000000000000000000000000..585fb151f302e4b376c705ed0d0974d518733605
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,59 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9098,64 +9138,29 @@ index 0000000000000000000000000000000000000000..be4d3436bd66359d3de795bf368359ba
 +
 +namespace WebKit {
 +
-+static unsigned toWPEButton(WebMouseEvent::Button button)
-+{
-+    switch (button) {
-+    case WebMouseEvent::NoButton:
-+    case WebMouseEvent::LeftButton:
-+        return 1;
-+    case WebMouseEvent::MiddleButton:
-+        return 3;
-+    case WebMouseEvent::RightButton:
-+        return 2;
-+    }
-+    return 1;
-+}
-+
-+static unsigned toWPEModifiers(OptionSet<WebEvent::Modifier> modifiers)
-+{
-+    unsigned result = 0;
-+    if (modifiers.contains(WebEvent::Modifier::ControlKey))
-+        result |= wpe_input_keyboard_modifier_control;
-+    if (modifiers.contains(WebEvent::Modifier::ShiftKey))
-+        result |= wpe_input_keyboard_modifier_shift;
-+    if (modifiers.contains(WebEvent::Modifier::AltKey))
-+        result |= wpe_input_keyboard_modifier_alt;
-+    if (modifiers.contains(WebEvent::Modifier::CapsLockKey))
-+       fprintf(stderr, "Unsupported modifier CapsLock will be ignored.\n");
-+    return result;
-+}
-+
 +void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
 +{
 +    unsigned keyCode = WebCore::PlatformKeyboardEvent::WPEKeyCodeForWindowsKeyCode(windowsVirtualKeyCode);
-+    struct wpe_input_xkb_keymap_entry* entries;
-+    uint32_t entriesCount;
-+    fprintf(stderr, "platformDispatchKeyEvent %s => %d\n", key.ascii().data(), keyCode);
-+    wpe_input_xkb_context_get_entries_for_key_code(wpe_input_xkb_context_get_default(), keyCode, &entries, &entriesCount);
-+    bool pressed = type == WebKeyboardEvent::KeyDown;
-+    struct wpe_input_keyboard_event event = { 0, keyCode, entriesCount ? entries[0].hardware_key_code : 0, pressed, toWPEModifiers(modifiers) };
-+    // event.time = timestamp.secondsSinceEpoch().milliseconds();
-+    wpe_view_backend_dispatch_keyboard_event(m_page.viewBackend(), &event);
-+    free(entries);
++    String keyIdentifier;
++    if (keyCode)
++        keyIdentifier = WebCore::PlatformKeyboardEvent::keyIdentifierForWPEKeyCode(keyCode);
++    NativeWebKeyboardEvent event(
++        type,
++        text,
++        unmodifiedText,
++        key,
++        code,
++        keyIdentifier,
++        windowsVirtualKeyCode,
++        nativeVirtualKeyCode,
++        isAutoRepeat,
++        isKeypad,
++        isSystemKey,
++        modifiers,
++        timestamp);
++    m_page.handleKeyboardEvent(event);
 +}
-+
-+void WebPageInspectorInputAgent::platformDispatchMouseEvent(WebMouseEvent::Type type, int x, int y, WebMouseEvent::Button button, OptionSet<WebEvent::Modifier> modifiers)
-+{
-+    wpe_input_pointer_event_type eventType = wpe_input_pointer_event_type_null;
-+    uint32_t eventButton = 0;
-+    uint32_t state = 0;
-+    if (type == WebEvent::MouseDown || type == WebEvent::MouseUp) {
-+        eventType = wpe_input_pointer_event_type_button;
-+        state = (type == WebEvent::MouseDown);
-+        eventButton = toWPEButton(button);
-+    } else if (type == WebEvent::MouseMove) {
-+        eventType = wpe_input_pointer_event_type_motion;
-+    }
-+    struct wpe_input_pointer_event event { eventType, 0, x, y, eventButton, state, toWPEModifiers(modifiers) };
-+    wpe_view_backend_dispatch_pointer_event(m_page.viewBackend(), &event);
-+}
-+
++ 
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 index 6897af5ec1990cd0d563aa55fd4889528460f05f..8378b01609bfc6b285b20f392d81ab61cba7eb70 100644
@@ -9432,6 +9437,31 @@ index 9a78a5fe24da78b34ebefa785a07b5049ba473ba..17f4f626641629cb6c97d36b7361305a
      HashSet<WebResourceLoader*> m_loadersWithUploads;
  };
  
+diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
+index fbdf254ec42dc736ca0a00f521de8339f08ffbf2..5bd0472c37cc18d5dd6680e833fab3948acf80ff 100644
+--- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
++++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
+@@ -242,12 +242,20 @@ void DrawingAreaCoordinatedGraphics::updatePreferences(const WebPreferencesStore
+         settings.setAcceleratedCompositingEnabled(false);
+     }
+ #endif
++
++#if USE(LIBWPE)
++    settings.setAcceleratedCompositingEnabled(false);
++    settings.setForceCompositingMode(false);
++    settings.setAcceleratedCompositingForFixedPositionEnabled(false);
++    m_alwaysUseCompositing = false;
++#else
+     settings.setForceCompositingMode(store.getBoolValueForKey(WebPreferencesKey::forceCompositingModeKey()));
+     // Fixed position elements need to be composited and create stacking contexts
+     // in order to be scrolled by the ScrollingCoordinator.
+     settings.setAcceleratedCompositingForFixedPositionEnabled(settings.acceleratedCompositingEnabled());
+ 
+     m_alwaysUseCompositing = settings.acceleratedCompositingEnabled() && settings.forceCompositingMode();
++#endif
+ 
+     // If async scrolling is disabled, we have to force-disable async frame and overflow scrolling
+     // to keep the non-async scrolling on those elements working.
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 index a360fe5674b3065197ffe9eaa5853f559b35be63..41fcd6db05c844d935aff6589cb069e3d4b9eb4c 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
@@ -10224,9 +10254,18 @@ index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed
      ${WPEBACKEND_FDO_INCLUDE_DIRS}
  )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..c59a705dfe586c1ed1f08a173715cf3c35bc49de 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..7e435b9b9bb3240042269e2ec47b77205de60ba1 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
+@@ -25,7 +25,7 @@
+ 
+ #include "cmakeconfig.h"
+ 
+-#include "HeadlessViewBackend.h"
++#include "NullViewBackend.h"
+ #include "WindowViewBackend.h"
+ #if ENABLE_WEB_AUDIO || ENABLE_VIDEO
+ #include <gst/gst.h>
 @@ -43,6 +43,7 @@ static gboolean headlessMode;
  static gboolean privateMode;
  static gboolean automationMode;
@@ -10243,11 +10282,20 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..c59a705dfe586c1ed1f08a173715cf3c
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, nullptr, "[URL]" },
      { nullptr, 0, 0, G_OPTION_ARG_NONE, nullptr, nullptr, nullptr }
  };
-@@ -172,6 +174,41 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -131,7 +133,7 @@ static gboolean decidePermissionRequest(WebKitWebView *, WebKitPermissionRequest
+ static std::unique_ptr<WPEToolingBackends::ViewBackend> createViewBackend(uint32_t width, uint32_t height)
+ {
+     if (headlessMode)
+-        return std::make_unique<WPEToolingBackends::HeadlessViewBackend>(width, height);
++        return std::make_unique<WPEToolingBackends::NullViewBackend>();
+     return std::make_unique<WPEToolingBackends::WindowViewBackend>(width, height);
+ }
+ 
+@@ -172,6 +174,52 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
      return newWebView;
  }
  
-+static WebKitWebView *createNewPage(WebKitBrowserInspector*, WebKitWebContext *context)
++static WebKitWebView *createNewPage(WebKitBrowserInspector*, WebKitWebContext *webContext)
 +{
 +    auto backend = createViewBackend(1280, 720);
 +    struct wpe_view_backend* wpeBackend = backend->backend();
@@ -10259,7 +10307,18 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..c59a705dfe586c1ed1f08a173715cf3c
 +            delete static_cast<WPEToolingBackends::ViewBackend*>(data);
 +        }, backend.release());
 +
-+    auto* newWebView = webkit_web_view_new_with_context(viewBackend, context);
++    auto* settings = webkit_settings_new_with_settings(
++        "enable-developer-extras", TRUE,
++        "enable-webgl", TRUE,
++        "enable-media-stream", TRUE,
++        "enable-encrypted-media", TRUE,
++        nullptr);
++
++    auto* newWebView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
++        "backend", viewBackend,
++        "web-context", webContext,
++        "settings", settings,
++        nullptr));
 +
 +    g_signal_connect(newWebView, "close", G_CALLBACK(webViewClose), nullptr);
 +
@@ -10285,7 +10344,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..c59a705dfe586c1ed1f08a173715cf3c
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -280,6 +317,9 @@ int main(int argc, char *argv[])
+@@ -280,6 +328,9 @@ int main(int argc, char *argv[])
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
  
@@ -10295,3 +10354,111 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..c59a705dfe586c1ed1f08a173715cf3c
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
+diff --git a/Tools/wpe/backends/CMakeLists.txt b/Tools/wpe/backends/CMakeLists.txt
+index 9788ab56abeb2f769d615029f615844a24d89cc2..fb32c4ff95e67b2e764e902dc0000d255b46ed17 100644
+--- a/Tools/wpe/backends/CMakeLists.txt
++++ b/Tools/wpe/backends/CMakeLists.txt
+@@ -10,6 +10,7 @@ file(MAKE_DIRECTORY ${DERIVED_SOURCES_WPETOOLINGBACKENDS_DIR})
+ set(WPEToolingBackends_SOURCES
+     ${DERIVED_SOURCES_WPETOOLINGBACKENDS_DIR}/xdg-shell-unstable-v6-protocol.c
+     ${TOOLS_DIR}/wpe/backends/HeadlessViewBackend.cpp
++    ${TOOLS_DIR}/wpe/backends/NullViewBackend.cpp
+     ${TOOLS_DIR}/wpe/backends/ViewBackend.cpp
+     ${TOOLS_DIR}/wpe/backends/WebKitAccessibleApplication.cpp
+     ${TOOLS_DIR}/wpe/backends/WindowViewBackend.cpp
+diff --git a/Tools/wpe/backends/NullViewBackend.cpp b/Tools/wpe/backends/NullViewBackend.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..033ff802d3971a455667cd64c0e68dd10f448aa7
+--- /dev/null
++++ b/Tools/wpe/backends/NullViewBackend.cpp
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (C) Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "NullViewBackend.h"
++
++#include <wpe/fdo-egl.h>
++
++namespace WPEToolingBackends {
++
++NullViewBackend::NullViewBackend()
++    : ViewBackend(1, 1)
++{
++    static struct wpe_view_backend_exportable_fdo_egl_client exportableClient = { nullptr, nullptr, nullptr, nullptr, nullptr };
++    m_exportable = wpe_view_backend_exportable_fdo_egl_create(&exportableClient, this, 1, 1);
++    initializeAccessibility();
++    addActivityState(wpe_view_activity_state_visible | wpe_view_activity_state_focused | wpe_view_activity_state_in_window);
++}
++
++} // namespace WPEToolingBackends
+diff --git a/Tools/wpe/backends/NullViewBackend.h b/Tools/wpe/backends/NullViewBackend.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a2a03491c33231de1c1d692e18fb71cc478b90f
+--- /dev/null
++++ b/Tools/wpe/backends/NullViewBackend.h
+@@ -0,0 +1,43 @@
++/*
++ * Copyright (C) Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#include "ViewBackend.h"
++#include <cairo.h>
++#include <glib.h>
++#include <unordered_map>
++
++namespace WPEToolingBackends {
++
++class NullViewBackend final : public ViewBackend {
++public:
++    NullViewBackend();
++    virtual ~NullViewBackend() = default;
++private:
++    void displayBuffer(struct wpe_fdo_egl_exported_image*) override { };
++};
++
++} // namespace WPEToolingBackends
