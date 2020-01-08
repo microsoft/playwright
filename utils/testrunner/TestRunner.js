@@ -21,6 +21,7 @@ const path = require('path');
 const EventEmitter = require('events');
 const Multimap = require('./Multimap');
 const fs = require('fs');
+const {SourceMapSupport} = require('./SourceMapSupport');
 
 const INFINITE_TIMEOUT = 2147483647;
 
@@ -240,6 +241,8 @@ class TestPass {
       // Otherwise, run the test itself if there is no scheduled termination.
       this._runningUserCallbacks.set(workerId, test._userCallback);
       test.error = await test._userCallback.run(state, test);
+      if (test.error)
+        await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(test.error);
       this._runningUserCallbacks.delete(workerId, test._userCallback);
       if (!test.error)
         test.result = TestResult.Ok;
@@ -299,6 +302,7 @@ class TestRunner extends EventEmitter {
       breakOnFailure = false,
       disableTimeoutWhenInspectorIsEnabled = true,
     } = options;
+    this._sourceMapSupport = new SourceMapSupport();
     this._rootSuite = new Suite(null, '', TestMode.Run);
     this._currentSuite = this._rootSuite;
     this._tests = [];
