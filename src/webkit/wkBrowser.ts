@@ -51,7 +51,7 @@ export class WKBrowser extends browser.Browser {
 
   constructor(transport: ConnectionTransport) {
     super();
-    this._connection = new WKConnection(transport);
+    this._connection = WKConnection.from(transport);
 
     this._defaultContext = this._createBrowserContext(undefined, {});
 
