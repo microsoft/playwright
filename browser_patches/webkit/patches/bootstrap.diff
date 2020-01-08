@@ -4158,18 +4158,6 @@ index fcb9e8ddb8c3a804aa27339cab1b0039eb136f53..633a4efd58ac5c6a8999fa8d75d88342
      const String& host = challenge.protectionSpace().host();
      NSArray *certificates = [NSURLRequest allowsSpecificHTTPSCertificateForHost:host];
      if (!certificates)
-diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
-index a8a95f4b0db4a50a8ef5b72039c51cc5818ed304..324504696770fb095a70153aa830a87b46b77327 100644
---- a/Source/WebKit/PlatformWPE.cmake
-+++ b/Source/WebKit/PlatformWPE.cmake
-@@ -248,6 +248,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
-     "${WEBKIT_DIR}/UIProcess/API/wpe"
-     "${WEBKIT_DIR}/UIProcess/CoordinatedGraphics"
-     "${WEBKIT_DIR}/UIProcess/geoclue"
-+    "${WEBKIT_DIR}/UIProcess/glib"
-     "${WEBKIT_DIR}/UIProcess/gstreamer"
-     "${WEBKIT_DIR}/UIProcess/linux"
-     "${WEBKIT_DIR}/UIProcess/soup"
 diff --git a/Source/WebKit/Shared/API/c/wpe/WebKit.h b/Source/WebKit/Shared/API/c/wpe/WebKit.h
 index 898e30b370db8176e886fbbde0cd960e38a64818..74945e06fac0eb14936578de6a599a123364a63a 100644
 --- a/Source/WebKit/Shared/API/c/wpe/WebKit.h
@@ -4387,7 +4375,7 @@ index 45a56eb3b0fda13c3b78d57594a0092e4e1866f6..5e29e15813be6abe82790e6a98d3947e
 -#endif // ENABLE(TOUCH_EVENTS)
 +#endif // ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
-index ca52603ed5b07cc1a10721736ed46c6789413312..c9054f10f0b8db8c7818d854ffbedb26e2e6d2da 100644
+index ca52603ed5b07cc1a10721736ed46c6789413312..4420bcbb124c51632570fb57411c93c76d0674da 100644
 --- a/Source/WebKit/Sources.txt
 +++ b/Source/WebKit/Sources.txt
 @@ -254,17 +254,22 @@ Shared/WebsiteData/WebsiteData.cpp
@@ -4413,13 +4401,12 @@ index ca52603ed5b07cc1a10721736ed46c6789413312..c9054f10f0b8db8c7818d854ffbedb26
  UIProcess/RemoteWebInspectorProxy.cpp
  UIProcess/ResponsivenessTimer.cpp
  UIProcess/StatisticsRequest.cpp
-@@ -306,6 +311,9 @@ UIProcess/WebPageDiagnosticLoggingClient.cpp
+@@ -306,6 +311,8 @@ UIProcess/WebPageDiagnosticLoggingClient.cpp
  UIProcess/WebPageGroup.cpp
  UIProcess/WebPageInjectedBundleClient.cpp
  UIProcess/WebPageInspectorController.cpp
 +UIProcess/WebPageInspectorEmulationAgent.cpp
 +UIProcess/WebPageInspectorInputAgent.cpp
-+UIProcess/WebPageInspectorTargetProxy.cpp
  UIProcess/WebPageProxy.cpp
  UIProcess/WebPasteboardProxy.cpp
  UIProcess/WebPreferences.cpp
@@ -4436,7 +4423,7 @@ index fe757953761b99f69b828c11bbc0f331aeefc191..4bec91c6eaaf7fdda6c0d89903a2fa60
  UIProcess/API/Cocoa/_WKContextMenuElementInfo.mm
  UIProcess/API/Cocoa/_WKCustomHeaderFields.mm @no-unify
 diff --git a/Source/WebKit/SourcesGTK.txt b/Source/WebKit/SourcesGTK.txt
-index 4038ad7baec95bd6f2da6421f9f1ed578719ea69..489f9e941837c5d48142917dec3d0e9e3331f9f3 100644
+index 4038ad7baec95bd6f2da6421f9f1ed578719ea69..5d460802ba539564b9065914c34950f50842962f 100644
 --- a/Source/WebKit/SourcesGTK.txt
 +++ b/Source/WebKit/SourcesGTK.txt
 @@ -129,6 +129,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -4455,18 +4442,25 @@ index 4038ad7baec95bd6f2da6421f9f1ed578719ea69..489f9e941837c5d48142917dec3d0e9e
  UIProcess/glib/RemoteInspectorClient.cpp
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
-@@ -256,6 +258,9 @@ UIProcess/gtk/WebColorPickerGtk.cpp
+@@ -243,6 +245,7 @@ UIProcess/gtk/AcceleratedBackingStoreX11.cpp @no-unify
+ UIProcess/gtk/DragAndDropHandler.cpp
+ UIProcess/gtk/GestureController.cpp
+ UIProcess/gtk/HardwareAccelerationManager.cpp
++UIProcess/gtk/InspectorTargetProxyGtk.cpp
+ UIProcess/gtk/KeyBindingTranslator.cpp
+ UIProcess/gtk/PointerLockManager.cpp @no-unify
+ UIProcess/gtk/PointerLockManagerWayland.cpp @no-unify
+@@ -256,6 +259,8 @@ UIProcess/gtk/WebColorPickerGtk.cpp
  UIProcess/gtk/WebContextMenuProxyGtk.cpp
  UIProcess/gtk/WebDataListSuggestionsDropdownGtk.cpp
  UIProcess/gtk/WebInspectorProxyGtk.cpp
 +UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 +UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
-+UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
  UIProcess/gtk/WebKitInspectorWindow.cpp
  UIProcess/gtk/WebPageProxyGtk.cpp @no-unify
  UIProcess/gtk/WebPasteboardProxyGtk.cpp
 diff --git a/Source/WebKit/SourcesWPE.txt b/Source/WebKit/SourcesWPE.txt
-index f788d84d86953820df58fb3ddf6181d8ffbefb24..f79f97c1bad00fb780b79a910b8ea66470513196 100644
+index f788d84d86953820df58fb3ddf6181d8ffbefb24..0abc1c62d30ca1eca22c0fc74738c42cf912b312 100644
 --- a/Source/WebKit/SourcesWPE.txt
 +++ b/Source/WebKit/SourcesWPE.txt
 @@ -117,6 +117,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -4486,13 +4480,16 @@ index f788d84d86953820df58fb3ddf6181d8ffbefb24..f79f97c1bad00fb780b79a910b8ea664
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -213,6 +214,9 @@ UIProcess/soup/WebProcessPoolSoup.cpp
+@@ -210,9 +211,12 @@ UIProcess/linux/MemoryPressureMonitor.cpp
+ UIProcess/soup/WebCookieManagerProxySoup.cpp
+ UIProcess/soup/WebProcessPoolSoup.cpp
+ 
++UIProcess/wpe/InspectorTargetProxyWPE.cpp
  UIProcess/wpe/TextCheckerWPE.cpp
  UIProcess/wpe/WebInspectorProxyWPE.cpp
  UIProcess/wpe/WebPageProxyWPE.cpp
 +UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
 +UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
-+UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp
  UIProcess/wpe/WebPasteboardProxyWPE.cpp
  UIProcess/wpe/WebPreferencesWPE.cpp
  
@@ -4919,64 +4916,10 @@ index f769407fdc660c6f6fef77af90a43bd5dca9d544..ba010ed593bdedc0d70e4f4d3139e73d
      bool canRunBeforeUnloadConfirmPanel() const final { return true; }
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-index 33a9b7d5ad060f275dcf7156a8cff3f37644e736..128a5c75807848de10aed628618fc7d149a42792 100644
+index 33a9b7d5ad060f275dcf7156a8cff3f37644e736..406c6431bd84a9193f75a7689553fe79eb5d864b 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-@@ -119,9 +119,7 @@ enum {
-     PROP_LOCAL_STORAGE_DIRECTORY,
- #endif
-     PROP_WEBSITE_DATA_MANAGER,
--#if PLATFORM(GTK)
-     PROP_PSON_ENABLED
--#endif
- };
- 
- enum {
-@@ -202,9 +200,7 @@ struct _WebKitWebContextPrivate {
- 
-     RefPtr<WebProcessPool> processPool;
-     bool clientsDetached;
--#if PLATFORM(GTK)
-     bool psonEnabled;
--#endif
- 
-     GRefPtr<WebKitFaviconDatabase> faviconDatabase;
-     GRefPtr<WebKitSecurityManager> securityManager;
-@@ -329,11 +325,9 @@ static void webkitWebContextGetProperty(GObject* object, guint propID, GValue* v
-     case PROP_WEBSITE_DATA_MANAGER:
-         g_value_set_object(value, webkit_web_context_get_website_data_manager(context));
-         break;
--#if PLATFORM(GTK)
-     case PROP_PSON_ENABLED:
-         g_value_set_boolean(value, context->priv->psonEnabled);
-         break;
--#endif
-     default:
-         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propID, paramSpec);
-     }
-@@ -354,11 +348,9 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
-         context->priv->websiteDataManager = manager ? WEBKIT_WEBSITE_DATA_MANAGER(manager) : nullptr;
-         break;
-     }
--#if PLATFORM(GTK)
-     case PROP_PSON_ENABLED:
-         context->priv->psonEnabled = g_value_get_boolean(value);
-         break;
--#endif
-     default:
-         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propID, paramSpec);
-     }
-@@ -375,9 +367,7 @@ static void webkitWebContextConstructed(GObject* object)
- 
-     API::ProcessPoolConfiguration configuration;
-     configuration.setInjectedBundlePath(FileSystem::stringFromFileSystemRepresentation(bundleFilename.get()));
--#if PLATFORM(GTK)
-     configuration.setProcessSwapsOnNavigation(priv->psonEnabled);
--#endif
- 
-     if (!priv->websiteDataManager)
-         priv->websiteDataManager = adoptGRef(webkit_website_data_manager_new("local-storage-directory", priv->localStorageDirectory.data(), nullptr));
-@@ -385,6 +375,11 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -385,6 +385,11 @@ static void webkitWebContextConstructed(GObject* object)
      if (!webkit_website_data_manager_is_ephemeral(priv->websiteDataManager.get()))
          WebKit::LegacyGlobalSettings::singleton().setHSTSStorageDirectory(FileSystem::stringFromFileSystemRepresentation(webkit_website_data_manager_get_hsts_cache_directory(priv->websiteDataManager.get())));
  
@@ -4988,22 +4931,6 @@ index 33a9b7d5ad060f275dcf7156a8cff3f37644e736..128a5c75807848de10aed628618fc7d1
      priv->processPool = WebProcessPool::create(configuration);
      priv->processPool->setPrimaryDataStore(webkitWebsiteDataManagerGetDataStore(priv->websiteDataManager.get()));
      priv->processPool->setUserMessageHandler([webContext](UserMessage&& message, CompletionHandler<void(UserMessage&&)>&& completionHandler) {
-@@ -496,7 +491,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
-             WEBKIT_TYPE_WEBSITE_DATA_MANAGER,
-             static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
- 
--#if PLATFORM(GTK)
-     /**
-      * WebKitWebContext:process-swap-on-cross-site-navigation-enabled:
-      *
-@@ -519,7 +513,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
-             _("Whether swap Web processes on cross-site navigations is enabled"),
-             FALSE,
-             static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)));
--#endif
- 
-     /**
-      * WebKitWebContext::download-started:
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 index 646e45adc2818287f47d00340567822c210a16ed..1caff042a6783addd52355527ea9797fb4e4c513 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
@@ -5148,10 +5075,10 @@ index 930b17b6629e04d0dfa2222bbc3217877c6e1812..395462e5f01c195231e9296d1204167c
  #include <webkit2/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b9392bc9f232f1f8a5be1e9668ec31e11bd8e3f8
+index 0000000000000000000000000000000000000000..773cbab35accf562349a133fe14ac84c22d32cc6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/wpe/WebKitBrowserInspector.h
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,76 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -5224,9 +5151,6 @@ index 0000000000000000000000000000000000000000..b9392bc9f232f1f8a5be1e9668ec31e1
 +
 +WEBKIT_API WebKitBrowserInspector *
 +webkit_browser_inspector_get_default                  (void);
-+
-+WEBKIT_API void
-+webkit_browser_inspector_initialize_pipe              (void);
 +
 +G_END_DECLS
 +
@@ -6570,10 +6494,15 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
-index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..b27bcc5026bdf788222ef38b7525fc247997e8b4 100644
+index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a54a1c99c1e255fd34a0c2fad13be32e7889cc8f 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
-@@ -32,6 +32,8 @@
+@@ -28,10 +28,13 @@
+ 
+ #include "ProvisionalPageProxy.h"
+ #include "WebFrameProxy.h"
++#include "WebPageInspectorController.h"
+ #include "WebPageInspectorTarget.h"
  #include "WebPageMessages.h"
  #include "WebPageProxy.h"
  #include "WebProcessProxy.h"
@@ -6582,7 +6511,7 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..b27bcc5026bdf788222ef38b7525fc24
  
  namespace WebKit {
  
-@@ -39,23 +41,29 @@ using namespace Inspector;
+@@ -39,23 +42,29 @@ using namespace Inspector;
  
  std::unique_ptr<InspectorTargetProxy> InspectorTargetProxy::create(WebPageProxy& page, const String& targetId, Inspector::InspectorTargetType type)
  {
@@ -6590,12 +6519,13 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..b27bcc5026bdf788222ef38b7525fc24
 +    return makeUnique<InspectorTargetProxy>(page, nullptr, targetId, type);
  }
  
- std::unique_ptr<InspectorTargetProxy> InspectorTargetProxy::create(ProvisionalPageProxy& provisionalPage, const String& targetId, Inspector::InspectorTargetType type)
+-std::unique_ptr<InspectorTargetProxy> InspectorTargetProxy::create(ProvisionalPageProxy& provisionalPage, const String& targetId, Inspector::InspectorTargetType type)
++std::unique_ptr<InspectorTargetProxy> InspectorTargetProxy::create(ProvisionalPageProxy& provisionalPage, const String& targetId)
  {
 -    auto target = InspectorTargetProxy::create(provisionalPage.page(), targetId, type);
 -    target->m_provisionalPage = makeWeakPtr(provisionalPage);
 -    return target;
-+    return makeUnique<InspectorTargetProxy>(provisionalPage.page(), &provisionalPage, targetId, type);
++    return makeUnique<InspectorTargetProxy>(provisionalPage.page(), &provisionalPage, targetId, Inspector::InspectorTargetType::Page);
  }
  
 -InspectorTargetProxy::InspectorTargetProxy(WebPageProxy& page, const String& targetId, Inspector::InspectorTargetType type)
@@ -6617,7 +6547,41 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..b27bcc5026bdf788222ef38b7525fc24
  void InspectorTargetProxy::connect(Inspector::FrontendChannel::ConnectionType connectionType)
  {
      if (m_provisionalPage) {
-@@ -102,4 +110,11 @@ bool InspectorTargetProxy::isProvisional() const
+@@ -83,6 +92,9 @@ void InspectorTargetProxy::disconnect()
+ 
+ void InspectorTargetProxy::sendMessageToTargetBackend(const String& message)
+ {
++    if (m_page.inspectorController().dispatchMessageToTargetBackend(message))
++        return;
++
+     if (m_provisionalPage) {
+         m_provisionalPage->send(Messages::WebPage::SendMessageToTargetBackend(identifier(), message));
+         return;
+@@ -97,9 +109,35 @@ void InspectorTargetProxy::didCommitProvisionalTarget()
+     m_provisionalPage = nullptr;
+ }
+ 
++void InspectorTargetProxy::activate(String& error)
++{
++    if (m_type != Inspector::InspectorTargetType::Page)
++        return InspectorTarget::activate(error);
++
++    platformActivate(error);
++}
++
++void InspectorTargetProxy::close(String& error, bool runBeforeUnload)
++{
++    if (m_type != Inspector::InspectorTargetType::Page)
++        return InspectorTarget::close(error, runBeforeUnload);
++
++    if (runBeforeUnload)
++        m_page.tryClose();
++    else
++        m_page.closePage();
++}
++
+ bool InspectorTargetProxy::isProvisional() const
+ {
      return !!m_provisionalPage;
  }
  
@@ -6630,10 +6594,10 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..b27bcc5026bdf788222ef38b7525fc24
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.h b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..7a9df22fd418553a64de267d58b165abfb09dc8a 100644
+index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..8c9960d59c7712b4f56d2c2f9bd862f0af7cf982 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.h
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-@@ -37,30 +37,34 @@ class WebPageProxy;
+@@ -37,30 +37,36 @@ class WebPageProxy;
  // NOTE: This UIProcess side InspectorTarget doesn't care about the frontend channel, since
  // any target -> frontend messages will be routed to the WebPageProxy with a targetId.
  
@@ -6643,8 +6607,9 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..7a9df22fd418553a64de267d58b165ab
      WTF_MAKE_NONCOPYABLE(InspectorTargetProxy);
  public:
      static std::unique_ptr<InspectorTargetProxy> create(WebPageProxy&, const String& targetId, Inspector::InspectorTargetType);
-     static std::unique_ptr<InspectorTargetProxy> create(ProvisionalPageProxy&, const String& targetId, Inspector::InspectorTargetType);
+-    static std::unique_ptr<InspectorTargetProxy> create(ProvisionalPageProxy&, const String& targetId, Inspector::InspectorTargetType);
 -    InspectorTargetProxy(WebPageProxy&, const String& targetId, Inspector::InspectorTargetType);
++    static std::unique_ptr<InspectorTargetProxy> create(ProvisionalPageProxy&, const String& targetId);
 +    InspectorTargetProxy(WebPageProxy&, ProvisionalPageProxy*, const String& targetId, Inspector::InspectorTargetType);
      ~InspectorTargetProxy() = default;
  
@@ -6659,12 +6624,13 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..7a9df22fd418553a64de267d58b165ab
      void connect(Inspector::FrontendChannel::ConnectionType) override;
      void disconnect() override;
      void sendMessageToTargetBackend(const String&) override;
++    void activate(String& error) override;
++    void close(String& error, bool runBeforeUnload) override;
  
--private:
-+protected:
-     WebPageProxy& m_page;
+ private:
++    void platformActivate(String& error) const;
 +
-+private:
+     WebPageProxy& m_page;
 +    WeakPtr<ProvisionalPageProxy> m_provisionalPage;
      String m_identifier;
      Inspector::InspectorTargetType m_type;
@@ -6930,24 +6896,26 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..632e698be67fb885c61aae9eddc507270dc54575 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..c1773034608010b4904ba90f00302f5ef32a1d95 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-@@ -26,10 +26,13 @@
+@@ -26,10 +26,15 @@
  #include "config.h"
  #include "WebPageInspectorController.h"
  
++#include "InspectorDialogAgent.h"
 +#include "InspectorBrowserAgent.h"
  #include "ProvisionalPageProxy.h"
  #include "WebFrameProxy.h"
++#include "WebPageInspectorEmulationAgent.h"
++#include "WebPageInspectorInputAgent.h"
  #include "WebPageInspectorTarget.h"
-+#include "WebPageInspectorTargetProxy.h"
  #include "WebPageProxy.h"
 +#include "WebPreferences.h"
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -46,12 +49,23 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -46,29 +51,80 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -6964,18 +6932,26 @@ index 1ee28bf716374371433215148aa20a51927a8a33..632e698be67fb885c61aae9eddc50727
      , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
  {
 -    auto targetAgent = makeUnique<InspectorTargetAgent>(m_frontendRouter.get(), m_backendDispatcher.get());
++}
++
++void WebPageInspectorController::init()
++{
 +    String browserContextID;
 +#if ENABLE(REMOTE_INSPECTOR)
-+    browserContextID = InspectorBrowserAgent::toBrowserContextIDProtocolString(page.sessionID());
++    browserContextID = InspectorBrowserAgent::toBrowserContextIDProtocolString(m_page.sessionID());
 +#endif
 +    auto targetAgent = makeUnique<InspectorTargetAgent>(m_frontendRouter.get(), m_backendDispatcher.get(), browserContextID);
  
      m_targetAgent = targetAgent.get();
  
-@@ -60,15 +74,51 @@ WebPageInspectorController::WebPageInspectorController(WebPageProxy& page)
+     m_agents.append(WTFMove(targetAgent));
+-}
++    m_agents.append(makeUnique<WebPageInspectorEmulationAgent>(m_backendDispatcher.get(), m_page));
++    m_agents.append(makeUnique<WebPageInspectorInputAgent>(m_backendDispatcher.get(), m_page));
++    m_agents.append(makeUnique<InspectorDialogAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), m_page));
  
- void WebPageInspectorController::init()
- {
+-void WebPageInspectorController::init()
+-{
 +    if (s_observer)
 +        s_observer->didCreateInspectorController(m_page);
 +
@@ -7024,7 +7000,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..632e698be67fb885c61aae9eddc50727
  }
  
  bool WebPageInspectorController::hasLocalFrontend() const
-@@ -80,6 +130,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -80,6 +136,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  {
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -7034,7 +7010,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..632e698be67fb885c61aae9eddc50727
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -134,6 +187,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +193,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -7046,30 +7022,16 @@ index 1ee28bf716374371433215148aa20a51927a8a33..632e698be67fb885c61aae9eddc50727
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -150,7 +208,12 @@ void WebPageInspectorController::setIndicating(bool indicating)
- 
- void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
- {
--    addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-+    std::unique_ptr<InspectorTargetProxy> target;
-+    if (type == Inspector::InspectorTargetType::Page)
-+        target = WebPageInspectorTargetProxy::create(m_page, *m_targetAgent, targetId);
-+    else
-+        target = InspectorTargetProxy::create(m_page, targetId, type);
-+    addTarget(WTFMove(target));
- }
- 
- void WebPageInspectorController::destroyInspectorTarget(const String& targetId)
-@@ -186,7 +249,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +250,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
 -    addTarget(InspectorTargetProxy::create(provisionalPage, getTargetID(provisionalPage), Inspector::InspectorTargetType::Page));
-+    addTarget(WebPageInspectorTargetProxy::create(provisionalPage, *m_targetAgent, getTargetID(provisionalPage)));
++    addTarget(InspectorTargetProxy::create(provisionalPage, getTargetID(provisionalPage)));
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +281,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +282,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -7680,219 +7642,6 @@ index 0000000000000000000000000000000000000000..7d7bfd78828ee56de6b08eca4b7d3ff4
 +};
 +
 +} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..2db60f1ec56499136f1ebfaa8bee175f1037fb3c
---- /dev/null
-+++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.cpp
-@@ -0,0 +1,134 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "config.h"
-+#include "WebPageInspectorTargetProxy.h"
-+
-+#include "InspectorDialogAgent.h"
-+#include "ProvisionalPageProxy.h"
-+#include "WebPageInspectorController.h"
-+#include "WebPageInspectorEmulationAgent.h"
-+#include "WebPageInspectorInputAgent.h"
-+#include "WebPageMessages.h"
-+#include "WebPageProxy.h"
-+#include "WebProcessProxy.h"
-+#include <JavaScriptCore/InspectorBackendDispatcher.h>
-+#include <JavaScriptCore/InspectorBackendDispatchers.h>
-+#include <JavaScriptCore/InspectorFrontendRouter.h>
-+#include <JavaScriptCore/InspectorTargetAgent.h>
-+
-+namespace WebKit {
-+
-+using namespace Inspector;
-+
-+namespace {
-+
-+class TargetFrontendChannel final : public FrontendChannel {
-+    WTF_MAKE_NONCOPYABLE(TargetFrontendChannel);
-+public:
-+    TargetFrontendChannel(InspectorTargetAgent& targetAgent, const String& targetId, FrontendChannel::ConnectionType type)
-+        : m_targetAgent(targetAgent)
-+        , m_targetId(targetId)
-+        , m_connectionType(type)
-+    {
-+    }
-+    ~TargetFrontendChannel() override = default;
-+
-+    ConnectionType connectionType() const override { return m_connectionType; }
-+    void sendMessageToFrontend(const String& message) override
-+    {
-+        m_targetAgent.sendMessageFromTargetToFrontend(m_targetId, message);
-+    }
-+
-+private:
-+    InspectorTargetAgent& m_targetAgent;
-+    String m_targetId;
-+    FrontendChannel::ConnectionType m_connectionType;
-+};
-+
-+} // namespace
-+
-+std::unique_ptr<WebPageInspectorTargetProxy> WebPageInspectorTargetProxy::create(WebPageProxy& page, Inspector::InspectorTargetAgent& targetAgent, const String& targetId)
-+{
-+    return makeUnique<WebPageInspectorTargetProxy>(page, nullptr, targetAgent, targetId);
-+}
-+
-+std::unique_ptr<WebPageInspectorTargetProxy> WebPageInspectorTargetProxy::create(ProvisionalPageProxy& provisionalPage, Inspector::InspectorTargetAgent& targetAgent, const String& targetId)
-+{
-+    return makeUnique<WebPageInspectorTargetProxy>(provisionalPage.page(), &provisionalPage, targetAgent, targetId);
-+}
-+
-+WebPageInspectorTargetProxy::WebPageInspectorTargetProxy(WebPageProxy& page, ProvisionalPageProxy* provisionalPage, Inspector::InspectorTargetAgent& targetAgent, const String& targetId)
-+    : InspectorTargetProxy(page, provisionalPage, targetId, Inspector::InspectorTargetType::Page)
-+    , m_frontendRouter(FrontendRouter::create())
-+    , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
-+    , m_targetAgent(targetAgent)
-+{
-+    m_agents.append(std::make_unique<WebPageInspectorEmulationAgent>(m_backendDispatcher.get(), page));
-+    m_agents.append(std::make_unique<WebPageInspectorInputAgent>(m_backendDispatcher.get(), page));
-+    m_agents.append(std::make_unique<InspectorDialogAgent>(m_backendDispatcher.get(), m_frontendRouter.get(), page));
-+}
-+
-+void WebPageInspectorTargetProxy::connect(Inspector::FrontendChannel::ConnectionType connectionType)
-+{
-+    InspectorTargetProxy::connect(connectionType);
-+    ASSERT(!m_frontendChannel);
-+    if (m_frontendChannel)
-+        return;
-+    m_frontendChannel = std::make_unique<TargetFrontendChannel>(m_targetAgent, identifier(), connectionType);
-+    m_frontendRouter->connectFrontend(*m_frontendChannel);
-+}
-+
-+void WebPageInspectorTargetProxy::disconnect()
-+{
-+    ASSERT(m_frontendChannel);
-+    m_frontendRouter->disconnectAllFrontends();
-+    m_frontendChannel.reset();
-+    InspectorTargetProxy::disconnect();
-+}
-+
-+void WebPageInspectorTargetProxy::sendMessageToTargetBackend(const String& message)
-+{
-+    if (m_backendDispatcher->dispatch(message, BackendDispatcher::Mode::ContinueIfDomainIsMissing) == BackendDispatcher::DispatchResult::Finished)
-+        return;
-+    if (m_page.inspectorController().dispatchMessageToTargetBackend(message))
-+        return;
-+    InspectorTargetProxy::sendMessageToTargetBackend(message);
-+}
-+
-+void WebPageInspectorTargetProxy::activate(String& error)
-+{
-+    platformActivate(error);
-+}
-+
-+void WebPageInspectorTargetProxy::close(String& error, bool runBeforeUnload)
-+{
-+    if (runBeforeUnload)
-+        m_page.tryClose();
-+    else
-+        m_page.closePage();
-+}
-+
-+} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
-new file mode 100644
-index 0000000000000000000000000000000000000000..36b42d75e6d7a12da3d2c2455bbdca070ca53093
---- /dev/null
-+++ b/Source/WebKit/UIProcess/WebPageInspectorTargetProxy.h
-@@ -0,0 +1,67 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#pragma once
-+
-+#include "InspectorTargetProxy.h"
-+#include <JavaScriptCore/InspectorAgentRegistry.h>
-+#include <wtf/Forward.h>
-+#include <wtf/Noncopyable.h>
-+
-+namespace Inspector {
-+class BackendDispatcher;
-+class InspectorTargetAgent;
-+}
-+
-+namespace WebKit {
-+
-+class WebPageProxy;
-+
-+class WebPageInspectorTargetProxy final : public InspectorTargetProxy {
-+    WTF_MAKE_FAST_ALLOCATED;
-+    WTF_MAKE_NONCOPYABLE(WebPageInspectorTargetProxy);
-+public:
-+    static std::unique_ptr<WebPageInspectorTargetProxy> create(WebPageProxy&, Inspector::InspectorTargetAgent&, const String& targetId);
-+    static std::unique_ptr<WebPageInspectorTargetProxy> create(ProvisionalPageProxy&, Inspector::InspectorTargetAgent&, const String& targetId);
-+    WebPageInspectorTargetProxy(WebPageProxy&, ProvisionalPageProxy*, Inspector::InspectorTargetAgent&, const String& targetId);
-+    ~WebPageInspectorTargetProxy() = default;
-+
-+    void connect(Inspector::FrontendChannel::ConnectionType) override;
-+    void disconnect() override;
-+    void sendMessageToTargetBackend(const String&) override;
-+    void activate(String& error) override;
-+    void close(String& error, bool runBeforeUnload) override;
-+
-+private:
-+    void platformActivate(String& error) const;
-+
-+    Ref<Inspector::FrontendRouter> m_frontendRouter;
-+    Ref<Inspector::BackendDispatcher> m_backendDispatcher;
-+    Inspector::InspectorTargetAgent& m_targetAgent;
-+    Inspector::AgentRegistry m_agents;
-+    std::unique_ptr<Inspector::FrontendChannel> m_frontendChannel;
-+};
-+
-+} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
 index 4ff9dddf30a92ba6a0f7f324c0bf187077b2e8f0..5a260380ecca1ac5c0979694a328d3120faa5be4 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
@@ -8342,6 +8091,56 @@ index 0000000000000000000000000000000000000000..27c8a4dfb0008bcf190157a0b8a72b72
 +} // namespace API
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/gtk/InspectorTargetProxyGtk.cpp b/Source/WebKit/UIProcess/gtk/InspectorTargetProxyGtk.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a86cc348bc210b71bb463dcb3057f575ad7c1d3
+--- /dev/null
++++ b/Source/WebKit/UIProcess/gtk/InspectorTargetProxyGtk.cpp
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (C) 2019 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "InspectorTargetProxy.h"
++
++#include "WebPageProxy.h"
++#include <WebCore/GtkUtilities.h>
++#include <gtk/gtk.h>
++
++namespace WebKit {
++
++void InspectorTargetProxy::platformActivate(String& error) const
++{
++    GtkWidget* parent = gtk_widget_get_toplevel(m_page.viewWidget());
++    if (WebCore::widgetIsOnscreenToplevelWindow(parent))
++        gtk_window_present(GTK_WINDOW(parent));
++    else
++        error = "The view is not on screen";
++}
++
++} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..c5ee54a88b2eff67bb96acc3481f7262dff0c796
@@ -8530,56 +8329,6 @@ index 0000000000000000000000000000000000000000..7ad3fe416c5c747eaad8c6948c3549a3
 +}
 +
 +} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..ea218e0ff490168db579a092ad5579c522281b16
---- /dev/null
-+++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorTargetProxyGtk.cpp
-@@ -0,0 +1,44 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "config.h"
-+#include "WebPageInspectorTargetProxy.h"
-+
-+#include "WebPageProxy.h"
-+#include <WebCore/GtkUtilities.h>
-+#include <gtk/gtk.h>
-+
-+namespace WebKit {
-+
-+void WebPageInspectorTargetProxy::platformActivate(String& error) const
-+{
-+    GtkWidget* parent = gtk_widget_get_toplevel(m_page.viewWidget());
-+    if (WebCore::widgetIsOnscreenToplevelWindow(parent))
-+        gtk_window_present(GTK_WINDOW(parent));
-+    else
-+        error = "The view is not on screen";
-+}
-+
-+} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/ios/PageClientImplIOS.mm b/Source/WebKit/UIProcess/ios/PageClientImplIOS.mm
 index dbfb34900ad983a8f2267a29ccca9adbb89de2d6..bcf76c1f8df1bb307074393a62fa8b2eb72c9b74 100644
 --- a/Source/WebKit/UIProcess/ios/PageClientImplIOS.mm
@@ -8732,6 +8481,54 @@ index 0000000000000000000000000000000000000000..af371a4a71a1facdaa9f67881e998bf5
 +}
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/mac/InspectorTargetProxyMac.mm b/Source/WebKit/UIProcess/mac/InspectorTargetProxyMac.mm
+new file mode 100644
+index 0000000000000000000000000000000000000000..721826c8c98fc85b68a4f45deaee69c1219a7254
+--- /dev/null
++++ b/Source/WebKit/UIProcess/mac/InspectorTargetProxyMac.mm
+@@ -0,0 +1,42 @@
++/*
++ * Copyright (C) 2019 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#import "config.h"
++#import "InspectorTargetProxy.h"
++#import "WebPageProxy.h"
++
++#if PLATFORM(MAC)
++
++namespace WebKit {
++
++void InspectorTargetProxy::platformActivate(String& error) const
++{
++    NSWindow* window = m_page.platformWindow();
++    [window makeKeyAndOrderFront:nil];
++}
++
++} // namespace WebKit
++
++#endif
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.h b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
 index 8016b56c160acc7b4269600f07f737b3793767bb..651a86c41af3305e215d7baf7f149cc7f401c470 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.h
@@ -9014,12 +8811,12 @@ index 0000000000000000000000000000000000000000..39be9012320b3a18d9dcc77a5c7d3cb3
 +}
 +
 +} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
+diff --git a/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp b/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..fbe0bfb31966980500d4b39d10a39aa88c5a98ac
+index 0000000000000000000000000000000000000000..7453194ca6f032ba86a4c67f5bf12688ab6ec1be
 --- /dev/null
-+++ b/Source/WebKit/UIProcess/mac/WebPageInspectorTargetProxyMac.mm
-@@ -0,0 +1,42 @@
++++ b/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp
+@@ -0,0 +1,40 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9045,29 +8842,27 @@ index 0000000000000000000000000000000000000000..fbe0bfb31966980500d4b39d10a39aa8
 + * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 + */
 +
-+#import "config.h"
-+#import "WebPageInspectorTargetProxy.h"
-+#import "WebPageProxy.h"
++#include "config.h"
++#include "InspectorTargetProxy.h"
 +
-+#if PLATFORM(MAC)
++#include "WebPageProxy.h"
++#include <wpe/wpe.h>
 +
 +namespace WebKit {
 +
-+void WebPageInspectorTargetProxy::platformActivate(String& error) const
++void InspectorTargetProxy::platformActivate(String& error) const
 +{
-+    NSWindow* window = m_page.platformWindow();
-+    [window makeKeyAndOrderFront:nil];
++    struct wpe_view_backend* backend = m_page.viewBackend();
++    wpe_view_backend_add_activity_state(backend, wpe_view_activity_state_visible | wpe_view_activity_state_focused | wpe_view_activity_state_in_window);
 +}
 +
 +} // namespace WebKit
-+
-+#endif
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5dc76aa302cb574307059e66a1b73730efe920da
+index 0000000000000000000000000000000000000000..db8eb05b6e9e738e61e04823929bbdf44373c5b0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorEmulationAgentWPE.cpp
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,40 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9101,20 +8896,19 @@ index 0000000000000000000000000000000000000000..5dc76aa302cb574307059e66a1b73730
 +
 +namespace WebKit {
 +
-+void WebPageInspectorEmulationAgent::platformSetSize(int width, int height, Function<void (const String& error)>&& callback)
++void WebPageInspectorEmulationAgent::platformSetSize(String& error, int width, int height)
 +{
 +    struct wpe_view_backend* backend = m_page.viewBackend();
 +    wpe_view_backend_dispatch_set_size(backend, width, height);
-+    callback(String());
 +}
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..be4d3436bd66359d3de795bf368359bad0fe785d
+index 0000000000000000000000000000000000000000..3850c53812149aac3258f9d5c7fc852b02231c1e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorInputAgentWPE.cpp
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,98 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9149,6 +8943,10 @@ index 0000000000000000000000000000000000000000..be4d3436bd66359d3de795bf368359ba
 +#include <wpe/wpe.h>
 +
 +namespace WebKit {
++
++void WebPageInspectorInputAgent::platformDispatchKeyEvent(String& error, const String& type, const String& keyRef)
++{
++}
 +
 +static unsigned toWPEButton(WebMouseEvent::Button button)
 +{
@@ -9209,57 +9007,11 @@ index 0000000000000000000000000000000000000000..be4d3436bd66359d3de795bf368359ba
 +}
 +
 +} // namespace WebKit
-diff --git a/Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp b/Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..1a625de882ee5c96b9ca5c881b4d0282e1c494a8
---- /dev/null
-+++ b/Source/WebKit/UIProcess/wpe/WebPageInspectorTargetProxyWPE.cpp
-@@ -0,0 +1,40 @@
-+/*
-+ * Copyright (C) 2019 Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include "config.h"
-+#include "WebPageInspectorTargetProxy.h"
-+
-+#include "WebPageProxy.h"
-+#include <wpe/wpe.h>
-+
-+namespace WebKit {
-+
-+void WebPageInspectorTargetProxy::platformActivate(String& error) const
-+{
-+    struct wpe_view_backend* backend = m_page.viewBackend();
-+    wpe_view_backend_add_activity_state(backend, wpe_view_activity_state_visible | wpe_view_activity_state_focused | wpe_view_activity_state_in_window);
-+}
-+
-+} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a33191f7e 100644
+index 6897af5ec1990cd0d563aa55fd4889528460f05f..8378b01609bfc6b285b20f392d81ab61cba7eb70 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-@@ -1720,6 +1720,20 @@
+@@ -1720,6 +1720,19 @@
  		CEE4AE2B1A5DCF430002F49B /* UIKitSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = CEE4AE2A1A5DCF430002F49B /* UIKitSPI.h */; };
  		D3B9484711FF4B6500032B39 /* WebPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484311FF4B6500032B39 /* WebPopupMenu.h */; };
  		D3B9484911FF4B6500032B39 /* WebSearchPopupMenu.h in Headers */ = {isa = PBXBuildFile; fileRef = D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */; };
@@ -9267,20 +9019,19 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
 +		D71A94342370E07A002C4D9E /* InspectorBrowserAgentClient.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94332370E07A002C4D9E /* InspectorBrowserAgentClient.h */; };
 +		D71A94382370F032002C4D9E /* BrowserInspectorController.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94372370F032002C4D9E /* BrowserInspectorController.h */; };
 +		D71A943A2370F061002C4D9E /* RemoteInspectorPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */; };
-+		D71A94412371F67E002C4D9E /* WebPageInspectorTargetProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A943E2371F67E002C4D9E /* WebPageInspectorTargetProxy.h */; };
 +		D71A94422371F67E002C4D9E /* WebPageInspectorEmulationAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */; };
 +		D71A94432371F67E002C4D9E /* WebPageInspectorInputAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */; };
 +		D71A944A2372290B002C4D9E /* _WKBrowserInspector.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A94492372290B002C4D9E /* _WKBrowserInspector.h */; settings = {ATTRIBUTES = (Private, ); }; };
 +		D71A944C237239FB002C4D9E /* BrowserInspectorPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */; };
 +		D76D6888238DBD81008D314B /* InspectorDialogAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = D76D6887238DBD80008D314B /* InspectorDialogAgent.h */; };
 +		D79902B1236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */; };
-+		D79902B2236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */; };
++		D79902B2236E9404005D6F7E /* InspectorTargetProxyMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902AF236E9404005D6F7E /* InspectorTargetProxyMac.mm */; };
 +		D79902B3236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */; };
 +		D7EB04E72372A73B00F744CE /* InspectorBrowserAgentClientMac.mm in Sources */ = {isa = PBXBuildFile; fileRef = D7EB04E62372A73B00F744CE /* InspectorBrowserAgentClientMac.mm */; };
  		E105FE5418D7B9DE008F57A8 /* EditingRange.h in Headers */ = {isa = PBXBuildFile; fileRef = E105FE5318D7B9DE008F57A8 /* EditingRange.h */; };
  		E11D35AE16B63D1B006D23D7 /* com.apple.WebProcess.sb in Resources */ = {isa = PBXBuildFile; fileRef = E1967E37150AB5E200C73169 /* com.apple.WebProcess.sb */; };
  		E14A954A16E016A40068DE82 /* NetworkProcessPlatformStrategies.h in Headers */ = {isa = PBXBuildFile; fileRef = E14A954816E016A40068DE82 /* NetworkProcessPlatformStrategies.h */; };
-@@ -4905,6 +4919,21 @@
+@@ -4905,6 +4918,20 @@
  		D3B9484311FF4B6500032B39 /* WebPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPopupMenu.h; sourceTree = "<group>"; };
  		D3B9484411FF4B6500032B39 /* WebSearchPopupMenu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebSearchPopupMenu.cpp; sourceTree = "<group>"; };
  		D3B9484511FF4B6500032B39 /* WebSearchPopupMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebSearchPopupMenu.h; sourceTree = "<group>"; };
@@ -9289,20 +9040,19 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
 +		D71A94332370E07A002C4D9E /* InspectorBrowserAgentClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorBrowserAgentClient.h; sourceTree = "<group>"; };
 +		D71A94372370F032002C4D9E /* BrowserInspectorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserInspectorController.h; sourceTree = "<group>"; };
 +		D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RemoteInspectorPipe.h; sourceTree = "<group>"; };
-+		D71A943E2371F67E002C4D9E /* WebPageInspectorTargetProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorTargetProxy.h; sourceTree = "<group>"; };
 +		D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorEmulationAgent.h; sourceTree = "<group>"; };
 +		D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPageInspectorInputAgent.h; sourceTree = "<group>"; };
 +		D71A94492372290B002C4D9E /* _WKBrowserInspector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _WKBrowserInspector.h; sourceTree = "<group>"; };
 +		D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserInspectorPipe.h; sourceTree = "<group>"; };
 +		D76D6887238DBD80008D314B /* InspectorDialogAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorDialogAgent.h; sourceTree = "<group>"; };
 +		D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorEmulationAgentMac.mm; sourceTree = "<group>"; };
-+		D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorTargetProxyMac.mm; sourceTree = "<group>"; };
++		D79902AF236E9404005D6F7E /* InspectorTargetProxyMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorTargetProxyMac.mm; sourceTree = "<group>"; };
 +		D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPageInspectorInputAgentMac.mm; sourceTree = "<group>"; };
 +		D7EB04E62372A73B00F744CE /* InspectorBrowserAgentClientMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorBrowserAgentClientMac.mm; sourceTree = "<group>"; };
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
  		DF58C6351371ACA000F9A37C /* NativeWebWheelEventMac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NativeWebWheelEventMac.mm; sourceTree = "<group>"; };
  		E105FE5318D7B9DE008F57A8 /* EditingRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditingRange.h; sourceTree = "<group>"; };
-@@ -6702,6 +6731,7 @@
+@@ -6702,6 +6729,7 @@
  		37C4C08318149C2A003688B9 /* Cocoa */ = {
  			isa = PBXGroup;
  			children = (
@@ -9310,7 +9060,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				1A43E826188F38E2009E4D30 /* Deprecated */,
  				37A5E01218BBF937000A081E /* _WKActivatedElementInfo.h */,
  				37A5E01118BBF937000A081E /* _WKActivatedElementInfo.mm */,
-@@ -8219,6 +8249,14 @@
+@@ -8219,6 +8247,13 @@
  		BC032DC310F438260058C15A /* UIProcess */ = {
  			isa = PBXGroup;
  			children = (
@@ -9318,14 +9068,13 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
 +				D71A944B237239FB002C4D9E /* BrowserInspectorPipe.h */,
 +				D71A943F2371F67E002C4D9E /* WebPageInspectorEmulationAgent.h */,
 +				D71A94402371F67E002C4D9E /* WebPageInspectorInputAgent.h */,
-+				D71A943E2371F67E002C4D9E /* WebPageInspectorTargetProxy.h */,
 +				D71A94392370F060002C4D9E /* RemoteInspectorPipe.h */,
 +				D71A94372370F032002C4D9E /* BrowserInspectorController.h */,
 +				D71A94332370E07A002C4D9E /* InspectorBrowserAgentClient.h */,
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
-@@ -8502,6 +8540,7 @@
+@@ -8502,6 +8537,7 @@
  		BC0C376610F807660076D7CB /* C */ = {
  			isa = PBXGroup;
  			children = (
@@ -9333,7 +9082,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				5123CF18133D25E60056F800 /* cg */,
  				6EE849C41368D9040038D481 /* mac */,
  				BCB63477116BF10600603215 /* WebKit2_C.h */,
-@@ -9101,6 +9140,11 @@
+@@ -9101,6 +9137,11 @@
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
@@ -9341,11 +9090,11 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
 +				D71A94302370E025002C4D9E /* InspectorBrowserAgentClientMac.h */,
 +				D79902AE236E9404005D6F7E /* WebPageInspectorEmulationAgentMac.mm */,
 +				D79902B0236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm */,
-+				D79902AF236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm */,
++				D79902AF236E9404005D6F7E /* InspectorTargetProxyMac.mm */,
  				B878B613133428DC006888E9 /* CorrectionPanel.h */,
  				B878B614133428DC006888E9 /* CorrectionPanel.mm */,
  				C1817362205844A900DFDA65 /* DisplayLink.cpp */,
-@@ -9798,6 +9842,7 @@
+@@ -9798,6 +9839,7 @@
  				5CAFDE452130846300B1F7E1 /* _WKInspector.h in Headers */,
  				991F492F23A812C60054642B /* _WKInspectorDebuggableInfo.h in Headers */,
  				99036AE223A949CF0000B06A /* _WKInspectorDebuggableInfoInternal.h in Headers */,
@@ -9353,7 +9102,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				5CAFDE472130846A00B1F7E1 /* _WKInspectorInternal.h in Headers */,
  				9979CA58237F49F10039EC05 /* _WKInspectorPrivate.h in Headers */,
  				A5C0F0AB2000658200536536 /* _WKInspectorWindow.h in Headers */,
-@@ -9916,6 +9961,7 @@
+@@ -9916,6 +9958,7 @@
  				7C89D2981A6753B2003A5FDE /* APIPageConfiguration.h in Headers */,
  				1AC1336C18565C7A00F3EC05 /* APIPageHandle.h in Headers */,
  				1AFDD3151891B54000153970 /* APIPolicyClient.h in Headers */,
@@ -9361,7 +9110,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				7CE4D2201A4914CA00C7F152 /* APIProcessPoolConfiguration.h in Headers */,
  				49BCA19223A177660028A836 /* APIResourceLoadStatisticsFirstParty.h in Headers */,
  				49BCA19723A1930D0028A836 /* APIResourceLoadStatisticsThirdParty.h in Headers */,
-@@ -10039,6 +10085,7 @@
+@@ -10039,6 +10082,7 @@
  				BC06F43A12DBCCFB002D78DE /* GeolocationPermissionRequestProxy.h in Headers */,
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
@@ -9369,7 +9118,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
-@@ -10162,8 +10209,10 @@
+@@ -10162,8 +10206,10 @@
  				41DC45961E3D6E2200B11F51 /* NetworkRTCProvider.h in Headers */,
  				413075AB1DE85F330039EC69 /* NetworkRTCSocket.h in Headers */,
  				5C20CBA01BB1ECD800895BB1 /* NetworkSession.h in Headers */,
@@ -9380,7 +9129,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				570DAAC22303730300E8FC04 /* NfcConnection.h in Headers */,
  				570DAAAE23026F5C00E8FC04 /* NfcService.h in Headers */,
  				31A2EC5614899C0900810D71 /* NotificationPermissionRequest.h in Headers */,
-@@ -10245,6 +10294,7 @@
+@@ -10245,6 +10291,7 @@
  				CD2865EE2255562000606AC7 /* ProcessTaskStateObserver.h in Headers */,
  				463FD4821EB94EC000A2982C /* ProcessTerminationReason.h in Headers */,
  				86E67A251910B9D100004AB7 /* ProcessThrottler.h in Headers */,
@@ -9388,15 +9137,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				83048AE61ACA45DC0082C832 /* ProcessThrottlerClient.h in Headers */,
  				A1E688701F6E2BAB007006A6 /* QuarantineSPI.h in Headers */,
  				57FD318222B3515E008D0E8B /* RedirectSOAuthorizationSession.h in Headers */,
-@@ -10418,6 +10468,7 @@
- 				F430E94422473DFF005FE053 /* WebContentMode.h in Headers */,
- 				31A505FA1680025500A930EB /* WebContextClient.h in Headers */,
- 				BC09B8F9147460F7005F5625 /* WebContextConnectionClient.h in Headers */,
-+				D71A94412371F67E002C4D9E /* WebPageInspectorTargetProxy.h in Headers */,
- 				BCDE059B11CDA8AE00E41AF1 /* WebContextInjectedBundleClient.h in Headers */,
- 				51871B5C127CB89D00F76232 /* WebContextMenu.h in Headers */,
- 				BC032D7710F4378D0058C15A /* WebContextMenuClient.h in Headers */,
-@@ -10656,6 +10707,7 @@
+@@ -10656,6 +10703,7 @@
  				BCD25F1711D6BDE100169B0E /* WKBundleFrame.h in Headers */,
  				BCF049E611FE20F600F86A58 /* WKBundleFramePrivate.h in Headers */,
  				BC49862F124D18C100D834E1 /* WKBundleHitTestResult.h in Headers */,
@@ -9404,7 +9145,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				BC204EF211C83EC8008F3375 /* WKBundleInitialize.h in Headers */,
  				65B86F1E12F11DE300B7DD8A /* WKBundleInspector.h in Headers */,
  				1A8B66B41BC45B010082DF77 /* WKBundleMac.h in Headers */,
-@@ -10704,6 +10756,7 @@
+@@ -10704,6 +10752,7 @@
  				5C795D71229F3757003FF1C4 /* WKContextMenuElementInfoPrivate.h in Headers */,
  				51A555F6128C6C47009ABCEC /* WKContextMenuItem.h in Headers */,
  				51A55601128C6D92009ABCEC /* WKContextMenuItemTypes.h in Headers */,
@@ -9412,7 +9153,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				A1EA02381DABFF7E0096021F /* WKContextMenuListener.h in Headers */,
  				BCC938E11180DE440085E5FE /* WKContextPrivate.h in Headers */,
  				9FB5F395169E6A80002C25BF /* WKContextPrivateMac.h in Headers */,
-@@ -10853,6 +10906,7 @@
+@@ -10853,6 +10902,7 @@
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
@@ -9420,7 +9161,15 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
-@@ -11887,6 +11941,7 @@
+@@ -11877,6 +11927,7 @@
+ 				CDA93DB122F8BCF400490A69 /* FullscreenTouchSecheuristicParameters.cpp in Sources */,
+ 				2749F6442146561B008380BF /* InjectedBundleNodeHandle.cpp in Sources */,
+ 				2749F6452146561E008380BF /* InjectedBundleRangeHandle.cpp in Sources */,
++				D79902B2236E9404005D6F7E /* InspectorTargetProxyMac.mm in Sources */,
+ 				2D913441212CF9F000128AFD /* JSNPMethod.cpp in Sources */,
+ 				2D913442212CF9F000128AFD /* JSNPObject.cpp in Sources */,
+ 				2984F588164BA095004BC0C6 /* LegacyCustomProtocolManagerMessageReceiver.cpp in Sources */,
+@@ -11887,6 +11938,7 @@
  				2D92A781212B6A7100F493FD /* MessageReceiverMap.cpp in Sources */,
  				2D92A782212B6A7100F493FD /* MessageSender.cpp in Sources */,
  				2D92A77A212B6A6100F493FD /* Module.cpp in Sources */,
@@ -9428,7 +9177,7 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
  				2D913443212CF9F000128AFD /* NetscapeBrowserFuncs.cpp in Sources */,
  				2D913444212CF9F000128AFD /* NetscapePlugin.cpp in Sources */,
-@@ -11911,6 +11966,7 @@
+@@ -11911,6 +11963,7 @@
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
@@ -9436,20 +9185,14 @@ index 6897af5ec1990cd0d563aa55fd4889528460f05f..b9f9c0ac8586a222916d45890ddcd67a
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
-@@ -11961,11 +12017,13 @@
- 				A1ADAFB62368E6A8009CB776 /* SharedMemory.cpp in Sources */,
- 				2DE6943D18BD2A68005C15E5 /* SmartMagnificationControllerMessageReceiver.cpp in Sources */,
- 				1A334DED16DE8F88006A8E38 /* StorageAreaMapMessageReceiver.cpp in Sources */,
+@@ -12183,6 +12236,7 @@
+ 				2D92A78C212B6AB100F493FD /* WebMouseEvent.cpp in Sources */,
+ 				31BA924D148831260062EDB5 /* WebNotificationManagerMessageReceiver.cpp in Sources */,
+ 				2DF6FE52212E110900469030 /* WebPage.cpp in Sources */,
 +				D79902B3236E9404005D6F7E /* WebPageInspectorInputAgentMac.mm in Sources */,
- 				9368EEDE2303A90200BDB11A /* StorageManagerSetMessageReceiver.cpp in Sources */,
- 				2D92A783212B6A7100F493FD /* StringReference.cpp in Sources */,
- 				2D11B7512126A282006F8878 /* UnifiedSource1-mm.mm in Sources */,
- 				2D11B7522126A282006F8878 /* UnifiedSource1.cpp in Sources */,
- 				2D11B7542126A282006F8878 /* UnifiedSource2.cpp in Sources */,
-+				D79902B2236E9404005D6F7E /* WebPageInspectorTargetProxyMac.mm in Sources */,
- 				2D11B7532126A282006F8878 /* UnifiedSource2-mm.mm in Sources */,
- 				2D11B7562126A282006F8878 /* UnifiedSource3.cpp in Sources */,
- 				2D11B7552126A282006F8878 /* UnifiedSource3-mm.mm in Sources */,
+ 				C0CE72A01247E71D00BC0EC4 /* WebPageMessageReceiver.cpp in Sources */,
+ 				BCBD3914125BB1A800D2C29F /* WebPageProxyMessageReceiver.cpp in Sources */,
+ 				7CE9CE101FA0767A000177DE /* WebPageUpdatePreferences.cpp in Sources */,
 diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 index b7303e828456f51ba2c7fa4bc5b8860b4afaff52..e96cd89e0265ac877e0e9276b5d5af824efa850f 100644
 --- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
@@ -9625,28 +9368,26 @@ index 1570d65effb5d601ee3c44a2a7461436f4691c2c..456f96cf589320efa70a76f76e230b67
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..be501274061102f805c43df37a67e4a1cf6d5494 100644
+index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..bc895f379e5dcca90464b63ebebcc756c479c47e 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
-@@ -53,6 +53,8 @@ static const char *cookiesFile;
+@@ -53,6 +53,7 @@ static const char *cookiesFile;
  static const char *cookiesPolicy;
  static const char *proxy;
  static gboolean darkMode;
 +static gboolean inspectorPipe;
-+static gboolean headless;
  static gboolean printVersion;
  
  typedef enum {
-@@ -121,6 +123,8 @@ static const GOptionEntry commandLineOptions[] =
+@@ -121,6 +122,7 @@ static const GOptionEntry commandLineOptions[] =
      { "ignore-tls-errors", 0, 0, G_OPTION_ARG_NONE, &ignoreTLSErrors, "Ignore TLS errors", NULL },
      { "content-filter", 0, 0, G_OPTION_ARG_FILENAME, &contentFilter, "JSON with content filtering rules", "FILE" },
      { "version", 'v', 0, G_OPTION_ARG_NONE, &printVersion, "Print the WebKitGTK version", NULL },
 +    { "inspector-pipe", 0, 0, G_OPTION_ARG_NONE, &inspectorPipe, "Open pipe connection to the remote inspector", NULL },
-+    { "headless", 0, 0, G_OPTION_ARG_NONE, &headless, "Noop headless operation", NULL },
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, 0, "[URL…]" },
      { 0, 0, 0, 0, 0, 0, 0 }
  };
-@@ -498,6 +502,29 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -498,6 +500,29 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -9676,7 +9417,7 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..be501274061102f805c43df37a67e4a1
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -541,10 +568,22 @@ int main(int argc, char *argv[])
+@@ -541,10 +566,22 @@ int main(int argc, char *argv[])
          return 0;
      }
  
@@ -10235,39 +9976,11 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
 +}
 +
  @end
-diff --git a/Tools/MiniBrowser/wpe/CMakeLists.txt b/Tools/MiniBrowser/wpe/CMakeLists.txt
-index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed91d47fc8 100644
---- a/Tools/MiniBrowser/wpe/CMakeLists.txt
-+++ b/Tools/MiniBrowser/wpe/CMakeLists.txt
-@@ -13,6 +13,7 @@ set(MiniBrowser_INCLUDE_DIRECTORIES
- 
- set(MiniBrowser_SYSTEM_INCLUDE_DIRECTORIES
-     ${ATK_INCLUDE_DIRS}
-+    ${GLIB_INCLUDE_DIRS}
-     ${WPE_INCLUDE_DIRS}
-     ${WPEBACKEND_FDO_INCLUDE_DIRS}
- )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..c59a705dfe586c1ed1f08a173715cf3c35bc49de 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..d94d4f06fc5be9ab9cd732ceb612a1676089ab82 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
-@@ -43,6 +43,7 @@ static gboolean headlessMode;
- static gboolean privateMode;
- static gboolean automationMode;
- static gboolean ignoreTLSErrors;
-+static gboolean inspectorPipe;
- static const char* contentFilter;
- static const char* cookiesFile;
- static const char* cookiesPolicy;
-@@ -63,6 +64,7 @@ static const GOptionEntry commandLineOptions[] =
-     { "content-filter", 0, 0, G_OPTION_ARG_FILENAME, &contentFilter, "JSON with content filtering rules", "FILE" },
-     { "bg-color", 0, 0, G_OPTION_ARG_STRING, &bgColor, "Window background color. Default: white", "COLOR" },
-     { "version", 'v', 0, G_OPTION_ARG_NONE, &printVersion, "Print the WPE version", nullptr },
-+    { "inspector-pipe", 'v', 0, G_OPTION_ARG_NONE, &inspectorPipe, "Expose remote debugging protocol over pipe", nullptr },
-     { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, nullptr, "[URL]" },
-     { nullptr, 0, 0, G_OPTION_ARG_NONE, nullptr, nullptr, nullptr }
- };
-@@ -172,6 +174,41 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -172,6 +172,41 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
      return newWebView;
  }
  
@@ -10298,24 +10011,23 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..c59a705dfe586c1ed1f08a173715cf3c
 +    g_main_loop_quit(mainLoop);
 +}
 +
-+static void configureBrowserInspector()
++static void configureBrowserInspector(GMainLoop* mainLoop, WebKitWebView *firstWebView)
 +{
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
 +    // FIXME: This signal is received only when closeAll is called. We should not rely on that.
-+    webkit_browser_inspector_initialize_pipe();
++    g_signal_connect(firstWebView, "close", G_CALLBACK(closeAll), mainLoop);
 +}
 +
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -280,6 +317,9 @@ int main(int argc, char *argv[])
-         delete static_cast<WPEToolingBackends::ViewBackend*>(data);
-     }, backend.release());
+@@ -301,6 +336,8 @@ int main(int argc, char *argv[])
+     g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
+     g_signal_connect(webView, "create", G_CALLBACK(createWebView), nullptr);
  
-+    if (inspectorPipe)
-+        configureBrowserInspector();
++    configureBrowserInspector(loop, webView);
 +
-     auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
-         "backend", viewBackend,
-         "web-context", webContext,
+     if (ignoreTLSErrors)
+         webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
+ 
