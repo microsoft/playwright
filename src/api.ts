@@ -15,7 +15,7 @@
  */
 
 export { Accessibility } from './accessibility';
-export { Browser, BrowserServer } from './browser';
+export { Browser } from './browser';
 export { BrowserContext } from './browserContext';
 export { ConsoleMessage } from './console';
 export { Dialog } from './dialog';
@@ -27,11 +27,15 @@ export { JSHandle } from './javascript';
 export { Request, Response } from './network';
 export { Coverage, FileChooser, Page, Worker } from './page';
 
+export { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';
+export { CRSession as ChromiumSession } from './chromium/crConnection';
+export { CRTarget as ChromiumTarget } from './chromium/crTarget';
+
+export { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
+
+export { WKBrowser as WebKitBrowser } from './webkit/wkBrowser';
+
 export { BrowserFetcher } from './server/browserFetcher';
 export { CRPlaywright as ChromiumPlaywright, CRBrowserServer as ChromiumBrowserServer } from './server/crPlaywright';
 export { FFPlaywright as FirefoxPlaywright, FFBrowserServer as FirefoxBrowserServer } from './server/ffPlaywright';
 export { WKPlaywright as WebKitPlaywright, WKBrowserServer as WebKitBrowserServer } from './server/wkPlaywright';
-
-export * from './chromium/crApi';
-export * from './firefox/ffApi';
-export * from './webkit/wkApi';

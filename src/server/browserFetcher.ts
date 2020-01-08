@@ -200,7 +200,7 @@ function httpRequest(url: string, method: string, response: (r: any) => void) {
 export type BrowserFetcherOptions = {
   platform?: string,
   path?: string,
-  host ?: string,
+  host?: string,
 };
 
 export type BrowserFetcherRevisionInfo = {

@@ -29,11 +29,12 @@
   * [browserFetcher.localRevisions()](#browserfetcherlocalrevisions)
   * [browserFetcher.remove(revision)](#browserfetcherremoverevision)
   * [browserFetcher.revisionInfo(revision)](#browserfetcherrevisioninforevision)
-- [class: BrowserServer](#class-browserserver)
-  * [browserServer.close()](#browserserverclose)
-  * [browserServer.connect()](#browserserverconnect)
-  * [browserServer.process()](#browserserverprocess)
-  * [browserServer.wsEndpoint()](#browserserverwsendpoint)
+- [class: ChromiumBrowserServer](#class-chromiumbrowserserver)
+  * [chromiumBrowserServer.close()](#chromiumbrowserserverclose)
+  * [chromiumBrowserServer.connect()](#chromiumbrowserserverconnect)
+  * [chromiumBrowserServer.connectOptions()](#chromiumbrowserserverconnectoptions)
+  * [chromiumBrowserServer.process()](#chromiumbrowserserverprocess)
+  * [chromiumBrowserServer.wsEndpoint()](#chromiumbrowserserverwsendpoint)
 - [class: ConsoleMessage](#class-consolemessage)
   * [consoleMessage.args()](#consolemessageargs)
   * [consoleMessage.location()](#consolemessagelocation)
@@ -263,6 +264,17 @@
   * [chromiumTarget.page()](#chromiumtargetpage)
   * [chromiumTarget.type()](#chromiumtargettype)
   * [chromiumTarget.url()](#chromiumtargeturl)
+- [class: FirefoxBrowserServer](#class-firefoxbrowserserver)
+  * [firefoxBrowserServer.close()](#firefoxbrowserserverclose)
+  * [firefoxBrowserServer.connect()](#firefoxbrowserserverconnect)
+  * [firefoxBrowserServer.connectOptions()](#firefoxbrowserserverconnectoptions)
+  * [firefoxBrowserServer.process()](#firefoxbrowserserverprocess)
+  * [firefoxBrowserServer.wsEndpoint()](#firefoxbrowserserverwsendpoint)
+- [class: WebKitBrowserServer](#class-webkitbrowserserver)
+  * [webKitBrowserServer.close()](#webkitbrowserserverclose)
+  * [webKitBrowserServer.connect()](#webkitbrowserserverconnect)
+  * [webKitBrowserServer.connectOptions()](#webkitbrowserserverconnectoptions)
+  * [webKitBrowserServer.process()](#webkitbrowserserverprocess)
 - [class: Worker](#class-worker)
   * [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
   * [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
@@ -307,8 +319,8 @@ const playwright = require('playwright');
 ```
 
 #### event: 'disconnected'
-Emitted when Playwright gets disconnected from the Chromium instance. This might happen because of one of the following:
-- Chromium is closed or crashed
+Emitted when Playwright gets disconnected from the browser instance. This might happen because of one of the following:
+- Browser is closed or crashed
 - The [`browser.disconnect`](#browserdisconnect) method was called
 
 #### browser.browserContexts()
@@ -320,7 +332,7 @@ a single instance of [BrowserContext].
 #### browser.close()
 - returns: <[Promise]>
 
-Closes Chromium and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
+Closes browser and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
 #### browser.defaultContext()
 - returns: <[BrowserContext]>
@@ -329,7 +341,7 @@ Returns the default browser context. The default browser context can not be clos
 
 #### browser.disconnect()
 
-Disconnects Playwright from the browser, but leaves the Chromium process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
+Disconnects Playwright from the browser, but leaves the browser process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
 
 #### browser.isConnected()
 
@@ -509,9 +521,9 @@ await context.setPermissions('https://html5demos.com', ['geolocation']);
 
 ### class: BrowserFetcher
 
-BrowserFetcher can download and manage different versions of Chromium.
+BrowserFetcher can download and manage different versions of Chromium/Firefox/WebKit.
 
-BrowserFetcher operates on revision strings that specify a precise version of Chromium, e.g. `"533271"`. Revision strings can be obtained from [omahaproxy.appspot.com](http://omahaproxy.appspot.com/).
+BrowserFetcher operates on revision strings that specify a precise version of the browser, e.g. `"533271"`. Chromium revision strings can be obtained from [omahaproxy.appspot.com](http://omahaproxy.appspot.com/).
 
 An example of using BrowserFetcher to download a specific version of Chromium and running
 Playwright against it:
@@ -561,22 +573,31 @@ The method initiates a GET request to download the revision from the host.
   - `url` <[string]> URL this revision can be downloaded from
   - `local` <[boolean]> whether the revision is locally available on disk
 
-### class: BrowserServer
+### class: ChromiumBrowserServer
 
-#### browserServer.close()
+#### chromiumBrowserServer.close()
 - returns: <[Promise]>
 
 Closes the browser gracefully and makes sure the process is terminated.
 
-#### browserServer.connect()
+#### chromiumBrowserServer.connect()
 - returns: <[Promise]<[Browser]>>
 
 Connects to the browser server and returns a <[Browser]> object.
 
-#### browserServer.process()
+#### chromiumBrowserServer.connectOptions()
+- returns: <[Object]>
+  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
+  - `slowMo` <[number]>
+  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
+
+This options object can be passed to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions) to establish connection to the browser.
+
+#### chromiumBrowserServer.process()
 - returns: <?[ChildProcess]> Spawned browser server process.
 
-#### browserServer.wsEndpoint()
+#### chromiumBrowserServer.wsEndpoint()
 - returns: <?[string]> Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to `playwright.connect`.
@@ -3332,6 +3353,9 @@ const iPhone = playwright.devices['iPhone 6'];
 
 #### chromiumPlaywright.downloadBrowser([options])
 - `options` <[Object]>
+  - `host` <[string]> A download host to be used. Defaults to `https://storage.googleapis.com`.
+  - `path` <[string]> A path for the downloads folder. Defaults to `<root>/.local-chromium`, where `<root>` is playwright's package root.
+  - `platform` <[string]> Possible values are: `mac`, `win32`, `win64`, `linux`. Defaults to the current platform.
   - `onProgress` <[function]([number], [number])> A function that will be called with two arguments:
     - `downloadedBytes` <[number]> how many bytes have been downloaded
     - `totalBytes` <[number]> how large is the total download.
@@ -3486,6 +3510,56 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 
 #### chromiumTarget.url()
 - returns: <[string]>
+
+### class: FirefoxBrowserServer
+
+#### firefoxBrowserServer.close()
+- returns: <[Promise]>
+
+Closes the browser gracefully and makes sure the process is terminated.
+
+#### firefoxBrowserServer.connect()
+- returns: <[Promise]<[Browser]>>
+
+Connects to the browser server and returns a <[Browser]> object.
+
+#### firefoxBrowserServer.connectOptions()
+- returns: <[Object]>
+  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `slowMo` <[number]>
+  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
+
+This options object can be passed to [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions) to establish connection to the browser.
+
+#### firefoxBrowserServer.process()
+- returns: <?[ChildProcess]> Spawned browser server process.
+
+#### firefoxBrowserServer.wsEndpoint()
+- returns: <?[string]> Browser websocket url.
+
+Browser websocket endpoint which can be used as an argument to `playwright.connect`.
+
+### class: WebKitBrowserServer
+
+#### webKitBrowserServer.close()
+- returns: <[Promise]>
+
+Closes the browser gracefully and makes sure the process is terminated.
+
+#### webKitBrowserServer.connect()
+- returns: <[Promise]<[Browser]>>
+
+Connects to the browser server and returns a <[Browser]> object.
+
+#### webKitBrowserServer.connectOptions()
+- returns: <[Object]>
+  - `slowMo` <[number]>
+  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
+
+This options object can be passed to [webKitPlaywright.connect(options)](#webkitplaywrightconnectoptions) to establish connection to the browser.
+
+#### webKitBrowserServer.process()
+- returns: <?[ChildProcess]> Spawned browser server process.
 
 ### class: Worker
 

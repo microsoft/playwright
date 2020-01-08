@@ -15,7 +15,6 @@
  */
 
 import { BrowserContext, BrowserContextOptions } from './browserContext';
-import { ChildProcess } from 'child_process';
 import { EventEmitter } from './platform';
 
 export class Browser extends EventEmitter {
@@ -26,32 +25,4 @@ export class Browser extends EventEmitter {
   disconnect(): void { throw new Error('Not implemented'); }
   isConnected(): boolean { throw new Error('Not implemented'); }
   close(): Promise<void> { throw new Error('Not implemented'); }
-}
-
-export class BrowserServer<T extends Browser> {
-  private _browser: T;
-  private _process: ChildProcess;
-  private _wsEndpoint: string;
-
-  constructor(browser: T, process: ChildProcess, wsEndpoint: string) {
-    this._browser = browser;
-    this._process = process;
-    this._wsEndpoint = wsEndpoint;
-  }
-
-  async connect(): Promise<T> {
-    return this._browser;
-  }
-
-  process(): ChildProcess {
-    return this._process;
-  }
-
-  wsEndpoint(): string {
-    return this._wsEndpoint;
-  }
-
-  async close(): Promise<void> {
-    await this._browser.close();
-  }
 }
