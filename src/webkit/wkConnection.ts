@@ -24,6 +24,7 @@ const debugProtocol = platform.debug('playwright:protocol');
 const debugWrappedMessage = platform.debug('wrapped');
 
 export const WKConnectionEvents = {
+  Disconnected: Symbol('Disconnected'),
   PageProxyCreated: Symbol('ConnectionEvents.PageProxyCreated'),
   PageProxyDestroyed: Symbol('Connection.PageProxyDestroyed')
 };
@@ -34,7 +35,7 @@ export const WKPageProxySessionEvents = {
   DidCommitProvisionalTarget: Symbol('PageProxyEvents.DidCommitProvisionalTarget'),
 };
 
-const kConnectionSymbol = Symbol();
+export const kBrowserCloseMessageId = -9999;
 
 export class WKConnection extends platform.EventEmitter {
   private _lastId = 0;
@@ -43,15 +44,6 @@ export class WKConnection extends platform.EventEmitter {
   private readonly _pageProxySessions = new Map<string, WKPageProxySession>();
 
   private _closed = false;
-
-  static from(transport: ConnectionTransport): WKConnection {
-    let connection = (transport as any)[kConnectionSymbol];
-    if (!connection) {
-      connection = new WKConnection(transport);
-      (transport as any)[kConnectionSymbol] = connection;
-    }
-    return connection;
-  }
 
   constructor(transport: ConnectionTransport) {
     super();
@@ -96,7 +88,7 @@ export class WKConnection extends platform.EventEmitter {
           callback.reject(createProtocolError(callback.error, callback.method, object));
         else
           callback.resolve(object.result);
-      } else {
+      } else if (object.id !== kBrowserCloseMessageId) {
         assert(this._closed, 'Received response for unknown callback: ' + object.id);
       }
     } else {
@@ -135,6 +127,7 @@ export class WKConnection extends platform.EventEmitter {
     for (const pageProxySession of this._pageProxySessions.values())
       pageProxySession.dispose();
     this._pageProxySessions.clear();
+    this.emit(WKConnectionEvents.Disconnected);
   }
 
   dispose() {

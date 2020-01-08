@@ -34,7 +34,7 @@ module.exports.describe = function({testRunner, defaultBrowserOptions, playwrigh
       let output = '';
       res.stdout.on('data', data => {
         output += data;
-        if (output.indexOf('\n'))
+        if (output.indexOf('\n') !== -1)
           wsEndPointCallback(output.substring(0, output.indexOf('\n')));
       });
       const browser = await playwright.connect({ browserWSEndpoint: await wsEndPointPromise });

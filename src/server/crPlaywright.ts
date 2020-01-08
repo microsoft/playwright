@@ -57,10 +57,12 @@ export type LaunchOptions = ChromeArgOptions & SlowMoOptions & {
 
 export class CRBrowserServer {
   private _process: ChildProcess;
+  private _gracefullyClose: () => Promise<void>;
   private _connectOptions: CRConnectOptions;
 
-  constructor(process: ChildProcess, connectOptions: CRConnectOptions) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: CRConnectOptions) {
     this._process = process;
+    this._gracefullyClose = gracefullyClose;
     this._connectOptions = connectOptions;
   }
 
@@ -81,10 +83,7 @@ export class CRBrowserServer {
   }
 
   async close(): Promise<void> {
-    const transport = await createTransport(this._connectOptions);
-    const connection = new CRConnection(transport);
-    await connection.rootSession.send('Browser.close');
-    connection.dispose();
+    await this._gracefullyClose();
   }
 }
 
@@ -151,7 +150,7 @@ export class CRPlaywright {
 
     const usePipe = chromeArguments.includes('--remote-debugging-pipe');
 
-    const launchedProcess = await launchProcess({
+    const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: chromeExecutable,
       args: chromeArguments,
       env,
@@ -160,33 +159,31 @@ export class CRPlaywright {
       handleSIGHUP,
       dumpio,
       pipe: usePipe,
-      tempDir: temporaryUserDataDir
-    }, () => {
-      if (temporaryUserDataDir || !server)
-        return Promise.reject();
-      return server.close();
+      tempDir: temporaryUserDataDir,
+      attemptToGracefullyClose: async () => {
+        if (!connectOptions)
+          return Promise.reject();
+
+        // We try to gracefully close to prevent crash reporting and core dumps.
+        // Note that it's fine to reuse the pipe transport, since
+        // our connection is tolerant to unknown responses.
+        const transport = await createTransport(connectOptions);
+        const connection = new CRConnection(transport);
+        connection.rootSession.send('Browser.close');
+      },
     });
 
-    let server: CRBrowserServer | undefined;
-    try {
-      let connectOptions: CRConnectOptions | undefined;
-      let browserWSEndpoint: string = '';
-      if (!usePipe) {
-        const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${this._revision}`);
-        const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
-        browserWSEndpoint = match[1];
-        connectOptions = { browserWSEndpoint, slowMo };
-      } else {
-        const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-        connectOptions = { slowMo, transport };
-      }
-      server = new CRBrowserServer(launchedProcess, connectOptions);
-      return server;
-    } catch (e) {
-      if (server)
-        await server.close();
-      throw e;
+    let connectOptions: CRConnectOptions | undefined;
+    if (!usePipe) {
+      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${this._revision}`);
+      const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
+      const browserWSEndpoint = match[1];
+      connectOptions = { browserWSEndpoint, slowMo };
+    } else {
+      const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+      connectOptions = { slowMo, transport };
     }
+    return new CRBrowserServer(launchedProcess, gracefullyClose, connectOptions);
   }
 
   async connect(options: CRConnectOptions): Promise<CRBrowser> {

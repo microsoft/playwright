@@ -22,6 +22,7 @@ import * as network from '../network';
 import { Page } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
+import { Events } from '../events';
 import { Protocol } from './protocol';
 import { WKConnection, WKConnectionEvents, WKPageProxySession } from './wkConnection';
 import { WKPageProxy } from './wkPageProxy';
@@ -51,7 +52,8 @@ export class WKBrowser extends browser.Browser {
 
   constructor(transport: ConnectionTransport) {
     super();
-    this._connection = WKConnection.from(transport);
+    this._connection = new WKConnection(transport);
+    this._connection.on(WKConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
 
     this._defaultContext = this._createBrowserContext(undefined, {});
 
@@ -127,7 +129,9 @@ export class WKBrowser extends browser.Browser {
 
   async close() {
     helper.removeEventListeners(this._eventListeners);
+    const disconnected = new Promise(f => this._connection.once(WKConnectionEvents.Disconnected, f));
     await this._connection.send('Browser.close');
+    await disconnected;
   }
 
   _createBrowserContext(browserContextId: string | undefined, options: BrowserContextOptions): BrowserContext {

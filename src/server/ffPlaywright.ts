@@ -33,10 +33,12 @@ import { assert } from '../helper';
 
 export class FFBrowserServer {
   private _process: ChildProcess;
+  private _gracefullyClose: () => Promise<void>;
   private _connectOptions: FFConnectOptions;
 
-  constructor(process: ChildProcess, connectOptions: FFConnectOptions) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: FFConnectOptions) {
     this._process = process;
+    this._gracefullyClose = gracefullyClose;
     this._connectOptions = connectOptions;
   }
 
@@ -57,10 +59,7 @@ export class FFBrowserServer {
   }
 
   async close(): Promise<void> {
-    const transport = await createTransport(this._connectOptions);
-    const connection = new FFConnection(transport);
-    await connection.send('Browser.close');
-    connection.dispose();
+    await this._gracefullyClose();
   }
 }
 
@@ -123,7 +122,10 @@ export class FFPlaywright {
         throw new Error(missingText);
       firefoxExecutable = executablePath;
     }
-    const launchedProcess = await launchProcess({
+
+    let connectOptions: FFConnectOptions | undefined = undefined;
+
+    const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
       env: os.platform() === 'linux' ? {
@@ -136,25 +138,24 @@ export class FFPlaywright {
       handleSIGHUP,
       dumpio,
       pipe: false,
-      tempDir: temporaryProfileDir
-    }, () => {
-      if (temporaryProfileDir || !server)
-        return Promise.reject();
-      server.close();
+      tempDir: temporaryProfileDir,
+      attemptToGracefullyClose: async () => {
+        if (!connectOptions)
+          return Promise.reject();
+        // We try to gracefully close to prevent crash reporting and core dumps.
+        // Note that we don't support pipe yet, so there is no issue
+        // with reusing the same connection - we can always create a new one.
+        const transport = await createTransport(connectOptions);
+        const connection = new FFConnection(transport);
+        connection.send('Browser.close');
+      },
     });
 
-    let server: FFBrowserServer | undefined;
-    try {
-      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
-      const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
-      const url = match[1];
-      server = new FFBrowserServer(launchedProcess, { browserWSEndpoint: url, slowMo });
-      return server;
-    } catch (e) {
-      if (server)
-        await server.close();
-      throw e;
-    }
+    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
+    const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
+    const url = match[1];
+    connectOptions = { browserWSEndpoint: url, slowMo };
+    return new FFBrowserServer(launchedProcess, gracefullyClose, connectOptions);
   }
 
   async connect(options: FFConnectOptions): Promise<FFBrowser> {
