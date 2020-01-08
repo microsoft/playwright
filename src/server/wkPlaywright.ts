@@ -19,9 +19,8 @@ import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetch
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as Errors from '../errors';
 import * as types from '../types';
-import { WKBrowser } from '../webkit/wkBrowser';
-import { WKConnectOptions, createTransport } from '../webkit/wkBrowser';
-import { WKConnection } from '../webkit/wkConnection';
+import { WKBrowser, createTransport } from '../webkit/wkBrowser';
+import { WKConnectOptions } from '../webkit/wkBrowser';
 import { execSync, ChildProcess } from 'child_process';
 import { PipeTransport } from './pipeTransport';
 import { launchProcess } from './processLauncher';
@@ -29,6 +28,7 @@ import * as path from 'path';
 import * as util from 'util';
 import * as os from 'os';
 import { assert } from '../helper';
+import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 
 export type LaunchOptions = {
   ignoreDefaultArgs?: boolean,
@@ -46,10 +46,12 @@ export type LaunchOptions = {
 
 export class WKBrowserServer {
   private _process: ChildProcess;
+  private _gracefullyClose: () => Promise<void>;
   private _connectOptions: WKConnectOptions;
 
-  constructor(process: ChildProcess, connectOptions: WKConnectOptions) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: WKConnectOptions) {
     this._process = process;
+    this._gracefullyClose = gracefullyClose;
     this._connectOptions = connectOptions;
   }
 
@@ -66,10 +68,7 @@ export class WKBrowserServer {
   }
 
   async close(): Promise<void> {
-    const transport = await createTransport(this._connectOptions);
-    const connection = WKConnection.from(transport);
-    await connection.send('Browser.close');
-    connection.dispose();
+    await this._gracefullyClose();
   }
 }
 
@@ -125,7 +124,9 @@ export class WKPlaywright {
     if (process.platform === 'darwin' && options.headless !== false)
       webkitArguments.push('--headless');
 
-    const launchedProcess = await launchProcess({
+    let connectOptions: WKConnectOptions | undefined = undefined;
+
+    const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: webkitExecutable,
       args: webkitArguments,
       env,
@@ -134,23 +135,20 @@ export class WKPlaywright {
       handleSIGHUP,
       dumpio,
       pipe: true,
-      tempDir: null
-    }, () => {
-      if (!server)
-        return Promise.reject();
-      server.close();
+      tempDir: null,
+      attemptToGracefullyClose: async () => {
+        if (!connectOptions)
+          return Promise.reject();
+        // We try to gracefully close to prevent crash reporting and core dumps.
+        const transport = await createTransport(connectOptions);
+        const message = JSON.stringify({method: 'Browser.close', params: {}, id: kBrowserCloseMessageId});
+        transport.send(message);
+      },
     });
 
-    let server: WKBrowserServer | undefined;
-    try {
-      const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-      server = new WKBrowserServer(launchedProcess, { transport, slowMo });
-      return server;
-    } catch (e) {
-      if (server)
-        await server.close();
-      throw e;
-    }
+    const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+    connectOptions = { transport, slowMo };
+    return new WKBrowserServer(launchedProcess, gracefullyClose, connectOptions);
   }
 
   executablePath(): string {

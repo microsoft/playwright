@@ -27,7 +27,6 @@ import { WKWorkers } from './wkWorkers';
 import { Page, PageDelegate, Coverage } from '../page';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
-import { WKBrowser } from './wkBrowser';
 import { BrowserContext } from '../browserContext';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
 import * as types from '../types';

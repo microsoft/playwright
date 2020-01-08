@@ -149,7 +149,9 @@ export class FFBrowser extends browser.Browser {
 
   async close() {
     helper.removeEventListeners(this._eventListeners);
+    const disconnected = new Promise(f => this._connection.once(ConnectionEvents.Disconnected, f));
     await this._connection.send('Browser.close');
+    await disconnected;
   }
 
   _createBrowserContext(browserContextId: string | null, options: BrowserContextOptions): BrowserContext {

@@ -36,9 +36,14 @@ export type LaunchProcessOptions = {
   dumpio?: boolean,
   pipe?: boolean,
   tempDir?: string,
+
+  // Note: attemptToGracefullyClose should reject if it does not close the browser.
+  attemptToGracefullyClose: () => Promise<any>,
 };
 
-export async function launchProcess(options: LaunchProcessOptions, attemptToGracefullyClose: () => Promise<any>): Promise<childProcess.ChildProcess> {
+type LaunchResult = { launchedProcess: childProcess.ChildProcess, gracefullyClose: () => Promise<void> };
+
+export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   let stdio: ('ignore' | 'pipe')[] = ['pipe', 'pipe', 'pipe'];
   if (options.pipe) {
     if (options.dumpio)
@@ -61,7 +66,7 @@ export async function launchProcess(options: LaunchProcessOptions, attemptToGrac
 
   if (!spawnedProcess.pid) {
     let reject: (e: Error) => void;
-    const result = new Promise<childProcess.ChildProcess>((f, r) => reject = r);
+    const result = new Promise<LaunchResult>((f, r) => reject = r);
     spawnedProcess.once('error', error => {
       reject(new Error('Failed to launch browser: ' + error));
     });
@@ -96,12 +101,20 @@ export async function launchProcess(options: LaunchProcessOptions, attemptToGrac
     listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyClose));
   if (options.handleSIGHUP)
     listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyClose));
-  return spawnedProcess;
+  let gracefullyClosing = false;
+  return { launchedProcess: spawnedProcess, gracefullyClose };
 
   async function gracefullyClose(): Promise<void> {
-    helper.removeEventListeners(listeners);
-    attemptToGracefullyClose().catch(() => killProcess());
+    // We keep listeners until we are done, to handle 'exit' and 'SIGINT' while
+    // asynchronously closing to prevent zombie processes. This might introduce
+    // reentrancy to this function.
+    if (gracefullyClosing)
+      return;
+    gracefullyClosing = true;
+    options.attemptToGracefullyClose().catch(() => killProcess());
+    // TODO: forcefully kill the process after some timeout.
     await waitForProcessToClose;
+    helper.removeEventListeners(listeners);
   }
 
   // This method has to be sync to be used as 'exit' event handler.

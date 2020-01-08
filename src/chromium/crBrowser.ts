@@ -235,8 +235,9 @@ export class CRBrowser extends browser.Browser {
   }
 
   async close() {
+    const disconnected = new Promise(f => this._connection.once(ConnectionEvents.Disconnected, f));
     await this._connection.rootSession.send('Browser.close');
-    this.disconnect();
+    await disconnected;
   }
 
   browserTarget(): CRTarget {
