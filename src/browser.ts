@@ -15,14 +15,14 @@
  */
 
 import { BrowserContext, BrowserContextOptions } from './browserContext';
-import { EventEmitter } from './platform';
+import * as platform from './platform';
 
-export class Browser extends EventEmitter {
-  newContext(options?: BrowserContextOptions): Promise<BrowserContext> { throw new Error('Not implemented'); }
-  browserContexts(): BrowserContext[] { throw new Error('Not implemented'); }
-  defaultContext(): BrowserContext { throw new Error('Not implemented'); }
+export interface Browser extends platform.EventEmitterType {
+  newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
+  browserContexts(): BrowserContext[];
+  defaultContext(): BrowserContext;
 
-  disconnect(): void { throw new Error('Not implemented'); }
-  isConnected(): boolean { throw new Error('Not implemented'); }
-  close(): Promise<void> { throw new Error('Not implemented'); }
+  disconnect(): void;
+  isConnected(): boolean;
+  close(): Promise<void>;
 }

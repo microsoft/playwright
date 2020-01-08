@@ -58,17 +58,9 @@ module.exports = async function lint(page, mdSources, jsSources) {
  * @return {!Documentation}
  */
 function filterJSDocumentation(jsSources, jsDocumentation) {
-  const apijs = jsSources.find(source => source.name() === 'api.ts');
-  let includedClasses = null;
-  if (apijs) {
-    const api = require(path.join(apijs.filePath(), '..', '..', 'lib', 'api.js'));
-    includedClasses = new Set(Object.keys(api).map(c => jsBuilder.expandPrefix(c)));
-  }
   // Filter private classes and methods.
   const classes = [];
   for (const cls of jsDocumentation.classesArray) {
-    if (includedClasses && !includedClasses.has(cls.name))
-      continue;
     const members = cls.membersArray.filter(member => !EXCLUDE_PROPERTIES.has(`${cls.name}.${member.name}`));
     classes.push(new Documentation.Class(cls.name, members));
   }

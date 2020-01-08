@@ -24,7 +24,7 @@ import { Page, Worker } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
-import * as browser from '../browser';
+import { Browser } from '../browser';
 import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
@@ -38,7 +38,7 @@ export type CRConnectOptions = {
   transport?: ConnectionTransport;
 };
 
-export class CRBrowser extends browser.Browser {
+export class CRBrowser extends platform.EventEmitter implements Browser {
   _connection: CRConnection;
   _client: CRSession;
   private _defaultContext: BrowserContext;
