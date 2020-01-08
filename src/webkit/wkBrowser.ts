@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as browser from '../browser';
+import { Browser } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
@@ -26,13 +26,14 @@ import { Events } from '../events';
 import { Protocol } from './protocol';
 import { WKConnection, WKConnectionEvents, WKPageProxySession } from './wkConnection';
 import { WKPageProxy } from './wkPageProxy';
+import * as platform from '../platform';
 
 export type WKConnectOptions = {
   slowMo?: number,
   transport: ConnectionTransport;
 };
 
-export class WKBrowser extends browser.Browser {
+export class WKBrowser extends platform.EventEmitter implements Browser {
   readonly _connection: WKConnection;
   private readonly _defaultContext: BrowserContext;
   private readonly _contexts = new Map<string, BrowserContext>();

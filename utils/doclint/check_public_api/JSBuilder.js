@@ -45,33 +45,40 @@ function checkSources(sources) {
   const checker = program.getTypeChecker();
   const sourceFiles = program.getSourceFiles();
   const errors = [];
+  const apiClassNames = new Set();
   /** @type {!Array<!Documentation.Class>} */
   const classes = [];
-  /** @type {!Map<string, string>} */
+  /** @type {!Map<string, string[]>} */
   const inheritance = new Map();
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x));
-  const documentation = new Documentation(recreateClassesWithInheritance(classes, inheritance));
+  const documentation = new Documentation(recreateClassesWithInheritance(classes, inheritance).filter(cls => apiClassNames.has(cls.name)));
 
   return {errors, documentation};
 
   /**
    * @param {!Array<!Documentation.Class>} classes
-   * @param {!Map<string, string>} inheritance
+   * @param {!Map<string, string[]>} inheritance
    * @return {!Array<!Documentation.Class>}
    */
   function recreateClassesWithInheritance(classes, inheritance) {
     const classesByName = new Map(classes.map(cls => [cls.name, cls]));
     return classes.map(cls => {
       const membersMap = new Map();
-      for (let wp = cls; wp; wp = classesByName.get(inheritance.get(wp.name))) {
-        for (const member of wp.membersArray) {
+      const visit = cls => {
+        if (!cls)
+          return;
+        for (const member of cls.membersArray) {
           // Member was overridden.
           const memberId = member.kind + ':' + member.name;
           if (membersMap.has(memberId))
             continue;
           membersMap.set(memberId, member);
         }
-      }
+        const parents = inheritance.get(cls.name) || [];
+        for (const parent of parents)
+          visit(classesByName.get(parent));
+      };
+      visit(cls);
       return new Documentation.Class(expandPrefix(cls.name), Array.from(membersMap.values()));
     });
   }
@@ -80,7 +87,8 @@ function checkSources(sources) {
    * @param {!ts.Node} node
    */
   function visit(node) {
-    if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
+    const fileName = node.getSourceFile().fileName;
+    if (ts.isClassDeclaration(node) || ts.isClassExpression(node) || ts.isInterfaceDeclaration(node)) {
       const symbol = node.name ? checker.getSymbolAtLocation(node.name) : node.symbol;
       let className = symbol.getName();
 
@@ -92,13 +100,12 @@ function checkSources(sources) {
       }
       if (className && !excludeClasses.has(className)) {
         classes.push(serializeClass(className, symbol, node));
-        const parentClassName = parentClass(node);
-        if (parentClassName)
-          inheritance.set(className, parentClassName);
+        inheritance.set(className, parentClasses(node));
         excludeClasses.add(className);
       }
     }
-    const fileName = node.getSourceFile().fileName;
+    if (fileName.endsWith('/api.ts') && ts.isExportSpecifier(node))
+      apiClassNames.add(expandPrefix((node.propertyName || node.name).text));
     if (!fileName.endsWith('platform.ts') && !fileName.includes('src/server/')) {
       // Only relative imports.
       if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
@@ -126,17 +133,18 @@ function checkSources(sources) {
     ts.forEachChild(node, visit);
   }
 
-  function parentClass(classNode) {
+  function parentClasses(classNode) {
+    const parents = [];
     for (const herigateClause of classNode.heritageClauses || []) {
       for (const heritageType of herigateClause.types) {
         let expression = heritageType.expression;
         if (expression.kind === ts.SyntaxKind.PropertyAccessExpression)
           expression = expression.name;
         if (classNode.name.escapedText !== expression.escapedText)
-          return expression.escapedText;
+          parents.push(expression.escapedText);
       }
     }
-    return null;
+    return parents;
   }
 
   function serializeSymbol(symbol, circular = []) {
@@ -225,6 +233,8 @@ function checkSources(sources) {
     /** @type {!Array<!Documentation.Member>} */
     const members = classEvents.get(className) || [];
     for (const [name, member] of symbol.members || []) {
+      if (className === 'Error')
+        continue;
       if (name.startsWith('_'))
         continue;
       if (EventEmitter.prototype.hasOwnProperty(name))

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as browser from '../browser';
+import { Browser } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
@@ -33,7 +33,7 @@ export type FFConnectOptions = {
   transport?: ConnectionTransport;
 };
 
-export class FFBrowser extends browser.Browser {
+export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
   _targets: Map<string, Target>;
   private _defaultContext: BrowserContext;

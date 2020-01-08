@@ -126,6 +126,7 @@ Documentation.Member = class {
    * @param {!Array<!Documentation.Member>} argsArray
    */
   constructor(kind, name, type, argsArray, comment = '', returnComment = '', required = true) {
+    if (name === 'code') debugger;
     this.kind = kind;
     this.name = name;
     this.type = type;
