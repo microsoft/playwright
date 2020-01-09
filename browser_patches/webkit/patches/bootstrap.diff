@@ -945,10 +945,10 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..bf7c6b49ac403a3b877f60b0f2e23697
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def546edc3ca7 100644
+index a8fc5332ac92424b00a3dec62152fd3c5f28544e..6dc8ac8e247631d2af6418155f088ea3cc172797 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
-@@ -110,6 +110,40 @@
+@@ -110,6 +110,41 @@
                  { "name": "session", "type": "boolean", "description": "True in case of session cookie." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
              ]
@@ -984,12 +984,13 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def54
 +                { "name": "invalid", "type": "string", "optional": true, "enum": ["true", "false", "grammar", "spelling"], "description": "Whether and in what way this node's value is invalid."},
 +                { "name": "orientation", "type": "string", "optional": true, "description": "Whether the node is oriented horizontally or vertically."},
 +                { "name": "focusable", "type": "boolean", "optional": true, "description": "Whether the node is focusable."},
-+                { "name": "children", "type": "array", "optional": true, "items": { "$ref": "AXNode"}, "description": "Child AXNodes of this node, if any."}
++                { "name": "children", "type": "array", "optional": true, "items": { "$ref": "AXNode"}, "description": "Child AXNodes of this node, if any."},
++                { "name": "found", "type": "boolean", "optional": true, "description": "True if this AXNode corresponds with the ObjectId passed into acessibilitySnapshot."}
 +            ]
          }
      ],
      "commands": [
-@@ -129,11 +163,21 @@
+@@ -129,11 +164,21 @@
                  { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
              ]
          },
@@ -1012,7 +1013,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def54
              ]
          },
          {
-@@ -246,6 +290,13 @@
+@@ -246,6 +291,13 @@
                  { "name": "appearance", "$ref": "Appearance", "description": "Appearance name to force. Empty string disables the override." }
              ]
          },
@@ -1026,7 +1027,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def54
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -276,19 +327,68 @@
+@@ -276,19 +328,71 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -1041,6 +1042,9 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def54
 +        {
 +            "name": "accessibilitySnapshot",
 +            "description": "Serializes and returns all of the accessibility nodes of the page.",
++            "parameters": [
++                { "name": "objectId", "type": "string", "optional": true, "description": "Object Id of a node to find in the accessibility tree."}
++            ],
 +            "returns": [
 +                { "name": "axNode", "$ref": "AXNode", "description": "The root AXNode."}
 +            ]
@@ -1097,7 +1101,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def54
              ]
          },
          {
-@@ -298,6 +398,14 @@
+@@ -298,6 +402,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1112,7 +1116,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..f68b0722868fbfb449354dead34def54
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -334,12 +442,36 @@
+@@ -334,12 +446,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1958,7 +1962,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..d651c0ceb58774d446f0201fc1a1bc8646c04860 100644
+index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..b71b5d196f61406152478180d487c179143397e0 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 @@ -54,6 +54,7 @@ namespace WebCore {
@@ -2005,13 +2009,29 @@ index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..d651c0ceb58774d446f0201fc1a1bc86
      bool handleMousePress();
      void mouseDidMoveOverElement(const HitTestResult&, unsigned modifierFlags);
      void inspect(Node*);
-@@ -194,6 +199,7 @@ public:
+@@ -194,12 +199,15 @@ public:
      void reset();
  
      Node* assertNode(ErrorString&, int nodeId);
 +    Node* assertNode(ErrorString&, const int* nodeId, const String* objectId);
      Element* assertElement(ErrorString&, int nodeId);
      Document* assertDocument(ErrorString&, int nodeId);
+ 
+     bool hasBreakpointForEventListener(EventTarget&, const AtomString& eventType, EventListener&, bool capture);
+     int idForEventListener(EventTarget&, const AtomString& eventType, EventListener&, bool capture);
+ 
++    Node* nodeForObjectId(const String& objectId);
++
+ private:
+ #if ENABLE(VIDEO)
+     void mediaMetricsTimerFired();
+@@ -229,7 +237,6 @@ private:
+     void processAccessibilityChildren(AXCoreObject&, JSON::ArrayOf<int>&);
+     
+     Node* nodeForPath(const String& path);
+-    Node* nodeForObjectId(const String& objectId);
+ 
+     void discardBindings();
  
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h b/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
 index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4af2464753 100644
@@ -2353,7 +2373,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..bee832c4c65f9a4487c0d0b7c6fd6985
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c320b9b062 100644
+index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3fb7fc9259 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2572,7 +2592,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c3
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -979,4 +1056,495 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -979,4 +1056,509 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -2894,7 +2914,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c3
 +    return "Unknown";
 +}
 +
-+static RefPtr<Inspector::Protocol::Page::AXNode> snapshotForAXObject(RefPtr<AXCoreObject> axObject) {
++static RefPtr<Inspector::Protocol::Page::AXNode> snapshotForAXObject(RefPtr<AXCoreObject> axObject, Node* nodeToFind) {
 +    auto axNode = Inspector::Protocol::Page::AXNode::create()
 +        .setRole(roleFromObject(axObject))
 +        .release();
@@ -2991,17 +3011,20 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c3
 +    if (axObject->isKeyboardFocusable())
 +        axNode->setFocusable(axObject->isKeyboardFocusable());
 +
++    if (nodeToFind && axObject->node() == nodeToFind)
++        axNode->setFound(true);
++
 +    if (axObject->hasChildren()) {
 +        RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::AXNode>> children = JSON::ArrayOf<Inspector::Protocol::Page::AXNode>::create();
 +        for (auto& childObject : axObject->children())
-+            children->addItem(snapshotForAXObject(childObject));
++            children->addItem(snapshotForAXObject(childObject, nodeToFind));
 +        axNode->setChildren(children);
 +    }
 +    return axNode;
 +}
 +
 +
-+void InspectorPageAgent::accessibilitySnapshot(ErrorString& errorString, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) {
++void InspectorPageAgent::accessibilitySnapshot(ErrorString& errorString, const String* objectId, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) {
 +    if (!WebCore::AXObjectCache::accessibilityEnabled())
 +        WebCore::AXObjectCache::enableAccessibility();
 +    auto document = makeRefPtr(m_inspectedPage.mainFrame().document());
@@ -3020,7 +3043,18 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c3
 +        return;
 +    }
 +
-+    out_axNode = snapshotForAXObject(makeRefPtr(axObject));
++    Node* node = nullptr;
++    if (objectId) {
++        InspectorDOMAgent* domAgent = m_instrumentingAgents.inspectorDOMAgent();
++        ASSERT(domAgent);
++        node = domAgent->nodeForObjectId(*objectId);
++        if (!node) {
++            errorString = "No Node for objectId"_s;
++            return;
++        }
++    }
++
++    out_axNode = snapshotForAXObject(makeRefPtr(axObject), node);
 +}
 +
 +void InspectorPageAgent::setInterceptFileChooserDialog(ErrorString&, bool enabled) {
@@ -3069,7 +3103,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..8e54267226f5fe66c10f1dc7251be9c3
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..1fcc543029bbc041a3a52e412b0b071e1070d36a 100644
+index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..6a67fc9012d258bd6e9c39f5d2a31c8e12c14eb3 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -3109,7 +3143,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..1fcc543029bbc041a3a52e412b0b071e
 +    void snapshotRect(ErrorString&, int x, int y, int width,  int height, const String& coordinateSystem, String* outDataURL) override;
      void archive(ErrorString&, String* data) override;
 +    void insertText(ErrorString&, const String& text) override;
-+    void accessibilitySnapshot(ErrorString&, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) override;
++    void accessibilitySnapshot(ErrorString&, const String* objectId, RefPtr<Inspector::Protocol::Page::AXNode>& out_axNode) override;
 +    void setInterceptFileChooserDialog(ErrorString&, bool enabled) override;
 +    void setDefaultBackgroundColorOverride(ErrorString&, const JSON::Object*) override;
 +    void createIsolatedWorld(ErrorString&, const String&, const String*) override;
