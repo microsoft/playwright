@@ -6007,7 +6007,7 @@ index 0e6e5bdd8e5d2030511328517c32cfce72b682d8..33991ff5add2edd16fa8879840f4606a
      if (id value = [defaults objectForKey:@"WebKitEnableLegacyTLS"])
          parameters.enableLegacyTLS = [value boolValue];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-index 9693809e34e40942c833164e19ac49eeb2c36f43..b45a4e7aa61c32f9143d29fcce410e9e647705ee 100644
+index 9693809e34e40942c833164e19ac49eeb2c36f43..3926ff3fdf2249df92a18d02f18d5a18b74a46e9 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 @@ -37,6 +37,7 @@
@@ -6018,37 +6018,31 @@ index 9693809e34e40942c833164e19ac49eeb2c36f43..b45a4e7aa61c32f9143d29fcce410e9e
  
  #if PLATFORM(GTK)
  #include <gtk/gtk.h>
-@@ -133,6 +134,11 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange()
+@@ -119,6 +120,10 @@ void DrawingAreaProxyCoordinatedGraphics::paint(BackingStore::PlatformGraphicsCo
+ 
+ void DrawingAreaProxyCoordinatedGraphics::sizeDidChange()
+ {
++    for (auto& value : m_callbacks)
++        value();
++    m_callbacks.clear();
++
+ #if USE(DIRECT2D)
+     m_backingStore = nullptr;
+ #endif
+@@ -133,6 +138,11 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange()
      backingStoreStateDidChange(RespondImmediately);
  }
  
-+void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdate(Function<void ()>&& callback)
++void DrawingAreaProxyCoordinatedGraphics::waitForSizeUpdate(Function<void ()>&& callback)
 +{
-+    m_callbacks.set(m_currentBackingStoreStateID, WTFMove(callback));
++    m_callbacks.append(WTFMove(callback));
 +}
 +
  void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
  {
      m_hasReceivedFirstUpdate = true;
-@@ -195,6 +201,16 @@ void DrawingAreaProxyCoordinatedGraphics::didUpdateBackingStoreState(uint64_t ba
-     else
-         m_hasReceivedFirstUpdate = true;
- 
-+    Vector<uint64_t> notified;
-+    for (auto& [key, value] : m_callbacks) {
-+        if (backingStoreStateID > key) {
-+            notified.append(key);
-+            value();
-+        }
-+    }
-+    for (uint64_t id : notified)
-+        m_callbacks.remove(id);
-+
- #if !PLATFORM(WPE)
-     if (isInAcceleratedCompositingMode()) {
-         ASSERT(!m_backingStore);
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7cfc4f638f157338754f9f157489749..fd0e1db93b4b6fc094ff47565ca19e83c6104410 100644
+index d7695088e7cfc4f638f157338754f9f157489749..ba114d47ac079661702e44f19853398f5c1d6b55 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 @@ -30,6 +30,7 @@
@@ -6063,20 +6057,31 @@ index d7695088e7cfc4f638f157338754f9f157489749..fd0e1db93b4b6fc094ff47565ca19e83
  
      bool isInAcceleratedCompositingMode() const { return !m_layerTreeContext.isEmpty(); }
      const LayerTreeContext& layerTreeContext() const { return m_layerTreeContext; }
-+    void waitForBackingStoreUpdate(Function<void ()>&&);
++    void waitForSizeUpdate(Function<void ()>&&);
  
  private:
      // DrawingAreaProxy
-@@ -126,6 +128,9 @@ private:
+@@ -126,6 +128,8 @@ private:
      // For a new Drawing Area don't draw anything until the WebProcess has sent over the first content.
      bool m_hasReceivedFirstUpdate { false };
  
-+    using ResizeCallbackMap = HashMap<uint64_t, Function<void ()>, WTF::IntHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>>;
-+    ResizeCallbackMap m_callbacks;
++    Vector<Function<void ()>> m_callbacks;
 +
  #if !PLATFORM(WPE)
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
+diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.h b/Source/WebKit/UIProcess/DrawingAreaProxy.h
+index 4896c404bc8b25d69360de7d1c509383282b2317..14bdebf732e929ea367c961f9d0bec85202bbae3 100644
+--- a/Source/WebKit/UIProcess/DrawingAreaProxy.h
++++ b/Source/WebKit/UIProcess/DrawingAreaProxy.h
+@@ -70,6 +70,7 @@ public:
+ 
+     const WebCore::IntSize& size() const { return m_size; }
+     bool setSize(const WebCore::IntSize&, const WebCore::IntSize& scrollOffset = { });
++    void waitForSizeUpdate(Function<void ()>&&);
+ 
+     // The timeout we use when waiting for a DidUpdateGeometry message.
+     static constexpr Seconds didUpdateBackingStoreStateTimeout() { return Seconds::fromMilliseconds(500); }
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..cf7832855e823cea9b3773e47e88499dc7727d1d
@@ -8537,7 +8542,7 @@ index 0000000000000000000000000000000000000000..8a86cc348bc210b71bb463dcb3057f57
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..c5ee54a88b2eff67bb96acc3481f7262dff0c796
+index 0000000000000000000000000000000000000000..e5e25acebabb76a05a77db02a99f1267bd99a3af
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 @@ -0,0 +1,69 @@
@@ -8600,7 +8605,7 @@ index 0000000000000000000000000000000000000000..c5ee54a88b2eff67bb96acc3481f7262
 +    height += windowAllocation.height - viewAllocation.height;
 +
 +    if (auto* drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(m_page.drawingArea())) {
-+        drawingArea->waitForBackingStoreUpdate([callback = WTFMove(callback)]() {
++        drawingArea->waitForSizeUpdate([callback = WTFMove(callback)]() {
 +            callback(String());
 +        });
 +    } else {
