@@ -1199,6 +1199,19 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..a2dd59e44b43b5e44eaa4530a143a408
              ]
          },
          {
+diff --git a/Source/WTF/wtf/Platform.h b/Source/WTF/wtf/Platform.h
+index 27b0f4ff89089d3faa9fd18335e3f94e305b5b54..77bba3ac378af3bce079dd6cc0ae3ad4c612a0bd 100644
+--- a/Source/WTF/wtf/Platform.h
++++ b/Source/WTF/wtf/Platform.h
+@@ -1447,7 +1447,7 @@
+ #endif
+ #endif
+ 
+-#if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101400) || (PLATFORM(IOS_FAMILY) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 130000) || PLATFORM(GTK)
++#if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101400) || (PLATFORM(IOS_FAMILY) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 130000) || PLATFORM(GTK) || PLATFORM(WPE)
+ #define HAVE_OS_DARK_MODE_SUPPORT 1
+ #endif
+ 
 diff --git a/Source/WebCore/Modules/geolocation/Geolocation.cpp b/Source/WebCore/Modules/geolocation/Geolocation.cpp
 index a256d2f8a42548c42ae3c955d9502cc0ad893d91..7e30dfcec151304b21b39286a841e38e35fa3ecf 100644
 --- a/Source/WebCore/Modules/geolocation/Geolocation.cpp
@@ -5133,20 +5146,47 @@ index 33a9b7d5ad060f275dcf7156a8cff3f37644e736..128a5c75807848de10aed628618fc7d1
      /**
       * WebKitWebContext::download-started:
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
-index 646e45adc2818287f47d00340567822c210a16ed..1caff042a6783addd52355527ea9797fb4e4c513 100644
+index 646e45adc2818287f47d00340567822c210a16ed..7f43830f615b1320258e55a8849a3bee8b6a6d99 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
-@@ -2385,6 +2385,15 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
+@@ -129,6 +129,7 @@ enum {
+     CLOSE,
+ 
+     SCRIPT_DIALOG,
++    SCRIPT_DIALOG_HANDLED,
+ 
+     DECIDE_POLICY,
+     PERMISSION_REQUEST,
+@@ -1535,6 +1536,15 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
+         G_TYPE_BOOLEAN, 1,
+         WEBKIT_TYPE_SCRIPT_DIALOG);
+ 
++    signals[SCRIPT_DIALOG_HANDLED] = g_signal_new(
++        "script-dialog-handled",
++        G_TYPE_FROM_CLASS(webViewClass),
++        G_SIGNAL_RUN_LAST,
++        G_STRUCT_OFFSET(WebKitWebViewClass, script_dialog),
++        g_signal_accumulator_true_handled, nullptr,
++        g_cclosure_marshal_generic,
++        G_TYPE_BOOLEAN, 1);
++
+     /**
+      * WebKitWebView::decide-policy:
+      * @web_view: the #WebKitWebView on which the signal is emitted
+@@ -2385,6 +2395,18 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
      webkit_script_dialog_unref(webView->priv->currentScriptDialog);
  }
  
 +void webkitWebViewHandleJavaScriptDialog(WebKitWebView* webView, bool accept, const String& value) {
++    auto* dialog = webView->priv->currentScriptDialog;
 +    if (!value.isNull())
 +        webkitWebViewSetCurrentScriptDialogUserInput(webView, value);
 +    if (accept)
 +        webkitWebViewAcceptCurrentScriptDialog(webView);
 +    else
 +        webkitWebViewDismissCurrentScriptDialog(webView);
++    gboolean returnValue;
++    g_signal_emit(webView, signals[SCRIPT_DIALOG_HANDLED], 0, dialog, &returnValue);
 +}
 +
  bool webkitWebViewIsShowingScriptDialog(WebKitWebView* webView)
@@ -5359,6 +5399,40 @@ index 0000000000000000000000000000000000000000..6dffa4fa10a9a64f778a0a77c760c2e7
 +G_END_DECLS
 +
 +#endif
+diff --git a/Source/WebKit/UIProcess/API/wpe/WebKitScriptDialogWPE.cpp b/Source/WebKit/UIProcess/API/wpe/WebKitScriptDialogWPE.cpp
+index 3ad6e613657557045ec07ce4bcdb3eea0d1e7dae..a53a4aa01bd692ba34bacb9f663c335cfd3821a7 100644
+--- a/Source/WebKit/UIProcess/API/wpe/WebKitScriptDialogWPE.cpp
++++ b/Source/WebKit/UIProcess/API/wpe/WebKitScriptDialogWPE.cpp
+@@ -22,14 +22,26 @@
+ 
+ #include "WebKitScriptDialogPrivate.h"
+ 
+-void webkitScriptDialogAccept(WebKitScriptDialog*)
++void webkitScriptDialogAccept(WebKitScriptDialog* dialog)
+ {
++    if (!dialog->completionHandler)
++        return;
++    auto completionHandler = std::exchange(dialog->completionHandler, nullptr);
++    completionHandler(true, String());
+ }
+ 
+-void webkitScriptDialogDismiss(WebKitScriptDialog*)
++void webkitScriptDialogDismiss(WebKitScriptDialog* dialog)
+ {
++    if (!dialog->completionHandler)
++        return;
++    auto completionHandler = std::exchange(dialog->completionHandler, nullptr);
++    completionHandler(false, String());
+ }
+ 
+-void webkitScriptDialogSetUserInput(WebKitScriptDialog*, const String&)
++void webkitScriptDialogSetUserInput(WebKitScriptDialog* dialog, const String& value)
+ {
++    if (!dialog->completionHandler)
++        return;
++    auto completionHandler = std::exchange(dialog->completionHandler, nullptr);
++    completionHandler(true, value);
+ }
 diff --git a/Source/WebKit/UIProcess/API/wpe/webkit.h b/Source/WebKit/UIProcess/API/wpe/webkit.h
 index 15a4c1ff1c4aeee7d807856db0b3a74002e421dd..92212f1b5befe0f3b8c5222e81221a8a049b4818 100644
 --- a/Source/WebKit/UIProcess/API/wpe/webkit.h
@@ -8177,7 +8251,7 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..6b7cc61fff69ea639f1ed6d2a824e4a765e5e80c
+index 0000000000000000000000000000000000000000..50a643a0ecab27b736ab49d3984384f45b038524
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 @@ -0,0 +1,131 @@
@@ -8276,7 +8350,7 @@ index 0000000000000000000000000000000000000000..6b7cc61fff69ea639f1ed6d2a824e4a7
 +#if PLATFORM(GTK)
 +    gtk_main_quit();
 +#else
-+    if (g_main_loop_quit)
++    if (m_mainLoop)
 +        g_main_loop_quit(m_mainLoop);
 +#endif
 +}
@@ -9721,6 +9795,18 @@ index 4c41864d89f40567ed81ed2efefb501f6753db84..b9cab7c400c0c129ea4a9851dc397682
  
  // For backwards compatibility with the WebBackForwardList API, we honor both
  // a per-WebView and a per-preferences setting for whether to use the back/forward cache.
+diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
+index 2fbbb581c02b6f4834ae8affa554df0fb2e311e1..1dd53b7970105b3e1191dbfb9545f406ef097646 100644
+--- a/Source/cmake/OptionsWPE.cmake
++++ b/Source/cmake/OptionsWPE.cmake
+@@ -49,6 +49,7 @@ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_XSLT PUBLIC ON)
+ # Changing these options is completely unsupported.
+ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_ASYNC_SCROLLING PRIVATE ON)
+ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_CONTENT_EXTENSIONS PRIVATE ON)
++WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_DARK_MODE_CSS PRIVATE ON)
+ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_MEDIA_STREAM PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
+ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_MHTML PRIVATE ON)
+ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_NETSCAPE_PLUGIN_API PRIVATE OFF)
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.h b/Tools/MiniBrowser/gtk/BrowserWindow.h
 index 1570d65effb5d601ee3c44a2a7461436f4691c2c..456f96cf589320efa70a76f76e230b6795886b5a 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.h
@@ -10358,7 +10444,7 @@ index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed
      ${WPEBACKEND_FDO_INCLUDE_DIRS}
  )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..ecc8708bcfb51dcc8f55a4fe3115c417d971600c 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..359c0f3275f5a22560349c445f086958b8edc356 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -10395,41 +10481,71 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..ecc8708bcfb51dcc8f55a4fe3115c417
      return std::make_unique<WPEToolingBackends::WindowViewBackend>(width, height);
  }
  
-@@ -172,6 +174,46 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
-     return newWebView;
+@@ -152,7 +154,23 @@ static void webViewClose(WebKitWebView* webView, gpointer)
+     g_object_unref(webView);
  }
  
-+static WebKitWebView *createNewPage(WebKitBrowserInspector*, WebKitWebContext *webContext)
+-static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationAction*, gpointer)
++static gboolean scriptDialog(WebKitWebView*, WebKitScriptDialog* dialog, gpointer)
 +{
-+    auto backend = createViewBackend(1280, 720);
-+    struct wpe_view_backend* wpeBackend = backend->backend();
-+    if (!wpeBackend)
-+        return nullptr;
++    if (inspectorPipe)
++        webkit_script_dialog_ref(dialog);
++    return TRUE;
++}
 +
-+    auto* viewBackend = webkit_web_view_backend_new(wpeBackend,
-+        [](gpointer data) {
-+            delete static_cast<WPEToolingBackends::ViewBackend*>(data);
-+        }, backend.release());
++static gboolean scriptDialogHandled(WebKitWebView*, WebKitScriptDialog* dialog, gpointer)
++{
++    if (inspectorPipe)
++        webkit_script_dialog_unref(dialog);
++    return TRUE;
++}
 +
++static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationAction*, gpointer);
++
++static WebKitWebView* createWebViewImpl(WebKitWebView* webView, WebKitWebContext *webContext)
+ {
+     auto backend = createViewBackend(1280, 720);
+     struct wpe_view_backend* wpeBackend = backend->backend();
+@@ -164,14 +182,48 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+             delete static_cast<WPEToolingBackends::ViewBackend*>(data);
+         }, backend.release());
+ 
+-    auto* newWebView = webkit_web_view_new_with_related_view(viewBackend, webView);
+-    webkit_web_view_set_settings(newWebView, webkit_web_view_get_settings(webView));
++    WebKitWebView* newWebView;
++    if (webView) {
++        newWebView = webkit_web_view_new_with_related_view(viewBackend, webView);
++    } else {
++        newWebView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
++            "backend", viewBackend,
++            "web-context", webContext,
++            nullptr));
++    }
 +    auto* settings = webkit_settings_new_with_settings(
 +        "enable-developer-extras", TRUE,
 +        "enable-webgl", TRUE,
 +        "enable-media-stream", TRUE,
 +        "enable-encrypted-media", TRUE,
 +        nullptr);
-+
-+    auto* newWebView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
-+        "backend", viewBackend,
-+        "web-context", webContext,
-+        "settings", settings,
-+        nullptr));
-+
-+    g_signal_connect(newWebView, "close", G_CALLBACK(webViewClose), nullptr);
-+
++    webkit_web_view_set_settings(newWebView, settings);
+ 
+     g_signal_connect(newWebView, "close", G_CALLBACK(webViewClose), nullptr);
+-
++    g_signal_connect(newWebView, "script-dialog", G_CALLBACK(scriptDialog), nullptr);
++    g_signal_connect(newWebView, "script-dialog-handled", G_CALLBACK(scriptDialogHandled), nullptr);
++    g_signal_connect(newWebView, "create", G_CALLBACK(createWebView), nullptr);
 +    webkit_web_view_load_uri(newWebView, "about:blank");
+     return newWebView;
+ }
+ 
++static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationAction*, gpointer)
++{
++    return createWebViewImpl(webView, nullptr);
++}
 +
-+    return newWebView;
-+
++static WebKitWebView* createNewPage(WebKitBrowserInspector*, WebKitWebContext *webContext)
++{
++    return createWebViewImpl(nullptr, webContext);
 +}
 +
 +static void configureBrowserInspector(GMainLoop* mainLoop)
@@ -10442,7 +10558,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..ecc8708bcfb51dcc8f55a4fe3115c417
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -280,6 +322,9 @@ int main(int argc, char *argv[])
+@@ -280,6 +332,9 @@ int main(int argc, char *argv[])
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
  
@@ -10452,6 +10568,15 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..ecc8708bcfb51dcc8f55a4fe3115c417
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
+@@ -318,7 +373,7 @@ int main(int argc, char *argv[])
+         g_object_unref(file);
+         webkit_web_view_load_uri(webView, url);
+         g_free(url);
+-    } else if (automationMode)
++    } else if (automationMode || inspectorPipe)
+         webkit_web_view_load_uri(webView, "about:blank");
+     else
+         webkit_web_view_load_uri(webView, "https://wpewebkit.org");
 diff --git a/Tools/wpe/backends/CMakeLists.txt b/Tools/wpe/backends/CMakeLists.txt
 index 9788ab56abeb2f769d615029f615844a24d89cc2..fb32c4ff95e67b2e764e902dc0000d255b46ed17 100644
 --- a/Tools/wpe/backends/CMakeLists.txt
