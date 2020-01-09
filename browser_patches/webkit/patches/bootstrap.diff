@@ -9556,10 +9556,10 @@ index fbdf254ec42dc736ca0a00f521de8339f08ffbf2..5bd0472c37cc18d5dd6680e833fab394
      // If async scrolling is disabled, we have to force-disable async frame and overflow scrolling
      // to keep the non-async scrolling on those elements working.
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
-index a360fe5674b3065197ffe9eaa5853f559b35be63..41fcd6db05c844d935aff6589cb069e3d4b9eb4c 100644
+index a360fe5674b3065197ffe9eaa5853f559b35be63..442d0493fa0705b187dc7c078ea564d222448606 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
-@@ -1721,13 +1721,10 @@ void WebPage::setSize(const WebCore::IntSize& viewSize)
+@@ -1721,17 +1721,13 @@ void WebPage::setSize(const WebCore::IntSize& viewSize)
      view->resize(viewSize);
      m_drawingArea->setNeedsDisplay();
  
@@ -9572,23 +9572,34 @@ index a360fe5674b3065197ffe9eaa5853f559b35be63..41fcd6db05c844d935aff6589cb069e3
 -#if USE(COORDINATED_GRAPHICS)
  void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArguments)
  {
-     FrameView* view = m_page->mainFrame().view();
-@@ -1748,6 +1745,7 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
+-    FrameView* view = m_page->mainFrame().view();
+-    ASSERT(view && view->useFixedLayout());
++    ASSERT(m_page->mainFrame().view() && m_page->mainFrame().view()->useFixedLayout());
+ 
+     // Viewport properties have no impact on zero sized fixed viewports.
+     if (m_viewSize.isEmpty())
+@@ -1748,26 +1744,18 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
  
      ViewportAttributes attr = computeViewportAttributes(viewportArguments, minimumLayoutFallbackWidth, deviceWidth, deviceHeight, 1, m_viewSize);
  
-+#if USE(COORDINATED_GRAPHICS)
-     // If no layout was done yet set contentFixedOrigin to (0,0).
-     IntPoint contentFixedOrigin = view->didFirstLayout() ? view->fixedVisibleContentRect().location() : IntPoint();
+-    // If no layout was done yet set contentFixedOrigin to (0,0).
+-    IntPoint contentFixedOrigin = view->didFirstLayout() ? view->fixedVisibleContentRect().location() : IntPoint();
+-
+-    // Put the width and height to the viewport width and height. In css units however.
+-    // Use FloatSize to avoid truncated values during scale.
+-    FloatSize contentFixedSize = m_viewSize;
+-
+ #if ENABLE(CSS_DEVICE_ADAPTATION)
++    FrameView* view = m_page->mainFrame().view();
+     // CSS viewport descriptors might be applied to already affected viewport size
+     // if the page enables/disables stylesheets, so need to keep initial viewport size.
+-    view->setInitialViewportSize(roundedIntSize(contentFixedSize));
++    view->setInitialViewportSize(roundedIntSize(m_viewSize));
+ #endif
  
-@@ -1763,11 +1761,15 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
- 
-     contentFixedSize.scale(1 / attr.initialScale);
-     view->setFixedVisibleContentRect(IntRect(contentFixedOrigin, roundedIntSize(contentFixedSize)));
-+#else
-+    UNUSED_PARAM(view);
-+#endif // USE(COORDINATED_GRAPHICS)
- 
+-    contentFixedSize.scale(1 / attr.initialScale);
+-    view->setFixedVisibleContentRect(IntRect(contentFixedOrigin, roundedIntSize(contentFixedSize)));
+-
      attr.initialScale = m_page->viewportArguments().zoom; // Resets auto (-1) if no value was set by user.
  
      // This also takes care of the relayout.
@@ -9597,7 +9608,7 @@ index a360fe5674b3065197ffe9eaa5853f559b35be63..41fcd6db05c844d935aff6589cb069e3
  
  #if USE(COORDINATED_GRAPHICS)
      m_drawingArea->didChangeViewportAttributes(WTFMove(attr));
-@@ -1775,7 +1777,6 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
+@@ -1775,7 +1763,6 @@ void WebPage::sendViewportAttributesChanged(const ViewportArguments& viewportArg
      send(Messages::WebPageProxy::DidChangeViewportProperties(attr));
  #endif
  }
@@ -9605,7 +9616,7 @@ index a360fe5674b3065197ffe9eaa5853f559b35be63..41fcd6db05c844d935aff6589cb069e3
  
  void WebPage::scrollMainFrameIfNotAtMaxScrollPosition(const IntSize& scrollOffset)
  {
-@@ -2157,17 +2158,13 @@ void WebPage::viewportPropertiesDidChange(const ViewportArguments& viewportArgum
+@@ -2157,17 +2144,13 @@ void WebPage::viewportPropertiesDidChange(const ViewportArguments& viewportArgum
          viewportConfigurationChanged();
  #endif
  
