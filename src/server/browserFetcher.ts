@@ -44,15 +44,17 @@ export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) =
 export class BrowserFetcher {
   private _downloadsFolder: string;
   private _platform: string;
+  private _preferredRevision: string;
   private _params: ParamsGetter;
 
-  constructor(downloadsFolder: string, platform: string, params: ParamsGetter) {
+  constructor(downloadsFolder: string, platform: string, preferredRevision: string, params: ParamsGetter) {
     this._downloadsFolder = downloadsFolder;
     this._platform = platform;
+    this._preferredRevision = preferredRevision;
     this._params = params;
   }
 
-  canDownload(revision: string): Promise<boolean> {
+  canDownload(revision: string = this._preferredRevision): Promise<boolean> {
     const url = this._params(this._platform, revision).downloadUrl;
     let resolve;
     const promise = new Promise<boolean>(x => resolve = x);
@@ -66,7 +68,7 @@ export class BrowserFetcher {
     return promise;
   }
 
-  async download(revision: string, progressCallback: OnProgressCallback | null): Promise<BrowserFetcherRevisionInfo> {
+  async download(revision: string = this._preferredRevision, progressCallback?: OnProgressCallback): Promise<BrowserFetcherRevisionInfo> {
     const url = this._params(this._platform, revision).downloadUrl;
     const zipPath = path.join(this._downloadsFolder, `download-${this._platform}-${revision}.zip`);
     const folderPath = this._getFolderPath(revision);
@@ -94,13 +96,13 @@ export class BrowserFetcher {
     return fileNames.map(fileName => parseFolderPath(fileName)).filter(entry => entry && entry.platform === this._platform).map(entry => entry.revision);
   }
 
-  async remove(revision: string) {
+  async remove(revision: string = this._preferredRevision) {
     const folderPath = this._getFolderPath(revision);
     assert(await existsAsync(folderPath), `Failed to remove: revision ${revision} is not downloaded`);
     await new Promise(fulfill => removeRecursive(folderPath, fulfill));
   }
 
-  revisionInfo(revision: string): BrowserFetcherRevisionInfo {
+  revisionInfo(revision: string = this._preferredRevision): BrowserFetcherRevisionInfo {
     const folderPath = this._getFolderPath(revision);
     const params = this._params(this._platform, revision);
     const local = fs.existsSync(folderPath);

@@ -5,6 +5,11 @@
 ##### Table of Contents
 
 <!-- GEN:toc -->
+- [class: Playwright](#class-playwright)
+  * [playwright.createBrowserFetcher([options])](#playwrightcreatebrowserfetcheroptions)
+  * [playwright.devices](#playwrightdevices)
+  * [playwright.errors](#playwrighterrors)
+  * [playwright.executablePath()](#playwrightexecutablepath)
 - [class: Browser](#class-browser)
   * [event: 'disconnected'](#event-disconnected)
   * [browser.browserContexts()](#browserbrowsercontexts)
@@ -24,17 +29,11 @@
   * [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
   * [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 - [class: BrowserFetcher](#class-browserfetcher)
-  * [browserFetcher.canDownload(revision)](#browserfetchercandownloadrevision)
-  * [browserFetcher.download(revision[, progressCallback])](#browserfetcherdownloadrevision-progresscallback)
+  * [browserFetcher.canDownload([revision])](#browserfetchercandownloadrevision)
+  * [browserFetcher.download([revision, progressCallback])](#browserfetcherdownloadrevision-progresscallback)
   * [browserFetcher.localRevisions()](#browserfetcherlocalrevisions)
-  * [browserFetcher.remove(revision)](#browserfetcherremoverevision)
-  * [browserFetcher.revisionInfo(revision)](#browserfetcherrevisioninforevision)
-- [class: ChromiumBrowserServer](#class-chromiumbrowserserver)
-  * [chromiumBrowserServer.close()](#chromiumbrowserserverclose)
-  * [chromiumBrowserServer.connect()](#chromiumbrowserserverconnect)
-  * [chromiumBrowserServer.connectOptions()](#chromiumbrowserserverconnectoptions)
-  * [chromiumBrowserServer.process()](#chromiumbrowserserverprocess)
-  * [chromiumBrowserServer.wsEndpoint()](#chromiumbrowserserverwsendpoint)
+  * [browserFetcher.remove([revision])](#browserfetcherremoverevision)
+  * [browserFetcher.revisionInfo([revision])](#browserfetcherrevisioninforevision)
 - [class: ConsoleMessage](#class-consolemessage)
   * [consoleMessage.args()](#consolemessageargs)
   * [consoleMessage.location()](#consolemessagelocation)
@@ -228,6 +227,20 @@
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
   * [accessibility.snapshot([options])](#accessibilitysnapshotoptions)
+- [class: Coverage](#class-coverage)
+  * [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
+  * [coverage.startJSCoverage([options])](#coveragestartjscoverageoptions)
+  * [coverage.stopCSSCoverage()](#coveragestopcsscoverage)
+  * [coverage.stopJSCoverage()](#coveragestopjscoverage)
+- [class: Worker](#class-worker)
+  * [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
+  * [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
+  * [worker.url()](#workerurl)
+- [class: ChromiumPlaywright](#class-chromiumplaywright)
+  * [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
+  * [chromiumPlaywright.defaultArgs([options])](#chromiumplaywrightdefaultargsoptions)
+  * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
+  * [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
   * [event: 'targetchanged'](#event-targetchanged)
   * [event: 'targetcreated'](#event-targetcreated)
@@ -239,21 +252,12 @@
   * [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
   * [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
   * [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
-- [class: Coverage](#class-coverage)
-  * [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
-  * [coverage.startJSCoverage([options])](#coveragestartjscoverageoptions)
-  * [coverage.stopCSSCoverage()](#coveragestopcsscoverage)
-  * [coverage.stopJSCoverage()](#coveragestopjscoverage)
-- [class: ChromiumPlaywright](#class-chromiumplaywright)
-  * [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
-  * [chromiumPlaywright.createBrowserFetcher([options])](#chromiumplaywrightcreatebrowserfetcheroptions)
-  * [chromiumPlaywright.defaultArgs([options])](#chromiumplaywrightdefaultargsoptions)
-  * [chromiumPlaywright.devices](#chromiumplaywrightdevices)
-  * [chromiumPlaywright.downloadBrowser([options])](#chromiumplaywrightdownloadbrowseroptions)
-  * [chromiumPlaywright.errors](#chromiumplaywrighterrors)
-  * [chromiumPlaywright.executablePath()](#chromiumplaywrightexecutablepath)
-  * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
-  * [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
+- [class: ChromiumBrowserServer](#class-chromiumbrowserserver)
+  * [chromiumBrowserServer.close()](#chromiumbrowserserverclose)
+  * [chromiumBrowserServer.connect()](#chromiumbrowserserverconnect)
+  * [chromiumBrowserServer.connectOptions()](#chromiumbrowserserverconnectoptions)
+  * [chromiumBrowserServer.process()](#chromiumbrowserserverprocess)
+  * [chromiumBrowserServer.wsEndpoint()](#chromiumbrowserserverwsendpoint)
 - [class: ChromiumSession](#class-chromiumsession)
   * [chromiumSession.detach()](#chromiumsessiondetach)
   * [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
@@ -264,26 +268,105 @@
   * [chromiumTarget.page()](#chromiumtargetpage)
   * [chromiumTarget.type()](#chromiumtargettype)
   * [chromiumTarget.url()](#chromiumtargeturl)
+- [class: FirefoxPlaywright](#class-firefoxplaywright)
+  * [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions)
+  * [firefoxPlaywright.defaultArgs([options])](#firefoxplaywrightdefaultargsoptions)
+  * [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions)
+  * [firefoxPlaywright.launchServer([options])](#firefoxplaywrightlaunchserveroptions)
+- [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: FirefoxBrowserServer](#class-firefoxbrowserserver)
   * [firefoxBrowserServer.close()](#firefoxbrowserserverclose)
   * [firefoxBrowserServer.connect()](#firefoxbrowserserverconnect)
   * [firefoxBrowserServer.connectOptions()](#firefoxbrowserserverconnectoptions)
   * [firefoxBrowserServer.process()](#firefoxbrowserserverprocess)
   * [firefoxBrowserServer.wsEndpoint()](#firefoxbrowserserverwsendpoint)
+- [class: WebKitPlaywright](#class-webkitplaywright)
+  * [webkitPlaywright.defaultArgs([options])](#webkitplaywrightdefaultargsoptions)
+  * [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions)
+  * [webkitPlaywright.launchServer([options])](#webkitplaywrightlaunchserveroptions)
+- [class: WebKitBrowser](#class-webkitbrowser)
 - [class: WebKitBrowserServer](#class-webkitbrowserserver)
   * [webKitBrowserServer.close()](#webkitbrowserserverclose)
   * [webKitBrowserServer.connect()](#webkitbrowserserverconnect)
   * [webKitBrowserServer.connectOptions()](#webkitbrowserserverconnectoptions)
   * [webKitBrowserServer.process()](#webkitbrowserserverprocess)
-- [class: Worker](#class-worker)
-  * [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
-  * [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
-  * [worker.url()](#workerurl)
-- [class: FirefoxBrowser](#class-firefoxbrowser)
-- [class: WebKitBrowser](#class-webkitbrowser)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
+- [Download defaults](#download-defaults)
 <!-- GEN:stop -->
+
+### class: Playwright
+
+Playwright module provides a method to launch a browser instance.
+The following is a typical example of using Playwright to drive automation:
+```js
+const playwright = require('playwright')('chromium');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+  const browser = await playwright.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto('http://example.com');
+  // other actions...
+  await browser.close();
+})();
+```
+
+See [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions), [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions) or [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions) for browser-specific launch methods.
+
+#### playwright.createBrowserFetcher([options])
+- `options` <[Object]>
+  - `host` <[string]> A download host to be used.
+  - `path` <[string]> A path for the downloads folder.
+  - `platform` <[string]> Defaults to the current platform.
+- returns: <[BrowserFetcher]>
+
+See [Download defaults](#download-defaults) for default values.
+
+#### playwright.devices
+- returns: <[Object]>
+
+Returns a list of devices to be used with [`page.emulate(options)`](#pageemulateoptions). Actual list of
+devices can be found in [lib/deviceDescriptors.js](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+
+```js
+const playwright = require('playwright')('firefox');  // Or 'chromium' or 'webkit'.
+const iPhone = playwright.devices['iPhone 6'];
+
+(async () => {
+  const browser = await playwright.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.emulate(iPhone);
+  await page.goto('http://example.com');
+  // other actions...
+  await browser.close();
+})();
+```
+
+#### playwright.errors
+- returns: <[Object]>
+  - `TimeoutError` <[function]> A class of [TimeoutError].
+
+Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
+might fail if the selector doesn't match any nodes during the given timeframe.
+
+For certain types of errors Playwright uses specific error classes.
+These classes are available via [`playwright.errors`](#playwrighterrors)
+
+An example of handling a timeout error:
+```js
+try {
+  await page.waitForSelector('.foo');
+} catch (e) {
+  if (e instanceof playwright.errors.TimeoutError) {
+    // Do something if this is a timeout.
+  }
+}
+```
+
+#### playwright.executablePath()
+- returns: <[string]> A path where Playwright expects to find bundled browser.
 
 ### class: Browser
 
@@ -531,20 +614,20 @@ Playwright against it:
 ```js
 const browserFetcher = playwright.createBrowserFetcher();
 const revisionInfo = await browserFetcher.download('533271');
-const browser = await playwright.launch({executablePath: revisionInfo.executablePath})
+const browser = await playwright.launch({executablePath: revisionInfo.executablePath});
 ```
 
 > **NOTE** BrowserFetcher is not designed to work concurrently with other
 > instances of BrowserFetcher that share the same downloads directory.
 
-#### browserFetcher.canDownload(revision)
-- `revision` <[string]> a revision to check availability.
+#### browserFetcher.canDownload([revision])
+- `revision` <[string]> a revision to check availability. Defaults to preferred revision.
 - returns: <[Promise]<[boolean]>>  returns `true` if the revision could be downloaded from the host.
 
 The method initiates a HEAD request to check if the revision is available.
 
-#### browserFetcher.download(revision[, progressCallback])
-- `revision` <[string]> a revision to download.
+#### browserFetcher.download([revision, progressCallback])
+- `revision` <[string]> a revision to download. Defaults to preferred revision.
 - `progressCallback` <[function]([number], [number])> A function that will be called with two arguments:
   - `downloadedBytes` <[number]> how many bytes have been downloaded
   - `totalBytes` <[number]> how large is the total download.
@@ -555,54 +638,23 @@ The method initiates a HEAD request to check if the revision is available.
   - `url` <[string]> URL this revision can be downloaded from
   - `local` <[boolean]> whether the revision is locally available on disk
 
-The method initiates a GET request to download the revision from the host.
+The method initiates a GET request to download the revision from the host. See [Download defaults](#download-defaults) for approximate download size.
 
 #### browserFetcher.localRevisions()
 - returns: <[Promise]<[Array]<[string]>>> A list of all revisions available locally on disk.
 
-#### browserFetcher.remove(revision)
-- `revision` <[string]> a revision to remove. The method will throw if the revision has not been downloaded.
+#### browserFetcher.remove([revision])
+- `revision` <[string]> a revision to remove. Defaults to preferred revision. The method will throw if the revision has not been downloaded.
 - returns: <[Promise]> Resolves when the revision has been removed.
 
-#### browserFetcher.revisionInfo(revision)
-- `revision` <[string]> a revision to get info for.
+#### browserFetcher.revisionInfo([revision])
+- `revision` <[string]> a revision to get info for. Defaults to preferred revision.
 - returns: <[Object]>
   - `revision` <[string]> the revision the info was created from
   - `folderPath` <[string]> path to the extracted revision folder
   - `executablePath` <[string]> path to the revision executable
   - `url` <[string]> URL this revision can be downloaded from
   - `local` <[boolean]> whether the revision is locally available on disk
-
-### class: ChromiumBrowserServer
-
-#### chromiumBrowserServer.close()
-- returns: <[Promise]>
-
-Closes the browser gracefully and makes sure the process is terminated.
-
-#### chromiumBrowserServer.connect()
-- returns: <[Promise]<[Browser]>>
-
-Connects to the browser server and returns a <[Browser]> object.
-
-#### chromiumBrowserServer.connectOptions()
-- returns: <[Object]>
-  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
-  - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-  - `slowMo` <[number]>
-  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
-
-This options object can be passed to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions) to establish connection to the browser.
-
-#### chromiumBrowserServer.process()
-- returns: <?[ChildProcess]> Spawned browser server process.
-
-#### chromiumBrowserServer.wsEndpoint()
-- returns: <?[string]> Browser websocket url.
-
-Browser websocket endpoint which can be used as an argument to `playwright.connect`.
-
-Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
 
 ### class: ConsoleMessage
 
@@ -3132,6 +3184,185 @@ function findFocusedNode(node) {
 }
 ```
 
+### class: Coverage
+
+Coverage gathers information about parts of JavaScript and CSS that were used by the page.
+
+An example of using JavaScript and CSS coverage to get percentage of initially
+executed code:
+
+```js
+// Enable both JavaScript and CSS coverage
+await Promise.all([
+  page.coverage.startJSCoverage(),
+  page.coverage.startCSSCoverage()
+]);
+// Navigate to page
+await page.goto('https://example.com');
+// Disable both JavaScript and CSS coverage
+const [jsCoverage, cssCoverage] = await Promise.all([
+  page.coverage.stopJSCoverage(),
+  page.coverage.stopCSSCoverage(),
+]);
+let totalBytes = 0;
+let usedBytes = 0;
+const coverage = [...jsCoverage, ...cssCoverage];
+for (const entry of coverage) {
+  totalBytes += entry.text.length;
+  for (const range of entry.ranges)
+    usedBytes += range.end - range.start - 1;
+}
+console.log(`Bytes used: ${usedBytes / totalBytes * 100}%`);
+```
+
+_To output coverage in a form consumable by [Istanbul](https://github.com/istanbuljs),
+  see [playwright-to-istanbul](https://github.com/istanbuljs/playwright-to-istanbul)._
+
+#### coverage.startCSSCoverage([options])
+- `options` <[Object]>  Set of configurable options for coverage
+  - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
+- returns: <[Promise]> Promise that resolves when coverage is started
+
+#### coverage.startJSCoverage([options])
+- `options` <[Object]>  Set of configurable options for coverage
+  - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
+  - `reportAnonymousScripts` <[boolean]> Whether anonymous scripts generated by the page should be reported. Defaults to `false`.
+- returns: <[Promise]> Promise that resolves when coverage is started
+
+> **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
+
+#### coverage.stopCSSCoverage()
+- returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all stylesheets
+  - `url` <[string]> StyleSheet URL
+  - `text` <[string]> StyleSheet content
+  - `ranges` <[Array]<[Object]>> StyleSheet ranges that were used. Ranges are sorted and non-overlapping.
+    - `start` <[number]> A start offset in text, inclusive
+    - `end` <[number]> An end offset in text, exclusive
+
+> **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
+
+#### coverage.stopJSCoverage()
+- returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all scripts
+  - `url` <[string]> Script URL
+  - `text` <[string]> Script content
+  - `ranges` <[Array]<[Object]>> Script ranges that were executed. Ranges are sorted and non-overlapping.
+    - `start` <[number]> A start offset in text, inclusive
+    - `end` <[number]> An end offset in text, exclusive
+
+> **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
+reported.
+
+### class: Worker
+
+The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
+The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
+
+```js
+page.on('workercreated', worker => console.log('Worker created: ' + worker.url()));
+page.on('workerdestroyed', worker => console.log('Worker destroyed: ' + worker.url()));
+
+console.log('Current workers:');
+for (const worker of page.workers())
+  console.log('  ' + worker.url());
+```
+
+#### worker.evaluate(pageFunction[, ...args])
+- `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
+- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
+- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+
+If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise to resolve and return its value.
+
+If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` resolves to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+
+#### worker.evaluateHandle(pageFunction[, ...args])
+- `pageFunction` <[function]|[string]> Function to be evaluated in the page context
+- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
+- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
+
+The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns in-page object (JSHandle).
+
+If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for the promise to resolve and return its value.
+
+#### worker.url()
+- returns: <[string]>
+
+### class: ChromiumPlaywright
+
+* extends: [Playwright]
+
+#### chromiumPlaywright.connect(options)
+- `options` <[Object]>
+  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
+- returns: <[Promise]<[ChromiumBrowser]>>
+
+This methods attaches Playwright to an existing Chromium instance.
+
+#### chromiumPlaywright.defaultArgs([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run Chromium in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
+  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+- returns: <[Array]<[string]>>
+
+The default flags that Chromium will be launched with.
+
+#### chromiumPlaywright.launch([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run Chromium in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
+  - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`chromiumPlaywright.defaultArgs()`](#chromiumplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
+- returns: <[Promise]<[ChromiumBrowser]>> Promise which resolves to browser instance.
+
+
+You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
+```js
+const browser = await playwright.launch({
+  ignoreDefaultArgs: ['--mute-audio']
+});
+```
+
+> **NOTE** Playwright can also be used to control the Chrome browser, but it works best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use `executablePath` option with extreme caution.
+>
+> If Google Chrome (rather than Chromium) is preferred, a [Chrome Canary](https://www.google.com/chrome/browser/canary.html) or [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
+>
+> In [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions) above, any mention of Chromium also applies to Chrome.
+>
+> See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
+
+#### chromiumPlaywright.launchServer([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run Chromium in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
+  - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`chromiumPlaywright.defaultArgs()`](#chromiumplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
+- returns: <[Promise]<[ChromiumBrowserServer]>> Promise which resolves to browser server instance.
+
 ### class: ChromiumBrowser
 
 * extends: [Browser]
@@ -3216,235 +3447,36 @@ await page.evaluate(() => window.open('https://www.example.com/'));
 const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
-### class: Coverage
+### class: ChromiumBrowserServer
 
-Coverage gathers information about parts of JavaScript and CSS that were used by the page.
+#### chromiumBrowserServer.close()
+- returns: <[Promise]>
 
-An example of using JavaScript and CSS coverage to get percentage of initially
-executed code:
+Closes the browser gracefully and makes sure the process is terminated.
 
-```js
-// Enable both JavaScript and CSS coverage
-await Promise.all([
-  page.coverage.startJSCoverage(),
-  page.coverage.startCSSCoverage()
-]);
-// Navigate to page
-await page.goto('https://example.com');
-// Disable both JavaScript and CSS coverage
-const [jsCoverage, cssCoverage] = await Promise.all([
-  page.coverage.stopJSCoverage(),
-  page.coverage.stopCSSCoverage(),
-]);
-let totalBytes = 0;
-let usedBytes = 0;
-const coverage = [...jsCoverage, ...cssCoverage];
-for (const entry of coverage) {
-  totalBytes += entry.text.length;
-  for (const range of entry.ranges)
-    usedBytes += range.end - range.start - 1;
-}
-console.log(`Bytes used: ${usedBytes / totalBytes * 100}%`);
-```
+#### chromiumBrowserServer.connect()
+- returns: <[Promise]<[ChromiumBrowser]>>
 
-_To output coverage in a form consumable by [Istanbul](https://github.com/istanbuljs),
-  see [playwright-to-istanbul](https://github.com/istanbuljs/playwright-to-istanbul)._
+Connects to the browser server and returns a <[ChromiumBrowser]> object.
 
-#### coverage.startCSSCoverage([options])
-- `options` <[Object]>  Set of configurable options for coverage
-  - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
-- returns: <[Promise]> Promise that resolves when coverage is started
-
-#### coverage.startJSCoverage([options])
-- `options` <[Object]>  Set of configurable options for coverage
-  - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
-  - `reportAnonymousScripts` <[boolean]> Whether anonymous scripts generated by the page should be reported. Defaults to `false`.
-- returns: <[Promise]> Promise that resolves when coverage is started
-
-> **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
-
-#### coverage.stopCSSCoverage()
-- returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all stylesheets
-  - `url` <[string]> StyleSheet URL
-  - `text` <[string]> StyleSheet content
-  - `ranges` <[Array]<[Object]>> StyleSheet ranges that were used. Ranges are sorted and non-overlapping.
-    - `start` <[number]> A start offset in text, inclusive
-    - `end` <[number]> An end offset in text, exclusive
-
-> **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
-
-#### coverage.stopJSCoverage()
-- returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all scripts
-  - `url` <[string]> Script URL
-  - `text` <[string]> Script content
-  - `ranges` <[Array]<[Object]>> Script ranges that were executed. Ranges are sorted and non-overlapping.
-    - `start` <[number]> A start offset in text, inclusive
-    - `end` <[number]> An end offset in text, exclusive
-
-> **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
-reported.
-
-### class: ChromiumPlaywright
-
-Playwright module provides a method to launch a Chromium instance.
-The following is a typical example of using Playwright to drive automation:
-```js
-const playwright = require('playwright');
-
-(async () => {
-  const browser = await playwright.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('https://www.google.com');
-  // other actions...
-  await browser.close();
-})();
-```
-
-#### chromiumPlaywright.connect(options)
-- `options` <[Object]>
+#### chromiumBrowserServer.connectOptions()
+- returns: <[Object]>
   - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
   - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
-- returns: <[Promise]<[Browser]>>
+  - `slowMo` <[number]>
+  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
 
-This methods attaches Playwright to an existing Chromium instance.
+This options object can be passed to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions) to establish connection to the browser.
 
-#### chromiumPlaywright.createBrowserFetcher([options])
-- `options` <[Object]>
-  - `host` <[string]> A download host to be used. Defaults to `https://storage.googleapis.com`.
-  - `path` <[string]> A path for the downloads folder. Defaults to `<root>/.local-chromium`, where `<root>` is playwright's package root.
-  - `platform` <[string]> Possible values are: `mac`, `win32`, `win64`, `linux`. Defaults to the current platform.
-- returns: <[BrowserFetcher]>
+#### chromiumBrowserServer.process()
+- returns: <?[ChildProcess]> Spawned browser server process.
 
-#### chromiumPlaywright.defaultArgs([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run browser in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
-  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-- returns: <[Array]<[string]>>
+#### chromiumBrowserServer.wsEndpoint()
+- returns: <?[string]> Browser websocket url.
 
-The default flags that Chromium will be launched with.
+Browser websocket endpoint which can be used as an argument to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions).
 
-#### chromiumPlaywright.devices
-- returns: <[Object]>
-
-Returns a list of devices to be used with [`page.emulate(options)`](#pageemulateoptions). Actual list of
-devices can be found in [lib/DeviceDescriptors.js](https://github.com/Microsoft/playwright/blob/master/lib/DeviceDescriptors.js).
-
-```js
-const playwright = require('playwright');
-const iPhone = playwright.devices['iPhone 6'];
-
-(async () => {
-  const browser = await playwright.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.emulate(iPhone);
-  await page.goto('https://www.google.com');
-  // other actions...
-  await browser.close();
-})();
-```
-
-> **NOTE** The old way (Playwright versions <= v1.14.0) devices can be obtained with `require('playwright/DeviceDescriptors')`.
-
-#### chromiumPlaywright.downloadBrowser([options])
-- `options` <[Object]>
-  - `host` <[string]> A download host to be used. Defaults to `https://storage.googleapis.com`.
-  - `path` <[string]> A path for the downloads folder. Defaults to `<root>/.local-chromium`, where `<root>` is playwright's package root.
-  - `platform` <[string]> Possible values are: `mac`, `win32`, `win64`, `linux`. Defaults to the current platform.
-  - `onProgress` <[function]([number], [number])> A function that will be called with two arguments:
-    - `downloadedBytes` <[number]> how many bytes have been downloaded
-    - `totalBytes` <[number]> how large is the total download.
-- returns: <[Promise]<[Object]>> Resolves with revision information when the revision is downloaded and extracted
-  - `revision` <[string]> the revision the info was created from
-  - `folderPath` <[string]> path to the extracted revision folder
-  - `executablePath` <[string]> path to the revision executable
-  - `url` <[string]> URL this revision can be downloaded from
-  - `local` <[boolean]> whether the revision is locally available on disk
-
-Downloads the default browser that Playwright controls. The browser is usually around 100mb.
-
-#### chromiumPlaywright.errors
-- returns: <[Object]>
-  - `TimeoutError` <[function]> A class of [TimeoutError].
-
-Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
-might fail if the selector doesn't match any nodes during the given timeframe.
-
-For certain types of errors Playwright uses specific error classes.
-These classes are available via [`playwright.errors`](#playwrighterrors)
-
-An example of handling a timeout error:
-```js
-try {
-  await page.waitForSelector('.foo');
-} catch (e) {
-  if (e instanceof playwright.errors.TimeoutError) {
-    // Do something if this is a timeout.
-  }
-}
-```
-
-> **NOTE** The old way (Playwright versions <= v1.14.0) errors can be obtained with `require('playwright/Errors')`.
-
-#### chromiumPlaywright.executablePath()
-- returns: <[string]> A path where Playwright expects to find bundled Chromium.
-
-#### chromiumPlaywright.launch([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run browser in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
-  - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
-- returns: <[Promise]<[Browser]>> Promise which resolves to browser instance.
-
-
-You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
-```js
-const browser = await playwright.launch({
-  ignoreDefaultArgs: ['--mute-audio']
-});
-```
-
-> **NOTE** Playwright can also be used to control the Chrome browser, but it works best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use `executablePath` option with extreme caution.
->
-> If Google Chrome (rather than Chromium) is preferred, a [Chrome Canary](https://www.google.com/chrome/browser/canary.html) or [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
->
-> In [playwright.launch([options])](#playwrightlaunchoptions) above, any mention of Chromium also applies to Chrome.
->
-> See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
-
-#### chromiumPlaywright.launchServer([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run browser in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
-  - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
-- returns: <[Promise]<[BrowserServer]>> Promise which resolves to browser server instance.
+Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
 
 ### class: ChromiumSession
 
@@ -3511,6 +3543,74 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 #### chromiumTarget.url()
 - returns: <[string]>
 
+### class: FirefoxPlaywright
+
+* extends: [Playwright]
+
+#### firefoxPlaywright.connect(options)
+- `options` <[Object]>
+  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
+- returns: <[Promise]<[FirefoxBrowser]>>
+
+This methods attaches Playwright to an existing Firefox instance.
+
+#### firefoxPlaywright.defaultArgs([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run Firefox in [headless mode](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true`.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Firefox flags can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
+- returns: <[Array]<[string]>>
+
+The default flags that Firefox will be launched with.
+
+#### firefoxPlaywright.launch([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run Firefox in [headless mode](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true`.
+  - `executablePath` <[string]> Path to a Firefox executable to run instead of the bundled Firefox. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Firefox, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Firefox flags can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`firefoxPlaywright.defaultArgs()`](#firefoxplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+- returns: <[Promise]<[FirefoxBrowser]>> Promise which resolves to browser instance.
+
+
+You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
+```js
+const browser = await playwright.launch({
+  ignoreDefaultArgs: ['--mute-audio']
+});
+```
+
+#### firefoxPlaywright.launchServer([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run Firefox in [headless mode](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true`.
+  - `executablePath` <[string]> Path to a Firefox executable to run instead of the bundled Firefox. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Firefox, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Firefox flags can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`firefoxPlaywright.defaultArgs()`](#firefoxplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+- returns: <[Promise]<[FirefoxBrowserServer]>> Promise which resolves to browser server instance.
+
+### class: FirefoxBrowser
+
+* extends: [Browser]
+
+Firefox browser instance does not expose Firefox-specific features.
+
 ### class: FirefoxBrowserServer
 
 #### firefoxBrowserServer.close()
@@ -3519,9 +3619,9 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 Closes the browser gracefully and makes sure the process is terminated.
 
 #### firefoxBrowserServer.connect()
-- returns: <[Promise]<[Browser]>>
+- returns: <[Promise]<[FirefoxBrowser]>>
 
-Connects to the browser server and returns a <[Browser]> object.
+Connects to the browser server and returns a <[FirefoxBrowser]> object.
 
 #### firefoxBrowserServer.connectOptions()
 - returns: <[Object]>
@@ -3537,7 +3637,62 @@ This options object can be passed to [firefoxPlaywright.connect(options)](#firef
 #### firefoxBrowserServer.wsEndpoint()
 - returns: <?[string]> Browser websocket url.
 
-Browser websocket endpoint which can be used as an argument to `playwright.connect`.
+Browser websocket endpoint which can be used as an argument to [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions).
+
+### class: WebKitPlaywright
+
+* extends: [Playwright]
+
+#### webkitPlaywright.defaultArgs([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
+- returns: <[Array]<[string]>>
+
+The default flags that WebKit will be launched with.
+
+#### webkitPlaywright.launch([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
+  - `executablePath` <[string]> Path to a WebKit executable to run instead of the bundled WebKit. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled WebKit, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`webKitPlaywright.defaultArgs()`](#webkitplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+- returns: <[Promise]<[WebKitBrowser]>> Promise which resolves to browser instance.
+
+
+You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
+```js
+const browser = await playwright.launch({
+  ignoreDefaultArgs: ['--mute-audio']
+});
+```
+
+#### webkitPlaywright.launchServer([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
+  - `executablePath` <[string]> Path to a WebKit executable to run instead of the bundled WebKit. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled WebKit, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`webKitPlaywright.defaultArgs()`](#webkitplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+- returns: <[Promise]<[WebKitBrowserServer]>> Promise which resolves to browser server instance.
+
+### class: WebKitBrowser
+
+* extends: [Browser]
+
+WebKit browser instance does not expose WebKit-specific features.
 
 ### class: WebKitBrowserServer
 
@@ -3547,9 +3702,9 @@ Browser websocket endpoint which can be used as an argument to `playwright.conne
 Closes the browser gracefully and makes sure the process is terminated.
 
 #### webKitBrowserServer.connect()
-- returns: <[Promise]<[Browser]>>
+- returns: <[Promise]<[WebKitBrowser]>>
 
-Connects to the browser server and returns a <[Browser]> object.
+Connects to the browser server and returns a <[WebKitBrowser]> object.
 
 #### webKitBrowserServer.connectOptions()
 - returns: <[Object]>
@@ -3560,53 +3715,6 @@ This options object can be passed to [webKitPlaywright.connect(options)](#webkit
 
 #### webKitBrowserServer.process()
 - returns: <?[ChildProcess]> Spawned browser server process.
-
-### class: Worker
-
-The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
-The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
-
-```js
-page.on('workercreated', worker => console.log('Worker created: ' + worker.url()));
-page.on('workerdestroyed', worker => console.log('Worker destroyed: ' + worker.url()));
-
-console.log('Current workers:');
-for (const worker of page.workers())
-  console.log('  ' + worker.url());
-```
-
-#### worker.evaluate(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
-
-If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise to resolve and return its value.
-
-If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` resolves to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
-
-#### worker.evaluateHandle(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated in the page context
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle)
-
-The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns in-page object (JSHandle).
-
-If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for the promise to resolve and return its value.
-
-#### worker.url()
-- returns: <[string]>
-
-### class: FirefoxBrowser
-
-* extends: [Browser]
-
-Firefox-specific features.
-
-### class: WebKitBrowser
-
-* extends: [Browser]
-
-WebKit-specific features.
 
 ### Working with selectors
 
@@ -3674,6 +3782,17 @@ const playwright = require('playwright');
 
 > **NOTE** It is not yet possible to test extension popups or content scripts.
 
+### Download defaults
+
+See [playwright.createBrowserFetcher([options])](#playwrightcreatebrowserfetcheroptions) for explanation. Below `<root>` is playwright's package root.
+
+| | Chromium | Firefox | WebKit |
+| --- | --- | --- | --- |
+| Download host | `https://storage.googleapis.com` | `https://playwrightaccount.blob.core.windows.net` | `https://playwrightaccount.blob.core.windows.net` |
+| Download path  | `<root>/.local-chromium` | `<root>/.local-firefox` | `<root>/.local-webkit` |
+| Supported platforms | `mac`, `win32`, `win64`, `linux` | `mac`, `win32`, `win64`, `linux` | `mac`, `linux`; linux binaries are run with WSL on Windows |
+| Approximate download size | 120mb | 70mb | 50mb |
+
 [AXNode]: #accessibilitysnapshotoptions "AXNode"
 [Accessibility]: #class-accessibility "Accessibility"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
@@ -3682,9 +3801,11 @@ const playwright = require('playwright');
 [BrowserFetcher]: #class-browserfetcher  "BrowserFetcher"
 [Browser]: #class-browser  "Browser"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
-[CDPSession]: #class-cdpsession  "CDPSession"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
-[Chromium]: #class-chromium "Chromium"
+[ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
+[ChromiumBrowserServer]: #class-chromiumbrowserserver "ChromiumBrowserServer"
+[ChromiumPlaywright]: #class-chromiumplaywright "ChromiumPlaywright"
+[ChromiumSession]: #class-chromiumsession  "ChromiumSession"
 [ChromiumTarget]: #class-chromiumtarget "ChromiumTarget"
 [ConnectionTransport]: ../lib/WebSocketTransport.js "ConnectionTransport"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
@@ -3695,6 +3816,9 @@ const playwright = require('playwright');
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
 [File]: #class-file "https://developer.mozilla.org/en-US/docs/Web/API/File"
 [FileChooser]: #class-filechooser "FileChooser"
+[FirefoxBrowser]: #class-firefoxbrowser "FirefoxBrowser"
+[FirefoxBrowserServer]: #class-firefoxbrowserserver "FirefoxBrowserServer"
+[FirefoxPlaywright]: #class-firefoxplaywright "FirefoxPlaywright"
 [Frame]: #class-frame "Frame"
 [JSHandle]: #class-jshandle "JSHandle"
 [Keyboard]: #class-keyboard "Keyboard"
@@ -3702,6 +3826,7 @@ const playwright = require('playwright');
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Page]: #class-page "Page"
+[Playwright]: #class-playwright "Playwright"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
 [Request]: #class-request  "Request"
@@ -3713,6 +3838,9 @@ const playwright = require('playwright');
 [URL]: https://nodejs.org/api/url.html
 [USKeyboardLayout]: ../lib/USKeyboardLayout.js "USKeyboardLayout"
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
+[WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
+[WebKitBrowserServer]: #class-webkitbrowserserver "WebKitBrowserServer"
+[WebKitPlaywright]: #class-webkitplaywright "WebKitPlaywright"
 [Worker]: #class-worker "Worker"
 [boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
 [function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
