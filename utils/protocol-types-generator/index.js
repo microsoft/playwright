@@ -162,7 +162,7 @@ async function generateFirefoxProtocol(revision) {
       return {"$type": "ref", "$ref": schemeName };
     }
   }
-  const json = vm.runInContext(`(${inject})();${protocolJSCode}; this.protocol.types = types; this.protocol;`, ctx);
+  const json = vm.runInContext(`(${inject})();${protocolJSCode}; this.protocol;`, ctx);
   fs.writeFileSync(outputPath, firefoxJSONToTS(json));
   console.log(`Wrote protocol.ts for Firefox to ${path.relative(process.cwd(), outputPath)}`);
 }
@@ -170,10 +170,10 @@ async function generateFirefoxProtocol(revision) {
 function firefoxJSONToTS(json) {
   const domains = Object.entries(json.domains);
   return `// This is generated from /utils/protocol-types-generator/index.js
-export module Protocol {${Object.entries(json.types).map(([typeName, type]) => `
-  export type ${typeName} = ${firefoxTypeToString(type, '  ')};`).join('')}
+export module Protocol {
 ${domains.map(([domainName, domain]) => `
-  export module ${domainName} {${(Object.entries(domain.events)).map(([eventName, event]) => `
+  export module ${domainName} {${Object.entries(domain.types).map(([typeName, type]) => `
+    export type ${typeName} = ${firefoxTypeToString(type, '    ')};`).join('')}${(Object.entries(domain.events)).map(([eventName, event]) => `
     export type ${eventName}Payload = ${firefoxTypeToString(event)}`).join('')}${(Object.entries(domain.methods)).map(([commandName, command]) => `
     export type ${commandName}Parameters = ${firefoxTypeToString(command.params)};
     export type ${commandName}ReturnValue = ${firefoxTypeToString(command.returns)};`).join('')}

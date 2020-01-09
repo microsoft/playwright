@@ -173,7 +173,7 @@ function checkException(exceptionDetails?: any) {
   }
 }
 
-export function deserializeValue({unserializableValue, value}: Protocol.RemoteObject) {
+export function deserializeValue({unserializableValue, value}: Protocol.Runtime.RemoteObject) {
   if (unserializableValue === 'Infinity')
     return Infinity;
   if (unserializableValue === '-Infinity')
