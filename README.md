@@ -94,4 +94,3 @@ Playwright is actively developed as we get to feature parity across Chromium, Fi
 ## Resources
 
 * [API documentation](https://github.com/microsoft/playwright/blob/master/docs/api.md)
-* [Playwright Studio](https://github.com/microsoft/playwright-studio): Record-and-replay tool for Playwright
