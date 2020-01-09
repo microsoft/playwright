@@ -315,11 +315,12 @@ export class WKPage implements PageDelegate {
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
-    if (viewport.isMobile || viewport.isLandscape || viewport.hasTouch)
+    if (viewport.isLandscape || viewport.hasTouch)
       throw new Error('Not implemented');
     const width = viewport.width;
     const height = viewport.height;
-    await this._pageProxySession.send('Emulation.setDeviceMetricsOverride', { width, height, fixedLayout: false, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
+    const fixedLayout = !!viewport.isMobile;
+    await this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {width, height, fixedLayout, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
   }
 
   setCacheEnabled(enabled: boolean): Promise<void> {

@@ -94,6 +94,16 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       await page.setViewport(iPhone.viewport);
       expect((await event2).text()).toBe('2');
     });
+    it.skip(FFOX)('default mobile viewports to 980 width', async({page, server}) => {
+      await page.setViewport({width: 320, height: 480, isMobile: true});
+      await page.goto(server.PREFIX + '/empty.html');
+      expect(await page.evaluate(() => window.innerWidth)).toBe(980);
+    });
+    it.skip(FFOX)('respect meta viewport tag', async({page, server}) => {
+      await page.setViewport({width: 320, height: 480, isMobile: true});
+      await page.goto(server.PREFIX + '/mobile.html');
+      expect(await page.evaluate(() => window.innerWidth)).toBe(320);
+    });
   });
 
   describe('Page.emulate', function() {
