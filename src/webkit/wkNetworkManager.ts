@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { WKSession, WKPageProxySession } from './wkConnection';
+import { WKSession } from './wkConnection';
 import { Page } from '../page';
 import { helper, RegisteredListener, assert } from '../helper';
 import { Protocol } from './protocol';
@@ -26,13 +26,13 @@ import * as platform from '../platform';
 
 export class WKNetworkManager {
   private readonly _page: Page;
-  private readonly _pageProxySession: WKPageProxySession;
+  private readonly _pageProxySession: WKSession;
   private _session: WKSession;
   private readonly _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
 
-  constructor(page: Page, pageProxySession: WKPageProxySession) {
+  constructor(page: Page, pageProxySession: WKSession) {
     this._page = page;
     this._pageProxySession = pageProxySession;
   }

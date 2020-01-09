@@ -19,7 +19,7 @@ import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
-import { WKSession, WKSessionEvents, WKPageProxySession } from './wkConnection';
+import { WKSession } from './wkConnection';
 import { Events } from '../events';
 import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
 import { WKNetworkManager } from './wkNetworkManager';
@@ -42,7 +42,7 @@ export class WKPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   _session: WKSession;
   readonly _page: Page;
-  private readonly _pageProxySession: WKPageProxySession;
+  private readonly _pageProxySession: WKSession;
   private readonly _networkManager: WKNetworkManager;
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
@@ -50,7 +50,7 @@ export class WKPage implements PageDelegate {
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browserContext: BrowserContext, pageProxySession: WKPageProxySession) {
+  constructor(browserContext: BrowserContext, pageProxySession: WKSession) {
     this._pageProxySession = pageProxySession;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
@@ -134,6 +134,10 @@ export class WKPage implements PageDelegate {
       this._page._didClose();
   }
 
+  didDisconnect() {
+    this._page._didDisconnect();
+  }
+
   _addSessionListeners() {
     this._sessionListeners = [
       helper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
@@ -147,7 +151,6 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       helper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
-      helper.addEventListener(this._session, WKSessionEvents.Disconnected, event => this._page._didDisconnect()),
     ];
   }
 
@@ -393,7 +396,7 @@ export class WKPage implements PageDelegate {
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
     // TODO: line below crashes, sort it out.
-    this._session.send('Page.setDefaultBackgroundColorOverride', { color });
+    await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
   async takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType> {

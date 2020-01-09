@@ -18,7 +18,7 @@
 import * as input from '../input';
 import { helper } from '../helper';
 import { macEditingCommands } from '../usKeyboardLayout';
-import { WKPageProxySession, WKSession } from './wkConnection';
+import { WKSession } from './wkConnection';
 
 function toModifiersMask(modifiers: Set<input.Modifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
@@ -35,10 +35,10 @@ function toModifiersMask(modifiers: Set<input.Modifier>): number {
 }
 
 export class RawKeyboardImpl implements input.RawKeyboard {
-  private readonly _pageProxySession: WKPageProxySession;
+  private readonly _pageProxySession: WKSession;
   private _session: WKSession;
 
-  constructor(session: WKPageProxySession) {
+  constructor(session: WKSession) {
     this._pageProxySession = session;
   }
 
@@ -88,9 +88,9 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 }
 
 export class RawMouseImpl implements input.RawMouse {
-  private readonly _pageProxySession: WKPageProxySession;
+  private readonly _pageProxySession: WKSession;
 
-  constructor(session: WKPageProxySession) {
+  constructor(session: WKSession) {
     this._pageProxySession = session;
   }
 
