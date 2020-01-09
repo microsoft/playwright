@@ -28,7 +28,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       await page.setViewport({width: 123, height: 456});
       expect(page.viewport()).toEqual({width: 123, height: 456});
     });
-    it.skip(WEBKIT)('should support mobile emulation', async({page, server}) => {
+    it('should support mobile emulation', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(800);
       await page.setViewport(iPhone.viewport);
@@ -36,7 +36,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       await page.setViewport({width: 400, height: 300});
       expect(await page.evaluate(() => window.innerWidth)).toBe(400);
     });
-    it.skip(WEBKIT)('should support touch emulation', async({page, server}) => {
+    it('should support touch emulation', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
       await page.setViewport(iPhone.viewport);
@@ -58,25 +58,26 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
         return promise;
       }
     });
-    it.skip(WEBKIT)('should be detectable by Modernizr', async({page, server}) => {
+    it('should be detectable by Modernizr', async({page, server}) => {
       await page.goto(server.PREFIX + '/detect-touch.html');
       expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
       await page.setViewport(iPhone.viewport);
       await page.goto(server.PREFIX + '/detect-touch.html');
       expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
     });
-    it.skip(WEBKIT)('should detect touch when applying viewport with touches', async({page, server}) => {
+    it('should detect touch when applying viewport with touches', async({page, server}) => {
       await page.setViewport({ width: 800, height: 600, hasTouch: true });
       await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
       expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
     });
-    it.skip(FFOX || WEBKIT)('should support landscape emulation', async({page, server}) => {
+    it.skip(FFOX)('should support landscape emulation', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
-      expect(await page.evaluate(() => screen.orientation.type)).toBe('portrait-primary');
+      await page.setViewport(iPhone.viewport);
+      expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
       await page.setViewport(iPhoneLandscape.viewport);
-      expect(await page.evaluate(() => screen.orientation.type)).toBe('landscape-primary');
+      expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true)
       await page.setViewport({width: 100, height: 100});
-      expect(await page.evaluate(() => screen.orientation.type)).toBe('portrait-primary');
+      expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
     });
     it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
@@ -107,13 +108,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   describe('Page.emulate', function() {
-    it.skip(WEBKIT)('should work', async({newPage, server}) => {
+    it('should work', async({newPage, server}) => {
       const page = await newPage({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
       expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
     });
-    it.skip(WEBKIT)('should support clicking', async({newPage, server}) => {
+    it('should support clicking', async({newPage, server}) => {
       const page = await newPage({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
