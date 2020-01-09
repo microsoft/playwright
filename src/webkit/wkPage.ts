@@ -19,7 +19,7 @@ import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
-import { WKTargetSession, WKSessionEvents, WKPageProxySession } from './wkConnection';
+import { WKSession, WKSessionEvents, WKPageProxySession } from './wkConnection';
 import { Events } from '../events';
 import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
 import { WKNetworkManager } from './wkNetworkManager';
@@ -40,7 +40,7 @@ const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
-  _session: WKTargetSession;
+  _session: WKSession;
   readonly _page: Page;
   private readonly _pageProxySession: WKPageProxySession;
   private readonly _networkManager: WKNetworkManager;
@@ -74,7 +74,7 @@ export class WKPage implements PageDelegate {
     await Promise.all(promises);
   }
 
-  setSession(session: WKTargetSession) {
+  setSession(session: WKSession) {
     helper.removeEventListeners(this._sessionListeners);
     this.disconnectFromTarget();
     this._session = session;
@@ -91,7 +91,7 @@ export class WKPage implements PageDelegate {
 
   // This method is called for provisional targets as well. The session passed as the parameter
   // may be different from the current session and may be destroyed without becoming current.
-  async _initializeSession(session: WKTargetSession) {
+  async _initializeSession(session: WKSession, isProvisional: boolean) {
     const promises : Promise<any>[] = [
       // Page agent must be enabled before Runtime.
       session.send('Page.enable'),
@@ -108,7 +108,7 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
-    if (session.isProvisional())
+    if (isProvisional)
       promises.push(this._setBootstrapScripts(session));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
@@ -288,11 +288,11 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  private async _setExtraHTTPHeaders(session: WKTargetSession, headers: network.Headers): Promise<void> {
+  private async _setExtraHTTPHeaders(session: WKSession, headers: network.Headers): Promise<void> {
     await session.send('Network.setExtraHTTPHeaders', { headers });
   }
 
-  private async _setEmulateMedia(session: WKTargetSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+  private async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
     if (colorScheme !== null) {
@@ -371,7 +371,7 @@ export class WKPage implements PageDelegate {
     await this._setBootstrapScripts(this._session);
   }
 
-  private async _setBootstrapScripts(session: WKTargetSession) {
+  private async _setBootstrapScripts(session: WKSession) {
     const source = this._bootstrapScripts.join(';');
     await session.send('Page.setBootstrapScript', { source });
   }
