@@ -17,8 +17,8 @@ import * as accessibility from '../accessibility';
 import { WKTargetSession } from './wkConnection';
 import { Protocol } from './protocol';
 
-export async function getAccessibilityTree(sesssion: WKTargetSession) {
-  const {axNode} = await sesssion.send('Page.accessibilitySnapshot');
+export async function getAccessibilityTree(session: WKTargetSession) {
+  const {axNode} = await session.send('Page.accessibilitySnapshot');
   return new WKAXNode(axNode);
 }
 
