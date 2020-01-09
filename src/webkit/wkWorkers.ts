@@ -17,7 +17,7 @@
 import { helper, RegisteredListener } from '../helper';
 import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
-import { WKSession, WKTargetSession } from './wkConnection';
+import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
 
 export class WKWorkers {
@@ -29,7 +29,7 @@ export class WKWorkers {
     this._page = page;
   }
 
-  setSession(session: WKTargetSession) {
+  setSession(session: WKSession) {
     helper.removeEventListeners(this._sessionListeners);
     this._page._clearWorkers();
     this._workerSessions.clear();
@@ -73,7 +73,7 @@ export class WKWorkers {
     ];
   }
 
-  async initializeSession(session: WKTargetSession) {
+  async initializeSession(session: WKSession) {
     await session.send('Worker.enable');
   }
 

@@ -29,12 +29,6 @@ export const WKConnectionEvents = {
   PageProxyDestroyed: Symbol('Connection.PageProxyDestroyed')
 };
 
-export const WKPageProxySessionEvents = {
-  TargetCreated: Symbol('PageProxyEvents.TargetCreated'),
-  TargetDestroyed: Symbol('PageProxyEvents.TargetDestroyed'),
-  DidCommitProvisionalTarget: Symbol('PageProxyEvents.DidCommitProvisionalTarget'),
-};
-
 export const kBrowserCloseMessageId = -9999;
 
 export class WKConnection extends platform.EventEmitter {
@@ -110,7 +104,7 @@ export class WKConnection extends platform.EventEmitter {
       Promise.resolve().then(() => this.emit(WKConnectionEvents.PageProxyDestroyed, pageProxyId));
     } else if (!object.id && object.pageProxyId) {
       const pageProxySession = this._pageProxySessions.get(object.pageProxyId);
-      pageProxySession._dispatchEvent(object, message);
+      Promise.resolve().then(() => pageProxySession.emit(object.method, object.params));
     }
   }
 
@@ -142,8 +136,7 @@ export const WKSessionEvents = {
 
 export class WKPageProxySession extends platform.EventEmitter {
   _connection: WKConnection;
-  private readonly _sessions = new Map<string, WKTargetSession>();
-  private readonly _pageProxyId: string;
+  readonly _pageProxyId: string;
   private readonly _closePromise: Promise<void>;
   private _closePromiseCallback: () => void;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -171,67 +164,23 @@ export class WKPageProxySession extends platform.EventEmitter {
     ]);
   }
 
-  _dispatchEvent(object: {method: string, params: any, pageProxyId?: string}, wrappedMessage: string) {
-    if (object.method === 'Target.targetCreated') {
-      const targetInfo = object.params.targetInfo as Protocol.Target.TargetInfo;
-      const session = new WKTargetSession(this, targetInfo);
-      this._sessions.set(session.sessionId, session);
-      Promise.resolve().then(() => this.emit(WKPageProxySessionEvents.TargetCreated, session, object.params.targetInfo));
-    } else if (object.method === 'Target.targetDestroyed') {
-      const session = this._sessions.get(object.params.targetId);
-      if (session) {
-        session.dispose();
-        this._sessions.delete(object.params.targetId);
-      }
-      Promise.resolve().then(() => this.emit(WKPageProxySessionEvents.TargetDestroyed, { targetId: object.params.targetId, crashed: object.params.crashed }));
-    } else if (object.method === 'Target.dispatchMessageFromTarget') {
-      const {targetId, message} = object.params as Protocol.Target.dispatchMessageFromTargetPayload;
-      const session = this._sessions.get(targetId);
-      if (!session)
-        throw new Error('Unknown target: ' + targetId);
-      if (session.isProvisional())
-        session._addProvisionalMessage(message);
-      else
-        session.dispatchMessage(JSON.parse(message));
-    } else if (object.method === 'Target.didCommitProvisionalTarget') {
-      const {oldTargetId, newTargetId} = object.params as Protocol.Target.didCommitProvisionalTargetPayload;
-      Promise.resolve().then(() => this.emit(WKPageProxySessionEvents.DidCommitProvisionalTarget, { oldTargetId, newTargetId }));
-      const newSession = this._sessions.get(newTargetId);
-      if (!newSession)
-        throw new Error('Unknown new target: ' + newTargetId);
-      const oldSession = this._sessions.get(oldTargetId);
-      if (!oldSession)
-        throw new Error('Unknown old target: ' + oldTargetId);
-      // TODO: make some calls like screenshot catch swapped out error and retry.
-      oldSession.errorText = 'Target was swapped out.';
-      assert(newSession.isProvisional());
-      for (const message of newSession._takeProvisionalMessagesAndCommit())
-        newSession.dispatchMessage(JSON.parse(message));
-    } else {
-      Promise.resolve().then(() => this.emit(object.method, object.params));
-    }
-  }
-
   isClosed() {
     return !this._connection;
   }
 
   dispose() {
-    for (const session of this._sessions.values())
-      session.dispose();
-    this._sessions.clear();
-
     this._closePromiseCallback();
     this._connection = null;
   }
 }
 
 export class WKSession extends platform.EventEmitter {
-  connection: WKConnection | null;
-  readonly sessionId: string;
-  private _rawSend: (message: any) => void;
+  connection?: WKConnection;
   errorText: string;
-  readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
+  readonly sessionId: string;
+
+  private readonly _rawSend: (message: any) => void;
+  private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
 
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -271,8 +220,8 @@ export class WKSession extends platform.EventEmitter {
     for (const callback of this._callbacks.values())
       callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): ${this.errorText}`));
     this._callbacks.clear();
-    this.connection = null;
-    Promise.resolve().then(() => this.emit(WKSessionEvents.Disconnected));
+    this.connection = undefined;
+    this.emit(WKSessionEvents.Disconnected);
   }
 
   dispatchMessage(object: any) {
@@ -290,36 +239,6 @@ export class WKSession extends platform.EventEmitter {
     } else {
       Promise.resolve().then(() => this.emit(object.method, object.params));
     }
-  }
-}
-
-export class WKTargetSession extends WKSession {
-  private _provisionalMessages?: string[];
-
-  constructor(pageProxySession: WKPageProxySession, targetInfo: Protocol.Target.TargetInfo) {
-    super(pageProxySession._connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, (message: any) => {
-      pageProxySession.send('Target.sendMessageToTarget', {
-        message: JSON.stringify(message), targetId: targetInfo.targetId
-      }).catch(e => {
-        this.dispatchMessage({ id: message.id, error: { message: e.message } });
-      });
-    });
-    if (targetInfo.isProvisional)
-      this._provisionalMessages = [];
-  }
-
-  isProvisional() : boolean {
-    return !!this._provisionalMessages;
-  }
-
-  _addProvisionalMessage(message: string) {
-    this._provisionalMessages.push(message);
-  }
-
-  _takeProvisionalMessagesAndCommit() : string[] {
-    const messages = this._provisionalMessages;
-    this._provisionalMessages = undefined;
-    return messages;
   }
 }
 

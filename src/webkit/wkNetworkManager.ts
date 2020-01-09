@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { WKTargetSession, WKPageProxySession } from './wkConnection';
+import { WKSession, WKPageProxySession } from './wkConnection';
 import { Page } from '../page';
 import { helper, RegisteredListener, assert } from '../helper';
 import { Protocol } from './protocol';
@@ -27,7 +27,7 @@ import * as platform from '../platform';
 export class WKNetworkManager {
   private readonly _page: Page;
   private readonly _pageProxySession: WKPageProxySession;
-  private _session: WKTargetSession;
+  private _session: WKSession;
   private readonly _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
@@ -41,7 +41,7 @@ export class WKNetworkManager {
     await this.authenticate(credentials);
   }
 
-  setSession(session: WKTargetSession) {
+  setSession(session: WKSession) {
     helper.removeEventListeners(this._sessionListeners);
     this._session = session;
     this._sessionListeners = [
@@ -53,7 +53,7 @@ export class WKNetworkManager {
     ];
   }
 
-  async initializeSession(session: WKTargetSession, interceptNetwork: boolean | null, offlineMode: boolean | null) {
+  async initializeSession(session: WKSession, interceptNetwork: boolean | null, offlineMode: boolean | null) {
     const promises = [];
     promises.push(session.send('Network.enable'));
     if (interceptNetwork)
@@ -188,14 +188,14 @@ const errorReasons: { [reason: string]: string } = {
 };
 
 class InterceptableRequest implements network.RequestDelegate {
-  private _session: WKTargetSession;
+  private _session: WKSession;
   readonly request: network.Request;
   _requestId: string;
   _documentId: string | undefined;
   _interceptedCallback: () => void;
   private _interceptedPromise: Promise<unknown>;
 
-  constructor(session: WKTargetSession, allowInterception: boolean, frame: frames.Frame | null, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[], documentId: string | undefined) {
+  constructor(session: WKSession, allowInterception: boolean, frame: frames.Frame | null, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[], documentId: string | undefined) {
     this._session = session;
     this._requestId = event.requestId;
     this._documentId = documentId;

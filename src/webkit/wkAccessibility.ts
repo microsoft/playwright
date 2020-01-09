@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import * as accessibility from '../accessibility';
-import { WKTargetSession } from './wkConnection';
+import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
 
-export async function getAccessibilityTree(session: WKTargetSession) {
+export async function getAccessibilityTree(session: WKSession) {
   const {axNode} = await session.send('Page.accessibilitySnapshot');
   return new WKAXNode(axNode);
 }
