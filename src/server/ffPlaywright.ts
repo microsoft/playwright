@@ -16,10 +16,9 @@
  */
 
 import { FFBrowser, FFConnectOptions, createTransport } from '../firefox/ffBrowser';
-import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from './browserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { launchProcess, waitForLine } from './processLauncher';
-import * as Errors from '../errors';
 import * as types from '../types';
 import * as platform from '../platform';
 import { FFConnection } from '../firefox/ffConnection';
@@ -30,6 +29,28 @@ import * as path from 'path';
 import * as util from 'util';
 import { TimeoutError } from '../errors';
 import { assert } from '../helper';
+import { Playwright } from './playwright';
+
+export type SlowMoOptions = {
+  slowMo?: number,
+};
+
+export type FirefoxArgOptions = {
+  headless?: boolean,
+  args?: string[],
+  userDataDir?: string,
+};
+
+export type LaunchOptions = FirefoxArgOptions & SlowMoOptions & {
+  executablePath?: string,
+  ignoreDefaultArgs?: boolean | string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  dumpio?: boolean,
+  env?: {[key: string]: string} | undefined,
+};
 
 export class FFBrowserServer {
   private _process: ChildProcess;
@@ -63,7 +84,7 @@ export class FFBrowserServer {
   }
 }
 
-export class FFPlaywright {
+export class FFPlaywright implements Playwright {
   private _projectRoot: string;
   readonly _revision: string;
 
@@ -72,19 +93,12 @@ export class FFPlaywright {
     this._revision = preferredRevision;
   }
 
-  async downloadBrowser(options?: BrowserFetcherOptions & { onProgress?: OnProgressCallback }): Promise<BrowserFetcherRevisionInfo> {
-    const fetcher = this.createBrowserFetcher(options);
-    const revisionInfo = fetcher.revisionInfo(this._revision);
-    await fetcher.download(this._revision, options ? options.onProgress : undefined);
-    return revisionInfo;
-  }
-
-  async launch(options: any): Promise<FFBrowser> {
+  async launch(options: LaunchOptions): Promise<FFBrowser> {
     const server = await this.launchServer(options);
     return server.connect();
   }
 
-  async launchServer(options: any = {}): Promise<FFBrowserServer> {
+  async launchServer(options: LaunchOptions = {}): Promise<FFBrowserServer> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -170,11 +184,12 @@ export class FFPlaywright {
     return DeviceDescriptors;
   }
 
-  get errors(): any {
-    return Errors;
+  get errors(): { TimeoutError: typeof TimeoutError } {
+    return { TimeoutError };
   }
 
-  defaultArgs(options: any = {}): string[] {
+  // TODO: rename userDataDir to profile?
+  defaultArgs(options: FirefoxArgOptions = {}): string[] {
     const {
       headless = true,
       args = [],
@@ -219,7 +234,7 @@ export class FFPlaywright {
     };
     assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
 
-    return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+    return new BrowserFetcher(options.path, options.platform, this._revision, (platform: string, revision: string) => {
       let executablePath = '';
       if (platform === 'linux')
         executablePath = path.join('firefox', 'firefox');
@@ -236,7 +251,7 @@ export class FFPlaywright {
 
   _resolveExecutablePath() {
     const browserFetcher = this.createBrowserFetcher();
-    const revisionInfo = browserFetcher.revisionInfo(this._revision);
+    const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };
   }

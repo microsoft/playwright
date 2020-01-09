@@ -221,7 +221,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   }
 }
 
-export class Target {
+class Target {
   _pagePromise?: Promise<Page>;
   _ffPage: FFPage | null = null;
   private readonly _browser: FFBrowser;

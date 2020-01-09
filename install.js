@@ -16,7 +16,7 @@
  */
 
  // This file is only run when someone clones the github repo for development
- 
+
 try {
   require('child_process').execSync('npm run build', {
     stdio: 'ignore'
@@ -73,14 +73,16 @@ async function downloadBrowser(browser, playwright) {
     progressBar.tick(delta);
   }
 
-  const revisionInfo = await playwright.downloadBrowser({onProgress});
+  const fetcher = playwright.createBrowserFetcher();
+  const revisionInfo = fetcher.revisionInfo();
   // Do nothing if the revision is already downloaded.
   if (revisionInfo.local)
     return revisionInfo;
+  await fetcher.download(revisionInfo.revision, onProgress);
   logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
   const browserFetcher = playwright.createBrowserFetcher();
   const localRevisions = await browserFetcher.localRevisions();
-  // Remove previous chromium revisions.
+  // Remove previous revisions.
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => browserFetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);
   return revisionInfo;

@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback, BrowserFetcherRevisionInfo } from './browserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
-import * as Errors from '../errors';
+import { TimeoutError } from '../errors';
 import * as types from '../types';
 import { WKBrowser, createTransport } from '../webkit/wkBrowser';
 import { WKConnectOptions } from '../webkit/wkBrowser';
@@ -29,9 +29,10 @@ import * as util from 'util';
 import * as os from 'os';
 import { assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
+import { Playwright } from './playwright';
 
 export type LaunchOptions = {
-  ignoreDefaultArgs?: boolean,
+  ignoreDefaultArgs?: boolean | string[],
   args?: string[],
   executablePath?: string,
   handleSIGINT?: boolean,
@@ -72,20 +73,13 @@ export class WKBrowserServer {
   }
 }
 
-export class WKPlaywright {
+export class WKPlaywright implements Playwright {
   private _projectRoot: string;
   readonly _revision: string;
 
   constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
     this._revision = preferredRevision;
-  }
-
-  async downloadBrowser(options?: BrowserFetcherOptions & { onProgress?: OnProgressCallback }): Promise<BrowserFetcherRevisionInfo> {
-    const fetcher = this.createBrowserFetcher(options);
-    const revisionInfo = fetcher.revisionInfo(this._revision);
-    await fetcher.download(this._revision, options ? options.onProgress : undefined);
-    return revisionInfo;
   }
 
   async launch(options?: LaunchOptions): Promise<WKBrowser> {
@@ -109,6 +103,8 @@ export class WKPlaywright {
     const webkitArguments = [];
     if (!ignoreDefaultArgs)
       webkitArguments.push(...this.defaultArgs(options));
+    else if (Array.isArray(ignoreDefaultArgs))
+      webkitArguments.push(...this.defaultArgs(options).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
       webkitArguments.push(...args);
 
@@ -158,11 +154,11 @@ export class WKPlaywright {
     return DeviceDescriptors;
   }
 
-  get errors(): any {
-    return Errors;
+  get errors(): { TimeoutError: typeof TimeoutError } {
+    return { TimeoutError };
   }
 
-  defaultArgs(options: any = {}): string[] {
+  defaultArgs(options: { args?: string[] } = {}): string[] {
     const {
       args = [],
     } = options;
@@ -197,7 +193,7 @@ export class WKPlaywright {
     };
     assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
 
-    return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+    return new BrowserFetcher(options.path, options.platform, this._revision, (platform: string, revision: string) => {
       return {
         downloadUrl: (platform === 'mac') ?
           util.format(downloadURLs[platform], options.host, revision, getMacVersion()) :
@@ -209,7 +205,7 @@ export class WKPlaywright {
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
     const browserFetcher = this.createBrowserFetcher();
-    const revisionInfo = browserFetcher.revisionInfo(this._revision);
+    const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };
   }

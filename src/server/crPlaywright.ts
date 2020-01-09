@@ -19,9 +19,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserFetcher, BrowserFetcherOptions, BrowserFetcherRevisionInfo, OnProgressCallback } from '../server/browserFetcher';
+import { BrowserFetcher, BrowserFetcherOptions } from '../server/browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
-import * as Errors from '../errors';
 import * as types from '../types';
 import { assert } from '../helper';
 import { CRBrowser, CRConnectOptions, createTransport } from '../chromium/crBrowser';
@@ -31,6 +30,7 @@ import { launchProcess, waitForLine } from '../server/processLauncher';
 import { ChildProcess } from 'child_process';
 import { CRConnection } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
+import { Playwright } from './playwright';
 
 export type SlowMoOptions = {
   slowMo?: number,
@@ -45,7 +45,7 @@ export type ChromeArgOptions = {
 
 export type LaunchOptions = ChromeArgOptions & SlowMoOptions & {
   executablePath?: string,
-  ignoreDefaultArgs?: boolean|string[],
+  ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -87,20 +87,13 @@ export class CRBrowserServer {
   }
 }
 
-export class CRPlaywright {
+export class CRPlaywright implements Playwright {
   private _projectRoot: string;
   readonly _revision: string;
 
   constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
     this._revision = preferredRevision;
-  }
-
-  async downloadBrowser(options?: BrowserFetcherOptions & { onProgress?: OnProgressCallback }): Promise<BrowserFetcherRevisionInfo> {
-    const fetcher = this.createBrowserFetcher(options);
-    const revisionInfo = fetcher.revisionInfo(this._revision);
-    await fetcher.download(this._revision, options ? options.onProgress : undefined);
-    return revisionInfo;
   }
 
   async launch(options?: LaunchOptions): Promise<CRBrowser> {
@@ -198,8 +191,8 @@ export class CRPlaywright {
     return DeviceDescriptors;
   }
 
-  get errors(): any {
-    return Errors;
+  get errors(): { TimeoutError: typeof TimeoutError } {
+    return { TimeoutError };
   }
 
   defaultArgs(options: ChromeArgOptions = {}): string[] {
@@ -255,7 +248,7 @@ export class CRPlaywright {
     };
     assert(!!(downloadURLs as any)[options.platform], 'Unsupported platform: ' + options.platform);
 
-    return new BrowserFetcher(options.path, options.platform, (platform: string, revision: string) => {
+    return new BrowserFetcher(options.path, options.platform, this._revision, (platform: string, revision: string) => {
       let archiveName = '';
       let executablePath = '';
       if (platform === 'linux') {
@@ -278,7 +271,7 @@ export class CRPlaywright {
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
     const browserFetcher = this.createBrowserFetcher();
-    const revisionInfo = browserFetcher.revisionInfo(this._revision);
+    const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `Chromium revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };
   }
