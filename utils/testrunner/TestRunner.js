@@ -260,7 +260,7 @@ class TestPass {
       test.result = TestResult.Crashed;
     this._runner._didFinishTest(test, workerId);
     if (this._breakOnFailure && test.result !== TestResult.Ok)
-      this._terminate(TestResult.Terminated, `Terminating because a test has failed and |testRunner.breakOnFailure| is enabled`, null);
+      await this._terminate(TestResult.Terminated, `Terminating because a test has failed and |testRunner.breakOnFailure| is enabled`, null);
   }
 
   async _runHook(workerId, suite, hookName, ...args) {
@@ -273,19 +273,21 @@ class TestPass {
     if (error === TimeoutError) {
       const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       const message = `${location} - Timeout Exceeded ${hook.timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
-      return this._terminate(TestResult.Crashed, message, null);
+      return await this._terminate(TestResult.Crashed, message, null);
     }
     if (error) {
       const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       const message = `${location} - FAILED while running "${hookName}" in suite "${suite.fullName}"`;
-      return this._terminate(TestResult.Crashed, message, error);
+      return await this._terminate(TestResult.Crashed, message, error);
     }
     return false;
   }
 
-  _terminate(result, message, error) {
+  async _terminate(result, message, error) {
     if (this._termination)
       return false;
+    if (error && error.stack)
+      await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
     this._termination = {result, message, error};
     for (const userCallback of this._runningUserCallbacks.valuesArray())
       userCallback.terminate();
@@ -408,10 +410,10 @@ class TestRunner extends EventEmitter {
     return result;
   }
 
-  terminate() {
+  async terminate() {
     if (!this._runningPass)
       return;
-    this._runningPass._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', null);
+    await this._runningPass._terminate(TestResult.Terminated, 'Terminated with |TestRunner.terminate()| call', null);
   }
 
   timeout() {
