@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-import { assert, helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
-import { rewriteError, WKSession, WKTargetSession } from './wkConnection';
+import { WKSession, WKTargetSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
 
 export class WKWorkers {
   private _sessionListeners: RegisteredListener[] = [];
   private _page: Page;
+  private _workerSessions = new Map<string, WKSession>();
 
   constructor(page: Page) {
     this._page = page;
@@ -30,10 +31,20 @@ export class WKWorkers {
 
   setSession(session: WKTargetSession) {
     helper.removeEventListeners(this._sessionListeners);
+    this._page._clearWorkers();
+    this._workerSessions.clear();
     this._sessionListeners = [
       helper.addEventListener(session, 'Worker.workerCreated', async (event: Protocol.Worker.workerCreatedPayload) => {
         const worker = new Worker(event.url);
-        const workerSession = new WKWorkerSession(session, event.workerId);
+        const workerSession = new WKSession(session.connection, event.workerId, 'Most likely the worker has been closed.', (message: any) => {
+          session.send('Worker.sendMessageToWorker', {
+            workerId: event.workerId,
+            message: JSON.stringify(message)
+          }).catch(e => {
+            workerSession.dispatchMessage({ id: message.id, error: { message: e.message } });
+          });
+        });
+        this._workerSessions.set(event.workerId, workerSession);
         worker._createExecutionContext(new WKExecutionContext(workerSession, undefined));
         this._page._addWorker(event.workerId, worker);
         workerSession.on('Console.messageAdded', event => this._onConsoleMessage(worker, event));
@@ -49,7 +60,14 @@ export class WKWorkers {
           // Worker can go as we are initializing it.
         }
       }),
+      helper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
+        const workerSession = this._workerSessions.get(event.workerId);
+        workerSession.dispatchMessage(JSON.parse(event.message));
+      }),
       helper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
+        const workerSession = this._workerSessions.get(event.workerId);
+        workerSession.dispose();
+        this._workerSessions.delete(event.workerId);
         this._page._removeWorker(event.workerId);
       })
     ];
@@ -71,61 +89,5 @@ export class WKWorkers {
       return worker._existingExecutionContext._createHandle(p);
     });
     this._page._addConsoleMessage(derivedType, handles, { url, lineNumber: lineNumber - 1, columnNumber: columnNumber - 1 }, handles.length ? undefined : text);
-  }
-}
-
-export class WKWorkerSession extends WKSession {
-  private _targetSession: WKTargetSession | null;
-  private _workerId: string;
-  private _lastId = 1001;
-
-  constructor(targetSession: WKTargetSession, workerId: string) {
-    super();
-    this._targetSession = targetSession;
-    this._workerId = workerId;
-    this._targetSession.on('Worker.dispatchMessageFromWorker', event => {
-      if (event.workerId === workerId)
-        this._dispatchMessage(event.message);
-    });
-    this._targetSession.on('Worker.workerTerminated', event => {
-      if (event.workerId === workerId)
-        this._workerTerminated();
-    });
-  }
-
-  send<T extends keyof Protocol.CommandParameters>(
-    method: T,
-    params?: Protocol.CommandParameters[T]
-  ): Promise<Protocol.CommandReturnValues[T]> {
-    if (!this._targetSession)
-      return Promise.reject(new Error(`Protocol error (${method}):  Most likely the worker has been closed.`));
-    const innerId = ++this._lastId;
-    const messageObj = {
-      id: innerId,
-      method,
-      params
-    };
-    const message = JSON.stringify(messageObj);
-    const result = new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
-      this._callbacks.set(innerId, {resolve, reject, error: new Error(), method});
-    });
-    this._targetSession.send('Worker.sendMessageToWorker', {
-      workerId: this._workerId,
-      message: message
-    }).catch(e => {
-      // There is a possible race of the connection closure. We may have received
-      // targetDestroyed notification before response for the command, in that
-      // case it's safe to swallow the exception.
-      const callback = this._callbacks.get(innerId);
-      assert(!callback, 'Callback was not rejected when worker was terminated.');
-    });
-    return result;
-  }
-
-  _workerTerminated() {
-    for (const callback of this._callbacks.values())
-      callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Worker terminated.`));
-    this._callbacks.clear();
-    this._targetSession = null;
   }
 }

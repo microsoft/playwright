@@ -19,7 +19,7 @@ import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
-import { WKTargetSession, WKTargetSessionEvents, WKPageProxySession } from './wkConnection';
+import { WKTargetSession, WKSessionEvents, WKPageProxySession } from './wkConnection';
 import { Events } from '../events';
 import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
 import { WKNetworkManager } from './wkNetworkManager';
@@ -82,7 +82,6 @@ export class WKPage implements PageDelegate {
     this._addSessionListeners();
     this._networkManager.setSession(session);
     this._workers.setSession(session);
-    this._page._clearWorkers();
     this._isolatedWorlds = new Set();
     // New bootstrap scripts may have been added during provisional load, push them
     // again to be on the safe side.
@@ -116,7 +115,7 @@ export class WKPage implements PageDelegate {
     if (this._page._state.extraHTTPHeaders !== null)
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
     await Promise.all(promises).catch(e => {
-      if (session.isClosed())
+      if (session.isDisposed())
         return;
       // Swallow initialization errors due to newer target swap in,
       // since we will reinitialize again.
@@ -148,7 +147,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       helper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
-      helper.addEventListener(this._session, WKTargetSessionEvents.Disconnected, event => this._page._didDisconnect()),
+      helper.addEventListener(this._session, WKSessionEvents.Disconnected, event => this._page._didDisconnect()),
     ];
   }
 
@@ -192,7 +191,7 @@ export class WKPage implements PageDelegate {
       }
     }
     // Append session id to avoid cross-process loaderId clash.
-    const documentId = this._session._sessionId + '::' + framePayload.loaderId;
+    const documentId = this._session.sessionId + '::' + framePayload.loaderId;
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', documentId, initial);
   }
 
@@ -377,8 +376,8 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    this._session._pageProxySession.send('Target.close', {
-      targetId: this._session._sessionId,
+    this._pageProxySession.send('Target.close', {
+      targetId: this._session.sessionId,
       runBeforeUnload
     }).catch(debugError);
   }
