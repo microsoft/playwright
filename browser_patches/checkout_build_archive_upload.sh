@@ -68,7 +68,7 @@ fi
 cd -
 
 source ./buildbots/send_telegram_message.sh
-LAST_COMMIT_MESSAGE=$(git log --format=%B -n 1 HEAD)
+LAST_COMMIT_MESSAGE=$(git log --format=%B -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
 BUILD_ALIAS="<b>[[$(./upload.sh $BROWSER_NAME --show-alias $FFOX_WIN64)]]</b> $LAST_COMMIT_MESSAGE"
 send_telegram_message "$BUILD_ALIAS -- started ⏳"
 
