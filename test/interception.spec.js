@@ -513,7 +513,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.status()).toBe(401);
     });
   });
-  
+
   describe.skip(FFOX)('Interception.setOfflineMode', function() {
     it('should work', async({page, server}) => {
       await page.setOfflineMode(true);

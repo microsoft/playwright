@@ -5,7 +5,7 @@
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
-import { WKPageProxySession, WKSession } from './wkConnection';
+import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
 import { RegisteredListener, helper, assert, debugError } from '../helper';
 import { Events } from '../events';
@@ -16,7 +16,7 @@ import { Events } from '../events';
 const provisionalMessagesSymbol = Symbol('provisionalMessages');
 
 export class WKPageProxy {
-  private readonly _pageProxySession: WKPageProxySession;
+  private readonly _pageProxySession: WKSession;
   readonly _browserContext: BrowserContext;
   private _pagePromise: Promise<Page> | null = null;
   private _wkPage: WKPage | null = null;
@@ -25,8 +25,8 @@ export class WKPageProxy {
   private readonly _sessions = new Map<string, WKSession>();
   private readonly _eventListeners: RegisteredListener[];
 
-  constructor(session: WKPageProxySession, browserContext: BrowserContext) {
-    this._pageProxySession = session;
+  constructor(pageProxySession: WKSession, browserContext: BrowserContext) {
+    this._pageProxySession = pageProxySession;
     this._browserContext = browserContext;
     this._firstTargetPromise = new Promise(r => this._firstTargetCallback = r);
     this._eventListeners = [
@@ -38,18 +38,30 @@ export class WKPageProxy {
 
     // Intercept provisional targets during cross-process navigation.
     this._pageProxySession.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
-      if (this._pageProxySession.isClosed())
+      if (this._pageProxySession.isDisposed())
         return;
       debugError(e);
       throw e;
     });
   }
 
+  didClose() {
+    if (this._wkPage)
+      this._wkPage.didClose(false);
+  }
+
   dispose() {
+    this._pageProxySession.dispose();
     helper.removeEventListeners(this._eventListeners);
     for (const session of this._sessions.values())
       session.dispose();
     this._sessions.clear();
+    if (this._wkPage)
+      this._wkPage.didDisconnect();
+  }
+
+  dispatchMessageToSession(message: any) {
+    this._pageProxySession.dispatchMessage(message);
   }
 
   async page(): Promise<Page> {
@@ -87,7 +99,7 @@ export class WKPageProxy {
 
   private _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
     const { targetInfo } = event;
-    const session = new WKSession(this._pageProxySession._connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, (message: any) => {
+    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, (message: any) => {
       this._pageProxySession.send('Target.sendMessageToTarget', {
         message: JSON.stringify(message), targetId: targetInfo.targetId
       }).catch(e => {
@@ -114,9 +126,7 @@ export class WKPageProxy {
     if (session)
       session.dispose();
     this._sessions.delete(targetId);
-    if (!this._wkPage)
-      return;
-    if (this._wkPage._session === session)
+    if (this._wkPage && this._wkPage._session === session && crashed)
       this._wkPage.didClose(crashed);
   }
 

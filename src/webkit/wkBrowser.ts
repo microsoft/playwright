@@ -24,7 +24,7 @@ import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { Events } from '../events';
 import { Protocol } from './protocol';
-import { WKConnection, WKConnectionEvents, WKPageProxySession } from './wkConnection';
+import { WKConnection, WKSession, kPageProxyMessageReceived, PageProxyMessageReceivedPayload } from './wkConnection';
 import { WKPageProxy } from './wkPageProxy';
 import * as platform from '../platform';
 
@@ -34,7 +34,8 @@ export type WKConnectOptions = {
 };
 
 export class WKBrowser extends platform.EventEmitter implements Browser {
-  readonly _connection: WKConnection;
+  private readonly _connection: WKConnection;
+  private readonly _browserSession: WKSession;
   private readonly _defaultContext: BrowserContext;
   private readonly _contexts = new Map<string, BrowserContext>();
   private readonly _pageProxies = new Map<string, WKPageProxy>();
@@ -53,24 +54,32 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   constructor(transport: ConnectionTransport) {
     super();
-    this._connection = new WKConnection(transport);
-    this._connection.on(WKConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
+    this._connection = new WKConnection(transport, this._onDisconnect.bind(this));
+    this._browserSession = this._connection.browserSession;
 
     this._defaultContext = this._createBrowserContext(undefined, {});
 
     this._eventListeners = [
-      helper.addEventListener(this._connection, WKConnectionEvents.PageProxyCreated, this._onPageProxyCreated.bind(this)),
-      helper.addEventListener(this._connection, WKConnectionEvents.PageProxyDestroyed, this._onPageProxyDestroyed.bind(this))
+      helper.addEventListener(this._browserSession, 'Browser.pageProxyCreated', this._onPageProxyCreated.bind(this)),
+      helper.addEventListener(this._browserSession, 'Browser.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
+      helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
 
     this._firstPageProxyPromise = new Promise<void>(resolve => this._firstPageProxyCallback = resolve);
   }
 
+  _onDisconnect() {
+    for (const pageProxy of this._pageProxies.values())
+      pageProxy.dispose();
+    this._pageProxies.clear();
+    this.emit(Events.Browser.Disconnected);
+  }
+
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    const { browserContextId } = await this._connection.send('Browser.createContext');
+    const { browserContextId } = await this._browserSession.send('Browser.createContext');
     const context = this._createBrowserContext(browserContextId, options);
     if (options.ignoreHTTPSErrors)
-      await this._connection.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
+      await this._browserSession.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -88,7 +97,9 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     await helper.waitWithTimeout(this._firstPageProxyPromise, 'firstPageProxy', timeout);
   }
 
-  _onPageProxyCreated(session: WKPageProxySession, pageProxyInfo: Protocol.Browser.PageProxyInfo) {
+  _onPageProxyCreated(event: Protocol.Browser.pageProxyCreatedPayload) {
+    const { pageProxyInfo } = event;
+    const pageProxyId = pageProxyInfo.pageProxyId;
     let context = null;
     if (pageProxyInfo.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
@@ -99,8 +110,11 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     }
     if (!context)
       context =  this._defaultContext;
-    const pageProxy = new WKPageProxy(session, context);
-    this._pageProxies.set(pageProxyInfo.pageProxyId, pageProxy);
+    const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {
+      this._connection.rawSend({ ...message, pageProxyId });
+    });
+    const pageProxy = new WKPageProxy(pageProxySession, context);
+    this._pageProxies.set(pageProxyId, pageProxy);
 
     if (pageProxyInfo.openerId) {
       const opener = this._pageProxies.get(pageProxyInfo.openerId);
@@ -114,10 +128,17 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     }
   }
 
-  _onPageProxyDestroyed(pageProxyId: Protocol.Browser.PageProxyID) {
+  _onPageProxyDestroyed(event: Protocol.Browser.pageProxyDestroyedPayload) {
+    const pageProxyId = event.pageProxyId;
     const pageProxy = this._pageProxies.get(pageProxyId);
+    pageProxy.didClose();
     pageProxy.dispose();
     this._pageProxies.delete(pageProxyId);
+  }
+
+  _onPageProxyMessageReceived(event: PageProxyMessageReceivedPayload) {
+    const pageProxy = this._pageProxies.get(event.pageProxyId);
+    pageProxy.dispatchMessageToSession(event.message);
   }
 
   disconnect() {
@@ -130,8 +151,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   async close() {
     helper.removeEventListeners(this._eventListeners);
-    const disconnected = new Promise(f => this._connection.once(WKConnectionEvents.Disconnected, f));
-    await this._connection.send('Browser.close');
+    const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
+    await this._browserSession.send('Browser.close');
     await disconnected;
   }
 
@@ -143,19 +164,19 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       },
 
       newPage: async (): Promise<Page> => {
-        const { pageProxyId } = await this._connection.send('Browser.createPage', { browserContextId });
+        const { pageProxyId } = await this._browserSession.send('Browser.createPage', { browserContextId });
         const pageProxy = this._pageProxies.get(pageProxyId);
         return await pageProxy.page();
       },
 
       close: async (): Promise<void> => {
         assert(browserContextId, 'Non-incognito profiles cannot be closed!');
-        await this._connection.send('Browser.deleteContext', { browserContextId });
+        await this._browserSession.send('Browser.deleteContext', { browserContextId });
         this._contexts.delete(browserContextId);
       },
 
       cookies: async (): Promise<network.NetworkCookie[]> => {
-        const { cookies } = await this._connection.send('Browser.getAllCookies', { browserContextId });
+        const { cookies } = await this._browserSession.send('Browser.getAllCookies', { browserContextId });
         return cookies.map((c: network.NetworkCookie) => ({
           ...c,
           expires: c.expires === 0 ? -1 : c.expires
@@ -163,14 +184,13 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       },
 
       clearCookies: async (): Promise<void> => {
-        await this._connection.send('Browser.deleteAllCookies', { browserContextId });
+        await this._browserSession.send('Browser.deleteAllCookies', { browserContextId });
       },
 
       setCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
         const cc = cookies.map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
-        await this._connection.send('Browser.setCookies', { cookies: cc, browserContextId });
+        await this._browserSession.send('Browser.setCookies', { cookies: cc, browserContextId });
       },
-
 
       setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
         const webPermissionToProtocol = new Map<string, string>([
@@ -182,16 +202,16 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
             throw new Error('Unknown permission: ' + permission);
           return protocolPermission;
         });
-        await this._connection.send('Browser.grantPermissions', { origin, browserContextId, permissions: filtered });
+        await this._browserSession.send('Browser.grantPermissions', { origin, browserContextId, permissions: filtered });
       },
 
       clearPermissions: async () => {
-        await this._connection.send('Browser.resetPermissions', { browserContextId });
+        await this._browserSession.send('Browser.resetPermissions', { browserContextId });
       },
 
       setGeolocation: async (geolocation: types.Geolocation | null): Promise<void> => {
         const payload: any = geolocation ? { ...geolocation, timestamp: Date.now() } : undefined;
-        await this._connection.send('Browser.setGeolocationOverride', { browserContextId, geolocation: payload });
+        await this._browserSession.send('Browser.setGeolocationOverride', { browserContextId, geolocation: payload });
       }
     }, options);
     return context;
