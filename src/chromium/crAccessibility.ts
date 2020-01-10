@@ -20,9 +20,13 @@ import { Protocol } from './protocol';
 import * as dom from '../dom';
 import * as accessibility from '../accessibility';
 
-export async function getAccessibilityTree(client: CRSession) : Promise<accessibility.AXNode> {
+export async function getAccessibilityTree(client: CRSession, needle?: dom.ElementHandle) : Promise<{tree: accessibility.AXNode, needle?: accessibility.AXNode}> {
   const {nodes} = await client.send('Accessibility.getFullAXTree');
-  return CRAXNode.createTree(client, nodes);
+  const tree = CRAXNode.createTree(client, nodes);
+  return {
+    tree,
+    needle: needle && await tree._findElement(needle)
+  };
 }
 
 class CRAXNode implements accessibility.AXNode {
@@ -90,7 +94,7 @@ class CRAXNode implements accessibility.AXNode {
     return this._children;
   }
 
-  async findElement(element: dom.ElementHandle): Promise<CRAXNode | null> {
+  async _findElement(element: dom.ElementHandle): Promise<CRAXNode | null> {
     const remoteObject = element._remoteObject as Protocol.Runtime.RemoteObject;
     const {node: {backendNodeId}} = await this._client.send('DOM.describeNode', {objectId: remoteObject.objectId});
     const needle = this.find(node => node._payload.backendDOMNodeId === backendNodeId);

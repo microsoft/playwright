@@ -363,8 +363,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         expect(snapshot.children[0]).toEqual(golden);
       });
 
-      describe.skip(FFOX || WEBKIT)('root option', function() {
-        it('should work a button', async({page}) => {
+      describe('root option', function() {
+        fit('should work a button', async({page}) => {
           await page.setContent(`<button>My Button</button>`);
 
           const button = await page.$('button');

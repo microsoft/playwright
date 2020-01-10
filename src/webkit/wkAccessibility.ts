@@ -16,10 +16,16 @@
 import * as accessibility from '../accessibility';
 import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
+import * as dom from '../dom';
 
-export async function getAccessibilityTree(session: WKSession) {
-  const {axNode} = await session.send('Page.accessibilitySnapshot');
-  return new WKAXNode(axNode);
+export async function getAccessibilityTree(session: WKSession, needle?: dom.ElementHandle) {
+  const objectId = needle ? needle._remoteObject.objectId : undefined;
+  const {axNode} = await session.send('Page.accessibilitySnapshot', { objectId });
+  const tree = new WKAXNode(axNode);
+  return {
+    tree,
+    needle: needle && tree._findNeedle()
+  };
 }
 
 class WKAXNode implements accessibility.AXNode {
@@ -38,7 +44,14 @@ class WKAXNode implements accessibility.AXNode {
       return this._children;
     }
 
-    async findElement() {
+    _findNeedle() : WKAXNode {
+      if (this._payload.found)
+        return this;
+      for (const child of this._children) {
+        const found = child._findNeedle()
+        if (found)
+          return found;
+      }
       return null;
     }
 

@@ -18,15 +18,21 @@
 import * as accessibility from '../accessibility';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
+import * as dom from '../dom';
 
-export async function getAccessibilityTree(session: FFSession) : Promise<accessibility.AXNode> {
-  const { tree } = await session.send('Accessibility.getFullAXTree');
-  return new FFAXNode(tree);
+export async function getAccessibilityTree(session: FFSession, needle: dom.ElementHandle) : Promise<{tree: accessibility.AXNode, needle?: accessibility.AXNode}> {
+  const objectId = needle ? needle._remoteObject.objectId : undefined;
+  const { tree } = await session.send('Accessibility.getFullAXTree', { objectId });
+  const axNode = new FFAXNode(tree);
+  return {
+    tree: axNode,
+    needle: needle && axNode._findNeedle()
+  };
 }
 
 class FFAXNode implements accessibility.AXNode {
   _children: FFAXNode[];
-  private _payload: any;
+  private _payload: Protocol.AXTree;
   private _editable: boolean;
   private _richlyEditable: boolean;
   private _focusable: boolean;
@@ -77,8 +83,15 @@ class FFAXNode implements accessibility.AXNode {
     return this._children;
   }
 
-  async findElement(): Promise<FFAXNode | null> {
-    throw new Error('Not implimented');
+  _findNeedle(): FFAXNode | null {
+    if (this._payload.foundObject)
+      return this;
+    for (const child of this._children) {
+      const found = child._findNeedle();
+      if (found)
+        return found;
+    }
+    return null;
   }
 
   isLeafNode(): boolean {
