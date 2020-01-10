@@ -195,9 +195,7 @@ export class WKPage implements PageDelegate {
         frame._contextDestroyed(context);
       }
     }
-    // Append session id to avoid cross-process loaderId clash.
-    const documentId = this._session.sessionId + '::' + framePayload.loaderId;
-    this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', documentId, initial);
+    this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {

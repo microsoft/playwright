@@ -95,7 +95,7 @@ export class WKNetworkManager {
     const frame = this._page._frameManager.frame(event.frameId);
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
-    const documentId = isNavigationRequest ? this._session.sessionId + '::' + event.loaderId : undefined;
+    const documentId = isNavigationRequest ? event.loaderId : undefined;
     const request = new InterceptableRequest(this._session, this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
