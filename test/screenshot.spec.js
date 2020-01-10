@@ -153,7 +153,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       });
       expect(Buffer.from(screenshot, 'base64')).toBeGolden('screenshot-sanity.png');
     });
-    it.skip(WEBKIT || FFOX)('should work with a mobile viewport', async({page, server}) => {
+    it.skip(FFOX)('should work with a mobile viewport', async({page, server}) => {
       await page.setViewport({
         width: 320,
         height: 480,
@@ -162,6 +162,24 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-mobile.png');
+    });
+    it('should work for canvas', async({page, server}) => {
+      await page.setViewport({width: 500, height: 500});
+      await page.goto(server.PREFIX + '/screenshots/canvas.html');
+      const screenshot = await page.screenshot();
+      expect(screenshot).toBeGolden('screenshot-canvas.png');
+    });
+    it('should work for translateZ', async({page, server}) => {
+      await page.setViewport({width: 500, height: 500});
+      await page.goto(server.PREFIX + '/screenshots/translateZ.html');
+      const screenshot = await page.screenshot();
+      expect(screenshot).toBeGolden('screenshot-translateZ.png');
+    });
+    it.skip(FFOX || WEBKIT)('should work for webgl', async({page, server}) => {
+      await page.setViewport({width: 640, height: 480});
+      await page.goto(server.PREFIX + '/screenshots/webgl.html');
+      const screenshot = await page.screenshot();
+      expect(screenshot).toBeGolden('screenshot-webgl.png');
     });
   });
 
@@ -305,24 +323,6 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       const elementHandle = await page.$('div');
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-fractional-offset.png');
-    });
-    it('should work for canvas', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
-      await page.goto(server.PREFIX + '/screenshots/canvas.html');
-      const screenshot = await page.screenshot();
-      expect(screenshot).toBeGolden('screenshot-canvas.png');
-    });
-    it('should work for translateZ', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
-      await page.goto(server.PREFIX + '/screenshots/translateZ.html');
-      const screenshot = await page.screenshot();
-      expect(screenshot).toBeGolden('screenshot-translateZ.png');
-    });
-    it.skip(FFOX || WEBKIT)('should work for webgl', async({page, server}) => {
-      await page.setViewport({width: 640, height: 480});
-      await page.goto(server.PREFIX + '/screenshots/webgl.html');
-      const screenshot = await page.screenshot();
-      expect(screenshot).toBeGolden('screenshot-webgl.png');
     });
   });
 
