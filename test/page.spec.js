@@ -243,7 +243,10 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
         page.evaluate(async url => fetch(url).catch(e => {}), server.EMPTY_PAGE)
       ]);
       expect(message.text()).toContain('Access-Control-Allow-Origin');
-      expect(message.type()).toEqual('error');
+      if (CHROME || WEBKIT)
+        expect(message.type()).toEqual('error');
+      else
+        expect(message.type()).toEqual('warn');
     });
     it('should have location for console API calls', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);

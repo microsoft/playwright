@@ -439,8 +439,6 @@ const DEFAULT_PREFERENCES = {
   // Ensure blocklist updates do not hit the network
   'services.settings.server': `http://${DUMMY_UMA_SERVER}/dummy/blocklist/`,
 
-  'browser.tabs.documentchannel': false,
-
   // Do not automatically fill sign-in forms with known usernames and
   // passwords
   'signon.autofillForms': false,
