@@ -181,6 +181,18 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-webgl.png');
     });
+    it('should work while navigating', async({page, server}) => {
+      await page.setViewport({width: 500, height: 500});
+      await page.goto(server.PREFIX + '/redirectloop1.html');
+      for (let i = 0; i < 10; i++) {
+        const screenshot = await page.screenshot({ fullPage: true }).catch(e => {
+          if (e.message.includes('Cannot take a screenshot while page is navigating'))
+            return Buffer.from('');
+          throw e;
+        });
+        expect(screenshot).toBeInstanceOf(Buffer);
+      }
+    });
   });
 
   describe('ElementHandle.screenshot', function() {

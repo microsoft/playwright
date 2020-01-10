@@ -1,0 +1,9 @@
+<script>
+  setTimeout(() => {
+    const iter = window.localStorage.iter || '';
+    window.localStorage.iter = iter + 'a';
+    if (iter.length === 10)
+      return;
+    window.location.href = window.location.href.replace('loop1', 'loop2');
+  }, 1);
+</script>>

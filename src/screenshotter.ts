@@ -43,24 +43,36 @@ export class Screenshotter {
       const viewport = this._page.viewport();
       let viewportSize: types.Size | undefined;
       if (!viewport) {
-        viewportSize = await this._page.evaluate(() => ({
-          width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
-          height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight)
-        }));
+        viewportSize = await this._page.evaluate(() => {
+          if (!document.body || !document.documentElement)
+            return null;
+          return {
+            width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
+            height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
+          };
+        });
+        if (!viewportSize)
+          throw new Error(kScreenshotDuringNavigationError);
       }
       if (options.fullPage && !this._page._delegate.canScreenshotOutsideViewport()) {
-        const fullPageRect = await this._page.evaluate(() => ({
-          width: Math.max(
-              document.body.scrollWidth, document.documentElement.scrollWidth,
-              document.body.offsetWidth, document.documentElement.offsetWidth,
-              document.body.clientWidth, document.documentElement.clientWidth
-          ),
-          height: Math.max(
-              document.body.scrollHeight, document.documentElement.scrollHeight,
-              document.body.offsetHeight, document.documentElement.offsetHeight,
-              document.body.clientHeight, document.documentElement.clientHeight
-          )
-        }));
+        const fullPageRect = await this._page.evaluate(() => {
+          if (!document.body || !document.documentElement)
+            return null;
+          return {
+            width: Math.max(
+                document.body.scrollWidth, document.documentElement.scrollWidth,
+                document.body.offsetWidth, document.documentElement.offsetWidth,
+                document.body.clientWidth, document.documentElement.clientWidth
+            ),
+            height: Math.max(
+                document.body.scrollHeight, document.documentElement.scrollHeight,
+                document.body.offsetHeight, document.documentElement.offsetHeight,
+                document.body.clientHeight, document.documentElement.clientHeight
+            ),
+          };
+        });
+        if (!fullPageRect)
+          throw new Error(kScreenshotDuringNavigationError);
         overridenViewport = viewport ? { ...viewport, ...fullPageRect } : fullPageRect;
         await this._page.setViewport(overridenViewport);
       } else if (options.clip) {
@@ -76,7 +88,7 @@ export class Screenshotter {
           await this._page._delegate.resetViewport(viewportSize);
       }
       return result;
-    });
+    }).catch(rewriteError);
   }
 
   async screenshotElement(handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<platform.BufferType> {
@@ -115,7 +127,7 @@ export class Screenshotter {
         await this._page.setViewport(viewport);
 
       return result;
-    });
+    }).catch(rewriteError);
   }
 
   private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType> {
@@ -200,4 +212,11 @@ function enclosingIntRect(rect: types.Rect): types.Rect {
   const x2 = Math.ceil(rect.x + rect.width - 1e-3);
   const y2 = Math.ceil(rect.y + rect.height - 1e-3);
   return { x, y, width: x2 - x, height: y2 - y };
+}
+
+export const kScreenshotDuringNavigationError = 'Cannot take a screenshot while page is navigating';
+function rewriteError(e: any) {
+  if (typeof e === 'object' && e instanceof Error && e.message.includes('Execution context was destroyed'))
+    e.message = kScreenshotDuringNavigationError;
+  throw e;
 }

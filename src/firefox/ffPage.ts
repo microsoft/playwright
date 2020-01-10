@@ -32,6 +32,7 @@ import * as network from '../network';
 import * as types from '../types';
 import * as accessibility from '../accessibility';
 import * as platform from '../platform';
+import { kScreenshotDuringNavigationError } from '../screenshotter';
 
 export class FFPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -278,6 +279,10 @@ export class FFPage implements PageDelegate {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
       fullPage: options.fullPage,
       clip: options.clip,
+    }).catch(e => {
+      if (e instanceof Error && e.message.includes('document.documentElement is null'))
+        e.message = kScreenshotDuringNavigationError;
+      throw e;
     });
     return platform.Buffer.from(data, 'base64');
   }
