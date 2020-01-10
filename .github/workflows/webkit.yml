@@ -31,7 +31,6 @@ jobs:
     - name: npm install, build, and test
       run: |
         npm install
-        cd .local-webkit; cd "$(ls)"; ls -1 | LD_LIBRARY_PATH=$PWD xargs ldd
         npm run build
         DUMPIO=1 xvfb-run --auto-servernum npm run wunit
       env:
