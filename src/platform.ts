@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+// Note: this is the only file outside of src/server which can import external dependencies.
+// All dependencies must be listed in web.webpack.config.js to avoid bundling them.
 import * as nodeEvents from 'events';
 import * as nodeFS from 'fs';
 import * as nodePath from 'path';

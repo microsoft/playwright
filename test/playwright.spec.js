@@ -215,4 +215,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   if (WEBKIT) {
     testRunner.loadTests(require('./webkit/launcher.spec.js'), testOptions);
   }
+
+  testRunner.loadTests(require('./web.spec.js'), testOptions);
 };

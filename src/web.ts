@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
-export * from './lib/api';
-export function playwright(browser: 'chromium'): import('./lib/api').ChromiumPlaywright;
-export function playwright(browser: 'firefox'): import('./lib/api').FirefoxPlaywright;
-export function playwright(browser: 'webkit'): import('./lib/api').WebKitPlaywright;
+import { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';
+import { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
+import { WKBrowser as WebKitBrowser } from './webkit/wkBrowser';
+
+function connect(browser: 'chromium' | 'firefox' | 'webkit') {
+  if (browser === 'chromium')
+    return ChromiumBrowser.connect;
+  if (browser === 'firefox')
+    return FirefoxBrowser.connect;
+  if (browser === 'webkit')
+    return WebKitBrowser.connect;
+  throw new Error(`Unsupported browser "${browser}"`);
+}
+
+export = connect;

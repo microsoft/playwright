@@ -49,7 +49,8 @@ async function run() {
     const page = await browser.defaultContext().newPage();
     const checkPublicAPI = require('./check_public_api');
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
-    messages.push(...await checkPublicAPI(page, mdSources, jsSources));
+    const externalDependencies = Object.keys(require('../../src/web.webpack.config').externals);
+    messages.push(...await checkPublicAPI(page, mdSources, jsSources, externalDependencies));
     await browser.close();
 
     for (const source of mdSources) {

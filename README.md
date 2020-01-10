@@ -24,7 +24,7 @@ Playwright can be used to create a browser instance, open pages, and then manipu
 
 ### Examples
 
-#### Page screenshot 
+#### Page screenshot
 
 This code snippet navigates to example.com in WebKit, and saves a screenshot.
 
@@ -94,3 +94,4 @@ Playwright is actively developed as we get to feature parity across Chromium, Fi
 ## Resources
 
 * [API documentation](https://github.com/microsoft/playwright/blob/master/docs/api.md)
+* [Running in the browser](https://github.com/microsoft/playwright/blob/master/docs/web.md)

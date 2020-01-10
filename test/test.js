@@ -44,7 +44,7 @@ beforeAll(async state => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + state.parallelIndex * 2;
+  const port = 8907 + state.parallelIndex * 3;
   state.server = await TestServer.create(assetsPath, port);
   state.server.enableHTTPCache(cachedPath);
   state.server.PORT = port;
@@ -59,6 +59,11 @@ beforeAll(async state => {
   state.httpsServer.PREFIX = `https://localhost:${httpsPort}`;
   state.httpsServer.CROSS_PROCESS_PREFIX = `https://127.0.0.1:${httpsPort}`;
   state.httpsServer.EMPTY_PAGE = `https://localhost:${httpsPort}/empty.html`;
+
+  const sourcePort = port + 2;
+  state.sourceServer = await TestServer.create(path.join(__dirname, '..'), sourcePort);
+  state.sourceServer.PORT = sourcePort;
+  state.sourceServer.PREFIX = `http://localhost:${sourcePort}`;
 });
 
 afterAll(async({server, httpsServer}) => {

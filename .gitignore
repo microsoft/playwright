@@ -21,3 +21,5 @@ yarn.lock
 /utils/browser/playwright-web.js
 lib/
 playwright-*.tgz
+/web.js
+/web.js.map

@@ -26,9 +26,7 @@
     "tsc": "tsc -p .",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
-    "apply-next-version": "node utils/apply_next_version.js",
-    "bundle": "npx browserify -r ./index.js:playwright -o utils/browser/playwright-web.js",
-    "unit-bundle": "node utils/browser/test.js"
+    "apply-next-version": "node utils/apply_next_version.js"
   },
   "author": {
     "name": "Microsoft Corporation"
