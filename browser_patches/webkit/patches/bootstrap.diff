@@ -1244,6 +1244,18 @@ index e453d89097e686b2c3352bad66ee712347c166b5..c53601cd782ffee6f9a215339d88fbcc
  
      JSTouch.cpp
      JSTouchEvent.cpp
+diff --git a/Source/WebCore/WebCore.order b/Source/WebCore/WebCore.order
+index 37d245e11e8bf3626523f076ea2b93d2c106e19b..93f4f64f705580535a8d3b077a9a15813647316a 100644
+--- a/Source/WebCore/WebCore.order
++++ b/Source/WebCore/WebCore.order
+@@ -3094,7 +3094,6 @@ __ZN7WebCore14DocumentLoader23stopLoadingSubresourcesEv
+ __ZN7WebCore14DocumentLoader18stopLoadingPlugInsEv
+ __ZN7WebCore14DocumentLoader15detachFromFrameEv
+ __ZN7WebCore20ApplicationCacheHost22setDOMApplicationCacheEPNS_19DOMApplicationCacheE
+-__ZN7WebCore24InspectorInstrumentation27loaderDetachedFromFrameImplEPNS_19InstrumentingAgentsEPNS_14DocumentLoaderE
+ __ZN7WebCore14DocumentLoaderD0Ev
+ __ZN7WebCore14DocumentLoaderD2Ev
+ __ZN7WebCore14DocumentLoader17clearMainResourceEv
 diff --git a/Source/WebCore/WebCore.xcodeproj/project.pbxproj b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
 index d4fb0d3682becb5d4280a7fff26bcb5dda096285..50a2d02ef93418375137aede42c67a87d51ef1b8 100644
 --- a/Source/WebCore/WebCore.xcodeproj/project.pbxproj
@@ -1394,7 +1406,7 @@ index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..3a032d9d14a8d5806103f86e687839a165212aa9 100644
+index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..170e3a81bc02303ce708d914376a1c527737fbc0 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1453,7 +1465,20 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..3a032d9d14a8d5806103f86e687839a1
  }
  
  void InspectorInstrumentation::frameDetachedFromParentImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
-@@ -786,6 +786,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
+@@ -744,12 +744,6 @@ void InspectorInstrumentation::frameDocumentUpdatedImpl(InstrumentingAgents& ins
+         pageDOMDebuggerAgent->frameDocumentUpdated(frame);
+ }
+ 
+-void InspectorInstrumentation::loaderDetachedFromFrameImpl(InstrumentingAgents& instrumentingAgents, DocumentLoader& loader)
+-{
+-    if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
+-        inspectorPageAgent->loaderDetachedFromFrame(loader);
+-}
+-
+ void InspectorInstrumentation::frameStartedLoadingImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
+ {
+     if (frame.isMainFrame()) {
+@@ -786,6 +780,12 @@ void InspectorInstrumentation::frameClearedScheduledNavigationImpl(Instrumenting
          inspectorPageAgent->frameClearedScheduledNavigation(frame);
  }
  
@@ -1466,7 +1491,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..3a032d9d14a8d5806103f86e687839a1
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
      if (InspectorPageAgent* inspectorPageAgent = instrumentingAgents.inspectorPageAgent())
-@@ -1266,6 +1272,31 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1266,6 +1266,31 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -1499,7 +1524,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..3a032d9d14a8d5806103f86e687839a1
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323cd15f080 100644
+index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd9b63b40d 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -45,6 +45,7 @@
@@ -1526,7 +1551,12 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -228,6 +231,7 @@ public:
+@@ -223,11 +226,11 @@ public:
+     static void frameDetachedFromParent(Frame&);
+     static void didCommitLoad(Frame&, DocumentLoader*);
+     static void frameDocumentUpdated(Frame&);
+-    static void loaderDetachedFromFrame(Frame&, DocumentLoader&);
+     static void frameStartedLoading(Frame&);
      static void frameStoppedLoading(Frame&);
      static void frameScheduledNavigation(Frame&, Seconds delay);
      static void frameClearedScheduledNavigation(Frame&);
@@ -1534,7 +1564,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -314,6 +318,11 @@ public:
+@@ -314,6 +317,11 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -1546,7 +1576,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -414,6 +423,7 @@ private:
+@@ -414,6 +422,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -1554,7 +1584,12 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -429,6 +439,7 @@ private:
+@@ -424,11 +433,11 @@ private:
+     static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
+     static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
+     static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
+-    static void loaderDetachedFromFrameImpl(InstrumentingAgents&, DocumentLoader&);
+     static void frameStartedLoadingImpl(InstrumentingAgents&, Frame&);
      static void frameStoppedLoadingImpl(InstrumentingAgents&, Frame&);
      static void frameScheduledNavigationImpl(InstrumentingAgents&, Frame&, Seconds delay);
      static void frameClearedScheduledNavigationImpl(InstrumentingAgents&, Frame&);
@@ -1562,7 +1597,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -511,6 +522,11 @@ private:
+@@ -511,6 +520,11 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -1574,7 +1609,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1091,6 +1107,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1091,6 +1105,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -1588,7 +1623,21 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1221,6 +1244,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1186,13 +1207,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+         frameDocumentUpdatedImpl(*instrumentingAgents, frame);
+ }
+ 
+-inline void InspectorInstrumentation::loaderDetachedFromFrame(Frame& frame, DocumentLoader& loader)
+-{
+-    FAST_RETURN_IF_NO_FRONTENDS(void());
+-    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(frame))
+-        loaderDetachedFromFrameImpl(*instrumentingAgents, loader);
+-}
+-
+ inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
+ {
+     FAST_RETURN_IF_NO_FRONTENDS(void());
+@@ -1221,6 +1235,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -1602,7 +1651,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..c76c5f752684da94720b798591784323
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1650,6 +1680,36 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1650,6 +1671,36 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -2373,7 +2422,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..bee832c4c65f9a4487c0d0b7c6fd6985
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3fb7fc9259 100644
+index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..9a4c25d227ea8017e6d117c93a2362c6dabc551a 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2385,7 +2434,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
  #include "CachedResource.h"
  #include "CachedResourceLoader.h"
  #include "Cookie.h"
-@@ -39,12 +41,14 @@
+@@ -39,12 +41,15 @@
  #include "CustomHeaderFields.h"
  #include "Document.h"
  #include "DocumentLoader.h"
@@ -2393,6 +2442,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
  #include "Frame.h"
  #include "FrameLoadRequest.h"
  #include "FrameLoader.h"
++#include "FrameLoaderClient.h"
  #include "FrameSnapshotting.h"
  #include "FrameView.h"
  #include "HTMLFrameOwnerElement.h"
@@ -2400,7 +2450,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -55,17 +59,22 @@
+@@ -55,19 +60,25 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "Page.h"
@@ -2422,8 +2472,11 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
 +#include <JavaScriptCore/InjectedScriptManager.h>
  #include <JavaScriptCore/RegularExpression.h>
  #include <wtf/ListHashSet.h>
++#include <wtf/ProcessID.h>
  #include <wtf/Stopwatch.h>
-@@ -339,6 +348,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+ #include <wtf/text/Base64.h>
+ #include <wtf/text/StringBuilder.h>
+@@ -339,6 +350,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -2431,7 +2484,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -377,6 +387,8 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -377,6 +389,8 @@ void InspectorPageAgent::enable(ErrorString& errorString)
  void InspectorPageAgent::disable(ErrorString&)
  {
      m_instrumentingAgents.setInspectorPageAgent(nullptr);
@@ -2440,7 +2493,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -384,6 +396,7 @@ void InspectorPageAgent::disable(ErrorString&)
+@@ -384,6 +398,7 @@ void InspectorPageAgent::disable(ErrorString&)
      overrideUserAgent(unused, nullptr);
      setEmulatedMedia(unused, emptyString());
      setForcedAppearance(unused, emptyString());
@@ -2448,7 +2501,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
  
  #define DISABLE_INSPECTOR_OVERRIDE_SETTING(name) \
      m_inspectedPage.settings().set##name##InspectorOverride(WTF::nullopt);
-@@ -414,14 +427,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -414,14 +429,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -2490,7 +2543,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -682,15 +717,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -682,15 +719,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -2512,6 +2565,67 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -698,13 +736,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+     m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
+ }
+ 
++static String globalIDForFrame(Frame& frame)
++{
++    return makeString(getCurrentProcessID(), ".", frame.loader().client().frameID()->toUInt64());
++}
++
+ void InspectorPageAgent::frameDetached(Frame& frame)
+ {
+-    auto identifier = m_frameToIdentifier.take(&frame);
+-    if (identifier.isNull())
++    String identifier = globalIDForFrame(frame);
++    if (!m_identifierToFrame.take(identifier))
+         return;
++
+     m_frontendDispatcher->frameDetached(identifier);
+-    m_identifierToFrame.remove(identifier);
+ }
+ 
+ Frame* InspectorPageAgent::frameForId(const String& frameId)
+@@ -716,20 +759,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+ {
+     if (!frame)
+         return emptyString();
+-    return m_frameToIdentifier.ensure(frame, [this, frame] {
+-        auto identifier = IdentifiersFactory::createIdentifier();
+-        m_identifierToFrame.set(identifier, frame);
+-        return identifier;
+-    }).iterator->value;
++
++    String identifier = globalIDForFrame(*frame);
++    m_identifierToFrame.set(identifier, frame);
++    return identifier;
+ }
+ 
+ String InspectorPageAgent::loaderId(DocumentLoader* loader)
+ {
+     if (!loader)
+         return emptyString();
+-    return m_loaderToIdentifier.ensure(loader, [] {
+-        return IdentifiersFactory::createIdentifier();
+-    }).iterator->value;
++
++    return String::number(loader->loaderIDForInspector());
+ }
+ 
+ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
+@@ -740,11 +781,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+     return frame;
+ }
+ 
+-void InspectorPageAgent::loaderDetachedFromFrame(DocumentLoader& loader)
+-{
+-    m_loaderToIdentifier.remove(&loader);
+-}
+-
+ void InspectorPageAgent::frameStartedLoading(Frame& frame)
+ {
+     m_frontendDispatcher->frameStartedLoading(frameId(&frame));
 @@ -765,17 +801,15 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
@@ -3103,7 +3217,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..ab2dcf8c4bdbda96e797b8c858ef4a3f
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..6a67fc9012d258bd6e9c39f5d2a31c8e12c14eb3 100644
+index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..a25053411467e0c87eaacd1b57d74db623c854c7 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,10 +40,15 @@
@@ -3133,7 +3247,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..6a67fc9012d258bd6e9c39f5d2a31c8e
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -110,13 +117,21 @@ public:
+@@ -110,33 +117,45 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -3157,8 +3271,8 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..6a67fc9012d258bd6e9c39f5d2a31c8e
 +    void loadEventFired(Frame&);
      void frameNavigated(Frame&);
      void frameDetached(Frame&);
-     void loaderDetachedFromFrame(DocumentLoader&);
-@@ -124,19 +139,24 @@ public:
+-    void loaderDetachedFromFrame(DocumentLoader&);
+     void frameStartedLoading(Frame&);
      void frameStoppedLoading(Frame&);
      void frameScheduledNavigation(Frame&, Seconds delay);
      void frameClearedScheduledNavigation(Frame&);
@@ -3184,7 +3298,7 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..6a67fc9012d258bd6e9c39f5d2a31c8e
  
  private:
      double timestamp();
-@@ -151,6 +171,7 @@ private:
+@@ -151,18 +170,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -3192,7 +3306,10 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..6a67fc9012d258bd6e9c39f5d2a31c8e
      InspectorClient* m_client { nullptr };
      InspectorOverlay* m_overlay { nullptr };
  
-@@ -161,8 +182,11 @@ private:
+-    HashMap<Frame*, String> m_frameToIdentifier;
+     HashMap<String, Frame*> m_identifierToFrame;
+-    HashMap<DocumentLoader*, String> m_loaderToIdentifier;
+     String m_userAgentOverride;
      String m_emulatedMedia;
      String m_forcedAppearance;
      String m_bootstrapScript;
@@ -3348,6 +3465,32 @@ index 54a00e05828fbe10d7c69facf69bf0c302687786..df0aa6dbd784813514f59bf8c37d8370
      InstrumentingAgents& m_instrumentingAgents;
  
      Page& m_inspectedPage;
+diff --git a/Source/WebCore/loader/DocumentLoader.cpp b/Source/WebCore/loader/DocumentLoader.cpp
+index 5d12564c5908689a5ec78d036bd24d57b241775a..0ed1e261967b446f54210a52512aa79c3a31c4d5 100644
+--- a/Source/WebCore/loader/DocumentLoader.cpp
++++ b/Source/WebCore/loader/DocumentLoader.cpp
+@@ -1263,8 +1263,6 @@ void DocumentLoader::detachFromFrame()
+     if (!m_frame)
+         return;
+ 
+-    InspectorInstrumentation::loaderDetachedFromFrame(*m_frame, *this);
+-
+     observeFrame(nullptr);
+ }
+ 
+diff --git a/Source/WebCore/loader/DocumentLoader.h b/Source/WebCore/loader/DocumentLoader.h
+index 05f4c14eec4da40450a5cf0f6a21fbf547045c46..15417787025db89985197faf97ce575e2f7ff847 100644
+--- a/Source/WebCore/loader/DocumentLoader.h
++++ b/Source/WebCore/loader/DocumentLoader.h
+@@ -162,6 +162,8 @@ public:
+     WEBCORE_EXPORT FrameLoader* frameLoader() const;
+     WEBCORE_EXPORT SubresourceLoader* mainResourceLoader() const;
+     WEBCORE_EXPORT RefPtr<SharedBuffer> mainResourceData() const;
++
++    virtual uint64_t loaderIDForInspector() { return 0; }
+     
+     DocumentWriter& writer() const { return m_writer; }
+ 
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
 index 9a72b906215d3790814255ff0c5cd9c34d9f9f70..a79921cce6ca0fc0f64e8d7ea36a326db82ac4db 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
@@ -9668,6 +9811,19 @@ index fbdf254ec42dc736ca0a00f521de8339f08ffbf2..5bd0472c37cc18d5dd6680e833fab394
  
      // If async scrolling is disabled, we have to force-disable async frame and overflow scrolling
      // to keep the non-async scrolling on those elements working.
+diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.h b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.h
+index f127d64d005ab7b93875591b94a5899205e91579..3d3080e188f57061726e4cd78f0e67a4096cd715 100644
+--- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.h
++++ b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.h
+@@ -43,6 +43,8 @@ public:
+ private:
+     WebDocumentLoader(const WebCore::ResourceRequest&, const WebCore::SubstituteData&);
+ 
++    uint64_t loaderIDForInspector() override { return navigationID(); }
++
+     void detachFromFrame() override;
+ 
+     uint64_t m_navigationID;
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 index a360fe5674b3065197ffe9eaa5853f559b35be63..442d0493fa0705b187dc7c078ea564d222448606 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
