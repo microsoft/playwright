@@ -168,6 +168,16 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
       expect(error.message).toBe('Unsupported color scheme: bad');
     });
+    it.skip(FFOX)('should work during navigation', async({page, server}) => {
+      await page.emulateMedia({ colorScheme: 'light' });
+      const navigated = page.goto(server.EMPTY_PAGE);
+      for (let i = 0; i < 9; i++) {
+        page.emulateMedia({ colorScheme: ['dark', 'light'][i & 1] });
+        await new Promise(f => setTimeout(f, 1));
+      }
+      await navigated;
+      expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+    });
   });
 
   describe.skip(FFOX || WEBKIT)('BrowserContext({timezoneId})', function() {
