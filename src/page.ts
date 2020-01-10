@@ -82,6 +82,7 @@ type PageState = {
   interceptNetwork: boolean | null;
   offlineMode: boolean | null;
   credentials: types.Credentials | null;
+  hasTouch: boolean | null;
 };
 
 export type FileChooser = {
@@ -124,7 +125,8 @@ export class Page extends platform.EventEmitter {
       cacheEnabled: null,
       interceptNetwork: null,
       offlineMode: null,
-      credentials: null
+      credentials: null,
+      hasTouch: null
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);

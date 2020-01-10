@@ -114,6 +114,8 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
+    if (this._page._state.hasTouch)
+      promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
     await Promise.all(promises).catch(e => {
       if (session.isDisposed())
         return;
@@ -318,12 +320,15 @@ export class WKPage implements PageDelegate {
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
-    if (viewport.isLandscape || viewport.hasTouch)
-      throw new Error('Not implemented');
     const width = viewport.width;
     const height = viewport.height;
     const fixedLayout = !!viewport.isMobile;
-    await this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {width, height, fixedLayout, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
+    const deviceScaleFactor = viewport.deviceScaleFactor || 1;
+    this._page._state.hasTouch = !!viewport.hasTouch;
+    await Promise.all([
+      this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {width, height, fixedLayout, deviceScaleFactor }),
+      this._session.send('Page.setTouchEmulationEnabled', { enabled: !!viewport.hasTouch }),
+    ]);
   }
 
   setCacheEnabled(enabled: boolean): Promise<void> {
