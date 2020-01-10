@@ -156,6 +156,11 @@ export class WKSession extends platform.EventEmitter {
   }
 }
 
+export interface Resender {
+  sendWithRetries<T>(action: (session: WKSession) => Promise<T>): Promise<T>;
+  sendToAllSessions(action: (session: WKSession) => Promise<any>): Promise<void>;
+}
+
 export function createProtocolError(error: Error, method: string, object: { error: { message: string; data: any; }; }): Error {
   let message = `Protocol error (${method}): ${object.error.message}`;
   if ('data' in object.error)
@@ -170,4 +175,8 @@ export function rewriteError(error: Error, message: string): Error {
 
 export function isSwappedOutError(e: Error) {
   return e.message.includes('Target was swapped out.');
+}
+
+export function isClosedError(e: Error) {
+  return e.message.includes('has been closed.');
 }

@@ -83,6 +83,8 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async sendText(text: string): Promise<void> {
+    // TODO: it is impossible to guarantee the relative order of Page.insertText and other
+    // input commands.
     await this._session.send('Page.insertText', { text });
   }
 }

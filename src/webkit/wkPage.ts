@@ -19,7 +19,7 @@ import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
-import { WKSession } from './wkConnection';
+import { WKSession, Resender } from './wkConnection';
 import { Events } from '../events';
 import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
 import { WKNetworkManager } from './wkNetworkManager';
@@ -43,21 +43,24 @@ export class WKPage implements PageDelegate {
   _session: WKSession;
   readonly _page: Page;
   private readonly _pageProxySession: WKSession;
+  private readonly _resender: Resender;
   private readonly _networkManager: WKNetworkManager;
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
+  private _defaultBackgroundColorOverride: { r: number; g: number; b: number; a: number; } | null = null;
 
-  constructor(browserContext: BrowserContext, pageProxySession: WKSession) {
+  constructor(browserContext: BrowserContext, pageProxySession: WKSession, resender: Resender) {
     this._pageProxySession = pageProxySession;
+    this._resender = resender;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
     this._isolatedWorlds = new Set();
     this._page = new Page(this, browserContext);
-    this._networkManager = new WKNetworkManager(this._page, pageProxySession);
+    this._networkManager = new WKNetworkManager(this._page, pageProxySession, resender);
     this._workers = new WKWorkers(this._page);
   }
 
@@ -83,10 +86,6 @@ export class WKPage implements PageDelegate {
     this._networkManager.setSession(session);
     this._workers.setSession(session);
     this._isolatedWorlds = new Set();
-    // New bootstrap scripts may have been added during provisional load, push them
-    // again to be on the safe side.
-    if (this._bootstrapScripts.length)
-      this._setBootstrapScripts(session).catch(e => debugError(e));
   }
 
   // This method is called for provisional targets as well. The session passed as the parameter
@@ -109,11 +108,13 @@ export class WKPage implements PageDelegate {
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
     if (isProvisional)
-      promises.push(this._setBootstrapScripts(session));
+      promises.push(session.send('Page.setBootstrapScript', { source: this._bootstrapScripts.join(';') }));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
       promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
+    if (this._defaultBackgroundColorOverride)
+      promises.push(session.send('Page.setDefaultBackgroundColorOverride', { color: this._defaultBackgroundColorOverride }));
     await Promise.all(promises).catch(e => {
       if (session.isDisposed())
         return;
@@ -222,7 +223,9 @@ export class WKPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
-    await this._session.send('Page.navigate', { url, frameId: frame._id, referrer });
+    await this._resender.sendWithRetries(async session => {
+      await session.send('Page.navigate', { url, frameId: frame._id, referrer });
+    });
     return {};  // We cannot get loaderId of cross-process navigation in advance.
   }
 
@@ -310,11 +313,11 @@ export class WKPage implements PageDelegate {
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
-    await this._setExtraHTTPHeaders(this._session, headers);
+    await this._resender.sendToAllSessions(session => this._setExtraHTTPHeaders(session, headers));
   }
 
   async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
-    await this._setEmulateMedia(this._session, mediaType, colorScheme);
+    await this._resender.sendToAllSessions(session => this._setEmulateMedia(session, mediaType, colorScheme));
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
@@ -326,12 +329,12 @@ export class WKPage implements PageDelegate {
     await this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {width, height, fixedLayout, deviceScaleFactor: viewport.deviceScaleFactor || 1 });
   }
 
-  setCacheEnabled(enabled: boolean): Promise<void> {
-    return this._networkManager.setCacheEnabled(enabled);
+  async setCacheEnabled(enabled: boolean): Promise<void> {
+    await this._networkManager.setCacheEnabled(enabled);
   }
 
-  setRequestInterception(enabled: boolean): Promise<void> {
-    return this._networkManager.setRequestInterception(enabled);
+  async setRequestInterception(enabled: boolean): Promise<void> {
+    await this._networkManager.setRequestInterception(enabled);
   }
 
   async setOfflineMode(value: boolean) {
@@ -343,40 +346,45 @@ export class WKPage implements PageDelegate {
   }
 
   async reload(): Promise<void> {
-    await this._session.send('Page.reload');
+    await this._resender.sendWithRetries(async session => {
+      await session.send('Page.reload');
+    });
   }
 
   goBack(): Promise<boolean> {
-    return this._session.send('Page.goBack').then(() => true).catch(error => {
-      if (error instanceof Error && error.message.includes(`Protocol error (Page.goBack): Failed to go`))
-        return false;
-      throw error;
+    return this._resender.sendWithRetries(async session => {
+      return session.send('Page.goBack').then(() => true).catch(error => {
+        if (error instanceof Error && error.message.includes(`Protocol error (Page.goBack): Failed to go`))
+          return false;
+        throw error;
+      });
     });
   }
 
   goForward(): Promise<boolean> {
-    return this._session.send('Page.goForward').then(() => true).catch(error => {
-      if (error instanceof Error && error.message.includes(`Protocol error (Page.goForward): Failed to go`))
-        return false;
-      throw error;
+    return this._resender.sendWithRetries(async session => {
+      return session.send('Page.goForward').then(() => true).catch(error => {
+        if (error instanceof Error && error.message.includes(`Protocol error (Page.goForward): Failed to go`))
+          return false;
+        throw error;
+      });
     });
   }
 
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {
     const script = `self.${name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${bindingFunction}`;
     this._bootstrapScripts.unshift(script);
-    await this._setBootstrapScripts(this._session);
+    await this._setBootstrapScripts();
     await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(debugError)));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
     this._bootstrapScripts.push(script);
-    await this._setBootstrapScripts(this._session);
+    await this._setBootstrapScripts();
   }
 
-  private async _setBootstrapScripts(session: WKSession) {
-    const source = this._bootstrapScripts.join(';');
-    await session.send('Page.setBootstrapScript', { source });
+  private async _setBootstrapScripts() {
+    await this._resender.sendToAllSessions(session => session.send('Page.setBootstrapScript', { source: this._bootstrapScripts.join(';') }));
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -395,13 +403,15 @@ export class WKPage implements PageDelegate {
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
-    // TODO: line below crashes, sort it out.
-    await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
+    this._defaultBackgroundColorOverride = color;
+    await this._resender.sendToAllSessions(session => session.send('Page.setDefaultBackgroundColorOverride', { color }));
   }
 
   async takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType> {
     const rect = options.clip || { x: 0, y: 0, width: viewport.width, height: viewport.height };
-    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
+    const result = await this._resender.sendWithRetries(session => {
+      return session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
+    });
     const prefix = 'data:image/png;base64,';
     let buffer = platform.Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
@@ -491,7 +501,7 @@ export class WKPage implements PageDelegate {
   }
 
   async getAccessibilityTree() : Promise<accessibility.AXNode> {
-    return getAccessibilityTree(this._session);
+    return getAccessibilityTree(this._resender);
   }
 
   coverage(): Coverage | undefined {

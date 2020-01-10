@@ -42,25 +42,10 @@ export class Screenshotter {
       let overridenViewport: types.Viewport | undefined;
       const viewport = this._page.viewport();
       let viewportSize: types.Size | undefined;
-      if (!viewport) {
-        viewportSize = await this._page.evaluate(() => ({
-          width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
-          height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight)
-        }));
-      }
+      if (!viewport)
+        viewportSize = await this._getSize(false);
       if (options.fullPage && !this._page._delegate.canScreenshotOutsideViewport()) {
-        const fullPageRect = await this._page.evaluate(() => ({
-          width: Math.max(
-              document.body.scrollWidth, document.documentElement.scrollWidth,
-              document.body.offsetWidth, document.documentElement.offsetWidth,
-              document.body.clientWidth, document.documentElement.clientWidth
-          ),
-          height: Math.max(
-              document.body.scrollHeight, document.documentElement.scrollHeight,
-              document.body.offsetHeight, document.documentElement.offsetHeight,
-              document.body.clientHeight, document.documentElement.clientHeight
-          )
-        }));
+        const fullPageRect = await this._getSize(true);
         overridenViewport = viewport ? { ...viewport, ...fullPageRect } : fullPageRect;
         await this._page.setViewport(overridenViewport);
       } else if (options.clip) {
@@ -128,6 +113,44 @@ export class Screenshotter {
     if (options.path)
       await platform.writeFileAsync(options.path, buffer);
     return buffer;
+  }
+
+  private async _getSize(fullPage: boolean): Promise<{ width: number, height: number }> {
+    while (true) {
+      try {
+        const result = await this._page.evaluate((fullPage: boolean) => {
+          function calculate() {
+            return fullPage ? { width: Math.max(
+              document.body.scrollWidth, document.documentElement.scrollWidth,
+              document.body.offsetWidth, document.documentElement.offsetWidth,
+              document.body.clientWidth, document.documentElement.clientWidth
+            ), height: Math.max(
+              document.body.scrollHeight, document.documentElement.scrollHeight,
+              document.body.offsetHeight, document.documentElement.offsetHeight,
+              document.body.clientHeight, document.documentElement.clientHeight
+            )} : {
+              width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
+              height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight)
+            };
+          }
+          return new Promise<{ width: number, height: number }>(resolve => {
+            if (document.body && document.documentElement) {
+              resolve(calculate());
+            } else {
+              function listener() {
+                document.removeEventListener('DOMContentLoaded', listener);
+                resolve(calculate());
+              }
+              document.addEventListener('DOMContentLoaded', listener);
+            }
+          });
+        }, fullPage);
+        return result;
+      } catch (e) {
+        if (!(e instanceof Error) || !e.message.includes('context was destroyed'))
+          throw e;
+      }
+    }
   }
 }
 

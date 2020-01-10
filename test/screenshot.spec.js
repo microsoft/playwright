@@ -27,6 +27,14 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-sanity.png');
     });
+    it.skip(FFOX)('should work while navigating', async({page, server}) => {
+      await page.setViewport({width: 500, height: 500});
+      await page.goto(server.PREFIX + '/redirectloop1.html');
+      for (let i = 0; i < 10; i++) {
+        const screenshot = await page.screenshot({ fullPage: true });
+        expect(screenshot).toBeInstanceOf(Buffer);
+      }
+    });
     it('should clip rect', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');

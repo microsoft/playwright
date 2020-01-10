@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 import * as accessibility from '../accessibility';
-import { WKSession } from './wkConnection';
+import { Resender } from './wkConnection';
 import { Protocol } from './protocol';
 
-export async function getAccessibilityTree(session: WKSession) {
-  const {axNode} = await session.send('Page.accessibilitySnapshot');
-  return new WKAXNode(axNode);
+export async function getAccessibilityTree(resender: Resender) {
+  return resender.sendWithRetries(async session => {
+    const {axNode} = await session.send('Page.accessibilitySnapshot');
+    return new WKAXNode(axNode);
+  });
 }
 
 class WKAXNode implements accessibility.AXNode {

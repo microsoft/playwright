@@ -5,7 +5,7 @@
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
-import { WKSession } from './wkConnection';
+import { WKSession, Resender, isSwappedOutError } from './wkConnection';
 import { WKPage } from './wkPage';
 import { RegisteredListener, helper, assert, debugError } from '../helper';
 import { Events } from '../events';
@@ -15,7 +15,7 @@ import { Events } from '../events';
 // has undefined instead.
 const provisionalMessagesSymbol = Symbol('provisionalMessages');
 
-export class WKPageProxy {
+export class WKPageProxy implements Resender {
   private readonly _pageProxySession: WKSession;
   readonly _browserContext: BrowserContext;
   private _pagePromise: Promise<Page> | null = null;
@@ -24,6 +24,10 @@ export class WKPageProxy {
   private _firstTargetCallback: () => void;
   private readonly _sessions = new Map<string, WKSession>();
   private readonly _eventListeners: RegisteredListener[];
+  private readonly _disposedPromise: Promise<void>;
+  private _disposedCallback: () => void;
+  private _disposed = false;
+  private _waitForCommitCallbacks: (() => void)[] = [];
 
   constructor(pageProxySession: WKSession, browserContext: BrowserContext) {
     this._pageProxySession = pageProxySession;
@@ -35,6 +39,7 @@ export class WKPageProxy {
       helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
     ];
+    this._disposedPromise = new Promise(f => this._disposedCallback = f);
 
     // Intercept provisional targets during cross-process navigation.
     this._pageProxySession.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
@@ -43,6 +48,34 @@ export class WKPageProxy {
       debugError(e);
       throw e;
     });
+  }
+
+  async sendWithRetries<T>(action: (session: WKSession) => Promise<T>): Promise<T> {
+    while (!this._disposed) {
+      try {
+        const result = await action(this._committedSession());
+        return result;
+      } catch (e) {
+        if (!isSwappedOutError(e))
+          throw e;
+      }
+      await Promise.race([
+        new Promise(f => this._waitForCommitCallbacks.push(f)),
+        this._disposedPromise,
+      ]);
+    }
+    return Promise.reject(new Error('The page has been closed.'));
+  }
+
+  async sendToAllSessions(action: (session: WKSession) => Promise<any>): Promise<void> {
+    const promises: Promise<any>[] = [];
+    for (const session of this._sessions.values()) {
+      promises.push(action(session).catch(e => {
+        if (!isSwappedOutError(e))
+          throw e;
+      }));
+    }
+    await Promise.all(promises);
   }
 
   didClose() {
@@ -56,6 +89,8 @@ export class WKPageProxy {
     for (const session of this._sessions.values())
       session.dispose();
     this._sessions.clear();
+    this._disposed = true;
+    this._disposedCallback();
     if (this._wkPage)
       this._wkPage.didDisconnect();
   }
@@ -78,8 +113,7 @@ export class WKPageProxy {
     popupPageProxy.page().then(page => this._wkPage._page.emit(Events.Page.Popup, page));
   }
 
-  private async _initializeWKPage(): Promise<Page> {
-    await this._firstTargetPromise;
+  private _committedSession(): WKSession {
     let session: WKSession;
     for (const anySession of this._sessions.values()) {
       if (!(anySession as any)[provisionalMessagesSymbol]) {
@@ -88,7 +122,13 @@ export class WKPageProxy {
       }
     }
     assert(session, 'One non-provisional target session must exist');
-    this._wkPage = new WKPage(this._browserContext, this._pageProxySession);
+    return session;
+  }
+
+  private async _initializeWKPage(): Promise<Page> {
+    await this._firstTargetPromise;
+    const session = this._committedSession();
+    this._wkPage = new WKPage(this._browserContext, this._pageProxySession, this);
     this._wkPage.setSession(session);
     await Promise.all([
       this._wkPage._initializePageProxySession(),
@@ -155,5 +195,9 @@ export class WKPageProxy {
     for (const message of provisionalMessages)
       newSession.dispatchMessage(JSON.parse(message));
     this._wkPage.setSession(newSession);
+    const callbacks = this._waitForCommitCallbacks;
+    this._waitForCommitCallbacks = [];
+    for (const callback of callbacks)
+      callback();
   }
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { WKSession } from './wkConnection';
+import { WKSession, isSwappedOutError, isClosedError, Resender } from './wkConnection';
 import { Page } from '../page';
 import { helper, RegisteredListener, assert } from '../helper';
 import { Protocol } from './protocol';
@@ -27,14 +27,16 @@ import * as platform from '../platform';
 export class WKNetworkManager {
   private readonly _page: Page;
   private readonly _pageProxySession: WKSession;
+  private readonly _resender: Resender;
   private _session: WKSession;
   private readonly _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _userCacheDisabled = false;
   private _sessionListeners: RegisteredListener[] = [];
 
-  constructor(page: Page, pageProxySession: WKSession) {
+  constructor(page: Page, pageProxySession: WKSession, resender: Resender) {
     this._page = page;
     this._pageProxySession = pageProxySession;
+    this._resender = resender;
   }
 
   async initializePageProxySession(credentials: types.Credentials | null) {
@@ -69,17 +71,11 @@ export class WKNetworkManager {
 
   async setCacheEnabled(enabled: boolean) {
     this._userCacheDisabled = !enabled;
-    await this._updateProtocolCacheDisabled();
+    await this._resender.sendToAllSessions(session => session.send('Network.setResourceCachingDisabled', { disabled: this._userCacheDisabled}));
   }
 
   async setRequestInterception(enabled: boolean): Promise<void> {
-    await this._session.send('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
-  }
-
-  async _updateProtocolCacheDisabled() {
-    await this._session.send('Network.setResourceCachingDisabled', {
-      disabled: this._userCacheDisabled
-    });
+    await this._resender.sendToAllSessions(session => session.send('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled }));
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
@@ -166,7 +162,7 @@ export class WKNetworkManager {
   }
 
   async setOfflineMode(value: boolean): Promise<void> {
-    await this._session.send('Network.setEmulateOfflineState', { offline: value });
+    await this._resender.sendToAllSessions(session => session.send('Network.setEmulateOfflineState', { offline: value }));
   }
 }
 
@@ -208,7 +204,12 @@ class InterceptableRequest implements network.RequestDelegate {
     const reason = errorReasons[errorCode];
     assert(reason, 'Unknown error code: ' + errorCode);
     await this._interceptedPromise;
-    await this._session.send('Network.interceptAsError', { requestId: this._requestId, reason });
+    try {
+      await this._session.send('Network.interceptAsError', { requestId: this._requestId, reason });
+    } catch (e) {
+      if (!isSwappedOutError(e) && !isClosedError(e))
+        throw e;
+    }
   }
 
   async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
