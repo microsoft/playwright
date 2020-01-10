@@ -2444,7 +2444,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..bee832c4c65f9a4487c0d0b7c6fd6985
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..9a4c25d227ea8017e6d117c93a2362c6dabc551a 100644
+index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..10659e29a0c2a6dcebc90c117194835f2f8f818f 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2728,7 +2728,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..9a4c25d227ea8017e6d117c93a2362c6
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -979,4 +1056,509 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -979,4 +1056,511 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3065,6 +3065,8 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..9a4c25d227ea8017e6d117c93a2362c6
 +        axNode->setKeyshortcuts(axObject->keyShortcutsValue());
 +    if (!axObject->valueDescription().isEmpty())
 +        axNode->setValuetext(axObject->valueDescription());
++    if (!axObject->roleDescription().isEmpty())
++        axNode->setRoledescription(axObject->roleDescription());
 +    if (!axObject->isEnabled())
 +        axNode->setDisabled(!axObject->isEnabled());
 +    if (axObject->supportsExpanded())
@@ -3079,7 +3081,7 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..9a4c25d227ea8017e6d117c93a2362c6
 +    if (axObject->isMultiSelectable())
 +        axNode->setMultiselectable(axObject->isMultiSelectable());
 +    if (axObject->supportsReadOnly())
-+        axNode->setReadonly(axObject->readOnlyValue() != "false");
++        axNode->setReadonly(axObject->readOnlyValue() == "true");
 +    if (axObject->supportsRequiredAttribute())
 +        axNode->setRequired(axObject->isRequired());
 +    if (axObject->isSelected())
