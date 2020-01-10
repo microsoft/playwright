@@ -64,6 +64,28 @@ index dece6ac51e3a85b1e094e405effc6203887ddfd4..9bf7519d894eceb06b40d754c4fb7940
              if (!inspectorValue)
                  return nullptr;
              inspectorObject->setValue(name.string(), WTFMove(inspectorValue));
+diff --git a/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp b/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp
+index 95cd87b01b15cb8667e57bc5bb51a71f06bc3760..1a32831a9f242430c18a7adb919b9cc49677d2e6 100644
+--- a/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp
++++ b/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp
+@@ -27,6 +27,8 @@
+ #include "config.h"
+ #include "IdentifiersFactory.h"
+ 
++#include <wtf/ProcessID.h>
++
+ namespace Inspector {
+ 
+ namespace {
+@@ -35,7 +37,7 @@ static long s_lastUsedIdentifier = 0;
+ 
+ static String addPrefixToIdentifier(const String& identifier)
+ {
+-    return makeString("0.", identifier);
++    return makeString(getCurrentProcessID(), ".", identifier);
+ }
+ 
+ String IdentifiersFactory::createIdentifier()
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 index 038cb646d31706905deff8935040d63c0afd00f9..2fca7b043f15a8cce3819cc827912fb719a345db 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
