@@ -20,9 +20,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  // FIXME: not supported in WebKit (as well as Emulation domain in general).
-  // It was removed from WebKit in https://webkit.org/b/126630
-  describe.skip(FFOX || WEBKIT)('Overrides.setGeolocation', function() {
+  describe.skip(FFOX)('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
       await context.setPermissions(server.PREFIX, ['geolocation']);
       await page.goto(server.EMPTY_PAGE);
