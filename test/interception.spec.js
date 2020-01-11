@@ -384,6 +384,49 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.goto(server.EMPTY_PAGE);
       expect(error.message).toContain('Request Interception is not enabled');
     });
+    it.skip(WEBKIT)('should intercept main resource during cross-process navigation', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setRequestInterception(true);
+      let intercepted = false;
+      page.on('request', request => {
+        if (request.url().includes(server.CROSS_PROCESS_PREFIX + '/empty.html'))
+          intercepted = true;
+        request.continue();
+      });
+      const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      expect(response.ok()).toBe(true);
+      expect(intercepted).toBe(true);
+    });
+    it('should not throw when continued after navigation', async({page, server}) => {
+      await page.setRequestInterception(true);
+      page.on('request', request => {
+        if (request.url() !== server.PREFIX + '/one-style.css')
+          request.continue();
+      });
+      // For some reason, Firefox issues load event with one outstanding request.
+      const failed = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
+      const request = await page.waitForRequest(server.PREFIX + '/one-style.css');
+      await page.goto(server.PREFIX + '/empty.html');
+      const error = await failed;
+      expect(error.message).toBe('Navigation to ' + server.PREFIX + '/one-style.html was canceled by another one');
+      const notAnError = await request.continue().then(() => null).catch(e => e);
+      expect(notAnError).toBe(null);
+    });
+    it.skip(WEBKIT)('should not throw when continued after cross-process navigation', async({page, server}) => {
+      await page.setRequestInterception(true);
+      page.on('request', request => {
+        if (request.url() !== server.PREFIX + '/one-style.css')
+          request.continue();
+      });
+      // For some reason, Firefox issues load event with one outstanding request.
+      const failed = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
+      const request = await page.waitForRequest(server.PREFIX + '/one-style.css');
+      await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      const error = await failed;
+      expect(error.message).toBe('Navigation to ' + server.PREFIX + '/one-style.html was canceled by another one');
+      const notAnError = await request.continue().then(() => null).catch(e => e);
+      expect(notAnError).toBe(null);
+    });
   });
 
   describe('Interception.continue', function() {

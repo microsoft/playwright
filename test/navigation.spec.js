@@ -353,6 +353,15 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       expect(request2.headers['referer']).toBe(undefined);
       expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
+    it('should fail when canceled by another navigation', async({page, server}) => {
+      server.setRoute('/one-style.css', (req, res) => {});
+      // For some reason, Firefox issues load event with one outstanding request.
+      const failed = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
+      await server.waitForRequest('/one-style.css');
+      await page.goto(server.PREFIX + '/empty.html');
+      const error = await failed;
+      expect(error.message).toBe('Navigation to ' + server.PREFIX + '/one-style.html was canceled by another one');
+    });
 
     describe('network idle', function() {
       it('should navigate to empty page with networkidle0', async({page, server}) => {
