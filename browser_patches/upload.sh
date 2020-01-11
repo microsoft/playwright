@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit] [--check] [zip-path] [--win64]"
+  echo "usage: $(basename $0) [firefox|firefox-win64|webkit] [--check] [zip-path]"
   echo
   echo "Upload .zip as a browser build."
   echo
@@ -34,6 +34,7 @@ BROWSER_NAME=""
 BUILD_NUMBER=""
 BLOB_NAME=""
 ALIAS=""
+
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
   # we always apply our patches atop of beta since it seems to get better
   # reliability guarantees.
@@ -46,15 +47,18 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
     BLOB_NAME="firefox-linux.zip"
     ALIAS="ff-linux r$BUILD_NUMBER"
   elif [[ "$(uname)" == MINGW* ]]; then
-    if [[ ("$2" == "--win64") || ("$3" == "--win64") ]]; then
-      BLOB_NAME="firefox-win64.zip"
-      ALIAS="ff-win64 r$BUILD_NUMBER"
-    else
-      BLOB_NAME="firefox-win32.zip"
-      ALIAS="ff-win32 r$BUILD_NUMBER"
-    fi
+    BLOB_NAME="firefox-win32.zip"
+    ALIAS="ff-win32 r$BUILD_NUMBER"
   else
-    echo "ERROR: unzupported platform - $(uname)"
+    echo "ERROR: unsupported platform - $(uname)"
+    exit 1
+  fi
+elif [[ ("$1" == "firefox-win64") || ("$1" == "firefox-win64/") ]]; then
+  if [[ "$(uname)" == MINGW* ]]; then
+    BLOB_NAME="firefox-win64.zip"
+    ALIAS="ff-win64 r$BUILD_NUMBER"
+  else
+    echo "ERROR: unsupported platform for browser '$1' - $(uname)"
     exit 1
   fi
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
@@ -68,7 +72,7 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
     BLOB_NAME="minibrowser-linux.zip"
     ALIAS="webkit-linux r$BUILD_NUMBER"
   else
-    echo "ERROR: unzupported platform - $(uname)"
+    echo "ERROR: unsupported platform - $(uname)"
     exit 1
   fi
 else
