@@ -945,6 +945,11 @@ class LifecycleWatcher {
   }
 
   _onCommittedNewDocumentNavigation(frame: Frame) {
+    if (frame === this._frame && this._expectedDocumentId !== undefined && this._navigationRequest &&
+        frame._lastDocumentId !== this._expectedDocumentId) {
+      this._navigationAbortedCallback(new Error('Navigation to ' + this._targetUrl + ' was canceled by another one'));
+      return;
+    }
     if (frame === this._frame && this._expectedDocumentId === undefined && this._urlMatches(frame.url())) {
       this._expectedDocumentId = frame._lastDocumentId;
       this._targetUrl = frame.url();
