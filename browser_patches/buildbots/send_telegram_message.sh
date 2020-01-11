@@ -5,9 +5,10 @@ send_telegram_message() {
   if ! command -v curl >/dev/null; then
     return;
   fi
+  local TEXT=${1//\"/\\\"}
   curl --silent \
        -X POST \
        -H 'Content-Type: application/json' \
-       -d '{"chat_id": "-1001225613794", "parse_mode": "html", "text": "'"$1"'", "disable_notification": false}' \
+       -d '{"chat_id": "-1001225613794", "parse_mode": "html", "text": "'"$TEXT"'", "disable_notification": false}' \
        https://api.telegram.org/bot$TELEGRAM_BOT_KEY/sendMessage >/dev/null
 }
