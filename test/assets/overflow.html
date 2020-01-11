@@ -1,0 +1,22 @@
+<style>
+body { margin: 0; padding: 0; }
+
+div {
+  display: inline-flex;
+  width: 50px;
+  height: 50px;
+  border-right: 1px solid black;
+  border-bottom: 1px solid black;
+}
+</style>
+  
+<body></body>
+
+<script>
+const colors = ['#222', '#444', '#666', '#888', '#aaa'];
+for (let i = 0; i < 200; ++i) {
+  const div = document.createElement('div');
+  div.style.setProperty('background-color', colors[i % 5]);
+  document.body.appendChild(div);
+}
+</script>
