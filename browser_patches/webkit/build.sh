@@ -10,11 +10,17 @@ if [[ "$(uname)" == "Darwin" ]]; then
   ./Tools/Scripts/build-webkit --release --touch-events
 elif [[ "$(uname)" == "Linux" ]]; then
   cd "checkout"
-  # Check that WebKitBuild exists and is not empty.
-  if ! [[ (-d ./WebKitBuild) && (-n $(ls -1 ./WebKitBuild/)) ]]; then
-    yes | DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
+  if [[ "$1" == "--wpe" ]]; then
+    if ! [[ -d ./WebKitBuild/DependenciesWPE ]]; then
+      yes | DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitwpe-libs
+    fi
+    ./Tools/Scripts/build-webkit --wpe --release --touch-events MiniBrowser
+  else
+    if ! [[ -d ./WebKitBuild/DependenciesGTK ]]; then
+      yes | DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
+    fi
+    ./Tools/Scripts/build-webkit --gtk --release --touch-events MiniBrowser
   fi
-  ./Tools/Scripts/build-webkit --gtk --release --touch-events MiniBrowser
 elif [[ "$(uname)" == MINGW* ]]; then
   /c/Windows/System32/cmd.exe "/c buildwin.bat"
 else

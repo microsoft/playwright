@@ -3,20 +3,19 @@ set -e
 set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0) [output-absolute-path]"
+  echo "usage: $(basename $0) [--wpe] [output-absolute-path]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
   exit 0
 fi
 
-if [[ $# != 1 ]]; then
-  echo "error: missing zip output path"
-  echo "try '$(basename $0) --help' for details"
-  exit 1
-fi
-
 ZIP_PATH=$1
+USE_WPE=""
+if [[ "$ZIP_PATH" == "--wpe" ]]; then
+  ZIP_PATH=$2
+  USE_WPE="true"
+fi
 if [[ $ZIP_PATH != /* ]]; then
   echo "ERROR: path $ZIP_PATH is not absolute"
   exit 1
@@ -55,20 +54,35 @@ createZipForLinux() {
   local tmpdir=$(mktemp -d -t webkit-deploy-XXXXXXXXXX)
   mkdir -p $tmpdir
 
-  # copy all relevant binaries
-  cp -t $tmpdir ./WebKitBuild/Release/bin/MiniBrowser ./WebKitBuild/Release/bin/WebKit*Process
   # copy runner
   cp -t $tmpdir ../pw_run.sh
   # copy protocol
   node ../concat_protocol.js > $tmpdir/protocol.json
-  # copy all relevant shared objects
-  LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesGTK/Root/lib" ldd WebKitBuild/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
 
-  # we failed to nicely build libgdk_pixbuf - expect it in the env
-  rm $tmpdir/libgdk_pixbuf*
+  if [[ -n $USE_WPE ]]; then
+    # copy all relevant binaries
+    cp -t $tmpdir ./WebKitBuild/Release/bin/MiniBrowser ./WebKitBuild/Release/bin/WPE*Process
+    # copy all relevant shared objects
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesWPE/Root/lib" ldd WebKitBuild/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesWPE/Root/lib" ldd WebKitBuild/Release/bin/WPENetworkProcess | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesWPE/Root/lib" ldd WebKitBuild/Release/bin/WPEWebProcess | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
+    cd $tmpdir
+    ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
+    cd -
+  else
+    # copy all relevant binaries
+    cp -t $tmpdir ./WebKitBuild/Release/bin/MiniBrowser ./WebKitBuild/Release/bin/WebKit*Process
+    # copy all relevant shared objects
+    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesGTK/Root/lib" ldd WebKitBuild/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
+
+    # we failed to nicely build libgdk_pixbuf - expect it in the env
+    rm $tmpdir/libgdk_pixbuf*
+  fi
 
   # tar resulting directory and cleanup TMP.
-  zip -jr $ZIP_PATH $tmpdir
+  cd $tmpdir
+  zip --symlinks -r $ZIP_PATH ./
+  cd -
   rm -rf $tmpdir
 }
 

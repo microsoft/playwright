@@ -2,11 +2,11 @@
 
 function runOSX() {
   # if script is run as-is
-  if [ -d $SCRIPT_PATH/checkout/WebKitBuild/Release/MiniBrowser.app ]; then
+  if [[ -d $SCRIPT_PATH/checkout/WebKitBuild/Release/MiniBrowser.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH/checkout/WebKitBuild/Release"
-  elif [ -d $SCRIPT_PATH/MiniBrowser.app ]; then
+  elif [[ -d $SCRIPT_PATH/MiniBrowser.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH"
-  elif [ -d $SCRIPT_PATH/WebKitBuild/Release/MiniBrowser.app ]; then
+  elif [[ -d $SCRIPT_PATH/WebKitBuild/Release/MiniBrowser.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH/WebKitBuild/Release"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
@@ -18,14 +18,18 @@ function runOSX() {
 
 function runLinux() {
   # if script is run as-is
-  if [ -d $SCRIPT_PATH/checkout/WebKitBuild ]; then
-    LD_PATH="$SCRIPT_PATH/checkout/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/checkout/WebKitBuild/Release/bin"
+  DEPENDENCIES_FOLDER="DependenciesGTK"
+  if [[ "$*" == *--headless* ]]; then
+    DEPENDENCIES_FOLDER="DependenciesWPE";
+  fi
+  if [[ -d $SCRIPT_PATH/checkout/WebKitBuild ]]; then
+    LD_PATH="$SCRIPT_PATH/checkout/WebKitBuild/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/WebKitBuild/Release/bin"
     MINIBROWSER="$SCRIPT_PATH/checkout/WebKitBuild/Release/bin/MiniBrowser"
-  elif [ -f $SCRIPT_PATH/MiniBrowser ]; then
+  elif [[ -f $SCRIPT_PATH/MiniBrowser ]]; then
     LD_PATH="$SCRIPT_PATH"
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
-  elif [ -d $SCRIPT_PATH/WebKitBuild ]; then
-    LD_PATH="$SCRIPT_PATH/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/WebKitBuild/Release/bin"
+  elif [[ -d $SCRIPT_PATH/WebKitBuild ]]; then
+    LD_PATH="$SCRIPT_PATH/WebKitBuild/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/WebKitBuild/Release/bin"
     MINIBROWSER="$SCRIPT_PATH/WebKitBuild/Release/bin/MiniBrowser"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
@@ -35,9 +39,9 @@ function runLinux() {
 }
 
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
-if [ "$(uname)" == "Darwin" ]; then
+if [[ "$(uname)" == "Darwin" ]]; then
   runOSX "$@"
-elif [ "$(uname)" == "Linux" ]; then
+elif [[ "$(uname)" == "Linux" ]]; then
   runLinux "$@"
 else
   echo "ERROR: cannot run on this platform!" 1>&2
