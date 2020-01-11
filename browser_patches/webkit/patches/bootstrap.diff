@@ -9260,10 +9260,10 @@ index 0000000000000000000000000000000000000000..6113f4cd60a5d72b8ead61176cb43200
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..39be9012320b3a18d9dcc77a5c7d3cb3fba68ffc
+index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071add54c4e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,124 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9305,7 +9305,18 @@ index 0000000000000000000000000000000000000000..39be9012320b3a18d9dcc77a5c7d3cb3
 +void WebPageInspectorInputAgent::platformDispatchMouseEvent(const String& type, int x, int y, const int* optionalModifiers, const String* button, const int* optionalClickCount) {
 +    IntPoint locationInWindow(x, y);
 +
-+    NSEventModifierFlags modifiers = optionalModifiers ? *optionalModifiers : 0;
++    NSEventModifierFlags modifiers = 0;
++    if (optionalModifiers) {
++        int inputModifiers = *optionalModifiers;
++        if (inputModifiers & 1)
++            modifiers |= NSEventModifierFlagShift;
++        if (inputModifiers & 2)
++            modifiers |= NSEventModifierFlagControl;
++        if (inputModifiers & 4)
++            modifiers |= NSEventModifierFlagOption;
++        if (inputModifiers & 8)
++            modifiers |= NSEventModifierFlagCommand;
++    }
 +    int clickCount = optionalClickCount ? *optionalClickCount : 0;
 +
 +    NSTimeInterval timestamp = [NSDate timeIntervalSinceReferenceDate];
