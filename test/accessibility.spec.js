@@ -135,7 +135,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       };
       expect(findFocusedNode(await page.accessibility.snapshot({interestingOnly: false}))).toEqual(golden);
     });
-    it.skip(WEBKIT)('roledescription', async({page}) => {
+    it('roledescription', async({page}) => {
       await page.setContent('<div tabIndex=-1 aria-roledescription="foo">Hi</div>');
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0].roledescription).toEqual('foo');
@@ -177,6 +177,20 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           }, {
             role: 'pagetab',
             name: 'Tab2'
+          }]
+        } : WEBKIT ? {
+          role: 'WebArea',
+          name: '',
+          roledescription: 'HTML content',
+          children: [{
+            role: 'tab',
+            name: 'Tab1',
+            roledescription: 'tab',
+            selected: true
+          }, {
+            role: 'tab',
+            name: 'Tab2',
+            roledescription: 'tab',
           }]
         } : {
           role: 'WebArea',
