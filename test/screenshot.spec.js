@@ -159,7 +159,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROME, W
         height: 480,
         isMobile: true
       });
-      await page.goto(server.PREFIX + '/grid.html');
+      await page.goto(server.PREFIX + '/overflow.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-mobile.png');
     });
