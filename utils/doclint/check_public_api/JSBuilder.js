@@ -23,8 +23,9 @@ module.exports = { checkSources, expandPrefix };
 
 /**
  * @param {!Array<!import('../Source')>} sources
+ * @param {!Array<string>} externalDependencies
  */
-function checkSources(sources) {
+function checkSources(sources, externalDependencies) {
   // special treatment for Events.js
   const classEvents = new Map();
   const eventsSources = sources.filter(source => source.name().startsWith('events.ts'));
@@ -106,17 +107,21 @@ function checkSources(sources) {
     }
     if (fileName.endsWith('/api.ts') && ts.isExportSpecifier(node))
       apiClassNames.add(expandPrefix((node.propertyName || node.name).text));
-    if (!fileName.endsWith('platform.ts') && !fileName.includes('src/server/')) {
+    const isPlatform = fileName.endsWith('platform.ts');
+    if (!fileName.includes('src/server/')) {
       // Only relative imports.
       if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
         const module = node.moduleSpecifier.text;
-        if (!module.startsWith('.') || path.resolve(path.dirname(fileName), module).includes('src/server')) {
+        const isRelative = module.startsWith('.');
+        const isPlatformDependency = isPlatform && externalDependencies.includes(module);
+        const isServerDependency = path.resolve(path.dirname(fileName), module).includes('src/server');
+        if (isServerDependency || (!isRelative && !isPlatformDependency)) {
           const lac = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.moduleSpecifier.pos);
           errors.push(`Disallowed import "${module}" at ${node.getSourceFile().fileName}:${lac.line + 1}`);
         }
       }
       // No references to external types.
-      if (ts.isTypeReferenceNode(node)) {
+      if (!isPlatform && ts.isTypeReferenceNode(node)) {
         const isPlatformReference = ts.isQualifiedName(node.typeName) && ts.isIdentifier(node.typeName.left) && node.typeName.left.escapedText === 'platform';
         if (!isPlatformReference) {
           const type = checker.getTypeAtLocation(node);

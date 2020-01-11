@@ -33,9 +33,9 @@ const EXCLUDE_PROPERTIES = new Set([
  * @param {!Array<!Source>} mdSources
  * @return {!Promise<!Array<!Message>>}
  */
-module.exports = async function lint(page, mdSources, jsSources) {
+module.exports = async function lint(page, mdSources, jsSources, externalDependencies) {
   const mdResult = await mdBuilder(page, mdSources);
-  const jsResult = jsBuilder.checkSources(jsSources);
+  const jsResult = jsBuilder.checkSources(jsSources, externalDependencies);
   const jsDocumentation = filterJSDocumentation(jsSources, jsResult.documentation);
   const mdDocumentation = mdResult.documentation;
 

@@ -1,0 +1,13 @@
+<script src='../../web.js'></script>
+<script>
+async function setup(product, connectOptions) {
+  window.connect = window.playwrightweb(product);
+  window.browser = await window.connect(connectOptions);
+  window.context = await window.browser.newContext();
+  window.page = await window.context.newPage();
+}
+async function teardown() {
+  await window.context.close();
+  await window.browser.disconnect();
+}
+</script>

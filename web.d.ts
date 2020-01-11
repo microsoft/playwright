@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export * from './lib/api';
-export function playwright(browser: 'chromium'): import('./lib/api').ChromiumPlaywright;
-export function playwright(browser: 'firefox'): import('./lib/api').FirefoxPlaywright;
-export function playwright(browser: 'webkit'): import('./lib/api').WebKitPlaywright;
+function connect(browser: 'chromium'): import('./lib/api').ChromiumBrowser.connect;
+function connect(browser: 'firefox'): import('./lib/api').FirefoxBrowser.connect;
+function connect(browser: 'webkit'): import('./lib/api').WebKitBrowser.connect;
+export = connect;
