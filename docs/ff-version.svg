@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="108" height="20">
+<svg xmlns="http://www.w3.org/2000/svg" width="98" height="20">
   <linearGradient id="b" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <clipPath id="a">
-    <rect width="108" height="20" rx="3" fill="#fff"/>
+    <rect width="98" height="20" rx="3" fill="#fff"/>
   </clipPath>
   <g clip-path="url(#a)">
     <path fill="#555" d="M0 0h77v30H0z"/>
     <path fill="#ff6314" d="M49 0h58v20H49z"/>
-    <path fill="url(#b)" d="M0 0h108v20H0z"/>
+    <path fill="url(#b)" d="M0 0h98v20H0z"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
     <text x="250" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">
@@ -18,11 +18,11 @@
     <text x="250" y="140" transform="scale(.1)">
       Firefox
     </text>
-    <text x="785" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">
-      d930f46e
+    <text x="735" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">
+      73.0b3
     </text>
-    <text x="785" y="140" transform="scale(.1)">
-      d930f46e
+    <text x="735" y="140" transform="scale(.1)">
+      73.0b3
     </text>
   </g>
 </svg>

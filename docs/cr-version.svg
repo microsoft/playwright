@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="20">
   <linearGradient id="b" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <clipPath id="a">
-    <rect width="120" height="20" rx="3" fill="#fff"/>
+    <rect width="128" height="20" rx="3" fill="#fff"/>
   </clipPath>
   <g clip-path="url(#a)">
     <path fill="#555" d="M0 0h77v30H0z"/>
-    <path fill="#4888f4" d="M66 0h58v20H66z"/>
-    <path fill="url(#b)" d="M0 0h120v20H0z"/>
+    <path fill="#4888f4" d="M66 0h80v20H66z"/>
+    <path fill="url(#b)" d="M0 0h128v20H0z"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
     <text x="335" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">
@@ -18,11 +18,11 @@
     <text x="335" y="140" transform="scale(.1)">
       Chromium
     </text>
-    <text x="930" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">
-      r724623
+    <text x="970" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">
+      80.0.3987
     </text>
-    <text x="930" y="140" transform="scale(.1)">
-      r724623
+    <text x="970" y="140" transform="scale(.1)">
+      80.0.3987
     </text>
   </g>
 </svg>
