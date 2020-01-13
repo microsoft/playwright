@@ -136,6 +136,33 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
     });
+    it('should take element screenshot when default viewport is null and restore back', async({server, newPage}) => {
+      const page = await newPage({ viewport: null });
+      await page.setContent(`
+        <div style="height: 14px">oooo</div>
+        <style>
+        div.to-screenshot {
+          border: 1px solid blue;
+          width: 600px;
+          height: 600px;
+          margin-left: 50px;
+        }
+        ::-webkit-scrollbar{
+          display: none;
+        }
+        </style>
+        <div class="to-screenshot"></div>
+        <div class="to-screenshot"></div>
+        <div class="to-screenshot"></div>
+      `);
+      const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
+      const elementHandle = await page.$('div.to-screenshot');
+      const screenshot = await elementHandle.screenshot();
+      expect(screenshot).toBeInstanceOf(Buffer);
+      const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
+      expect(sizeBefore.width).toBe(sizeAfter.width);
+      expect(sizeBefore.height).toBe(sizeAfter.height);
+    });
   });
 
   describe('BrowserContext({setUserAgent})', function() {
