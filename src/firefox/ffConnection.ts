@@ -20,7 +20,7 @@ import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
-const debugProtocol = platform.debug('playwright:protocol');
+const debugProtocol = platform.debug('pw:protocol');
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),

@@ -122,6 +122,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   constructor(context: FrameExecutionContext, remoteObject: any) {
     super(context, remoteObject);
     this._page = context.frame._page;
+    return helper.logPublicApiCalls('handle', this);
   }
 
   asElement(): ElementHandle<T> | null {

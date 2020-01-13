@@ -20,8 +20,8 @@ import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
-const debugProtocol = platform.debug('playwright:protocol');
-const debugWrappedMessage = platform.debug('wrapped');
+const debugProtocol = platform.debug('pw:protocol');
+const debugWrappedMessage = platform.debug('pw:wrapped');
 
 // WKBrowserServer uses this special id to issue Browser.close command which we
 // should ignore.
