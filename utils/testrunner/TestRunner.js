@@ -399,10 +399,17 @@ class TestRunner extends EventEmitter {
     const result = {};
     if (termination) {
       result.result = termination.result;
+      result.exitCode = 130;
       result.terminationMessage = termination.message;
       result.terminationError = termination.error;
     } else {
-      result.result = this.failedTests().length ? TestResult.Failed : TestResult.Ok;
+      if (this.failedTests().length) {
+        result.result = TestResult.Failed;
+        result.exitCode = 1;
+      } else {
+        result.result = TestResult.Ok;
+        result.exitCode = 0;
+      }
     }
     this.emit(TestRunner.Events.Finished, result);
     if (session)
