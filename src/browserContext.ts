@@ -18,6 +18,7 @@
 import { Page } from './page';
 import * as network from './network';
 import * as types from './types';
+import { helper } from './helper';
 
 export interface BrowserContextDelegate {
   pages(): Promise<Page[]>;
@@ -58,7 +59,7 @@ export class BrowserContext {
     if (this._options.viewport)
       this._options.viewport = { ...this._options.viewport };
     if (this._options.geolocation)
-      this._options.geolocation = { ...this._options.geolocation };
+      this._options.geolocation = verifyGeolocation(this._options.geolocation);
   }
 
   async _initialize() {
@@ -100,16 +101,8 @@ export class BrowserContext {
   }
 
   async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
-    if (geolocation) {
-      geolocation.accuracy = geolocation.accuracy || 0;
-      const { longitude, latitude, accuracy } = geolocation;
-      if (longitude !== undefined && (longitude < -180 || longitude > 180))
-        throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
-      if (latitude !== undefined && (latitude < -90 || latitude > 90))
-        throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
-      if (accuracy < 0)
-        throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
-    }
+    if (geolocation)
+      geolocation = verifyGeolocation(geolocation);
     this._options.geolocation = geolocation || undefined;
     await this._delegate.setGeolocation(geolocation);
   }
@@ -120,4 +113,17 @@ export class BrowserContext {
     await this._delegate.close();
     this._closed = true;
   }
+}
+
+function verifyGeolocation(geolocation: types.Geolocation): types.Geolocation {
+  const result = { ...geolocation };
+  result.accuracy = result.accuracy || 0;
+  const { longitude, latitude, accuracy } = result;
+  if (!helper.isNumber(longitude) || longitude < -180 || longitude > 180)
+    throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
+  if (!helper.isNumber(latitude) || latitude < -90 || latitude > 90)
+    throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
+  if (!helper.isNumber(accuracy) || accuracy < 0)
+    throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
+  return result;
 }

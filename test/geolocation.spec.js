@@ -42,12 +42,31 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       }
       expect(error.message).toContain('Invalid longitude "200"');
     });
+    it('should throw with missing latitude', async({context}) => {
+      let error = null;
+      try {
+        await context.setGeolocation({longitude: 10});
+      } catch (e) {
+        error = e;
+      }
+      expect(error.message).toContain('Invalid latitude "undefined"');
+    });
     it('should not modify passed default options object', async({newContext}) => {
       const geolocation = { longitude: 10, latitude: 10 };
       const options = { geolocation };
       const context = await newContext(options);
       await context.setGeolocation({ longitude: 20, latitude: 20 });
       expect(options.geolocation).toBe(geolocation);
+    });
+    it('should throw with missing longitude in default options', async({newContext}) => {
+      let error = null;
+      try {
+        const context = await newContext({ geolocation: {latitude: 10} });
+        await context.close();
+      } catch (e) {
+        error = e;
+      }
+      expect(error.message).toContain('Invalid longitude "undefined"');
     });
     it('should use context options', async({newContext, server}) => {
       const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: {} };
