@@ -18,6 +18,7 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { Utils } from './utils';
 import { CSSEngine } from './cssSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
+import { TextEngine } from './textSelectorEngine';
 
 function createAttributeEngine(attribute: string): SelectorEngine {
   const engine: SelectorEngine = {
@@ -53,6 +54,7 @@ class Injected {
     const defaultEngines = [
       CSSEngine,
       XPathEngine,
+      TextEngine,
       createAttributeEngine('id'),
       createAttributeEngine('data-testid'),
       createAttributeEngine('data-test-id'),

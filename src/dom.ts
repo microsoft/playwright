@@ -504,7 +504,7 @@ function normalizeSelector(selector: string): string {
   if (selector.startsWith('//'))
     return 'xpath=' + selector;
   if (selector.startsWith('"'))
-    return 'zs=' + selector;
+    return 'text=' + selector;
   return 'css=' + selector;
 }
 

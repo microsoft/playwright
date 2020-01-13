@@ -56,6 +56,11 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const idAttribute = await page.$eval('xpath=/html/body/section', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
+    it('should work with text selector', async({page, server}) => {
+      await page.setContent('<section id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('text=43543', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
     it('should auto-detect css selector', async({page, server}) => {
       await page.setContent('<section id="testAttribute">43543</section>');
       const idAttribute = await page.$eval('section', e => e.id);
@@ -167,7 +172,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const element = await page.$('//html/body/section');
       expect(element).toBeTruthy();
     });
-    it('should auto-detect zs selector', async({page, server}) => {
+    it('should auto-detect text selector', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const element = await page.$('"test"');
       expect(element).toBeTruthy();
@@ -460,6 +465,47 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(await page.$eval(`zs="ya"~"hey"~"hello"`, e => e.outerHTML)).toBe('<div id="target">hello</div>');
       expect(await page.$eval(`zs="ya"~"hey"~"unique"`, e => e.outerHTML).catch(e => e.message)).toBe('Error: failed to find element matching selector "zs="ya"~"hey"~"unique""');
       expect(await page.$$eval(`zs="ya" ~ "hey" ~ "hello"`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div id="target">hello</div>\n<div id="target2">hello</div>');
+    });
+  });
+
+  describe('text selector', () => {
+    it('query', async ({page}) => {
+      await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
+      expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
+      expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
+      expect(await page.$eval(`text=/^[ay]+$/`, e => e.outerHTML)).toBe('<div>ya</div>');
+      expect(await page.$eval(`text=/Ya/i`, e => e.outerHTML)).toBe('<div>ya</div>');
+      expect(await page.$eval(`text=ye`, e => e.outerHTML)).toBe('<div>\nye  </div>');
+
+      await page.setContent(`<div> ye </div><div>ye</div>`);
+      expect(await page.$eval(`text="ye"`, e => e.outerHTML)).toBe('<div>ye</div>');
+
+      await page.setContent(`<div>yo</div><div>"ya</div><div> hello world! </div>`);
+      expect(await page.$eval(`text="\\"ya"`, e => e.outerHTML)).toBe('<div>"ya</div>');
+      expect(await page.$eval(`text=/hello/`, e => e.outerHTML)).toBe('<div> hello world! </div>');
+      expect(await page.$eval(`text=/^\\s*heLLo/i`, e => e.outerHTML)).toBe('<div> hello world! </div>');
+
+      await page.setContent(`<div>yo<div>ya</div>hey<div>hey</div></div>`);
+      expect(await page.$eval(`text=hey`, e => e.outerHTML)).toBe('<div>yo<div>ya</div>hey<div>hey</div></div>');
+
+      await page.setContent(`<div>yo<span id="s1"></span></div><div>yo<span id="s2"></span><span id="s3"></span></div>`);
+      expect(await page.$$eval(`text=yo`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div>yo<span id="s1"></span></div>\n<div>yo<span id="s2"></span><span id="s3"></span></div>');
+    });
+
+    it('create', async ({page}) => {
+      await page.setContent(`<div>yo</div><div>"ya</div><div>ye ye</div>`);
+      expect(await page._createSelector('text', await page.$('div'))).toBe('yo');
+      expect(await page._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');
+      expect(await page._createSelector('text', await page.$('div:nth-child(3)'))).toBe('"ye ye"');
+
+      await page.setContent(`<div>yo</div><div>yo<div>ya</div>hey</div>`);
+      expect(await page._createSelector('text', await page.$('div:nth-child(2)'))).toBe('hey');
+
+      await page.setContent(`<div> yo <div></div>ya</div>`);
+      expect(await page._createSelector('text', await page.$('div'))).toBe('yo');
+
+      await page.setContent(`<div> "yo <div></div>ya</div>`);
+      expect(await page._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
     });
   });
 };
