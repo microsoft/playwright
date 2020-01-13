@@ -68,9 +68,9 @@ export type Credentials = {
 };
 
 export type Geolocation = {
-  longitude?: number;
-  latitude?: number;
-  accuracy?: number | undefined;
+  longitude: number;
+  latitude: number;
+  accuracy?: number;
 };
 
 export type SelectOption = {
