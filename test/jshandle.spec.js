@@ -115,6 +115,11 @@ module.exports.describe = function({testRunner, expect, CHROMIUM, FFOX, WEBKIT})
       expect(foo).toBeTruthy();
       expect(await foo.jsonValue()).toBe('bar');
     });
+    it('should return empty map for non-objects', async({page, server}) => {
+      const aHandle = await page.evaluateHandle(() => 123);
+      const properties = await aHandle.getProperties();
+      expect(properties.size).toBe(0);
+    });
     it('should return even non-own properties', async({page, server}) => {
       const aHandle = await page.evaluateHandle(() => {
         class A {

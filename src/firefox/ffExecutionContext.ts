@@ -113,9 +113,12 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+    const objectId = handle._remoteObject.objectId;
+    if (!objectId)
+      return new Map();
     const response = await this._session.send('Runtime.getObjectProperties', {
       executionContextId: this._executionContextId,
-      objectId: handle._remoteObject.objectId,
+      objectId,
     });
     const result = new Map();
     for (const property of response.properties)
