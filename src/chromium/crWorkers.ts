@@ -28,7 +28,7 @@ export class CRWorkers {
       if (event.targetInfo.type !== 'worker')
         return;
       const url = event.targetInfo.url;
-      const session = CRConnection.fromSession(client).session(event.sessionId);
+      const session = CRConnection.fromSession(client).session(event.sessionId)!;
       const worker = new Worker(url);
       page._addWorker(event.sessionId, worker);
       session.once('Runtime.executionContextCreated', async event => {
@@ -36,7 +36,7 @@ export class CRWorkers {
       });
       // This might fail if the target is closed before we recieve all execution contexts.
       session.send('Runtime.enable', {}).catch(debugError);
-      session.on('Runtime.consoleAPICalled', event => page._addConsoleMessage(event.type, event.args.map(o => worker._existingExecutionContext._createHandle(o)), toConsoleMessageLocation(event.stackTrace)));
+      session.on('Runtime.consoleAPICalled', event => page._addConsoleMessage(event.type, event.args.map(o => worker._existingExecutionContext!._createHandle(o)), toConsoleMessageLocation(event.stackTrace)));
       session.on('Runtime.exceptionThrown', exception => page.emit(Events.Page.PageError, exceptionToError(exception.exceptionDetails)));
     });
     client.on('Target.detachedFromTarget', event => page._removeWorker(event.sessionId));

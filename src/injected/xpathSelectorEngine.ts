@@ -23,9 +23,10 @@ export const XPathEngine: SelectorEngine = {
   name: 'xpath',
 
   create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
-    const document = root instanceof Document ? root : root.ownerDocument;
-    if (!document)
+    const maybeDocument = root instanceof Document ? root : root.ownerDocument;
+    if (!maybeDocument)
       return;
+    const document = maybeDocument!;
 
     const xpathCache = new Map<string, Element[]>();
     if (type === 'notext')

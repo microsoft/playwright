@@ -122,7 +122,7 @@ export class WKPlaywright implements Playwright {
     let connectOptions: WKConnectOptions | undefined = undefined;
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: webkitExecutable,
+      executablePath: webkitExecutable!,
       args: webkitArguments,
       env,
       handleSIGINT,
@@ -130,7 +130,6 @@ export class WKPlaywright implements Playwright {
       handleSIGHUP,
       dumpio,
       pipe: true,
-      tempDir: null,
       attemptToGracefullyClose: async () => {
         if (!connectOptions)
           return Promise.reject();
@@ -191,13 +190,13 @@ export class WKPlaywright implements Playwright {
       ...defaultOptions,
       ...options,
     };
-    assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
+    assert(!!(downloadURLs as any)[options.platform!], 'Unsupported platform: ' + options.platform);
 
-    return new BrowserFetcher(options.path, options.platform, this._revision, (platform: string, revision: string) => {
+    return new BrowserFetcher(options.path!, options.platform!, this._revision, (platform: string, revision: string) => {
       return {
         downloadUrl: (platform === 'mac') ?
-          util.format(downloadURLs[platform], options.host, revision, getMacVersion()) :
-          util.format(downloadURLs[platform], options.host, revision),
+          util.format(downloadURLs[platform], options!.host, revision, getMacVersion()) :
+          util.format((downloadURLs as any)[platform], options!.host, revision),
         executablePath: 'pw_run.sh',
       };
     });
@@ -211,9 +210,9 @@ export class WKPlaywright implements Playwright {
   }
 }
 
-const DEFAULT_ARGS = [];
+const DEFAULT_ARGS: string[] = [];
 
-let cachedMacVersion = undefined;
+let cachedMacVersion: string | undefined = undefined;
 function getMacVersion() {
   if (!cachedMacVersion) {
     const [major, minor] = execSync('sw_vers -productVersion').toString('utf8').trim().split('.');

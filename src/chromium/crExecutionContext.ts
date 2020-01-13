@@ -132,8 +132,11 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+    const objectId = toRemoteObject(handle).objectId;
+    if (!objectId)
+      return new Map();
     const response = await this._client.send('Runtime.getProperties', {
-      objectId: toRemoteObject(handle).objectId,
+      objectId,
       ownProperties: true
     });
     const result = new Map();

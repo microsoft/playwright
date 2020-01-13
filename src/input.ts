@@ -137,10 +137,10 @@ export class Keyboard {
   }
 
   async type(text: string, options?: { delay?: number }) {
-    const delay = (options && options.delay) || null;
+    const delay = (options && options.delay) || undefined;
     for (const char of text) {
       if (keyboardLayout.keyDefinitions[char]) {
-        await this.press(char, {delay});
+        await this.press(char, { delay });
       } else {
         if (delay)
           await new Promise(f => setTimeout(f, delay));

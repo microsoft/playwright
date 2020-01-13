@@ -67,7 +67,7 @@ export async function releaseObject(client: CRSession, remoteObject: Protocol.Ru
 
 export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<platform.BufferType> {
   let eof = false;
-  let fd;
+  let fd: number | undefined;
   if (path)
     fd = await platform.openFdAsync(path, 'w');
   const bufs = [];
@@ -77,16 +77,16 @@ export async function readProtocolStream(client: CRSession, handle: string, path
     const buf = platform.Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
     bufs.push(buf);
     if (path)
-      await platform.writeFdAsync(fd, buf);
+      await platform.writeFdAsync(fd!, buf);
   }
   if (path)
-    await platform.closeFdAsync(fd);
+    await platform.closeFdAsync(fd!);
   await client.send('IO.close', {handle});
   let resultBuffer = null;
   try {
     resultBuffer = platform.Buffer.concat(bufs);
   } finally {
-    return resultBuffer;
+    return resultBuffer!;
   }
 }
 

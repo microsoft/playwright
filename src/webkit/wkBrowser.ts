@@ -124,20 +124,20 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
     if (this._firstPageProxyCallback) {
       this._firstPageProxyCallback();
-      this._firstPageProxyCallback = null;
+      this._firstPageProxyCallback = undefined;
     }
   }
 
   _onPageProxyDestroyed(event: Protocol.Browser.pageProxyDestroyedPayload) {
     const pageProxyId = event.pageProxyId;
-    const pageProxy = this._pageProxies.get(pageProxyId);
+    const pageProxy = this._pageProxies.get(pageProxyId)!;
     pageProxy.didClose();
     pageProxy.dispose();
     this._pageProxies.delete(pageProxyId);
   }
 
   _onPageProxyMessageReceived(event: PageProxyMessageReceivedPayload) {
-    const pageProxy = this._pageProxies.get(event.pageProxyId);
+    const pageProxy = this._pageProxies.get(event.pageProxyId)!;
     pageProxy.dispatchMessageToSession(event.message);
   }
 
@@ -165,14 +165,14 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
       newPage: async (): Promise<Page> => {
         const { pageProxyId } = await this._browserSession.send('Browser.createPage', { browserContextId });
-        const pageProxy = this._pageProxies.get(pageProxyId);
+        const pageProxy = this._pageProxies.get(pageProxyId)!;
         return await pageProxy.page();
       },
 
       close: async (): Promise<void> => {
         assert(browserContextId, 'Non-incognito profiles cannot be closed!');
-        await this._browserSession.send('Browser.deleteContext', { browserContextId });
-        this._contexts.delete(browserContextId);
+        await this._browserSession.send('Browser.deleteContext', { browserContextId: browserContextId! });
+        this._contexts.delete(browserContextId!);
       },
 
       cookies: async (): Promise<network.NetworkCookie[]> => {

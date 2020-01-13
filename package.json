@@ -51,6 +51,7 @@
     "@types/mime": "^2.0.0",
     "@types/node": "^8.10.34",
     "@types/pngjs": "^3.4.0",
+    "@types/proxy-from-env": "^1.0.0",
     "@types/rimraf": "^2.0.2",
     "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "^2.6.1",

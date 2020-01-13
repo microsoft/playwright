@@ -207,7 +207,7 @@ class CRAXNode implements accessibility.AXNode {
 
     const node: {[x in keyof accessibility.SerializedAXNode]: any} = {
       role: this._role,
-      name: this._payload.name.value || ''
+      name: this._payload.name ? (this._payload.name.value || '') : ''
     };
 
     const userStringProperties: Array<keyof accessibility.SerializedAXNode> = [
@@ -286,7 +286,7 @@ class CRAXNode implements accessibility.AXNode {
       nodeById.set(payload.nodeId, new CRAXNode(client, payload));
     for (const node of nodeById.values()) {
       for (const childId of node._payload.childIds || [])
-        node._children.push(nodeById.get(childId));
+        node._children.push(nodeById.get(childId)!);
     }
     return nodeById.values().next().value;
   }

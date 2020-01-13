@@ -36,7 +36,7 @@ function toModifiersMask(modifiers: Set<input.Modifier>): number {
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   private readonly _pageProxySession: WKSession;
-  private _session: WKSession;
+  private _session?: WKSession;
 
   constructor(session: WKSession) {
     this._pageProxySession = session;
@@ -83,7 +83,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async sendText(text: string): Promise<void> {
-    await this._session.send('Page.insertText', { text });
+    await this._session!.send('Page.insertText', { text });
   }
 }
 

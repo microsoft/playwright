@@ -144,7 +144,7 @@ export class CRPlaywright implements Playwright {
     const usePipe = chromeArguments.includes('--remote-debugging-pipe');
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: chromeExecutable,
+      executablePath: chromeExecutable!,
       args: chromeArguments,
       env,
       handleSIGINT,
@@ -152,7 +152,7 @@ export class CRPlaywright implements Playwright {
       handleSIGHUP,
       dumpio,
       pipe: usePipe,
-      tempDir: temporaryUserDataDir,
+      tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
         if (!connectOptions)
           return Promise.reject();
@@ -246,9 +246,9 @@ export class CRPlaywright implements Playwright {
       ...defaultOptions,
       ...options,
     };
-    assert(!!(downloadURLs as any)[options.platform], 'Unsupported platform: ' + options.platform);
+    assert(!!(downloadURLs as any)[options.platform!], 'Unsupported platform: ' + options.platform);
 
-    return new BrowserFetcher(options.path, options.platform, this._revision, (platform: string, revision: string) => {
+    return new BrowserFetcher(options.path!, options.platform!, this._revision, (platform: string, revision: string) => {
       let archiveName = '';
       let executablePath = '';
       if (platform === 'linux') {

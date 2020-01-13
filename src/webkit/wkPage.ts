@@ -59,6 +59,7 @@ export class WKPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._networkManager = new WKNetworkManager(this._page, pageProxySession);
     this._workers = new WKWorkers(this._page);
+    this._session = undefined as any as WKSession;
   }
 
   async _initializePageProxySession() {
@@ -173,7 +174,7 @@ export class WKPage implements PageDelegate {
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
-    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId);
+    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
     if (!frameTree.childFrames)
       return;
@@ -233,8 +234,8 @@ export class WKPage implements PageDelegate {
   async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber, source } = event.message;
     if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
-      const parsedObjectId = JSON.parse(parameters[1].objectId);
-      const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
+      const parsedObjectId = JSON.parse(parameters[1].objectId!);
+      const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId)!;
       this._page._onBindingCalled(parameters[2].value, context);
       return;
     }
@@ -245,7 +246,7 @@ export class WKPage implements PageDelegate {
       return;
     }
 
-    let derivedType: string = type;
+    let derivedType: string = type || '';
     if (type === 'log')
       derivedType = level;
     else if (type === 'timing')
@@ -256,13 +257,13 @@ export class WKPage implements PageDelegate {
       let context: dom.FrameExecutionContext | null = null;
       if (p.objectId) {
         const objectId = JSON.parse(p.objectId);
-        context = this._contextIdToContext.get(objectId.injectedScriptId);
+        context = this._contextIdToContext.get(objectId.injectedScriptId)!;
       } else {
         context = mainFrameContext;
       }
       return context._createHandle(p);
     });
-    this._page._addConsoleMessage(derivedType, handles, { url, lineNumber: lineNumber - 1, columnNumber: columnNumber - 1 }, handles.length ? undefined : text);
+    this._page._addConsoleMessage(derivedType, handles, { url, lineNumber: (lineNumber || 1) - 1, columnNumber: (columnNumber || 1) - 1 }, handles.length ? undefined : text);
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
@@ -276,7 +277,7 @@ export class WKPage implements PageDelegate {
   }
 
   async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
-    const context = await this._page._frameManager.frame(event.frameId)._mainContext();
+    const context = await this._page._frameManager.frame(event.frameId)!._mainContext();
     const handle = context._createHandle(event.element).asElement()!;
     this._page._onFileChooserOpened(handle);
   }
@@ -418,7 +419,7 @@ export class WKPage implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const nodeInfo = await this._session.send('DOM.describeNode', {
-      objectId: toRemoteObject(handle).objectId
+      objectId: toRemoteObject(handle).objectId!
     });
     if (!nodeInfo.contentFrameId)
       return null;
@@ -462,7 +463,7 @@ export class WKPage implements PageDelegate {
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('DOM.getContentQuads', {
-      objectId: toRemoteObject(handle).objectId
+      objectId: toRemoteObject(handle).objectId!
     }).catch(debugError);
     if (!result)
       return null;
@@ -478,8 +479,8 @@ export class WKPage implements PageDelegate {
     return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
-  async setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void> {
-    const objectId = toRemoteObject(handle).objectId;
+  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
+    const objectId = toRemoteObject(handle).objectId!;
     await this._session.send('DOM.setInputFiles', { objectId, files });
   }
 

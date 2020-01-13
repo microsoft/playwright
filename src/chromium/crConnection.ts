@@ -43,7 +43,7 @@ export class CRConnection extends platform.EventEmitter {
   }
 
   static fromSession(session: CRSession): CRConnection {
-    return session._connection;
+    return session._connection!;
   }
 
   session(sessionId: string): CRSession | null {
@@ -84,8 +84,8 @@ export class CRConnection extends platform.EventEmitter {
     if (this._closed)
       return;
     this._closed = true;
-    this._transport.onmessage = null;
-    this._transport.onclose = null;
+    this._transport.onmessage = undefined;
+    this._transport.onclose = undefined;
     for (const session of this._sessions.values())
       session._onClosed();
     this._sessions.clear();
@@ -99,12 +99,12 @@ export class CRConnection extends platform.EventEmitter {
 
   async createSession(targetInfo: Protocol.Target.TargetInfo): Promise<CRSession> {
     const { sessionId } = await this.rootSession.send('Target.attachToTarget', { targetId: targetInfo.targetId, flatten: true });
-    return this._sessions.get(sessionId);
+    return this._sessions.get(sessionId)!;
   }
 
   async createBrowserSession(): Promise<CRSession> {
     const { sessionId } = await this.rootSession.send('Target.attachToBrowserTarget');
-    return this._sessions.get(sessionId);
+    return this._sessions.get(sessionId)!;
   }
 }
 
@@ -113,7 +113,7 @@ export const CRSessionEvents = {
 };
 
 export class CRSession extends platform.EventEmitter {
-  _connection: CRConnection;
+  _connection: CRConnection | null;
   private _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private _targetType: string;
   private _sessionId: string;
@@ -128,6 +128,12 @@ export class CRSession extends platform.EventEmitter {
     this._connection = connection;
     this._targetType = targetType;
     this._sessionId = sessionId;
+
+    this.on = super.on;
+    this.addListener = super.addListener;
+    this.off = super.removeListener;
+    this.removeListener = super.removeListener;
+    this.once = super.once;
   }
 
   send<T extends keyof Protocol.CommandParameters>(
@@ -144,7 +150,7 @@ export class CRSession extends platform.EventEmitter {
 
   _onMessage(object: { id?: number; method: string; params: any; error: { message: string; data: any; }; result?: any; }) {
     if (object.id && this._callbacks.has(object.id)) {
-      const callback = this._callbacks.get(object.id);
+      const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.error)
         callback.reject(createProtocolError(callback.error, callback.method, object));

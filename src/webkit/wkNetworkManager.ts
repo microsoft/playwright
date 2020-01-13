@@ -35,6 +35,7 @@ export class WKNetworkManager {
   constructor(page: Page, pageProxySession: WKSession) {
     this._page = page;
     this._pageProxySession = pageProxySession;
+    this._session = undefined as any as WKSession;
   }
 
   async initializePageProxySession(credentials: types.Credentials | null) {
@@ -96,13 +97,13 @@ export class WKNetworkManager {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new InterceptableRequest(this._session, this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
+    const request = new InterceptableRequest(this._session, !!this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
 
   _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
-    this._requestIdToRequest.get(event.requestId)._interceptedCallback();
+    this._requestIdToRequest.get(event.requestId)!._interceptedCallback();
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
@@ -141,8 +142,9 @@ export class WKNetworkManager {
 
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
-    if (request.request.response())
-      request.request.response()._requestFinished();
+    const response = request.request.response();
+    if (response)
+      response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestFinished(request.request);
   }
@@ -192,7 +194,7 @@ class InterceptableRequest implements network.RequestDelegate {
   readonly request: network.Request;
   _requestId: string;
   _documentId: string | undefined;
-  _interceptedCallback: () => void;
+  _interceptedCallback: () => void = () => {};
   private _interceptedPromise: Promise<unknown>;
 
   constructor(session: WKSession, allowInterception: boolean, frame: frames.Frame | null, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[], documentId: string | undefined) {

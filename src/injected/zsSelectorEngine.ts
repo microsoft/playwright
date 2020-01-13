@@ -349,7 +349,12 @@ class Engine {
       for (let [element, boundary] of currentStep) {
         let next: (Element | SelectorRoot)[] = [];
         if (token.combinator === '^') {
-          next = element === boundary ? [] : (parentOrRoot(element) ? [parentOrRoot(element)] : []);
+          if (element === boundary) {
+            next = [];
+          } else {
+            const parent = parentOrRoot(element);
+            next = parent ? [parent] : [];
+          }
         } else if (token.combinator === '>') {
           boundary = element;
           next = this._matchChildren(element, token, all);
@@ -367,7 +372,7 @@ class Engine {
             }
             if (element === boundary)
               break;
-            element = parentOrRoot(element);
+            element = parentOrRoot(element)!;
           }
         }
         for (const nextElement of next) {

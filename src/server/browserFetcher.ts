@@ -56,12 +56,12 @@ export class BrowserFetcher {
 
   canDownload(revision: string = this._preferredRevision): Promise<boolean> {
     const url = this._params(this._platform, revision).downloadUrl;
-    let resolve;
+    let resolve: (result: boolean) => void = () => {};
     const promise = new Promise<boolean>(x => resolve = x);
     const request = httpRequest(url, 'HEAD', response => {
       resolve(response.statusCode === 200);
     });
-    request.on('error', error => {
+    request.on('error', (error: any) => {
       console.error(error);
       resolve(false);
     });
@@ -92,8 +92,8 @@ export class BrowserFetcher {
   async localRevisions(): Promise<string[]> {
     if (!await existsAsync(this._downloadsFolder))
       return [];
-    const fileNames = await readdirAsync(this._downloadsFolder);
-    return fileNames.map(fileName => parseFolderPath(fileName)).filter(entry => entry && entry.platform === this._platform).map(entry => entry.revision);
+    const fileNames: string[] = await readdirAsync(this._downloadsFolder);
+    return fileNames.map(fileName => parseFolderPath(fileName)).filter(entry => entry && entry.platform === this._platform).map(entry => entry!.revision);
   }
 
   async remove(revision: string = this._preferredRevision) {
@@ -123,8 +123,9 @@ function parseFolderPath(folderPath: string): { platform: string; revision: stri
   return {platform, revision};
 }
 
-function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | null): Promise<any> {
-  let fulfill, reject;
+function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | undefined): Promise<any> {
+  let fulfill: () => void = () => {};
+  let reject: (error: any) => void = () => {};
   let downloadedBytes = 0;
   let totalBytes = 0;
 
@@ -146,12 +147,12 @@ function downloadFile(url: string, destinationPath: string, progressCallback: On
     if (progressCallback)
       response.on('data', onData);
   });
-  request.on('error', error => reject(error));
+  request.on('error', (error: any) => reject(error));
   return promise;
 
-  function onData(chunk) {
+  function onData(chunk: string) {
     downloadedBytes += chunk.length;
-    progressCallback(downloadedBytes, totalBytes);
+    progressCallback!(downloadedBytes, totalBytes);
   }
 }
 
@@ -186,7 +187,7 @@ function httpRequest(url: string, method: string, response: (r: any) => void) {
     }
   }
 
-  const requestCallback = res => {
+  const requestCallback = (res: any) => {
     if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location)
       httpRequest(res.headers.location, method, response);
     else

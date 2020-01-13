@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "noImplicitAny": true
+    "strict": true
   },
   "extends": "../../tsconfig.json"
 }

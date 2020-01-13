@@ -46,7 +46,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   _targets = new Map<string, CRTarget>();
 
   private _tracingRecording = false;
-  private _tracingPath = '';
+  private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
   static async connect(options: CRConnectOptions): Promise<CRBrowser> {
@@ -79,20 +79,21 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
       pages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
-        return pages.filter(page => !!page);
+        return pages.filter(page => !!page) as Page[];
       },
 
       newPage: async (): Promise<Page> => {
         const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
-        const target = this._targets.get(targetId);
+        const target = this._targets.get(targetId)!;
         assert(await target._initializedPromise, 'Failed to create target for page');
-        return target.page();
+        const page = await target.page();
+        return page!;
       },
 
       close: async (): Promise<void> => {
         assert(contextId, 'Non-incognito profiles cannot be closed!');
-        await this._client.send('Target.disposeBrowserContext', {browserContextId: contextId || undefined});
-        this._contexts.delete(contextId);
+        await this._client.send('Target.disposeBrowserContext', { browserContextId: contextId! });
+        this._contexts.delete(contextId!);
       },
 
       cookies: async (): Promise<network.NetworkCookie[]> => {
@@ -171,7 +172,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   async _targetCreated(event: Protocol.Target.targetCreatedPayload) {
     const targetInfo = event.targetInfo;
     const {browserContextId} = targetInfo;
-    const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId) : this._defaultContext;
+    const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId)! : this._defaultContext;
 
     const target = new CRTarget(this, targetInfo, context, () => this._connection.createSession(targetInfo));
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
@@ -182,7 +183,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   }
 
   async _targetDestroyed(event: { targetId: string; }) {
-    const target = this._targets.get(event.targetId);
+    const target = this._targets.get(event.targetId)!;
     target._initializedCallback(false);
     this._targets.delete(event.targetId);
     target._didClose();
@@ -191,7 +192,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   }
 
   _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
-    const target = this._targets.get(event.targetInfo.targetId);
+    const target = this._targets.get(event.targetInfo.targetId)!;
     assert(target, 'target should exist before targetInfoChanged');
     const previousURL = target.url();
     const wasInitialized = target._isInitialized;
@@ -241,7 +242,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   }
 
   browserTarget(): CRTarget {
-    return [...this._targets.values()].find(t => t.type() === 'browser');
+    return [...this._targets.values()].find(t => t.type() === 'browser')!;
   }
 
   serviceWorker(target: CRTarget): Promise<Worker | null> {
@@ -279,10 +280,10 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     assert(this._tracingClient, 'Tracing was not started.');
     let fulfill: (buffer: platform.BufferType) => void;
     const contentPromise = new Promise<platform.BufferType>(x => fulfill = x);
-    this._tracingClient.once('Tracing.tracingComplete', event => {
-      readProtocolStream(this._tracingClient, event.stream, this._tracingPath).then(fulfill);
+    this._tracingClient!.once('Tracing.tracingComplete', event => {
+      readProtocolStream(this._tracingClient!, event.stream!, this._tracingPath).then(fulfill);
     });
-    await this._tracingClient.send('Tracing.end');
+    await this._tracingClient!.send('Tracing.end');
     this._tracingRecording = false;
     return contentPromise;
   }
@@ -323,5 +324,5 @@ export async function createTransport(options: CRConnectOptions): Promise<Connec
     }
     transport = await platform.createWebSocketTransport(connectionURL);
   }
-  return SlowMoTransport.wrap(transport, options.slowMo);
+  return SlowMoTransport.wrap(transport!, options.slowMo);
 }

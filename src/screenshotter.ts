@@ -29,10 +29,10 @@ export class Screenshotter {
     this._page = page;
 
     const browserContext = page.browserContext();
-    this._queue = browserContext[taskQueueSymbol];
+    this._queue = (browserContext as any)[taskQueueSymbol];
     if (!this._queue) {
       this._queue = new TaskQueue();
-      browserContext[taskQueueSymbol] = this._queue;
+      (browserContext as any)[taskQueueSymbol] = this._queue;
     }
   }
 
@@ -45,7 +45,7 @@ export class Screenshotter {
       if (!viewport) {
         viewportSize = await this._page.evaluate(() => {
           if (!document.body || !document.documentElement)
-            return null;
+            return;
           return {
             width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
             height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
@@ -79,13 +79,13 @@ export class Screenshotter {
         options.clip = trimClipToViewport(viewport, options.clip);
       }
 
-      const result = await this._screenshot(format, options, overridenViewport || viewport);
+      const result = await this._screenshot(format, options, (overridenViewport || viewport)!);
 
       if (overridenViewport) {
         if (viewport)
           await this._page.setViewport(viewport);
         else
-          await this._page._delegate.resetViewport(viewportSize);
+          await this._page._delegate.resetViewport(viewportSize!);
       }
       return result;
     }).catch(rewriteError);
@@ -97,12 +97,15 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       let overridenViewport: types.Viewport | undefined;
 
-      let boundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
-      assert(boundingBox, 'Node is either not visible or not an HTMLElement');
+      let maybeBoundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
+      assert(maybeBoundingBox, 'Node is either not visible or not an HTMLElement');
+      let boundingBox = maybeBoundingBox!;
       assert(boundingBox.width !== 0, 'Node has 0 width.');
       assert(boundingBox.height !== 0, 'Node has 0 height.');
       boundingBox = enclosingIntRect(boundingBox);
-      const viewport = this._page.viewport();
+
+      // TODO: viewport may be null here.
+      const viewport = this._page.viewport()!;
 
       if (!this._page._delegate.canScreenshotOutsideViewport()) {
         if (boundingBox.width > viewport.width || boundingBox.height > viewport.height) {
@@ -115,7 +118,9 @@ export class Screenshotter {
         }
 
         await handle.scrollIntoViewIfNeeded();
-        boundingBox = enclosingIntRect(await this._page._delegate.getBoundingBoxForScreenshot(handle));
+        maybeBoundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
+        assert(maybeBoundingBox, 'Node is either not visible or not an HTMLElement');
+        boundingBox = enclosingIntRect(maybeBoundingBox!);
       }
 
       if (!overridenViewport)
@@ -159,7 +164,7 @@ class TaskQueue {
   }
 }
 
-function trimClipToViewport(viewport: types.Viewport | null, clip: types.Rect | null): types.Rect | null {
+function trimClipToViewport(viewport: types.Viewport | null, clip: types.Rect | undefined): types.Rect | undefined {
   if (!clip || !viewport)
     return clip;
   const p1 = { x: Math.min(clip.x, viewport.width), y: Math.min(clip.y, viewport.height) };

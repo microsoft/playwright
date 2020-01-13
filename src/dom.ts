@@ -62,7 +62,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return result;
   }
 
-  _createHandle(remoteObject: any): js.JSHandle | null {
+  _createHandle(remoteObject: any): js.JSHandle {
     if (this.frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this, remoteObject);
     return super._createHandle(remoteObject);
@@ -88,7 +88,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     );
     if (!handle.asElement())
       await handle.dispose();
-    return handle.asElement();
+    return handle.asElement() as ElementHandle<Element>;
   }
 
   async _$array(selector: string, scope?: ElementHandle): Promise<js.JSHandle<Element[]>> {
@@ -103,9 +103,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
     const arrayHandle = await this._$array(selector, scope);
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
-    const result = [];
+    const result: ElementHandle<Element>[] = [];
     for (const property of properties.values()) {
-      const elementHandle = property.asElement();
+      const elementHandle = property.asElement() as ElementHandle<Element>;
       if (elementHandle)
         result.push(elementHandle);
       else
@@ -121,6 +121,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   constructor(context: FrameExecutionContext, remoteObject: any) {
     super(context, remoteObject);
+    this._context = context;
     this._page = context.frame._page;
   }
 
@@ -130,7 +131,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   _evaluateInUtility: types.EvaluateOn<T> = async (pageFunction, ...args) => {
     const utility = await this._context.frame._utilityContext();
-    return utility.evaluate(pageFunction, this, ...args);
+    return utility.evaluate(pageFunction as any, this, ...args);
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
@@ -241,10 +242,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
       this._evaluateInUtility((node: Node) => {
-        if (node.nodeType !== Node.ELEMENT_NODE)
+        if (node.nodeType !== Node.ELEMENT_NODE || !node.ownerDocument || !node.ownerDocument.defaultView)
           return { x: 0, y: 0 };
         const style = node.ownerDocument.defaultView.getComputedStyle(node as Element);
-        return { x: parseInt(style.borderLeftWidth, 10), y: parseInt(style.borderTopWidth, 10) };
+        return { x: parseInt(style.borderLeftWidth || '', 10), y: parseInt(style.borderTopWidth || '', 10) };
       }).catch(debugError),
     ]);
     const point = { x: relativePoint.x, y: relativePoint.y };
@@ -316,7 +317,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const element = node as HTMLSelectElement;
 
       const options = Array.from(element.options);
-      element.value = undefined;
+      element.value = undefined as any;
       for (let index = 0; index < options.length; index++) {
         const option = options[index];
         option.selected = optionsToSelect.some(optionToSelect => {
@@ -381,6 +382,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         const range = element.ownerDocument.createRange();
         range.selectNodeContents(element);
         const selection = element.ownerDocument.defaultView.getSelection();
+        if (!selection)
+          return 'Element belongs to invisible iframe.';
         selection.removeAllRanges();
         selection.addRange(range);
         element.focus();
@@ -413,12 +416,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       return item;
     }));
-    await this._page._delegate.setInputFiles(this, filePayloads);
+    await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
   }
 
   async focus() {
     const errorMessage = await this._evaluateInUtility((element: Node) => {
-      if (!element['focus'])
+      if (!(element as any)['focus'])
         return 'Node is not an HTML or SVG element.';
       (element as HTMLElement|SVGElement).focus();
       return false;
@@ -531,10 +534,10 @@ export function waitForFunctionTask(selector: string | undefined, pageFunction: 
         return innerPredicate(...args);
       return innerPredicate(element, ...args);
     }
-  }, await context._injected(), selector, predicateBody, polling, options.timeout, ...args);
+  }, await context._injected(), selector, predicateBody, polling, options.timeout || 0, ...args);
 }
 
-export function waitForSelectorTask(selector: string, visibility: types.Visibility | undefined, timeout: number): Task {
+export function waitForSelectorTask(selector: string, visibility: types.Visibility, timeout: number): Task {
   return async (context: FrameExecutionContext) => {
     selector = normalizeSelector(selector);
     return context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number) => {

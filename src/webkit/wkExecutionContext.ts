@@ -28,14 +28,13 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   private _globalObjectId?: Promise<string>;
   _session: WKSession;
   _contextId: number | undefined;
-  private _contextDestroyedCallback: () => void;
+  private _contextDestroyedCallback: () => void = () => {};
   private _executionContextDestroyedPromise: Promise<unknown>;
   _jsonStringifyObjectId: Protocol.Runtime.RemoteObjectId | undefined;
 
   constructor(client: WKSession, contextId: number | undefined) {
     this._session = client;
     this._contextId = contextId;
-    this._contextDestroyedCallback = null;
     this._executionContextDestroyedPromise = new Promise((resolve, reject) => {
       this._contextDestroyedCallback = resolve;
     });
@@ -59,7 +58,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         if (response.result.type === 'object' && response.result.className === 'Promise') {
           return Promise.race([
             this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
-            this._awaitPromise(response.result.objectId),
+            this._awaitPromise(response.result.objectId!),
           ]);
         }
         return response;
@@ -131,7 +130,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       if (response.result.type === 'object' && response.result.className === 'Promise') {
         return Promise.race([
           this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
-          this._awaitPromise(response.result.objectId),
+          this._awaitPromise(response.result.objectId!),
         ]);
       }
       return response;
@@ -198,7 +197,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
           throw new Error('Execution context was destroyed, most likely because of a navigation.');
         throw e;
       }).then(response => {
-        return response.result.objectId;
+        return response.result.objectId!;
       });
     }
     return this._globalObjectId;
@@ -233,8 +232,11 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+    const objectId = toRemoteObject(handle).objectId;
+    if (!objectId)
+      return new Map();
     const response = await this._session.send('Runtime.getProperties', {
-      objectId: toRemoteObject(handle).objectId,
+      objectId,
       ownProperties: true
     });
     const result = new Map();

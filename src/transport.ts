@@ -65,7 +65,7 @@ export class SlowMoTransport {
     const message = this._incomingMessageQueue.shift();
     try {
       if (this.onmessage)
-        this.onmessage(message);
+        this.onmessage(message!);
     } finally {
       this._scheduleQueueDispatch();
     }
@@ -77,8 +77,8 @@ export class SlowMoTransport {
     if (this.onclose)
       this.onclose();
     this._closed = true;
-    this._delegate.onmessage = null;
-    this._delegate.onclose = null;
+    this._delegate.onmessage = undefined;
+    this._delegate.onclose = undefined;
   }
 
   send(s: string) {

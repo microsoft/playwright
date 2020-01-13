@@ -65,7 +65,7 @@ export interface PageDelegate {
   getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;
   getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null>;
   layoutViewport(): Promise<{ width: number, height: number }>;
-  setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void>;
+  setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
 
   getAccessibilityTree(): Promise<accessibility.AXNode>;
@@ -114,7 +114,9 @@ export class Page extends platform.EventEmitter {
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
     this._delegate = delegate;
+    this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
+    this._disconnectedCallback = () => {};
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
     this._state = {
@@ -159,7 +161,7 @@ export class Page extends platform.EventEmitter {
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
-    const multiple = await handle.evaluate((element: HTMLInputElement) => !!element.multiple);
+    const multiple = await handle.evaluate(element => !!(element as HTMLInputElement).multiple);
     if (!this.listenerCount(Events.Page.FileChooser)) {
       await handle.dispose();
       return;
@@ -196,10 +198,10 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().waitForSelector(selector, options);
   }
 
-  async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string> {
+  async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
     const mainContext = await this.mainFrame()._mainContext();
     return mainContext.evaluate((injected: Injected, target: Element, name: string) => {
-      return injected.engines.get(name).create(document.documentElement, target);
+      return injected.engines.get(name)!.create(document.documentElement, target);
     }, await mainContext._injected(), handle, name);
   }
 
@@ -269,7 +271,7 @@ export class Page extends platform.EventEmitter {
     const {name, seq, args} = JSON.parse(payload);
     let expression = null;
     try {
-      const result = await this._pageBindings.get(name)(...args);
+      const result = await this._pageBindings.get(name)!(...args);
       expression = helper.evaluationString(deliverResult, name, seq, result);
     } catch (error) {
       if (error instanceof Error)
@@ -494,7 +496,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().type(selector, text, options);
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & { visibility?: types.Visibility }, ...args: any[]): Promise<js.JSHandle> {
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & { visibility?: types.Visibility }, ...args: any[]): Promise<js.JSHandle | null> {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 
@@ -532,12 +534,14 @@ export class Worker {
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;
-  _existingExecutionContext: js.ExecutionContext | null;
+  _existingExecutionContext: js.ExecutionContext | null = null;
 
   constructor(url: string) {
     this._url = url;
+    this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
+
   _createExecutionContext(delegate: js.ExecutionContextDelegate) {
     this._existingExecutionContext = new js.ExecutionContext(delegate);
     this._executionContextCallback(this._existingExecutionContext);

@@ -92,14 +92,14 @@ export class BrowserContext {
     if (geolocation) {
       geolocation.accuracy = geolocation.accuracy || 0;
       const { longitude, latitude, accuracy } = geolocation;
-      if (longitude < -180 || longitude > 180)
+      if (longitude !== undefined && (longitude < -180 || longitude > 180))
         throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
-      if (latitude < -90 || latitude > 90)
+      if (latitude !== undefined && (latitude < -90 || latitude > 90))
         throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
       if (accuracy < 0)
         throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
     }
-    this._options.geolocation = geolocation;
+    this._options.geolocation = geolocation || undefined;
     await this._delegate.setGeolocation(geolocation);
   }
 

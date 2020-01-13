@@ -65,7 +65,7 @@ class JSCoverage {
   _scriptSources: Map<string, string>;
   _eventListeners: RegisteredListener[];
   _resetOnNavigation: boolean;
-  _reportAnonymousScripts: boolean;
+  _reportAnonymousScripts = false;
 
   constructor(client: CRSession) {
     this._client = client;
@@ -238,12 +238,12 @@ class CSSCoverage {
       });
     }
 
-    const coverage = [];
+    const coverage: CoverageEntry[] = [];
     for (const styleSheetId of this._stylesheetURLs.keys()) {
-      const url = this._stylesheetURLs.get(styleSheetId);
-      const text = this._stylesheetSources.get(styleSheetId);
+      const url = this._stylesheetURLs.get(styleSheetId)!;
+      const text = this._stylesheetSources.get(styleSheetId)!;
       const ranges = convertToDisjointRanges(styleSheetIdToCoverage.get(styleSheetId) || []);
-      coverage.push({url, ranges, text});
+      coverage.push({ url, ranges, text });
     }
 
     return coverage;
@@ -277,7 +277,7 @@ function convertToDisjointRanges(nestedRanges: {
   });
 
   const hitCountStack = [];
-  const results = [];
+  const results: { start: number; end: number; }[] = [];
   let lastOffset = 0;
   // Run scanning line to intersect all ranges.
   for (const point of points) {

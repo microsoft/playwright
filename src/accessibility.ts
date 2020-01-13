@@ -68,13 +68,13 @@ export class Accessibility {
   async snapshot(options: {
       interestingOnly?: boolean;
       root?: dom.ElementHandle | null;
-    } = {}): Promise<SerializedAXNode> {
+    } = {}): Promise<SerializedAXNode | null> {
     const {
       interestingOnly = true,
       root = null,
     } = options;
     const defaultRoot = await this._getAXTree();
-    let needle = defaultRoot;
+    let needle: AXNode | null = defaultRoot;
     if (root) {
       needle = await defaultRoot.findElement(root);
       if (!needle)
