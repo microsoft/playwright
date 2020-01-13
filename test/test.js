@@ -121,6 +121,6 @@ new Reporter(testRunner, {
 
 // await utils.initializeFlakinessDashboardIfNeeded(testRunner);
 testRunner.run().then(result => {
-  process.exit(result.terminationError ? 130 : 0);
+  process.exit(result.exitCode);
 });
 
