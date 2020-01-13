@@ -101,17 +101,17 @@ export class Request {
   private _url: string;
   private _resourceType: string;
   private _method: string;
-  private _postData: string;
+  private _postData: string | undefined;
   private _headers: Headers;
-  private _frame: frames.Frame;
+  private _frame: frames.Frame | null;
   private _waitForResponsePromise: Promise<Response>;
-  private _waitForResponsePromiseCallback: (value?: Response) => void;
-  private _waitForFinishedPromise: Promise<Response | undefined>;
-  private _waitForFinishedPromiseCallback: (value?: Response | undefined) => void;
+  private _waitForResponsePromiseCallback: (value: Response) => void = () => {};
+  private _waitForFinishedPromise: Promise<Response | null>;
+  private _waitForFinishedPromiseCallback: (value: Response | null) => void = () => {};
   private _interceptionHandled = false;
 
-  constructor(delegate: RequestDelegate | null, frame: frames.Frame | null, redirectChain: Request[], documentId: string,
-    url: string, resourceType: string, method: string, postData: string, headers: Headers) {
+  constructor(delegate: RequestDelegate | null, frame: frames.Frame | null, redirectChain: Request[], documentId: string | undefined,
+    url: string, resourceType: string, method: string, postData: string | undefined, headers: Headers) {
     this._delegate = delegate;
     this._frame = frame;
     this._redirectChain = redirectChain;
@@ -130,7 +130,7 @@ export class Request {
 
   _setFailureText(failureText: string) {
     this._failureText = failureText;
-    this._waitForFinishedPromiseCallback();
+    this._waitForFinishedPromiseCallback(null);
   }
 
   url(): string {
@@ -157,7 +157,7 @@ export class Request {
     return this._response;
   }
 
-  async _waitForFinished(): Promise<Response | undefined> {
+  async _waitForFinished(): Promise<Response | null> {
     return this._waitForFinishedPromise;
   }
 
@@ -200,7 +200,7 @@ export class Request {
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
-    await this._delegate.abort(errorCode);
+    await this._delegate!.abort(errorCode);
   }
 
   async fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }) {    // Mocking responses for dataURL requests is not currently supported.
@@ -209,7 +209,7 @@ export class Request {
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
-    await this._delegate.fulfill(response);
+    await this._delegate!.fulfill(response);
   }
 
   async continue(overrides: { headers?: { [key: string]: string } } = {}) {
@@ -218,7 +218,7 @@ export class Request {
       return;
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
-    await this._delegate.continue(overrides);
+    await this._delegate!.continue(overrides);
   }
 }
 

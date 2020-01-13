@@ -152,7 +152,7 @@ export class FFPlaywright implements Playwright {
       handleSIGHUP,
       dumpio,
       pipe: false,
-      tempDir: temporaryProfileDir,
+      tempDir: temporaryProfileDir || undefined,
       attemptToGracefullyClose: async () => {
         if (!connectOptions)
           return Promise.reject();
@@ -232,9 +232,9 @@ export class FFPlaywright implements Playwright {
       ...defaultOptions,
       ...options,
     };
-    assert(!!downloadURLs[options.platform], 'Unsupported platform: ' + options.platform);
+    assert(!!(downloadURLs as any)[options.platform!], 'Unsupported platform: ' + options.platform);
 
-    return new BrowserFetcher(options.path, options.platform, this._revision, (platform: string, revision: string) => {
+    return new BrowserFetcher(options.path!, options.platform!, this._revision, (platform: string, revision: string) => {
       let executablePath = '';
       if (platform === 'linux')
         executablePath = path.join('firefox', 'firefox');
@@ -243,7 +243,7 @@ export class FFPlaywright implements Playwright {
       else if (platform === 'win32' || platform === 'win64')
         executablePath = path.join('firefox', 'firefox.exe');
       return {
-        downloadUrl: util.format(downloadURLs[platform], options.host, revision),
+        downloadUrl: util.format((downloadURLs as any)[platform], options.host, revision),
         executablePath
       };
     });
@@ -465,8 +465,8 @@ const DEFAULT_PREFERENCES = {
 
 async function createProfile(extraPrefs?: object): Promise<string> {
   const profilePath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_firefox_profile-'));
-  const prefsJS = [];
-  const userJS = [];
+  const prefsJS: string[] = [];
+  const userJS: string[] = [];
 
   const prefs = { ...DEFAULT_PREFERENCES, ...extraPrefs };
   for (const [key, value] of Object.entries(prefs))

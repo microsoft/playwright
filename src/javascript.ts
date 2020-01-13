@@ -62,16 +62,16 @@ export class JSHandle<T = any> {
   }
 
   evaluate: types.EvaluateOn<T> = (pageFunction, ...args) => {
-    return this._context.evaluate(pageFunction, this, ...args);
+    return this._context.evaluate(pageFunction as any, this, ...args);
   }
 
   evaluateHandle: types.EvaluateHandleOn<T> = (pageFunction, ...args) => {
-    return this._context.evaluateHandle(pageFunction, this, ...args);
+    return this._context.evaluateHandle(pageFunction as any, this, ...args);
   }
 
   async getProperty(propertyName: string): Promise<JSHandle | null> {
-    const objectHandle = await this.evaluateHandle((object, propertyName) => {
-      const result = {__proto__: null};
+    const objectHandle = await this.evaluateHandle((object: any, propertyName) => {
+      const result: any = {__proto__: null};
       result[propertyName] = object[propertyName];
       return result;
     }, propertyName);

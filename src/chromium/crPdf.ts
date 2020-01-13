@@ -125,6 +125,6 @@ export class CRPDF {
       pageRanges,
       preferCSSPageSize
     });
-    return await readProtocolStream(this._client, result.stream, path);
+    return await readProtocolStream(this._client, result.stream!, path);
   }
 }

@@ -37,7 +37,7 @@ export class CRTarget {
   _crPage: CRPage | null = null;
   private _workerPromise: Promise<Worker> | null = null;
   readonly _initializedPromise: Promise<boolean>;
-  _initializedCallback: (value?: unknown) => void;
+  _initializedCallback: (success: boolean) => void = () => {};
   _isInitialized: boolean;
 
   static fromPage(page: Page): CRTarget {
@@ -135,7 +135,7 @@ export class CRTarget {
     const { openerId } = this._targetInfo;
     if (!openerId)
       return null;
-    return this._browser._targets.get(openerId);
+    return this._browser._targets.get(openerId)!;
   }
 
   createCDPSession(): Promise<CRSession> {

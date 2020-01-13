@@ -77,8 +77,8 @@ export class WKConnection {
     if (this._closed)
       return;
     this._closed = true;
-    this._transport.onmessage = null;
-    this._transport.onclose = null;
+    this._transport.onmessage = undefined;
+    this._transport.onclose = undefined;
     this.browserSession.dispose();
     this._onDisconnect();
   }
@@ -90,10 +90,11 @@ export class WKConnection {
 }
 
 export class WKSession extends platform.EventEmitter {
-  connection?: WKConnection;
+  connection: WKConnection;
   errorText: string;
   readonly sessionId: string;
 
+  private _disposed = false;
   private readonly _rawSend: (message: any) => void;
   private readonly _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
 
@@ -109,13 +110,19 @@ export class WKSession extends platform.EventEmitter {
     this.sessionId = sessionId;
     this._rawSend = rawSend;
     this.errorText = errorText;
+
+    this.on = super.on;
+    this.off = super.removeListener;
+    this.addListener = super.addListener;
+    this.removeListener = super.removeListener;
+    this.once = super.once;
   }
 
   send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (!this.connection)
+    if (this._disposed)
       return Promise.reject(new Error(`Protocol error (${method}): ${this.errorText}`));
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
@@ -128,20 +135,20 @@ export class WKSession extends platform.EventEmitter {
   }
 
   isDisposed(): boolean {
-    return !this.connection;
+    return this._disposed;
   }
 
   dispose() {
     for (const callback of this._callbacks.values())
       callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): ${this.errorText}`));
     this._callbacks.clear();
-    this.connection = undefined;
+    this._disposed = true;
   }
 
   dispatchMessage(object: any) {
     debugWrappedMessage('◀ RECV ' + JSON.stringify(object, null, 2));
     if (object.id && this._callbacks.has(object.id)) {
-      const callback = this._callbacks.get(object.id);
+      const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.error)
         callback.reject(createProtocolError(callback.error, callback.method, object));

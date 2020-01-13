@@ -28,7 +28,7 @@ const removeFolderAsync = platform.promisify(removeFolder);
 export type LaunchProcessOptions = {
   executablePath: string,
   args: string[],
-  env?: {[key: string]: string},
+  env?: {[key: string]: string | undefined},
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -133,7 +133,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
     // Attempt to remove temporary profile directory to avoid littering.
     try {
-      removeFolder.sync(options.tempDir);
+      if (options.tempDir)
+        removeFolder.sync(options.tempDir);
     } catch (e) { }
   }
 }

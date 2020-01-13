@@ -21,7 +21,7 @@ export class WKPageProxy {
   private _pagePromise: Promise<Page> | null = null;
   private _wkPage: WKPage | null = null;
   private readonly _firstTargetPromise: Promise<void>;
-  private _firstTargetCallback: () => void;
+  private _firstTargetCallback?: () => void;
   private readonly _sessions = new Map<string, WKSession>();
   private readonly _eventListeners: RegisteredListener[];
 
@@ -71,16 +71,15 @@ export class WKPageProxy {
   }
 
   onPopupCreated(popupPageProxy: WKPageProxy) {
-    if (!this._wkPage)
+    const wkPage = this._wkPage;
+    if (!wkPage || !wkPage._page.listenerCount(Events.Page.Popup))
       return;
-    if (!this._wkPage._page.listenerCount(Events.Page.Popup))
-      return;
-    popupPageProxy.page().then(page => this._wkPage._page.emit(Events.Page.Popup, page));
+    popupPageProxy.page().then(page => wkPage._page.emit(Events.Page.Popup, page));
   }
 
   private async _initializeWKPage(): Promise<Page> {
     await this._firstTargetPromise;
-    let session: WKSession;
+    let session: WKSession | undefined;
     for (const anySession of this._sessions.values()) {
       if (!(anySession as any)[provisionalMessagesSymbol]) {
         session = anySession;
@@ -89,10 +88,10 @@ export class WKPageProxy {
     }
     assert(session, 'One non-provisional target session must exist');
     this._wkPage = new WKPage(this._browserContext, this._pageProxySession);
-    this._wkPage.setSession(session);
+    this._wkPage.setSession(session!);
     await Promise.all([
       this._wkPage._initializePageProxySession(),
-      this._wkPage._initializeSession(session, false),
+      this._wkPage._initializeSession(session!, false),
     ]);
     return this._wkPage._page;
   }
@@ -110,7 +109,7 @@ export class WKPageProxy {
     this._sessions.set(targetInfo.targetId, session);
     if (this._firstTargetCallback) {
       this._firstTargetCallback();
-      this._firstTargetCallback = null;
+      this._firstTargetCallback = undefined;
     }
     if (targetInfo.isProvisional)
       (session as any)[provisionalMessagesSymbol] = [];
@@ -138,7 +137,7 @@ export class WKPageProxy {
     if (provisionalMessages)
       provisionalMessages.push(message);
     else
-      session.dispatchMessage(JSON.parse(message));
+      session!.dispatchMessage(JSON.parse(message));
   }
 
   private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
@@ -148,12 +147,12 @@ export class WKPageProxy {
     const oldSession = this._sessions.get(oldTargetId);
     assert(oldSession, 'Unknown old target: ' + oldTargetId);
     // TODO: make some calls like screenshot catch swapped out error and retry.
-    oldSession.errorText = 'Target was swapped out.';
+    oldSession!.errorText = 'Target was swapped out.';
     const provisionalMessages = (newSession as any)[provisionalMessagesSymbol];
     assert(provisionalMessages, 'Committing target must be provisional');
     (newSession as any)[provisionalMessagesSymbol] = undefined;
     for (const message of provisionalMessages)
-      newSession.dispatchMessage(JSON.parse(message));
-    this._wkPage.setSession(newSession);
+      newSession!.dispatchMessage(JSON.parse(message));
+    this._wkPage!.setSession(newSession!);
   }
 }

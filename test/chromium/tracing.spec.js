@@ -48,7 +48,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browser.stopTracing();
 
       const traceJson = JSON.parse(fs.readFileSync(outputFile).toString());
-      expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires');
+      expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires', 'Does not contain expected category');
     });
     it('should throw if tracing on two pages', async({browser, page, server, outputFile}) => {
       await browser.startTracing(page, {path: outputFile});
@@ -64,7 +64,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.goto(server.PREFIX + '/grid.html');
       const trace = await browser.stopTracing();
       const buf = fs.readFileSync(outputFile);
-      expect(trace.toString()).toEqual(buf.toString());
+      expect(trace.toString()).toEqual(buf.toString(), 'Tracing buffer mismatch');
     });
     it('should work without options', async({browser, page, server, outputFile}) => {
       await browser.startTracing(page);
@@ -87,7 +87,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await browser.startTracing(page, {screenshots: true});
       await page.goto(server.PREFIX + '/grid.html');
       const trace = await browser.stopTracing();
-      expect(trace.toString()).toContain('screenshot');
+      expect(trace.toString()).toContain('screenshot', 'Does not contain screenshot');
     });
   });
 };

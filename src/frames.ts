@@ -63,6 +63,7 @@ export class FrameManager {
 
   constructor(page: Page) {
     this._page = page;
+    this._mainFrame = undefined as any as Frame;
   }
 
   mainFrame(): Frame {
@@ -86,7 +87,7 @@ export class FrameManager {
   }
 
   frameAttached(frameId: string, parentFrameId: string | null | undefined): Frame {
-    const parentFrame = parentFrameId ? this._frames.get(parentFrameId) : null;
+    const parentFrame = parentFrameId ? this._frames.get(parentFrameId)! : null;
     if (!parentFrame) {
       if (this._mainFrame) {
         // Update frame id to retain frame identity on cross-process navigation.
@@ -108,7 +109,7 @@ export class FrameManager {
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
-    const frame = this._frames.get(frameId);
+    const frame = this._frames.get(frameId)!;
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
     frame._url = url;
@@ -185,9 +186,10 @@ export class FrameManager {
 
   requestStarted(request: network.Request) {
     this._inflightRequestStarted(request);
-    if (request._documentId && request.frame() && !request.redirectChain().length) {
+    const frame = request.frame();
+    if (request._documentId && frame && !request.redirectChain().length) {
       for (const watcher of this._lifecycleWatchers)
-        watcher._onNavigationRequest(request.frame(), request);
+        watcher._onNavigationRequest(frame, request);
     }
     this._page.emit(Events.Page.Request, request);
   }
@@ -203,14 +205,15 @@ export class FrameManager {
 
   requestFailed(request: network.Request, canceled: boolean) {
     this._inflightRequestFinished(request);
-    if (request._documentId && request.frame()) {
-      const isCurrentDocument = request.frame()._lastDocumentId === request._documentId;
+    const frame = request.frame();
+    if (request._documentId && frame) {
+      const isCurrentDocument = frame._lastDocumentId === request._documentId;
       if (!isCurrentDocument) {
-        let errorText = request.failure().errorText;
+        let errorText = request.failure()!.errorText;
         if (canceled)
           errorText += '; maybe frame was detached?';
         for (const watcher of this._lifecycleWatchers)
-          watcher._onAbortedNewDocumentNavigation(request.frame(), request._documentId, errorText);
+          watcher._onAbortedNewDocumentNavigation(frame, request._documentId, errorText);
       }
     }
     this._page.emit(Events.Page.RequestFailed, request);
@@ -227,9 +230,9 @@ export class FrameManager {
   }
 
   private _inflightRequestFinished(request: network.Request) {
-    if (!request.frame() || request.url().endsWith('favicon.ico'))
-      return;
     const frame = request.frame();
+    if (!frame || request.url().endsWith('favicon.ico'))
+      return;
     if (!frame._inflightRequests.has(request))
       return;
     frame._inflightRequests.delete(request);
@@ -240,9 +243,9 @@ export class FrameManager {
   }
 
   private _inflightRequestStarted(request: network.Request) {
-    if (!request.frame() || request.url().endsWith('favicon.ico'))
-      return;
     const frame = request.frame();
+    if (!frame || request.url().endsWith('favicon.ico'))
+      return;
     frame._inflightRequests.add(request);
     if (frame._inflightRequests.size === 1)
       this._stopNetworkIdleTimer(frame, 'networkidle0');
@@ -260,7 +263,9 @@ export class FrameManager {
   }
 
   private _stopNetworkIdleTimer(frame: Frame, event: LifecycleEvent) {
-    clearTimeout(frame._networkIdleTimers.get(event));
+    const timeoutId = frame._networkIdleTimers.get(event);
+    if (timeoutId)
+      clearTimeout(timeoutId);
     frame._networkIdleTimers.delete(event);
   }
 }
@@ -270,12 +275,12 @@ export class Frame {
   readonly _firedLifecycleEvents: Set<LifecycleEvent>;
   _lastDocumentId: string;
   readonly _page: Page;
-  private _parentFrame: Frame;
+  private _parentFrame: Frame | null;
   _url = '';
   private _detached = false;
   private _contextData = new Map<ContextType, ContextData>();
   private _childFrames = new Set<Frame>();
-  _name: string;
+  _name = '';
   _inflightRequests = new Set<network.Request>();
   readonly _networkIdleTimers = new Map<LifecycleEvent, NodeJS.Timer>();
 
@@ -318,10 +323,10 @@ export class Frame {
     ]);
     if (!error) {
       const promises = [watcher.timeoutOrTerminationPromise];
-      if (navigateResult.newDocumentId) {
-        watcher.setExpectedDocumentId(navigateResult.newDocumentId, url);
+      if (navigateResult!.newDocumentId) {
+        watcher.setExpectedDocumentId(navigateResult!.newDocumentId, url);
         promises.push(watcher.newDocumentNavigationPromise);
-      } else if (navigateResult.isSameDocument) {
+      } else if (navigateResult!.isSameDocument) {
         promises.push(watcher.sameDocumentNavigationPromise);
       } else {
         promises.push(watcher.sameDocumentNavigationPromise, watcher.newDocumentNavigationPromise);
@@ -361,7 +366,7 @@ export class Frame {
   _context(contextType: ContextType): Promise<dom.FrameExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
-    return this._contextData.get(contextType).contextPromise;
+    return this._contextData.get(contextType)!.contextPromise;
   }
 
   _mainContext(): Promise<dom.FrameExecutionContext> {
@@ -505,14 +510,13 @@ export class Frame {
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
-        return (await context.evaluateHandle(addScriptUrl, url, type)).asElement();
+        return (await context.evaluateHandle(addScriptUrl, url, type)).asElement()!;
       if (path !== null) {
         let contents = await platform.readFileAsync(path, 'utf8');
         contents += '//# sourceURL=' + path.replace(/\n/g, '');
-        return (await context.evaluateHandle(addScriptContent, contents, type)).asElement();
+        return (await context.evaluateHandle(addScriptContent, contents, type)).asElement()!;
       }
-      if (content !== null)
-        return (await context.evaluateHandle(addScriptContent, content, type)).asElement();
+      return (await context.evaluateHandle(addScriptContent, content!, type)).asElement()!;
     });
 
     async function addScriptUrl(url: string, type: string): Promise<HTMLElement> {
@@ -554,16 +558,15 @@ export class Frame {
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
-        return (await context.evaluateHandle(addStyleUrl, url)).asElement();
+        return (await context.evaluateHandle(addStyleUrl, url)).asElement()!;
 
       if (path !== null) {
         let contents = await platform.readFileAsync(path, 'utf8');
         contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
-        return (await context.evaluateHandle(addStyleContent, contents)).asElement();
+        return (await context.evaluateHandle(addStyleContent, contents)).asElement()!;
       }
 
-      if (content !== null)
-        return (await context.evaluateHandle(addStyleContent, content)).asElement();
+      return (await context.evaluateHandle(addStyleContent, content!)).asElement()!;
     });
 
     async function addStyleUrl(url: string): Promise<HTMLElement> {
@@ -595,7 +598,7 @@ export class Frame {
 
   private async _raceWithCSPError(func: () => Promise<dom.ElementHandle>): Promise<dom.ElementHandle> {
     const listeners: RegisteredListener[] = [];
-    let result: dom.ElementHandle | undefined;
+    let result: dom.ElementHandle;
     let error: Error | undefined;
     let cspMessage: ConsoleMessage | undefined;
     const actionPromise = new Promise<dom.ElementHandle>(async resolve => {
@@ -620,7 +623,7 @@ export class Frame {
       throw new Error(cspMessage.text());
     if (error)
       throw error;
-    return result;
+    return result!;
   }
 
   async click(selector: string, options?: WaitForOptions & ClickOptions) {
@@ -683,17 +686,19 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: WaitForOptions | undefined): Promise<dom.ElementHandle<Element> | null> {
+  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: WaitForOptions | undefined): Promise<dom.ElementHandle<Element>> {
     const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'visible' } = (options || {});
-    let handle: dom.ElementHandle<Element> | null;
+    let handle: dom.ElementHandle<Element>;
     if (waitFor !== 'nowait') {
-      handle = await this._waitForSelectorInUtilityContext(selector, waitFor, timeout);
-      if (!handle)
+      const maybeHandle = await this._waitForSelectorInUtilityContext(selector, waitFor, timeout);
+      if (!maybeHandle)
         throw new Error('No node found for selector: ' + selectorToString(selector, waitFor));
+      handle = maybeHandle;
     } else {
       const context = await this._context('utility');
-      handle = await context._$(selector);
-      assert(handle, 'No node found for selector: ' + selector);
+      const maybeHandle = await context._$(selector);
+      assert(maybeHandle, 'No node found for selector: ' + selector);
+      handle = maybeHandle!;
     }
     return handle;
   }
@@ -742,7 +747,7 @@ export class Frame {
   }
 
   private _scheduleRerunnableTask(task: dom.Task, contextType: ContextType, timeout?: number, title?: string): Promise<js.JSHandle> {
-    const data = this._contextData.get(contextType);
+    const data = this._contextData.get(contextType)!;
     const rerunnableTask = new RerunnableTask(data, task, timeout, title);
     data.rerunnableTasks.add(rerunnableTask);
     if (data.context)
@@ -751,7 +756,7 @@ export class Frame {
   }
 
   private _setContext(contextType: ContextType, context: dom.FrameExecutionContext | null) {
-    const data = this._contextData.get(contextType);
+    const data = this._contextData.get(contextType)!;
     data.context = context;
     if (context) {
       data.contextResolveCallback.call(null, context);
@@ -765,7 +770,7 @@ export class Frame {
   }
 
   _contextCreated(contextType: ContextType, context: dom.FrameExecutionContext) {
-    const data = this._contextData.get(contextType);
+    const data = this._contextData.get(contextType)!;
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
     // We can use either.
@@ -787,10 +792,10 @@ class RerunnableTask {
   private _contextData: ContextData;
   private _task: dom.Task;
   private _runCount: number;
-  private _resolve: (result: js.JSHandle) => void;
-  private _reject: (reason: Error) => void;
-  private _timeoutTimer: NodeJS.Timer;
-  private _terminated: boolean;
+  private _resolve: (result: js.JSHandle) => void = () => {};
+  private _reject: (reason: Error) => void = () => {};
+  private _timeoutTimer?: NodeJS.Timer;
+  private _terminated = false;
 
   constructor(data: ContextData, task: dom.Task, timeout?: number, title?: string) {
     this._contextData = data;
@@ -834,7 +839,7 @@ class RerunnableTask {
     // If execution context has been already destroyed, `context.evaluate` will
     // throw an error - ignore this predicate run altogether.
     if (!error && await context.evaluate(s => !s, success).catch(e => true)) {
-      await success.dispose();
+      await success!.dispose();
       return;
     }
 
@@ -851,13 +856,14 @@ class RerunnableTask {
     if (error)
       this._reject(error);
     else
-      this._resolve(success);
+      this._resolve(success!);
 
     this._doCleanup();
   }
 
   _doCleanup() {
-    clearTimeout(this._timeoutTimer);
+    if (this._timeoutTimer)
+      clearTimeout(this._timeoutTimer);
     this._contextData.rerunnableTasks.delete(this);
   }
 }
@@ -870,13 +876,13 @@ class LifecycleWatcher {
   private _expectedLifecycle: LifecycleEvent[];
   private _frame: Frame;
   private _navigationRequest: network.Request | null = null;
-  private _sameDocumentNavigationCompleteCallback: () => void;
-  private _lifecycleCallback: () => void;
-  private _newDocumentNavigationCompleteCallback: () => void;
-  private _frameDetachedCallback: (err: Error) => void;
-  private _navigationAbortedCallback: (err: Error) => void;
-  private _maximumTimer: NodeJS.Timer;
-  private _hasSameDocumentNavigation: boolean;
+  private _sameDocumentNavigationCompleteCallback: () => void = () => {};
+  private _lifecycleCallback: () => void = () => {};
+  private _newDocumentNavigationCompleteCallback: () => void = () => {};
+  private _frameDetachedCallback: (err: Error) => void = () => {};
+  private _navigationAbortedCallback: (err: Error) => void = () => {};
+  private _maximumTimer?: NodeJS.Timer;
+  private _hasSameDocumentNavigation = false;
   private _targetUrl: string | undefined;
   private _expectedDocumentId: string | undefined;
   private _urlMatch: types.URLMatch | undefined;
@@ -971,7 +977,7 @@ class LifecycleWatcher {
     this._checkLifecycleComplete();
   }
 
-  navigationResponse(): Promise<network.Response | null> {
+  async navigationResponse(): Promise<network.Response | null> {
     return this._navigationRequest ? this._navigationRequest._finalRequest._waitForFinished() : null;
   }
 
@@ -1009,7 +1015,8 @@ class LifecycleWatcher {
 
   dispose() {
     this._frame._page._frameManager._lifecycleWatchers.delete(this);
-    clearTimeout(this._maximumTimer);
+    if (this._maximumTimer)
+      clearTimeout(this._maximumTimer);
   }
 }
 

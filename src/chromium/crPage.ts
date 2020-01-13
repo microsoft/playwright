@@ -16,6 +16,7 @@
  */
 
 import * as dom from '../dom';
+import * as js from '../javascript';
 import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
@@ -151,7 +152,7 @@ export class CRPage implements PageDelegate {
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameTree) {
-    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId);
+    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
     if (!frameTree.childFrames)
       return;
@@ -196,7 +197,7 @@ export class CRPage implements PageDelegate {
   }
 
   _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
-    const frame = this._page._frameManager.frame(contextPayload.auxData ? contextPayload.auxData.frameId : null);
+    const frame = contextPayload.auxData ? this._page._frameManager.frame(contextPayload.auxData.frameId) : null;
     if (!frame)
       return;
     if (contextPayload.auxData && contextPayload.auxData.type === 'isolated')
@@ -240,7 +241,7 @@ export class CRPage implements PageDelegate {
       // @see https://github.com/GoogleChrome/puppeteer/issues/3865
       return;
     }
-    const context = this._contextIdToContext.get(event.executionContextId);
+    const context = this._contextIdToContext.get(event.executionContextId)!;
     const values = event.args.map(arg => context._createHandle(arg));
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
@@ -252,7 +253,7 @@ export class CRPage implements PageDelegate {
   }
 
   _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
-    const context = this._contextIdToContext.get(event.executionContextId);
+    const context = this._contextIdToContext.get(event.executionContextId)!;
     this._page._onBindingCalled(event.payload, context);
   }
 
@@ -283,7 +284,7 @@ export class CRPage implements PageDelegate {
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
-    const frame = this._page._frameManager.frame(event.frameId);
+    const frame = this._page._frameManager.frame(event.frameId)!;
     const utilityContext = await frame._utilityContext();
     const handle = await this.adoptBackendNodeId(event.backendNodeId, utilityContext);
     this._page._onFileChooserOpened(handle);
@@ -458,7 +459,7 @@ export class CRPage implements PageDelegate {
     return { width: layoutMetrics.layoutViewport.clientWidth, height: layoutMetrics.layoutViewport.clientHeight };
   }
 
-  async setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void> {
+  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     await handle.evaluate(dom.setFileInputFunction, files);
   }
 
@@ -492,7 +493,7 @@ export class CRPage implements PageDelegate {
   }
 }
 
-function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
+function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
   return handle._remoteObject as Protocol.Runtime.RemoteObject;
 }
 

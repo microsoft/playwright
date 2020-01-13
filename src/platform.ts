@@ -23,9 +23,9 @@ export const isNode = typeof process === 'object' && !!process && typeof process
 
 export function promisify(nodeFunction: Function): Function {
   assert(isNode);
-  function promisified(...args) {
+  function promisified(...args: any[]) {
     return new Promise((resolve, reject) => {
-      function callback(err, ...result) {
+      function callback(err: any, ...result: any[]) {
         if (err)
           return reject(err);
         if (result.length === 1)
@@ -200,7 +200,7 @@ export async function closeFdAsync(fd: number): Promise<void> {
   return await promisify(nodeFS.close)(fd);
 }
 
-export function getMimeType(file: string): string {
+export function getMimeType(file: string): string | null {
   assertFileAccess();
   return mime.getType(file);
 }
@@ -228,7 +228,7 @@ export function pngToJpeg(buffer: Buffer): Buffer {
 
 function nodeFetch(url: string): Promise<string> {
   let resolve: (url: string) => void;
-  let reject: (e: Error) => void;
+  let reject: (e: Error) => void = () => {};
   const promise = new Promise<string>((res, rej) => { resolve = res; reject = rej; });
 
   const endpointURL = new URL(url);

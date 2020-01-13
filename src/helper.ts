@@ -46,10 +46,10 @@ class Helper {
       const method = Reflect.get(classType.prototype, methodName);
       if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function' || method.constructor.name !== 'AsyncFunction')
         continue;
-      Reflect.set(classType.prototype, methodName, function(...args: any[]) {
+      Reflect.set(classType.prototype, methodName, function(this: any, ...args: any[]) {
         const syncStack: any = {};
         Error.captureStackTrace(syncStack);
-        return method.call(this, ...args).catch(e => {
+        return method.call(this, ...args).catch((e: any) => {
           const stack = syncStack.stack.substring(syncStack.stack.indexOf('\n') + 1);
           const clientStack = stack.substring(stack.indexOf('\n'));
           if (e instanceof Error && e.stack && !e.stack.includes(clientStack))
@@ -112,7 +112,9 @@ class Helper {
     predicate: Function,
     timeout: number,
     abortPromise: Promise<Error>): Promise<any> {
-    let eventTimeout, resolveCallback, rejectCallback;
+    let eventTimeout: NodeJS.Timer;
+    let resolveCallback: (event: any) => void = () => {};
+    let rejectCallback: (error: any) => void = () => {};
     const promise = new Promise((resolve, reject) => {
       resolveCallback = resolve;
       rejectCallback = reject;

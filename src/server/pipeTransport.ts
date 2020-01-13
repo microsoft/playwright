@@ -19,7 +19,7 @@ import { debugError, helper, RegisteredListener } from '../helper';
 import { ConnectionTransport } from '../transport';
 
 export class PipeTransport implements ConnectionTransport {
-  private _pipeWrite: NodeJS.WritableStream;
+  private _pipeWrite: NodeJS.WritableStream | null;
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
   onmessage?: (message: string) => void;
@@ -36,13 +36,13 @@ export class PipeTransport implements ConnectionTransport {
       helper.addEventListener(pipeRead, 'error', debugError),
       helper.addEventListener(pipeWrite, 'error', debugError),
     ];
-    this.onmessage = null;
-    this.onclose = null;
+    this.onmessage = undefined;
+    this.onclose = undefined;
   }
 
   send(message: string) {
-    this._pipeWrite.write(message);
-    this._pipeWrite.write('\0');
+    this._pipeWrite!.write(message);
+    this._pipeWrite!.write('\0');
   }
 
   _dispatch(buffer: Buffer) {

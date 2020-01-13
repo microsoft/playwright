@@ -154,11 +154,13 @@ export class CRNetworkManager {
         requestId: event.requestId
       }).catch(debugError);
     }
+    if (!event.networkId)
+      return;
 
     const requestId = event.networkId;
     const interceptionId = event.requestId;
-    if (requestId && this._requestIdToRequestWillBeSentEvent.has(requestId)) {
-      const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(requestId);
+    const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(requestId);
+    if (requestWillBeSentEvent) {
       this._onRequest(requestWillBeSentEvent, interceptionId);
       this._requestIdToRequestWillBeSentEvent.delete(requestId);
     } else {
@@ -186,7 +188,7 @@ export class CRNetworkManager {
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
-    const remoteAddress: network.RemoteAddress = { ip: responsePayload.remoteIPAddress, port: responsePayload.remotePort };
+    const remoteAddress: network.RemoteAddress = { ip: responsePayload.remoteIPAddress || '', port: responsePayload.remotePort || 0 };
     const getResponseBody = async () => {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
       return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
@@ -199,7 +201,8 @@ export class CRNetworkManager {
     request.request._redirectChain.push(request.request);
     response._requestFinished(new Error('Response body is unavailable for redirect responses'));
     this._requestIdToRequest.delete(request._requestId);
-    this._attemptedAuthentications.delete(request._interceptionId);
+    if (request._interceptionId)
+      this._attemptedAuthentications.delete(request._interceptionId);
     this._page._frameManager.requestReceivedResponse(response);
     this._page._frameManager.requestFinished(request.request);
   }
@@ -222,10 +225,12 @@ export class CRNetworkManager {
 
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
-    if (request.request.response())
-      request.request.response()._requestFinished();
+    const response = request.request.response();
+    if (response)
+      response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
-    this._attemptedAuthentications.delete(request._interceptionId);
+    if (request._interceptionId)
+      this._attemptedAuthentications.delete(request._interceptionId);
     this._page._frameManager.requestFinished(request.request);
   }
 
@@ -239,32 +244,33 @@ export class CRNetworkManager {
     if (response)
       response._requestFinished();
     this._requestIdToRequest.delete(request._requestId);
-    this._attemptedAuthentications.delete(request._interceptionId);
+    if (request._interceptionId)
+      this._attemptedAuthentications.delete(request._interceptionId);
     request.request._setFailureText(event.errorText);
-    this._page._frameManager.requestFailed(request.request, event.canceled);
+    this._page._frameManager.requestFailed(request.request, !!event.canceled);
   }
 }
 
 class InterceptableRequest implements network.RequestDelegate {
   readonly request: network.Request;
   _requestId: string;
-  _interceptionId: string;
-  _documentId: string;
+  _interceptionId: string | null;
+  _documentId: string | undefined;
   private _client: CRSession;
 
-  constructor(client: CRSession, frame: frames.Frame | null, interceptionId: string, documentId: string | undefined, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
+  constructor(client: CRSession, frame: frames.Frame | null, interceptionId: string | null, documentId: string | undefined, allowInterception: boolean, event: Protocol.Network.requestWillBeSentPayload, redirectChain: network.Request[]) {
     this._client = client;
     this._requestId = event.requestId;
     this._interceptionId = interceptionId;
     this._documentId = documentId;
 
     this.request = new network.Request(allowInterception ? this : null, frame, redirectChain, documentId,
-        event.request.url, event.type.toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
+        event.request.url, (event.type || '').toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
   }
 
   async continue(overrides: { headers?: network.Headers; } = {}) {
     await this._client.send('Fetch.continueRequest', {
-      requestId: this._interceptionId,
+      requestId: this._interceptionId!,
       headers: overrides.headers ? headersArray(overrides.headers) : undefined,
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
@@ -287,7 +293,7 @@ class InterceptableRequest implements network.RequestDelegate {
       responseHeaders['content-length'] = String(platform.Buffer.byteLength(responseBody));
 
     await this._client.send('Fetch.fulfillRequest', {
-      requestId: this._interceptionId,
+      requestId: this._interceptionId!,
       responseCode: response.status || 200,
       responsePhrase: network.STATUS_TEXTS[String(response.status || 200)],
       responseHeaders: headersArray(responseHeaders),
@@ -303,7 +309,7 @@ class InterceptableRequest implements network.RequestDelegate {
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
     await this._client.send('Fetch.failRequest', {
-      requestId: this._interceptionId,
+      requestId: this._interceptionId!,
       errorReason
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
