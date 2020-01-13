@@ -36,14 +36,14 @@ export type SlowMoOptions = {
   slowMo?: number,
 };
 
-export type ChromeArgOptions = {
+export type ChromiumArgOptions = {
   headless?: boolean,
   args?: string[],
   userDataDir?: string,
   devtools?: boolean,
 };
 
-export type LaunchOptions = ChromeArgOptions & SlowMoOptions & {
+export type LaunchOptions = ChromiumArgOptions & SlowMoOptions & {
   executablePath?: string,
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
@@ -129,7 +129,7 @@ export class CRPlaywright implements Playwright {
     if (!chromeArguments.some(argument => argument.startsWith('--remote-debugging-')))
       chromeArguments.push(pipe ? '--remote-debugging-pipe' : '--remote-debugging-port=0');
     if (!chromeArguments.some(arg => arg.startsWith('--user-data-dir'))) {
-      temporaryUserDataDir = await mkdtempAsync(CHROME_PROFILE_PATH);
+      temporaryUserDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
       chromeArguments.push(`--user-data-dir=${temporaryUserDataDir}`);
     }
 
@@ -168,7 +168,7 @@ export class CRPlaywright implements Playwright {
 
     let connectOptions: CRConnectOptions | undefined;
     if (!usePipe) {
-      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chrome! The only Chrome revision guaranteed to work is r${this._revision}`);
+      const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
       const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
       const browserWSEndpoint = match[1];
       connectOptions = { browserWSEndpoint, slowMo };
@@ -195,7 +195,7 @@ export class CRPlaywright implements Playwright {
     return { TimeoutError };
   }
 
-  defaultArgs(options: ChromeArgOptions = {}): string[] {
+  defaultArgs(options: ChromiumArgOptions = {}): string[] {
     const {
       devtools = false,
       headless = !devtools,
@@ -279,7 +279,7 @@ export class CRPlaywright implements Playwright {
 
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
-const CHROME_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
+const CHROMIUM_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
 const DEFAULT_ARGS = [
   '--disable-background-networking',

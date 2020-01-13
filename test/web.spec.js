@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, product, CHROME, FFOX}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, product, CHROMIUM, FFOX}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  (CHROME || FFOX) && describe('Web SDK', function() {
+  (CHROMIUM || FFOX) && describe('Web SDK', function() {
     beforeAll(async state => {
       state.controlledBrowserServer = await playwright.launchServer({ ...defaultBrowserOptions, pipe: false });
       state.hostBrowserServer = await playwright.launchServer(defaultBrowserOptions);

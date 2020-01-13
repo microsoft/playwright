@@ -34,7 +34,7 @@ try {
   try {
     const chromeRevision = await downloadBrowser('chromium', require('./chromium'));
     if (protocolGenerator)
-      protocolGenerator.generateChromeProtocol(chromeRevision);
+      protocolGenerator.generateChromiunProtocol(chromeRevision);
   } catch (e) {
     console.warn(e.message);
   }

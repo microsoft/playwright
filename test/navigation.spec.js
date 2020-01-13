@@ -18,7 +18,7 @@
 const utils = require('./utils');
 const { performance } = require('perf_hooks');
 
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -116,7 +116,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
       let error = null;
       await page.goto(server.EMPTY_PAGE).catch(e => error = e);
       expect(error).not.toBe(null);
-      if (CHROME)
+      if (CHROMIUM)
         expect(error.message).toContain('net::ERR_ABORTED');
       else
         expect(error.message).toContain('NS_BINDING_ABORTED');
@@ -136,7 +136,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
     it('should fail when navigating to bad url', async({page, server}) => {
       let error = null;
       await page.goto('asdfasdf').catch(e => error = e);
-      if (CHROME || WEBKIT)
+      if (CHROMIUM || WEBKIT)
         expect(error.message).toContain('Cannot navigate to invalid URL');
       else
         expect(error.message).toContain('Invalid url');
@@ -170,7 +170,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
     it('should fail when main resources failed to load', async({page, server}) => {
       let error = null;
       await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-      if (CHROME)
+      if (CHROMIUM)
         expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
       else if (WEBKIT)
         expect(error.message).toContain('Could not connect');
@@ -889,7 +889,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME
   });
 
   function expectSSLError(errorMessage) {
-    if (CHROME) {
+    if (CHROMIUM) {
       expect(errorMessage).toContain('net::ERR_CERT_AUTHORITY_INVALID');
     } else if (WEBKIT) {
       if (process.platform === 'darwin')

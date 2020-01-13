@@ -19,7 +19,7 @@ const utils = require('./utils');
 
 const bigint = typeof BigInt !== 'undefined';
 
-module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;

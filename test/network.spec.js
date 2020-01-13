@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
 
-module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -77,7 +77,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
   describe('Request.headers', function() {
     it('should work', async({page, server}) => {
       const response = await page.goto(server.EMPTY_PAGE);
-      if (CHROME)
+      if (CHROMIUM)
         expect(response.request().headers()['user-agent']).toContain('Chrome');
       else if (FFOX)
         expect(response.request().headers()['user-agent']).toContain('Firefox');
@@ -245,7 +245,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
       expect(failedRequests[0].url()).toContain('one-style.css');
       expect(failedRequests[0].response()).toBe(null);
       expect(failedRequests[0].resourceType()).toBe('stylesheet');
-      if (CHROME) {
+      if (CHROMIUM) {
         expect(failedRequests[0].failure().errorText).toBe('net::ERR_INVALID_HTTP_RESPONSE');
       } else if (WEBKIT) {
         if (process.platform === 'darwin')

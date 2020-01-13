@@ -19,7 +19,7 @@ const path = require('path');
 const utils = require('./utils');
 const {waitEvent} = utils;
 
-module.exports.describe = function({testRunner, expect, headless, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, headless, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -50,7 +50,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       const dialog = await waitEvent(newPage, 'dialog');
       expect(dialog.type()).toBe('beforeunload');
       expect(dialog.defaultValue()).toBe('');
-      if (CHROME)
+      if (CHROMIUM)
         expect(dialog.message()).toBe('');
       else if (WEBKIT)
         expect(dialog.message()).toBe('Leave?');
@@ -113,7 +113,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     it('should throw when page crashes', async({page}) => {
       let error = null;
       page.on('error', err => error = err);
-      if (CHROME)
+      if (CHROMIUM)
         page.goto('chrome://crash').catch(e => {});
       else if (WEBKIT)
         page._delegate._session.send('Page.crash', {}).catch(e => {});
@@ -674,7 +674,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => __injected)).toBe(42);
     });
 
-    (CHROME || FFOX) && it('should include sourceURL when path is provided', async({page, server}) => {
+    (CHROMIUM || FFOX) && it('should include sourceURL when path is provided', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
       const result = await page.evaluate(() => __injectedError.stack);

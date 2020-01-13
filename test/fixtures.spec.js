@@ -18,7 +18,7 @@
 const path = require('path');
 const {spawn} = require('child_process');
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
