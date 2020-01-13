@@ -156,6 +156,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     const { browserContextId } = await this._client.send('Target.createBrowserContext');
     const context = this._createBrowserContext(browserContextId, options);
+    await context._initialize();
     this._contexts.set(browserContextId, context);
     return context;
   }

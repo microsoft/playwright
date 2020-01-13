@@ -58,8 +58,6 @@ export type Viewport = {
   height: number;
   deviceScaleFactor?: number;
   isMobile?: boolean;
-  isLandscape?: boolean;
-  hasTouch?: boolean;
 };
 
 export type URLMatch = string | RegExp | ((url: URL) => boolean);

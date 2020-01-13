@@ -25,9 +25,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 600,
       'height': 1024,
       'deviceScaleFactor': 1,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -37,9 +35,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 1024,
       'height': 600,
       'deviceScaleFactor': 1,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -49,9 +45,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 360,
       'height': 640,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -61,9 +55,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -73,9 +65,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 360,
       'height': 640,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -85,9 +75,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -97,9 +85,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 360,
       'height': 640,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -109,9 +95,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -121,9 +105,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 360,
       'height': 640,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -133,9 +115,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -145,9 +125,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 360,
       'height': 640,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -157,129 +135,87 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
-    'name': 'iPad',
-    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1',
+    'name': 'iPad (gen 6)',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
       'width': 768,
       'height': 1024,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
-    'name': 'iPad landscape',
-    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1',
+    'name': 'iPad (gen 6) landscape',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
       'width': 1024,
       'height': 768,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
+    }
+  },
+  {
+    'name': 'iPad (gen 7)',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 810,
+      'height': 1080,
+      'deviceScaleFactor': 2,
+      'isMobile': true
+    }
+  },
+  {
+    'name': 'iPad (gen 7) landscape',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 1080,
+      'height': 810,
+      'deviceScaleFactor': 2,
+      'isMobile': true
     }
   },
   {
     'name': 'iPad Mini',
-    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
       'width': 768,
       'height': 1024,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
     'name': 'iPad Mini landscape',
-    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
       'width': 1024,
       'height': 768,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
-    'name': 'iPad Pro',
-    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1',
+    'name': 'iPad Pro 11',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
-      'width': 1024,
-      'height': 1366,
+      'width': 834,
+      'height': 1194,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
-    'name': 'iPad Pro landscape',
-    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1',
+    'name': 'iPad Pro 11 landscape',
+    'userAgent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
-      'width': 1366,
-      'height': 1024,
+      'width': 1194,
+      'height': 834,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
-    }
-  },
-  {
-    'name': 'iPhone 4',
-    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53',
-    'viewport': {
-      'width': 320,
-      'height': 480,
-      'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
-    }
-  },
-  {
-    'name': 'iPhone 4 landscape',
-    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53',
-    'viewport': {
-      'width': 480,
-      'height': 320,
-      'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
-    }
-  },
-  {
-    'name': 'iPhone 5',
-    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1',
-    'viewport': {
-      'width': 320,
-      'height': 568,
-      'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
-    }
-  },
-  {
-    'name': 'iPhone 5 landscape',
-    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1',
-    'viewport': {
-      'width': 568,
-      'height': 320,
-      'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -289,9 +225,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 375,
       'height': 667,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -301,9 +235,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 667,
       'height': 375,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -313,9 +245,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 414,
       'height': 736,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -325,9 +255,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 736,
       'height': 414,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -337,9 +265,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 375,
       'height': 667,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -349,9 +275,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 667,
       'height': 375,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -361,9 +285,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 414,
       'height': 736,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -373,9 +295,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 736,
       'height': 414,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -385,9 +305,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 375,
       'height': 667,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -397,9 +315,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 667,
       'height': 375,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -409,9 +325,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 414,
       'height': 736,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -421,9 +335,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 736,
       'height': 414,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -433,9 +345,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 320,
       'height': 568,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -445,9 +355,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 568,
       'height': 320,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -457,9 +365,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 375,
       'height': 812,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -469,9 +375,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 812,
       'height': 375,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -481,9 +385,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 414,
       'height': 896,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -493,9 +395,37 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 896,
       'height': 414,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
+    }
+  },
+  {
+    'name': 'iPhone 11',
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 414,
+      'height': 896,
+      'deviceScaleFactor': 2,
+      'isMobile': true
+    }
+  },
+  {
+    'name': 'iPhone 11 Pro',
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 375,
+      'height': 812,
+      'deviceScaleFactor': 3,
+      'isMobile': true
+    }
+  },
+  {
+    'name': 'iPhone 11 Pro Max',
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 414,
+      'height': 896,
+      'deviceScaleFactor': 3,
+      'isMobile': true
     }
   },
   {
@@ -505,9 +435,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 240,
       'height': 320,
       'deviceScaleFactor': 1,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -517,9 +445,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 320,
       'height': 240,
       'deviceScaleFactor': 1,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -529,9 +455,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 800,
       'height': 1280,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -541,9 +465,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 1280,
       'height': 800,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -553,9 +475,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 384,
       'height': 640,
       'deviceScaleFactor': 1.25,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -565,9 +485,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 384,
       'deviceScaleFactor': 1.25,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -577,9 +495,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -589,9 +505,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 360,
       'height': 640,
       'deviceScaleFactor': 4,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -601,9 +515,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 4,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -613,9 +525,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 800,
       'height': 1280,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -625,9 +535,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 1280,
       'height': 800,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -637,9 +545,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 384,
       'height': 640,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -649,9 +555,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 384,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -661,9 +565,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 360,
       'height': 640,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -673,9 +575,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 640,
       'height': 360,
       'deviceScaleFactor': 3,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -685,9 +585,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 412,
       'height': 732,
       'deviceScaleFactor': 2.625,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -697,9 +595,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 732,
       'height': 412,
       'deviceScaleFactor': 2.625,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -709,9 +605,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 412,
       'height': 732,
       'deviceScaleFactor': 3.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -721,9 +615,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 732,
       'height': 412,
       'deviceScaleFactor': 3.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -733,9 +625,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 412,
       'height': 732,
       'deviceScaleFactor': 3.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -745,9 +635,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 732,
       'height': 412,
       'deviceScaleFactor': 3.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -757,9 +645,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 600,
       'height': 960,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -769,9 +655,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 960,
       'height': 600,
       'deviceScaleFactor': 2,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -781,9 +665,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 320,
       'height': 533,
       'deviceScaleFactor': 1.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -793,9 +675,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 533,
       'height': 320,
       'deviceScaleFactor': 1.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -805,9 +685,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 480,
       'height': 854,
       'deviceScaleFactor': 1,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -817,9 +695,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 854,
       'height': 480,
       'deviceScaleFactor': 1,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -829,9 +705,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 411,
       'height': 731,
       'deviceScaleFactor': 2.625,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -841,9 +715,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 731,
       'height': 411,
       'deviceScaleFactor': 2.625,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   },
   {
@@ -853,9 +725,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 411,
       'height': 823,
       'deviceScaleFactor': 3.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': false
+      'isMobile': true
     }
   },
   {
@@ -865,9 +735,7 @@ const descriptors: types.DeviceDescriptor[] = [
       'width': 823,
       'height': 411,
       'deviceScaleFactor': 3.5,
-      'isMobile': true,
-      'hasTouch': true,
-      'isLandscape': true
+      'isMobile': true
     }
   }
 ];

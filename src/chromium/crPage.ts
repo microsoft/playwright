@@ -299,15 +299,12 @@ export class CRPage implements PageDelegate {
       height,
       isMobile = false,
       deviceScaleFactor = 1,
-      hasTouch = false,
-      isLandscape = false,
     } = viewport;
+    const isLandscape = width > height;
     const screenOrientation: Protocol.Emulation.ScreenOrientation = isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' };
     await Promise.all([
       this._client.send('Emulation.setDeviceMetricsOverride', { mobile: isMobile, width, height, deviceScaleFactor, screenOrientation }),
-      this._client.send('Emulation.setTouchEmulationEnabled', {
-        enabled: hasTouch
-      })
+      this._client.send('Emulation.setTouchEmulationEnabled', { enabled: isMobile })
     ]);
   }
 

@@ -392,12 +392,10 @@ export class Page extends platform.EventEmitter {
 
   async setViewport(viewport: types.Viewport) {
     const oldIsMobile = this._state.viewport ? !!this._state.viewport.isMobile : false;
-    const oldHasTouch = this._state.viewport ? !!this._state.viewport.hasTouch : false;
     const newIsMobile = !!viewport.isMobile;
-    const newHasTouch = !!viewport.hasTouch;
     this._state.viewport = { ...viewport };
     await this._delegate.setViewport(viewport);
-    if (oldIsMobile !== newIsMobile || oldHasTouch !== newHasTouch)
+    if (oldIsMobile !== newIsMobile)
       await this.reload();
   }
 

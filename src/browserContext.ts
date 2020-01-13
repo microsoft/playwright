@@ -41,7 +41,8 @@ export type BrowserContextOptions = {
   bypassCSP?: boolean,
   userAgent?: string,
   timezoneId?: string,
-  geolocation?: types.Geolocation
+  geolocation?: types.Geolocation,
+  permissions?: { [key: string]: string[] };
 };
 
 export class BrowserContext {
@@ -60,12 +61,22 @@ export class BrowserContext {
       this._options.geolocation = { ...this._options.geolocation };
   }
 
+  async _initialize() {
+    const entries = Object.entries(this._options.permissions || {});
+    await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
+    if (this._options.geolocation)
+      await this.setGeolocation(this._options.geolocation);
+  }
+
   async pages(): Promise<Page[]> {
     return this._delegate.pages();
   }
 
-  async newPage(): Promise<Page> {
-    return this._delegate.newPage();
+  async newPage(url?: string): Promise<Page> {
+    const page = await this._delegate.newPage();
+    if (url)
+      await page.goto(url);
+    return page;
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
