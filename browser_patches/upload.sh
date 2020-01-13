@@ -36,8 +36,6 @@ BLOB_NAME=""
 ALIAS=""
 
 if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
-  # we always apply our patches atop of beta since it seems to get better
-  # reliability guarantees.
   BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
   BROWSER_NAME="firefox"
   if [[ "$(uname)" == "Darwin" ]]; then
@@ -54,6 +52,8 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
     exit 1
   fi
 elif [[ ("$1" == "firefox-win64") || ("$1" == "firefox-win64/") ]]; then
+  BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
+  BROWSER_NAME="firefox"
   if [[ "$(uname)" == MINGW* ]]; then
     BLOB_NAME="firefox-win64.zip"
     ALIAS="ff-win64 r$BUILD_NUMBER"
