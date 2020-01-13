@@ -18,7 +18,7 @@
 import { TimeoutError } from './errors';
 import * as platform from './platform';
 
-export const debugError = platform.debug(`playwright:error`);
+export const debugError = platform.debug(`pw:error`);
 
 export type RegisteredListener = {
   emitter: platform.EventEmitterType;
@@ -58,6 +58,26 @@ class Helper {
         });
       });
     }
+  }
+
+  static logPublicApiCalls(className: string, object: any): any {
+    const log = platform.debug('pw:api');
+    if (!log.enabled)
+      return object;
+    return new Proxy(object, {
+      get(target, key: string) {
+        const value = target[key];
+        if (typeof key === 'string' && key.startsWith('_') || typeof value !== 'function')
+          return value;
+        return function(...args: any) {
+          if (args.length)
+            log(`${className}.${key} %o`, args);
+          else
+            log(`${className}.${key}`);
+          return value.apply(this, args);
+        };
+      }
+    });
   }
 
   static addEventListener(
