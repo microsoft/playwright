@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -62,7 +62,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
             {role: 'combobox option', name: 'First Option', selected: true},
             {role: 'combobox option', name: 'Second Option'}]
           }]
-      } : CHROME ? {
+      } : CHROMIUM ? {
         role: 'WebArea',
         name: 'Accessibility Test',
         children: [
@@ -113,7 +113,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           role: 'text leaf',
           name: 'hi'
         }]
-      } : CHROME ? {
+      } : CHROMIUM ? {
         role: 'textbox',
         name: '',
         value: 'hi',
@@ -308,7 +308,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           role: 'entry',
           name: 'my favorite textbox',
           value: 'this is the inner content yo'
-        } : CHROME ? {
+        } : CHROMIUM ? {
           role: 'textbox',
           name: 'my favorite textbox',
           value: 'this is the inner content '
@@ -331,7 +331,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT}) {
           role: 'checkbutton',
           name: 'my favorite checkbox',
           checked: true
-        } : CHROME ? {
+        } : CHROMIUM ? {
           role: 'checkbox',
           name: 'my favorite checkbox',
           checked: true

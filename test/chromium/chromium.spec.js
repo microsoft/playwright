@@ -16,7 +16,7 @@
 
 const { waitEvent } = require('../utils');
 
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;

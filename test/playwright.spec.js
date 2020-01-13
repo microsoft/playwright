@@ -29,7 +29,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  const CHROME = product === 'Chromium';
+  const CHROMIUM = product === 'Chromium';
   const FFOX = product === 'Firefox';
   const WEBKIT = product === 'WebKit';
   const MAC = os.platform() === 'darwin';
@@ -76,7 +76,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     product,
     FFOX,
     WEBKIT,
-    CHROME,
+    CHROMIUM,
     MAC,
     LINUX,
     WIN,
@@ -170,14 +170,14 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       testRunner.loadTests(require('./geolocation.spec.js'), testOptions);
       testRunner.loadTests(require('./workers.spec.js'), testOptions);
 
-      if (CHROME) {
+      if (CHROMIUM) {
         testRunner.loadTests(require('./chromium/chromium.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/coverage.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/pdf.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/session.spec.js'), testOptions);
       }
 
-      if (CHROME || FFOX) {
+      if (CHROMIUM || FFOX) {
         testRunner.loadTests(require('./features/permissions.spec.js'), testOptions);
       }
 
@@ -187,7 +187,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     testRunner.loadTests(require('./browser.spec.js'), testOptions);
     testRunner.loadTests(require('./browsercontext.spec.js'), testOptions);
     testRunner.loadTests(require('./ignorehttpserrors.spec.js'), testOptions);
-    if (CHROME) {
+    if (CHROMIUM) {
       testRunner.loadTests(require('./chromium/browser.spec.js'), testOptions);
     }
     if (FFOX) {
@@ -200,7 +200,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   testRunner.loadTests(require('./fixtures.spec.js'), testOptions);
   testRunner.loadTests(require('./launcher.spec.js'), testOptions);
 
-  if (CHROME) {
+  if (CHROMIUM) {
     testRunner.loadTests(require('./chromium/connect.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/launcher.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/headful.spec.js'), testOptions);

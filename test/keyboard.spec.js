@@ -18,7 +18,7 @@
 const utils = require('./utils');
 const os = require('os');
 
-module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT, MAC}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -227,7 +227,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT, MA
       await textarea.type('👹 Tokyo street Japan 🇯🇵');
       expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
     });
-    it.skip(CHROME && MAC)('should handle selectAll', async({page, server}) => {
+    it.skip(CHROMIUM && MAC)('should handle selectAll', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       const textarea = await page.$('textarea');
       await textarea.type('some text');
@@ -238,7 +238,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT, MA
       await page.keyboard.press('Backspace');
       expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
     });
-    it.skip(CHROME && MAC)('should be able to prevent selectAll', async({page, server}) => {
+    it.skip(CHROMIUM && MAC)('should be able to prevent selectAll', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       const textarea = await page.$('textarea');
       await textarea.type('some text');

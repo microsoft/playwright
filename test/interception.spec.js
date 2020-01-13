@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROME, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -532,7 +532,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.status()).toBe(200);
     });
     it('should fail if wrong credentials', async({page, server}) => {
-      // Use unique user/password since Chrome caches credentials per origin.
+      // Use unique user/password since Chromium caches credentials per origin.
       server.setAuth('/empty.html', 'user2', 'pass2');
       await page.authenticate({
         username: 'foo',
@@ -542,7 +542,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(response.status()).toBe(401);
     });
     it('should allow disable authentication', async({page, server}) => {
-      // Use unique user/password since Chrome caches credentials per origin.
+      // Use unique user/password since Chromium caches credentials per origin.
       server.setAuth('/empty.html', 'user3', 'pass3');
       await page.authenticate({
         username: 'user3',
@@ -551,7 +551,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       let response = await page.goto(server.EMPTY_PAGE);
       expect(response.status()).toBe(200);
       await page.authenticate(null);
-      // Navigate to a different origin to bust Chrome's credential caching.
+      // Navigate to a different origin to bust Chromium's credential caching.
       response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(response.status()).toBe(401);
     });

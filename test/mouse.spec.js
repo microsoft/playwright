@@ -26,7 +26,7 @@ function dimensions() {
   };
 }
 
-module.exports.describe = function({testRunner, expect, FFOX, CHROME, WEBKIT, MAC}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;

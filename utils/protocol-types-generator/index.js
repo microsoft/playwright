@@ -5,7 +5,7 @@ const StreamZip = require('node-stream-zip');
 const vm = require('vm');
 const os = require('os');
 
-async function generateChromeProtocol(revision) {
+async function generateChromiunProtocol(revision) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
   if (revision.local && fs.existsSync(outputPath))
     return;
@@ -215,4 +215,4 @@ function firefoxTypeToString(type, indent='    ') {
   return type['$type'];
 }
 
-module.exports = {generateChromeProtocol, generateFirefoxProtocol, generateWebKitProtocol};
+module.exports = {generateChromiunProtocol, generateFirefoxProtocol, generateWebKitProtocol};

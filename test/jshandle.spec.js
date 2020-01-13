@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, CHROME, FFOX, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, CHROMIUM, FFOX, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -93,7 +93,7 @@ module.exports.describe = function({testRunner, expect, CHROME, FFOX, WEBKIT}) {
       await windowHandle.jsonValue().catch(e => error = e);
       if (WEBKIT)
         expect(error.message).toContain('Object has too long reference chain');
-      else if (CHROME)
+      else if (CHROMIUM)
         expect(error.message).toContain('Object reference chain is too long');
       else if (FFOX)
         expect(error.message).toContain('Object is not serializable');
