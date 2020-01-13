@@ -80,6 +80,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     const context = this._createBrowserContext(browserContextId, options);
     if (options.ignoreHTTPSErrors)
       await this._browserSession.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
+    await context._initialize();
     this._contexts.set(browserContextId, context);
     return context;
   }

@@ -322,10 +322,10 @@ export class WKPage implements PageDelegate {
     const height = viewport.height;
     const fixedLayout = !!viewport.isMobile;
     const deviceScaleFactor = viewport.deviceScaleFactor || 1;
-    this._page._state.hasTouch = !!viewport.hasTouch;
+    this._page._state.hasTouch = !!viewport.isMobile;
     await Promise.all([
       this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {width, height, fixedLayout, deviceScaleFactor }),
-      this._session.send('Page.setTouchEmulationEnabled', { enabled: !!viewport.hasTouch }),
+      this._session.send('Page.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }),
     ]);
   }
 

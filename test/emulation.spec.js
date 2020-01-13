@@ -66,7 +66,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
     });
     it('should detect touch when applying viewport with touches', async({page, server}) => {
-      await page.setViewport({ width: 800, height: 600, hasTouch: true });
+      await page.setViewport({ width: 800, height: 600, isMobile: true });
       await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
       expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
     });

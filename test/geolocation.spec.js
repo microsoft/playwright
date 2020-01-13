@@ -49,5 +49,20 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       await context.setGeolocation({ longitude: 20, latitude: 20 });
       expect(options.geolocation).toBe(geolocation);
     });
+    it('should use context options', async({newContext, server}) => {
+      const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: {} };
+      options.permissions[server.PREFIX] = ['geolocation'];
+      const context = await newContext(options);
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+
+      const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
+        resolve({latitude: position.coords.latitude, longitude: position.coords.longitude});
+      })));
+      expect(geolocation).toEqual({
+        latitude: 10,
+        longitude: 10
+      });
+    });
   });
 };

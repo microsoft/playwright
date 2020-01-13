@@ -23,7 +23,7 @@
   * [browserContext.clearPermissions()](#browsercontextclearpermissions)
   * [browserContext.close()](#browsercontextclose)
   * [browserContext.cookies([...urls])](#browsercontextcookiesurls)
-  * [browserContext.newPage()](#browsercontextnewpage)
+  * [browserContext.newPage(url)](#browsercontextnewpageurl)
   * [browserContext.pages()](#browsercontextpages)
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
   * [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
@@ -305,8 +305,7 @@ const playwright = require('playwright')('chromium');  // Or 'firefox' or 'webki
 (async () => {
   const browser = await playwright.launch();
   const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('http://example.com');
+  const page = await context.newPage('http://example.com');
   // other actions...
   await browser.close();
 })();
@@ -335,10 +334,11 @@ const iPhone = playwright.devices['iPhone 6'];
 
 (async () => {
   const browser = await playwright.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.emulate(iPhone);
-  await page.goto('http://example.com');
+  const context = await browser.newContext({
+    viewport: iPhone.viewport,
+    userAgent: iPhone.userAgent;
+  });
+  const page = await context.newPage('http://example.com');
   // other actions...
   await browser.close();
 })();
@@ -381,8 +381,7 @@ const playwright = require('playwright');
 (async () => {
   const browser = await playwright.launch();
   const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('https://example.com');
+  const page = await context.newPage('https://example.com');
   await browser.close();
 })();
 ```
@@ -441,8 +440,6 @@ Indicates that the browser is connected.
     - `height` <[number]> page height in pixels.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
     - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-    - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-    - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
   - `userAgent` <?[string]> Specific user agent to use in this page
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
@@ -450,6 +447,7 @@ Indicates that the browser is connected.
     - `latitude` <[number]> Latitude between -90 and 90.
     - `longitude` <[number]> Longitude between -180 and 180.
     - `accuracy` <[number]> Optional non-negative accuracy value.
+  - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions]((#browsercontextsetpermissionsorigin-permissions)) for more details.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -460,9 +458,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   // Create a new incognito browser context.
   const context = await browser.newContext();
   // Create a new page in a pristine context.
-  const page = await context.newPage();
-  // Do stuff
-  await page.goto('https://example.com');
+  const page = await context.newPage('https://example.com');
 })();
 ```
 
@@ -482,9 +478,7 @@ Playwright allows creation of "incognito" browser contexts with `browser.newCont
 // Create a new incognito browser context
 const context = await browser.newContext();
 // Create a new page inside context.
-const page = await context.newPage();
-// ... do stuff with page ...
-await page.goto('https://example.com');
+const page = await context.newPage('https://example.com');
 // Dispose context once it's no longer needed.
 await context.close();
 ```
@@ -533,10 +527,11 @@ If URLs are specified, only cookies that affect those URLs are returned.
 
 > **NOTE** the default browser context cannot be closed.
 
-#### browserContext.newPage()
+#### browserContext.newPage(url)
+- `url` <?[string]> Optional url to navigate the page to.
 - returns: <[Promise]<[Page]>>
 
-Creates a new page in the browser context.
+Creates a new page in the browser context and optionally navigates it to the specified URL.
 
 #### browserContext.pages()
 - returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
@@ -725,8 +720,7 @@ const playwright = require('playwright');
 (async () => {
   const browser = await playwright.launch();
   const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('https://example.com');
+  const page = await context.newPage('https://example.com');
   const hrefElement = await page.$('a');
   await hrefElement.click();
   // ...
@@ -993,8 +987,7 @@ const playwright = require('playwright');
 (async () => {
   const browser = await playwright.launch();
   const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('https://www.google.com/chrome/browser/canary.html');
+  const page = await context.newPage('https://www.google.com/chrome/browser/canary.html');
   dumpFrameTree(page.mainFrame(), '');
   await browser.close();
 
@@ -1782,8 +1775,7 @@ const playwright = require('playwright');
 (async () => {
   const browser = await playwright.launch();
   const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('https://example.com');
+  const page = await context.newPage('https://example.com');
   await page.screenshot({path: 'screenshot.png'});
   await browser.close();
 })();
@@ -2629,11 +2621,9 @@ await browser.close();
   - `height` <[number]> page height in pixels. **required**
   - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
   - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-  - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-  - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
 - returns: <[Promise]>
 
-> **NOTE** in certain cases, setting viewport will reload the page in order to set the `isMobile` or `hasTouch` properties.
+> **NOTE** in certain cases, setting viewport will reload the page in order to set the `isMobile` property.
 
 In the case of multiple pages in a single browser, each page can have its own viewport size.
 
@@ -2707,8 +2697,6 @@ This is a shortcut for [page.mainFrame().url()](#frameurl)
   - `height` <[number]> page height in pixels.
   - `deviceScaleFactor` <[number]> Specify device scale factor (can be though of as dpr). Defaults to `1`.
   - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-  - `hasTouch`<[boolean]> Specifies if viewport supports touch events. Defaults to `false`
-  - `isLandscape` <[boolean]> Specifies if viewport is in landscape mode. Defaults to `false`.
 
 #### page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])
 - `selectorOrFunctionOrTimeout` <[string]|[number]|[function]> A [selector], predicate or timeout to wait for

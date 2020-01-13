@@ -204,11 +204,9 @@ export class FFPage implements PageDelegate {
       height,
       isMobile = false,
       deviceScaleFactor = 1,
-      hasTouch = false,
-      isLandscape = false,
     } = viewport;
     await this._session.send('Page.setViewport', {
-      viewport: { width, height, isMobile, deviceScaleFactor, hasTouch, isLandscape },
+      viewport: { width, height, isMobile, deviceScaleFactor, hasTouch: isMobile, isLandscape: width > height },
     });
   }
 
