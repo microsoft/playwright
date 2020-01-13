@@ -1,6 +1,9 @@
 # Playwright
 
 [![npm version](https://badge.fury.io/js/playwright.svg)](https://www.npmjs.com/package/playwright)
+<img src="./docs/cr-version.svg">
+<img src="./docs/wk-version.svg">
+<img src="./docs/ff-version.svg">
 
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
@@ -69,7 +72,7 @@ const pw = require('playwright');
 
 WebKit support on Windows is based on the [WSL](https://docs.microsoft.com/en-us/windows/wsl/about) / [Docker](https://www.docker.com/) containers. We are working on the [WinCairo](https://trac.webkit.org/wiki/BuildingCairoOnWindows)-based version of the browser, but it'll be available later. Stay tuned!
 
-## Contributing to Playwright
+## Contributing
 
 Check out our [contributing guide](https://github.com/microsoft/playwright/blob/master/CONTRIBUTING.md).
 
