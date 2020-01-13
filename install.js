@@ -34,7 +34,7 @@ try {
   try {
     const chromeRevision = await downloadBrowser('chromium', require('./chromium'));
     if (protocolGenerator)
-      protocolGenerator.generateChromiunProtocol(chromeRevision);
+      await protocolGenerator.generateChromiunProtocol(chromeRevision);
   } catch (e) {
     console.warn(e.message);
   }
@@ -42,14 +42,14 @@ try {
   try {
     const firefoxRevision = await downloadBrowser('firefox', require('./firefox'));
     if (protocolGenerator)
-      protocolGenerator.generateFirefoxProtocol(firefoxRevision);
+      await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
   } catch (e) {
     console.warn(e.message);
   }
   try {
     const webkitRevision = await downloadBrowser('webkit', require('./webkit'));
     if (protocolGenerator)
-      protocolGenerator.generateWebKitProtocol(webkitRevision);
+      await protocolGenerator.generateWebKitProtocol(webkitRevision);
   } catch (e) {
     console.warn(e.message);
   }
