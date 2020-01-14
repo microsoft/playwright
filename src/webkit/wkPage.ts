@@ -223,8 +223,12 @@ export class WKPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
-    await this._session.send('Page.navigate', { url, frameId: frame._id, referrer });
-    return {};  // We cannot get loaderId of cross-process navigation in advance.
+    this._page._validateNavigationReferrer(referrer);
+    if (this._pageProxySession.isDisposed())
+      throw new Error('Target closed');
+    const pageProxyId = this._pageProxySession.sessionId;
+    const result = await this._pageProxySession.connection!.browserSession.send('Browser.navigate', { url, pageProxyId, frameId: frame._id, referrer });
+    return { newDocumentId: result.loaderId, isSameDocument: !result.loaderId };
   }
 
   needsLifecycleResetOnSetContent(): boolean {
