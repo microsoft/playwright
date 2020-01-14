@@ -318,7 +318,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await waitForSelector;
       expect(boxFound).toBe(true);
     });
-    it('should wait for visible', async({page, server}) => {
+    it.skip(FFOX)('should wait for visible', async({page, server}) => {
       let divFound = false;
       const waitForSelector = page.waitForSelector('div').then(() => divFound = true);
       await page.setContent(`<div style='display: none; visibility: hidden;'>1</div>`);

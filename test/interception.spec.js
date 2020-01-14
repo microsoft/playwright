@@ -315,7 +315,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(requests.length).toBe(1);
       expect(requests[0].url()).toBe(dataURL);
     });
-    it('should navigate to URL with hash and and fire requests without hash', async({page, server}) => {
+    it.skip(FFOX)('should navigate to URL with hash and and fire requests without hash', async({page, server}) => {
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {

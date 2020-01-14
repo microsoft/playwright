@@ -158,6 +158,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 
   _createBrowserContext(browserContextId: string | undefined, options: BrowserContextOptions): BrowserContext {
+    BrowserContext.validateOptions(options);
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
         const pageProxies = Array.from(this._pageProxies.values()).filter(proxy => proxy._browserContext === context);

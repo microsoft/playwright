@@ -156,6 +156,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   }
 
   _createBrowserContext(browserContextId: string | null, options: BrowserContextOptions): BrowserContext {
+    BrowserContext.validateOptions(options);
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
         const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');

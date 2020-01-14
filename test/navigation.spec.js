@@ -353,7 +353,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(request2.headers['referer']).toBe(undefined);
       expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
-    it('should fail when canceled by another navigation', async({page, server}) => {
+    it.skip(FFOX)('should fail when canceled by another navigation', async({page, server}) => {
       server.setRoute('/one-style.css', (req, res) => {});
       // For some reason, Firefox issues load event with one outstanding request.
       const failed = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);

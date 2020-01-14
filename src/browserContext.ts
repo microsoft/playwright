@@ -113,6 +113,11 @@ export class BrowserContext {
     await this._delegate.close();
     this._closed = true;
   }
+
+  static validateOptions(options: BrowserContextOptions) {
+    if (options.geolocation)
+      verifyGeolocation(options.geolocation);
+  }
 }
 
 function verifyGeolocation(geolocation: types.Geolocation): types.Geolocation {
