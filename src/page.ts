@@ -171,18 +171,6 @@ export class Page extends platform.EventEmitter {
     this.emit(Events.Page.FileChooser, fileChooser);
   }
 
-  _validateNavigationReferrer(referrer: string | undefined) {
-    if (!referrer)
-      return;
-    if (!this._state.extraHTTPHeaders)
-      return;
-    const header = this._state.extraHTTPHeaders['referer'];
-    if (!header)
-      return;
-    if (header !== referrer)
-      throw new Error('"referer" is already specified as extra HTTP header');
-  }
-
   browserContext(): BrowserContext {
     return this._browserContext;
   }

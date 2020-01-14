@@ -219,11 +219,6 @@ export class FrameManager {
     this._page.emit(Events.Page.RequestFailed, request);
   }
 
-  provisionalLoadFailed(documentId: string, error: string) {
-    for (const watcher of this._lifecycleWatchers)
-      watcher._onProvisionalLoadFailed(documentId, error);
-  }
-
   private _removeFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
@@ -976,10 +971,6 @@ class LifecycleWatcher {
       else
         this._navigationAbortedCallback(new Error('Navigation failed: ' + errorText));
     }
-  }
-
-  _onProvisionalLoadFailed(documentId: string, error: string) {
-    this._onAbortedNewDocumentNavigation(this._frame, documentId, error);
   }
 
   _onLifecycleEvent(frame: Frame) {

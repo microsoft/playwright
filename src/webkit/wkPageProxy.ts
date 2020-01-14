@@ -64,12 +64,6 @@ export class WKPageProxy {
     this._pageProxySession.dispatchMessage(message);
   }
 
-  handleProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
-    if (!this._wkPage)
-      return;
-    this._wkPage._page._frameManager.provisionalLoadFailed(event.loaderId, event.error);
-  }
-
   async page(): Promise<Page> {
     if (!this._pagePromise)
       this._pagePromise = this._initializeWKPage();
