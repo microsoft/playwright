@@ -30,6 +30,33 @@ export async function getAccessibilityTree(session: FFSession, needle: dom.Eleme
   };
 }
 
+const FFRoleToARIARole = new Map(Object.entries({
+  'pushbutton': 'button',
+  'checkbutton': 'checkbox',
+  'editcombobox': 'combobox',
+  'content deletion': 'deletion',
+  'footnote': 'doc-footnote',
+  'non-native document': 'document',
+  'grouping': 'group',
+  'graphic': 'img',
+  'content insertion': 'insertion',
+  'animation': 'marquee',
+  'flat equation': 'math',
+  'menupopup': 'menu',
+  'check menu item': 'menuitemcheckbox',
+  'radio menu item': 'menuitemradio',
+  'listbox option': 'option',
+  'radiobutton': 'radio',
+  'statusbar': 'status',
+  'pagetab': 'tab',
+  'pagetablist': 'tablist',
+  'propertypage': 'tabpanel',
+  'entry': 'textbox',
+  'outline': 'tree',
+  'tree table': 'treegrid',
+  'outlineitem': 'treeitem',
+}));
+
 class FFAXNode implements accessibility.AXNode {
   _children: FFAXNode[];
   private _payload: Protocol.AXTree;
@@ -173,7 +200,7 @@ class FFAXNode implements accessibility.AXNode {
 
   serialize(): accessibility.SerializedAXNode {
     const node: {[x in keyof accessibility.SerializedAXNode]: any} = {
-      role: this._role,
+      role: FFRoleToARIARole.get(this._role) || this._role,
       name: this._name || ''
     };
     const userStringProperties: Array<keyof accessibility.SerializedAXNode> = [

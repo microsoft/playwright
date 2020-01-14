@@ -21,7 +21,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Accessibility', function() {
-    it.skip(WEBKIT)('should work', async function({page}) {
+    it('should work', async function({page}) {
       await page.setContent(`
       <head>
         <title>Accessibility Test</title>
@@ -51,13 +51,13 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         children: [
           {role: 'text leaf', name: 'Hello World'},
           {role: 'heading', name: 'Inputs', level: 1},
-          {role: 'entry', name: 'Empty input', focused: true},
-          {role: 'entry', name: 'readonly input', readonly: true},
-          {role: 'entry', name: 'disabled input', disabled: true},
-          {role: 'entry', name: 'Input with whitespace', value: '  '},
-          {role: 'entry', name: '', value: 'value only'},
-          {role: 'entry', name: '', value: 'and a value'}, // firefox doesn't use aria-placeholder for the name
-          {role: 'entry', name: '', value: 'and a value', description: 'This is a description!'}, // and here
+          {role: 'textbox', name: 'Empty input', focused: true},
+          {role: 'textbox', name: 'readonly input', readonly: true},
+          {role: 'textbox', name: 'disabled input', disabled: true},
+          {role: 'textbox', name: 'Input with whitespace', value: '  '},
+          {role: 'textbox', name: '', value: 'value only'},
+          {role: 'textbox', name: '', value: 'and a value'}, // firefox doesn't use aria-placeholder for the name
+          {role: 'textbox', name: '', value: 'and a value', description: 'This is a description!'}, // and here
           {role: 'combobox', name: '', value: 'First Option', haspopup: true, children: [
             {role: 'combobox option', name: 'First Option', selected: true},
             {role: 'combobox option', name: 'Second Option'}]
@@ -83,14 +83,14 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         role: 'WebArea',
         name: 'Accessibility Test',
         children: [
-          {role: 'heading', name: 'Inputs', level: 1 },
-          {role: 'TextField', name: 'Empty input', focused: true, readonly: true},
-          {role: 'TextField', name: 'readonly input', readonly: true },
-          {role: 'TextField', name: 'disabled input', disabled: true, readonly: true},
-          {role: 'TextField', name: 'Input with whitespace', value: '  ', description: 'Input with whitespace', readonly: true},
-          {role: 'TextField', name: '', value: 'value only', readonly: true },
-          {role: 'TextField', name: 'placeholder',value: 'and a value',readonly: true},
-          {role: 'TextField', name: 'This is a description!',value: 'and a value',readonly: true},
+          {role: 'heading', name: 'Inputs', level: 1},
+          {role: 'textbox', name: 'Empty input', focused: true},
+          {role: 'textbox', name: 'readonly input', readonly: true},
+          {role: 'textbox', name: 'disabled input', disabled: true},
+          {role: 'textbox', name: 'Input with whitespace', value: '  ' },
+          {role: 'textbox', name: '', value: 'value only' },
+          {role: 'textbox', name: 'placeholder',value: 'and a value'},
+          {role: 'textbox', name: 'This is a description!',value: 'and a value'}, // webkit uses the description over placeholder for the name
           {role: 'button', name: '', value: 'First Option', children: [
             { role: 'MenuListOption', name: '', value: 'First Option', selected: true },
             { role: 'MenuListOption', name: '', value: 'Second Option' }]
@@ -98,42 +98,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         ]
       };
       expect(await page.accessibility.snapshot()).toEqual(golden);
-    });
-    it.skip(WEBKIT)('should report uninteresting nodes', async function({page}) {
-      await page.setContent(`<textarea autofocus>hi</textarea>`);
-      // autofocus happens after a delay in chrome these days
-      await page.waitForFunction(() => document.activeElement.hasAttribute('autofocus'));
-      const golden = FFOX ? {
-        role: 'entry',
-        name: '',
-        value: 'hi',
-        focused: true,
-        multiline: true,
-        children: [{
-          role: 'text leaf',
-          name: 'hi'
-        }]
-      } : CHROMIUM ? {
-        role: 'textbox',
-        name: '',
-        value: 'hi',
-        focused: true,
-        multiline: true,
-        children: [{
-          role: 'generic',
-          name: '',
-          children: [{
-            role: 'text', name: 'hi'
-          }]
-        }]
-      } : {
-        role: 'textbox',
-        name: '',
-        value: 'hi',
-        focused: true,
-        multiline: true
-      };
-      expect(findFocusedNode(await page.accessibility.snapshot({interestingOnly: false}))).toEqual(golden);
     });
     it('roledescription', async({page}) => {
       await page.setContent('<div tabIndex=-1 aria-roledescription="foo">Hi</div>');
@@ -145,8 +109,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0].orientation).toEqual('vertical');
     });
-    it.skip(FFOX || WEBKIT)('autocomplete', async({page}) => {
-      await page.setContent('<input type="number" aria-autocomplete="list" />');
+    it('autocomplete', async({page}) => {
+      await page.setContent('<div role="textbox" aria-autocomplete="list">hi</div>');
       const snapshot = await page.accessibility.snapshot();
       expect(snapshot.children[0].autocomplete).toEqual('list');
     });
@@ -167,33 +131,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           <div role="tab" aria-selected="true"><b>Tab1</b></div>
           <div role="tab">Tab2</div>
         </div>`);
-        const golden = FFOX ? {
-          role: 'document',
-          name: '',
-          children: [{
-            role: 'pagetab',
-            name: 'Tab1',
-            selected: true
-          }, {
-            role: 'pagetab',
-            name: 'Tab2'
-          }]
-        } : WEBKIT ? {
-          role: 'WebArea',
-          name: '',
-          roledescription: 'HTML content',
-          children: [{
-            role: 'tab',
-            name: 'Tab1',
-            roledescription: 'tab',
-            selected: true
-          }, {
-            role: 'tab',
-            name: 'Tab2',
-            roledescription: 'tab',
-          }]
-        } : {
-          role: 'WebArea',
+        const golden = {
+          role: FFOX ? 'document' : 'WebArea',
           name: '',
           children: [{
             role: 'tab',
@@ -244,7 +183,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           Edit this image: <img src="fakeimage.png" alt="my fake image">
         </div>`);
         const golden = FFOX ? {
-          role: 'entry',
+          role: 'textbox',
           name: '',
           value: 'Edit this image: my fake image',
           children: [{
@@ -305,7 +244,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           <img alt="yo" src="fakeimg.png">
         </div>`);
         const golden = FFOX ? {
-          role: 'entry',
+          role: 'textbox',
           name: 'my favorite textbox',
           value: 'this is the inner content yo'
         } : CHROMIUM ? {
@@ -313,10 +252,9 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           name: 'my favorite textbox',
           value: 'this is the inner content '
         } : {
-          role: 'TextField',
+          role: 'textbox',
           name: 'my favorite textbox',
           value: 'this is the inner content  ',
-          description: 'my favorite textbox'
         };
         const snapshot = await page.accessibility.snapshot();
         expect(snapshot.children[0]).toEqual(golden);
@@ -327,18 +265,9 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           this is the inner content
           <img alt="yo" src="fakeimg.png">
         </div>`);
-        const golden = FFOX ? {
-          role: 'checkbutton',
-          name: 'my favorite checkbox',
-          checked: true
-        } : CHROMIUM ? {
+        const golden = {
           role: 'checkbox',
           name: 'my favorite checkbox',
-          checked: true
-        } : {
-          role: 'checkbox',
-          name: 'my favorite checkbox',
-          description: "my favorite checkbox",
           checked: true
         };
         const snapshot = await page.accessibility.snapshot();
@@ -351,7 +280,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           <img alt="yo" src="fakeimg.png">
         </div>`);
         const golden = FFOX ? {
-          role: 'checkbutton',
+          role: 'checkbox',
           name: 'this is the inner content yo',
           checked: true
         } : {
@@ -364,7 +293,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       });
 
       describe('root option', function() {
-        fit('should work a button', async({page}) => {
+        it('should work a button', async({page}) => {
           await page.setContent(`<button>My Button</button>`);
 
           const button = await page.$('button');
@@ -383,7 +312,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
             value: 'My Value'
           });
         });
-        it('should work a menu', async({page}) => {
+        it('should work on a menu', async({page}) => {
           await page.setContent(`
             <div role="menu" title="My Menu">
               <div role="menuitem">First Item</div>
@@ -399,7 +328,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
             children:
             [ { role: 'menuitem', name: 'First Item' },
               { role: 'menuitem', name: 'Second Item' },
-              { role: 'menuitem', name: 'Third Item' } ]
+              { role: 'menuitem', name: 'Third Item' } ],
+            orientation: WEBKIT ? 'vertical' : undefined
           });
         });
         it('should return null when the element is no longer in DOM', async({page}) => {
@@ -407,27 +337,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           const button = await page.$('button');
           await page.$eval('button', button => button.remove());
           expect(await page.accessibility.snapshot({root: button})).toEqual(null);
-        });
-        it('should support the interestingOnly option', async({page}) => {
-          await page.setContent(`<div><button>My Button</button></div>`);
-          const div = await page.$('div');
-          expect(await page.accessibility.snapshot({root: div})).toEqual(null);
-          expect(await page.accessibility.snapshot({root: div, interestingOnly: false})).toEqual({
-            role: 'generic',
-            name: '',
-            children: [
-              {
-                role: 'button',
-                name: 'My Button',
-                children: [
-                  {
-                    role: "text",
-                    name: "My Button"
-                  }
-                ],
-              }
-            ]
-          });
         });
       });
     });

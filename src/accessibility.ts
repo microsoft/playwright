@@ -73,14 +73,17 @@ export class Accessibility {
       root = null,
     } = options;
     const {tree, needle} = await this._getAXTree(root);
-    if (!interestingOnly)
-      return serializeTree(needle)[0];
+    if (!interestingOnly) {
+      if (root)
+        return needle && serializeTree(needle)[0];
+      return serializeTree(tree)[0];
+    }
 
     const interestingNodes: Set<AXNode> = new Set();
     collectInterestingNodes(interestingNodes, tree, false);
     if (root && !interestingNodes.has(needle))
       return null;
-    return serializeTree(needle, interestingNodes)[0];
+    return serializeTree(needle || tree, interestingNodes)[0];
   }
 }
 

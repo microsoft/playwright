@@ -28,6 +28,30 @@ export async function getAccessibilityTree(session: WKSession, needle?: dom.Elem
   };
 }
 
+const WKRoleToARIARole = new Map(Object.entries({
+  'TextField': 'textbox',
+}));
+
+// WebKit localizes role descriptions on mac, but the english versions only add noise.
+const WKUnhelpfulRoleDescriptions = new Map(Object.entries({
+  'WebArea': 'HTML content',
+  'Summary': 'summary',
+  'DescriptionList': 'description list',
+  'ImageMap': 'image map',
+  'ListMarker': 'list marker',
+  'Video': 'video playback',
+  'Mark': 'highlighted',
+  'contentinfo': 'content information',
+  'Details': 'details',
+  'DescriptionListDetail': 'description',
+  'DescriptionListTerm': 'term',
+  'alertdialog': 'web alert dialog',
+  'dialog': 'web dialog',
+  'status': 'application status',
+  'tabpanel': 'tab panel',
+  'application': 'web application',
+}));
+
 class WKAXNode implements accessibility.AXNode {
     private _payload: Protocol.Page.AXNode;
     private _children: WKAXNode[];
@@ -48,7 +72,7 @@ class WKAXNode implements accessibility.AXNode {
       if (this._payload.found)
         return this;
       for (const child of this._children) {
-        const found = child._findNeedle()
+        const found = child._findNeedle();
         if (found)
           return found;
       }
@@ -111,15 +135,27 @@ class WKAXNode implements accessibility.AXNode {
 
     serialize(): accessibility.SerializedAXNode {
       const node : accessibility.SerializedAXNode = {
-        role: this._payload.role,
+        role: WKRoleToARIARole.get(this._payload.role) || this._payload.role,
         name: this._payload.name || '',
       };
 
+      if ('description' in this._payload && this._payload.description !== node.name)
+        node.description = this._payload.description;
+
+      if ('roledescription' in this._payload) {
+        const roledescription = this._payload.roledescription;
+        if (roledescription !== this._payload.role && WKUnhelpfulRoleDescriptions.get(this._payload.role) !== roledescription)
+          node.roledescription = roledescription;
+      }
+
+      type AXPropertyOfType<Type> = {
+        [Key in keyof Protocol.Page.AXNode]:
+            Protocol.Page.AXNode[Key] extends Type ? Key : never
+      }[keyof Protocol.Page.AXNode];
+
       const userStringProperties: string[] = [
         'value',
-        'description',
         'keyshortcuts',
-        'roledescription',
         'valuetext'
       ];
       for (const userStringProperty of userStringProperties) {
