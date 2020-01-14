@@ -222,24 +222,10 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..78455c32fc5ddb0f1b9a828233a652d4
  private:
      WTF::Function<void()> m_resumeCallback;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..02b7eae77c4d4636ca9079f89bad24874acafb1c 100644
+index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..e3006f981fad81d98e09d2118443962cc925f66f 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-@@ -30,11 +30,12 @@
- 
- namespace Inspector {
- 
--InspectorTargetAgent::InspectorTargetAgent(FrontendRouter& frontendRouter, BackendDispatcher& backendDispatcher)
-+InspectorTargetAgent::InspectorTargetAgent(FrontendRouter& frontendRouter, BackendDispatcher& backendDispatcher, const String& browserContextID)
-     : InspectorAgentBase("Target"_s)
-     , m_router(frontendRouter)
-     , m_frontendDispatcher(makeUnique<TargetFrontendDispatcher>(frontendRouter))
-     , m_backendDispatcher(TargetBackendDispatcher::create(backendDispatcher, this))
-+    , m_browserContextID(browserContextID)
- {
- }
- 
-@@ -87,6 +88,28 @@ void InspectorTargetAgent::sendMessageToTarget(ErrorString& errorString, const S
+@@ -87,6 +87,28 @@ void InspectorTargetAgent::sendMessageToTarget(ErrorString& errorString, const S
      target->sendMessageToTargetBackend(message);
  }
  
@@ -268,13 +254,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..02b7eae77c4d4636ca9079f89bad2487
  void InspectorTargetAgent::sendMessageFromTargetToFrontend(const String& targetId, const String& message)
  {
      ASSERT_WITH_MESSAGE(m_targets.get(targetId), "Sending a message from an untracked target to the frontend.");
-@@ -109,16 +132,21 @@ static Protocol::Target::TargetInfo::Type targetTypeToProtocolType(InspectorTarg
-     return Protocol::Target::TargetInfo::Type::Page;
- }
- 
--static Ref<Protocol::Target::TargetInfo> buildTargetInfoObject(const InspectorTarget& target)
-+static Ref<Protocol::Target::TargetInfo> buildTargetInfoObject(const InspectorTarget& target, const String& browserContextID)
- {
+@@ -114,9 +136,12 @@ static Ref<Protocol::Target::TargetInfo> buildTargetInfoObject(const InspectorTa
      auto result = Protocol::Target::TargetInfo::create()
          .setTargetId(target.identifier())
          .setType(targetTypeToProtocolType(target.type()))
@@ -287,21 +267,8 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..02b7eae77c4d4636ca9079f89bad2487
 +    }
      if (target.isPaused())
          result->setIsPaused(true);
-+    if (!browserContextID.isEmpty())
-+        result->setBrowserContextId(browserContextID);
      return result;
- }
- 
-@@ -134,7 +162,7 @@ void InspectorTargetAgent::targetCreated(InspectorTarget& target)
-         target.pause();
-     target.connect(connectionType());
- 
--    m_frontendDispatcher->targetCreated(buildTargetInfoObject(target));
-+    m_frontendDispatcher->targetCreated(buildTargetInfoObject(target, m_browserContextID));
- }
- 
- void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
-@@ -144,7 +172,17 @@ void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
+@@ -144,7 +169,17 @@ void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
      if (!m_isConnected)
          return;
  
@@ -320,7 +287,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..02b7eae77c4d4636ca9079f89bad2487
  }
  
  void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID, const String& committedTargetID)
-@@ -159,6 +197,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
+@@ -159,6 +194,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
      m_frontendDispatcher->didCommitProvisionalTarget(oldTargetID, committedTargetID);
  }
  
@@ -339,28 +306,10 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..02b7eae77c4d4636ca9079f89bad2487
  FrontendChannel::ConnectionType InspectorTargetAgent::connectionType() const
  {
      return m_router.hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
-@@ -168,7 +218,7 @@ void InspectorTargetAgent::connectToTargets()
- {
-     for (InspectorTarget* target : m_targets.values()) {
-         target->connect(connectionType());
--        m_frontendDispatcher->targetCreated(buildTargetInfoObject(*target));
-+        m_frontendDispatcher->targetCreated(buildTargetInfoObject(*target, m_browserContextID));
-     }
- }
- 
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..b10dd23de692fd5f447a9b845b5695ac369e8496 100644
+index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..7709bcc2ec69aab0589ca1b954db1fb241bb583b 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-@@ -41,7 +41,7 @@ class JS_EXPORT_PRIVATE InspectorTargetAgent : public InspectorAgentBase, public
-     WTF_MAKE_NONCOPYABLE(InspectorTargetAgent);
-     WTF_MAKE_FAST_ALLOCATED;
- public:
--    InspectorTargetAgent(FrontendRouter&, BackendDispatcher&);
-+    InspectorTargetAgent(FrontendRouter&, BackendDispatcher&, const String& browserContextID);
-     ~InspectorTargetAgent() override;
- 
-     // InspectorAgentBase
 @@ -52,15 +52,21 @@ public:
      void setPauseOnStart(ErrorString&, bool pauseOnStart) override;
      void resume(ErrorString&, const String& targetId) override;
@@ -383,14 +332,6 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..b10dd23de692fd5f447a9b845b5695ac
  private:
      // FrontendChannel
      FrontendChannel::ConnectionType connectionType() const;
-@@ -70,6 +76,7 @@ private:
-     Inspector::FrontendRouter& m_router;
-     std::unique_ptr<TargetFrontendDispatcher> m_frontendDispatcher;
-     Ref<TargetBackendDispatcher> m_backendDispatcher;
-+    const String m_browserContextID;
-     HashMap<String, InspectorTarget*> m_targets;
-     bool m_isConnected { false };
-     bool m_shouldPauseOnStart { false };
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
 index 0000000000000000000000000000000000000000..c5d94e331f4a0f5a188d38cbb852bdbd6787a33d
@@ -1199,10 +1140,10 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..6dc8ac8e247631d2af6418155f088ea3
      ]
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
-index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..a2dd59e44b43b5e44eaa4530a143a408e6411e0a 100644
+index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..55b783d9c429117f1e3d8a3234696f99e37c78d7 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Target.json
-@@ -10,8 +10,11 @@
+@@ -10,8 +10,10 @@
              "properties": [
                  { "name": "targetId", "type": "string", "description": "Unique identifier for the target." },
                  { "name": "type", "type": "string", "enum": ["page", "service-worker", "worker"] },
@@ -1211,12 +1152,11 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..a2dd59e44b43b5e44eaa4530a143a408
 +                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "True value indicates that this is a provisional page target i.e. Such target may be created when current page starts cross-origin navigation. Eventually each provisional target is either committed and swaps with the current target or gets destroyed, e.g. in case of load request failure." },
 +                { "name": "oldTargetId", "type": "string", "optional": true, "description": "Unique identifier of the target which is going to be replaced if this target is committed. Only set for provisional targets." },
 +                { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." },
-+                { "name": "url", "type": "string" },
-+                { "name": "browserContextId", "$ref": "Browser.ContextID", "optional": true }
++                { "name": "url", "type": "string" }
              ]
          }
      ],
-@@ -37,6 +40,21 @@
+@@ -37,6 +39,21 @@
                  { "name": "targetId", "type": "string" },
                  { "name": "message", "type": "string", "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
              ]
@@ -1238,7 +1178,7 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..a2dd59e44b43b5e44eaa4530a143a408
          }
      ],
      "events": [
-@@ -49,7 +67,8 @@
+@@ -49,7 +66,8 @@
          {
              "name": "targetDestroyed",
              "parameters": [
@@ -7546,16 +7486,15 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6afb2ac55b 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9f711610d 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-@@ -26,10 +26,17 @@
+@@ -26,10 +26,16 @@
  #include "config.h"
  #include "WebPageInspectorController.h"
  
 +#include "APINavigation.h"
 +#include "InspectorDialogAgent.h"
-+#include "InspectorBrowserAgent.h"
  #include "ProvisionalPageProxy.h"
  #include "WebFrameProxy.h"
 +#include "WebPageInspectorEmulationAgent.h"
@@ -7567,7 +7506,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -46,29 +53,94 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -46,29 +52,90 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -7582,17 +7521,12 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
      : m_page(page)
      , m_frontendRouter(FrontendRouter::create())
      , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
- {
--    auto targetAgent = makeUnique<InspectorTargetAgent>(m_frontendRouter.get(), m_backendDispatcher.get());
++{
 +}
 +
 +void WebPageInspectorController::init()
-+{
-+    String browserContextID;
-+#if ENABLE(REMOTE_INSPECTOR)
-+    browserContextID = InspectorBrowserAgent::toBrowserContextIDProtocolString(m_page.sessionID());
-+#endif
-+    auto targetAgent = makeUnique<InspectorTargetAgent>(m_frontendRouter.get(), m_backendDispatcher.get(), browserContextID);
+ {
+     auto targetAgent = makeUnique<InspectorTargetAgent>(m_frontendRouter.get(), m_backendDispatcher.get());
  
      m_targetAgent = targetAgent.get();
  
@@ -7666,7 +7600,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
  }
  
  bool WebPageInspectorController::hasLocalFrontend() const
-@@ -80,6 +152,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -80,6 +147,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  {
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -7676,7 +7610,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -98,8 +173,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
+@@ -98,8 +168,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
      m_frontendRouter->disconnectFrontend(frontendChannel);
  
      bool disconnectingLastFrontend = !m_frontendRouter->hasFrontends();
@@ -7688,7 +7622,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
  
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
-@@ -122,6 +199,8 @@ void WebPageInspectorController::disconnectAllFrontends()
+@@ -122,6 +194,8 @@ void WebPageInspectorController::disconnectAllFrontends()
      // Disconnect any remaining remote frontends.
      m_frontendRouter->disconnectAllFrontends();
  
@@ -7697,7 +7631,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -134,6 +213,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +208,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -7709,7 +7643,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -148,6 +232,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -148,6 +227,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
@@ -7765,7 +7699,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -186,7 +319,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +314,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -7774,7 +7708,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..fcb4d7850b66e21b266c1f4f7063bd6a
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +351,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +346,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
