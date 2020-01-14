@@ -758,6 +758,16 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       response.end('Not found');
       await navigationPromise;
     });
+    it.skip(WEBKIT || FFOX)('should work with pages that have loaded before being connected to', async({page, context, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(async () => {
+        const child = window.open(document.location.href);
+        while(child.document.readyState !== 'complete' || child.document.location.href === 'about:blank')
+          await new Promise(setTimeout);
+      });
+      const [, childPage] = await context.pages();
+      await childPage.waitForLoadState();
+    });
   });
 
   describe('Page.goBack', function() {
