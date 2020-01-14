@@ -188,7 +188,6 @@ export class FFPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referer: string | undefined): Promise<frames.GotoResult> {
-    this._page._validateNavigationReferrer(referer);
     const response = await this._session.send('Page.navigate', { url, referer, frameId: frame._id });
     return { newDocumentId: response.navigationId || undefined, isSameDocument: !response.navigationId };
   }

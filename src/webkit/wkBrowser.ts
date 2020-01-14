@@ -62,7 +62,6 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     this._eventListeners = [
       helper.addEventListener(this._browserSession, 'Browser.pageProxyCreated', this._onPageProxyCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Browser.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
-      helper.addEventListener(this._browserSession, 'Browser.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
 
@@ -141,11 +140,6 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   _onPageProxyMessageReceived(event: PageProxyMessageReceivedPayload) {
     const pageProxy = this._pageProxies.get(event.pageProxyId)!;
     pageProxy.dispatchMessageToSession(event.message);
-  }
-
-  _onProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
-    const pageProxy = this._pageProxies.get(event.pageProxyId)!;
-    pageProxy.handleProvisionalLoadFailed(event);
   }
 
   disconnect() {
