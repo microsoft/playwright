@@ -67,7 +67,10 @@ export class CRBrowserServer {
   }
 
   async connect(): Promise<CRBrowser> {
-    return CRBrowser.connect(this._connectOptions);
+    const browser = await CRBrowser.connect(this._connectOptions);
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    browser.close = this._gracefullyClose;
+    return browser;
   }
 
   process(): ChildProcess {

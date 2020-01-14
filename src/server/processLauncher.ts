@@ -23,6 +23,7 @@ import * as readline from 'readline';
 import { TimeoutError } from '../errors';
 import * as platform from '../platform';
 
+const debugLauncher = platform.debug('pw:launcher');
 const removeFolderAsync = platform.promisify(removeFolder);
 
 export type LaunchProcessOptions = {
@@ -43,7 +44,10 @@ export type LaunchProcessOptions = {
 
 type LaunchResult = { launchedProcess: childProcess.ChildProcess, gracefullyClose: () => Promise<void> };
 
+let lastLaunchedId = 0;
+
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
+  const id = ++lastLaunchedId;
   let stdio: ('ignore' | 'pipe')[] = ['pipe', 'pipe', 'pipe'];
   if (options.pipe) {
     if (options.dumpio)
@@ -63,6 +67,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         stdio
       }
   );
+  debugLauncher(`[${id}] <launching> ${options.executablePath} ${options.args.join(' ')}`);
 
   if (!spawnedProcess.pid) {
     let reject: (e: Error) => void;
@@ -81,13 +86,14 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   let processClosed = false;
   const waitForProcessToClose = new Promise((fulfill, reject) => {
     spawnedProcess.once('exit', () => {
+      debugLauncher(`[${id}] <process did exit>`);
       processClosed = true;
       helper.removeEventListeners(listeners);
       // Cleanup as processes exit.
       if (options.tempDir) {
         removeFolderAsync(options.tempDir)
-            .then(() => fulfill())
-            .catch((err: Error) => console.error(err));
+            .catch((err: Error) => console.error(err))
+            .then(fulfill);
       } else {
         fulfill();
       }
@@ -111,14 +117,17 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     if (gracefullyClosing)
       return;
     gracefullyClosing = true;
+    debugLauncher(`[${id}] <gracefully close start>`);
     options.attemptToGracefullyClose().catch(() => killProcess());
     // TODO: forcefully kill the process after some timeout.
     await waitForProcessToClose;
+    debugLauncher(`[${id}] <gracefully close end>`);
     helper.removeEventListeners(listeners);
   }
 
   // This method has to be sync to be used as 'exit' event handler.
   function killProcess() {
+    debugLauncher(`[${id}] <kill>`);
     helper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       // Force kill chrome.
