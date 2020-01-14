@@ -260,12 +260,13 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.close', { runBeforeUnload });
   }
 
-  getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
+  async getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
     const frameId = handle._context.frame._id;
-    return this._session.send('Page.getBoundingBox', {
+    const response = await this._session.send('Page.getBoundingBox', {
       frameId,
       objectId: handle._remoteObject.objectId,
     });
+    return response.boundingBox;
   }
 
   canScreenshotOutsideViewport(): boolean {
@@ -373,6 +374,6 @@ export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.Lif
   return waitUntil;
 }
 
-function toRemoteObject(handle: dom.ElementHandle): Protocol.RemoteObject {
+function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
   return handle._remoteObject;
 }

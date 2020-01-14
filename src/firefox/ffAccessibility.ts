@@ -35,7 +35,7 @@ class FFAXNode implements accessibility.AXNode {
   private _role: string;
   private _cachedHasFocusableChild: boolean|undefined;
 
-  constructor(payload: Protocol.AXTree) {
+  constructor(payload: Protocol.Accessibility.AXTree) {
     this._payload = payload;
     this._children = (payload.children || []).map(x => new FFAXNode(x));
     this._editable = !!payload.editable;
