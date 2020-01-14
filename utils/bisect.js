@@ -17,8 +17,8 @@
 
 const URL = require('url');
 const debug = require('debug');
-const pptr = require('..');
-const browserFetcher = pptr.createBrowserFetcher();
+const playwright = require('..');
+const browserFetcher = playwright.chromium._createBrowserFetcher();
 const path = require('path');
 const fs = require('fs');
 const {fork} = require('child_process');

@@ -246,7 +246,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('BrowserFetcher', function() {
     it('should download and extract linux binary', async({server}) => {
       const downloadsFolder = await mkdtempAsync(TMP_FOLDER);
-      const browserFetcher = playwright.createBrowserFetcher({
+      const browserFetcher = playwright._createBrowserFetcher({
         platform: 'linux',
         path: downloadsFolder,
         host: server.PREFIX

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { BrowserFetcherOptions, BrowserFetcher } from './browserFetcher';
 import * as types from '../types';
 import { TimeoutError } from '../errors';
 
 export interface Playwright {
-  createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher;
   executablePath(): string;
   devices: types.Devices;
   errors: { TimeoutError: typeof TimeoutError };

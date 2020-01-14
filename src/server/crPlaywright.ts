@@ -220,7 +220,7 @@ export class CRPlaywright implements Playwright {
     return chromeArguments;
   }
 
-  createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
+  _createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
     const downloadURLs = {
       linux: '%s/chromium-browser-snapshots/Linux_x64/%d/%s.zip',
       mac: '%s/chromium-browser-snapshots/Mac/%d/%s.zip',
@@ -270,7 +270,7 @@ export class CRPlaywright implements Playwright {
   }
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
-    const browserFetcher = this.createBrowserFetcher();
+    const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `Chromium revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };
