@@ -61,6 +61,11 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const idAttribute = await page.$eval('section', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
+    it('should auto-detect css selector with attributes', async({page, server}) => {
+      await page.setContent('<section id="testAttribute">43543</section>');
+      const idAttribute = await page.$eval('section[id="testAttribute"]', e => e.id);
+      expect(idAttribute).toBe('testAttribute');
+    });
     it('should accept arguments', async({page, server}) => {
       await page.setContent('<section>hello</section>');
       const text = await page.$eval('section', (e, suffix) => e.textContent + suffix, ' world!');
