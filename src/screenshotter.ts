@@ -108,7 +108,7 @@ export class Screenshotter {
       const viewport = this._page.viewport();
       if (!this._page._delegate.canScreenshotOutsideViewport()) {
         if (!viewport) {
-          viewportSize = await this._page.evaluate(() => {
+          const maybeViewportSize = await this._page.evaluate(() => {
             if (!document.body || !document.documentElement)
               return;
             return {
@@ -116,8 +116,9 @@ export class Screenshotter {
               height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
             };
           });
-          if (!viewportSize)
+          if (!maybeViewportSize)
             throw new Error(kScreenshotDuringNavigationError);
+          viewportSize = maybeViewportSize!;
         } else {
           viewportSize = viewport;
         }
@@ -137,7 +138,7 @@ export class Screenshotter {
       if (!overridenViewport)
         rewrittenOptions.clip = boundingBox;
 
-      const result = await this._screenshot(format, rewrittenOptions, overridenViewport || viewport);
+      const result = await this._screenshot(format, rewrittenOptions, (overridenViewport || viewport)!);
 
       if (overridenViewport) {
         if (viewport)

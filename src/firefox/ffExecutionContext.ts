@@ -105,7 +105,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     checkException(payload.exceptionDetails);
     return context._createHandle(payload.result);
 
-    function rewriteError(error) : never {
+    function rewriteError(error: Error) : never {
       if (error.message.includes('Failed to find execution context with id') || error.message.includes('Execution context was destroyed!'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
       throw error;
@@ -146,10 +146,10 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     const simpleValue = await this._session.send('Runtime.callFunction', {
       executionContextId: this._executionContextId,
       returnByValue: true,
-      functionDeclaration: (e => e).toString(),
+      functionDeclaration: ((e: any) => e).toString(),
       args: [this._toCallArgument(payload)],
     });
-    return deserializeValue(simpleValue.result);
+    return deserializeValue(simpleValue.result!);
   }
 
   handleToString(handle: js.JSHandle, includeType: boolean): string {

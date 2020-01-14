@@ -26,6 +26,7 @@ import { ConnectionTransport, SlowMoTransport } from '../transport';
 import { ConnectionEvents, FFConnection, FFSessionEvents } from './ffConnection';
 import { FFPage } from './ffPage';
 import * as platform from '../platform';
+import { Protocol } from './protocol';
 
 export type FFConnectOptions = {
   slowMo?: number,
@@ -124,12 +125,14 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     return Array.from(this._targets.values());
   }
 
-  async _onTargetCreated({targetId, url, browserContextId, openerId, type}) {
-    const context = browserContextId ? this._contexts.get(browserContextId) : this._defaultContext;
+  async _onTargetCreated(payload: Protocol.Target.targetCreatedPayload) {
+    const {targetId, url, browserContextId, openerId, type} = payload;
+    const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext;
     const target = new Target(this._connection, this, context, targetId, type, url, openerId);
     this._targets.set(targetId, target);
-    if (target.opener() && target.opener()._pagePromise) {
-      const openerPage = await target.opener()._pagePromise;
+    const opener = target.opener();
+    if (opener && opener._pagePromise) {
+      const openerPage = await opener._pagePromise;
       if (openerPage.listenerCount(Events.Page.Popup)) {
         const popupPage = await target.page();
         openerPage.emit(Events.Page.Popup, popupPage);
@@ -137,14 +140,16 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     }
   }
 
-  _onTargetDestroyed({targetId}) {
-    const target = this._targets.get(targetId);
+  _onTargetDestroyed(payload: Protocol.Target.targetDestroyedPayload) {
+    const {targetId} = payload;
+    const target = this._targets.get(targetId)!;
     this._targets.delete(targetId);
     target._didClose();
   }
 
-  _onTargetInfoChanged({targetId, url}) {
-    const target = this._targets.get(targetId);
+  _onTargetInfoChanged(payload: Protocol.Target.targetInfoChangedPayload) {
+    const {targetId, url} = payload;
+    const target = this._targets.get(targetId)!;
     target._url = url;
   }
 
@@ -168,14 +173,14 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
         const {targetId} = await this._connection.send('Target.newPage', {
           browserContextId: browserContextId || undefined
         });
-        const target = this._targets.get(targetId);
+        const target = this._targets.get(targetId)!;
         return target.page();
       },
 
       close: async (): Promise<void> => {
         assert(browserContextId, 'Non-incognito profiles cannot be closed!');
-        await this._connection.send('Target.removeBrowserContext', { browserContextId });
-        this._contexts.delete(browserContextId);
+        await this._connection.send('Target.removeBrowserContext', { browserContextId: browserContextId! });
+        this._contexts.delete(browserContextId!);
       },
 
       cookies: async (): Promise<network.NetworkCookie[]> => {
@@ -196,7 +201,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
       },
 
       setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
-        const webPermissionToProtocol = new Map([
+        const webPermissionToProtocol = new Map<string, 'geo' | 'microphone' | 'camera' | 'desktop-notifications'>([
           ['geolocation', 'geo'],
           ['microphone', 'microphone'],
           ['camera', 'camera'],
@@ -232,7 +237,7 @@ class Target {
   private readonly _targetId: string;
   private readonly _type: 'page' | 'browser';
   _url: string;
-  private readonly _openerId: string;
+  private readonly _openerId: string | undefined;
 
   constructor(connection: any, browser: FFBrowser, context: BrowserContext, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
     this._browser = browser;
@@ -250,7 +255,7 @@ class Target {
   }
 
   opener(): Target | null {
-    return this._openerId ? this._browser._targets.get(this._openerId) : null;
+    return this._openerId ? this._browser._targets.get(this._openerId)! : null;
   }
 
   type(): 'page' | 'browser' {
@@ -266,7 +271,9 @@ class Target {
   }
 
   page(): Promise<Page> {
-    if (this._type === 'page' && !this._pagePromise) {
+    if (this._type !== 'page')
+      throw new Error(`Cannot create page for "${this._type}" target`);
+    if (!this._pagePromise) {
       this._pagePromise = new Promise(async f => {
         const session = await this._connection.createSession(this._targetId);
         this._ffPage = new FFPage(session, this._context);
@@ -291,5 +298,5 @@ export async function createTransport(options: FFConnectOptions): Promise<Connec
     transport = options.transport;
   else if (options.browserWSEndpoint)
     transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
-  return SlowMoTransport.wrap(transport, options.slowMo);
+  return SlowMoTransport.wrap(transport!, options.slowMo);
 }

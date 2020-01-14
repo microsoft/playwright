@@ -9,7 +9,7 @@ async function generateChromiunProtocol(revision) {
   const outputPath = path.join(__dirname, '..', '..', 'src', 'chromium', 'protocol.ts');
   if (revision.local && fs.existsSync(outputPath))
     return;
-  const playwright = await require('../../chromium');
+  const playwright = await require('../../index').chromium;
   const browserServer = await playwright.launchServer({executablePath: revision.executablePath});
   const origin = browserServer.wsEndpoint().match(/ws:\/\/([0-9A-Za-z:\.]*)\//)[1];
   const page = await (await browserServer.connect()).defaultContext().newPage();
@@ -211,7 +211,7 @@ function firefoxTypeToString(type, indent='    ') {
   if (type['$type'] === 'array')
     return firefoxTypeToString(type['$items'], indent) + '[]';
   if (type['$type'] === 'enum')
-    return type['$values'].map(v => JSON.stringify(v)).join('|');
+    return '(' + type['$values'].map(v => JSON.stringify(v)).join('|') + ')';
   return type['$type'];
 }
 

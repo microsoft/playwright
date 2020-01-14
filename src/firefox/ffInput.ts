@@ -38,6 +38,7 @@ function toButtonNumber(button: input.Button): number {
     return 1;
   if (button === 'right')
     return 2;
+  return 0;
 }
 
 function toButtonsMask(buttons: Set<input.Button>): number {

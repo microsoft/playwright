@@ -33,6 +33,12 @@ export class FFConnection extends platform.EventEmitter {
   private _sessions: Map<string, FFSession>;
   _closed: boolean;
 
+  on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+
   constructor(transport: ConnectionTransport) {
     super();
     this._transport = transport;
@@ -43,17 +49,26 @@ export class FFConnection extends platform.EventEmitter {
     this._transport.onclose = this._onClose.bind(this);
     this._sessions = new Map();
     this._closed = false;
+
+    this.on = super.on;
+    this.addListener = super.addListener;
+    this.off = super.removeListener;
+    this.removeListener = super.removeListener;
+    this.once = super.once;
   }
 
   static fromSession(session: FFSession): FFConnection {
-    return session._connection;
+    return session._connection!;
   }
 
   session(sessionId: string): FFSession | null {
     return this._sessions.get(sessionId) || null;
   }
 
-  send(method: string, params: object | undefined = {}): Promise<any> {
+  send<T extends keyof Protocol.CommandParameters>(
+    method: T,
+    params?: Protocol.CommandParameters[T]
+  ): Promise<Protocol.CommandReturnValues[T]> {
     const id = this._rawSend({method, params});
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
@@ -105,8 +120,8 @@ export class FFConnection extends platform.EventEmitter {
     if (this._closed)
       return;
     this._closed = true;
-    this._transport.onmessage = null;
-    this._transport.onclose = null;
+    this._transport.onmessage = undefined;
+    this._transport.onclose = undefined;
     for (const callback of this._callbacks.values())
       callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
@@ -123,7 +138,7 @@ export class FFConnection extends platform.EventEmitter {
 
   async createSession(targetId: string): Promise<FFSession> {
     const {sessionId} = await this.send('Target.attachToTarget', {targetId});
-    return this._sessions.get(sessionId);
+    return this._sessions.get(sessionId)!;
   }
 }
 
@@ -132,7 +147,7 @@ export const FFSessionEvents = {
 };
 
 export class FFSession extends platform.EventEmitter {
-  _connection: FFConnection;
+  _connection: FFConnection | null;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _targetType: string;
   private _sessionId: string;
@@ -148,6 +163,12 @@ export class FFSession extends platform.EventEmitter {
     this._connection = connection;
     this._targetType = targetType;
     this._sessionId = sessionId;
+
+    this.on = super.on;
+    this.addListener = super.addListener;
+    this.off = super.removeListener;
+    this.removeListener = super.removeListener;
+    this.once = super.once;
   }
 
   send<T extends keyof Protocol.CommandParameters>(
@@ -164,7 +185,7 @@ export class FFSession extends platform.EventEmitter {
 
   _onMessage(object: { id?: number; method: string; params: object; error: { message: string; data: any; }; result?: any; }) {
     if (object.id && this._callbacks.has(object.id)) {
-      const callback = this._callbacks.get(object.id);
+      const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.error)
         callback.reject(createProtocolError(callback.error, callback.method, object));
@@ -174,12 +195,6 @@ export class FFSession extends platform.EventEmitter {
       assert(!object.id);
       Promise.resolve().then(() => this.emit(object.method, object.params));
     }
-  }
-
-  async detach() {
-    if (!this._connection)
-      throw new Error(`Session already detached. Most likely the ${this._targetType} has been closed.`);
-    await this._connection.send('Target.detachFromTarget',  {sessionId: this._sessionId});
   }
 
   _onClosed() {
