@@ -82,7 +82,7 @@ async function downloadBrowser(browser, playwright) {
   logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
   const localRevisions = await fetcher.localRevisions();
   // Remove previous revisions.
-  const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => browserFetcher.remove(revision));
+  const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);
   return revisionInfo;
 }
