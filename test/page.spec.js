@@ -792,6 +792,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(cachedRequest.headers['if-modified-since']).not.toBe(undefined);
 
       await page.setCacheEnabled(false);
+      await page.goto(server.EMPTY_PAGE);
       const [nonCachedRequest] = await Promise.all([
         server.waitForRequest('/cached/one-style.html'),
         page.goto(server.PREFIX + '/cached/one-style.html'),
