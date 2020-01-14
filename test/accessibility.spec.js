@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -27,7 +27,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         <title>Accessibility Test</title>
       </head>
       <body>
-        <div>Hello World</div>
         <h1>Inputs</h1>
         <input placeholder="Empty input" autofocus />
         <input placeholder="readonly input" readonly />
@@ -45,7 +44,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         role: 'document',
         name: 'Accessibility Test',
         children: [
-          {role: 'text leaf', name: 'Hello World'},
           {role: 'heading', name: 'Inputs', level: 1},
           {role: 'textbox', name: 'Empty input', focused: true},
           {role: 'textbox', name: 'readonly input', readonly: true},
@@ -59,7 +57,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         role: 'WebArea',
         name: 'Accessibility Test',
         children: [
-          {role: 'text', name: 'Hello World'},
           {role: 'heading', name: 'Inputs', level: 1},
           {role: 'textbox', name: 'Empty input', focused: true},
           {role: 'textbox', name: 'readonly input', readonly: true},
@@ -73,7 +70,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         role: 'WebArea',
         name: 'Accessibility Test',
         children: [
-          {role: 'text', name: 'Hello World'},
           {role: 'heading', name: 'Inputs', level: 1},
           {role: 'textbox', name: 'Empty input', focused: true},
           {role: 'textbox', name: 'readonly input', readonly: true},
@@ -85,6 +81,14 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         ]
       };
       expect(await page.accessibility.snapshot()).toEqual(golden);
+    });
+    it.skip(WEBKIT && !MAC)('should work with regular text', async({page}) => {
+      await page.setContent(`<div>Hello World</div>`);
+      const snapshot = await page.accessibility.snapshot();
+      expect(snapshot.children[0]).toEqual({
+        role: FFOX ? 'text leaf' : 'text',
+        name: 'Hello World',
+      });
     });
     it('roledescription', async({page}) => {
       await page.setContent('<div tabIndex=-1 aria-roledescription="foo">Hi</div>');
@@ -328,27 +332,23 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         it('should show uninteresting nodes', async({page}) => {
           await page.setContent(`
             <div id="root" role="textbox">
-              <div>hi</div>
+              <div>
+                hello
+                <div>
+                  world
+                </div>
+              </div>
             </div>
           `);
 
           const root = await page.$('#root');
           const snapshot = await page.accessibility.snapshot({root, interestingOnly: false});
           expect(snapshot.role).toBe('textbox');
-          expect(snapshot.value).toBe('hi');
+          expect(snapshot.value).toContain('hello');
+          expect(snapshot.value).toContain('world');
           expect(!!snapshot.children).toBe(true);
         });
       });
     });
-    function findFocusedNode(node) {
-      if (node.focused)
-        return node;
-      for (const child of node.children || []) {
-        const focusedChild = findFocusedNode(child);
-        if (focusedChild)
-          return focusedChild;
-      }
-      return null;
-    }
   });
 };
