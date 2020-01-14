@@ -17,7 +17,7 @@
 
 import { WKSession } from './wkConnection';
 import { Page } from '../page';
-import { helper, RegisteredListener, assert } from '../helper';
+import { helper, RegisteredListener, assert, debugError } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
@@ -210,7 +210,11 @@ class InterceptableRequest implements network.RequestDelegate {
     const reason = errorReasons[errorCode];
     assert(reason, 'Unknown error code: ' + errorCode);
     await this._interceptedPromise;
-    await this._session.send('Network.interceptAsError', { requestId: this._requestId, reason });
+    await this._session.send('Network.interceptAsError', { requestId: this._requestId, reason }).catch(error => {
+      // In certain cases, protocol will return error if the request was already canceled
+      // or the page was closed. We should tolerate these errors.
+      debugError(error);
+    });
   }
 
   async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
@@ -237,6 +241,10 @@ class InterceptableRequest implements network.RequestDelegate {
       headers: responseHeaders,
       base64Encoded,
       content: responseBody
+    }).catch(error => {
+      // In certain cases, protocol will return error if the request was already canceled
+      // or the page was closed. We should tolerate these errors.
+      debugError(error);
     });
   }
 
@@ -245,6 +253,10 @@ class InterceptableRequest implements network.RequestDelegate {
     await this._session.send('Network.interceptContinue', {
       requestId: this._requestId,
       ...overrides
+    }).catch(error => {
+      // In certain cases, protocol will return error if the request was already canceled
+      // or the page was closed. We should tolerate these errors.
+      debugError(error);
     });
   }
 }
