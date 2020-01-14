@@ -81,7 +81,7 @@ if (process.env.BROWSER === 'firefox') {
   describe('Firefox', () => {
     testRunner.loadTests(require('./playwright.spec.js'), {
       product: 'Firefox',
-      playwrightPath: path.join(utils.projectRoot(), 'firefox.js'),
+      playwrightPath: utils.projectRoot(),
       testRunner,
     });
   });
@@ -89,7 +89,7 @@ if (process.env.BROWSER === 'firefox') {
   describe('WebKit', () => {
     testRunner.loadTests(require('./playwright.spec.js'), {
       product: 'WebKit',
-      playwrightPath: path.join(utils.projectRoot(), 'webkit.js'),
+      playwrightPath: utils.projectRoot(),
       testRunner,
     });
   });
@@ -97,7 +97,7 @@ if (process.env.BROWSER === 'firefox') {
   describe('Chromium', () => {
     testRunner.loadTests(require('./playwright.spec.js'), {
       product: 'Chromium',
-      playwrightPath: path.join(utils.projectRoot(), 'chromium.js'),
+      playwrightPath: utils.projectRoot(),
       testRunner,
     });
     if (process.env.COVERAGE)

@@ -1,8 +1,7 @@
 <script src='../../web.js'></script>
 <script>
 async function setup(product, connectOptions) {
-  window.connect = window.playwrightweb(product);
-  window.browser = await window.connect(connectOptions);
+  window.browser = await window.playwrightweb[product].connect(connectOptions);
   window.context = await window.browser.newContext();
   window.page = await window.context.newPage();
 }

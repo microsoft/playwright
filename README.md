@@ -31,7 +31,7 @@ This code snippet navigates to example.com in WebKit, and saves a screenshot.
 const pw = require('playwright');
 
 (async () => {
-  const browser = await pw.playwright('webkit').launch(); // or 'chromium', 'firefox'
+  const browser = await pw.webkit.launch(); // or 'chromium', 'firefox'
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -50,7 +50,7 @@ This code snippet navigates to example.com in Firefox, and executes a script in 
 const pw = require('playwright');
 
 (async () => {
-  const browser = await pw.playwright('firefox').launch(); // or 'chromium', 'webkit'
+  const browser = await pw.firefox.launch(); // or 'chromium', 'webkit'
   const context = await browser.newContext();
   const page = await context.newPage();
 

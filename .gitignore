@@ -18,7 +18,6 @@ yarn.lock
 /src/chromium/protocol.ts
 /src/firefox/protocol.ts
 /src/webkit/protocol.ts
-/utils/browser/playwright-web.js
 lib/
 playwright-*.tgz
 /web.js

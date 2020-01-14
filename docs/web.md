@@ -10,11 +10,10 @@ API consists of a single `connect` function, similar to
 [webkitPlaywright.connect(options)](api.md#webkitplaywrightconnectoptions).
 
 ```html
-<script src='../playwright/web.js'></script>
+<script src='playwright/web.js'></script>
 <script>
 async function usePlaywright() {
-  const connect = window.playwrightweb('chromium'); // or 'firefox', 'webkit'
-  const browser = await connect(options);
+  const browser = await window.playwrightweb.chromium.connect(options); // or 'firefox', 'webkit'
   // ... drive automation ...
   await browser.disconnect();
 }

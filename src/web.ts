@@ -18,14 +18,9 @@ import { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';
 import { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
 import { WKBrowser as WebKitBrowser } from './webkit/wkBrowser';
 
-function connect(browser: 'chromium' | 'firefox' | 'webkit') {
-  if (browser === 'chromium')
-    return ChromiumBrowser.connect;
-  if (browser === 'firefox')
-    return FirefoxBrowser.connect;
-  if (browser === 'webkit')
-    return WebKitBrowser.connect;
-  throw new Error(`Unsupported browser "${browser}"`);
-}
-
+const connect = {
+  chromium: { connect: ChromiumBrowser.connect },
+  firefox: { connect: FirefoxBrowser.connect },
+  webkit: { connect: WebKitBrowser.connect },
+};
 export = connect;
