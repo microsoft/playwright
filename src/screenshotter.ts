@@ -96,6 +96,7 @@ export class Screenshotter {
     const rewrittenOptions: types.ScreenshotOptions = { ...options };
     return this._queue.postTask(async () => {
       let overridenViewport: types.Viewport | undefined;
+      let viewportSize: types.Size;
 
       let maybeBoundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
       assert(maybeBoundingBox, 'Node is either not visible or not an HTMLElement');
@@ -104,16 +105,26 @@ export class Screenshotter {
       assert(boundingBox.height !== 0, 'Node has 0 height.');
       boundingBox = enclosingIntRect(boundingBox);
 
-      // TODO: viewport may be null here.
-      const viewport = this._page.viewport()!;
-
+      const viewport = this._page.viewport();
       if (!this._page._delegate.canScreenshotOutsideViewport()) {
-        if (boundingBox.width > viewport.width || boundingBox.height > viewport.height) {
-          overridenViewport = {
-            ...viewport,
-            width: Math.max(viewport.width, boundingBox.width),
-            height: Math.max(viewport.height, boundingBox.height),
-          };
+        if (!viewport) {
+          viewportSize = await this._page.evaluate(() => {
+            if (!document.body || !document.documentElement)
+              return;
+            return {
+              width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
+              height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
+            };
+          });
+          if (!viewportSize)
+            throw new Error(kScreenshotDuringNavigationError);
+        } else {
+          viewportSize = viewport;
+        }
+        if (boundingBox.width > viewportSize.width || boundingBox.height > viewportSize.height) {
+          overridenViewport = {... (viewport || viewportSize)};
+          overridenViewport.width = Math.max(viewportSize.width, boundingBox.width);
+          overridenViewport.height = Math.max(viewportSize.height, boundingBox.height);
           await this._page.setViewport(overridenViewport);
         }
 
@@ -128,8 +139,12 @@ export class Screenshotter {
 
       const result = await this._screenshot(format, rewrittenOptions, overridenViewport || viewport);
 
-      if (overridenViewport)
-        await this._page.setViewport(viewport);
+      if (overridenViewport) {
+        if (viewport)
+          await this._page.setViewport(viewport);
+        else
+          await this._page._delegate.resetViewport(viewportSize!);
+      }
 
       return result;
     }).catch(rewriteError);
