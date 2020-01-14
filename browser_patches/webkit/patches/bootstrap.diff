@@ -2470,7 +2470,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..bee832c4c65f9a4487c0d0b7c6fd6985
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..4c3fa82e3bb63bd3750731157950563808c754c2 100644
+index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..7ddcea8b824043a6a17cfe2d209d861b701029f1 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -3105,8 +3105,8 @@ index d4e6b5d1f2151a1f4c16081b2695dd66da416ba2..4c3fa82e3bb63bd37507311579505638
 +        axNode->setMultiline(multiline);
 +    if (axObject->isMultiSelectable())
 +        axNode->setMultiselectable(axObject->isMultiSelectable());
-+    if (axObject->supportsReadOnly())
-+        axNode->setReadonly(axObject->readOnlyValue() == "true");
++    if (axObject->supportsReadOnly() && !axObject->canSetValueAttribute() && axObject->isEnabled())
++        axNode->setReadonly(true);
 +    if (axObject->supportsRequiredAttribute())
 +        axNode->setRequired(axObject->isRequired());
 +    if (axObject->isSelected())
