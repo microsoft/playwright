@@ -322,26 +322,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(request2.headers['referer']).toBe(server.PREFIX + '/grid.html');
       expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
-    it('should use referer option when setExtraHTTPHeaders provides referer', async({page, server}) => {
+    it('should reject referer option when setExtraHTTPHeaders provides referer', async({page, server}) => {
       await page.setExtraHTTPHeaders({ 'referer': 'http://microsoft.com/' });
-      try {
-        const [request1, request2] = await Promise.all([
-          server.waitForRequest('/grid.html'),
-          server.waitForRequest('/digits/1.png'),
-          page.goto(server.PREFIX + '/grid.html', {
-            referer: 'http://google.com/',
-          }),
-        ]);
-        expect(request1.headers['referer']).toBe('http://google.com/');
-        // Make sure subresources use referer specified by setExtraHTTPHeaders.
-        expect(request2.headers['referer']).toBe('http://microsoft.com/');
-        expect(page.url()).toBe(server.PREFIX + '/grid.html');
-      } catch (error) {
-        if (FFOX || WEBKIT)
-          expect(error.message).toBe('"referer" is already specified as extra HTTP header');
-        else
-          throw error;
-      }
+      let error;
+      await page.goto(server.PREFIX + '/grid.html', {
+        referer: 'http://google.com/',
+      }).catch(e => error = e);
+      expect(error.message).toBe('"referer" is already specified as extra HTTP header');
     });
     it('should override referrer-policy', async({page, server}) => {
       server.setRoute('/grid.html', (req, res) => {

@@ -223,7 +223,6 @@ export class WKPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
-    this._page._validateNavigationReferrer(referrer);
     if (this._pageProxySession.isDisposed())
       throw new Error('Target closed');
     const pageProxyId = this._pageProxySession.sessionId;

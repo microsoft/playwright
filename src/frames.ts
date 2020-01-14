@@ -309,8 +309,11 @@ export class Frame {
 
   async goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
     let referer = (this._page._state.extraHTTPHeaders || {})['referer'];
-    if (options && options.referer !== undefined)
+    if (options && options.referer !== undefined) {
+      if (referer !== undefined && referer !== options.referer)
+        throw new Error('"referer" is already specified as extra HTTP header');
       referer = options.referer;
+    }
     const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
 
     let navigateResult: GotoResult;
