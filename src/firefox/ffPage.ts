@@ -87,7 +87,8 @@ export class FFPage implements PageDelegate {
     await Promise.all(promises);
   }
 
-  _onExecutionContextCreated({executionContextId, auxData}) {
+  _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
+    const {executionContextId, auxData} = payload;
     const frame = this._page._frameManager.frame(auxData ? auxData.frameId : null);
     if (!frame)
       return;
@@ -98,7 +99,8 @@ export class FFPage implements PageDelegate {
     this._contextIdToContext.set(executionContextId, context);
   }
 
-  _onExecutionContextDestroyed({executionContextId}) {
+  _onExecutionContextDestroyed(payload: Protocol.Runtime.executionContextDestroyedPayload) {
+    const {executionContextId} = payload;
     const context = this._contextIdToContext.get(executionContextId);
     if (!context)
       return;
@@ -110,7 +112,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
-    const frame = this._page._frameManager.frame(params.frameId);
+    const frame = this._page._frameManager.frame(params.frameId)!;
     for (const watcher of this._page._frameManager._lifecycleWatchers)
       watcher._onAbortedNewDocumentNavigation(frame, params.navigationId, params.errorText);
   }
@@ -131,7 +133,8 @@ export class FFPage implements PageDelegate {
     this._page._frameManager.frameDetached(params.frameId);
   }
 
-  _onEventFired({frameId, name}) {
+  _onEventFired(payload: Protocol.Page.eventFiredPayload) {
+    const {frameId, name} = payload;
     if (name === 'load')
       this._page._frameManager.frameLifecycleEvent(frameId, 'load');
     if (name === 'DOMContentLoaded')
@@ -144,8 +147,9 @@ export class FFPage implements PageDelegate {
     this._page.emit(Events.Page.PageError, error);
   }
 
-  _onConsole({type, args, executionContextId, location}) {
-    const context = this._contextIdToContext.get(executionContextId);
+  _onConsole(payload: Protocol.Runtime.consolePayload) {
+    const {type, args, executionContextId, location} = payload;
+    const context = this._contextIdToContext.get(executionContextId)!;
     this._page._addConsoleMessage(type, args.map(arg => context._createHandle(arg)), location);
   }
 
@@ -160,12 +164,13 @@ export class FFPage implements PageDelegate {
   }
 
   _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
-    const context = this._contextIdToContext.get(event.executionContextId);
+    const context = this._contextIdToContext.get(event.executionContextId)!;
     this._page._onBindingCalled(event.payload, context);
   }
 
-  async _onFileChooserOpened({executionContextId, element}) {
-    const context = this._contextIdToContext.get(executionContextId);
+  async _onFileChooserOpened(payload: Protocol.Page.fileChooserOpenedPayload) {
+    const {executionContextId, element} = payload;
+    const context = this._contextIdToContext.get(executionContextId)!;
     const handle = context._createHandle(element).asElement()!;
     this._page._onFileChooserOpened(handle);
   }
@@ -184,7 +189,7 @@ export class FFPage implements PageDelegate {
 
   async navigateFrame(frame: frames.Frame, url: string, referer: string | undefined): Promise<frames.GotoResult> {
     const response = await this._session.send('Page.navigate', { url, referer, frameId: frame._id });
-    return { newDocumentId: response.navigationId, isSameDocument: !response.navigationId };
+    return { newDocumentId: response.navigationId || undefined, isSameDocument: !response.navigationId };
   }
 
   needsLifecycleResetOnSetContent(): boolean {
@@ -292,7 +297,7 @@ export class FFPage implements PageDelegate {
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const { frameId } = await this._session.send('Page.contentFrame', {
       frameId: handle._context.frame._id,
-      objectId: toRemoteObject(handle).objectId,
+      objectId: toRemoteObject(handle).objectId!,
     });
     if (!frameId)
       return null;
@@ -329,7 +334,7 @@ export class FFPage implements PageDelegate {
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('Page.getContentQuads', {
       frameId: handle._context.frame._id,
-      objectId: toRemoteObject(handle).objectId,
+      objectId: toRemoteObject(handle).objectId!,
     }).catch(debugError);
     if (!result)
       return null;
@@ -340,7 +345,7 @@ export class FFPage implements PageDelegate {
     return this._page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
   }
 
-  async setInputFiles(handle: dom.ElementHandle, files: types.FilePayload[]): Promise<void> {
+  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
     await handle.evaluate(dom.setFileInputFunction, files);
   }
 

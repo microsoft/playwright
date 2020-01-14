@@ -14,8 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as accessibility from '../accessibility';
 import { FFSession } from './ffConnection';
+import { Protocol } from './protocol';
 
 export async function getAccessibilityTree(session: FFSession) : Promise<accessibility.AXNode> {
   const { tree } = await session.send('Accessibility.getFullAXTree');
@@ -33,13 +35,13 @@ class FFAXNode implements accessibility.AXNode {
   private _role: string;
   private _cachedHasFocusableChild: boolean|undefined;
 
-  constructor(payload) {
+  constructor(payload: Protocol.AXTree) {
     this._payload = payload;
     this._children = (payload.children || []).map(x => new FFAXNode(x));
-    this._editable = payload.editable;
+    this._editable = !!payload.editable;
     this._richlyEditable = this._editable && (payload.tag !== 'textarea' && payload.tag !== 'input');
-    this._focusable = payload.focusable;
-    this._expanded = payload.expanded;
+    this._focusable = !!payload.focusable;
+    this._expanded = !!payload.expanded;
     this._name = this._payload.name;
     this._role = this._payload.role;
     this._cachedHasFocusableChild;

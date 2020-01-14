@@ -101,12 +101,8 @@ class WKAXNode implements accessibility.AXNode {
         role: this._payload.role,
         name: this._payload.name || '',
       };
-      type AXPropertyOfType<Type> = {
-        [Key in keyof Protocol.Page.AXNode]:
-            Protocol.Page.AXNode[Key] extends Type ? Key : never
-      }[keyof Protocol.Page.AXNode];
 
-      const userStringProperties: AXPropertyOfType<string>[] = [
+      const userStringProperties: string[] = [
         'value',
         'description',
         'keyshortcuts',
@@ -116,10 +112,10 @@ class WKAXNode implements accessibility.AXNode {
       for (const userStringProperty of userStringProperties) {
         if (!(userStringProperty in this._payload))
           continue;
-        node[userStringProperty] = this._payload[userStringProperty];
+        (node as any)[userStringProperty] = (this._payload as any)[userStringProperty];
       }
 
-      const booleanProperties: AXPropertyOfType<boolean>[] = [
+      const booleanProperties: string[] = [
         'disabled',
         'expanded',
         'focused',
@@ -135,10 +131,10 @@ class WKAXNode implements accessibility.AXNode {
         // not whether focus is specifically on the root node.
         if (booleanProperty === 'focused' && (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea'))
           continue;
-        const value = this._payload[booleanProperty];
+        const value = (this._payload as any)[booleanProperty];
         if (!value)
           continue;
-        node[booleanProperty] = value;
+        (node as any)[booleanProperty] = value;
       }
 
       const tristateProperties: ('checked'|'pressed')[] = [
@@ -151,7 +147,7 @@ class WKAXNode implements accessibility.AXNode {
         const value = this._payload[tristateProperty];
         node[tristateProperty] = value === 'mixed' ? 'mixed' : value === 'true' ? true : false;
       }
-      const numericalProperties: AXPropertyOfType<number>[] = [
+      const numericalProperties: string[] = [
         'level',
         'valuemax',
         'valuemin',
@@ -159,18 +155,18 @@ class WKAXNode implements accessibility.AXNode {
       for (const numericalProperty of numericalProperties) {
         if (!(numericalProperty in this._payload))
           continue;
-        node[numericalProperty] = this._payload[numericalProperty];
+        (node as any)[numericalProperty] = (this._payload as any)[numericalProperty];
       }
-      const tokenProperties: AXPropertyOfType<string>[] = [
+      const tokenProperties: string[] = [
         'autocomplete',
         'haspopup',
         'invalid',
       ];
       for (const tokenProperty of tokenProperties) {
-        const value = this._payload[tokenProperty];
+        const value = (this._payload as any)[tokenProperty];
         if (!value || value === 'false')
           continue;
-        node[tokenProperty] = value;
+        (node as any)[tokenProperty] = value;
       }
 
       const orientationIsApplicable = new Set([

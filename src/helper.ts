@@ -69,7 +69,7 @@ class Helper {
         const value = target[key];
         if (typeof key === 'string' && key.startsWith('_') || typeof value !== 'function')
           return value;
-        return function(...args: any) {
+        return function(this: any, ...args: any) {
           if (args.length)
             log(`${className}.${key} %o`, args);
           else

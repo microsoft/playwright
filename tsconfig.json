@@ -6,7 +6,7 @@
     "sourceMap": true,
     "rootDir": "./src",
     "outDir": "./lib",
-    "strictBindCallApply": true,
+    "strict": true,
     "declaration": true
   },
   "compileOnSave": true,

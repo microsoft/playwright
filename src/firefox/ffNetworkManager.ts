@@ -21,6 +21,7 @@ import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
 import * as platform from '../platform';
+import { Protocol } from './protocol';
 
 export class FFNetworkManager {
   private _session: FFSession;
@@ -46,11 +47,11 @@ export class FFNetworkManager {
     helper.removeEventListeners(this._eventListeners);
   }
 
-  async setRequestInterception(enabled) {
+  async setRequestInterception(enabled: boolean) {
     await this._session.send('Network.setRequestInterception', {enabled});
   }
 
-  _onRequestWillBeSent(event) {
+  _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
     const redirected = event.redirectedFrom ? this._requests.get(event.redirectedFrom) : null;
     const frame = redirected ? redirected.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
     if (!frame)
@@ -66,11 +67,11 @@ export class FFNetworkManager {
     this._page._frameManager.requestStarted(request.request);
   }
 
-  _onResponseReceived(event) {
+  _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
-    const remoteAddress: network.RemoteAddress = { ip: event.remoteIPAddress, port: event.remotePort };
+    const remoteAddress: network.RemoteAddress = { ip: event.remoteIPAddress || '', port: event.remotePort || 0 };
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', {
         requestId: request._id
@@ -86,11 +87,11 @@ export class FFNetworkManager {
     this._page._frameManager.requestReceivedResponse(response);
   }
 
-  _onRequestFinished(event) {
+  _onRequestFinished(event: Protocol.Network.requestFinishedPayload) {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
-    const response = request.request.response();
+    const response = request.request.response()!;
     // Keep redirected requests in the map for future reference in redirectChain.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
@@ -102,19 +103,20 @@ export class FFNetworkManager {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  _onRequestFailed(event) {
+  _onRequestFailed(event: Protocol.Network.requestFailedPayload) {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
     this._requests.delete(request._id);
-    if (request.request.response())
-      request.request.response()._requestFinished();
+    const response = request.request.response();
+    if (response)
+      response._requestFinished();
     request.request._setFailureText(event.errorCode);
     this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
   }
 }
 
-const causeToResourceType = {
+const causeToResourceType: {[key: string]: string} = {
   TYPE_INVALID: 'other',
   TYPE_OTHER: 'other',
   TYPE_SCRIPT: 'script',
@@ -145,7 +147,7 @@ class InterceptableRequest implements network.RequestDelegate {
   _id: string;
   private _session: FFSession;
 
-  constructor(session: FFSession, frame: frames.Frame, redirectChain: network.Request[], payload: any) {
+  constructor(session: FFSession, frame: frames.Frame, redirectChain: network.Request[], payload: Protocol.Network.requestWillBeSentPayload) {
     this._id = payload.requestId;
     this._session = session;
 
