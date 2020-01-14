@@ -73,15 +73,14 @@ async function downloadBrowser(browser, playwright) {
     progressBar.tick(delta);
   }
 
-  const fetcher = playwright.createBrowserFetcher();
+  const fetcher = playwright._createBrowserFetcher();
   const revisionInfo = fetcher.revisionInfo();
   // Do nothing if the revision is already downloaded.
   if (revisionInfo.local)
     return revisionInfo;
   await fetcher.download(revisionInfo.revision, onProgress);
   logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
-  const browserFetcher = playwright.createBrowserFetcher();
-  const localRevisions = await browserFetcher.localRevisions();
+  const localRevisions = await fetcher.localRevisions();
   // Remove previous revisions.
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => browserFetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);

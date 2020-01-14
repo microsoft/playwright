@@ -6,7 +6,6 @@
 
 <!-- GEN:toc -->
 - [class: Playwright](#class-playwright)
-  * [playwright.createBrowserFetcher([options])](#playwrightcreatebrowserfetcheroptions)
   * [playwright.devices](#playwrightdevices)
   * [playwright.errors](#playwrighterrors)
   * [playwright.executablePath()](#playwrightexecutablepath)
@@ -28,12 +27,6 @@
   * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
   * [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
   * [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
-- [class: BrowserFetcher](#class-browserfetcher)
-  * [browserFetcher.canDownload([revision])](#browserfetchercandownloadrevision)
-  * [browserFetcher.download([revision, progressCallback])](#browserfetcherdownloadrevision-progresscallback)
-  * [browserFetcher.localRevisions()](#browserfetcherlocalrevisions)
-  * [browserFetcher.remove([revision])](#browserfetcherremoverevision)
-  * [browserFetcher.revisionInfo([revision])](#browserfetcherrevisioninforevision)
 - [class: ConsoleMessage](#class-consolemessage)
   * [consoleMessage.args()](#consolemessageargs)
   * [consoleMessage.location()](#consolemessagelocation)
@@ -292,7 +285,7 @@
   * [webKitBrowserServer.process()](#webkitbrowserserverprocess)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
-- [Download defaults](#download-defaults)
+- [Downloaded browsers](#downloaded-browsers)
 <!-- GEN:stop -->
 
 ### class: Playwright
@@ -313,14 +306,7 @@ const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 
 See [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions), [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions) or [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions) for browser-specific launch methods.
 
-#### playwright.createBrowserFetcher([options])
-- `options` <[Object]>
-  - `host` <[string]> A download host to be used.
-  - `path` <[string]> A path for the downloads folder.
-  - `platform` <[string]> Defaults to the current platform.
-- returns: <[BrowserFetcher]>
-
-See [Download defaults](#download-defaults) for default values.
+Playwright automatically downloads browser executables during installation, see [Downloaded browsers](#downloaded-browsers) for more information.
 
 #### playwright.devices
 - returns: <[Object]>
@@ -596,60 +582,6 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 const context = browser.defaultContext();
 await context.setPermissions('https://html5demos.com', ['geolocation']);
 ```
-
-### class: BrowserFetcher
-
-BrowserFetcher can download and manage different versions of Chromium/Firefox/WebKit.
-
-BrowserFetcher operates on revision strings that specify a precise version of the browser, e.g. `"533271"`. Chromium revision strings can be obtained from [omahaproxy.appspot.com](http://omahaproxy.appspot.com/).
-
-An example of using BrowserFetcher to download a specific version of Chromium and running
-Playwright against it:
-
-```js
-const browserFetcher = playwright.createBrowserFetcher();
-const revisionInfo = await browserFetcher.download('533271');
-const browser = await playwright.launch({executablePath: revisionInfo.executablePath});
-```
-
-> **NOTE** BrowserFetcher is not designed to work concurrently with other
-> instances of BrowserFetcher that share the same downloads directory.
-
-#### browserFetcher.canDownload([revision])
-- `revision` <[string]> a revision to check availability. Defaults to preferred revision.
-- returns: <[Promise]<[boolean]>>  returns `true` if the revision could be downloaded from the host.
-
-The method initiates a HEAD request to check if the revision is available.
-
-#### browserFetcher.download([revision, progressCallback])
-- `revision` <[string]> a revision to download. Defaults to preferred revision.
-- `progressCallback` <[function]([number], [number])> A function that will be called with two arguments:
-  - `downloadedBytes` <[number]> how many bytes have been downloaded
-  - `totalBytes` <[number]> how large is the total download.
-- returns: <[Promise]<[Object]>> Resolves with revision information when the revision is downloaded and extracted
-  - `revision` <[string]> the revision the info was created from
-  - `folderPath` <[string]> path to the extracted revision folder
-  - `executablePath` <[string]> path to the revision executable
-  - `url` <[string]> URL this revision can be downloaded from
-  - `local` <[boolean]> whether the revision is locally available on disk
-
-The method initiates a GET request to download the revision from the host. See [Download defaults](#download-defaults) for approximate download size.
-
-#### browserFetcher.localRevisions()
-- returns: <[Promise]<[Array]<[string]>>> A list of all revisions available locally on disk.
-
-#### browserFetcher.remove([revision])
-- `revision` <[string]> a revision to remove. Defaults to preferred revision. The method will throw if the revision has not been downloaded.
-- returns: <[Promise]> Resolves when the revision has been removed.
-
-#### browserFetcher.revisionInfo([revision])
-- `revision` <[string]> a revision to get info for. Defaults to preferred revision.
-- returns: <[Object]>
-  - `revision` <[string]> the revision the info was created from
-  - `folderPath` <[string]> path to the extracted revision folder
-  - `executablePath` <[string]> path to the revision executable
-  - `url` <[string]> URL this revision can be downloaded from
-  - `local` <[boolean]> whether the revision is locally available on disk
 
 ### class: ConsoleMessage
 
@@ -3770,14 +3702,14 @@ const playwright = require('playwright').chromium;
 
 > **NOTE** It is not yet possible to test extension popups or content scripts.
 
-### Download defaults
+### Downloaded browsers
 
-See [playwright.createBrowserFetcher([options])](#playwrightcreatebrowserfetcheroptions) for explanation. Below `<root>` is playwright's package root.
+During installation Playwright downloads browser executables, according to revisions in the [package.json](https://github.com/microsoft/playwright/blob/master/package.json) file. Below `<playwright>` refers to playwright's package root.
 
 | | Chromium | Firefox | WebKit |
 | --- | --- | --- | --- |
 | Download host | `https://storage.googleapis.com` | `https://playwrightaccount.blob.core.windows.net` | `https://playwrightaccount.blob.core.windows.net` |
-| Download path  | `<root>/.local-chromium` | `<root>/.local-firefox` | `<root>/.local-webkit` |
+| Local path  | `<playwright>/.local-chromium` | `<playwright>/.local-firefox` | `<playwright>/.local-webkit` |
 | Supported platforms | `mac`, `win32`, `win64`, `linux` | `mac`, `win32`, `win64`, `linux` | `mac`, `linux`; linux binaries are run with WSL on Windows |
 | Approximate download size | 120mb | 70mb | 50mb |
 
@@ -3786,7 +3718,6 @@ See [playwright.createBrowserFetcher([options])](#playwrightcreatebrowserfetcher
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Body]: #class-body  "Body"
 [BrowserContext]: #class-browsercontext  "BrowserContext"
-[BrowserFetcher]: #class-browserfetcher  "BrowserFetcher"
 [Browser]: #class-browser  "Browser"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"

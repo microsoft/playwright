@@ -166,7 +166,7 @@ export class WKPlaywright implements Playwright {
     return webkitArguments;
   }
 
-  createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher {
+  _createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher {
     const downloadURLs = {
       linux: '%s/builds/webkit/%s/minibrowser-linux.zip',
       mac: '%s/builds/webkit/%s/minibrowser-mac-%s.zip',
@@ -203,7 +203,7 @@ export class WKPlaywright implements Playwright {
   }
 
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
-    const browserFetcher = this.createBrowserFetcher();
+    const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };

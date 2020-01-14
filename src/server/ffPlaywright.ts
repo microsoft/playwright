@@ -206,7 +206,7 @@ export class FFPlaywright implements Playwright {
     return firefoxArguments;
   }
 
-  createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
+  _createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {
     const downloadURLs = {
       linux: '%s/builds/firefox/%s/firefox-linux.zip',
       mac: '%s/builds/firefox/%s/firefox-mac.zip',
@@ -250,7 +250,7 @@ export class FFPlaywright implements Playwright {
   }
 
   _resolveExecutablePath() {
-    const browserFetcher = this.createBrowserFetcher();
+    const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
     const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install" or "yarn install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };

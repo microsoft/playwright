@@ -16,11 +16,11 @@
  */
 
 const assert = require('assert');
-const playwright = require('../chromium');
+const playwright = require('..').chromium;
 const https = require('https');
 const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
 
-const fetchers = SUPPORTER_PLATFORMS.map(platform => playwright.createBrowserFetcher({platform}));
+const fetchers = SUPPORTER_PLATFORMS.map(platform => playwright._createBrowserFetcher({platform}));
 
 const colors = {
   reset: '\x1b[0m',
