@@ -32,7 +32,7 @@ try {
     // Release mode
   }
   try {
-    const chromeRevision = await downloadBrowser('chromium', require('./chromium'));
+    const chromeRevision = await downloadBrowser('chromium', require('./index').chromium);
     if (protocolGenerator)
       await protocolGenerator.generateChromiunProtocol(chromeRevision);
   } catch (e) {
@@ -40,14 +40,14 @@ try {
   }
 
   try {
-    const firefoxRevision = await downloadBrowser('firefox', require('./firefox'));
+    const firefoxRevision = await downloadBrowser('firefox', require('./index').firefox);
     if (protocolGenerator)
       await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
   } catch (e) {
     console.warn(e.message);
   }
   try {
-    const webkitRevision = await downloadBrowser('webkit', require('./webkit'));
+    const webkitRevision = await downloadBrowser('webkit', require('./index').webkit);
     if (protocolGenerator)
       await protocolGenerator.generateWebKitProtocol(webkitRevision);
   } catch (e) {
