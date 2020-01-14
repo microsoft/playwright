@@ -219,6 +219,11 @@ export class FrameManager {
     this._page.emit(Events.Page.RequestFailed, request);
   }
 
+  provisionalLoadFailed(documentId: string, error: string) {
+    for (const watcher of this._lifecycleWatchers)
+      watcher._onProvisionalLoadFailed(documentId, error);
+  }
+
   private _removeFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
@@ -304,8 +309,11 @@ export class Frame {
 
   async goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
     let referer = (this._page._state.extraHTTPHeaders || {})['referer'];
-    if (options && options.referer !== undefined)
+    if (options && options.referer !== undefined) {
+      if (referer !== undefined && referer !== options.referer)
+        throw new Error('"referer" is already specified as extra HTTP header');
       referer = options.referer;
+    }
     const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
 
     let navigateResult: GotoResult;
@@ -971,6 +979,10 @@ class LifecycleWatcher {
       else
         this._navigationAbortedCallback(new Error('Navigation failed: ' + errorText));
     }
+  }
+
+  _onProvisionalLoadFailed(documentId: string, error: string) {
+    this._onAbortedNewDocumentNavigation(this._frame, documentId, error);
   }
 
   _onLifecycleEvent(frame: Frame) {
