@@ -40,7 +40,7 @@ module.exports.describe = function({testRunner, defaultBrowserOptions, playwrigh
       const browser = await playwright.connect({ browserWSEndpoint: await wsEndPointPromise });
       const promises = [
         new Promise(resolve => browser.once('disconnected', resolve)),
-        new Promise(resolve => res.on('close', resolve))
+        new Promise(resolve => res.on('exit', resolve))
       ];
       if (process.platform === 'win32')
         execSync(`taskkill /pid ${res.pid} /T /F`);

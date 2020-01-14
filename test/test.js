@@ -27,8 +27,7 @@ if (parallelArgIndex !== -1)
   parallel = parseInt(process.argv[parallelArgIndex + 1], 10);
 require('events').defaultMaxListeners *= parallel;
 
-// Timeout to 20 seconds on Appveyor instances.
-let timeout = process.env.APPVEYOR ? 20 * 1000 : 10 * 1000;
+let timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
 if (!isNaN(process.env.TIMEOUT))
   timeout = parseInt(process.env.TIMEOUT, 10);
 const testRunner = new TestRunner({
