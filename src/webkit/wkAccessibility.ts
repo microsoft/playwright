@@ -68,7 +68,7 @@ class WKAXNode implements accessibility.AXNode {
       return this._children;
     }
 
-    _findNeedle() : WKAXNode {
+    _findNeedle() : WKAXNode | null {
       if (this._payload.found)
         return this;
       for (const child of this._children) {
@@ -108,8 +108,26 @@ class WKAXNode implements accessibility.AXNode {
       }
     }
 
+    _isTextControl() : boolean {
+      switch (this._payload.role) {
+        case 'combobox':
+        case 'searchfield':
+        case 'textbox':
+        case 'TextField':
+          return true;
+      }
+      return false;
+    }
+
+    _name() : string {
+      if (this._payload.role === 'text')
+        return this._payload.value || '';
+      return this._payload.name || '';
+    }
+
     isInteresting(insideControl: boolean) : boolean {
-      const {role, focusable, name} = this._payload;
+      const {role, focusable} = this._payload;
+      const name = this._name();
       if (role === 'ScrollArea')
         return false;
       if (role === 'WebArea')
@@ -129,14 +147,29 @@ class WKAXNode implements accessibility.AXNode {
       return this.isLeafNode() && !!name;
     }
 
+    _hasRendundantTextChild() {
+      if (this._children.length !== 1)
+        return false;
+      const child = this._children[0];
+      return child._payload.role === 'text' && this._payload.name === child._payload.value;
+    }
+
     isLeafNode() : boolean {
-      return !this._children.length;
+      if (!this._children.length)
+        return true;
+      // WebKit on Linux ignores everything inside text controls, normalize this behavior
+      if (this._isTextControl())
+        return true;
+      // WebKit for mac has text nodes inside heading, li, menuitem, a, and p nodes
+      if (this._hasRendundantTextChild())
+        return true;
+      return false;
     }
 
     serialize(): accessibility.SerializedAXNode {
       const node : accessibility.SerializedAXNode = {
         role: WKRoleToARIARole.get(this._payload.role) || this._payload.role,
-        name: this._payload.name || '',
+        name: this._name(),
       };
 
       if ('description' in this._payload && this._payload.description !== node.name)
@@ -148,13 +181,15 @@ class WKAXNode implements accessibility.AXNode {
           node.roledescription = roledescription;
       }
 
+      if ('value' in this._payload && this._payload.role !== 'text')
+        node.value = this._payload.value;
+
       type AXPropertyOfType<Type> = {
         [Key in keyof Protocol.Page.AXNode]:
             Protocol.Page.AXNode[Key] extends Type ? Key : never
       }[keyof Protocol.Page.AXNode];
 
       const userStringProperties: string[] = [
-        'value',
         'keyshortcuts',
         'valuetext'
       ];

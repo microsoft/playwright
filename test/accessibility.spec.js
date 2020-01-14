@@ -37,10 +37,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         <input aria-placeholder="placeholder" value="and a value" />
         <div aria-hidden="true" id="desc">This is a description!</div>
         <input aria-placeholder="placeholder" value="and a value" aria-describedby="desc" />
-        <select>
-          <option>First Option</option>
-          <option>Second Option</option>
-        </select>
       </body>`);
       // autofocus happens after a delay in chrome these days
       await page.waitForFunction(() => document.activeElement.hasAttribute('autofocus'));
@@ -58,10 +54,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           {role: 'textbox', name: '', value: 'value only'},
           {role: 'textbox', name: '', value: 'and a value'}, // firefox doesn't use aria-placeholder for the name
           {role: 'textbox', name: '', value: 'and a value', description: 'This is a description!'}, // and here
-          {role: 'combobox', name: '', value: 'First Option', haspopup: true, children: [
-            {role: 'combobox option', name: 'First Option', selected: true},
-            {role: 'combobox option', name: 'Second Option'}]
-          }]
+        ]
       } : CHROMIUM ? {
         role: 'WebArea',
         name: 'Accessibility Test',
@@ -75,14 +68,12 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           {role: 'textbox', name: '', value: 'value only'},
           {role: 'textbox', name: 'placeholder', value: 'and a value'},
           {role: 'textbox', name: 'placeholder', value: 'and a value', description: 'This is a description!'},
-          {role: 'combobox', name: '', value: 'First Option', children: [
-            {role: 'menuitem', name: 'First Option', selected: true},
-            {role: 'menuitem', name: 'Second Option'}]
-          }]
+        ]
       } : {
         role: 'WebArea',
         name: 'Accessibility Test',
         children: [
+          {role: 'text', name: 'Hello World'},
           {role: 'heading', name: 'Inputs', level: 1},
           {role: 'textbox', name: 'Empty input', focused: true},
           {role: 'textbox', name: 'readonly input', readonly: true},
@@ -91,10 +82,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           {role: 'textbox', name: '', value: 'value only' },
           {role: 'textbox', name: 'placeholder',value: 'and a value'},
           {role: 'textbox', name: 'This is a description!',value: 'and a value'}, // webkit uses the description over placeholder for the name
-          {role: 'button', name: '', value: 'First Option', children: [
-            { role: 'MenuListOption', name: '', value: 'First Option', selected: true },
-            { role: 'MenuListOption', name: '', value: 'Second Option' }]
-          }
         ]
       };
       expect(await page.accessibility.snapshot()).toEqual(golden);
@@ -337,6 +324,19 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
           const button = await page.$('button');
           await page.$eval('button', button => button.remove());
           expect(await page.accessibility.snapshot({root: button})).toEqual(null);
+        });
+        it('should show uninteresting nodes', async({page}) => {
+          await page.setContent(`
+            <div id="root" role="textbox">
+              <div>hi</div>
+            </div>
+          `);
+
+          const root = await page.$('#root');
+          const snapshot = await page.accessibility.snapshot({root, interestingOnly: false});
+          expect(snapshot.role).toBe('textbox');
+          expect(snapshot.value).toBe('hi');
+          expect(!!snapshot.children).toBe(true);
         });
       });
     });
