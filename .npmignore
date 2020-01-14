@@ -9,7 +9,7 @@ lib/injected/
 #types
 !lib/**/*.d.ts
 !index.d.ts
-!web.d.ts
+
 # Install
 !install.js
 
@@ -18,12 +18,3 @@ lib/injected/
 
 # root for "playwright/web"
 !web.js
-
-# specific browsers
-!chromium.js
-!firefox.js
-!webkit.js
-
-# dgozman says to remove these
-!DeviceDescriptors.js
-!Errors.js

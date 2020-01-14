@@ -4,7 +4,7 @@
     console.log('unhandledRejection', error.message);
   });
 
-  const [, , playwrightRoot, usePipe] = process.argv;
+  const [, , playwrightRoot, product, usePipe] = process.argv;
   const options = {
     pipe: usePipe === 'use-pipe',
     ignoreDefaultArgs: true,
@@ -14,10 +14,10 @@
     args: ['-e', 'console.error("message from dumpio")', '--']
   }
   console.error('using pipe: ' + options.pipe);
-  if (playwrightRoot.includes('firefox'))
+  if (product.toLowerCase() === 'firefox')
     options.args.push('-juggler', '-profile');
   try {
-    await require(playwrightRoot).launchServer(options);
+    await require(playwrightRoot)[product.toLowerCase()].launchServer(options);
     console.error('Browser launch unexpectedly succeeded.');
   } catch (e) {
   }

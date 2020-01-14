@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const playwright = require('../../chromium');
+const playwright = require('../../index.js').chromium;
 const path = require('path');
 const Source = require('./Source');
 

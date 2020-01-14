@@ -72,11 +72,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Top-level requires', function() {
     it('should require top-level Errors', async() => {
-      const Errors = require(path.join(utils.projectRoot(), '/Errors'));
+      const Errors = require(path.join(utils.projectRoot(), '/lib/errors.js'));
       expect(Errors.TimeoutError).toBe(playwright.errors.TimeoutError);
     });
     it('should require top-level DeviceDescriptors', async() => {
-      const Devices = require(path.join(utils.projectRoot(), '/DeviceDescriptors'));
+      const Devices = require(path.join(utils.projectRoot(), '/lib/deviceDescriptors.js')).DeviceDescriptors;
       expect(Devices['iPhone 6']).toBe(playwright.devices['iPhone 6']);
     });
   });

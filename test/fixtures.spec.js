@@ -18,7 +18,7 @@
 const path = require('path');
 const {spawn} = require('child_process');
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, product, playwrightPath, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -26,14 +26,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Fixtures', function() {
     it('dumpio option should work with pipe option ', async({server}) => {
       let dumpioData = '';
-      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, 'use-pipe']);
+      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product, 'use-pipe']);
       res.stderr.on('data', data => dumpioData += data.toString('utf8'));
       await new Promise(resolve => res.on('close', resolve));
       expect(dumpioData).toContain('message from dumpio');
     });
     it('should dump browser process stderr', async({server}) => {
       let dumpioData = '';
-      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath]);
+      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product]);
       res.stderr.on('data', data => dumpioData += data.toString('utf8'));
       await new Promise(resolve => res.on('close', resolve));
       expect(dumpioData).toContain('message from dumpio');

@@ -17,7 +17,7 @@
 const path = require('path');
 const {spawn, execSync} = require('child_process');
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, product}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -40,7 +40,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         // Disable DUMPIO to cleanly read stdout.
         dumpio: false,
       });
-      const res = spawn('node', [path.join(__dirname, '..', 'fixtures', 'closeme.js'), playwrightPath, JSON.stringify(options)]);
+      const res = spawn('node', [path.join(__dirname, '..', 'fixtures', 'closeme.js'), playwrightPath, product, JSON.stringify(options)]);
       let wsEndPointCallback;
       const wsEndPointPromise = new Promise(x => wsEndPointCallback = x);
       let output = '';

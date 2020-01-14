@@ -300,7 +300,7 @@
 Playwright module provides a method to launch a browser instance.
 The following is a typical example of using Playwright to drive automation:
 ```js
-const playwright = require('playwright')('chromium');  // Or 'firefox' or 'webkit'.
+const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -329,7 +329,7 @@ Returns a list of devices to be used with [`page.emulate(options)`](#pageemulate
 devices can be found in [lib/deviceDescriptors.js](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
 
 ```js
-const playwright = require('playwright')('firefox');  // Or 'chromium' or 'webkit'.
+const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
 const iPhone = playwright.devices['iPhone 6'];
 
 (async () => {
@@ -376,7 +376,7 @@ A Browser is created when Playwright connects to a browser instance, either thro
 
 An example of using a [Browser] to create a [Page]:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -388,7 +388,7 @@ const playwright = require('playwright');
 
 An example of disconnecting from and reconnecting to a [Browser]:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browserServer = await playwright.launchServer();
@@ -678,7 +678,7 @@ One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'
 
 An example of using `Dialog` class:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -715,7 +715,7 @@ const playwright = require('playwright');
 ElementHandle represents an in-page DOM element. ElementHandles can be created with the [page.$](#pageselector) method.
 
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -982,7 +982,7 @@ At every point of time, page exposes its current frame tree via the [page.mainFr
 An example of dumping frame tree:
 
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -1413,7 +1413,7 @@ await page.waitFor(selector => !!document.querySelector(selector), {}, selector)
 
 The `waitForFunction` can be used to observe viewport size change:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -1488,7 +1488,7 @@ immediately. If the selector doesn't appear after the `timeout` milliseconds of 
 
 This method works across navigations:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -1770,7 +1770,7 @@ Page provides methods to interact with a single tab or [extension background pag
 
 This example creates a page, navigates it to a URL, and then saves a screenshot:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -2238,7 +2238,7 @@ If the `playwrightFunction` returns a [Promise], it will be awaited.
 
 An example of adding an `md5` function into the page:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
 const crypto = require('crypto');
 
 (async () => {
@@ -2262,7 +2262,7 @@ const crypto = require('crypto');
 An example of adding a `window.readfile` function into the page:
 
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 const fs = require('fs');
 
 (async () => {
@@ -2758,7 +2758,7 @@ Waits for event to fire and passes its value into the predicate function. Resolv
 
 The `waitForFunction` can be used to observe viewport size change:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -2866,7 +2866,7 @@ immediately. If the selector doesn't appear after the `timeout` milliseconds of 
 
 This method works across navigations:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await playwright.launch();
@@ -3749,7 +3749,7 @@ Playwright can be used for testing Chrome Extensions.
 
 The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
 ```js
-const playwright = require('playwright');
+const playwright = require('playwright').chromium;
 
 (async () => {
   const pathToExtension = require('path').join(__dirname, 'my-extension');
