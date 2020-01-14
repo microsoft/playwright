@@ -1780,7 +1780,7 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6514d6e912e51268a2a4bd08024190bb1c449e7a
+index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e744759b55a5f
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
 @@ -0,0 +1,671 @@
@@ -2197,7 +2197,7 @@ index 0000000000000000000000000000000000000000..6514d6e912e51268a2a4bd08024190bb
 +      throw new Error('RemoteObject is not a node');
 +    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document});
 +    if (!quads.length)
-+      return null;
++      return {boundingBox: null};
 +    let x1 = Infinity;
 +    let y1 = Infinity;
 +    let x2 = -Infinity;
@@ -2209,7 +2209,7 @@ index 0000000000000000000000000000000000000000..6514d6e912e51268a2a4bd08024190bb
 +      x2 = Math.max(boundingBox.x + boundingBox.width, x2);
 +      y2 = Math.max(boundingBox.y + boundingBox.height, y2);
 +    }
-+    return {x: x1 + frame.domWindow().scrollX, y: y1 + frame.domWindow().scrollY, width: x2 - x1, height: y2 - y1};
++    return {boundingBox: {x: x1 + frame.domWindow().scrollX, y: y1 + frame.domWindow().scrollY, width: x2 - x1, height: y2 - y1}};
 +  }
 +
 +  async screenshot({mimeType, fullPage, clip}) {
@@ -4143,16 +4143,15 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79f6f1bd6b
+index 0000000000000000000000000000000000000000..92ce5a8cebfc4290a9f14f398d9ef282d4370fbe
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,673 @@
+@@ -0,0 +1,700 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
-+const types = {};
-+
-+types.TargetInfo = {
++const targetTypes = {};
++targetTypes.TargetInfo = {
 +  type: t.Enum(['page', 'browser']),
 +  targetId: t.String,
 +  browserContextId: t.Optional(t.String),
@@ -4161,19 +4160,63 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +  openerId: t.Optional(t.String),
 +};
 +
-+types.DOMPoint = {
++const browserTypes = {};
++
++browserTypes.CookieOptions = {
++  name: t.String,
++  value: t.String,
++  url: t.Optional(t.String),
++  domain: t.Optional(t.String),
++  path: t.Optional(t.String),
++  secure: t.Optional(t.Boolean),
++  httpOnly: t.Optional(t.Boolean),
++  sameSite: t.Optional(t.Enum(['Strict', 'Lax', 'None'])),
++  expires: t.Optional(t.Number),
++};
++
++browserTypes.Cookie = {
++  name: t.String,
++  domain: t.String,
++  path: t.String,
++  value: t.String,
++  expires: t.Number,
++  size: t.Number,
++  httpOnly: t.Boolean,
++  secure: t.Boolean,
++  session: t.Boolean,
++  sameSite: t.Enum(['Strict', 'Lax', 'None']),
++};
++
++const pageTypes = {};
++pageTypes.DOMPoint = {
 +  x: t.Number,
 +  y: t.Number,
 +};
 +
-+types.DOMQuad = {
-+  p1: types.DOMPoint,
-+  p2: types.DOMPoint,
-+  p3: types.DOMPoint,
-+  p4: types.DOMPoint,
++pageTypes.BoundingBox = {
++  x: t.Number,
++  y: t.Number,
++  width: t.Number,
++  height: t.Number,
 +};
 +
-+types.TouchPoint = {
++pageTypes.Viewport = {
++  width: t.Number,
++  height: t.Number,
++  deviceScaleFactor: t.Number,
++  isMobile: t.Boolean,
++  hasTouch: t.Boolean,
++  isLandscape: t.Boolean,
++};
++
++pageTypes.DOMQuad = {
++  p1: pageTypes.DOMPoint,
++  p2: pageTypes.DOMPoint,
++  p3: pageTypes.DOMPoint,
++  p4: pageTypes.DOMPoint,
++};
++
++pageTypes.TouchPoint = {
 +  x: t.Number,
 +  y: t.Number,
 +  radiusX: t.Optional(t.Number),
@@ -4182,7 +4225,16 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +  force: t.Optional(t.Number),
 +};
 +
-+types.RemoteObject = {
++pageTypes.Clip = {
++  x: t.Number,
++  y: t.Number,
++  width: t.Number,
++  height: t.Number,
++};
++
++
++const runtimeTypes = {};
++runtimeTypes.RemoteObject = {
 +  type: t.Optional(t.Enum(['object', 'function', 'undefined', 'string', 'number', 'boolean', 'symbol', 'bigint'])),
 +  subtype: t.Optional(t.Enum(['array', 'null', 'node', 'regexp', 'date', 'map', 'set', 'weakmap', 'weakset', 'error', 'proxy', 'promise', 'typedarray'])),
 +  objectId: t.Optional(t.String),
@@ -4190,10 +4242,34 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +  value: t.Any
 +};
 +
-+types.AXTree = {
++runtimeTypes.ObjectProperty = {
++  name: t.String,
++  value: runtimeTypes.RemoteObject,
++};
++
++runtimeTypes.ScriptLocation = {
++  columnNumber: t.Number,
++  lineNumber: t.Number,
++  url: t.String,
++};
++
++runtimeTypes.ExceptionDetails = {
++  text: t.Optional(t.String),
++  stack: t.Optional(t.String),
++  value: t.Optional(t.Any),
++};
++
++runtimeTypes.CallFunctionArgument = {
++  objectId: t.Optional(t.String),
++  unserializableValue: t.Optional(t.Enum(['Infinity', '-Infinity', '-0', 'NaN'])),
++  value: t.Any,
++};
++
++const axTypes = {};
++axTypes.AXTree = {
 +  role: t.String,
 +  name: t.String,
-+  children: t.Optional(t.Array(t.Recursive(types, 'AXTree'))),
++  children: t.Optional(t.Array(t.Recursive(axTypes, 'AXTree'))),
 +
 +  selected: t.Optional(t.Boolean),
 +  focused: t.Optional(t.Boolean),
@@ -4234,6 +4310,8 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +
 +  events: {},
 +
++  types: browserTypes,
++
 +  methods: {
 +    'close': {},
 +    'getInfo': {
@@ -4264,17 +4342,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +    'setCookies': {
 +      params: {
 +        browserContextId: t.Optional(t.String),
-+        cookies: t.Array({
-+          name: t.String,
-+          value: t.String,
-+          url: t.Optional(t.String),
-+          domain: t.Optional(t.String),
-+          path: t.Optional(t.String),
-+          secure: t.Optional(t.Boolean),
-+          httpOnly: t.Optional(t.Boolean),
-+          sameSite: t.Optional(t.Enum(['Strict', 'Lax', 'None'])),
-+          expires: t.Optional(t.Number),
-+        }),
++        cookies: t.Array(browserTypes.CookieOptions),
 +      }
 +    },
 +    'clearCookies': {
@@ -4287,18 +4355,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +        browserContextId: t.Optional(t.String)
 +      },
 +      returns: {
-+        cookies: t.Array({
-+          name: t.String,
-+          domain: t.String,
-+          path: t.String,
-+          value: t.String,
-+          expires: t.Number,
-+          size: t.Number,
-+          httpOnly: t.Boolean,
-+          secure: t.Boolean,
-+          session: t.Boolean,
-+          sameSite: t.Enum(['Strict', 'Lax', 'None']),
-+        }),
++        cookies: t.Array(browserTypes.Cookie),
 +      },
 +    },
 +  },
@@ -4307,17 +4364,19 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +const Target = {
 +  targets: ['browser'],
 +
++  types: targetTypes,
++
 +  events: {
 +    'attachedToTarget': {
 +      sessionId: t.String,
-+      targetInfo: types.TargetInfo,
++      targetInfo: targetTypes.TargetInfo,
 +    },
 +    'detachedFromTarget': {
 +      sessionId: t.String,
 +    },
-+    'targetCreated': types.TargetInfo,
-+    'targetDestroyed': types.TargetInfo,
-+    'targetInfoChanged': types.TargetInfo,
++    'targetCreated': targetTypes.TargetInfo,
++    'targetDestroyed': targetTypes.TargetInfo,
++    'targetInfoChanged': targetTypes.TargetInfo,
 +  },
 +
 +  methods: {
@@ -4357,8 +4416,24 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +  },
 +};
 +
++const networkTypes = {};
++
++networkTypes.HTTPHeader = {
++  name: t.String,
++  value: t.String,
++};
++
++networkTypes.SecurityDetails = {
++  protocol: t.String,
++  subjectName: t.String,
++  issuer: t.String,
++  validFrom: t.Number,
++  validTo: t.Number,
++};
++
 +const Network = {
 +  targets: ['page'],
++  types: networkTypes,
 +  events: {
 +    'requestWillBeSent': {
 +      // frameId may be absent for redirected requests.
@@ -4367,10 +4442,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +      // RequestID of redirected request.
 +      redirectedFrom: t.Optional(t.String),
 +      postData: t.Optional(t.String),
-+      headers: t.Array({
-+        name: t.String,
-+        value: t.String,
-+      }),
++      headers: t.Array(networkTypes.HTTPHeader),
 +      suspended: t.Optional(t.Boolean),
 +      url: t.String,
 +      method: t.String,
@@ -4378,23 +4450,14 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +      cause: t.String,
 +    },
 +    'responseReceived': {
-+      securityDetails: t.Nullable({
-+        protocol: t.String,
-+        subjectName: t.String,
-+        issuer: t.String,
-+        validFrom: t.Number,
-+        validTo: t.Number,
-+      }),
++      securityDetails: t.Nullable(networkTypes.SecurityDetails),
 +      requestId: t.String,
 +      fromCache: t.Boolean,
 +      remoteIPAddress: t.Optional(t.String),
 +      remotePort: t.Optional(t.Number),
 +      status: t.Number,
 +      statusText: t.String,
-+      headers: t.Array({
-+        name: t.String,
-+        value: t.String,
-+      }),
++      headers: t.Array(networkTypes.HTTPHeader),
 +    },
 +    'requestFinished': {
 +      requestId: t.String,
@@ -4413,10 +4476,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +    },
 +    'setExtraHTTPHeaders': {
 +      params: {
-+        headers: t.Array({
-+          name: t.String,
-+          value: t.String,
-+        }),
++        headers: t.Array(networkTypes.HTTPHeader),
 +      },
 +    },
 +    'abortSuspendedRequest': {
@@ -4427,10 +4487,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +    'resumeSuspendedRequest': {
 +      params: {
 +        requestId: t.String,
-+        headers: t.Optional(t.Array({
-+          name: t.String,
-+          value: t.String,
-+        })),
++        headers: t.Optional(t.Array(networkTypes.HTTPHeader)),
 +      },
 +    },
 +    'getResponseBody': {
@@ -4447,6 +4504,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +
 +const Runtime = {
 +  targets: ['page'],
++  types: runtimeTypes,
 +  events: {
 +    'executionContextCreated': {
 +      executionContextId: t.String,
@@ -4457,13 +4515,9 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +    },
 +    'console': {
 +      executionContextId: t.String,
-+      args: t.Array(types.RemoteObject),
++      args: t.Array(runtimeTypes.RemoteObject),
 +      type: t.String,
-+      location: {
-+        columnNumber: t.Number,
-+        lineNumber: t.Number,
-+        url: t.String,
-+      },
++      location: runtimeTypes.ScriptLocation,
 +    },
 +  },
 +  methods: {
@@ -4479,12 +4533,8 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +      },
 +
 +      returns: {
-+        result: t.Optional(types.RemoteObject),
-+        exceptionDetails: t.Optional({
-+          text: t.Optional(t.String),
-+          stack: t.Optional(t.String),
-+          value: t.Optional(t.Any),
-+        }),
++        result: t.Optional(runtimeTypes.RemoteObject),
++        exceptionDetails: t.Optional(runtimeTypes.ExceptionDetails),
 +      }
 +    },
 +    'callFunction': {
@@ -4493,20 +4543,12 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +        executionContextId: t.String,
 +        functionDeclaration: t.String,
 +        returnByValue: t.Optional(t.Boolean),
-+        args: t.Array({
-+          objectId: t.Optional(t.String),
-+          unserializableValue: t.Optional(t.Enum(['Infinity', '-Infinity', '-0', 'NaN'])),
-+          value: t.Any,
-+        }),
++        args: t.Array(runtimeTypes.CallFunctionArgument),
 +      },
 +
 +      returns: {
-+        result: t.Optional(types.RemoteObject),
-+        exceptionDetails: t.Optional({
-+          text: t.Optional(t.String),
-+          stack: t.Optional(t.String),
-+          value: t.Optional(t.Any),
-+        }),
++        result: t.Optional(runtimeTypes.RemoteObject),
++        exceptionDetails: t.Optional(runtimeTypes.ExceptionDetails),
 +      }
 +    },
 +    'disposeObject': {
@@ -4523,10 +4565,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +      },
 +
 +      returns: {
-+        properties: t.Array({
-+          name: t.String,
-+          value: types.RemoteObject,
-+        }),
++        properties: t.Array(runtimeTypes.ObjectProperty),
 +      }
 +    },
 +  },
@@ -4534,6 +4573,8 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +
 +const Page = {
 +  targets: ['page'],
++
++  types: pageTypes,
 +  events: {
 +    'eventFired': {
 +      frameId: t.String,
@@ -4589,7 +4630,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +    },
 +    'fileChooserOpened': {
 +      executionContextId: t.String,
-+      element: types.RemoteObject
++      element: runtimeTypes.RemoteObject
 +    },
 +  },
 +
@@ -4616,14 +4657,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +    },
 +    'setViewport': {
 +      params: {
-+        viewport: t.Nullable({
-+          width: t.Number,
-+          height: t.Number,
-+          deviceScaleFactor: t.Number,
-+          isMobile: t.Boolean,
-+          hasTouch: t.Boolean,
-+          isLandscape: t.Boolean,
-+        }),
++        viewport: t.Nullable(pageTypes.Viewport),
 +      },
 +    },
 +    'setUserAgent': {
@@ -4717,23 +4751,15 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +        frameId: t.String,
 +        objectId: t.String,
 +      },
-+      returns: t.Nullable({
-+        x: t.Number,
-+        y: t.Number,
-+        width: t.Number,
-+        height: t.Number,
-+      }),
++      returns: {
++        boundingBox: t.Nullable(pageTypes.BoundingBox),
++      },
 +    },
 +    'screenshot': {
 +      params: {
 +        mimeType: t.Enum(['image/png', 'image/jpeg']),
 +        fullPage: t.Optional(t.Boolean),
-+        clip: t.Optional({
-+          x: t.Number,
-+          y: t.Number,
-+          width: t.Number,
-+          height: t.Number,
-+        })
++        clip: t.Optional(pageTypes.Clip),
 +      },
 +      returns: {
 +        data: t.String,
@@ -4745,7 +4771,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +        objectId: t.String,
 +      },
 +      returns: {
-+        quads: t.Array(types.DOMQuad),
++        quads: t.Array(pageTypes.DOMQuad),
 +      },
 +    },
 +    'dispatchKeyEvent': {
@@ -4761,7 +4787,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +    'dispatchTouchEvent': {
 +      params: {
 +        type: t.Enum(['touchStart', 'touchEnd', 'touchMove', 'touchCancel']),
-+        touchPoints: t.Array(types.TouchPoint),
++        touchPoints: t.Array(pageTypes.TouchPoint),
 +        modifiers: t.Number,
 +      },
 +      returns: {
@@ -4802,6 +4828,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +
 +const Accessibility = {
 +  targets: ['page'],
++  types: axTypes,
 +  events: {},
 +  methods: {
 +    'getFullAXTree': {
@@ -4809,7 +4836,7 @@ index 0000000000000000000000000000000000000000..31afa2edd183d65a4ed04f69b80adf79
 +        objectId: t.Optional(t.String),
 +      },
 +      returns: {
-+        tree:types.AXTree
++        tree: axTypes.AXTree
 +      },
 +    }
 +  }
