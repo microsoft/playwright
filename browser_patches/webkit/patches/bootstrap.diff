@@ -3672,6 +3672,19 @@ index d7438c15cd51d6660c0f738ac2e97fabf5abdc23..f9c711e0ceb1a19cd839cb25a1a0ccae
  #endif
  
  #if PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp b/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
+index bb086d0c51fcd15b8597e2bc039098da1f129876..c241fd8e434fbf20285f1f75642c2be4a456cb18 100644
+--- a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
++++ b/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
+@@ -27,7 +27,7 @@
+ #include "config.h"
+ #include "GraphicsContextGLOpenGL.h"
+ 
+-#if ENABLE(GRAPHICS_CONTEXT_GL) && (USE(OPENGL) || (PLATFORM(COCOA) && USE(OPENGL_ES)))
++#if !PLATFORM(WIN) && ENABLE(GRAPHICS_CONTEXT_GL) && (USE(OPENGL) || (PLATFORM(COCOA) && USE(OPENGL_ES)))
+ 
+ #if PLATFORM(IOS_FAMILY)
+ #include "GraphicsContextGLOpenGLESIOS.h"
 diff --git a/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp b/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp
 index 269008b9053c8d8b6787cf22f13b44b46dace333..d3ba16947bc8964a7cfe746cabbf99d32a673cef 100644
 --- a/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp
@@ -4197,6 +4210,145 @@ index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b814
      Vector<WTF::Function<void(bool)>> m_listeners;
      Timer m_updateStateTimer;
  
+diff --git a/Source/WebCore/platform/network/curl/CookieJarCurl.cpp b/Source/WebCore/platform/network/curl/CookieJarCurl.cpp
+index 5ecba66ef94984ebff5e3ff034375abb68ca72fa..e834685842aabf572b488394d961566aa8160be7 100644
+--- a/Source/WebCore/platform/network/curl/CookieJarCurl.cpp
++++ b/Source/WebCore/platform/network/curl/CookieJarCurl.cpp
+@@ -152,6 +152,25 @@ void CookieJarCurl::deleteAllCookiesModifiedSince(const NetworkStorageSession&,
+     // FIXME: Not yet implemented
+ }
+ 
++Vector<Cookie> CookieJarCurl::getAllCookies(const NetworkStorageSession& session) const
++{
++    CookieJarDB& cookieJarDB = session.cookieDatabase();
++    return cookieJarDB.getAllCookies();
++}
++
++void CookieJarCurl::setCookie(const NetworkStorageSession& session, const Cookie& cookie) const
++{
++    CookieJarDB& cookieJarDB = session.cookieDatabase();
++    cookieJarDB.setCookie(cookie);
++}
++
++void CookieJarCurl::deleteCookie(const NetworkStorageSession& session, const Cookie& cookie) const
++{
++    String url = (cookie.secure ? "https" : "http") + ("://" + cookie.domain + cookie.path);
++    CookieJarDB& cookieJarDB = session.cookieDatabase();
++    cookieJarDB.deleteCookie(url, cookie.name);
++}
++
+ } // namespace WebCore
+ 
+ #endif // USE(CURL)
+diff --git a/Source/WebCore/platform/network/curl/CookieJarCurl.h b/Source/WebCore/platform/network/curl/CookieJarCurl.h
+index 5e974f5fbdb8c04975a5511b0dc4a142d101a308..ab2af278059bc47c61dfd3254d0e0cca5aad302b 100644
+--- a/Source/WebCore/platform/network/curl/CookieJarCurl.h
++++ b/Source/WebCore/platform/network/curl/CookieJarCurl.h
+@@ -58,6 +58,9 @@ public:
+     void deleteCookiesForHostnames(const NetworkStorageSession&, const Vector<String>& cookieHostNames) const;
+     void deleteAllCookies(const NetworkStorageSession&) const;
+     void deleteAllCookiesModifiedSince(const NetworkStorageSession&, WallTime) const;
++    Vector<Cookie> getAllCookies(const NetworkStorageSession& session) const;
++    void setCookie(const NetworkStorageSession& session, const Cookie& cookie) const;
++    void deleteCookie(const NetworkStorageSession& session, const Cookie& cookie) const;
+ };
+ 
+ } // namespace WebCore
+diff --git a/Source/WebCore/platform/network/curl/CookieJarDB.cpp b/Source/WebCore/platform/network/curl/CookieJarDB.cpp
+index 101624f2900a94cc7d1a89989676d6b45ab7fa3d..6f446b2d57801d8971a3692b7039fec2210fd218 100644
+--- a/Source/WebCore/platform/network/curl/CookieJarDB.cpp
++++ b/Source/WebCore/platform/network/curl/CookieJarDB.cpp
+@@ -445,6 +445,36 @@ Optional<Vector<Cookie>> CookieJarDB::searchCookies(const URL& firstParty, const
+     return results;
+ }
+ 
++Vector<Cookie> CookieJarDB::getAllCookies()
++{
++    Vector<Cookie> result;
++    if (!isEnabled() || !m_database.isOpen())
++        return result;
++
++    const String sql = "SELECT name, value, domain, path, expires, httponly, secure, session FROM Cookie";
++
++    auto pstmt = makeUnique<SQLiteStatement>(m_database, sql);
++    if (!pstmt)
++        return result;
++    pstmt->prepare();
++
++    while (pstmt->step() == SQLITE_ROW) {
++        Cookie cookie;
++        cookie.name = pstmt->getColumnText(0);
++        cookie.value = pstmt->getColumnText(1);
++        cookie.domain = pstmt->getColumnText(2).convertToASCIILowercase();
++        cookie.path = pstmt->getColumnText(3);
++        cookie.expires = (double)pstmt->getColumnInt64(4) * 1000;
++        cookie.httpOnly = (pstmt->getColumnInt(5) == 1);
++        cookie.secure = (pstmt->getColumnInt(6) == 1);
++        cookie.session = (pstmt->getColumnInt(7) == 1);
++        result.append(WTFMove(cookie));
++    }
++    pstmt->finalize();
++
++    return result;
++}
++
+ bool CookieJarDB::hasHttpOnlyCookie(const String& name, const String& domain, const String& path)
+ {
+     auto& statement = preparedStatement(CHECK_EXISTS_HTTPONLY_COOKIE_SQL);
+diff --git a/Source/WebCore/platform/network/curl/CookieJarDB.h b/Source/WebCore/platform/network/curl/CookieJarDB.h
+index 2687ae74fb9d9942972bedcac6ab9b1159a7e50f..b62e2a2b032f938065ea4e4d8e093153b4f17cf5 100644
+--- a/Source/WebCore/platform/network/curl/CookieJarDB.h
++++ b/Source/WebCore/platform/network/curl/CookieJarDB.h
+@@ -64,6 +64,7 @@ public:
+     bool deleteCookies(const String& url);
+     bool deleteAllCookies();
+ 
++    Vector<Cookie> getAllCookies();
+     WEBCORE_EXPORT CookieJarDB(const String& databasePath);
+     WEBCORE_EXPORT ~CookieJarDB();
+ 
+diff --git a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
+index f2a1903561ac1a50b0bbd8f757a0e565463bb52a..6a827110712f3baafb3f1f3261d43bffe977b638 100644
+--- a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
++++ b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
+@@ -61,7 +61,7 @@ static String defaultCookieJarPath()
+ NetworkStorageSession::NetworkStorageSession(PAL::SessionID sessionID)
+     : m_sessionID(sessionID)
+     , m_cookieStorage(makeUniqueRef<CookieJarCurl>())
+-    , m_cookieDatabase(makeUniqueRef<CookieJarDB>(defaultCookieJarPath()))
++    , m_cookieDatabase(makeUniqueRef<CookieJarDB>(sessionID.isEphemeral() ? ":memory:" : defaultCookieJarPath()))
+ {
+ }
+ 
+@@ -100,14 +100,14 @@ void NetworkStorageSession::setCookies(const Vector<Cookie>&, const URL&, const
+     // FIXME: Implement for WebKit to use.
+ }
+ 
+-void NetworkStorageSession::setCookie(const Cookie&)
++void NetworkStorageSession::setCookie(const Cookie& cookie)
+ {
+-    // FIXME: Implement for WebKit to use.
++    cookieStorage().setCookie(*this, cookie);
+ }
+ 
+-void NetworkStorageSession::deleteCookie(const Cookie&)
++void NetworkStorageSession::deleteCookie(const Cookie& cookie)
+ {
+-    // FIXME: Implement for WebKit to use.
++    cookieStorage().deleteCookie(*this, cookie);
+ }
+ 
+ void NetworkStorageSession::deleteCookie(const URL& url, const String& cookie) const
+@@ -139,8 +139,7 @@ void NetworkStorageSession::deleteCookiesForHostnames(const Vector<String>& cook
+ 
+ Vector<Cookie> NetworkStorageSession::getAllCookies()
+ {
+-    // FIXME: Implement for WebKit to use.
+-    return { };
++    return cookieStorage().getAllCookies(*this);
+ }
+ 
+ void NetworkStorageSession::getHostnamesWithCookies(HashSet<String>& hostnames)
 diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 index 3fb8892c79fd5e4f670cac4884f9ef0b5371b2a5..974cd5d8cc3772a1964897f5134ec7b055252ebc 100644
 --- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
@@ -4266,7 +4418,7 @@ index 4da04add2fd22d551444059df5f3212aa9ab5dfe..399155b4a74a0b2b333137c59e903e61
  void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
  {
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
-index e08d5824da30420cf5c5d834f29bdf72c6c80d69..a17d3122b22cee54ea0948c0f8b93c0b543fee33 100644
+index e08d5824da30420cf5c5d834f29bdf72c6c80d69..b5cba472cef39768c45cddb0a9779f8721c67342 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.h
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.h
 @@ -74,6 +74,7 @@ class SessionID;
@@ -4296,17 +4448,19 @@ index e08d5824da30420cf5c5d834f29bdf72c6c80d69..a17d3122b22cee54ea0948c0f8b93c0b
  #endif
  
      const String& uiProcessBundleIdentifier() const { return m_uiProcessBundleIdentifier; }
-@@ -417,6 +423,9 @@ private:
+@@ -417,8 +423,10 @@ private:
      void syncAllCookies();
      void didSyncAllCookies();
  
-+#if PLATFORM(COCOA)
-+    void setIgnoreTLSErrors(bool);
-+#endif
- #if USE(SOUP)
+-#if USE(SOUP)
++#if PLATFORM(COCOA) || USE(CURL) || USE(SOUP)
      void setIgnoreTLSErrors(bool);
++#endif
++#if USE(SOUP)
      void userPreferredLanguagesChanged(const Vector<String>&);
-@@ -565,6 +574,7 @@ private:
+     void setNetworkProxySettings(const WebCore::SoupNetworkProxySettings&);
+ #endif
+@@ -565,6 +573,7 @@ private:
  
  #if PLATFORM(COCOA)
      std::unique_ptr<NetworkHTTPSUpgradeChecker> m_networkHTTPSUpgradeChecker;
@@ -4315,7 +4469,7 @@ index e08d5824da30420cf5c5d834f29bdf72c6c80d69..a17d3122b22cee54ea0948c0f8b93c0b
  
  #if ENABLE(RESOURCE_LOAD_STATISTICS)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-index 2ad9881fcf7ea844d82bc77fac07f493d7c4de5e..571f21cfab8aed17e21dc1a8b770f87aae307a64 100644
+index 2ad9881fcf7ea844d82bc77fac07f493d7c4de5e..ee3103d24b1027e4a02f42237dfd0a13205fc7f4 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
 @@ -27,8 +27,10 @@ messages -> NetworkProcess LegacyReceiver {
@@ -4323,7 +4477,7 @@ index 2ad9881fcf7ea844d82bc77fac07f493d7c4de5e..571f21cfab8aed17e21dc1a8b770f87a
      CreateNetworkConnectionToWebProcess(WebCore::ProcessIdentifier processIdentifier, PAL::SessionID sessionID) -> (Optional<IPC::Attachment> connectionIdentifier) Async
  
 -#if USE(SOUP)
-+#if USE(SOUP) || PLATFORM(COCOA)
++#if USE(SOUP) || PLATFORM(COCOA) || USE(CURL)
      SetIgnoreTLSErrors(bool ignoreTLSErrors)
 +#endif
 +#if USE(SOUP)
@@ -4425,6 +4579,20 @@ index fcb9e8ddb8c3a804aa27339cab1b0039eb136f53..633a4efd58ac5c6a8999fa8d75d88342
      const String& host = challenge.protectionSpace().host();
      NSArray *certificates = [NSURLRequest allowsSpecificHTTPSCertificateForHost:host];
      if (!certificates)
+diff --git a/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
+index 5be170266f45b8bf72ef56b10087cb59bb56dba9..24f8885a0054c1a64cb7deebb00bb4421c56a858 100644
+--- a/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
++++ b/Source/WebKit/NetworkProcess/curl/NetworkProcessCurl.cpp
+@@ -94,4 +94,9 @@ void NetworkProcess::setNetworkProxySettings(PAL::SessionID sessionID, WebCore::
+         ASSERT_NOT_REACHED();
+ }
+ 
++void NetworkProcess::setIgnoreTLSErrors(bool ignoreTLSErrors)
++{
++    CurlContext::singleton().sslHandle().setIgnoreSSLErrors(ignoreTLSErrors);
++}
++
+ } // namespace WebKit
 diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
 index a8a95f4b0db4a50a8ef5b72039c51cc5818ed304..324504696770fb095a70153aa830a87b46b77327 100644
 --- a/Source/WebKit/PlatformWPE.cmake
@@ -4437,6 +4605,25 @@ index a8a95f4b0db4a50a8ef5b72039c51cc5818ed304..324504696770fb095a70153aa830a87b
      "${WEBKIT_DIR}/UIProcess/gstreamer"
      "${WEBKIT_DIR}/UIProcess/linux"
      "${WEBKIT_DIR}/UIProcess/soup"
+diff --git a/Source/WebKit/PlatformWin.cmake b/Source/WebKit/PlatformWin.cmake
+index 26c9bea5089c7f3b2c5051da4f1c3f0b02560249..093eb486b589ea357985fdf9ca50ac2a02de5a10 100644
+--- a/Source/WebKit/PlatformWin.cmake
++++ b/Source/WebKit/PlatformWin.cmake
+@@ -54,10 +54,14 @@ list(APPEND WebKit_SOURCES
+ 
+     UIProcess/WebsiteData/win/WebsiteDataStoreWin.cpp
+ 
++    UIProcess/win/InspectorTargetProxyWin.cpp
++    UIProcess/win/InspectorBrowserAgentClientWin.cpp
+     UIProcess/win/PageClientImpl.cpp
+     UIProcess/win/TextCheckerWin.cpp
+     UIProcess/win/WebContextMenuProxyWin.cpp
+     UIProcess/win/WebInspectorProxyWin.cpp
++    UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
++    UIProcess/win/WebPageInspectorInputAgentWin.cpp
+     UIProcess/win/WebPageProxyWin.cpp
+     UIProcess/win/WebPopupMenuProxyWin.cpp
+     UIProcess/win/WebPreferencesWin.cpp
 diff --git a/Source/WebKit/Shared/API/c/wpe/WebKit.h b/Source/WebKit/Shared/API/c/wpe/WebKit.h
 index 898e30b370db8176e886fbbde0cd960e38a64818..74945e06fac0eb14936578de6a599a123364a63a 100644
 --- a/Source/WebKit/Shared/API/c/wpe/WebKit.h
@@ -4450,7 +4637,7 @@ index 898e30b370db8176e886fbbde0cd960e38a64818..74945e06fac0eb14936578de6a599a12
  #include <WebKit/WKContextConfigurationRef.h>
  #include <WebKit/WKCredential.h>
 diff --git a/Source/WebKit/Shared/NativeWebKeyboardEvent.h b/Source/WebKit/Shared/NativeWebKeyboardEvent.h
-index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..785febdfc72027ea002db6b64b85301838a299d3 100644
+index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..c09e35e1b4fbf95b31f8d890bf09231055e4373a 100644
 --- a/Source/WebKit/Shared/NativeWebKeyboardEvent.h
 +++ b/Source/WebKit/Shared/NativeWebKeyboardEvent.h
 @@ -34,6 +34,7 @@
@@ -4461,7 +4648,7 @@ index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..785febdfc72027ea002db6b64b853018
  
  namespace WebCore {
  struct CompositionUnderline;
-@@ -67,16 +68,28 @@ public:
+@@ -67,18 +68,34 @@ public:
  #if USE(APPKIT)
      // FIXME: Share iOS's HandledByInputMethod enum here instead of passing a boolean.
      NativeWebKeyboardEvent(NSEvent *, bool handledByInputMethod, bool replacesSoftSpace, const Vector<WebCore::KeypressCommand>&);
@@ -4489,16 +4676,22 @@ index f08c19fb95ec8c8cca8f4ca2aa4049885637febf..785febdfc72027ea002db6b64b853018
 +    }
  #elif PLATFORM(WIN)
      NativeWebKeyboardEvent(HWND, UINT message, WPARAM, LPARAM, Vector<MSG>&& pendingCharEvents);
++    NativeWebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
++        : WebKeyboardEvent(type, text, unmodifiedText, key, code, keyIdentifier, windowsVirtualKeyCode, nativeVirtualKeyCode, isAutoRepeat, isKeypad, isSystemKey, modifiers, timestamp)
++    {
++    }
  #endif
+ 
+ #if USE(APPKIT)
 diff --git a/Source/WebKit/Shared/NativeWebMouseEvent.h b/Source/WebKit/Shared/NativeWebMouseEvent.h
-index 0fa557e9faa34ba81a7a4f7da5e32f30cbfad5d2..d6c1ae7811cf002d374ec2e8f268a6c475e85a95 100644
+index 0fa557e9faa34ba81a7a4f7da5e32f30cbfad5d2..4f06afeb895fb1231d87e4304a4b588cd326944c 100644
 --- a/Source/WebKit/Shared/NativeWebMouseEvent.h
 +++ b/Source/WebKit/Shared/NativeWebMouseEvent.h
 @@ -70,6 +70,11 @@ public:
      NativeWebMouseEvent(HWND, UINT message, WPARAM, LPARAM, bool);
  #endif
  
-+#if PLATFORM(GTK) || USE(LIBWPE)
++#if PLATFORM(GTK) || USE(LIBWPE) || PLATFORM(WIN)
 +    NativeWebMouseEvent(Type type, Button button, unsigned short buttons, const WebCore::IntPoint& position, const WebCore::IntPoint& globalPosition, float deltaX, float deltaY, float deltaZ, int clickCount, OptionSet<Modifier> modifiers, WallTime timestamp)
 +       : WebMouseEvent(type, button, buttons, position, globalPosition, deltaX, deltaY, deltaZ, clickCount, modifiers, timestamp) { }
 +#endif
@@ -4507,7 +4700,7 @@ index 0fa557e9faa34ba81a7a4f7da5e32f30cbfad5d2..d6c1ae7811cf002d374ec2e8f268a6c4
      NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
  #elif PLATFORM(GTK)
 diff --git a/Source/WebKit/Shared/WebEvent.h b/Source/WebKit/Shared/WebEvent.h
-index 93d0bf22b5083d5a0027458d11ce241627b10c3b..567c9ddd635b704611d1b94aae65ceb47f14ef16 100644
+index 93d0bf22b5083d5a0027458d11ce241627b10c3b..d60fa40f7a2cfae4f473f18dd6167986e7f2b78a 100644
 --- a/Source/WebKit/Shared/WebEvent.h
 +++ b/Source/WebKit/Shared/WebEvent.h
 @@ -37,6 +37,7 @@
@@ -4518,7 +4711,7 @@ index 93d0bf22b5083d5a0027458d11ce241627b10c3b..567c9ddd635b704611d1b94aae65ceb4
  #include <wtf/WallTime.h>
  #include <wtf/text/WTFString.h>
  
-@@ -258,12 +259,15 @@ public:
+@@ -258,14 +259,18 @@ public:
  
  #if USE(APPKIT)
      WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool handledByInputMethod, const Vector<WebCore::KeypressCommand>&, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
@@ -4533,8 +4726,11 @@ index 93d0bf22b5083d5a0027458d11ce241627b10c3b..567c9ddd635b704611d1b94aae65ceb4
 +    WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
  #else
      WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
++    WebKeyboardEvent(Type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier>, WallTime timestamp);
  #endif
-@@ -307,7 +311,7 @@ private:
+ 
+     const String& text() const { return m_text; }
+@@ -307,7 +312,7 @@ private:
      int32_t m_nativeVirtualKeyCode;
      int32_t m_macCharCode;
  #if USE(APPKIT) || USE(UIKIT_KEYBOARD_ADDITIONS) || PLATFORM(GTK) || USE(LIBWPE)
@@ -4544,7 +4740,7 @@ index 93d0bf22b5083d5a0027458d11ce241627b10c3b..567c9ddd635b704611d1b94aae65ceb4
  #if PLATFORM(GTK) || USE(LIBWPE)
      Optional<Vector<WebCore::CompositionUnderline>> m_preeditUnderlines;
 diff --git a/Source/WebKit/Shared/WebKeyboardEvent.cpp b/Source/WebKit/Shared/WebKeyboardEvent.cpp
-index cccb560418f32fad40587ac083b95f398eb1399d..fb91afeaa595fa123eea32b0b6427ca345971205 100644
+index cccb560418f32fad40587ac083b95f398eb1399d..f6b0aee44e5f12055dd14ad0636d780d2d4ece5d 100644
 --- a/Source/WebKit/Shared/WebKeyboardEvent.cpp
 +++ b/Source/WebKit/Shared/WebKeyboardEvent.cpp
 @@ -35,6 +35,7 @@ WebKeyboardEvent::WebKeyboardEvent()
@@ -4605,10 +4801,12 @@ index cccb560418f32fad40587ac083b95f398eb1399d..fb91afeaa595fa123eea32b0b6427ca3
  #elif PLATFORM(IOS_FAMILY)
  
  WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool handledByInputMethod, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
-@@ -123,6 +160,23 @@ WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String&
-     ASSERT(isKeyboardEventType(type));
- }
+@@ -144,6 +181,27 @@ WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String&
  
+ #endif
+ 
++#if PLATFORM(WIN) || USE(LIBWPE)
++
 +WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
 +    : WebEvent(type, modifiers, timestamp)
 +    , m_text(text)
@@ -4626,9 +4824,11 @@ index cccb560418f32fad40587ac083b95f398eb1399d..fb91afeaa595fa123eea32b0b6427ca3
 +    ASSERT(isKeyboardEventType(type));
 +}
 +
- #else
- 
- WebKeyboardEvent::WebKeyboardEvent(Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, int macCharCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<Modifier> modifiers, WallTime timestamp)
++#endif
++
+ WebKeyboardEvent::~WebKeyboardEvent()
+ {
+ }
 diff --git a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp b/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
 index 2357f3d58415fae78e48b0f8a25bddad85c786bf..f3941a74922f5a0a3bf59a11cd4c42fbfd33d0af 100644
 --- a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
@@ -4695,6 +4895,19 @@ index 45a56eb3b0fda13c3b78d57594a0092e4e1866f6..5e29e15813be6abe82790e6a98d3947e
  
 -#endif // ENABLE(TOUCH_EVENTS)
 +#endif // ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebKit/Shared/win/WebEventFactory.cpp b/Source/WebKit/Shared/win/WebEventFactory.cpp
+index 88d53d236cd6d62735f03678a04ca9c198dddacb..b8f8efc57ab00dc5725660c5a8ad56a3e6384de5 100644
+--- a/Source/WebKit/Shared/win/WebEventFactory.cpp
++++ b/Source/WebKit/Shared/win/WebEventFactory.cpp
+@@ -473,7 +473,7 @@ WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(HWND hwnd, UINT message
+ }
+ 
+ #if ENABLE(TOUCH_EVENTS)
+-WebTouchEvent WebEventFactory::createWebTouchEvent(const GdkEvent* event, Vector<WebPlatformTouchPoint>&& touchPoints)
++WebTouchEvent WebEventFactory::createWebTouchEvent()
+ {
+     return WebTouchEvent();
+ }
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
 index ca52603ed5b07cc1a10721736ed46c6789413312..4420bcbb124c51632570fb57411c93c76d0674da 100644
 --- a/Source/WebKit/Sources.txt
@@ -4826,6 +5039,48 @@ index 54513035b261bfd5e187ec945796198ed09d88b1..2d3200e4f6e90a16f248b255f75d2a7e
  
      virtual void setStatusText(WebKit::WebPageProxy*, const WTF::String&) { }
      virtual void mouseDidMoveOverElement(WebKit::WebPageProxy&, const WebKit::WebHitTestResultData&, OptionSet<WebKit::WebEvent::Modifier>, Object*) { }
+diff --git a/Source/WebKit/UIProcess/API/C/WKInspector.cpp b/Source/WebKit/UIProcess/API/C/WKInspector.cpp
+index 39327c5c9230591e4f52e4574c416e36687788f0..c84fe4e5249cfec5d65805868769c99200eb27da 100644
+--- a/Source/WebKit/UIProcess/API/C/WKInspector.cpp
++++ b/Source/WebKit/UIProcess/API/C/WKInspector.cpp
+@@ -28,6 +28,11 @@
+ 
+ #if !PLATFORM(IOS_FAMILY)
+ 
++#if PLATFORM(WIN)
++#include "BrowserInspectorPipe.h"
++#include "InspectorBrowserAgentClientWin.h"
++#endif
++
+ #include "WKAPICast.h"
+ #include "WebInspectorProxy.h"
+ #include "WebPageProxy.h"
+@@ -130,4 +135,11 @@ void WKInspectorToggleElementSelection(WKInspectorRef inspectorRef)
+     toImpl(inspectorRef)->toggleElementSelection();
+ }
+ 
++void WKInspectorInitializeRemoteInspectorPipe(CreatePageCallback createPage, QuitCallback quit)
++{
++#if PLATFORM(WIN)
++    initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientWin>(createPage, quit));
++#endif
++}
++
+ #endif // !PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebKit/UIProcess/API/C/WKInspector.h b/Source/WebKit/UIProcess/API/C/WKInspector.h
+index 026121d114c5fcad84c1396be8d692625beaa3bd..1f707641766b51e3bddcdde0c49ee8cfcd83db0b 100644
+--- a/Source/WebKit/UIProcess/API/C/WKInspector.h
++++ b/Source/WebKit/UIProcess/API/C/WKInspector.h
+@@ -66,6 +66,9 @@ WK_EXPORT void WKInspectorTogglePageProfiling(WKInspectorRef inspector);
+ WK_EXPORT bool WKInspectorIsElementSelectionActive(WKInspectorRef inspector);
+ WK_EXPORT void WKInspectorToggleElementSelection(WKInspectorRef inspector);
+ 
++typedef WKPageRef (*CreatePageCallback)(WKPageConfigurationRef configuration);
++typedef void (*QuitCallback)();
++WK_EXPORT void WKInspectorInitializeRemoteInspectorPipe(CreatePageCallback, QuitCallback);
+ #ifdef __cplusplus
+ }
+ #endif
 diff --git a/Source/WebKit/UIProcess/API/C/WKPage.cpp b/Source/WebKit/UIProcess/API/C/WKPage.cpp
 index dd796b8332359e1c3b1e5575fd7a03353cb1fac2..283682a495e5bd114beec3e8351817465d39caab 100644
 --- a/Source/WebKit/UIProcess/API/C/WKPage.cpp
@@ -7230,10 +7485,10 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..8c9960d59c7712b4f56d2c2f9bd862f0
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..4fa74c40442750e93fe84403163bacb60f770ea5
+index 0000000000000000000000000000000000000000..0b4ec2de5671723f4045e98b3e398fc11180b3b8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
-@@ -0,0 +1,154 @@
+@@ -0,0 +1,219 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7277,13 +7532,76 @@ index 0000000000000000000000000000000000000000..4fa74c40442750e93fe84403163bacb6
 +#include <unistd.h>
 +#endif
 +
++#if PLATFORM(WIN)
++#include <io.h>
++#endif
++
 +namespace WebKit {
 +
-+static const int readFD = 3;
-+static const int writeFD = 4;
++namespace {
++
++const int readFD = 3;
++const int writeFD = 4;
++
++const size_t kWritePacketSize = 1 << 16;
++
++#if PLATFORM(WIN)
++HANDLE readHandle;
++HANDLE writeHandle;
++#endif
++
++size_t ReadBytes(void* buffer, size_t size, bool exact_size)
++{
++    size_t bytesRead = 0;
++    while (bytesRead < size) {
++#if PLATFORM(WIN)
++        DWORD sizeRead = 0;
++        bool hadError = !ReadFile(readHandle, static_cast<char*>(buffer) + bytesRead,
++            size - bytesRead, &sizeRead, nullptr);
++#else
++        int sizeRead = read(readFD, static_cast<char*>(buffer) + bytesRead,
++            size - bytesRead);
++        if (sizeRead < 0 && errno == EINTR)
++            continue;
++        bool hadError = sizeRead <= 0;
++#endif
++        if (hadError) {
++            return 0;
++        }
++        bytesRead += sizeRead;
++        if (!exact_size)
++            break;
++    }
++    return bytesRead;
++}
++
++void WriteBytes(const char* bytes, size_t size)
++{
++    size_t totalWritten = 0;
++    while (totalWritten < size) {
++        size_t length = size - totalWritten;
++        if (length > kWritePacketSize)
++            length = kWritePacketSize;
++#if PLATFORM(WIN)
++        DWORD bytesWritten = 0;
++        bool hadError = !WriteFile(writeHandle, bytes + totalWritten, static_cast<DWORD>(length), &bytesWritten, nullptr);
++#else
++        int bytesWritten = write(writeFD, bytes + totalWritten, length);
++        if (bytesWritten < 0 && errno == EINTR)
++            continue;
++        bool hadError = bytesWritten <= 0;
++#endif
++        if (hadError)
++            return;
++        totalWritten += bytesWritten;
++    }
++}
++
++}  // namespace
 +
 +class RemoteInspectorPipe::RemoteFrontendChannel : public Inspector::FrontendChannel {
 +    WTF_MAKE_FAST_ALLOCATED;
++
 +public:
 +    RemoteFrontendChannel()
 +        : m_senderQueue(WorkQueue::create("Inspector pipe writer"))
@@ -7300,7 +7618,8 @@ index 0000000000000000000000000000000000000000..4fa74c40442750e93fe84403163bacb6
 +    void sendMessageToFrontend(const String& message) override
 +    {
 +        m_senderQueue->dispatch([message = message.isolatedCopy()]() {
-+            dprintf(writeFD, "%s%c", message.ascii().data(), '\0');
++            WriteBytes(message.ascii().data(), message.length());
++            WriteBytes("\0", 1);
 +        });
 +    }
 +
@@ -7324,6 +7643,11 @@ index 0000000000000000000000000000000000000000..4fa74c40442750e93fe84403163bacb6
 +{
 +    if (m_receiverThread)
 +        return true;
++
++#if PLATFORM(WIN)
++    readHandle = reinterpret_cast<HANDLE>(_get_osfhandle(readFD));
++    writeHandle = reinterpret_cast<HANDLE>(_get_osfhandle(writeFD));
++#endif
 +
 +    m_browserInspectorController.connectFrontend(*m_remoteFrontendChannel);
 +    m_terminated = false;
@@ -7351,13 +7675,9 @@ index 0000000000000000000000000000000000000000..4fa74c40442750e93fe84403163bacb6
 +    auto buffer = makeUniqueArray<char>(bufSize);
 +    Vector<char> line;
 +    while (!m_terminated) {
-+        ssize_t size = read(readFD, buffer.get(), bufSize);
-+        if (size == 0) {
++        size_t size = ReadBytes(buffer.get(), bufSize, false);
++        if (!size)
 +            break;
-+        }
-+        if (size < 0) {
-+            break;
-+        }
 +        size_t start = 0;
 +        size_t end = line.size();
 +        line.append(buffer.get(), size);
@@ -7999,7 +8319,7 @@ index 0000000000000000000000000000000000000000..77dff2c191fee081773bc5705d80168c
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..9a0668f9fc450e09a43cce3073fdb5584c6e7ba7
+index 0000000000000000000000000000000000000000..7b1125da9a39107a73e9f282480e81d3fd3d7d6a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 @@ -0,0 +1,244 @@
@@ -8228,7 +8548,7 @@ index 0000000000000000000000000000000000000000..9a0668f9fc450e09a43cce3073fdb558
 +    m_mouseCallbacks->append(WTFMove(callback));
 +#if PLATFORM(MAC)
 +    platformDispatchMouseEvent(type, x, y, modifiers, button, clickCount);
-+#elif PLATFORM(GTK) || PLATFORM(WPE)
++#elif PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(WIN)
 +    WallTime timestamp = WallTime::now();
 +    NativeWebMouseEvent event(
 +        eventType,
@@ -8603,7 +8923,7 @@ index 2c87b48e73c2fd361a2a0da8c8e766cd2c57e325..540724a733c77da5484c73e993cd73f7
  #if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
      std::unique_ptr<WebDeviceOrientationUpdateProviderProxy> m_webDeviceOrientationUpdateProviderProxy;
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.h b/Source/WebKit/UIProcess/WebProcessPool.h
-index b7c955a5f3ebe5805ad7095bc06878e128d11568..ab65f14db987e4e03e0474c9127efad669585355 100644
+index b7c955a5f3ebe5805ad7095bc06878e128d11568..34a9a421c0bb27395f67f6df7b22d915c28c0b8b 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.h
 +++ b/Source/WebKit/UIProcess/WebProcessPool.h
 @@ -415,7 +415,7 @@ public:
@@ -8611,19 +8931,21 @@ index b7c955a5f3ebe5805ad7095bc06878e128d11568..ab65f14db987e4e03e0474c9127efad6
      void windowServerConnectionStateChanged();
  
 -#if USE(SOUP)
-+#if USE(SOUP) || PLATFORM(COCOA)
++#if USE(SOUP) || PLATFORM(COCOA) || PLATFORM(WIN)
      void setIgnoreTLSErrors(bool);
      bool ignoreTLSErrors() const { return m_ignoreTLSErrors; }
  #endif
-@@ -710,7 +710,7 @@ private:
+@@ -710,8 +710,8 @@ private:
      HashMap<uint64_t, RefPtr<DictionaryCallback>> m_dictionaryCallbacks;
      HashMap<uint64_t, RefPtr<StatisticsRequest>> m_statisticsRequests;
  
 -#if USE(SOUP)
-+#if USE(SOUP) || PLATFORM(COCOA)
-     bool m_ignoreTLSErrors { true };
+-    bool m_ignoreTLSErrors { true };
++#if USE(SOUP) || PLATFORM(COCOA) || PLATFORM(WIN)
++    bool m_ignoreTLSErrors { false };
  #endif
  
+     bool m_memoryCacheDisabled { false };
 diff --git a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp b/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
 index dba2a990d15683216a6fa90a48eb30eebd3c526f..6a8afc7c206765670d25152f7b6a1aa7e5563a27 100644
 --- a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
@@ -9643,6 +9965,358 @@ index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071
 +}
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..b48550079b63975e6e35e11574db4982bba37cf2
+--- /dev/null
++++ b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
+@@ -0,0 +1,88 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "InspectorBrowserAgentClientWin.h"
++
++#if ENABLE(REMOTE_INSPECTOR)
++
++#include "APIPageConfiguration.h"
++#include "APIProcessPoolConfiguration.h"
++#include "InspectorBrowserAgent.h"
++#include "WebPageProxy.h"
++#include "WebsiteDataStore.h"
++#include "WebPreferences.h"
++#include "WebProcessPool.h"
++#include "WebView.h"
++#include "WKAPICast.h"
++#include <wtf/HashMap.h>
++#include <wtf/RefPtr.h>
++#include <wtf/text/StringView.h>
++#include <wtf/text/WTFString.h>
++
++namespace WebKit {
++
++InspectorBrowserAgentClientWin::InspectorBrowserAgentClientWin(CreatePageCallback createPage, QuitCallback quit)
++    : m_createPage(createPage)
++    , m_quit(quit)
++{
++}
++
++RefPtr<WebPageProxy> InspectorBrowserAgentClientWin::createPage(WTF::String& error, PAL::SessionID sessionID)
++{
++    auto conf = &API::PageConfiguration::create().leakRef();
++    auto prefs = &WebPreferences::create(String(), "WebKit2Automation.", "WebKit2Automation.").leakRef();
++    auto context = m_idToContext.find(sessionID);
++    if (context != m_idToContext.end()) {
++        conf->setProcessPool(context->value.processPool.get());
++        conf->setWebsiteDataStore(context->value.dataStore.get());
++    }
++    return toImpl(m_createPage(toAPI(conf)));
++}
++
++void InspectorBrowserAgentClientWin::closeAllWindows()
++{
++    m_quit();
++}
++
++BrowserContext InspectorBrowserAgentClientWin::createBrowserContext(WTF::String& error)
++{
++    auto config = API::ProcessPoolConfiguration::create();
++    BrowserContext browserContext;
++    browserContext.processPool = WebKit::WebProcessPool::create(config);
++    browserContext.dataStore = WebKit::WebsiteDataStore::createNonPersistent();
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++    m_idToContext.set(sessionID, browserContext);
++    return browserContext;
++}
++
++void InspectorBrowserAgentClientWin::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
++{
++    m_idToContext.remove(sessionID);
++}
++
++} // namespace WebKit
++
++#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..561a70fdcf2c0fa192872fdc050bc717555012a8
+--- /dev/null
++++ b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#pragma once
++
++#if ENABLE(REMOTE_INSPECTOR)
++
++#include "InspectorBrowserAgentClient.h"
++#include <WebKit/WKInspector.h>
++#include <wtf/Forward.h>
++#include <wtf/HashMap.h>
++#include <wtf/text/StringHash.h>
++
++typedef WKPageRef (*CreatePageCallback)(WKPageConfigurationRef configuration);
++typedef void (*QuitCallback)();
++
++namespace WebKit {
++
++class InspectorBrowserAgentClientWin : public InspectorBrowserAgentClient {
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    InspectorBrowserAgentClientWin(CreatePageCallback, QuitCallback);
++    ~InspectorBrowserAgentClientWin() override = default;
++
++    RefPtr<WebPageProxy> createPage(WTF::String& error, PAL::SessionID) override;
++    void closeAllWindows() override;
++    BrowserContext createBrowserContext(WTF::String& error) override;
++    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
++
++private:
++    HashMap<PAL::SessionID, BrowserContext> m_idToContext;
++    CreatePageCallback m_createPage;
++    QuitCallback m_quit;
++};
++
++} // namespace API
++
++#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/win/InspectorTargetProxyWin.cpp b/Source/WebKit/UIProcess/win/InspectorTargetProxyWin.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..135a60361fa8fbf907382625e7c8dd4ea64ceb94
+--- /dev/null
++++ b/Source/WebKit/UIProcess/win/InspectorTargetProxyWin.cpp
+@@ -0,0 +1,36 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "InspectorTargetProxy.h"
++#include "WebPageProxy.h"
++
++namespace WebKit {
++
++void InspectorTargetProxy::platformActivate(String& error) const
++{
++}
++
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..96eb0ab882fb1830cda6610570d88cd36eb85d75
+--- /dev/null
++++ b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
+@@ -0,0 +1,58 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++#include "WebPageInspectorEmulationAgent.h"
++#include "WebPageProxy.h"
++
++namespace WebKit {
++
++void WebPageInspectorEmulationAgent::platformSetSize(int width, int height, Function<void (const String& error)>&& callback)
++{
++    HWND viewHwnd = m_page.viewWidget();
++    HWND windowHwnd = GetAncestor(viewHwnd, GA_ROOT);
++    RECT viewRect;
++    RECT windowRect;
++
++    if (!windowHwnd || !GetWindowRect(windowHwnd, &windowRect)) {
++        callback("Could not retrieve window size");
++        return;
++    }
++    if (!GetWindowRect(viewHwnd, &viewRect)) {
++        callback("Could retrieve view size");
++        return;
++    }
++
++    width += windowRect.right - windowRect.left - viewRect.right + viewRect.left;
++    height += windowRect.top - windowRect.bottom - viewRect.top + viewRect.bottom;
++
++    if (!SetWindowPos(windowHwnd, 0, 0, 0, width, height, SWP_NOMOVE)) {
++        callback("Could not resize window");
++        return;
++    }
++    callback(String());
++}
++
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/win/WebPageInspectorInputAgentWin.cpp b/Source/WebKit/UIProcess/win/WebPageInspectorInputAgentWin.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..b536b9cc56a9f05e1ed8f29e7e649fc2d90e6c50
+--- /dev/null
++++ b/Source/WebKit/UIProcess/win/WebPageInspectorInputAgentWin.cpp
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (C) 2020 Microsoft Corporation.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++
++#include "config.h"
++#include "WebPageInspectorInputAgent.h"
++
++#include "NativeWebKeyboardEvent.h"
++#include "WebPageProxy.h"
++#include <WebCore/PlatformKeyboardEvent.h>
++
++namespace WebKit {
++
++void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& macCommands, WallTime timestamp)
++{
++    NativeWebKeyboardEvent event(
++        type,
++        text,
++        unmodifiedText,
++        key,
++        code,
++        key,
++        windowsVirtualKeyCode,
++        nativeVirtualKeyCode,
++        isAutoRepeat,
++        isKeypad,
++        isSystemKey,
++        modifiers,
++        timestamp);
++    m_page.handleKeyboardEvent(event);
++}
++ 
++} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
+index 18f9e93932793b7c3e44e6346be0f13ed6dbf233..acb0617bcded07029665d4949659c73adf2fd633 100644
+--- a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
++++ b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
+@@ -26,7 +26,7 @@
+ 
+ #include "config.h"
+ #include "WebProcessPool.h"
+-
++#include "NetworkProcessMessages.h"
+ #include "WebProcessCreationParameters.h"
+ #include <WebCore/NotImplemented.h>
+ 
+@@ -97,4 +97,11 @@ void WebProcessPool::platformResolvePathsForSandboxExtensions()
+ {
+ }
+ 
++void WebProcessPool::setIgnoreTLSErrors(bool ignoreTLSErrors)
++{
++    m_ignoreTLSErrors = ignoreTLSErrors;
++    if (networkProcess())
++        networkProcess()->send(Messages::NetworkProcess::SetIgnoreTLSErrors(m_ignoreTLSErrors), 0);
++}
++
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp b/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..7453194ca6f032ba86a4c67f5bf12688ab6ec1be
@@ -10998,6 +11672,157 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
 +}
 +
  @end
+diff --git a/Tools/MiniBrowser/win/Common.cpp b/Tools/MiniBrowser/win/Common.cpp
+index 87fde928c12a91f13a4f8bc2f2dc24097e42f2d0..145a4ac7546bbfbc46ee09ae801f14c96bde5725 100644
+--- a/Tools/MiniBrowser/win/Common.cpp
++++ b/Tools/MiniBrowser/win/Common.cpp
+@@ -278,6 +278,10 @@ CommandLineOptions parseCommandLine()
+ #if ENABLE(WEBKIT)
+         else if (!wcsicmp(argv[i], L"--wk2") || !wcsicmp(argv[i], L"--webkit"))
+             options.windowType = BrowserWindowType::WebKit;
++        else if (!wcsicmp(argv[i], L"--inspector-pipe"))
++            options.inspectorPipe = true;
++        else if (!wcsicmp(argv[i], L"--headless"))
++            options.headless = true;
+ #endif
+         else if (!options.requestedURL)
+             options.requestedURL = argv[i];
+diff --git a/Tools/MiniBrowser/win/Common.h b/Tools/MiniBrowser/win/Common.h
+index d996feb64e02d7399f2ed0b34d3d0dd03133f824..474caddaafa1fd464acd9117e3260fe3889224eb 100644
+--- a/Tools/MiniBrowser/win/Common.h
++++ b/Tools/MiniBrowser/win/Common.h
+@@ -36,6 +36,8 @@ enum class BrowserWindowType {
+ struct CommandLineOptions {
+     bool usesLayeredWebView { };
+     bool useFullDesktop { };
++    bool inspectorPipe { };
++    bool headless { };
+     BrowserWindowType windowType;
+     _bstr_t requestedURL;
+ 
+diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
+index 71c43e6691395b787140ca0603550aac1c8513d5..a0ed17bdfd5743f0e49de88313eaac5f2b7c8a12 100644
+--- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
++++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
+@@ -39,6 +39,8 @@
+ #include <WebKit/WKWebsiteDataStoreRefCurl.h>
+ #include <vector>
+ 
++static bool s_headless = false;
++
+ std::wstring createString(WKStringRef wkString)
+ {
+     size_t maxSize = WKStringGetLength(wkString);
+@@ -148,6 +150,7 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
+     uiClient.base.clientInfo = this;
+     uiClient.createNewPage = createNewPage;
+     uiClient.didNotHandleKeyEvent = didNotHandleKeyEvent;
++    uiClient.close = closeWindow;
+     WKPageSetPageUIClient(page, &uiClient.base);
+ 
+     WKPageStateClientV0 stateClient = { };
+@@ -381,6 +384,34 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+     return false;
+ }
+ 
++// static
++void WebKitBrowserWindow::setHeadless(bool headless)
++{
++    s_headless = headless;
++}
++
++void WebKitBrowserWindow::closeWindow(WKPageRef page, const void* clientInfo)
++{
++    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
++}
++
++WKPageRef WebKitBrowserWindow::createPageForAutomation(WKPageConfigurationRef configuration)
++{
++    auto& newWindow = MainWindow::create().leakRef();
++    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
++        return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
++    };
++    bool ok = newWindow.init(factory, hInst);
++    if (!s_headless)
++        ShowWindow(newWindow.hwnd(), SW_SHOW);
++    newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
++
++    auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
++    WKRetainPtr<WKPageRef> newPage = WKViewGetPage(newBrowserWindow.m_view.get());
++    return newPage.leakRef();
++}
++
+ WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
+ {
+     auto& newWindow = MainWindow::create().leakRef();
+diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
+index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..f37211c18a831893354c106ed11d3b2c7f6f69a0 100644
+--- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
++++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
+@@ -34,6 +34,8 @@
+ class WebKitBrowserWindow : public BrowserWindow {
+ public:
+     static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, bool useLayeredWebView = false);
++    static void setHeadless(bool headless);
++    static WKPageRef createPageForAutomation(WKPageConfigurationRef configuration);
+ 
+ private:
+     WebKitBrowserWindow(BrowserWindowClient&, WKPageConfigurationRef, HWND mainWnd);
+@@ -71,6 +73,7 @@ private:
+     static void didChangeActiveURL(const void*);
+     static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
+     static WKPageRef createNewPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void *);
++    static void closeWindow(WKPageRef, const void*);
+     static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
+ 
+     BrowserWindowClient& m_client;
+diff --git a/Tools/MiniBrowser/win/WinMain.cpp b/Tools/MiniBrowser/win/WinMain.cpp
+index b1d17e88de61a6f196830f62604e4174564506bd..4c72d4300dab24d4d9b024802f3a445102b45ea7 100644
+--- a/Tools/MiniBrowser/win/WinMain.cpp
++++ b/Tools/MiniBrowser/win/WinMain.cpp
+@@ -47,11 +47,18 @@
+ #include <WebKitLegacy/WebKitCOMAPI.h>
+ #endif
+ 
++#include <wtf/MainThread.h>
++#include <WebKit/WKInspector.h>
++
+ SOFT_LINK_LIBRARY(user32);
+ SOFT_LINK_OPTIONAL(user32, SetProcessDpiAwarenessContext, BOOL, STDAPICALLTYPE, (DPI_AWARENESS_CONTEXT));
+ 
+ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpstrCmdLine, _In_ int nCmdShow)
+ {
++#if ENABLE(WEBKIT)
++    // WebKit2 does not use RunLoop.
++    WTF::initializeMainThread();
++#endif
+ #ifdef _CRTDBG_MAP_ALLOC
+     _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+@@ -67,6 +74,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+     InitCommonControlsEx(&InitCtrlEx);
+ 
+     auto options = parseCommandLine();
++    if (options.inspectorPipe) {
++        WebKitBrowserWindow::setHeadless(options.headless);
++        WKInspectorInitializeRemoteInspectorPipe(
++            WebKitBrowserWindow::createPageForAutomation,
++            []() { PostQuitMessage(0); });
++    }
+ 
+     if (options.useFullDesktop)
+         computeFullDesktopFrame();
+@@ -91,7 +104,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+     if (FAILED(hr))
+         goto exit;
+ 
+-    ShowWindow(mainWindow.hwnd(), nCmdShow);
++    if (!options.headless)
++        ShowWindow(mainWindow.hwnd(), nCmdShow);
+ 
+     hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_MINIBROWSER));
+ 
 diff --git a/Tools/MiniBrowser/wpe/CMakeLists.txt b/Tools/MiniBrowser/wpe/CMakeLists.txt
 index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed91d47fc8 100644
 --- a/Tools/MiniBrowser/wpe/CMakeLists.txt
