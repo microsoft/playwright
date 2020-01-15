@@ -250,6 +250,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       } else if (WEBKIT) {
         if (process.platform === 'darwin')
           expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
+        else if (process.platform === 'win32')
+          expect(failedRequests[0].failure().errorText).toBe('Unsupported protocol');
         else
           expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
       } else {

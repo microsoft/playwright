@@ -21,7 +21,6 @@ import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
 const debugProtocol = platform.debug('pw:protocol');
-const debugWrappedMessage = platform.debug('pw:wrapped');
 
 // WKBrowserServer uses this special id to issue Browser.close command which we
 // should ignore.
@@ -126,7 +125,7 @@ export class WKSession extends platform.EventEmitter {
       return Promise.reject(new Error(`Protocol error (${method}): ${this.errorText}`));
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
-    debugWrappedMessage('SEND ► ' + JSON.stringify(messageObj, null, 2));
+    platform.debug('pw:wrapped:' + this.sessionId)('SEND ► ' + JSON.stringify(messageObj, null, 2));
     const result = new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
     });
@@ -146,7 +145,7 @@ export class WKSession extends platform.EventEmitter {
   }
 
   dispatchMessage(object: any) {
-    debugWrappedMessage('◀ RECV ' + JSON.stringify(object, null, 2));
+    platform.debug('pw:wrapped:' + this.sessionId)('◀ RECV ' + JSON.stringify(object, null, 2));
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
