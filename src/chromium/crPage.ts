@@ -480,8 +480,8 @@ export class CRPage implements PageDelegate {
     return to._createHandle(result.object).asElement()!;
   }
 
-  async getAccessibilityTree(): Promise<accessibility.AXNode> {
-    return getAccessibilityTree(this._client);
+  async getAccessibilityTree(needle?: dom.ElementHandle) {
+    return getAccessibilityTree(this._client, needle);
   }
 
   async pdf(options?: types.PDFOptions): Promise<platform.BufferType> {

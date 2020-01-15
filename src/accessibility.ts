@@ -55,13 +55,12 @@ export interface AXNode {
     isLeafNode(): boolean;
     isControl(): boolean;
     serialize(): SerializedAXNode;
-    findElement(element: dom.ElementHandle): Promise<AXNode|null>;
     children(): Iterable<AXNode>;
 }
 
 export class Accessibility {
-  private _getAXTree:  () => Promise<AXNode>;
-  constructor(getAXTree: () => Promise<AXNode>) {
+  private _getAXTree:  (needle?: dom.ElementHandle) => Promise<{tree: AXNode, needle: AXNode | null}>;
+  constructor(getAXTree: (needle?: dom.ElementHandle) => Promise<{tree: AXNode, needle: AXNode | null}>) {
     this._getAXTree = getAXTree;
   }
 
@@ -73,21 +72,18 @@ export class Accessibility {
       interestingOnly = true,
       root = null,
     } = options;
-    const defaultRoot = await this._getAXTree();
-    let needle: AXNode | null = defaultRoot;
-    if (root) {
-      needle = await defaultRoot.findElement(root);
-      if (!needle)
-        return null;
+    const {tree, needle} = await this._getAXTree(root || undefined);
+    if (!interestingOnly) {
+      if (root)
+        return needle && serializeTree(needle)[0];
+      return serializeTree(tree)[0];
     }
-    if (!interestingOnly)
-      return serializeTree(needle)[0];
 
     const interestingNodes: Set<AXNode> = new Set();
-    collectInterestingNodes(interestingNodes, defaultRoot, false);
-    if (root && !interestingNodes.has(needle))
+    collectInterestingNodes(interestingNodes, tree, false);
+    if (root && (!needle || !interestingNodes.has(needle)))
       return null;
-    return serializeTree(needle, interestingNodes)[0];
+    return serializeTree(needle || tree, interestingNodes)[0];
   }
 }
 

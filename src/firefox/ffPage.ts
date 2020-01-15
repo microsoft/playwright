@@ -355,8 +355,8 @@ export class FFPage implements PageDelegate {
     return handle;
   }
 
-  async getAccessibilityTree() : Promise<accessibility.AXNode> {
-    return getAccessibilityTree(this._session);
+  async getAccessibilityTree(needle?: dom.ElementHandle) {
+    return getAccessibilityTree(this._session, needle);
   }
 
   coverage(): Coverage | undefined {

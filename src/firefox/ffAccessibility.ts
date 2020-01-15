@@ -18,15 +18,48 @@
 import * as accessibility from '../accessibility';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
+import * as dom from '../dom';
 
-export async function getAccessibilityTree(session: FFSession) : Promise<accessibility.AXNode> {
-  const { tree } = await session.send('Accessibility.getFullAXTree');
-  return new FFAXNode(tree);
+export async function getAccessibilityTree(session: FFSession, needle?: dom.ElementHandle) : Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
+  const objectId = needle ? needle._remoteObject.objectId : undefined;
+  const { tree } = await session.send('Accessibility.getFullAXTree', { objectId });
+  const axNode = new FFAXNode(tree);
+  return {
+    tree: axNode,
+    needle: needle ? axNode._findNeedle() : null
+  };
 }
+
+const FFRoleToARIARole = new Map(Object.entries({
+  'pushbutton': 'button',
+  'checkbutton': 'checkbox',
+  'editcombobox': 'combobox',
+  'content deletion': 'deletion',
+  'footnote': 'doc-footnote',
+  'non-native document': 'document',
+  'grouping': 'group',
+  'graphic': 'img',
+  'content insertion': 'insertion',
+  'animation': 'marquee',
+  'flat equation': 'math',
+  'menupopup': 'menu',
+  'check menu item': 'menuitemcheckbox',
+  'radio menu item': 'menuitemradio',
+  'listbox option': 'option',
+  'radiobutton': 'radio',
+  'statusbar': 'status',
+  'pagetab': 'tab',
+  'pagetablist': 'tablist',
+  'propertypage': 'tabpanel',
+  'entry': 'textbox',
+  'outline': 'tree',
+  'tree table': 'treegrid',
+  'outlineitem': 'treeitem',
+}));
 
 class FFAXNode implements accessibility.AXNode {
   _children: FFAXNode[];
-  private _payload: any;
+  private _payload: Protocol.Accessibility.AXTree;
   private _editable: boolean;
   private _richlyEditable: boolean;
   private _focusable: boolean;
@@ -77,8 +110,15 @@ class FFAXNode implements accessibility.AXNode {
     return this._children;
   }
 
-  async findElement(): Promise<FFAXNode | null> {
-    throw new Error('Not implimented');
+  _findNeedle(): FFAXNode | null {
+    if (this._payload.foundObject)
+      return this;
+    for (const child of this._children) {
+      const found = child._findNeedle();
+      if (found)
+        return found;
+    }
+    return null;
   }
 
   isLeafNode(): boolean {
@@ -160,10 +200,10 @@ class FFAXNode implements accessibility.AXNode {
 
   serialize(): accessibility.SerializedAXNode {
     const node: {[x in keyof accessibility.SerializedAXNode]: any} = {
-      role: this._role,
+      role: FFRoleToARIARole.get(this._role) || this._role,
       name: this._name || ''
     };
-    const userStringProperties: Array<keyof accessibility.SerializedAXNode> = [
+    const userStringProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
       'name',
       'value',
       'description',
@@ -176,7 +216,7 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[userStringProperty] = this._payload[userStringProperty];
     }
-    const booleanProperties: Array<keyof accessibility.SerializedAXNode> = [
+    const booleanProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
       'disabled',
       'expanded',
       'focused',
@@ -195,7 +235,7 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[booleanProperty] = value;
     }
-    const tristateProperties: Array<keyof accessibility.SerializedAXNode> = [
+    const tristateProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
       'checked',
       'pressed',
     ];
@@ -205,7 +245,7 @@ class FFAXNode implements accessibility.AXNode {
       const value = this._payload[tristateProperty];
       node[tristateProperty] = value;
     }
-    const numericalProperties: Array<keyof accessibility.SerializedAXNode> = [
+    const numericalProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
       'level'
     ];
     for (const numericalProperty of numericalProperties) {
@@ -213,7 +253,7 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[numericalProperty] = this._payload[numericalProperty];
     }
-    const tokenProperties: Array<keyof accessibility.SerializedAXNode> = [
+    const tokenProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
       'autocomplete',
       'haspopup',
       'invalid',

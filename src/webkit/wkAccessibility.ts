@@ -16,11 +16,41 @@
 import * as accessibility from '../accessibility';
 import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
+import * as dom from '../dom';
 
-export async function getAccessibilityTree(session: WKSession) {
-  const {axNode} = await session.send('Page.accessibilitySnapshot');
-  return new WKAXNode(axNode);
+export async function getAccessibilityTree(session: WKSession, needle?: dom.ElementHandle) {
+  const objectId = needle ? needle._remoteObject.objectId : undefined;
+  const {axNode} = await session.send('Page.accessibilitySnapshot', { objectId });
+  const tree = new WKAXNode(axNode);
+  return {
+    tree,
+    needle: needle ? tree._findNeedle() : null
+  };
 }
+
+const WKRoleToARIARole = new Map(Object.entries({
+  'TextField': 'textbox',
+}));
+
+// WebKit localizes role descriptions on mac, but the english versions only add noise.
+const WKUnhelpfulRoleDescriptions = new Map(Object.entries({
+  'WebArea': 'HTML content',
+  'Summary': 'summary',
+  'DescriptionList': 'description list',
+  'ImageMap': 'image map',
+  'ListMarker': 'list marker',
+  'Video': 'video playback',
+  'Mark': 'highlighted',
+  'contentinfo': 'content information',
+  'Details': 'details',
+  'DescriptionListDetail': 'description',
+  'DescriptionListTerm': 'term',
+  'alertdialog': 'web alert dialog',
+  'dialog': 'web dialog',
+  'status': 'application status',
+  'tabpanel': 'tab panel',
+  'application': 'web application',
+}));
 
 class WKAXNode implements accessibility.AXNode {
     private _payload: Protocol.Page.AXNode;
@@ -38,7 +68,14 @@ class WKAXNode implements accessibility.AXNode {
       return this._children;
     }
 
-    async findElement() {
+    _findNeedle() : WKAXNode | null {
+      if (this._payload.found)
+        return this;
+      for (const child of this._children) {
+        const found = child._findNeedle();
+        if (found)
+          return found;
+      }
       return null;
     }
 
@@ -71,8 +108,26 @@ class WKAXNode implements accessibility.AXNode {
       }
     }
 
+    _isTextControl() : boolean {
+      switch (this._payload.role) {
+        case 'combobox':
+        case 'searchfield':
+        case 'textbox':
+        case 'TextField':
+          return true;
+      }
+      return false;
+    }
+
+    _name() : string {
+      if (this._payload.role === 'text')
+        return this._payload.value || '';
+      return this._payload.name || '';
+    }
+
     isInteresting(insideControl: boolean) : boolean {
-      const {role, focusable, name} = this._payload;
+      const {role, focusable} = this._payload;
+      const name = this._name();
       if (role === 'ScrollArea')
         return false;
       if (role === 'WebArea')
@@ -92,30 +147,54 @@ class WKAXNode implements accessibility.AXNode {
       return this.isLeafNode() && !!name;
     }
 
+    _hasRendundantTextChild() {
+      if (this._children.length !== 1)
+        return false;
+      const child = this._children[0];
+      return child._payload.role === 'text' && this._payload.name === child._payload.value;
+    }
+
     isLeafNode() : boolean {
-      return !this._children.length;
+      if (!this._children.length)
+        return true;
+      // WebKit on Linux ignores everything inside text controls, normalize this behavior
+      if (this._isTextControl())
+        return true;
+      // WebKit for mac has text nodes inside heading, li, menuitem, a, and p nodes
+      if (this._hasRendundantTextChild())
+        return true;
+      return false;
     }
 
     serialize(): accessibility.SerializedAXNode {
       const node : accessibility.SerializedAXNode = {
-        role: this._payload.role,
-        name: this._payload.name || '',
+        role: WKRoleToARIARole.get(this._payload.role) || this._payload.role,
+        name: this._name(),
       };
 
-      const userStringProperties: string[] = [
-        'value',
-        'description',
+      if ('description' in this._payload && this._payload.description !== node.name)
+        node.description = this._payload.description;
+
+      if ('roledescription' in this._payload) {
+        const roledescription = this._payload.roledescription;
+        if (roledescription !== this._payload.role && WKUnhelpfulRoleDescriptions.get(this._payload.role) !== roledescription)
+          node.roledescription = roledescription;
+      }
+
+      if ('value' in this._payload && this._payload.role !== 'text')
+        node.value = this._payload.value;
+
+      const userStringProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'keyshortcuts',
-        'roledescription',
         'valuetext'
       ];
       for (const userStringProperty of userStringProperties) {
         if (!(userStringProperty in this._payload))
           continue;
-        (node as any)[userStringProperty] = (this._payload as any)[userStringProperty];
+        (node as any)[userStringProperty] = this._payload[userStringProperty];
       }
 
-      const booleanProperties: string[] = [
+      const booleanProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'disabled',
         'expanded',
         'focused',
@@ -131,7 +210,7 @@ class WKAXNode implements accessibility.AXNode {
         // not whether focus is specifically on the root node.
         if (booleanProperty === 'focused' && (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea'))
           continue;
-        const value = (this._payload as any)[booleanProperty];
+        const value = this._payload[booleanProperty];
         if (!value)
           continue;
         (node as any)[booleanProperty] = value;
@@ -147,7 +226,7 @@ class WKAXNode implements accessibility.AXNode {
         const value = this._payload[tristateProperty];
         node[tristateProperty] = value === 'mixed' ? 'mixed' : value === 'true' ? true : false;
       }
-      const numericalProperties: string[] = [
+      const numericalProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'level',
         'valuemax',
         'valuemin',
@@ -157,7 +236,7 @@ class WKAXNode implements accessibility.AXNode {
           continue;
         (node as any)[numericalProperty] = (this._payload as any)[numericalProperty];
       }
-      const tokenProperties: string[] = [
+      const tokenProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'autocomplete',
         'haspopup',
         'invalid',
