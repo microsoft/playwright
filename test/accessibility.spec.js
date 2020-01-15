@@ -76,7 +76,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
           {role: 'textbox', name: 'disabled input', disabled: true},
           {role: 'textbox', name: 'Input with whitespace', value: '  ' },
           {role: 'textbox', name: '', value: 'value only' },
-          {role: 'textbox', name: 'placeholder',value: 'and a value'},
+          {role: 'textbox', name: 'placeholder', value: 'and a value'},
           {role: 'textbox', name: 'This is a description!',value: 'and a value'}, // webkit uses the description over placeholder for the name
         ]
       };
