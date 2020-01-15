@@ -197,6 +197,19 @@ index 95d9d81188e735e8f1b70cc0deee2682cb6714f0..4c67ce34302f74e0d07f64ae53a4eaf1
  
      // Note that 'unused' is a workaround so the compiler can pick the right sendResponse based on arity.
      // When <http://webkit.org/b/179847> is fixed or this class is renamed for the JSON::Object case,
+diff --git a/Source/JavaScriptCore/inspector/InspectorFrontendRouter.cpp b/Source/JavaScriptCore/inspector/InspectorFrontendRouter.cpp
+index d408d364f1986983161f9d44efbc8bc6f6898676..1375ce9990f0c63d7e6f33ee62930051d6cd44cb 100644
+--- a/Source/JavaScriptCore/inspector/InspectorFrontendRouter.cpp
++++ b/Source/JavaScriptCore/inspector/InspectorFrontendRouter.cpp
+@@ -49,7 +49,7 @@ void FrontendRouter::connectFrontend(FrontendChannel& connection)
+ void FrontendRouter::disconnectFrontend(FrontendChannel& connection)
+ {
+     if (!m_connections.contains(&connection)) {
+-        ASSERT_NOT_REACHED();
++        ASSERT(m_connections.isEmpty());
+         return;
+     }
+ 
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
 index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..78455c32fc5ddb0f1b9a828233a652d4f86b4d90 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
@@ -1391,7 +1404,7 @@ index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..170e3a81bc02303ce708d914376a1c527737fbc0 100644
+index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..724fdb3d8e37dfc29069e2e2a65adefb72818cf5 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -121,7 +121,7 @@ static Frame* frameForScriptExecutionContext(ScriptExecutionContext& context)
@@ -1498,7 +1511,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..170e3a81bc02303ce708d914376a1c52
 +    return false;
 +}
 +
-+bool InspectorInstrumentation::interceptRequestImpl(InstrumentingAgents& instrumentingAgents, ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++bool InspectorInstrumentation::interceptRequestImpl(InstrumentingAgents& instrumentingAgents, ResourceLoader& loader, Function<void(bool handled)>&& handler)
 +{
 +    if (InspectorNetworkAgent* networkAgent = instrumentingAgents.inspectorNetworkAgent())
 +        return networkAgent->interceptRequest(loader, WTFMove(handler));
@@ -1509,10 +1522,10 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..170e3a81bc02303ce708d914376a1c52
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd9b63b40d 100644
+index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..4a01c8001ec080c4a9f41cb6a2ad43df10cfec65 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
-@@ -45,6 +45,7 @@
+@@ -45,11 +45,13 @@
  #include "HitTestResult.h"
  #include "InspectorInstrumentationPublic.h"
  #include "Page.h"
@@ -1520,7 +1533,13 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
  #include "StorageArea.h"
  #include "WebAnimation.h"
  #include <JavaScriptCore/ConsoleMessage.h>
-@@ -77,6 +78,7 @@ class DOMWrapperWorld;
+ #include <initializer_list>
+ #include <wtf/CompletionHandler.h>
++#include <wtf/Function.h>
+ #include <wtf/MemoryPressureHandler.h>
+ #include <wtf/RefPtr.h>
+ 
+@@ -77,6 +79,7 @@ class DOMWrapperWorld;
  class Document;
  class DocumentLoader;
  class EventListener;
@@ -1528,7 +1547,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -197,6 +199,7 @@ public:
+@@ -197,6 +200,7 @@ public:
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
@@ -1536,7 +1555,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
      static void didReceiveResourceResponse(WorkerGlobalScope&, unsigned long identifier, const ResourceResponse&);
-@@ -223,11 +226,11 @@ public:
+@@ -223,11 +227,11 @@ public:
      static void frameDetachedFromParent(Frame&);
      static void didCommitLoad(Frame&, DocumentLoader*);
      static void frameDocumentUpdated(Frame&);
@@ -1549,19 +1568,19 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
      static void willDestroyCachedResource(CachedResource&);
  
-@@ -314,6 +317,11 @@ public:
+@@ -314,6 +318,11 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
 +    static void runOpenPanel(Frame*, HTMLInputElement*, bool*);
 +    static void frameAttached(Frame*);
 +    static bool shouldBypassCSP(ScriptExecutionContext*);
-+    static bool interceptRequest(ResourceLoader&, CompletionHandler<void(bool handled)>&&);
++    static bool interceptRequest(ResourceLoader&, Function<void(bool handled)>&&);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -414,6 +422,7 @@ private:
+@@ -414,6 +423,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, unsigned long identifier, DocumentLoader*, const ResourceError&);
@@ -1569,7 +1588,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, unsigned long identifier, const String& sourceString);
-@@ -424,11 +433,11 @@ private:
+@@ -424,11 +434,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -1582,19 +1601,19 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
      static void willDestroyCachedResourceImpl(CachedResource&);
  
-@@ -511,6 +520,11 @@ private:
+@@ -511,6 +521,11 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
 +    static void runOpenPanelImpl(InstrumentingAgents&, HTMLInputElement*, bool*);
 +    static void frameAttachedImpl(InstrumentingAgents&, Frame&);
 +    static bool shouldBypassCSPImpl(InstrumentingAgents&);
-+    static bool interceptRequestImpl(InstrumentingAgents&, ResourceLoader&, CompletionHandler<void(bool handled)>&&);
++    static bool interceptRequestImpl(InstrumentingAgents&, ResourceLoader&, Function<void(bool handled)>&&);
 +
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1091,6 +1105,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1091,6 +1106,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -1608,7 +1627,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
  inline void InspectorInstrumentation::didFailLoading(WorkerGlobalScope& workerGlobalScope, unsigned long identifier, const ResourceError& error)
  {
      didFailLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, error);
-@@ -1186,13 +1207,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1186,13 +1208,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*instrumentingAgents, frame);
  }
  
@@ -1622,7 +1641,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1221,6 +1235,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1221,6 +1236,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*instrumentingAgents, frame);
  }
  
@@ -1636,7 +1655,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1650,6 +1671,36 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1650,6 +1672,36 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*instrumentingAgents, renderLayer);
  }
  
@@ -1662,7 +1681,7 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
 +    return false;
 +}
 +
-+inline bool InspectorInstrumentation::interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++inline bool InspectorInstrumentation::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler)
 +{
 +    FAST_RETURN_IF_NO_FRONTENDS(false);
 +    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(loader.frame()))
@@ -1674,14 +1693,14 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..e050d993b8cd8ab18a832283094e25fd
  {
      return context ? instrumentingAgentsForContext(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
-index 954aaf121a9fa507d83bc10ae37de1f128f7dcfc..043bfa8b5302e599e3fd2ad729e09acb211a0ec3 100644
+index 954aaf121a9fa507d83bc10ae37de1f128f7dcfc..9f16be3dbcf4857742ec2ab131e2b2f962a2a47c 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
 @@ -30,6 +30,11 @@
  
  namespace WebCore {
  
-+bool InspectorInstrumentationWebKit::interceptRequestInternal(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++bool InspectorInstrumentationWebKit::interceptRequestInternal(ResourceLoader& loader, Function<void(bool handled)>&& handler)
 +{
 +    return InspectorInstrumentation::interceptRequest(loader, WTFMove(handler));
 +}
@@ -1690,24 +1709,32 @@ index 954aaf121a9fa507d83bc10ae37de1f128f7dcfc..043bfa8b5302e599e3fd2ad729e09acb
  {
      return InspectorInstrumentation::shouldInterceptResponse(frame, response);
 diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..e7b2cebbe0054802fb5378f269570c28497ed0ff 100644
+index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..c468bc0981d1fb13272b28095f9f7584840b5861 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-@@ -36,14 +36,22 @@ class SharedBuffer;
+@@ -27,6 +27,7 @@
+ 
+ #include "InspectorInstrumentationPublic.h"
+ #include <wtf/CompletionHandler.h>
++#include <wtf/Function.h>
+ 
+ namespace WebCore {
+ 
+@@ -36,14 +37,22 @@ class SharedBuffer;
  
  class WEBCORE_EXPORT InspectorInstrumentationWebKit {
  public:
-+    static bool interceptRequest(ResourceLoader&, CompletionHandler<void(bool handled)>&&);
++    static bool interceptRequest(ResourceLoader&, Function<void(bool handled)>&&);
      static bool shouldInterceptResponse(const Frame*, const ResourceResponse&);
      static void interceptResponse(const Frame*, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
  
  private:
-+    static bool interceptRequestInternal(ResourceLoader&, CompletionHandler<void(bool handled)>&&);
++    static bool interceptRequestInternal(ResourceLoader&, Function<void(bool handled)>&&);
      static bool shouldInterceptResponseInternal(const Frame&, const ResourceResponse&);
      static void interceptResponseInternal(const Frame&, const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
  };
  
-+inline bool InspectorInstrumentationWebKit::interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler)
++inline bool InspectorInstrumentationWebKit::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler)
 +{
 +    FAST_RETURN_IF_NO_FRONTENDS(false);
 +    return interceptRequestInternal(loader, WTFMove(handler));
@@ -2080,7 +2107,7 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index ca8f169d18a697a4dea405c933398e67feef01c6..f5bb8f4580cb1e1c1121b47063ce4da66aa27aef 100644
+index ca8f169d18a697a4dea405c933398e67feef01c6..e1dfdf06bccaf40ca52622cd1b2dd670e3d80ca8 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -56,6 +56,7 @@
@@ -2170,7 +2197,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..f5bb8f4580cb1e1c1121b47063ce4da6
  
 -void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId)
 -{
-+bool InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&& handler) {
++bool InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&& handler) {
 +    if (!m_interceptionEnabled || !m_interceptRequests)
 +        return false;
 +    String requestId = IdentifiersFactory::requestId(loader.identifier());
@@ -2332,7 +2359,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..f5bb8f4580cb1e1c1121b47063ce4da6
  {
      m_resourcesData->clear(loaderIdentifier(&loader));
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index a68f84520736977c8b9216616c5a178fbf5275d6..bee832c4c65f9a4487c0d0b7c6fd6985ae17f885 100644
+index a68f84520736977c8b9216616c5a178fbf5275d6..b839460cf769887f49d1944d780a526fcb681b90 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 @@ -87,11 +87,13 @@ public:
@@ -2356,7 +2383,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..bee832c4c65f9a4487c0d0b7c6fd6985
      bool willInterceptRequest(const ResourceRequest&);
      bool shouldInterceptResponse(const ResourceResponse&);
      void interceptResponse(const ResourceResponse&, unsigned long identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    bool interceptRequest(ResourceLoader& loader, CompletionHandler<void(bool handled)>&&);
++    bool interceptRequest(ResourceLoader& loader, Function<void(bool handled)>&&);
  
      void searchOtherRequests(const JSC::Yarr::RegularExpression&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>&);
      void searchInRequest(ErrorString&, const String& requestId, const String& query, bool caseSensitive, bool isRegex, RefPtr<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>&);
@@ -7806,7 +7833,7 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9f711610d 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..0b9d8337877111bf4ba9c7bd0a78edc969ffe2fc 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,16 @@
@@ -7930,28 +7957,32 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -98,8 +168,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
+@@ -98,8 +168,12 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
      m_frontendRouter->disconnectFrontend(frontendChannel);
  
      bool disconnectingLastFrontend = !m_frontendRouter->hasFrontends();
 -    if (disconnectingLastFrontend)
 +    if (disconnectingLastFrontend) {
          m_agents.willDestroyFrontendAndBackend(DisconnectReason::InspectorDestroyed);
++        for (auto& it : m_pendingNavigations)
++            it.value("Page closed", 0);
 +        m_pendingNavigations.clear();
 +    }
  
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
-@@ -122,6 +194,8 @@ void WebPageInspectorController::disconnectAllFrontends()
+@@ -122,6 +196,10 @@ void WebPageInspectorController::disconnectAllFrontends()
      // Disconnect any remaining remote frontends.
      m_frontendRouter->disconnectAllFrontends();
  
++    for (auto& it : m_pendingNavigations)
++        it.value("Page closed", 0);
 +    m_pendingNavigations.clear();
 +
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -134,6 +208,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +212,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -7963,7 +7994,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -148,6 +227,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -148,6 +231,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
@@ -8019,7 +8050,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -186,7 +314,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +318,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -8028,7 +8059,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +346,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +350,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -10776,7 +10807,7 @@ index fbdf254ec42dc736ca0a00f521de8339f08ffbf2..5bd0472c37cc18d5dd6680e833fab394
      // If async scrolling is disabled, we have to force-disable async frame and overflow scrolling
      // to keep the non-async scrolling on those elements working.
 diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
-index b2d54a627b94583bda3518c4e7c3364481b605a4..62f1dc0b6075e867ddd19a216bdf0d374d326ff7 100644
+index b2d54a627b94583bda3518c4e7c3364481b605a4..d407e32b6a7b8b27925c49391e86d42c9b3dfa8b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 @@ -47,6 +47,14 @@ void WebDocumentLoader::detachFromFrame()
@@ -10785,7 +10816,7 @@ index b2d54a627b94583bda3518c4e7c3364481b605a4..62f1dc0b6075e867ddd19a216bdf0d37
  
 +void WebDocumentLoader::replacedByFragmentNavigation(Frame& frame)
 +{
-+    ASSERT(!frame());
++    ASSERT(!this->frame());
 +    // Notify WebPageProxy that the navigation has been converted into same page navigation.
 +    if (m_navigationID)
 +        WebFrame::fromCoreFrame(frame)->documentLoaderDetached(m_navigationID);
