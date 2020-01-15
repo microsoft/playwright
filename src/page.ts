@@ -68,7 +68,7 @@ export interface PageDelegate {
   setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
 
-  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle?: accessibility.AXNode}>;
+  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<platform.BufferType>;
   coverage(): Coverage | undefined;
 }

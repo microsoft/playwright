@@ -24,7 +24,7 @@ export async function getAccessibilityTree(session: WKSession, needle?: dom.Elem
   const tree = new WKAXNode(axNode);
   return {
     tree,
-    needle: needle && tree._findNeedle()
+    needle: needle ? tree._findNeedle() : null
   };
 }
 
@@ -184,22 +184,17 @@ class WKAXNode implements accessibility.AXNode {
       if ('value' in this._payload && this._payload.role !== 'text')
         node.value = this._payload.value;
 
-      type AXPropertyOfType<Type> = {
-        [Key in keyof Protocol.Page.AXNode]:
-            Protocol.Page.AXNode[Key] extends Type ? Key : never
-      }[keyof Protocol.Page.AXNode];
-
-      const userStringProperties: string[] = [
+      const userStringProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'keyshortcuts',
         'valuetext'
       ];
       for (const userStringProperty of userStringProperties) {
         if (!(userStringProperty in this._payload))
           continue;
-        (node as any)[userStringProperty] = (this._payload as any)[userStringProperty];
+        (node as any)[userStringProperty] = this._payload[userStringProperty];
       }
 
-      const booleanProperties: string[] = [
+      const booleanProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'disabled',
         'expanded',
         'focused',
@@ -215,7 +210,7 @@ class WKAXNode implements accessibility.AXNode {
         // not whether focus is specifically on the root node.
         if (booleanProperty === 'focused' && (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea'))
           continue;
-        const value = (this._payload as any)[booleanProperty];
+        const value = this._payload[booleanProperty];
         if (!value)
           continue;
         (node as any)[booleanProperty] = value;
@@ -231,7 +226,7 @@ class WKAXNode implements accessibility.AXNode {
         const value = this._payload[tristateProperty];
         node[tristateProperty] = value === 'mixed' ? 'mixed' : value === 'true' ? true : false;
       }
-      const numericalProperties: string[] = [
+      const numericalProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'level',
         'valuemax',
         'valuemin',
@@ -241,7 +236,7 @@ class WKAXNode implements accessibility.AXNode {
           continue;
         (node as any)[numericalProperty] = (this._payload as any)[numericalProperty];
       }
-      const tokenProperties: string[] = [
+      const tokenProperties: Array<keyof accessibility.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'autocomplete',
         'haspopup',
         'invalid',

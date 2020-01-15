@@ -497,7 +497,7 @@ export class WKPage implements PageDelegate {
     return to._createHandle(result.object) as dom.ElementHandle<T>;
   }
 
-  async getAccessibilityTree(needle?: dom.ElementHandle) : Promise<{tree: accessibility.AXNode, needle?: accessibility.AXNode}> {
+  async getAccessibilityTree(needle?: dom.ElementHandle) : Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
     return getAccessibilityTree(this._session, needle);
   }
 
