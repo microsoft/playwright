@@ -172,6 +172,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
       if (CHROMIUM)
         expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
+      else if (WEBKIT && process.platform === 'win32')
+        expect(error.message).toContain(`Couldn\'t connect to server`);
       else if (WEBKIT)
         expect(error.message).toContain('Could not connect');
       else
@@ -898,6 +900,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     } else if (WEBKIT) {
       if (process.platform === 'darwin')
         expect(errorMessage).toContain('The certificate for this server is invalid');
+      else if (process.platform === 'win32')
+        expect(errorMessage).toContain('SSL peer certificate or SSH remote key was not OK');
       else
         expect(errorMessage).toContain('Unacceptable TLS certificate');
     } else {
