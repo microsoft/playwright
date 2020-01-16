@@ -182,7 +182,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await button.click();
       expect(await page.evaluate(() => result)).toBe('Clicked');
     });
-    it.skip(FFOX)('should work with Node removed', async({page, server}) => {
+    it('should work with Node removed', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.evaluate(() => delete window['Node']);
       const button = await page.$('button');
@@ -239,7 +239,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await button.hover();
       expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
     });
-    it.skip(FFOX)('should work when Node is removed', async({page, server}) => {
+    it('should work when Node is removed', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/scrollable.html');
       await page.evaluate(() => delete window['Node']);
       const button = await page.$('#button-6');
@@ -257,7 +257,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         expect(Math.round(ratio * 10)).toBe(10 - i);
       }
     });
-    it.skip(FFOX)('should work when Node is removed', async({page, server}) => {
+    it('should work when Node is removed', async({page, server}) => {
       await page.goto(server.PREFIX + '/offscreenbuttons.html');
       await page.evaluate(() => delete window['Node']);
       for (let i = 0; i < 11; ++i) {
@@ -290,7 +290,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await handle.fill('some value');
       expect(await page.evaluate(() => result)).toBe('some value');
     });
-    it.skip(FFOX)('should fill input when Node is removed', async({page, server}) => {
+    it('should fill input when Node is removed', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.evaluate(() => delete window['Node']);
       const handle = await page.$('input');

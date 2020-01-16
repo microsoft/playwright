@@ -38,7 +38,6 @@ import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
-import * as accessibility from '../accessibility';
 import * as platform from '../platform';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
