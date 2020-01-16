@@ -238,6 +238,50 @@ index edda707be08292a767f66d20f2abca98af113796..f7031a8e1fd813a9371b8f6d3a987a32
  NS_IMETHODIMP BrowserChild::OnProgressChange(nsIWebProgress* aWebProgress,
                                               nsIRequest* aRequest,
                                               int32_t aCurSelfProgress,
+diff --git a/dom/script/ScriptSettings.cpp b/dom/script/ScriptSettings.cpp
+index 9e3c1a56d10394d98de9e84fb8cd6ee8e3be5870..8c661de349d6cb64fd8d81d5db9c28f2a2af9138 100644
+--- a/dom/script/ScriptSettings.cpp
++++ b/dom/script/ScriptSettings.cpp
+@@ -140,6 +140,30 @@ ScriptSettingsStackEntry::~ScriptSettingsStackEntry() {
+   MOZ_ASSERT_IF(mGlobalObject, mGlobalObject->HasJSGlobal());
+ }
+ 
++static nsIGlobalObject* UnwrapSandboxGlobal(nsIGlobalObject* global) {
++  if (!global)
++    return global;
++  JSObject* globalObject = global->GetGlobalJSObject();
++  if (!globalObject)
++    return global;
++  JSContext* cx = nsContentUtils::GetCurrentJSContext();
++  if (!cx)
++    return global;
++  JS::Rooted<JSObject*> proto(cx);
++  JS::RootedObject rootedGlobal(cx, globalObject);
++  if (!JS_GetPrototype(cx, rootedGlobal, &proto))
++    return global;
++  if (!proto || !xpc::IsSandboxPrototypeProxy(proto))
++    return global;
++  // If this is a sandbox associated with a DOMWindow via a
++  // sandboxPrototype, use that DOMWindow. This supports GreaseMonkey
++  // and JetPack content scripts.
++  proto = js::CheckedUnwrapDynamic(proto, cx, /* stopAtWindowProxy = */ false);
++  if (!proto)
++    return global;
++  return xpc::WindowGlobalOrNull(proto);
++}
++
+ // If the entry or incumbent global ends up being something that the subject
+ // principal doesn't subsume, we don't want to use it. This never happens on
+ // the web, but can happen with asymmetric privilege relationships (i.e.
+@@ -167,7 +191,7 @@ static nsIGlobalObject* ClampToSubject(nsIGlobalObject* aGlobalOrNull) {
+   NS_ENSURE_TRUE(globalPrin, GetCurrentGlobal());
+   if (!nsContentUtils::SubjectPrincipalOrSystemIfNativeCaller()
+            ->SubsumesConsideringDomain(globalPrin)) {
+-    return GetCurrentGlobal();
++    return UnwrapSandboxGlobal(GetCurrentGlobal());
+   }
+ 
+   return aGlobalOrNull;
 diff --git a/dom/security/nsCSPUtils.cpp b/dom/security/nsCSPUtils.cpp
 index f0c28cfdae1c9ac33013e9688e0142d161763543..a38ab106e37dbab58e91ef5a873f8954c35881e7 100644
 --- a/dom/security/nsCSPUtils.cpp
@@ -1780,10 +1824,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e744759b55a5f
+index 0000000000000000000000000000000000000000..758871cc245ab5aa30ce54d58e87175f65401d50
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,671 @@
+@@ -0,0 +1,714 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -1795,6 +1839,82 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +
 +const helper = new Helper();
 +
++class FrameData {
++  constructor(agent, frame) {
++    this._agent = agent;
++    this._frame = frame;
++    this._isolatedWorlds = new Map();
++    this.reset();
++  }
++
++  reset() {
++    if (this.mainContext)
++      this._agent._runtime.destroyExecutionContext(this.mainContext);
++    for (const world of this._isolatedWorlds.values())
++      this._agent._runtime.destroyExecutionContext(world);
++    this._isolatedWorlds.clear();
++
++    this.mainContext = this._agent._runtime.createExecutionContext(this._frame.domWindow(), this._frame.domWindow(), {
++      frameId: this._frame.id(),
++      name: '',
++    });
++
++    for (const bindingName of this._agent._bindingsToAdd.values())
++      this.exposeFunction(bindingName);
++    for (const {script, worldName} of this._agent._scriptsToEvaluateOnNewDocument.values()) {
++      const context = worldName ? this.createIsolatedWorld(worldName) : this.mainContext;
++      try {
++        let result = context.evaluateScript(script);
++        if (result && result.objectId)
++          context.disposeObject(result.objectId);
++      } catch (e) {
++      }
++    }
++  }
++
++  exposeFunction(name) {
++    Cu.exportFunction((...args) => {
++      this._agent._session.emitEvent('Page.bindingCalled', {
++        executionContextId: this.mainContext.id(),
++        name,
++        payload: args[0]
++      });
++    }, this._frame.domWindow(), {
++      defineAs: name,
++    });
++  }
++
++  createIsolatedWorld(name) {
++    const principal = [this._frame.domWindow()]; // extended principal
++    const sandbox = Cu.Sandbox(principal, {
++      sandboxPrototype: this._frame.domWindow(),
++      wantComponents: false,
++      wantExportHelpers: false,
++      wantXrays: true,
++    });
++    const world = this._agent._runtime.createExecutionContext(this._frame.domWindow(), sandbox, {
++      frameId: this._frame.id(),
++      name,
++    });
++    this._isolatedWorlds.set(world.id(), world);
++    return world;
++  }
++
++  unsafeObject(objectId) {
++    if (this.mainContext) {
++      const result = this.mainContext.unsafeObject(objectId);
++      if (result)
++        return result.object;
++    }
++    for (const world of this._isolatedWorlds.values()) {
++      const result = world.unsafeObject(objectId);
++      if (result)
++        return result.object;
++    }
++    throw new Error('Cannot find object with id = ' + objectId);
++  }
++}
++
 +class PageAgent {
 +  constructor(session, runtimeAgent, frameTree, scrollbarManager, networkMonitor) {
 +    this._session = session;
@@ -1803,7 +1923,7 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +    this._networkMonitor = networkMonitor;
 +    this._scrollbarManager = scrollbarManager;
 +
-+    this._frameToExecutionContext = new Map();
++    this._frameData = new Map();
 +    this._scriptsToEvaluateOnNewDocument = new Map();
 +    this._bindingsToAdd = new Set();
 +
@@ -1866,9 +1986,13 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +    docShell.bypassCSPEnabled = enabled;
 +  }
 +
-+  addScriptToEvaluateOnNewDocument({script}) {
++  addScriptToEvaluateOnNewDocument({script, worldName}) {
 +    const scriptId = helper.generateId();
-+    this._scriptsToEvaluateOnNewDocument.set(scriptId, script);
++    this._scriptsToEvaluateOnNewDocument.set(scriptId, {script, worldName});
++    if (worldName) {
++      for (const frameData of this._frameData.values())
++        frameData.createIsolatedWorld(worldName);
++    }
 +    return {scriptId};
 +  }
 +
@@ -1927,10 +2051,10 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +  _filePickerShown(inputElement) {
 +    if (inputElement.ownerGlobal.docShell !== this._docShell)
 +      return;
-+    const result = this._runtime.rawElementToRemoteObject(inputElement);
++    const frameData = Array.from(this._frameData.values()).find(data => inputElement.ownerDocument === data._frame.domWindow().document);
 +    this._session.emitEvent('Page.fileChooserOpened', {
-+      executionContextId: result.executionContextId,
-+      element: result.element
++      executionContextId: frameData.mainContext.id(),
++      element: frameData.mainContext.rawValueToRemoteObject(inputElement)
 +    });
 +  }
 +
@@ -2016,25 +2140,7 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+
-+    if (this._frameToExecutionContext.has(frame)) {
-+      this._runtime.destroyExecutionContext(this._frameToExecutionContext.get(frame));
-+      this._frameToExecutionContext.delete(frame);
-+    }
-+    const executionContext = this._ensureExecutionContext(frame);
-+
-+    if (!this._scriptsToEvaluateOnNewDocument.size && !this._bindingsToAdd.size)
-+      return;
-+    for (const bindingName of this._bindingsToAdd.values())
-+      this._exposeFunction(frame, bindingName);
-+    for (const script of this._scriptsToEvaluateOnNewDocument.values()) {
-+      try {
-+        let result = executionContext.evaluateScript(script);
-+        if (result && result.objectId)
-+          executionContext.disposeObject(result.objectId);
-+      } catch (e) {
-+      }
-+    }
++    this._frameData.get(frame).reset();
 +  }
 +
 +  _onFrameAttached(frame) {
@@ -2042,24 +2148,14 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +      frameId: frame.id(),
 +      parentFrameId: frame.parentFrame() ? frame.parentFrame().id() : undefined,
 +    });
-+    this._ensureExecutionContext(frame);
++    this._frameData.set(frame, new FrameData(this, frame));
 +  }
 +
 +  _onFrameDetached(frame) {
++    this._frameData.delete(frame);
 +    this._session.emitEvent('Page.frameDetached', {
 +      frameId: frame.id(),
 +    });
-+  }
-+
-+  _ensureExecutionContext(frame) {
-+    let executionContext = this._frameToExecutionContext.get(frame);
-+    if (!executionContext) {
-+      executionContext = this._runtime.createExecutionContext(frame.domWindow(), {
-+        frameId: frame.id(),
-+      });
-+      this._frameToExecutionContext.set(frame, executionContext);
-+    }
-+    return executionContext;
 +  }
 +
 +  dispose() {
@@ -2127,29 +2223,24 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +    if (this._bindingsToAdd.has(name))
 +      throw new Error(`Binding with name ${name} already exists`);
 +    this._bindingsToAdd.add(name);
-+    for (const frame of this._frameTree.frames())
-+      this._exposeFunction(frame, name);
++    for (const frameData of this._frameData.values())
++      frameData.exposeFunction(name);
 +  }
 +
-+  _exposeFunction(frame, name) {
-+    Cu.exportFunction((...args) => {
-+      const executionContext = this._ensureExecutionContext(frame);
-+      this._session.emitEvent('Page.bindingCalled', {
-+        executionContextId: executionContext.id(),
-+        name,
-+        payload: args[0]
-+      });
-+    }, frame.domWindow(), {
-+      defineAs: name,
-+    });
++  async adoptNode({frameId, objectId, executionContextId}) {
++    const frame = this._frameTree.frame(frameId);
++    if (!frame)
++      throw new Error('Failed to find frame with id = ' + frameId);
++    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
++    const context = this._runtime.findExecutionContext(executionContextId);
++    return { remoteObject: context.rawValueToRemoteObject(unsafeObject) };
 +  }
 +
 +  async setFileInputFiles({objectId, frameId, files}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
-+    const executionContext = this._ensureExecutionContext(frame);
-+    const unsafeObject = executionContext.unsafeObject(objectId);
++    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
 +    if (!unsafeObject)
 +      throw new Error('Object is not input!');
 +    const nsFiles = await Promise.all(files.map(filePath => File.createFromFileName(filePath)));
@@ -2160,8 +2251,7 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
-+    const executionContext = this._ensureExecutionContext(frame);
-+    const unsafeObject = executionContext.unsafeObject(objectId);
++    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
 +    if (!unsafeObject.getBoxQuads)
 +      throw new Error('RemoteObject is not a node');
 +    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document}).map(quad => {
@@ -2179,8 +2269,7 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
-+    const executionContext = this._ensureExecutionContext(frame);
-+    const unsafeObject = executionContext.unsafeObject(objectId);
++    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
 +    if (!unsafeObject.contentWindow)
 +      return null;
 +    const contentFrame = this._frameTree.frameForDocShell(unsafeObject.contentWindow.docShell);
@@ -2191,8 +2280,7 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
-+    const executionContext = this._ensureExecutionContext(frame);
-+    const unsafeObject = executionContext.unsafeObject(objectId);
++    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
 +    if (!unsafeObject.getBoxQuads)
 +      throw new Error('RemoteObject is not a node');
 +    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document});
@@ -2308,8 +2396,7 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +  async getFullAXTree({objectId}) {
 +    let unsafeObject = null;
 +    if (objectId) {
-+      const executionContext = this._ensureExecutionContext(this._frameTree.mainFrame());
-+      unsafeObject = executionContext.unsafeObject(objectId);
++      unsafeObject = this._frameData.get(this._frameTree.mainFrame()).unsafeObject(objectId);
 +      if (!unsafeObject)
 +        throw new Error(`No object found for id "${objectId}"`);
 +    }
@@ -2457,10 +2544,10 @@ index 0000000000000000000000000000000000000000..550860d93891bdeaec54dfccc38e7447
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b43df14b060682711a59221f67fd2c3bba3a0f62
+index 0000000000000000000000000000000000000000..642b8bc1be7eaa6ad46ed38eee10dc58169d44ea
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
-@@ -0,0 +1,466 @@
+@@ -0,0 +1,465 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -2550,14 +2637,6 @@ index 0000000000000000000000000000000000000000..b43df14b060682711a59221f67fd2c3b
 +
 +    this._eventListeners = [];
 +    this._enabled = false;
-+  }
-+
-+  rawElementToRemoteObject(node) {
-+    const executionContext = Array.from(this._executionContexts.values()).find(context => node.ownerDocument == context._domWindow.document);
-+    return {
-+      executionContextId: executionContext.id(),
-+      element: executionContext.rawValueToRemoteObject(node)
-+    };
 +  }
 +
 +  _consoleAPICalled({wrappedJSObject}, topic, data) {
@@ -2655,12 +2734,19 @@ index 0000000000000000000000000000000000000000..b43df14b060682711a59221f67fd2c3b
 +    pendingPromise.resolve({success: false, obj: null});
 +  }
 +
-+  createExecutionContext(domWindow, auxData) {
-+    const context = new ExecutionContext(this, domWindow, this._debugger.addDebuggee(domWindow), auxData);
++  createExecutionContext(domWindow, contextGlobal, auxData) {
++    const context = new ExecutionContext(this, domWindow, this._debugger.addDebuggee(contextGlobal), auxData);
 +    this._executionContexts.set(context._id, context);
 +    this._windowToExecutionContext.set(domWindow, context);
 +    this._notifyExecutionContextCreated(context);
 +    return context;
++  }
++
++  findExecutionContext(executionContextId) {
++    const executionContext = this._executionContexts.get(executionContextId);
++    if (!executionContext)
++      throw new Error('Failed to find execution context with id = ' + executionContextId);
++    return executionContext;
 +  }
 +
 +  destroyExecutionContext(destroyedContext) {
@@ -2785,8 +2871,8 @@ index 0000000000000000000000000000000000000000..b43df14b060682711a59221f67fd2c3b
 +
 +  unsafeObject(objectId) {
 +    if (!this._remoteObjects.has(objectId))
-+      throw new Error('Cannot find object with id = ' + objectId);
-+    return this._remoteObjects.get(objectId).unsafeDereference();
++      return;
++    return { object: this._remoteObjects.get(objectId).unsafeDereference() };
 +  }
 +
 +  rawValueToRemoteObject(rawValue) {
@@ -3707,10 +3793,10 @@ index 0000000000000000000000000000000000000000..f5e7e919594b3778fd3046bf69d34878
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..13e659902758eeb3482d33a7084d8dfd0d330f1e
+index 0000000000000000000000000000000000000000..db0648f6bee8035c7750cd810281ad0286540576
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,281 @@
+@@ -0,0 +1,285 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -3842,6 +3928,10 @@ index 0000000000000000000000000000000000000000..13e659902758eeb3482d33a7084d8dfd
 +
 +  async addBinding(options) {
 +    return await this._contentSession.send('Page.addBinding', options);
++  }
++
++  async adoptNode(options) {
++    return await this._contentSession.send('Page.adoptNode', options);
 +  }
 +
 +  async screenshot(options) {
@@ -4143,10 +4233,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..92ce5a8cebfc4290a9f14f398d9ef282d4370fbe
+index 0000000000000000000000000000000000000000..0344e2c71a86aff1ab602d9a90c8f2a0817cb66b
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,700 @@
+@@ -0,0 +1,711 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4698,6 +4788,7 @@ index 0000000000000000000000000000000000000000..92ce5a8cebfc4290a9f14f398d9ef282
 +    'addScriptToEvaluateOnNewDocument': {
 +      params: {
 +        script: t.String,
++        worldName: t.Optional(t.String),
 +      },
 +      returns: {
 +        scriptId: t.String,
@@ -4753,6 +4844,16 @@ index 0000000000000000000000000000000000000000..92ce5a8cebfc4290a9f14f398d9ef282
 +      },
 +      returns: {
 +        boundingBox: t.Nullable(pageTypes.BoundingBox),
++      },
++    },
++    'adoptNode': {
++      params: {
++        frameId: t.String,
++        objectId: t.String,
++        executionContextId: t.String,
++      },
++      returns: {
++        remoteObject: runtimeTypes.RemoteObject,
 +      },
 +    },
 +    'screenshot': {
