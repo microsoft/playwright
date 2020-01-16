@@ -6556,10 +6556,10 @@ index 4896c404bc8b25d69360de7d1c509383282b2317..14bdebf732e929ea367c961f9d0bec85
      static constexpr Seconds didUpdateBackingStoreStateTimeout() { return Seconds::fromMilliseconds(500); }
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..1d27f8ffb425522b536c48ad460aac8a68f6c07c
+index 0000000000000000000000000000000000000000..cd718da46713a8414b90e6768f65d7c90e5207dd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,483 @@
+@@ -0,0 +1,482 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -6707,7 +6707,7 @@ index 0000000000000000000000000000000000000000..1d27f8ffb425522b536c48ad460aac8a
 +    if (m_client == nullptr) {
 +        errorString = "no platform delegate to close browser";
 +    } else {
-+        m_client->closeAllWindows();
++        m_client->closeBrowser();
 +    }
 +}
 +
@@ -6748,8 +6748,7 @@ index 0000000000000000000000000000000000000000..1d27f8ffb425522b536c48ad460aac8a
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
 +    if (!errorString.isEmpty())
 +        return;
-+    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+    RefPtr<WebPageProxy> page = m_client->createPage(errorString, sessionID);
++    RefPtr<WebPageProxy> page = m_client->createPage(errorString, browserContext);
 +    if (!page)
 +        return;
 +    page->setPermissionsForAutomation(m_permissions.get(browserContextID ? *browserContextID : ""));
@@ -7164,7 +7163,7 @@ index 0000000000000000000000000000000000000000..71a26862762e695015ca27aac2e4645d
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0e18ecd59f6f493da1f9ac8505c5088c163271bb
+index 0000000000000000000000000000000000000000..21f8cc9bffd8f2d4a88764a4eafa13f367aa1e7c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
 @@ -0,0 +1,55 @@
@@ -7214,8 +7213,8 @@ index 0000000000000000000000000000000000000000..0e18ecd59f6f493da1f9ac8505c5088c
 +class InspectorBrowserAgentClient {
 +public:
 +    virtual ~InspectorBrowserAgentClient() = default;
-+    virtual RefPtr<WebKit::WebPageProxy> createPage(WTF::String& error, PAL::SessionID) = 0;
-+    virtual void closeAllWindows() = 0;
++    virtual RefPtr<WebKit::WebPageProxy> createPage(WTF::String& error, const BrowserContext& context) = 0;
++    virtual void closeBrowser() = 0;
 +    virtual BrowserContext createBrowserContext(WTF::String& error) = 0;
 +    virtual void deleteBrowserContext(WTF::String& error, PAL::SessionID) = 0;
 +};
@@ -9113,10 +9112,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..50a643a0ecab27b736ab49d3984384f45b038524
+index 0000000000000000000000000000000000000000..d3f969edbd888c4f9265c04e07814d0a3e337802
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
-@@ -0,0 +1,131 @@
+@@ -0,0 +1,132 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9186,8 +9185,9 @@ index 0000000000000000000000000000000000000000..50a643a0ecab27b736ab49d3984384f4
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientGlib::createPage(WTF::String& error, PAL::SessionID sessionID)
++RefPtr<WebPageProxy> InspectorBrowserAgentClientGlib::createPage(WTF::String& error, const BrowserContext& browserContext)
 +{
++    auto sessionID = browserContext.dataStore->sessionID();
 +    WebKitWebContext* context;
 +    if (!sessionID || webkitWebContextGetProcessPool(webkit_web_context_get_default()).websiteDataStore()->sessionID() == sessionID)
 +      context = webkit_web_context_get_default();
@@ -9205,7 +9205,7 @@ index 0000000000000000000000000000000000000000..50a643a0ecab27b736ab49d3984384f4
 +    return page;
 +}
 +
-+void InspectorBrowserAgentClientGlib::closeAllWindows()
++void InspectorBrowserAgentClientGlib::closeBrowser()
 +{
 +    closeAllPages(Optional<PAL::SessionID>());
 +    m_idToContext.clear();
@@ -9250,7 +9250,7 @@ index 0000000000000000000000000000000000000000..50a643a0ecab27b736ab49d3984384f4
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..6fcadb97ebe89699f29afc4dcac6065dbade9a3b
+index 0000000000000000000000000000000000000000..9e27fe017ffdef1e8aafce69344fd688c732c3b4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.h
 @@ -0,0 +1,59 @@
@@ -9298,8 +9298,8 @@ index 0000000000000000000000000000000000000000..6fcadb97ebe89699f29afc4dcac6065d
 +    InspectorBrowserAgentClientGlib(GMainLoop* mainLoop);
 +    ~InspectorBrowserAgentClientGlib() override = default;
 +
-+    RefPtr<WebPageProxy> createPage(WTF::String& error, PAL::SessionID) override;
-+    void closeAllWindows() override;
++    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
++    void closeBrowser() override;
 +    BrowserContext createBrowserContext(WTF::String& error) override;
 +    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +
@@ -9566,7 +9566,7 @@ index dbfb34900ad983a8f2267a29ccca9adbb89de2d6..bcf76c1f8df1bb307074393a62fa8b2e
  
 diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..5de915edebd76599a71e2556516f5442ac7ed9b4
+index 0000000000000000000000000000000000000000..f9e7e5906301bb7add100bba3f88c0c0aef04fd1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.h
 @@ -0,0 +1,51 @@
@@ -9610,12 +9610,12 @@ index 0000000000000000000000000000000000000000..5de915edebd76599a71e2556516f5442
 +    InspectorBrowserAgentClientMac(_WKBrowserInspectorDelegate* delegate);
 +    ~InspectorBrowserAgentClientMac() override = default;
 +
-+    RefPtr<WebPageProxy> createPage(WTF::String& error, PAL::SessionID) override;
-+    void closeAllWindows() override;
++    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
++    void closeBrowser() override;
 +    BrowserContext createBrowserContext(WTF::String& error) override;
 +    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
-+  private:
 +
++private:
 +    _WKBrowserInspectorDelegate* delegate_;
 +};
 +
@@ -9623,10 +9623,10 @@ index 0000000000000000000000000000000000000000..5de915edebd76599a71e2556516f5442
 +} // namespace API
 diff --git a/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..af371a4a71a1facdaa9f67881e998bf5fe23201e
+index 0000000000000000000000000000000000000000..c5d7c51bff0e0865a49a49c8df19ef9677a03998
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/InspectorBrowserAgentClientMac.mm
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,77 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9673,8 +9673,9 @@ index 0000000000000000000000000000000000000000..af371a4a71a1facdaa9f67881e998bf5
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientMac::createPage(WTF::String& error, PAL::SessionID sessionID)
++RefPtr<WebPageProxy> InspectorBrowserAgentClientMac::createPage(WTF::String& error, const BrowserContext& browserContext)
 +{
++    auto sessionID = browserContext.dataStore->sessionID();
 +    WKWebView *webView = [delegate_ createNewPage:sessionID.toUInt64()];
 +    if (!webView) {
 +        error = "Internal error: can't create page in given context"_s;
@@ -9683,7 +9684,7 @@ index 0000000000000000000000000000000000000000..af371a4a71a1facdaa9f67881e998bf5
 +    return [webView _page];
 +}
 +
-+void InspectorBrowserAgentClientMac::closeAllWindows()
++void InspectorBrowserAgentClientMac::closeBrowser()
 +{
 +    [delegate_ quit];
 +}
@@ -10046,10 +10047,10 @@ index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b48550079b63975e6e35e11574db4982bba37cf2
+index 0000000000000000000000000000000000000000..d33b1bb189d561754e5f44cc1fa87f2760a2f424
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,83 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -10102,19 +10103,16 @@ index 0000000000000000000000000000000000000000..b48550079b63975e6e35e11574db4982
 +{
 +}
 +
-+RefPtr<WebPageProxy> InspectorBrowserAgentClientWin::createPage(WTF::String& error, PAL::SessionID sessionID)
++RefPtr<WebPageProxy> InspectorBrowserAgentClientWin::createPage(WTF::String& error, const BrowserContext& context)
 +{
 +    auto conf = &API::PageConfiguration::create().leakRef();
 +    auto prefs = &WebPreferences::create(String(), "WebKit2Automation.", "WebKit2Automation.").leakRef();
-+    auto context = m_idToContext.find(sessionID);
-+    if (context != m_idToContext.end()) {
-+        conf->setProcessPool(context->value.processPool.get());
-+        conf->setWebsiteDataStore(context->value.dataStore.get());
-+    }
++    conf->setProcessPool(context.processPool.get());
++    conf->setWebsiteDataStore(context.dataStore.get());
 +    return toImpl(m_createPage(toAPI(conf)));
 +}
 +
-+void InspectorBrowserAgentClientWin::closeAllWindows()
++void InspectorBrowserAgentClientWin::closeBrowser()
 +{
 +    m_quit();
 +}
@@ -10126,13 +10124,11 @@ index 0000000000000000000000000000000000000000..b48550079b63975e6e35e11574db4982
 +    browserContext.processPool = WebKit::WebProcessPool::create(config);
 +    browserContext.dataStore = WebKit::WebsiteDataStore::createNonPersistent();
 +    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+    m_idToContext.set(sessionID, browserContext);
 +    return browserContext;
 +}
 +
 +void InspectorBrowserAgentClientWin::deleteBrowserContext(WTF::String& error, PAL::SessionID sessionID)
 +{
-+    m_idToContext.remove(sessionID);
 +}
 +
 +} // namespace WebKit
@@ -10140,10 +10136,10 @@ index 0000000000000000000000000000000000000000..b48550079b63975e6e35e11574db4982
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..561a70fdcf2c0fa192872fdc050bc717555012a8
+index 0000000000000000000000000000000000000000..2311841478469154473c259a4e0c669daf4644f9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.h
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,58 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -10176,7 +10172,6 @@ index 0000000000000000000000000000000000000000..561a70fdcf2c0fa192872fdc050bc717
 +#include "InspectorBrowserAgentClient.h"
 +#include <WebKit/WKInspector.h>
 +#include <wtf/Forward.h>
-+#include <wtf/HashMap.h>
 +#include <wtf/text/StringHash.h>
 +
 +typedef WKPageRef (*CreatePageCallback)(WKPageConfigurationRef configuration);
@@ -10190,13 +10185,12 @@ index 0000000000000000000000000000000000000000..561a70fdcf2c0fa192872fdc050bc717
 +    InspectorBrowserAgentClientWin(CreatePageCallback, QuitCallback);
 +    ~InspectorBrowserAgentClientWin() override = default;
 +
-+    RefPtr<WebPageProxy> createPage(WTF::String& error, PAL::SessionID) override;
-+    void closeAllWindows() override;
++    RefPtr<WebPageProxy> createPage(WTF::String& error, const BrowserContext&) override;
++    void closeBrowser() override;
 +    BrowserContext createBrowserContext(WTF::String& error) override;
 +    void deleteBrowserContext(WTF::String& error, PAL::SessionID) override;
 +
 +private:
-+    HashMap<PAL::SessionID, BrowserContext> m_idToContext;
 +    CreatePageCallback m_createPage;
 +    QuitCallback m_quit;
 +};
@@ -11806,7 +11800,7 @@ index d996feb64e02d7399f2ed0b34d3d0dd03133f824..474caddaafa1fd464acd9117e3260fe3
      _bstr_t requestedURL;
  
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index 71c43e6691395b787140ca0603550aac1c8513d5..a0ed17bdfd5743f0e49de88313eaac5f2b7c8a12 100644
+index 71c43e6691395b787140ca0603550aac1c8513d5..82fd4b084931a87ba34f390ccd26737e0c787ebb 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 @@ -39,6 +39,8 @@
@@ -11826,10 +11820,11 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..a0ed17bdfd5743f0e49de88313eaac5f
      WKPageSetPageUIClient(page, &uiClient.base);
  
      WKPageStateClientV0 stateClient = { };
-@@ -381,6 +384,34 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+@@ -381,21 +384,41 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
      return false;
  }
  
+-WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
 +// static
 +void WebKitBrowserWindow::setHeadless(bool headless)
 +{
@@ -11842,27 +11837,37 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..a0ed17bdfd5743f0e49de88313eaac5f
 +    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
 +}
 +
-+WKPageRef WebKitBrowserWindow::createPageForAutomation(WKPageConfigurationRef configuration)
-+{
-+    auto& newWindow = MainWindow::create().leakRef();
-+    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
-+        return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
-+    };
-+    bool ok = newWindow.init(factory, hInst);
-+    if (!s_headless)
++WKPageRef WebKitBrowserWindow::createPageCallback(WKPageConfigurationRef configuration)
+ {
+     auto& newWindow = MainWindow::create().leakRef();
+     auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
+         return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
+     };
+     bool ok = newWindow.init(factory, hInst);
+-    if (!ok)
+-        return nullptr;
+-    ShowWindow(newWindow.hwnd(), SW_SHOW);
++    if (s_headless)
++        SetMenu(newWindow.hwnd(), NULL);
++    else
 +        ShowWindow(newWindow.hwnd(), SW_SHOW);
 +    newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
 +
-+    auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
-+    WKRetainPtr<WKPageRef> newPage = WKViewGetPage(newBrowserWindow.m_view.get());
-+    return newPage.leakRef();
+     auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
+     WKRetainPtr<WKPageRef> newPage = WKViewGetPage(newBrowserWindow.m_view.get());
+     return newPage.leakRef();
+ }
+ 
++WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef, WKPageConfigurationRef configuration, WKNavigationActionRef, WKWindowFeaturesRef, const void*)
++{
++    return createPageCallback(configuration);
 +}
 +
- WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
+ void WebKitBrowserWindow::didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr event, const void* clientInfo)
  {
-     auto& newWindow = MainWindow::create().leakRef();
+     auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..f37211c18a831893354c106ed11d3b2c7f6f69a0 100644
+index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..67f629637fad2da465025248af328f80e6ee7068 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 @@ -34,6 +34,8 @@
@@ -11870,7 +11875,7 @@ index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..f37211c18a831893354c106ed11d3b2c
  public:
      static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, bool useLayeredWebView = false);
 +    static void setHeadless(bool headless);
-+    static WKPageRef createPageForAutomation(WKPageConfigurationRef configuration);
++    static WKPageRef createPageCallback(WKPageConfigurationRef configuration);
  
  private:
      WebKitBrowserWindow(BrowserWindowClient&, WKPageConfigurationRef, HWND mainWnd);
@@ -11883,7 +11888,7 @@ index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..f37211c18a831893354c106ed11d3b2c
  
      BrowserWindowClient& m_client;
 diff --git a/Tools/MiniBrowser/win/WinMain.cpp b/Tools/MiniBrowser/win/WinMain.cpp
-index b1d17e88de61a6f196830f62604e4174564506bd..ce9a603b120b8d11c93e35c63006a8b5d97145c8 100644
+index b1d17e88de61a6f196830f62604e4174564506bd..eb5b63e75be20ffbe390c0b084314c3542b6b5b2 100644
 --- a/Tools/MiniBrowser/win/WinMain.cpp
 +++ b/Tools/MiniBrowser/win/WinMain.cpp
 @@ -47,11 +47,18 @@
@@ -11912,27 +11917,29 @@ index b1d17e88de61a6f196830f62604e4174564506bd..ce9a603b120b8d11c93e35c63006a8b5
 +    if (options.inspectorPipe) {
 +        WebKitBrowserWindow::setHeadless(options.headless);
 +        WKInspectorInitializeRemoteInspectorPipe(
-+            WebKitBrowserWindow::createPageForAutomation,
++            WebKitBrowserWindow::createPageCallback,
 +            []() { PostQuitMessage(0); });
 +    }
  
      if (options.useFullDesktop)
          computeFullDesktopFrame();
-@@ -91,14 +104,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+@@ -91,14 +104,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
      if (FAILED(hr))
          goto exit;
  
 -    ShowWindow(mainWindow.hwnd(), nCmdShow);
-+    if (!options.headless)
++    if (options.headless)
++        SetMenu(mainWindow.hwnd(), NULL);
++    else
 +        ShowWindow(mainWindow.hwnd(), nCmdShow);
  
      hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_MINIBROWSER));
  
--    if (options.requestedURL.length())
--        mainWindow.loadURL(options.requestedURL.GetBSTR());
--    else
+     if (options.requestedURL.length())
+         mainWindow.loadURL(options.requestedURL.GetBSTR());
+     else
 -        mainWindow.browserWindow()->loadURL(_bstr_t(defaultURL).GetBSTR());
-+    mainWindow.loadURL(_bstr_t("about:blank").GetBSTR());
++        mainWindow.loadURL(_bstr_t("about:blank").GetBSTR());
  
  #pragma warning(disable:4509)
  
