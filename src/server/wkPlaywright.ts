@@ -24,25 +24,34 @@ import { WKConnectOptions } from '../webkit/wkBrowser';
 import { execSync, ChildProcess } from 'child_process';
 import { PipeTransport } from './pipeTransport';
 import { launchProcess } from './processLauncher';
+import * as fs from 'fs';
 import * as path from 'path';
+import * as platform from '../platform';
 import * as util from 'util';
 import * as os from 'os';
 import { assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { Playwright } from './playwright';
 
-export type LaunchOptions = {
-  ignoreDefaultArgs?: boolean | string[],
+export type SlowMoOptions = {
+  slowMo?: number,
+};
+
+export type WebKitArgOptions = {
+  headless?: boolean,
   args?: string[],
+  userDataDir?: string,
+};
+
+export type LaunchOptions = WebKitArgOptions & SlowMoOptions & {
   executablePath?: string,
+  ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  headless?: boolean,
   timeout?: number,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
-  slowMo?: number,
 };
 
 export class WKBrowserServer {
@@ -108,6 +117,17 @@ export class WKPlaywright implements Playwright {
     else
       webkitArguments.push(...args);
 
+    let userDataDir: string;
+    let temporaryUserDataDir: string | null = null;
+    const userDataDirArg = webkitArguments.find(arg => arg.startsWith('--user-data-dir'));
+    if (userDataDirArg) {
+      userDataDir = userDataDirArg.substr('--user-data-dir'.length).trim();
+    } else {
+      userDataDir = await mkdtempAsync(WEBKIT_PROFILE_PATH);
+      temporaryUserDataDir = userDataDir;
+      webkitArguments.push(`--user-data-dir=${temporaryUserDataDir}`);
+    }
+
     let webkitExecutable = executablePath;
     if (!executablePath) {
       const {missingText, executablePath} = this._resolveExecutablePath();
@@ -124,12 +144,13 @@ export class WKPlaywright implements Playwright {
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: webkitExecutable!,
       args: webkitArguments,
-      env,
+      env: { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') },
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
       dumpio,
       pipe: true,
+      tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
         if (!connectOptions)
           return Promise.reject();
@@ -157,11 +178,14 @@ export class WKPlaywright implements Playwright {
     return { TimeoutError };
   }
 
-  defaultArgs(options: { args?: string[] } = {}): string[] {
+  defaultArgs(options: WebKitArgOptions = {}): string[] {
     const {
       args = [],
+      userDataDir = null
     } = options;
     const webkitArguments = [...DEFAULT_ARGS];
+    if (userDataDir)
+      webkitArguments.push(`--user-data-dir=${userDataDir}`);
     webkitArguments.push(...args);
     return webkitArguments;
   }
@@ -210,6 +234,9 @@ export class WKPlaywright implements Playwright {
   }
 }
 
+const mkdtempAsync = platform.promisify(fs.mkdtemp);
+
+const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 const DEFAULT_ARGS: string[] = [];
 
 let cachedMacVersion: string | undefined = undefined;
