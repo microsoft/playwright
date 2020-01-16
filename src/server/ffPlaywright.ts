@@ -64,7 +64,10 @@ export class FFBrowserServer {
   }
 
   async connect(): Promise<FFBrowser> {
-    return FFBrowser.connect(this._connectOptions);
+    const browser = await FFBrowser.connect(this._connectOptions);
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    browser.close = this._gracefullyClose;
+    return browser;
   }
 
   process(): ChildProcess {

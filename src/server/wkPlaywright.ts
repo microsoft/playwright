@@ -57,7 +57,10 @@ export class WKBrowserServer {
   }
 
   async connect(): Promise<WKBrowser> {
-    return WKBrowser.connect(this._connectOptions);
+    const browser = await WKBrowser.connect(this._connectOptions);
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    browser.close = this._gracefullyClose;
+    return browser;
   }
 
   process(): ChildProcess {
