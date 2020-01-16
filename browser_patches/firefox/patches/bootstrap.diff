@@ -1824,10 +1824,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..758871cc245ab5aa30ce54d58e87175f65401d50
+index 0000000000000000000000000000000000000000..03c4c9717148169110f7e7d19306a76984ed4860
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,714 @@
+@@ -0,0 +1,721 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2051,10 +2051,17 @@ index 0000000000000000000000000000000000000000..758871cc245ab5aa30ce54d58e87175f
 +  _filePickerShown(inputElement) {
 +    if (inputElement.ownerGlobal.docShell !== this._docShell)
 +      return;
-+    const frameData = Array.from(this._frameData.values()).find(data => inputElement.ownerDocument === data._frame.domWindow().document);
++    const frameData = this._findFrameForNode(inputElement);
 +    this._session.emitEvent('Page.fileChooserOpened', {
 +      executionContextId: frameData.mainContext.id(),
 +      element: frameData.mainContext.rawValueToRemoteObject(inputElement)
++    });
++  }
++
++  _findFrameForNode(node) {
++    return Array.from(this._frameData.values()).find(data => {
++      const doc = data._frame.domWindow().document;
++      return node === doc || node.ownerDocument === doc;
 +    });
 +  }
 +
@@ -2265,15 +2272,15 @@ index 0000000000000000000000000000000000000000..758871cc245ab5aa30ce54d58e87175f
 +    return {quads};
 +  }
 +
-+  contentFrame({objectId, frameId}) {
++  describeNode({objectId, frameId}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
 +    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
-+    if (!unsafeObject.contentWindow)
-+      return null;
-+    const contentFrame = this._frameTree.frameForDocShell(unsafeObject.contentWindow.docShell);
-+    return {frameId: contentFrame.id()};
++    return {
++      contentFrameId: unsafeObject.contentWindow ? this._frameTree.frameForDocShell(unsafeObject.contentWindow.docShell).id() : undefined,
++      ownerFrameId: this._findFrameForNode(unsafeObject)._frame.id(),
++    };
 +  }
 +
 +  async getBoundingBox({frameId, objectId}) {
@@ -2544,10 +2551,10 @@ index 0000000000000000000000000000000000000000..758871cc245ab5aa30ce54d58e87175f
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..642b8bc1be7eaa6ad46ed38eee10dc58169d44ea
+index 0000000000000000000000000000000000000000..262011d8fda346078a6cfcb7aae5dac357fb9b60
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
-@@ -0,0 +1,465 @@
+@@ -0,0 +1,478 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -2813,7 +2820,18 @@ index 0000000000000000000000000000000000000000..642b8bc1be7eaa6ad46ed38eee10dc58
 +    this._remoteObjects = new Map();
 +    this._id = helper.generateId();
 +    this._auxData = auxData;
-+    this._jsonStringifyObject = this._global.executeInGlobal('JSON.stringify.bind(JSON)').return;
++    this._jsonStringifyObject = this._global.executeInGlobal(`((stringify, dateProto, object) => {
++      const oldToJson = dateProto.toJSON;
++      dateProto.toJSON = undefined;
++      let hasSymbol = false;
++      const result = stringify(object, (key, value) => {
++        if (typeof value === 'symbol')
++          hasSymbol = true;
++        return value;
++      });
++      dateProto.toJSON = oldToJson;
++      return hasSymbol ? undefined : result;
++    }).bind(null, JSON.stringify.bind(JSON), Date.prototype)`).return;
 +  }
 +
 +  id() {
@@ -2949,6 +2967,8 @@ index 0000000000000000000000000000000000000000..642b8bc1be7eaa6ad46ed38eee10dc58
 +  _toDebugger(obj) {
 +    if (typeof obj !== 'object')
 +      return obj;
++    if (obj === null)
++      return obj;
 +    const properties = {};
 +    for (let [key, value] of Object.entries(obj)) {
 +      properties[key] = {
@@ -2967,7 +2987,7 @@ index 0000000000000000000000000000000000000000..642b8bc1be7eaa6ad46ed38eee10dc58
 +    const result = this._global.executeInGlobalWithBindings('stringify(e)', {e: obj, stringify: this._jsonStringifyObject});
 +    if (result.throw)
 +      throw new Error('Object is not serializable');
-+    return JSON.parse(result.return);
++    return result.return === undefined ? undefined : JSON.parse(result.return);
 +  }
 +
 +  disposeObject(objectId) {
@@ -3793,10 +3813,10 @@ index 0000000000000000000000000000000000000000..f5e7e919594b3778fd3046bf69d34878
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..db0648f6bee8035c7750cd810281ad0286540576
+index 0000000000000000000000000000000000000000..bf59b2afa8692d02fd0ce664eec2e9827a8209d2
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,285 @@
+@@ -0,0 +1,281 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -3974,12 +3994,8 @@ index 0000000000000000000000000000000000000000..db0648f6bee8035c7750cd810281ad02
 +    return await this._contentSession.send('Page.reload', options);
 +  }
 +
-+  /**
-+   * @param {{frameId: String, objectId: String}} options
-+   * @return {!Promise<*>}
-+   */
-+  async contentFrame(options) {
-+    return await this._contentSession.send('Page.contentFrame', options);
++  async describeNode(options) {
++    return await this._contentSession.send('Page.describeNode', options);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument(options) {
@@ -4233,10 +4249,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..0344e2c71a86aff1ab602d9a90c8f2a0817cb66b
+index 0000000000000000000000000000000000000000..75b5276d085bd4217389cd05099895ebec2438b6
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,711 @@
+@@ -0,0 +1,712 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4776,13 +4792,14 @@ index 0000000000000000000000000000000000000000..0344e2c71a86aff1ab602d9a90c8f2a0
 +        enabled: t.Boolean,
 +      },
 +    },
-+    'contentFrame': {
++    'describeNode': {
 +      params: {
 +        frameId: t.String,
 +        objectId: t.String,
 +      },
 +      returns: {
-+        frameId: t.Nullable(t.String),
++        contentFrameId: t.Optional(t.String),
++        ownerFrameId: t.Optional(t.String),
 +      },
 +    },
 +    'addScriptToEvaluateOnNewDocument': {
