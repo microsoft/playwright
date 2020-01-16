@@ -503,8 +503,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
   }
 
-  async $wait(selector: string, pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
-    return this.mainFrame().$wait(selector, pageFunction, options, ...args);
+  $wait: types.$Wait = async (selector, pageFunction, options, ...args) => {
+    return this.mainFrame().$wait(selector, pageFunction, options, ...args as any);
   }
 
   workers(): Worker[] {
