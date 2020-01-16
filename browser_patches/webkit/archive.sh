@@ -42,6 +42,8 @@ main() {
     createZipForMac
   elif [[ "$(uname)" == "Linux" ]]; then
     createZipForLinux
+  elif [[ "$(uname)" == MINGW* ]]; then
+    createZipForWindows
   else
     echo "ERROR: cannot upload on this platform!" 1>&2
     exit 1;
@@ -67,6 +69,27 @@ createZipForLinux() {
 
   # tar resulting directory and cleanup TMP.
   zip -jr $ZIP_PATH $tmpdir
+  rm -rf $tmpdir
+}
+
+createZipForWindows() {
+  # create a TMP directory to copy all necessary files
+  local tmpdir="/tmp/webkit-deploy-$(date +%s)"
+  mkdir -p $tmpdir
+
+  cp -t $tmpdir ./WebKitLibraries/win/bin64/*.dll
+  cd WebKitBuild/Release/bin64
+  cp -r -t $tmpdir WebKit.resources
+  cp -t $tmpdir JavaScriptCore.dll MiniBrowserLib.dll WTF.dll WebKit.dll WebKit2.dll libEGL.dll libGLESv2.dll
+  cp -t $tmpdir MiniBrowser.exe WebKitNetworkProcess.exe WebKitWebProcess.exe
+  cd -
+
+  # copy protocol
+  node ../concat_protocol.js > $tmpdir/protocol.json
+  # tar resulting directory and cleanup TMP.
+  cd $tmpdir
+  zip -r $ZIP_PATH ./
+  cd -
   rm -rf $tmpdir
 }
 

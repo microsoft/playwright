@@ -45,6 +45,8 @@ while true; do
   iteration=$(( iteration + 1 ))
   echo "== ITERATION ${iteration} =="
   git pull origin master
+  ../checkout_build_archive_upload.sh webkit || true
+  git pull origin master
   ../checkout_build_archive_upload.sh firefox || true
   git pull origin master
   ../checkout_build_archive_upload.sh firefox-win64 || true

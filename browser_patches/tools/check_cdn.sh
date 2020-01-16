@@ -39,11 +39,13 @@ WK_ARCHIVES=(
   "$HOST/webkit/%s/minibrowser-linux.zip"
   "$HOST/webkit/%s/minibrowser-mac-10.14.zip"
   "$HOST/webkit/%s/minibrowser-mac-10.15.zip"
+  "$HOST/webkit/%s/minibrowser-win64.zip"
 )
 WK_ALIASES=(
   "WK-LINUX"
   "WK-MAC-10.14"
   "WK-MAC-10.15"
+  "WK-WIN64"
 )
 
 COLUMN="%-15s"

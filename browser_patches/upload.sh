@@ -71,6 +71,9 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   elif [[ "$(uname)" == "Linux" ]]; then
     BLOB_NAME="minibrowser-linux.zip"
     ALIAS="webkit-linux r$BUILD_NUMBER"
+  elif [[ "$(uname)" == MINGW* ]]; then
+    BLOB_NAME="minibrowser-win64.zip"
+    ALIAS="webkit-win64 r$BUILD_NUMBER"
   else
     echo "ERROR: unsupported platform - $(uname)"
     exit 1
