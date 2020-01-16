@@ -98,7 +98,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await page.hover('#button-91');
       expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-91');
     });
-    it.skip(FFOX)('should trigger hover state with removed window.Node', async({page, server}) => {
+    it('should trigger hover state with removed window.Node', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/scrollable.html');
       await page.evaluate(() => delete window.Node);
       await page.hover('#button-6');

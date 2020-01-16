@@ -16,7 +16,7 @@
  */
 
 import * as frames from '../frames';
-import { assert, helper, RegisteredListener, debugError } from '../helper';
+import { helper, RegisteredListener, debugError } from '../helper';
 import * as dom from '../dom';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
@@ -30,9 +30,10 @@ import { BrowserContext } from '../browserContext';
 import { getAccessibilityTree } from './ffAccessibility';
 import * as network from '../network';
 import * as types from '../types';
-import * as accessibility from '../accessibility';
 import * as platform from '../platform';
 import { kScreenshotDuringNavigationError } from '../screenshotter';
+
+const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
 export class FFPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -70,7 +71,7 @@ export class FFPage implements PageDelegate {
 
   async _initialize() {
     const promises: Promise<any>[] = [
-      this._session.send('Runtime.enable'),
+      this._session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._session.send('Network.enable'),
       this._session.send('Page.enable'),
       this._session.send('Page.setInterceptFileChooserDialog', { enabled: true })
@@ -87,6 +88,13 @@ export class FFPage implements PageDelegate {
     await Promise.all(promises);
   }
 
+  async _ensureIsolatedWorld(name: string) {
+    await this._session.send('Page.addScriptToEvaluateOnNewDocument', {
+      script: '',
+      worldName: name,
+    });
+  }
+
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
     const {executionContextId, auxData} = payload;
     const frame = this._page._frameManager.frame(auxData ? auxData.frameId : null);
@@ -94,8 +102,10 @@ export class FFPage implements PageDelegate {
       return;
     const delegate = new FFExecutionContext(this._session, executionContextId);
     const context = new dom.FrameExecutionContext(delegate, frame);
-    frame._contextCreated('main', context);
-    frame._contextCreated('utility', context);
+    if (auxData.name === UTILITY_WORLD_NAME)
+      frame._contextCreated('utility', context);
+    else if (!auxData.name)
+      frame._contextCreated('main', context);
     this._contextIdToContext.set(executionContextId, context);
   }
 
@@ -351,8 +361,12 @@ export class FFPage implements PageDelegate {
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
-    assert(false, 'Multiple isolated worlds are not implemented');
-    return handle;
+    const result = await this._session.send('Page.adoptNode', {
+      frameId: handle._context.frame._id,
+      objectId: toRemoteObject(handle).objectId!,
+      executionContextId: (to._delegate as FFExecutionContext)._executionContextId
+    });
+    return to._createHandle(result.remoteObject) as dom.ElementHandle<T>;
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle) {

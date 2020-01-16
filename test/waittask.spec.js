@@ -246,7 +246,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await frame.waitForSelector('div');
     });
 
-    it.skip(FFOX)('should work with removed MutationObserver', async({page, server}) => {
+    it('should work with removed MutationObserver', async({page, server}) => {
       await page.evaluate(() => delete window.MutationObserver);
       const [handle] = await Promise.all([
         page.waitForSelector('.zombo'),
@@ -318,7 +318,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await waitForSelector;
       expect(boxFound).toBe(true);
     });
-    it.skip(FFOX)('should wait for visible', async({page, server}) => {
+    it('should wait for visible', async({page, server}) => {
       let divFound = false;
       const waitForSelector = page.waitForSelector('div').then(() => divFound = true);
       await page.setContent(`<div style='display: none; visibility: hidden;'>1</div>`);
