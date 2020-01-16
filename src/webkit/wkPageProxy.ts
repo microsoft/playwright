@@ -67,7 +67,10 @@ export class WKPageProxy {
   handleProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
     if (!this._wkPage)
       return;
-    this._wkPage._page._frameManager.provisionalLoadFailed(event.loaderId, event.error);
+    let errorText = event.error;
+    if (errorText.includes('cancelled'))
+      errorText += '; maybe frame was detached?';
+    this._wkPage._page._frameManager.provisionalLoadFailed(event.loaderId, errorText);
   }
 
   async page(): Promise<Page> {
