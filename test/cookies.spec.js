@@ -51,7 +51,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(cookies.length).toBe(1);
       expect(cookies[0].httpOnly).toBe(true);
     });
-    it.skip(WEBKIT && process.platform === 'linux')('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
+    it.skip(WEBKIT && process.platform !== 'darwin')('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
         res.end();
@@ -61,7 +61,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(cookies.length).toBe(1);
       expect(cookies[0].sameSite).toBe('Strict');
     });
-    it.skip(WEBKIT && process.platform === 'linux')('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
+    it.skip(WEBKIT && process.platform !== 'darwin')('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
         res.end();

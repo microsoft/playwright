@@ -76,8 +76,6 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
       await page.setViewport(iPhoneLandscape.viewport);
       expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true)
-      await page.setViewport({width: 100, height: 100});
-      expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
     });
     it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
