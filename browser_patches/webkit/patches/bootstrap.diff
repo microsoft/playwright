@@ -1522,7 +1522,7 @@ index 4f18b58c6cd01e0b69a8953ad09a739c3520496a..724fdb3d8e37dfc29069e2e2a65adefb
  {
      return workerGlobalScope.inspectorController().m_instrumentingAgents;
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..4a01c8001ec080c4a9f41cb6a2ad43df10cfec65 100644
+index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..4e3344f7f9a554053882a13d6b2f1851dde6501f 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -45,11 +45,13 @@
@@ -1547,10 +1547,12 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..4a01c8001ec080c4a9f41cb6a2ad43df
  class HTTPHeaderMap;
  class InspectorTimelineAgent;
  class InstrumentingAgents;
-@@ -197,6 +200,7 @@ public:
+@@ -196,7 +199,8 @@ public:
+     static void didReceiveThreadableLoaderResponse(DocumentThreadableLoader&, unsigned long identifier);
      static void didReceiveData(Frame*, unsigned long identifier, const char* data, int dataLength, int encodedDataLength);
      static void didFinishLoading(Frame*, DocumentLoader*, unsigned long identifier, const NetworkLoadMetrics&, ResourceLoader*);
-     static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
+-    static void didFailLoading(Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
++    static void didFailLoading(const Frame*, DocumentLoader*, unsigned long identifier, const ResourceError&);
 +    static void didReceiveMainResourceError(Frame&, const ResourceError&);
  
      static void willSendRequest(WorkerGlobalScope&, unsigned long identifier, ResourceRequest&);
@@ -1613,7 +1615,14 @@ index dbf82205db5bccbe169ed0e947d1ad83dd850fd6..4a01c8001ec080c4a9f41cb6a2ad43df
      static InstrumentingAgents& instrumentingAgentsForPage(Page&);
      static InstrumentingAgents& instrumentingAgentsForWorkerGlobalScope(WorkerGlobalScope&);
  
-@@ -1091,6 +1106,13 @@ inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoade
+@@ -1085,12 +1100,19 @@ inline void InspectorInstrumentation::didFinishLoading(WorkerGlobalScope& worker
+     didFinishLoadingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), identifier, nullptr, networkLoadMetrics, nullptr);
+ }
+ 
+-inline void InspectorInstrumentation::didFailLoading(Frame* frame, DocumentLoader* loader, unsigned long identifier, const ResourceError& error)
++inline void InspectorInstrumentation::didFailLoading(const Frame* frame, DocumentLoader* loader, unsigned long identifier, const ResourceError& error)
+ {
+     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(frame))
          didFailLoadingImpl(*instrumentingAgents, identifier, loader, error);
  }
  
@@ -3611,6 +3620,45 @@ index e24fded2225f1c1918f454017566717e20484eab..30e4b7a986418c4b4f6c799b858b6082
  }
  
  void ProgressTracker::incrementProgress(unsigned long identifier, const ResourceResponse& response)
+diff --git a/Source/WebCore/loader/ResourceLoadNotifier.cpp b/Source/WebCore/loader/ResourceLoadNotifier.cpp
+index 812e2744a79fe1ddcd83f1caa248f4764d6fb1b5..b8a93ef321f753565d04ffff9c1c0d438d9136f8 100644
+--- a/Source/WebCore/loader/ResourceLoadNotifier.cpp
++++ b/Source/WebCore/loader/ResourceLoadNotifier.cpp
+@@ -103,8 +103,6 @@ void ResourceLoadNotifier::didFailToLoad(ResourceLoader* loader, const ResourceE
+     Ref<Frame> protect(m_frame);
+     if (!error.isNull())
+         m_frame.loader().client().dispatchDidFailLoading(loader->documentLoader(), loader->identifier(), error);
+-
+-    InspectorInstrumentation::didFailLoading(&m_frame, loader->documentLoader(), loader->identifier(), error);
+ }
+ 
+ void ResourceLoadNotifier::assignIdentifierToInitialRequest(unsigned long identifier, DocumentLoader* loader, const ResourceRequest& request)
+diff --git a/Source/WebCore/loader/cache/CachedResource.cpp b/Source/WebCore/loader/cache/CachedResource.cpp
+index c75b3dc0b2c4fa475903d331a922b180480ddef4..8f722cb851f86ee77b8d1009e2d55180835b14a6 100644
+--- a/Source/WebCore/loader/cache/CachedResource.cpp
++++ b/Source/WebCore/loader/cache/CachedResource.cpp
+@@ -378,6 +378,10 @@ void CachedResource::error(CachedResource::Status status)
+     m_data = nullptr;
+ 
+     setLoading(false);
++
++    if (m_loader)
++        InspectorInstrumentation::didFailLoading(m_loader->frame(), m_loader->documentLoader(), m_loader->identifier(), m_error);
++
+     checkNotify();
+ }
+     
+@@ -393,6 +397,10 @@ void CachedResource::cancelLoad()
+         setStatus(LoadError);
+ 
+     setLoading(false);
++
++    if (m_loader)
++        InspectorInstrumentation::didFailLoading(m_loader->frame(), m_loader->documentLoader(), m_loader->identifier(), m_error);
++
+     checkNotify();
+ }
+ 
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
 index 6f434d95832e2527aa2059e5907154bdf64bef63..563d961443ad3f28e32766302eeee144635154d0 100644
 --- a/Source/WebCore/page/Frame.cpp
