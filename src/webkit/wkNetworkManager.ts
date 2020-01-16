@@ -84,6 +84,8 @@ export class WKNetworkManager {
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
+    if (event.request.url.startsWith('data:'))
+      return;
     let redirectChain: network.Request[] = [];
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
@@ -103,7 +105,9 @@ export class WKNetworkManager {
   }
 
   _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
-    this._requestIdToRequest.get(event.requestId)!._interceptedCallback();
+    const request = this._requestIdToRequest.get(event.requestId);
+    if (request)
+      request._interceptedCallback();
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {

@@ -231,9 +231,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
     });
-    it.skip(FFOX)('should work when navigating to data url', async({page, server}) => {
+    it('should work when navigating to data url', async({page, server}) => {
       const response = await page.goto('data:text/html,hello');
-      expect(response.ok()).toBe(true);
+      expect(response).toBe(null);
     });
     it('should work when navigating to 404', async({page, server}) => {
       const response = await page.goto(server.PREFIX + '/not-found');
@@ -278,14 +278,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       process.removeListener('warning', warningHandler);
       expect(warning).toBe(null);
     });
-    it.skip(FFOX)('should navigate to dataURL and fire dataURL requests', async({page, server}) => {
+    it('should navigate to dataURL and not fire dataURL requests', async({page, server}) => {
       const requests = [];
       page.on('request', request => !utils.isFavicon(request) && requests.push(request));
       const dataURL = 'data:text/html,<div>yo</div>';
       const response = await page.goto(dataURL);
-      expect(response.status()).toBe(200);
-      expect(requests.length).toBe(1);
-      expect(requests[0].url()).toBe(dataURL);
+      expect(response).toBe(null);
+      expect(requests.length).toBe(0);
     });
     it('should navigate to URL with hash and fire requests without hash', async({page, server}) => {
       const requests = [];

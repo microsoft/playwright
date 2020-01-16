@@ -154,7 +154,7 @@ export class CRNetworkManager {
         requestId: event.requestId
       }).catch(debugError);
     }
-    if (!event.networkId)
+    if (!event.networkId || event.request.url.startsWith('data:'))
       return;
 
     const requestId = event.networkId;
@@ -169,6 +169,8 @@ export class CRNetworkManager {
   }
 
   _onRequest(event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
+    if (event.request.url.startsWith('data:'))
+      return;
     let redirectChain: network.Request[] = [];
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
