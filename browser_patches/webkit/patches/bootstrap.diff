@@ -7859,7 +7859,7 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9f711610d 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..17a7f735dd0024bf6f701571b74d5ffbbe8256ba 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,16 @@
@@ -7973,17 +7973,25 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  }
  
  bool WebPageInspectorController::hasLocalFrontend() const
-@@ -80,6 +147,9 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -80,6 +147,17 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  {
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
++    // HACK: forcefully disconnect remote connections to show local inspector starting with initial
++    // agents' state.
++    if (frontendChannel.connectionType() == Inspector::FrontendChannel::ConnectionType::Local &&
++        !connectingFirstFrontend && !m_frontendRouter->hasLocalFrontend()) {
++        disconnectAllFrontends();
++        connectingFirstFrontend = true;
++    }
++
 +    if (connectingFirstFrontend)
 +        adjustPageSettings();
 +
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -98,8 +168,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
+@@ -98,8 +176,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
      m_frontendRouter->disconnectFrontend(frontendChannel);
  
      bool disconnectingLastFrontend = !m_frontendRouter->hasFrontends();
@@ -7995,7 +8003,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
-@@ -122,6 +194,8 @@ void WebPageInspectorController::disconnectAllFrontends()
+@@ -122,6 +202,8 @@ void WebPageInspectorController::disconnectAllFrontends()
      // Disconnect any remaining remote frontends.
      m_frontendRouter->disconnectAllFrontends();
  
@@ -8004,7 +8012,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -134,6 +208,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +216,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -8016,7 +8024,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -148,6 +227,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -148,6 +235,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
@@ -8072,7 +8080,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -186,7 +314,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +322,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -8081,7 +8089,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +346,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +354,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
