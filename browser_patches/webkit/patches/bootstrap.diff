@@ -5629,7 +5629,7 @@ index 33a9b7d5ad060f275dcf7156a8cff3f37644e736..128a5c75807848de10aed628618fc7d1
      /**
       * WebKitWebContext::download-started:
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
-index 646e45adc2818287f47d00340567822c210a16ed..7f43830f615b1320258e55a8849a3bee8b6a6d99 100644
+index 646e45adc2818287f47d00340567822c210a16ed..c44a5a0e4b4e5c75ce3efb3fe886ae8c174eff51 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebView.cpp
 @@ -129,6 +129,7 @@ enum {
@@ -5656,12 +5656,13 @@ index 646e45adc2818287f47d00340567822c210a16ed..7f43830f615b1320258e55a8849a3bee
      /**
       * WebKitWebView::decide-policy:
       * @web_view: the #WebKitWebView on which the signal is emitted
-@@ -2385,6 +2395,18 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
+@@ -2385,6 +2395,20 @@ void webkitWebViewRunJavaScriptBeforeUnloadConfirm(WebKitWebView* webView, const
      webkit_script_dialog_unref(webView->priv->currentScriptDialog);
  }
  
 +void webkitWebViewHandleJavaScriptDialog(WebKitWebView* webView, bool accept, const String& value) {
 +    auto* dialog = webView->priv->currentScriptDialog;
++    webkit_script_dialog_ref(dialog);
 +    if (!value.isNull())
 +        webkitWebViewSetCurrentScriptDialogUserInput(webView, value);
 +    if (accept)
@@ -5670,6 +5671,7 @@ index 646e45adc2818287f47d00340567822c210a16ed..7f43830f615b1320258e55a8849a3bee
 +        webkitWebViewDismissCurrentScriptDialog(webView);
 +    gboolean returnValue;
 +    g_signal_emit(webView, signals[SCRIPT_DIALOG_HANDLED], 0, dialog, &returnValue);
++    webkit_script_dialog_unref(dialog);
 +}
 +
  bool webkitWebViewIsShowingScriptDialog(WebKitWebView* webView)
@@ -7857,7 +7859,7 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..0b9d8337877111bf4ba9c7bd0a78edc969ffe2fc 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..527957a5424a0c5ebdd174f97f4672f9f711610d 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,16 @@
@@ -7981,32 +7983,28 @@ index 1ee28bf716374371433215148aa20a51927a8a33..0b9d8337877111bf4ba9c7bd0a78edc9
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -98,8 +168,12 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
+@@ -98,8 +168,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
      m_frontendRouter->disconnectFrontend(frontendChannel);
  
      bool disconnectingLastFrontend = !m_frontendRouter->hasFrontends();
 -    if (disconnectingLastFrontend)
 +    if (disconnectingLastFrontend) {
          m_agents.willDestroyFrontendAndBackend(DisconnectReason::InspectorDestroyed);
-+        for (auto& it : m_pendingNavigations)
-+            it.value("Page closed", 0);
 +        m_pendingNavigations.clear();
 +    }
  
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
-@@ -122,6 +196,10 @@ void WebPageInspectorController::disconnectAllFrontends()
+@@ -122,6 +194,8 @@ void WebPageInspectorController::disconnectAllFrontends()
      // Disconnect any remaining remote frontends.
      m_frontendRouter->disconnectAllFrontends();
  
-+    for (auto& it : m_pendingNavigations)
-+        it.value("Page closed", 0);
 +    m_pendingNavigations.clear();
 +
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -134,6 +212,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
+@@ -134,6 +208,11 @@ void WebPageInspectorController::dispatchMessageFromFrontend(const String& messa
      m_backendDispatcher->dispatch(message);
  }
  
@@ -8018,7 +8016,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..0b9d8337877111bf4ba9c7bd0a78edc9
  #if ENABLE(REMOTE_INSPECTOR)
  void WebPageInspectorController::setIndicating(bool indicating)
  {
-@@ -148,6 +231,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -148,6 +227,55 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
@@ -8074,7 +8072,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..0b9d8337877111bf4ba9c7bd0a78edc9
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -186,7 +318,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -186,7 +314,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -8083,7 +8081,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..0b9d8337877111bf4ba9c7bd0a78edc9
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +350,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +346,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -8101,7 +8099,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..0b9d8337877111bf4ba9c7bd0a78edc9
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0ce83675569502d150fcc44e5f9868c..9b156c01b50457980785af31ae783751968024a6 100644
+index 78caedf0c0ce83675569502d150fcc44e5f9868c..c5c375b9aef58d1df2dad223462bce2da4b1aef2 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
 @@ -26,6 +26,7 @@
@@ -8169,7 +8167,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..9b156c01b50457980785af31ae783751
      void setIndicating(bool);
  #endif
  
-+    using NavigationHandler = CompletionHandler<void(const String&, uint64_t)>;
++    using NavigationHandler = Function<void(const String&, uint64_t)>;
 +    void navigate(WebCore::ResourceRequest&&, WebFrameProxy*, NavigationHandler&&);
 +    void didReceivePolicyDecision(WebCore::PolicyAction action, uint64_t navigationID);
 +    void didDestroyNavigation(uint64_t navigationID);
