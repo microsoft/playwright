@@ -30,25 +30,15 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-    if (returnByValue) {
-      try {
-        const handle = await this.evaluate(context, false /* returnByValue */, pageFunction, ...args as any);
-        const result = await handle.jsonValue();
-        await handle.dispose();
-        return result;
-      } catch (e) {
-        if (e.message.includes('cyclic object value') || e.message.includes('Object is not serializable'))
-          return undefined;
-        throw e;
-      }
-    }
-
     if (helper.isString(pageFunction)) {
       const payload = await this._session.send('Runtime.evaluate', {
         expression: pageFunction.trim(),
+        returnByValue,
         executionContextId: this._executionContextId,
       }).catch(rewriteError);
       checkException(payload.exceptionDetails);
+      if (returnByValue)
+        return deserializeValue(payload.result!);
       return context._createHandle(payload.result);
     }
     if (typeof pageFunction !== 'function')
@@ -94,6 +84,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       callFunctionPromise = this._session.send('Runtime.callFunction', {
         functionDeclaration: functionText,
         args: protocolArgs,
+        returnByValue,
         executionContextId: this._executionContextId
       });
     } catch (err) {
@@ -103,9 +94,13 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     }
     const payload = await callFunctionPromise.catch(rewriteError);
     checkException(payload.exceptionDetails);
+    if (returnByValue)
+      return deserializeValue(payload.result!);
     return context._createHandle(payload.result);
 
-    function rewriteError(error: Error) : never {
+    function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
+      if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
+        return {result: {type: 'undefined', value: undefined}};
       if (error.message.includes('Failed to find execution context with id') || error.message.includes('Execution context was destroyed!'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
       throw error;
