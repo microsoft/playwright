@@ -25,31 +25,24 @@ try {
 }
 
 (async function() {
-  let protocolGenerator;
-  try {
-    protocolGenerator = require('./utils/protocol-types-generator');
-  } catch (e) {
-    // Release mode
-  }
+  const protocolGenerator = require('./utils/protocol-types-generator');
   try {
     const chromeRevision = await downloadBrowser('chromium', require('./index').chromium);
-    if (protocolGenerator)
-      await protocolGenerator.generateChromiunProtocol(chromeRevision);
+    await protocolGenerator.generateChromiunProtocol(chromeRevision);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
     const firefoxRevision = await downloadBrowser('firefox', require('./index').firefox);
-    if (protocolGenerator)
-      await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
+    await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
   } catch (e) {
     console.warn(e.message);
   }
+
   try {
     const webkitRevision = await downloadBrowser('webkit', require('./index').webkit);
-    if (protocolGenerator)
-      await protocolGenerator.generateWebKitProtocol(webkitRevision);
+    await protocolGenerator.generateWebKitProtocol(webkitRevision);
   } catch (e) {
     console.warn(e.message);
   }
