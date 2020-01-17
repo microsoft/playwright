@@ -46,7 +46,6 @@ export class WKPage implements PageDelegate {
   private readonly _networkManager: WKNetworkManager;
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
-  private _isolatedWorlds: Set<string>;
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
@@ -55,7 +54,6 @@ export class WKPage implements PageDelegate {
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
-    this._isolatedWorlds = new Set();
     this._page = new Page(this, browserContext);
     this._networkManager = new WKNetworkManager(this._page, pageProxySession);
     this._workers = new WKWorkers(this._page);
@@ -83,7 +81,6 @@ export class WKPage implements PageDelegate {
     this._addSessionListeners();
     this._networkManager.setSession(session);
     this._workers.setSession(session);
-    this._isolatedWorlds = new Set();
     // New bootstrap scripts may have been added during provisional load, push them
     // again to be on the safe side.
     if (this._bootstrapScripts.length)
@@ -98,7 +95,8 @@ export class WKPage implements PageDelegate {
       session.send('Page.enable'),
       session.send('Page.getResourceTree').then(({frameTree}) => this._handleFrameTree(frameTree)),
       // Resource tree should be received before first execution context.
-      session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
+      session.send('Runtime.enable'),
+      session.send('Page.createIsolatedWorld', { name: UTILITY_WORLD_NAME, source: `//# sourceURL=${EVALUATION_SCRIPT_URL}` }),
       session.send('Console.enable'),
       session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
       this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode),
@@ -108,13 +106,13 @@ export class WKPage implements PageDelegate {
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
-      promises.push(this._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
+      promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
     if (isProvisional)
       promises.push(this._setBootstrapScripts(session));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
-      promises.push(this._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
+      promises.push(WKPage._setExtraHTTPHeaders(session, this._page._state.extraHTTPHeaders));
     if (this._page._state.hasTouch)
       promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
     await Promise.all(promises).catch(e => {
@@ -285,21 +283,11 @@ export class WKPage implements PageDelegate {
     this._page._onFileChooserOpened(handle);
   }
 
-  async _ensureIsolatedWorld(name: string) {
-    if (this._isolatedWorlds.has(name))
-      return;
-    this._isolatedWorlds.add(name);
-    await this._session.send('Page.createIsolatedWorld', {
-      name,
-      source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`
-    });
-  }
-
-  private async _setExtraHTTPHeaders(session: WKSession, headers: network.Headers): Promise<void> {
+  private static async _setExtraHTTPHeaders(session: WKSession, headers: network.Headers): Promise<void> {
     await session.send('Network.setExtraHTTPHeaders', { headers });
   }
 
-  private async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
+  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
     if (colorScheme !== null) {
@@ -314,11 +302,11 @@ export class WKPage implements PageDelegate {
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
-    await this._setExtraHTTPHeaders(this._session, headers);
+    await WKPage._setExtraHTTPHeaders(this._session, headers);
   }
 
   async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
-    await this._setEmulateMedia(this._session, mediaType, colorScheme);
+    await WKPage._setEmulateMedia(this._session, mediaType, colorScheme);
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
