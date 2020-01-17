@@ -68,6 +68,10 @@ export class WKPageProxy {
     for (const session of this._sessions.values())
       session.dispose();
     this._sessions.clear();
+    if (this._provisionalPage) {
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    }
     if (this._wkPage)
       this._wkPage.didDisconnect();
   }
