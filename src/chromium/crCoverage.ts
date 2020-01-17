@@ -21,6 +21,7 @@ import { Protocol } from './protocol';
 
 import { EVALUATION_SCRIPT_URL } from './crExecutionContext';
 import { Coverage } from '../page';
+import * as types from '../types';
 
 type CoverageEntry = {
   url: string,
@@ -28,20 +29,16 @@ type CoverageEntry = {
   ranges : {start: number, end: number}[]
 };
 
-export class CRCoverage extends Coverage {
+export class CRCoverage implements Coverage {
   private _jsCoverage: JSCoverage;
   private _cssCoverage: CSSCoverage;
 
   constructor(client: CRSession) {
-    super();
     this._jsCoverage = new JSCoverage(client);
     this._cssCoverage = new CSSCoverage(client);
   }
 
-  async startJSCoverage(options: {
-      resetOnNavigation?: boolean;
-      reportAnonymousScripts?: boolean;
-    }) {
+  async startJSCoverage(options?: types.JSCoverageOptions) {
     return await this._jsCoverage.start(options);
   }
 
@@ -49,7 +46,7 @@ export class CRCoverage extends Coverage {
     return await this._jsCoverage.stop();
   }
 
-  async startCSSCoverage(options: { resetOnNavigation?: boolean; } = {}) {
+  async startCSSCoverage(options?: types.CSSCoverageOptions) {
     return await this._cssCoverage.start(options);
   }
 
@@ -76,10 +73,7 @@ class JSCoverage {
     this._resetOnNavigation = false;
   }
 
-  async start(options: {
-      resetOnNavigation?: boolean;
-      reportAnonymousScripts?: boolean;
-    } = {}) {
+  async start(options: types.JSCoverageOptions = {}) {
     assert(!this._enabled, 'JSCoverage is already enabled');
     const {
       resetOnNavigation = true,
@@ -173,7 +167,7 @@ class CSSCoverage {
     this._resetOnNavigation = false;
   }
 
-  async start(options: { resetOnNavigation?: boolean; } = {}) {
+  async start(options: types.CSSCoverageOptions = {}) {
     assert(!this._enabled, 'CSSCoverage is already enabled');
     const {resetOnNavigation = true} = options;
     this._resetOnNavigation = resetOnNavigation;

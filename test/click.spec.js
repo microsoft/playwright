@@ -241,8 +241,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
           window.double = true;
         });
       });
-      const button = await page.$('button');
-      await button.dblclick();
+      await page.dblclick('button');
       expect(await page.evaluate('double')).toBe(true);
       expect(await page.evaluate('result')).toBe('Clicked');
     });

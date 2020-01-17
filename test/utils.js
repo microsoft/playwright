@@ -76,8 +76,9 @@ const utils = module.exports = {
     const coverage = new Map();
     for (const [className, classType] of Object.entries(api))
       traceAPICoverage(coverage, events, className, classType);
-    testRunner.describe(COVERAGE_TESTSUITE_NAME, () => {
-      testRunner.it('should call all API methods', () => {
+    const focus = testRunner.hasFocusedTestsOrSuites();
+    (focus ? testRunner.fdescribe : testRunner.describe)(COVERAGE_TESTSUITE_NAME, () => {
+      (focus ? testRunner.fit : testRunner.it)('should call all API methods', () => {
         const missingMethods = [];
         for (const method of coverage.keys()) {
           if (!coverage.get(method))

@@ -560,23 +560,9 @@ export class Worker {
   }
 }
 
-export class Coverage {
-  startJSCoverage(options: {
-    resetOnNavigation?: boolean;
-    reportAnonymousScripts?: boolean;
-  }): Promise<void> {
-    throw new Error('not implemented');
-  }
-
-  stopJSCoverage(): Promise<types.CoverageEntry[]> {
-    throw new Error('not implemented');
-  }
-
-  startCSSCoverage(options: { resetOnNavigation?: boolean; } = {}): Promise<void> {
-    throw new Error('not implemented');
-  }
-
-  stopCSSCoverage(): Promise<types.CoverageEntry[]> {
-    throw new Error('not implemented');
-  }
+export interface Coverage {
+  startJSCoverage(options?: types.JSCoverageOptions): Promise<void>;
+  stopJSCoverage(): Promise<types.CoverageEntry[]>;
+  startCSSCoverage(options?: types.CSSCoverageOptions): Promise<void>;
+  stopCSSCoverage(): Promise<types.CoverageEntry[]>;
 }
