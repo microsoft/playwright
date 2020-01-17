@@ -60,7 +60,7 @@ export class WKPage implements PageDelegate {
     this._session = undefined as any as WKSession;
   }
 
-  async _initializePageProxySession() {
+  private async _initializePageProxySession() {
     const promises : Promise<any>[] = [
       this._pageProxySession.send('Dialog.enable'),
       this._networkManager.initializePageProxySession(this._page._state.credentials)
@@ -87,20 +87,28 @@ export class WKPage implements PageDelegate {
       this._setBootstrapScripts(session).catch(e => debugError(e));
   }
 
+  async initialize() {
+    await Promise.all([
+      this._initializePageProxySession(),
+      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree)),
+    ]);
+  }
+
   // This method is called for provisional targets as well. The session passed as the parameter
   // may be different from the current session and may be destroyed without becoming current.
-  async _initializeSession(session: WKSession, isProvisional: boolean) {
+  async _initializeSession(session: WKSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void) {
+    const isProvisional = this._session !== session;
     const promises : Promise<any>[] = [
       // Page agent must be enabled before Runtime.
       session.send('Page.enable'),
-      session.send('Page.getResourceTree').then(({frameTree}) => this._handleFrameTree(frameTree)),
+      session.send('Page.getResourceTree').then(resourceTreeHandler),
       // Resource tree should be received before first execution context.
       session.send('Runtime.enable'),
       session.send('Page.createIsolatedWorld', { name: UTILITY_WORLD_NAME, source: `//# sourceURL=${EVALUATION_SCRIPT_URL}` }),
       session.send('Console.enable'),
       session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
       this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode),
-      this._workers.initializeSession(session),
+      this._workers.initializeSession(session)
     ];
     const contextOptions = this._page.browserContext()._options;
     if (contextOptions.userAgent)
