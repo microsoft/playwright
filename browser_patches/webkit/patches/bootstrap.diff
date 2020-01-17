@@ -12248,6 +12248,70 @@ index fcecdd6a6ed518b02ded768d5d6601f418b74c9a..fa6e079bbe26d471c3205bc356871da3
      };
      WKPageSetPageUIClient(m_mainWebView->page(), &pageUIClient.base);
  
+diff --git a/Tools/WebKitTestRunner/win/EventSenderProxyWin.cpp b/Tools/WebKitTestRunner/win/EventSenderProxyWin.cpp
+index 06f19261b387ce02a44c319bd7016e824847ad24..c4e2f8f8816b06a105c18872e735ae4dbca6fe68 100644
+--- a/Tools/WebKitTestRunner/win/EventSenderProxyWin.cpp
++++ b/Tools/WebKitTestRunner/win/EventSenderProxyWin.cpp
+@@ -312,4 +312,59 @@ void EventSenderProxy::keyDown(WKStringRef keyRef, WKEventModifiers wkModifiers,
+         SetKeyboardState(keyState);
+ }
+ 
++void EventSenderProxy::addTouchPoint(int, int)
++{
++    notImplemented();
++}
++
++void EventSenderProxy::updateTouchPoint(int, int, int)
++{
++    notImplemented();
++}
++
++void EventSenderProxy::setTouchModifier(WKEventModifiers, bool)
++{
++    notImplemented();
++}
++
++void EventSenderProxy::setTouchPointRadius(int, int)
++{
++    notImplemented();
++}
++
++void EventSenderProxy::touchStart()
++{
++    notImplemented();
++}
++
++void EventSenderProxy::touchMove()
++{
++    notImplemented();
++}
++
++void EventSenderProxy::touchEnd()
++{
++    notImplemented();
++}
++
++void EventSenderProxy::touchCancel()
++{
++    notImplemented();
++}
++
++void EventSenderProxy::clearTouchPoints()
++{
++    notImplemented();
++}
++
++void EventSenderProxy::releaseTouchPoint(int)
++{
++    notImplemented();
++}
++
++void EventSenderProxy::cancelTouchPoint(int)
++{
++    notImplemented();
++}
++
+ } // namespace WTR
 diff --git a/Tools/wpe/backends/CMakeLists.txt b/Tools/wpe/backends/CMakeLists.txt
 index 9788ab56abeb2f769d615029f615844a24d89cc2..fb32c4ff95e67b2e764e902dc0000d255b46ed17 100644
 --- a/Tools/wpe/backends/CMakeLists.txt
