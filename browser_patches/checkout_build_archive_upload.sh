@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|firefox-win64|webkit] [-f|--force]"
+  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
   echo
   echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploades if build is missing."
   echo "Script will bail out early if the build for the browser version is already present."
@@ -15,22 +15,66 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
 fi
 
 if [[ $# == 0 ]]; then
-  echo "missing browser: 'firefox' or 'webkit'"
+  echo "missing build flavor!"
   echo "try './$(basename $0) --help' for more information"
   exit 1
 fi
 
+CURRENT_HOST_OS="$(uname)"
+CURRENT_HOST_OS_VERSION=""
+if [[ "$CURRENT_HOST_OS" == "Darwin" ]]; then
+  CURRENT_HOST_OS_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
+fi
+
 BROWSER_NAME=""
 EXTRA_BUILD_ARGS=""
-if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
+BUILD_FLAVOR="$1"
+EXPECTED_HOST_OS=""
+EXPECTED_HOST_OS_VERSION=""
+if [[ "$BUILD_FLAVOR" == "firefox-linux" ]]; then
   BROWSER_NAME="firefox"
-elif [[ ("$1" == "firefox-win64") || ("$1" == "firefox-win64/") ]]; then
+  EXPECTED_HOST_OS="Linux"
+elif [[ "$BUILD_FLAVOR" == "firefox-mac" ]]; then
+  BROWSER_NAME="firefox"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="10.14"
+elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
+  BROWSER_NAME="firefox"
+  EXPECTED_HOST_OS="MINGW"
+elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--win64"
-elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
+  EXPECTED_HOST_OS="MINGW"
+elif [[ "$BUILD_FLAVOR" == "webkit-gtk" ]]; then
   BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Linux"
+elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
+  BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="MINGW"
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.14" ]]; then
+  BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="10.14"
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.15" ]]; then
+  BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="10.15"
 else
-  echo ERROR: unknown browser - "$1"
+  echo ERROR: unknown build flavor - "$BUILD_FLAVOR"
+  exit 1
+fi
+
+if [[ "$CURRENT_HOST_OS" != $EXPECTED_HOST_OS* ]]; then
+  echo "ERROR: cannot build $BUILD_FLAVOR"
+  echo "  -- expected OS: $EXPECTED_HOST_OS"
+  echo "  --  current OS: $CURRENT_HOST_OS"
+  exit 1
+fi
+
+if [[ "$CURRENT_HOST_OS_VERSION" != "$EXPECTED_HOST_OS_VERSION" ]]; then
+  echo "ERROR: cannot build $BUILD_FLAVOR"
+  echo "  -- expected OS Version: $EXPECTED_HOST_OS_VERSION"
+  echo "  --  current OS Version: $CURRENT_HOST_OS_VERSION"
   exit 1
 fi
 
@@ -50,7 +94,7 @@ BUILD_NUMBER=$(cat ./$BROWSER_NAME/BUILD_NUMBER)
 
 # pull from upstream and check if a new build has to be uploaded.
 if ! [[ ($2 == '-f') || ($2 == '--force') ]]; then
-  if ./upload.sh $1 --check; then
+  if ./upload.sh $BUILD_FLAVOR --check; then
     echo "Build is already uploaded - no changes."
     exit 0
   else
@@ -69,7 +113,7 @@ cd -
 
 source ./buildbots/send_telegram_message.sh
 LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
-BUILD_ALIAS="<b>[[$(./upload.sh $1 --show-alias)]]</b> $LAST_COMMIT_MESSAGE"
+BUILD_ALIAS="<b>[[$BUILD_FLAVOR r$BUILD_NUMBER]]</b> $LAST_COMMIT_MESSAGE"
 send_telegram_message "$BUILD_ALIAS -- started ⏳"
 
 echo "-- preparing checkout"
@@ -97,7 +141,7 @@ if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH; then
 fi
 
 echo "-- uploading"
-if ! ./upload.sh $1 $ZIP_PATH; then
+if ! ./upload.sh $BUILD_FLAVOR $ZIP_PATH; then
   send_telegram_message "$BUILD_ALIAS -- ./upload.sh failed! ❌"
   exit 1
 fi

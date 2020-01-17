@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|firefox-win64|webkit] [--check] [zip-path]"
+  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [--check] [zip-path]"
   echo
   echo "Upload .zip as a browser build."
   echo
@@ -30,65 +30,42 @@ if [[ $# < 1 ]]; then
   echo "try '$(basename $0) --help' for more information"
   exit 1
 fi
-BROWSER_NAME=""
-BUILD_NUMBER=""
-BLOB_NAME=""
-ALIAS=""
 
-if [[ ("$1" == "firefox") || ("$1" == "firefox/") ]]; then
-  BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
+BUILD_FLAVOR="$1"
+BROWSER_NAME=""
+BLOB_NAME=""
+if [[ "$BUILD_FLAVOR" == "firefox-linux" ]]; then
   BROWSER_NAME="firefox"
-  if [[ "$(uname)" == "Darwin" ]]; then
-    BLOB_NAME="firefox-mac.zip"
-    ALIAS="firefox-mac r$BUILD_NUMBER"
-  elif [[ "$(uname)" == "Linux" ]]; then
-    BLOB_NAME="firefox-linux.zip"
-    ALIAS="ff-linux r$BUILD_NUMBER"
-  elif [[ "$(uname)" == MINGW* ]]; then
-    BLOB_NAME="firefox-win32.zip"
-    ALIAS="ff-win32 r$BUILD_NUMBER"
-  else
-    echo "ERROR: unsupported platform - $(uname)"
-    exit 1
-  fi
-elif [[ ("$1" == "firefox-win64") || ("$1" == "firefox-win64/") ]]; then
-  BUILD_NUMBER=$(cat "$PWD/firefox/BUILD_NUMBER")
+  BLOB_NAME="firefox-linux.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-mac" ]]; then
   BROWSER_NAME="firefox"
-  if [[ "$(uname)" == MINGW* ]]; then
-    BLOB_NAME="firefox-win64.zip"
-    ALIAS="ff-win64 r$BUILD_NUMBER"
-  else
-    echo "ERROR: unsupported platform for browser '$1' - $(uname)"
-    exit 1
-  fi
-elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
-  BUILD_NUMBER=$(cat "$PWD/webkit/BUILD_NUMBER")
+  BLOB_NAME="firefox-mac.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
+  BROWSER_NAME="firefox"
+  BLOB_NAME="firefox-win32.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
+  BROWSER_NAME="firefox"
+  BLOB_NAME="firefox-win64.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-gtk" ]]; then
   BROWSER_NAME="webkit"
-  if [[ "$(uname)" == "Darwin" ]]; then
-    MAC_MAJOR_MINOR_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
-    BLOB_NAME="minibrowser-mac-$MAC_MAJOR_MINOR_VERSION.zip"
-    ALIAS="webkit-mac-$MAC_MAJOR_MINOR_VERSION r$BUILD_NUMBER"
-  elif [[ "$(uname)" == "Linux" ]]; then
-    BLOB_NAME="minibrowser-gtk.zip"
-    ALIAS="webkit-gtk r$BUILD_NUMBER"
-  elif [[ "$(uname)" == MINGW* ]]; then
-    BLOB_NAME="minibrowser-win64.zip"
-    ALIAS="webkit-win64 r$BUILD_NUMBER"
-  else
-    echo "ERROR: unsupported platform - $(uname)"
-    exit 1
-  fi
+  BLOB_NAME="minibrowser-gtk.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
+  BROWSER_NAME="webkit"
+  BLOB_NAME="minibrowser-win64.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.14" ]]; then
+  BROWSER_NAME="webkit"
+  BLOB_NAME="minibrowser-mac-10.14.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.15" ]]; then
+  BROWSER_NAME="webkit"
+  BLOB_NAME="minibrowser-mac-10.15.zip"
 else
-  echo ERROR: unknown browser to export - "$1"
+  echo ERROR: unknown build flavor - "$BUILD_FLAVOR"
   exit 1
 fi
 
-if [[ ("$2" == '--show-alias') || ("$3" == '--show-alias') ]]; then
-  echo $ALIAS
-  exit 0
-fi
-
+BUILD_NUMBER=$(cat ./$BROWSER_NAME/BUILD_NUMBER)
 BLOB_PATH="$BROWSER_NAME/$BUILD_NUMBER/$BLOB_NAME"
+
 if [[ ("$2" == '--check') || ("$3" == '--check') ]]; then
   EXISTS=$(az storage blob exists -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -n "$BLOB_PATH" --query "exists")
   if [[ $EXISTS == "true" ]]; then
@@ -103,7 +80,9 @@ if [[ $# < 2 ]]; then
   echo "try '$(basename $0) --help' for more information"
   exit 1
 fi
-ZIP_PATH=$2
+
+ZIP_PATH="$2"
+
 if ! [[ -f $ZIP_PATH ]]; then
   echo "ERROR: $ZIP_PATH does not exist"
   exit 1
