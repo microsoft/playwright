@@ -20,7 +20,7 @@ const packageJson = require('./package.json');
 
 for (const className in api) {
   if (typeof api[className] === 'function')
-    helper.installAsyncStackHooks(api[className]);
+    helper.installApiHooks(className, api[className]);
 }
 
 module.exports = {

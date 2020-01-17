@@ -41,12 +41,24 @@ class Helper {
     }
   }
 
-  static installAsyncStackHooks(classType: any) {
+  static installApiHooks(className: string, classType: any) {
+    const log = platform.debug('pw:api');
     for (const methodName of Reflect.ownKeys(classType.prototype)) {
       const method = Reflect.get(classType.prototype, methodName);
-      if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function' || method.constructor.name !== 'AsyncFunction')
+      if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
+        continue;
+      const isAsync = method.constructor.name === 'AsyncFunction';
+      if (!isAsync && !log.enabled)
         continue;
       Reflect.set(classType.prototype, methodName, function(this: any, ...args: any[]) {
+        if (log.enabled) {
+          if (args.length)
+            log(`${className}.${methodName} %o`, args);
+          else
+            log(`${className}.${methodName}`);
+        }
+        if (!isAsync)
+          return method.call(this, ...args);
         const syncStack: any = {};
         Error.captureStackTrace(syncStack);
         return method.call(this, ...args).catch((e: any) => {
@@ -58,26 +70,6 @@ class Helper {
         });
       });
     }
-  }
-
-  static logPublicApiCalls(className: string, object: any): any {
-    const log = platform.debug('pw:api');
-    if (!log.enabled)
-      return object;
-    return new Proxy(object, {
-      get(target, key: string) {
-        const value = target[key];
-        if (typeof key === 'string' && key.startsWith('_') || typeof value !== 'function')
-          return value;
-        return function(this: any, ...args: any) {
-          if (args.length)
-            log(`${className}.${key} %o`, args);
-          else
-            log(`${className}.${key}`);
-          return value.apply(this, args);
-        };
-      }
-    });
   }
 
   static addEventListener(

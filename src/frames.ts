@@ -303,8 +303,6 @@ export class Frame {
 
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
-
-    return helper.logPublicApiCalls('frame', this);
   }
 
   async goto(url: string, options?: GotoOptions): Promise<network.Response | null> {

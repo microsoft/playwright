@@ -16,7 +16,6 @@
 
 import * as types from './types';
 import * as dom from './dom';
-import { helper } from './helper';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
@@ -58,7 +57,6 @@ export class JSHandle<T = any> {
   constructor(context: ExecutionContext, remoteObject: any) {
     this._context = context;
     this._remoteObject = remoteObject;
-    return helper.logPublicApiCalls('handle', this);
   }
 
   evaluate: types.EvaluateOn<T> = (pageFunction, ...args) => {
