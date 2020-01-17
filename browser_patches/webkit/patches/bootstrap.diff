@@ -11172,6 +11172,93 @@ index 1019fce94d5389a1f7b15675199dc02ccc68fcc3..5335aed3b8fba48b92407d988d5c7b49
  
      # Experimental features
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_APPLICATION_MANIFEST PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
+diff --git a/Tools/MiniBrowser/MiniBrowser.xcodeproj/project.pbxproj b/Tools/MiniBrowser/MiniBrowser.xcodeproj/project.pbxproj
+index c342e8ffd7e36a291a809a96f6e7b42a5a8115de..2122b10360314230076f965e8e00c918c0cd1576 100644
+--- a/Tools/MiniBrowser/MiniBrowser.xcodeproj/project.pbxproj
++++ b/Tools/MiniBrowser/MiniBrowser.xcodeproj/project.pbxproj
+@@ -8,12 +8,8 @@
+ 
+ /* Begin PBXBuildFile section */
+ 		0FE643A1161FA8940059E3FF /* BrowserWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FE643A0161FA8940059E3FF /* BrowserWindowController.m */; };
+-		0FE643A4161FAC660059E3FF /* WK1BrowserWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FE643A3161FAC660059E3FF /* WK1BrowserWindowController.m */; };
+ 		256AC3DA0F4B6AC300CF3369 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 256AC3D90F4B6AC300CF3369 /* AppDelegate.m */; };
+-		2DC37343198B62D300EC33E9 /* SettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2DC37342198B62D300EC33E9 /* SettingsController.m */; };
+ 		51E244FA11EFCE07008228D1 /* MBToolbarItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 51E244F911EFCE07008228D1 /* MBToolbarItem.m */; };
+-		7CA379421AC381C10079DC37 /* ExtensionManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CA379401AC381C10079DC37 /* ExtensionManagerWindowController.m */; };
+-		7CA379431AC381C10079DC37 /* ExtensionManagerWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7CA379411AC381C10079DC37 /* ExtensionManagerWindowController.xib */; };
+ 		BC329487116A92E2008635D0 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BC329486116A92E2008635D0 /* main.m */; };
+ 		BC329498116A941B008635D0 /* WK2BrowserWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = BC329497116A941B008635D0 /* WK2BrowserWindowController.m */; };
+ 		BC72B89511E57E07001EB4EA /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DDD58150DA1D0A300B32029 /* MainMenu.xib */; };
+@@ -23,8 +19,6 @@
+ /* Begin PBXFileReference section */
+ 		0FE6439F161FA8940059E3FF /* BrowserWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BrowserWindowController.h; path = mac/BrowserWindowController.h; sourceTree = "<group>"; };
+ 		0FE643A0161FA8940059E3FF /* BrowserWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BrowserWindowController.m; path = mac/BrowserWindowController.m; sourceTree = "<group>"; };
+-		0FE643A2161FAC660059E3FF /* WK1BrowserWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WK1BrowserWindowController.h; path = mac/WK1BrowserWindowController.h; sourceTree = "<group>"; };
+-		0FE643A3161FAC660059E3FF /* WK1BrowserWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WK1BrowserWindowController.m; path = mac/WK1BrowserWindowController.m; sourceTree = "<group>"; };
+ 		1AFFEF761860EE6800DA465E /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+ 		1AFFEF781860EE6800DA465E /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+ 		1DDD58150DA1D0A300B32029 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = MainMenu.xib; path = mac/MainMenu.xib; sourceTree = "<group>"; };
+@@ -33,14 +27,9 @@
+ 		256AC3F00F4B6AF500CF3369 /* MiniBrowser_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MiniBrowser_Prefix.pch; path = mac/MiniBrowser_Prefix.pch; sourceTree = "<group>"; };
+ 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+ 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+-		2DC37341198B62D300EC33E9 /* SettingsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SettingsController.h; path = mac/SettingsController.h; sourceTree = "<group>"; };
+-		2DC37342198B62D300EC33E9 /* SettingsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SettingsController.m; path = mac/SettingsController.m; sourceTree = "<group>"; };
+ 		37BAF90620218053000EA879 /* MiniBrowser.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MiniBrowser.entitlements; sourceTree = "<group>"; };
+ 		51E244F811EFCE07008228D1 /* MBToolbarItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MBToolbarItem.h; sourceTree = "<group>"; };
+ 		51E244F911EFCE07008228D1 /* MBToolbarItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MBToolbarItem.m; sourceTree = "<group>"; };
+-		7CA3793F1AC381C10079DC37 /* ExtensionManagerWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExtensionManagerWindowController.h; path = mac/ExtensionManagerWindowController.h; sourceTree = "<group>"; };
+-		7CA379401AC381C10079DC37 /* ExtensionManagerWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ExtensionManagerWindowController.m; path = mac/ExtensionManagerWindowController.m; sourceTree = "<group>"; };
+-		7CA379411AC381C10079DC37 /* ExtensionManagerWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = ExtensionManagerWindowController.xib; path = mac/ExtensionManagerWindowController.xib; sourceTree = "<group>"; };
+ 		8D1107320486CEB800E47090 /* MiniBrowser.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiniBrowser.app; sourceTree = BUILT_PRODUCTS_DIR; };
+ 		A1B89B95221E027A00EB4CEA /* SDKVariant.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = SDKVariant.xcconfig; sourceTree = "<group>"; };
+ 		BC329486116A92E2008635D0 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = mac/main.m; sourceTree = "<group>"; };
+@@ -71,17 +60,11 @@
+ 				256AC3D90F4B6AC300CF3369 /* AppDelegate.m */,
+ 				0FE6439F161FA8940059E3FF /* BrowserWindowController.h */,
+ 				0FE643A0161FA8940059E3FF /* BrowserWindowController.m */,
+-				7CA3793F1AC381C10079DC37 /* ExtensionManagerWindowController.h */,
+-				7CA379401AC381C10079DC37 /* ExtensionManagerWindowController.m */,
+ 				BC72B89A11E57E8A001EB4EA /* Info.plist */,
+ 				BC329486116A92E2008635D0 /* main.m */,
+ 				51E244F811EFCE07008228D1 /* MBToolbarItem.h */,
+ 				51E244F911EFCE07008228D1 /* MBToolbarItem.m */,
+ 				37BAF90620218053000EA879 /* MiniBrowser.entitlements */,
+-				2DC37341198B62D300EC33E9 /* SettingsController.h */,
+-				2DC37342198B62D300EC33E9 /* SettingsController.m */,
+-				0FE643A2161FAC660059E3FF /* WK1BrowserWindowController.h */,
+-				0FE643A3161FAC660059E3FF /* WK1BrowserWindowController.m */,
+ 				BC329496116A941B008635D0 /* WK2BrowserWindowController.h */,
+ 				BC329497116A941B008635D0 /* WK2BrowserWindowController.m */,
+ 			);
+@@ -123,7 +106,6 @@
+ 			isa = PBXGroup;
+ 			children = (
+ 				BC3294A2116A9852008635D0 /* BrowserWindow.xib */,
+-				7CA379411AC381C10079DC37 /* ExtensionManagerWindowController.xib */,
+ 				1DDD58150DA1D0A300B32029 /* MainMenu.xib */,
+ 			);
+ 			name = Resources;
+@@ -210,7 +192,6 @@
+ 			buildActionMask = 2147483647;
+ 			files = (
+ 				BC72B89611E57E0F001EB4EA /* BrowserWindow.xib in Resources */,
+-				7CA379431AC381C10079DC37 /* ExtensionManagerWindowController.xib in Resources */,
+ 				BC72B89511E57E07001EB4EA /* MainMenu.xib in Resources */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+@@ -224,11 +205,8 @@
+ 			files = (
+ 				256AC3DA0F4B6AC300CF3369 /* AppDelegate.m in Sources */,
+ 				0FE643A1161FA8940059E3FF /* BrowserWindowController.m in Sources */,
+-				7CA379421AC381C10079DC37 /* ExtensionManagerWindowController.m in Sources */,
+ 				BC329487116A92E2008635D0 /* main.m in Sources */,
+ 				51E244FA11EFCE07008228D1 /* MBToolbarItem.m in Sources */,
+-				2DC37343198B62D300EC33E9 /* SettingsController.m in Sources */,
+-				0FE643A4161FAC660059E3FF /* WK1BrowserWindowController.m in Sources */,
+ 				BC329498116A941B008635D0 /* WK2BrowserWindowController.m in Sources */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.h b/Tools/MiniBrowser/gtk/BrowserWindow.h
 index 1570d65effb5d601ee3c44a2a7461436f4691c2c..456f96cf589320efa70a76f76e230b6795886b5a 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.h
@@ -11264,41 +11351,64 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..17854dbfb1a3223e091ab90c0ca1bfc1
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
          GEnumClass *enumClass = g_type_class_ref(WEBKIT_TYPE_COOKIE_ACCEPT_POLICY);
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.h b/Tools/MiniBrowser/mac/AppDelegate.h
-index ca98036e51491695bc976fedcd10c9e63d386144..06c41ff9d246d06fb41e16e1dd46daca7ba71807 100644
+index ca98036e51491695bc976fedcd10c9e63d386144..9554d9e899af20e71a3dcde711b979eeb4b06215 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.h
 +++ b/Tools/MiniBrowser/mac/AppDelegate.h
-@@ -23,12 +23,25 @@
+@@ -23,20 +23,22 @@
   * THE POSSIBILITY OF SUCH DAMAGE.
   */
  
+-@class ExtensionManagerWindowController;
+-@class SettingsController;
 +#import <WebKit/_WKBrowserInspector.h>
-+
- @class ExtensionManagerWindowController;
- @class SettingsController;
  
 -@interface BrowserAppDelegate : NSObject <NSApplicationDelegate> {
+-    NSMutableSet *_browserWindowControllers;
+-    SettingsController *_settingsController;
+-    ExtensionManagerWindowController *_extensionManagerWindowController;
+-
+-    IBOutlet NSMenu *_settingsMenu;
 +WK_CLASS_AVAILABLE(macos(10.14.0))
 +@interface WebViewDialog : NSObject
 +@property (nonatomic, strong) WKWebView *webView;
 +@property (nonatomic, copy) void (^completionHandler)(BOOL accept, NSString* value);
 +@end
-+
+ 
+-    IBOutlet NSMenuItem *_newWebKit1WindowItem;
 +@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate> {
-     NSMutableSet *_browserWindowControllers;
-     SettingsController *_settingsController;
++    NSMutableSet *_browserWindowControllers;
 +    NSMutableSet *_headlessWindows;
 +    NSMutableSet *_browserContexts;
 +    bool _headless;
 +    NSMutableSet *_dialogs;
 +    NSString* _initialURL;
-     ExtensionManagerWindowController *_extensionManagerWindowController;
+     IBOutlet NSMenuItem *_newWebKit2WindowItem;
+-    IBOutlet NSMenuItem *_newWebKit1EditorItem;
+-    IBOutlet NSMenuItem *_newWebKit2EditorItem;
+ }
  
-     IBOutlet NSMenu *_settingsMenu;
+ - (void)browserWindowWillClose:(NSWindow *)window;
+@@ -44,7 +46,6 @@
+ - (void)didChangeSettings;
+ 
+ @property (readonly, nonatomic) WKUserContentController *userContentContoller;
+-@property (readonly, nonatomic) SettingsController *settingsController;
+ @property (readonly, nonatomic) WKPreferences *defaultPreferences;
+ 
+ @end
 diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a935be1695b 100644
+index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..10fc6b99d62bc2a634a9fd4de2cb4b3e9e57c002 100644
 --- a/Tools/MiniBrowser/mac/AppDelegate.m
 +++ b/Tools/MiniBrowser/mac/AppDelegate.m
-@@ -33,7 +33,9 @@
+@@ -25,20 +25,18 @@
+ 
+ #import "AppDelegate.h"
+ 
+-#import "ExtensionManagerWindowController.h"
+-#import "SettingsController.h"
+-#import "WK1BrowserWindowController.h"
+ #import "WK2BrowserWindowController.h"
+ #import <WebKit/WKPreferencesPrivate.h>
  #import <WebKit/WKProcessPoolPrivate.h>
  #import <WebKit/WKUserContentControllerPrivate.h>
  #import <WebKit/WKWebViewConfigurationPrivate.h>
@@ -11308,7 +11418,12 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
  #import <WebKit/WebKit.h>
  #import <WebKit/_WKExperimentalFeature.h>
  #import <WebKit/_WKInternalDebugFeature.h>
-@@ -64,16 +66,53 @@ @interface NSApplication (TouchBar)
+ #import <WebKit/_WKProcessPoolConfiguration.h>
+-#import <WebKit/_WKUserContentExtensionStore.h>
+ #import <WebKit/_WKWebsiteDataStoreConfiguration.h>
+ 
+ enum {
+@@ -64,28 +62,58 @@ @interface NSApplication (TouchBar)
  
  @end
  
@@ -11357,7 +11472,7 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
 +                                                       reason:ActivityReason];
 +        _dialogs = [[NSMutableSet alloc] init];
 +    } else {
-+        _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
++        [NSApp activateIgnoringOtherApps:YES];
 +        _browserWindowControllers = [[NSMutableSet alloc] init];
 +    }
 +    if ([arguments containsObject: @"--inspector-pipe"])
@@ -11365,7 +11480,19 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
      return self;
  }
  
-@@ -99,7 +138,7 @@ - (void)awakeFromNib
+ - (void)awakeFromNib
+ {
+-    _settingsController = [[SettingsController alloc] initWithMenu:_settingsMenu];
+-
+-    if ([_settingsController usesGameControllerFramework])
+-        [WKProcessPool _forceGameControllerFramework];
+-
+-//    [[NSApp mainMenu] insertItem:[item autorelease] atIndex:[[NSApp mainMenu] indexOfItemWithTitle:@"Debug"]];
+-
+     if ([NSApp respondsToSelector:@selector(setAutomaticCustomizeTouchBarMenuItemEnabled:)])
+         [NSApp setAutomaticCustomizeTouchBarMenuItemEnabled:YES];
+ }
+@@ -99,7 +127,7 @@ - (void)awakeFromNib
          configuration.networkCacheSpeculativeValidationEnabled = YES;
          dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
      }
@@ -11374,49 +11501,92 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
      return dataStore;
  }
  
-@@ -114,13 +153,18 @@ - (WKWebViewConfiguration *)defaultConfiguration
+@@ -114,38 +142,14 @@ - (WKWebViewConfiguration *)defaultConfiguration
          configuration.preferences._developerExtrasEnabled = YES;
          configuration.preferences._mediaDevicesEnabled = YES;
          configuration.preferences._mockCaptureDevicesEnabled = YES;
+-
 +        configuration.preferences._hiddenPageDOMTimerThrottlingEnabled = NO;
 +        configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
 +        configuration.preferences._pageVisibilityBasedProcessSuppressionEnabled = NO;
 +        configuration.preferences._domTimersThrottlingEnabled = NO;
 +        configuration.preferences._requestAnimationFrameEnabled = YES;
- 
          _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
-         if (_settingsController.perWindowWebProcessesDisabled)
-             processConfiguration.usesSingleWebProcess = YES;
-         if (_settingsController.processSwapOnWindowOpenWithOpenerEnabled)
-             processConfiguration.processSwapsOnWindowOpenWithOpener = true;
+-        if (_settingsController.perWindowWebProcessesDisabled)
+-            processConfiguration.usesSingleWebProcess = YES;
+-        if (_settingsController.processSwapOnWindowOpenWithOpenerEnabled)
+-            processConfiguration.processSwapsOnWindowOpenWithOpener = true;
 -        
-+
          configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
+-
+-        NSArray<_WKExperimentalFeature *> *experimentalFeatures = [WKPreferences _experimentalFeatures];
+-        for (_WKExperimentalFeature *feature in experimentalFeatures) {
+-            BOOL enabled;
+-            if ([[NSUserDefaults standardUserDefaults] objectForKey:feature.key])
+-                enabled = [[NSUserDefaults standardUserDefaults] boolForKey:feature.key];
+-            else
+-                enabled = [feature defaultValue];
+-            [configuration.preferences _setEnabled:enabled forExperimentalFeature:feature];
+-        }
+-
+-        NSArray<_WKInternalDebugFeature *> *internalDebugFeatures = [WKPreferences _internalDebugFeatures];
+-        for (_WKInternalDebugFeature *feature in internalDebugFeatures) {
+-            BOOL enabled;
+-            if ([[NSUserDefaults standardUserDefaults] objectForKey:feature.key])
+-                enabled = [[NSUserDefaults standardUserDefaults] boolForKey:feature.key];
+-            else
+-                enabled = [feature defaultValue];
+-            [configuration.preferences _setEnabled:enabled forInternalDebugFeature:feature];
+-        }
+     }
+-
+-    configuration.suppressesIncrementalRendering = _settingsController.incrementalRenderingSuppressed;
+-    configuration.websiteDataStore._resourceLoadStatisticsEnabled = _settingsController.resourceLoadStatisticsEnabled;
+     return configuration;
+ }
  
-         NSArray<_WKExperimentalFeature *> *experimentalFeatures = [WKPreferences _experimentalFeatures];
-@@ -156,6 +200,9 @@ - (WKPreferences *)defaultPreferences
+@@ -156,31 +160,13 @@ - (WKPreferences *)defaultPreferences
  
  - (BrowserWindowController *)createBrowserWindowController:(id)sender
  {
+-    BrowserWindowController *controller = nil;
+-    BOOL useWebKit2 = NO;
+-    BOOL makeEditable = NO;
+-
+-    if (![sender respondsToSelector:@selector(tag)]) {
+-        useWebKit2 = _settingsController.useWebKit2ByDefault;
+-        makeEditable = _settingsController.createEditorByDefault;
+-    } else {
+-        useWebKit2 = [sender tag] == WebKit2NewWindowTag || [sender tag] == WebKit2NewEditorTag;
+-        makeEditable = [sender tag] == WebKit1NewEditorTag || [sender tag] == WebKit2NewEditorTag;
+-    }
+-
+-    if (!useWebKit2)
+-        controller = [[WK1BrowserWindowController alloc] initWithWindowNibName:@"BrowserWindow"];
+-    else
+-        controller = [[WK2BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]];
+-
+-    if (makeEditable)
+-        controller.editable = YES;
 +    if (_headless)
 +        return nil;
-+
-     BrowserWindowController *controller = nil;
-     BOOL useWebKit2 = NO;
-     BOOL makeEditable = NO;
-@@ -169,9 +216,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
-     }
  
-     if (!useWebKit2)
--        controller = [[WK1BrowserWindowController alloc] initWithWindowNibName:@"BrowserWindow"];
-+        controller = [[[WK1BrowserWindowController alloc] initWithWindowNibName:@"BrowserWindow"] autorelease];
-     else
--        controller = [[WK2BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]];
-+        controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]] autorelease];
++    BrowserWindowController *controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]] autorelease];
+     if (!controller)
+         return nil;
+-
+     [_browserWindowControllers addObject:controller];
+-
+     return controller;
+ }
  
-     if (makeEditable)
-         controller.editable = YES;
-@@ -196,6 +243,9 @@ - (IBAction)newWindow:(id)sender
+@@ -191,11 +177,14 @@ - (IBAction)newWindow:(id)sender
+         return;
+ 
+     [[controller window] makeKeyAndOrderFront:sender];
+-    [controller loadURLString:_settingsController.defaultURL];
++    [controller loadURLString:@"about:blank"];
+ }
  
  - (IBAction)newPrivateWindow:(id)sender
  {
@@ -11426,7 +11596,26 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
      WKWebViewConfiguration *privateConfiguraton = [self.defaultConfiguration copy];
      privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
  
-@@ -225,16 +275,19 @@ - (void)browserWindowWillClose:(NSWindow *)window
+@@ -205,17 +194,7 @@ - (IBAction)newPrivateWindow:(id)sender
+     [[controller window] makeKeyAndOrderFront:sender];
+     [_browserWindowControllers addObject:controller];
+ 
+-    [controller loadURLString:_settingsController.defaultURL];
+-}
+-
+-- (IBAction)newEditorWindow:(id)sender
+-{
+-    BrowserWindowController *controller = [self createBrowserWindowController:sender];
+-    if (!controller)
+-        return;
+-
+-    [[controller window] makeKeyAndOrderFront:sender];
+-    [controller loadHTMLString:@"<html><body></body></html>"];
++    [controller loadURLString:@"about:blank"];
+ }
+ 
+ - (void)browserWindowWillClose:(NSWindow *)window
+@@ -225,16 +204,19 @@ - (void)browserWindowWillClose:(NSWindow *)window
  
  - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
  {
@@ -11450,7 +11639,7 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
  }
  
  - (BrowserWindowController *)frontmostBrowserWindowController
-@@ -260,12 +313,15 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+@@ -260,12 +242,15 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
          return NO;
  
      [controller.window makeKeyAndOrderFront:self];
@@ -11467,7 +11656,7 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
      BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
  
      if (browserWindowController) {
-@@ -295,6 +351,9 @@ - (IBAction)openDocument:(id)sender
+@@ -295,6 +280,9 @@ - (IBAction)openDocument:(id)sender
  
  - (void)didChangeSettings
  {
@@ -11477,21 +11666,30 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
      [self _updateNewWindowKeyEquivalents];
  
      // Let all of the BrowserWindowControllers know that a setting changed, so they can attempt to dynamically update.
-@@ -323,6 +382,8 @@ - (void)_updateNewWindowKeyEquivalents
+@@ -304,56 +292,169 @@ - (void)didChangeSettings
  
- - (IBAction)showExtensionsManager:(id)sender
+ - (void)_updateNewWindowKeyEquivalents
  {
-+    if (_headless)
-+        return;
-     [_extensionManagerWindowController showWindow:sender];
- }
- 
-@@ -356,4 +417,159 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
-     }];
- }
- 
-+#pragma mark WKBrowserInspectorDelegate
+-    NSEventModifierFlags webKit1Flags = _settingsController.useWebKit2ByDefault ? NSEventModifierFlagOption : 0;
+-    NSEventModifierFlags webKit2Flags = _settingsController.useWebKit2ByDefault ? 0 : NSEventModifierFlagOption;
++    NSString *normalWindowEquivalent = @"n";
++    _newWebKit2WindowItem.keyEquivalentModifierMask = NSEventModifierFlagCommand;
++    _newWebKit2WindowItem.keyEquivalent = normalWindowEquivalent;
++}
 +
++- (WKUserContentController *)userContentContoller
++{
++    return self.defaultConfiguration.userContentController;
++}
+ 
+-    NSString *normalWindowEquivalent = _settingsController.createEditorByDefault ? @"N" : @"n";
+-    NSString *editorEquivalent = _settingsController.createEditorByDefault ? @"n" : @"N";
++#pragma mark WKBrowserInspectorDelegate
+ 
+-    _newWebKit1WindowItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | webKit1Flags;
+-    _newWebKit2WindowItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | webKit2Flags;
+-    _newWebKit1EditorItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | webKit1Flags;
+-    _newWebKit2EditorItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | webKit2Flags;
 +- (WKWebViewConfiguration *) sessionConfiguration:(uint64_t)sessionID
 +{
 +    for (_WKBrowserContext *browserContext in _browserContexts) {
@@ -11504,7 +11702,11 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
 +    }
 +    return [self defaultConfiguration];
 +}
-+
+ 
+-    _newWebKit1WindowItem.keyEquivalent = normalWindowEquivalent;
+-    _newWebKit2WindowItem.keyEquivalent = normalWindowEquivalent;
+-    _newWebKit1EditorItem.keyEquivalent = editorEquivalent;
+-    _newWebKit2EditorItem.keyEquivalent = editorEquivalent;
 +- (WKWebView *)createNewPage:(uint64_t)sessionID
 +{
 +    if (_headless)
@@ -11516,12 +11718,14 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
 +        return nil;
 +    [[controller window] makeKeyAndOrderFront:nil];
 +    [_browserWindowControllers addObject:controller];
-+    [controller loadURLString:_settingsController.defaultURL];
++    [controller loadURLString:@"about:blank"];
 +    return [controller webView];
-+}
-+
+ }
+ 
+-- (IBAction)showExtensionsManager:(id)sender
 +- (WKWebView *)createHeadlessWebView:(WKWebViewConfiguration *)configuration
-+{
+ {
+-    [_extensionManagerWindowController showWindow:sender];
 +    NSRect rect = NSMakeRect(0, 0, 1024, 768);
 +    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
 +    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
@@ -11540,36 +11744,54 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
 +    [_headlessWindows addObject:window];
 +    webView.UIDelegate = self;
 +    return [webView autorelease];
-+}
-+
+ }
+ 
+-- (WKUserContentController *)userContentContoller
 +- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
-+{
+ {
+-    return self.defaultConfiguration.userContentController;
 +    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
 +    return [self createHeadlessWebView:configuration];
-+}
-+
+ }
+ 
+-- (IBAction)fetchDefaultStoreWebsiteData:(id)sender
 +- (_WKBrowserContext *)createBrowserContext
-+{
+ {
+-    [persistentDataStore() fetchDataRecordsOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] completionHandler:^(NSArray *websiteDataRecords) {
+-        NSLog(@"did fetch default store website data %@.", websiteDataRecords);
+-    }];
 +    _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
 +    _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
 +    browserContext.dataStore = [WKWebsiteDataStore nonPersistentDataStore];
 +    browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
 +    [_browserContexts addObject:browserContext];
 +    return browserContext;
-+}
-+
+ }
+ 
+-- (IBAction)fetchAndClearDefaultStoreWebsiteData:(id)sender
 +- (void)deleteBrowserContext:(uint64_t)sessionID
-+{
+ {
+-    [persistentDataStore() fetchDataRecordsOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] completionHandler:^(NSArray *websiteDataRecords) {
+-        [persistentDataStore() removeDataOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] forDataRecords:websiteDataRecords completionHandler:^{
+-            [persistentDataStore() fetchDataRecordsOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] completionHandler:^(NSArray *websiteDataRecords) {
+-                NSLog(@"did clear default store website data, after clearing data is %@.", websiteDataRecords);
+-            }];
+-        }];
+-    }];
 +    for (_WKBrowserContext *browserContext in _browserContexts) {
 +        if ([[browserContext dataStore] sessionID] != sessionID)
 +            continue;
 +        [_browserContexts removeObject:browserContext];
 +        return;
 +    }
-+}
-+
+ }
+ 
+-- (IBAction)clearDefaultStoreWebsiteData:(id)sender
 +- (void)quit
-+{
+ {
+-    [persistentDataStore() removeDataOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] modifiedSince:[NSDate distantPast] completionHandler:^{
+-        NSLog(@"Did clear default store website data.");
+-    }];
 +    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
 +}
 +
@@ -11643,22 +11865,2417 @@ index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a93
 +- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 +{
 +    return [self createHeadlessWebView:configuration];
-+}
-+
+ }
+ 
  @end
+diff --git a/Tools/MiniBrowser/mac/BrowserWindowController.h b/Tools/MiniBrowser/mac/BrowserWindowController.h
+index 4d05f6834caba4e5b409efc7b74436d39716a565..0baed3023a24158fb6baa280814d5230424fad4f 100644
+--- a/Tools/MiniBrowser/mac/BrowserWindowController.h
++++ b/Tools/MiniBrowser/mac/BrowserWindowController.h
+@@ -37,7 +37,6 @@
+     IBOutlet NSButton *toggleUseShrinkToFitButton;
+ 
+     BOOL _zoomTextOnly;
+-    BOOL _editable;
+ }
+ 
+ - (void)loadURLString:(NSString *)urlString;
+@@ -84,8 +83,4 @@
+ 
+ - (CGFloat)pageScaleForMenuItemTag:(NSInteger)tag;
+ 
+-@property (nonatomic, assign, getter=isEditable) BOOL editable;
+-- (IBAction)toggleEditable:(id)sender;
+-
+ @end
+-
+diff --git a/Tools/MiniBrowser/mac/BrowserWindowController.m b/Tools/MiniBrowser/mac/BrowserWindowController.m
+index 396a60ddc66b50fc808af423543bcc3df5ad0b2f..fa0524724548be173b6e105671ff82cf0cdd56a5 100644
+--- a/Tools/MiniBrowser/mac/BrowserWindowController.m
++++ b/Tools/MiniBrowser/mac/BrowserWindowController.m
+@@ -30,8 +30,6 @@ @interface BrowserWindowController () <NSSharingServicePickerDelegate, NSSharing
+ 
+ @implementation BrowserWindowController
+ 
+-@synthesize editable=_editable;
+-
+ - (id)initWithWindow:(NSWindow *)window
+ {
+     self = [super initWithWindow:window];
+@@ -220,11 +218,6 @@ - (NSView *)mainContentView
+     return nil;
+ }
+ 
+-- (IBAction)toggleEditable:(id)sender
+-{
+-    self.editable = !self.isEditable;
+-}
+-
+ #pragma mark -
+ #pragma mark NSSharingServicePickerDelegate
+ 
+diff --git a/Tools/MiniBrowser/mac/CMakeLists.txt b/Tools/MiniBrowser/mac/CMakeLists.txt
+index e6f23de5a5773cfcd7518dacbe7938f20f93bd48..61f14c90864dd7ce61cf7a09a32697250bcd4471 100644
+--- a/Tools/MiniBrowser/mac/CMakeLists.txt
++++ b/Tools/MiniBrowser/mac/CMakeLists.txt
+@@ -6,16 +6,12 @@ add_definitions("-include MiniBrowser_Prefix.pch -DWEBCORE_EXPORT=")
+ set(MiniBrowser_SOURCES
+     ${MINIBROWSER_DIR}/AppDelegate.m
+     ${MINIBROWSER_DIR}/BrowserWindowController.m
+-    ${MINIBROWSER_DIR}/ExtensionManagerWindowController.m
+-    ${MINIBROWSER_DIR}/SettingsController.m
+-    ${MINIBROWSER_DIR}/WK1BrowserWindowController.m
+     ${MINIBROWSER_DIR}/WK2BrowserWindowController.m
+     ${MINIBROWSER_DIR}/main.m
+     ${TOOLS_DIR}/MiniBrowser/MBToolbarItem.m
+ )
+ 
+ set(MiniBrowser_INCLUDE_DIRECTORIES
+-    ${CMAKE_SOURCE_DIR}/Source/WebKitLegacy
+     ${CMAKE_SOURCE_DIR}/Source
+     ${FORWARDING_HEADERS_DIR}
+     ${MINIBROWSER_DIR}
+@@ -34,13 +30,10 @@ set(MiniBrowser_Contents_Directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/MiniBrowser
+ make_directory(${MiniBrowser_Contents_Directory}/Resources)
+ add_custom_command(OUTPUT ${MiniBrowser_Contents_Directory}/Resources/BrowserWindow.nib
+     COMMAND ibtool --compile ${MiniBrowser_Contents_Directory}/Resources/BrowserWindow.nib ${MINIBROWSER_DIR}/BrowserWindow.xib VERBATIM)
+-add_custom_command(OUTPUT ${MiniBrowser_Contents_Directory}/Resources/ExtensionManagerWindowController.nib
+-    COMMAND ibtool --compile ${MiniBrowser_Contents_Directory}/Resources/ExtensionManagerWindowController.nib ${MINIBROWSER_DIR}/ExtensionManagerWindowController.xib VERBATIM)
+ add_custom_command(OUTPUT ${MiniBrowser_Contents_Directory}/Resources/MainMenu.nib
+     COMMAND ibtool --compile ${MiniBrowser_Contents_Directory}/Resources/MainMenu.nib ${MINIBROWSER_DIR}/MainMenu.xib VERBATIM)
+ add_custom_target(MiniBrowserNibs ALL DEPENDS
+     ${MiniBrowser_Contents_Directory}/Resources/BrowserWindow.nib
+-    ${MiniBrowser_Contents_Directory}/Resources/ExtensionManagerWindowController.nib
+     ${MiniBrowser_Contents_Directory}/Resources/MainMenu.nib
+ )
+ 
+diff --git a/Tools/MiniBrowser/mac/ExtensionManagerWindowController.m b/Tools/MiniBrowser/mac/ExtensionManagerWindowController.m
+deleted file mode 100644
+index 5730b62cdbd6e1987f5094b83ba51503201e7bdf..0000000000000000000000000000000000000000
+--- a/Tools/MiniBrowser/mac/ExtensionManagerWindowController.m
++++ /dev/null
+@@ -1,141 +0,0 @@
+-/*
+- * Copyright (C) 2015 Apple Inc. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- *
+- * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
+- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+- * THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-#import "ExtensionManagerWindowController.h"
+-
+-#import "AppDelegate.h"
+-#import <WebKit/WKUserContentControllerPrivate.h>
+-#import <WebKit/_WKUserContentExtensionStore.h>
+-
+-@implementation ExtensionManagerWindowController
+-
+-- (instancetype)init
+-{
+-    self = [self initWithWindowNibName:@"ExtensionManagerWindowController"];
+-    if (self) {
+-        NSArray* installedContentExtensions = [[NSUserDefaults standardUserDefaults] arrayForKey:@"InstalledContentExtensions"];
+-        if (installedContentExtensions) {
+-            for (NSString *identifier in installedContentExtensions) {
+-                [[_WKUserContentExtensionStore defaultStore] lookupContentExtensionForIdentifier:identifier completionHandler:^(_WKUserContentFilter *extension, NSError *error)
+-                {
+-                    if (error) {
+-                        NSLog(@"Extension store got out of sync with system defaults.");
+-                        return;
+-                    }
+-
+-                    BrowserAppDelegate* appDelegate = [[NSApplication sharedApplication] browserAppDelegate];
+-                    [appDelegate.userContentContoller _addUserContentFilter:extension];
+-                }];
+-            }
+-                
+-        }
+-    }
+-    return self;
+-}
+-
+-- (void)windowDidLoad
+-{
+-    [super windowDidLoad];
+-
+-    NSArray* installedContentExtensions = [[NSUserDefaults standardUserDefaults] arrayForKey:@"InstalledContentExtensions"];
+-    if (installedContentExtensions) {
+-        for (NSString *extension in installedContentExtensions)
+-            [arrayController addObject:extension];
+-    }
+-}
+-
+-- (IBAction)add:(id)sender
+-{
+-    NSOpenPanel *openPanel = [[NSOpenPanel openPanel] retain];
+-    openPanel.allowedFileTypes = @[ @"public.json" ];
+-    
+-    [openPanel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result)
+-    {
+-        if (result != NSModalResponseOK)
+-            return;
+-
+-        NSURL *url = [openPanel.URLs objectAtIndex:0];
+-        NSString *identifier = url.lastPathComponent;
+-        NSString *jsonString = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:nil];
+-
+-        [[_WKUserContentExtensionStore defaultStore] compileContentExtensionForIdentifier:identifier encodedContentExtension:jsonString completionHandler:^(_WKUserContentFilter *extension, NSError *error)
+-        {
+-            
+-            if (error) {
+-                NSAlert *alert = [NSAlert alertWithError:error];
+-                [alert runModal];
+-                return;
+-            }
+-
+-            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+-
+-            NSArray* installedContentExtensions = [defaults arrayForKey:@"InstalledContentExtensions"];
+-            NSMutableArray *mutableInstalledContentExtensions;
+-            if (installedContentExtensions)
+-                mutableInstalledContentExtensions = [installedContentExtensions mutableCopy];
+-            else
+-                mutableInstalledContentExtensions = [[NSMutableArray alloc] init];
+-
+-            [mutableInstalledContentExtensions addObject:identifier];
+-            [defaults setObject:mutableInstalledContentExtensions forKey:@"InstalledContentExtensions"];
+-            [mutableInstalledContentExtensions release];
+-
+-            [arrayController addObject:identifier];
+-
+-            BrowserAppDelegate* appDelegate = [[NSApplication sharedApplication] browserAppDelegate];
+-            [appDelegate.userContentContoller _addUserContentFilter:extension];
+-        }];
+-    }];
+-
+-}
+-
+-- (IBAction)remove:(id)sender
+-{
+-    NSUInteger index = [arrayController selectionIndex];
+-
+-    NSString *identifierToRemove = arrayController.arrangedObjects[index];
+-
+-    [[_WKUserContentExtensionStore defaultStore] removeContentExtensionForIdentifier:identifierToRemove completionHandler:^(NSError *error)
+-    {
+-        if (error) {
+-            NSAlert *alert = [NSAlert alertWithError:error];
+-            [alert runModal];
+-            return;
+-        }
+-
+-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+-
+-        NSMutableArray *installedContentExtensions = [[defaults arrayForKey:@"InstalledContentExtensions"] mutableCopy];
+-        [installedContentExtensions removeObject:identifierToRemove];
+-        [defaults setObject:installedContentExtensions forKey:@"InstalledContentExtensions"];
+-        [installedContentExtensions release];
+-
+-        [arrayController removeObjectAtArrangedObjectIndex:index];
+-        BrowserAppDelegate* appDelegate = [[NSApplication sharedApplication] browserAppDelegate];
+-        [appDelegate.userContentContoller _removeUserContentFilter:identifierToRemove];
+-    }];
+-}
+-
+-@end
+diff --git a/Tools/MiniBrowser/mac/ExtensionManagerWindowController.xib b/Tools/MiniBrowser/mac/ExtensionManagerWindowController.xib
+deleted file mode 100644
+index 7a2f430151c493cd827321170781bec58e9e8efd..0000000000000000000000000000000000000000
+--- a/Tools/MiniBrowser/mac/ExtensionManagerWindowController.xib
++++ /dev/null
+@@ -1,147 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13F1076" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+-    <dependencies>
+-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
+-    </dependencies>
+-    <objects>
+-        <customObject id="-2" userLabel="File's Owner" customClass="ExtensionManagerWindowController">
+-            <connections>
+-                <outlet property="arrayController" destination="xeI-l9-8Xv" id="O8f-gY-5FH"/>
+-                <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
+-            </connections>
+-        </customObject>
+-        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+-        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+-        <window title="Extensions Manager" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" animationBehavior="default" id="F0z-JX-Cv5">
+-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES"/>
+-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+-            <rect key="contentRect" x="196" y="240" width="480" height="270"/>
+-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
+-            <view key="contentView" id="se5-gp-TjO">
+-                <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
+-                <autoresizingMask key="autoresizingMask"/>
+-                <subviews>
+-                    <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3Ps-vx-3Rj">
+-                        <rect key="frame" x="20" y="58" width="440" height="192"/>
+-                        <clipView key="contentView" id="228-qF-Rc1">
+-                            <rect key="frame" x="1" y="1" width="438" height="190"/>
+-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+-                            <subviews>
+-                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnSelection="YES" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" rowSizeStyle="automatic" viewBased="YES" id="mmd-0v-4hR">
+-                                    <rect key="frame" x="0.0" y="0.0" width="438" height="190"/>
+-                                    <autoresizingMask key="autoresizingMask"/>
+-                                    <size key="intercellSpacing" width="3" height="2"/>
+-                                    <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+-                                    <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
+-                                    <tableColumns>
+-                                        <tableColumn width="435" minWidth="40" maxWidth="1000" id="6PD-e9-GfD">
+-                                            <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
+-                                                <font key="font" metaFont="smallSystem"/>
+-                                                <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
+-                                                <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
+-                                            </tableHeaderCell>
+-                                            <textFieldCell key="dataCell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" alignment="left" title="Text Cell" id="Sq0-um-maR">
+-                                                <font key="font" metaFont="system"/>
+-                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+-                                                <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+-                                            </textFieldCell>
+-                                            <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
+-                                            <prototypeCellViews>
+-                                                <tableCellView id="R3S-7i-hkn">
+-                                                    <rect key="frame" x="1" y="1" width="435" height="17"/>
+-                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+-                                                    <subviews>
+-                                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DqA-Ee-O6f">
+-                                                            <rect key="frame" x="0.0" y="0.0" width="434" height="17"/>
+-                                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Table View Cell" id="syf-BT-XBf">
+-                                                                <font key="font" metaFont="system"/>
+-                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+-                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+-                                                            </textFieldCell>
+-                                                            <connections>
+-                                                                <binding destination="R3S-7i-hkn" name="value" keyPath="objectValue" id="uwA-wN-TwE"/>
+-                                                            </connections>
+-                                                        </textField>
+-                                                    </subviews>
+-                                                    <constraints>
+-                                                        <constraint firstAttribute="bottom" secondItem="DqA-Ee-O6f" secondAttribute="bottom" id="Eob-Am-Ity"/>
+-                                                        <constraint firstItem="DqA-Ee-O6f" firstAttribute="leading" secondItem="R3S-7i-hkn" secondAttribute="leading" constant="2" id="acg-V8-jUr"/>
+-                                                        <constraint firstAttribute="trailing" secondItem="DqA-Ee-O6f" secondAttribute="trailing" constant="2" id="gTj-qL-A7r"/>
+-                                                        <constraint firstItem="DqA-Ee-O6f" firstAttribute="top" secondItem="R3S-7i-hkn" secondAttribute="top" id="lKF-M8-hn7"/>
+-                                                    </constraints>
+-                                                    <connections>
+-                                                        <outlet property="textField" destination="DqA-Ee-O6f" id="cpI-Wh-atT"/>
+-                                                    </connections>
+-                                                </tableCellView>
+-                                            </prototypeCellViews>
+-                                        </tableColumn>
+-                                    </tableColumns>
+-                                    <connections>
+-                                        <binding destination="xeI-l9-8Xv" name="content" keyPath="arrangedObjects" id="paH-6b-cxM"/>
+-                                        <binding destination="xeI-l9-8Xv" name="selectionIndexes" keyPath="selectionIndexes" previousBinding="paH-6b-cxM" id="NDp-MB-3u8"/>
+-                                    </connections>
+-                                </tableView>
+-                            </subviews>
+-                            <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+-                        </clipView>
+-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="iTc-lE-Pk6">
+-                            <rect key="frame" x="1" y="119" width="223" height="15"/>
+-                            <autoresizingMask key="autoresizingMask"/>
+-                        </scroller>
+-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="ak3-QY-AvJ">
+-                            <rect key="frame" x="224" y="17" width="15" height="102"/>
+-                            <autoresizingMask key="autoresizingMask"/>
+-                        </scroller>
+-                    </scrollView>
+-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="27H-8l-ZRr">
+-                        <rect key="frame" x="20" y="21" width="21" height="21"/>
+-                        <constraints>
+-                            <constraint firstAttribute="width" constant="21" id="Kv9-Ra-5xj"/>
+-                            <constraint firstAttribute="height" constant="19" id="Nmn-14-1ea"/>
+-                        </constraints>
+-                        <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSAddTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6T3-fu-laO">
+-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+-                            <font key="font" metaFont="system"/>
+-                        </buttonCell>
+-                        <connections>
+-                            <action selector="add:" target="-2" id="nIg-iE-xaG"/>
+-                        </connections>
+-                    </button>
+-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="i46-AU-g9W">
+-                        <rect key="frame" x="40" y="21" width="21" height="21"/>
+-                        <constraints>
+-                            <constraint firstAttribute="width" constant="21" id="ECG-hI-EML"/>
+-                            <constraint firstAttribute="height" constant="19" id="b3A-2I-fDc"/>
+-                        </constraints>
+-                        <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSRemoveTemplate" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="gfs-sY-cBN">
+-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+-                            <font key="font" metaFont="system"/>
+-                        </buttonCell>
+-                        <connections>
+-                            <action selector="remove:" target="-2" id="BOW-Fc-AGp"/>
+-                            <binding destination="xeI-l9-8Xv" name="enabled" keyPath="canRemove" id="pp1-d7-6Gd"/>
+-                        </connections>
+-                    </button>
+-                </subviews>
+-                <constraints>
+-                    <constraint firstAttribute="bottom" secondItem="3Ps-vx-3Rj" secondAttribute="bottom" constant="58" id="Nej-YX-BMe"/>
+-                    <constraint firstItem="i46-AU-g9W" firstAttribute="leading" secondItem="se5-gp-TjO" secondAttribute="leading" constant="40" id="SQS-4J-NJE"/>
+-                    <constraint firstAttribute="bottom" secondItem="i46-AU-g9W" secondAttribute="bottom" constant="22" id="Tri-yU-fA4"/>
+-                    <constraint firstItem="27H-8l-ZRr" firstAttribute="leading" secondItem="se5-gp-TjO" secondAttribute="leading" constant="20" id="URC-fD-No6"/>
+-                    <constraint firstItem="3Ps-vx-3Rj" firstAttribute="leading" secondItem="se5-gp-TjO" secondAttribute="leading" constant="20" id="Udm-Eg-Fmx"/>
+-                    <constraint firstAttribute="bottom" secondItem="27H-8l-ZRr" secondAttribute="bottom" constant="22" id="gVG-YX-oeX"/>
+-                    <constraint firstAttribute="trailing" secondItem="3Ps-vx-3Rj" secondAttribute="trailing" constant="20" id="ggD-nm-PDi"/>
+-                    <constraint firstItem="3Ps-vx-3Rj" firstAttribute="top" secondItem="se5-gp-TjO" secondAttribute="top" constant="20" id="qiw-wC-igh"/>
+-                </constraints>
+-            </view>
+-            <connections>
+-                <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
+-            </connections>
+-        </window>
+-        <arrayController id="xeI-l9-8Xv"/>
+-    </objects>
+-    <resources>
+-        <image name="NSAddTemplate" width="8" height="8"/>
+-        <image name="NSRemoveTemplate" width="8" height="8"/>
+-    </resources>
+-</document>
+\ No newline at end of file
+diff --git a/Tools/MiniBrowser/mac/Info.plist b/Tools/MiniBrowser/mac/Info.plist
+index 0232b180f4841ccea4293e04965533e1a6990747..4ed50c40f2f0dfd0ddf7c546b3451ab426c0501e 100644
+--- a/Tools/MiniBrowser/mac/Info.plist
++++ b/Tools/MiniBrowser/mac/Info.plist
+@@ -7,7 +7,7 @@
+ 	<key>CFBundleExecutable</key>
+ 	<string>${EXECUTABLE_NAME}</string>
+ 	<key>CFBundleIconFile</key>
+-	<string>MiniBrowser</string>
++	<string>WebKit Browser</string>
+ 	<key>CFBundleIdentifier</key>
+ 	<string>${PRODUCT_BUNDLE_IDENTIFIER}</string>
+ 	<key>CFBundleInfoDictionaryVersion</key>
+diff --git a/Tools/MiniBrowser/mac/MainMenu.xib b/Tools/MiniBrowser/mac/MainMenu.xib
+index 2b4d3a3b8cb8a20257869712b15bc85557ed63cb..80536bf220a762dedb38674bbf96aec9209d7a8e 100644
+--- a/Tools/MiniBrowser/mac/MainMenu.xib
++++ b/Tools/MiniBrowser/mac/MainMenu.xib
+@@ -70,34 +70,18 @@
+                                     <action selector="openLocation:" target="-1" id="575"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem title="New WebKit1 Window" tag="1" keyEquivalent="n" id="573">
+-                                <connections>
+-                                    <action selector="newWindow:" target="-1" id="574"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="New WebKit2 Window" tag="2" keyEquivalent="n" id="571">
++                            <menuItem title="New Window" tag="2" keyEquivalent="n" id="571">
+                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                 <connections>
+                                     <action selector="newWindow:" target="-1" id="572"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem title="New WebKit2 Private Window" tag="2" id="Zqs-AO-XAX">
++                            <menuItem title="New Private Window" tag="2" id="Zqs-AO-XAX">
+                                 <modifierMask key="keyEquivalentModifierMask"/>
+                                 <connections>
+                                     <action selector="newPrivateWindow:" target="-1" id="mf5-zi-a5R"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem title="New WebKit1 Editor" tag="3" keyEquivalent="N" id="jNR-Z3-YWi" userLabel="New WebKit1 Editor">
+-                                <connections>
+-                                    <action selector="newEditorWindow:" target="-1" id="Nv5-c0-KRP"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="New WebKit2 Editor" tag="4" keyEquivalent="N" id="IdI-wb-1JD" userLabel="New WebKit2 Editor">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-                                <connections>
+-                                    <action selector="newEditorWindow:" target="-1" id="kk6-R4-iec"/>
+-                                </connections>
+-                            </menuItem>
+                             <menuItem title="Open…" keyEquivalent="o" id="72">
+                                 <connections>
+                                     <action selector="openDocument:" target="-1" id="374"/>
+@@ -145,12 +129,6 @@
+                                     <action selector="saveAsWebArchive:" target="-1" id="AGx-3e-6Nt"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem title="Revert to Saved" id="nek-8q-bdB">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="revertDocumentToSaved:" target="-1" id="7iJ-l6-TWs"/>
+-                                </connections>
+-                            </menuItem>
+                             <menuItem isSeparatorItem="YES" id="74">
+                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                             </menuItem>
+@@ -182,15 +160,6 @@
+                                     <action selector="redo:" target="-1" id="231"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem isSeparatorItem="YES" id="fUL-7k-Dqg">
+-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+-                            </menuItem>
+-                            <menuItem title="Editable" id="kG4-hS-JbX">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="toggleEditable:" target="-1" id="6my-b2-eff"/>
+-                                </connections>
+-                            </menuItem>
+                             <menuItem isSeparatorItem="YES" id="206">
+                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                             </menuItem>
+@@ -209,17 +178,6 @@
+                                     <action selector="paste:" target="-1" id="226"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem title="Paste as Quotation" keyEquivalent="V" id="8Ng-DB-z0Y">
+-                                <connections>
+-                                    <action selector="_pasteAsQuotation:" target="-1" id="6Mn-XC-2qO"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Paste and Match Style" keyEquivalent="V" id="485">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-                                <connections>
+-                                    <action selector="pasteAsPlainText:" target="-1" id="486"/>
+-                                </connections>
+-                            </menuItem>
+                             <menuItem title="Delete" id="202">
+                                 <connections>
+                                     <action selector="delete:" target="-1" id="235"/>
+@@ -265,414 +223,12 @@
+                                     </items>
+                                 </menu>
+                             </menuItem>
+-                            <menuItem title="Spelling and Grammar" id="216">
+-                                <menu key="submenu" title="Spelling and Grammar" id="200">
+-                                    <items>
+-                                        <menuItem title="Show Spelling and Grammar" keyEquivalent=":" id="204">
+-                                            <connections>
+-                                                <action selector="showGuessPanel:" target="-1" id="230"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Check Document Now" keyEquivalent=";" id="201">
+-                                            <connections>
+-                                                <action selector="checkSpelling:" target="-1" id="225"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="453"/>
+-                                        <menuItem title="Check Spelling While Typing" id="219">
+-                                            <connections>
+-                                                <action selector="toggleContinuousSpellChecking:" target="-1" id="222"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Check Grammar With Spelling" id="346">
+-                                            <connections>
+-                                                <action selector="toggleGrammarChecking:" target="-1" id="347"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Correct Spelling Automatically" id="454">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="toggleAutomaticSpellingCorrection:" target="-1" id="456"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                    </items>
+-                                </menu>
+-                            </menuItem>
+-                            <menuItem title="Substitutions" id="348">
+-                                <menu key="submenu" title="Substitutions" id="349">
+-                                    <items>
+-                                        <menuItem title="Show Substitutions" id="457">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="orderFrontSubstitutionsPanel:" target="-1" id="458"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="459"/>
+-                                        <menuItem title="Smart Copy/Paste" tag="1" keyEquivalent="f" id="350">
+-                                            <connections>
+-                                                <action selector="toggleSmartInsertDelete:" target="-1" id="355"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Smart Quotes" tag="2" keyEquivalent="g" id="351">
+-                                            <connections>
+-                                                <action selector="toggleAutomaticQuoteSubstitution:" target="-1" id="356"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Smart Dashes" id="460">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="toggleAutomaticDashSubstitution:" target="-1" id="461"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Smart Links" tag="3" keyEquivalent="G" id="354">
+-                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+-                                            <connections>
+-                                                <action selector="toggleAutomaticLinkDetection:" target="-1" id="357"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Text Replacement" id="462">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="toggleAutomaticTextReplacement:" target="-1" id="463"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                    </items>
+-                                </menu>
+-                            </menuItem>
+-                            <menuItem title="Transformations" id="450">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <menu key="submenu" title="Transformations" id="451">
+-                                    <items>
+-                                        <menuItem title="Make Upper Case" id="452">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="uppercaseWord:" target="-1" id="464"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Make Lower Case" id="465">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="lowercaseWord:" target="-1" id="468"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Capitalize" id="466">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="capitalizeWord:" target="-1" id="467"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                    </items>
+-                                </menu>
+-                            </menuItem>
+-                            <menuItem title="Speech" id="211">
+-                                <menu key="submenu" title="Speech" id="212">
+-                                    <items>
+-                                        <menuItem title="Start Speaking" id="196">
+-                                            <connections>
+-                                                <action selector="startSpeaking:" target="-1" id="233"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Stop Speaking" id="195">
+-                                            <connections>
+-                                                <action selector="stopSpeaking:" target="-1" id="227"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                    </items>
+-                                </menu>
+-                            </menuItem>
+-                        </items>
+-                    </menu>
+-                </menuItem>
+-                <menuItem title="Format" id="XIS-Pd-Vuu">
+-                    <modifierMask key="keyEquivalentModifierMask"/>
+-                    <menu key="submenu" title="Format" id="Q4W-S0-3Cu">
+-                        <items>
+-                            <menuItem title="Font" id="B6h-7Z-w3k">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <menu key="submenu" title="Font" systemMenu="font" id="ccs-Kj-Qnl">
+-                                    <items>
+-                                        <menuItem title="Show Fonts" keyEquivalent="t" id="JdP-ph-D1e">
+-                                            <connections>
+-                                                <action selector="orderFrontFontPanel:" target="420" id="5ax-1j-V6I"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Bold" tag="2" keyEquivalent="b" id="eCo-Bs-3zW">
+-                                            <connections>
+-                                                <action selector="addFontTrait:" target="420" id="lA7-DT-nNL"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Italic" tag="1" keyEquivalent="i" id="cqM-51-HFZ">
+-                                            <connections>
+-                                                <action selector="addFontTrait:" target="420" id="gNF-s1-bu3"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Underline" keyEquivalent="u" id="edF-7q-n4G">
+-                                            <connections>
+-                                                <action selector="underline:" target="-1" id="p7r-e7-lE1"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="dKY-wH-ZAW"/>
+-                                        <menuItem title="Bigger" tag="3" id="V0U-mA-5AK">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="modifyFont:" target="420" id="hmF-PZ-vVH"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Smaller" tag="4" id="hWP-7f-ZV3">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="modifyFont:" target="420" id="pnr-Yn-h6p"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="85U-ed-XaT"/>
+-                                        <menuItem title="Kern" id="OpW-rX-7b7">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <menu key="submenu" title="Kern" id="3ai-p0-u8J">
+-                                                <items>
+-                                                    <menuItem title="Use Default" id="Bq7-s4-Cx4">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="useStandardKerning:" target="-1" id="dGQ-15-u64"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Use None" id="J91-Su-jko">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="turnOffKerning:" target="-1" id="4id-Hg-Z2c"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Tighten" id="9JU-gk-Jf0">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="tightenKerning:" target="-1" id="okp-HV-KQw"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Loosen" id="RzD-kL-wAw">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="loosenKerning:" target="-1" id="siy-AO-hQn"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                </items>
+-                                            </menu>
+-                                        </menuItem>
+-                                        <menuItem title="Ligatures" id="Uxd-4f-NdX">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <menu key="submenu" title="Ligatures" id="8EV-D4-9u0">
+-                                                <items>
+-                                                    <menuItem title="Use Default" id="TvA-ab-gje">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="useStandardLigatures:" target="-1" id="5rl-eI-e68"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Use None" id="Qnc-kL-37b">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="turnOffLigatures:" target="-1" id="vjm-iK-G9H"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Use All" id="irX-HQ-nx8">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="useAllLigatures:" target="-1" id="mAE-dy-11q"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                </items>
+-                                            </menu>
+-                                        </menuItem>
+-                                        <menuItem title="Baseline" id="bOK-WT-ZWa">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <menu key="submenu" title="Baseline" id="XsM-qD-Vyo">
+-                                                <items>
+-                                                    <menuItem title="Use Default" id="aBU-Hk-nlu">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="unscript:" target="-1" id="hUi-Ri-yRm"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Superscript" id="mku-Fv-4Ng">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="superscript:" target="-1" id="qjR-Jx-t1g"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Subscript" id="Zg2-uQ-ASS">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="subscript:" target="-1" id="2Z9-gF-tB1"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Raise" id="yUJ-Xq-P8x">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="raiseBaseline:" target="-1" id="a0E-9Z-R0E"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem title="Lower" id="Evj-iA-Jwn">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="lowerBaseline:" target="-1" id="Ps2-ny-xky"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                </items>
+-                                            </menu>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="zMW-Ao-9C1"/>
+-                                        <menuItem title="Show Colors" keyEquivalent="C" id="EAK-j7-Pzh">
+-                                            <connections>
+-                                                <action selector="orderFrontColorPanel:" target="-1" id="zOJ-Uy-Ff6"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="OQ1-81-xHz"/>
+-                                        <menuItem title="Copy Style" keyEquivalent="c" id="FXX-Ut-i7F">
+-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-                                            <connections>
+-                                                <action selector="copyFont:" target="-1" id="8mq-Bq-dJK"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Paste Style" keyEquivalent="v" id="SqT-TI-FSL">
+-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-                                            <connections>
+-                                                <action selector="pasteFont:" target="-1" id="AlM-Je-cOH"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                    </items>
+-                                </menu>
+-                            </menuItem>
+-                            <menuItem title="Text" id="Wwu-ay-eo6">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <menu key="submenu" title="Text" id="GYP-R3-ASD">
+-                                    <items>
+-                                        <menuItem title="Align Left" keyEquivalent="{" id="dUB-l9-hkx">
+-                                            <connections>
+-                                                <action selector="alignLeft:" target="-1" id="SPA-U4-gSy"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Center" keyEquivalent="|" id="Da2-ZQ-w1h">
+-                                            <connections>
+-                                                <action selector="alignCenter:" target="-1" id="B4w-OT-Hwr"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Justify" id="iAO-CA-P2L">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="alignJustified:" target="-1" id="lSG-0g-DFJ"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Align Right" keyEquivalent="}" id="Bik-5s-M6P">
+-                                            <connections>
+-                                                <action selector="alignRight:" target="-1" id="WCu-Uc-5dx"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="231-fw-Azp"/>
+-                                        <menuItem title="Indent" keyEquivalent="]" id="OcZ-mE-dy8">
+-                                            <connections>
+-                                                <action selector="indent:" target="-1" id="lSG-0g-DFM"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Outdent" keyEquivalent="[" id="Ayh-5B-HWu">
+-                                            <connections>
+-                                                <action selector="outdent:" target="-1" id="Ayh-5B-HWM"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="GNO-k5-c2C"/>
+-                                        <menuItem title="Writing Direction" id="Dxv-9Y-sNO">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <menu key="submenu" title="Writing Direction" id="pKn-WV-hFk">
+-                                                <items>
+-                                                    <menuItem title="Paragraph" enabled="NO" id="PX7-T3-iSU">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                    </menuItem>
+-                                                    <menuItem id="fYp-sh-nqB">
+-                                                        <string key="title">	Default</string>
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="makeBaseWritingDirectionNatural:" target="-1" id="z9r-Q0-zcU"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem id="7Kh-vB-DZW">
+-                                                        <string key="title">	Left to Right</string>
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="makeBaseWritingDirectionLeftToRight:" target="-1" id="By6-Xc-sQg"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem id="Efq-zm-Iex">
+-                                                        <string key="title">	Right to Left</string>
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="makeBaseWritingDirectionRightToLeft:" target="-1" id="J4w-YN-dtS"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem isSeparatorItem="YES" id="9Jo-nJ-QoT"/>
+-                                                    <menuItem title="Selection" enabled="NO" id="hEQ-Jh-r5g">
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                    </menuItem>
+-                                                    <menuItem id="m9Q-d8-VVx">
+-                                                        <string key="title">	Default</string>
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="makeTextWritingDirectionNatural:" target="-1" id="Ilo-c7-jCj"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem id="5Ym-OR-TV9">
+-                                                        <string key="title">	Left to Right</string>
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="makeTextWritingDirectionLeftToRight:" target="-1" id="9ca-bt-cYl"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                    <menuItem id="blA-MU-vkf">
+-                                                        <string key="title">	Right to Left</string>
+-                                                        <modifierMask key="keyEquivalentModifierMask"/>
+-                                                        <connections>
+-                                                            <action selector="makeTextWritingDirectionRightToLeft:" target="-1" id="0FR-dP-o2G"/>
+-                                                        </connections>
+-                                                    </menuItem>
+-                                                </items>
+-                                            </menu>
+-                                        </menuItem>
+-                                        <menuItem isSeparatorItem="YES" id="B8B-wI-eLJ"/>
+-                                        <menuItem title="Show Ruler" id="n5B-oo-Cq3">
+-                                            <modifierMask key="keyEquivalentModifierMask"/>
+-                                            <connections>
+-                                                <action selector="toggleRuler:" target="-1" id="Owf-8L-beV"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Copy Ruler" keyEquivalent="c" id="1lc-9z-D87">
+-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+-                                            <connections>
+-                                                <action selector="copyRuler:" target="-1" id="PEA-p8-LkH"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                        <menuItem title="Paste Ruler" keyEquivalent="v" id="OYt-kg-Stz">
+-                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+-                                            <connections>
+-                                                <action selector="pasteRuler:" target="-1" id="2Zj-Qr-dKw"/>
+-                                            </connections>
+-                                        </menuItem>
+-                                    </items>
+-                                </menu>
+-                            </menuItem>
+                         </items>
+                     </menu>
+                 </menuItem>
+                 <menuItem title="View" id="295">
+                     <menu key="submenu" title="View" id="296">
+                         <items>
+-                            <menuItem title="Show Toolbar" keyEquivalent="t" id="297">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-                                <connections>
+-                                    <action selector="toggleToolbarShown:" target="-1" id="366"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Customize Toolbar…" id="298">
+-                                <connections>
+-                                    <action selector="runToolbarCustomizationPalette:" target="-1" id="365"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem isSeparatorItem="YES" id="556"/>
+                             <menuItem title="Zoom In" keyEquivalent="+" id="555">
+                                 <connections>
+                                     <action selector="zoomIn:" target="-1" id="559"/>
+@@ -752,19 +308,6 @@
+                                     </items>
+                                 </menu>
+                             </menuItem>
+-                            <menuItem title="Always Show Horizontal Scroller" id="vTs-1N-5Cb">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="toggleAlwaysShowsHorizontalScroller:" target="-1" id="WAH-WK-kRY"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Always Show Vertical Scroller" id="dad-Bl-adD">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="toggleAlwaysShowsVerticalScroller:" target="-1" id="zGl-OI-HH6"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem isSeparatorItem="YES" id="581"/>
+                             <menuItem title="Reload Page" keyEquivalent="r" id="579">
+                                 <connections>
+                                     <action selector="reload:" target="-1" id="582"/>
+@@ -773,89 +316,16 @@
+                         </items>
+                     </menu>
+                 </menuItem>
+-                <menuItem title="Settings" id="L97-eg-kzp" userLabel="Settings">
+-                    <modifierMask key="keyEquivalentModifierMask"/>
+-                    <menu key="submenu" title="Settings" id="Egg-52-IiJ"/>
+-                </menuItem>
+                 <menuItem title="Debug" id="534">
+                     <modifierMask key="keyEquivalentModifierMask"/>
+                     <menu key="submenu" title="Debug" id="535">
+                         <items>
+-                            <menuItem title="Force Repaint" keyEquivalent="r" id="545">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-                                <connections>
+-                                    <action selector="forceRepaint:" target="-1" id="547"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Hide Web View" id="548">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="showHideWebView:" target="-1" id="549"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Remove Web View" id="550">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="removeReinsertWebView:" target="-1" id="551"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem isSeparatorItem="YES" id="553"/>
+-                            <menuItem title="Dump Source To Console" id="566">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="dumpSourceToConsole:" target="-1" id="567"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem isSeparatorItem="YES" id="77P-rp-OVT"/>
+-                            <menuItem title="Fetch Website Data" id="bFf-Dl-CTv">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="fetchWebsiteData:" target="-1" id="pVk-bR-Z4t"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Fetch Default Store Website Data" alternate="YES" id="hGe-aG-Hya">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES"/>
+-                                <connections>
+-                                    <action selector="fetchDefaultStoreWebsiteData:" target="-1" id="4Dx-M1-kNg"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Clear Website Data" id="bfj-13-wQ4">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="clearWebsiteData:" target="-1" id="pEC-gb-vGm"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Clear Default Store Website Data" alternate="YES" id="YZt-aI-HG8">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES"/>
+-                                <connections>
+-                                    <action selector="clearDefaultStoreWebsiteData:" target="-1" id="HDz-DK-I9T"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Fetch And Clear Website Data" id="VDP-iU-836">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="fetchAndClearWebsiteData:" target="-1" id="R06-l2-tP0"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem title="Fetch And Clear Default Store Website Data" alternate="YES" id="VDT-W7-H7E">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES"/>
+-                                <connections>
+-                                    <action selector="fetchAndClearDefaultStoreWebsiteData:" target="-1" id="B75-Hd-TIT"/>
+-                                </connections>
+-                            </menuItem>
+-                            <menuItem isSeparatorItem="YES" id="uef-kb-r9n"/>
+                             <menuItem title="Show Web Inspector" keyEquivalent="i" id="xso-9z-R4u">
+                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                 <connections>
+                                     <action selector="showHideWebInspector:" target="-1" id="Cmx-g7-EPb"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem title="Show Extensions Manager" keyEquivalent="m" id="2f0-pH-KRx">
+-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+-                                <connections>
+-                                    <action selector="showExtensionsManager:" target="-1" id="iyL-17-sLo"/>
+-                                </connections>
+-                            </menuItem>
+                         </items>
+                     </menu>
+                 </menuItem>
+@@ -883,28 +353,12 @@
+                         </items>
+                     </menu>
+                 </menuItem>
+-                <menuItem title="Help" id="490">
+-                    <modifierMask key="keyEquivalentModifierMask"/>
+-                    <menu key="submenu" title="Help" systemMenu="help" id="491">
+-                        <items>
+-                            <menuItem title="MiniBrowser Help" keyEquivalent="?" id="492">
+-                                <connections>
+-                                    <action selector="showHelp:" target="-1" id="493"/>
+-                                </connections>
+-                            </menuItem>
+-                        </items>
+-                    </menu>
+-                </menuItem>
+             </items>
+             <point key="canvasLocation" x="139" y="-50"/>
+         </menu>
+         <customObject id="494" customClass="BrowserAppDelegate">
+             <connections>
+-                <outlet property="_newWebKit1EditorItem" destination="jNR-Z3-YWi" id="6wB-Aa-CK7"/>
+-                <outlet property="_newWebKit1WindowItem" destination="573" id="ZCj-u2-PU7"/>
+-                <outlet property="_newWebKit2EditorItem" destination="IdI-wb-1JD" id="DIr-pe-XI8"/>
+                 <outlet property="_newWebKit2WindowItem" destination="571" id="1Gv-mK-aul"/>
+-                <outlet property="_settingsMenu" destination="Egg-52-IiJ" id="JMi-UF-EfK"/>
+             </connections>
+         </customObject>
+         <customObject id="420" customClass="NSFontManager"/>
+diff --git a/Tools/MiniBrowser/mac/SettingsController.h b/Tools/MiniBrowser/mac/SettingsController.h
+deleted file mode 100644
+index c6676c08dd6a425cbfbde6c3c7822284737fc77d..0000000000000000000000000000000000000000
+--- a/Tools/MiniBrowser/mac/SettingsController.h
++++ /dev/null
+@@ -1,67 +0,0 @@
+-/*
+- * Copyright (C) 2014-2016 Apple Inc. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- *
+- * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
+- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+- * THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-#import <Cocoa/Cocoa.h>
+-
+-extern NSString * const kUserAgentChangedNotificationName;
+-
+-@interface SettingsController : NSObject
+-
+-- (instancetype)initWithMenu:(NSMenu *)menu;
+-
+-@property (nonatomic, readonly) BOOL useWebKit2ByDefault;
+-@property (nonatomic, readonly) BOOL createEditorByDefault;
+-@property (nonatomic, readonly) BOOL useTransparentWindows;
+-@property (nonatomic, readonly) BOOL usePaginatedMode;
+-@property (nonatomic, readonly) BOOL layerBordersVisible;
+-@property (nonatomic, readonly) BOOL simpleLineLayoutEnabled;
+-@property (nonatomic, readonly) BOOL simpleLineLayoutDebugBordersEnabled;
+-@property (nonatomic, readonly) BOOL incrementalRenderingSuppressed;
+-@property (nonatomic, readonly) BOOL tiledScrollingIndicatorVisible;
+-@property (nonatomic, readonly, getter=isSpaceReservedForBanners) BOOL spaceReservedForBanners;
+-@property (nonatomic, readonly) BOOL resourceUsageOverlayVisible;
+-@property (nonatomic, readonly) BOOL nonFastScrollableRegionOverlayVisible;
+-@property (nonatomic, readonly) BOOL wheelEventHandlerRegionOverlayVisible;
+-@property (nonatomic, readonly) BOOL useUISideCompositing;
+-@property (nonatomic, readonly) BOOL perWindowWebProcessesDisabled;
+-@property (nonatomic, readonly) BOOL subPixelCSSOMMetricsEnabled;
+-@property (nonatomic, readonly) BOOL acceleratedDrawingEnabled;
+-@property (nonatomic, readonly) BOOL displayListDrawingEnabled;
+-@property (nonatomic, readonly) BOOL subpixelAntialiasedLayerTextEnabled;
+-@property (nonatomic, readonly) BOOL resourceLoadStatisticsEnabled;
+-@property (nonatomic, readonly) BOOL largeImageAsyncDecodingEnabled;
+-@property (nonatomic, readonly) BOOL animatedImageAsyncDecodingEnabled;
+-@property (nonatomic, readonly) BOOL appleColorFilterEnabled;
+-@property (nonatomic, readonly) BOOL punchOutWhiteBackgroundsInDarkMode;
+-@property (nonatomic, readonly) BOOL useSystemAppearance;
+-@property (nonatomic, readonly) BOOL loadsAllSiteIcons;
+-@property (nonatomic, readonly) BOOL usesGameControllerFramework;
+-@property (nonatomic, readonly) BOOL networkCacheSpeculativeRevalidationDisabled;
+-@property (nonatomic, readonly) BOOL processSwapOnWindowOpenWithOpenerEnabled;
+-
+-@property (nonatomic, readonly) NSString *defaultURL;
+-@property (nonatomic, readonly) NSString *customUserAgent;
+-
+-@end
 diff --git a/Tools/MiniBrowser/mac/SettingsController.m b/Tools/MiniBrowser/mac/SettingsController.m
-index d68c854ad582702c6a6ea638708f1d3f8e4e1b18..3a078cbc6c5b081de013497fe8254bedb8e034d4 100644
+deleted file mode 100644
+index d68c854ad582702c6a6ea638708f1d3f8e4e1b18..0000000000000000000000000000000000000000
 --- a/Tools/MiniBrowser/mac/SettingsController.m
-+++ b/Tools/MiniBrowser/mac/SettingsController.m
-@@ -33,7 +33,7 @@
- 
- NSString * const kUserAgentChangedNotificationName = @"UserAgentChangedNotification";
- 
++++ /dev/null
+@@ -1,814 +0,0 @@
+-/*
+- * Copyright (C) 2014-2016 Apple Inc. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- *
+- * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
+- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+- * THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-#import "SettingsController.h"
+-
+-#import "AppDelegate.h"
+-#import "BrowserWindowController.h"
+-#import <WebKit/WKPreferencesPrivate.h>
+-#import <WebKit/_WKExperimentalFeature.h>
+-#import <WebKit/_WKInternalDebugFeature.h>
+-
+-NSString * const kUserAgentChangedNotificationName = @"UserAgentChangedNotification";
+-
 -static NSString * const defaultURL = @"http://www.webkit.org/";
-+static NSString * const defaultURL = @"about:blank";
- static NSString * const DefaultURLPreferenceKey = @"DefaultURL";
- 
- static NSString * const CustomUserAgentPreferenceKey = @"CustomUserAgentIdentifier";
+-static NSString * const DefaultURLPreferenceKey = @"DefaultURL";
+-
+-static NSString * const CustomUserAgentPreferenceKey = @"CustomUserAgentIdentifier";
+-
+-static NSString * const UseWebKit2ByDefaultPreferenceKey = @"UseWebKit2ByDefault";
+-static NSString * const CreateEditorByDefaultPreferenceKey = @"CreateEditorByDefault";
+-static NSString * const LayerBordersVisiblePreferenceKey = @"LayerBordersVisible";
+-static NSString * const SimpleLineLayoutEnabledPreferenceKey = @"SimpleLineLayoutEnabled";
+-static NSString * const SimpleLineLayoutDebugBordersEnabledPreferenceKey = @"SimpleLineLayoutDebugBordersEnabled";
+-static NSString * const TiledScrollingIndicatorVisiblePreferenceKey = @"TiledScrollingIndicatorVisible";
+-static NSString * const ReserveSpaceForBannersPreferenceKey = @"ReserveSpaceForBanners";
+-
+-static NSString * const ResourceUsageOverlayVisiblePreferenceKey = @"ResourceUsageOverlayVisible";
+-static NSString * const LoadsAllSiteIconsKey = @"LoadsAllSiteIcons";
+-static NSString * const UsesGameControllerFrameworkKey = @"UsesGameControllerFramework";
+-static NSString * const IncrementalRenderingSuppressedPreferenceKey = @"IncrementalRenderingSuppressed";
+-static NSString * const AcceleratedDrawingEnabledPreferenceKey = @"AcceleratedDrawingEnabled";
+-static NSString * const DisplayListDrawingEnabledPreferenceKey = @"DisplayListDrawingEnabled";
+-static NSString * const SubpixelAntialiasedLayerTextEnabledPreferenceKey = @"SubpixelAntialiasedLayerTextEnabled";
+-static NSString * const ResourceLoadStatisticsEnabledPreferenceKey = @"ResourceLoadStatisticsEnabled";
+-
+-static NSString * const NonFastScrollableRegionOverlayVisiblePreferenceKey = @"NonFastScrollableRegionOverlayVisible";
+-static NSString * const WheelEventHandlerRegionOverlayVisiblePreferenceKey = @"WheelEventHandlerRegionOverlayVisible";
+-
+-static NSString * const UseTransparentWindowsPreferenceKey = @"UseTransparentWindows";
+-static NSString * const UsePaginatedModePreferenceKey = @"UsePaginatedMode";
+-static NSString * const EnableSubPixelCSSOMMetricsPreferenceKey = @"EnableSubPixelCSSOMMetrics";
+-
+-static NSString * const LargeImageAsyncDecodingEnabledPreferenceKey = @"LargeImageAsyncDecodingEnabled";
+-static NSString * const AnimatedImageAsyncDecodingEnabledPreferenceKey = @"AnimatedImageAsyncDecodingEnabled";
+-static NSString * const AppleColorFilterEnabledPreferenceKey = @"AppleColorFilterEnabled";
+-static NSString * const PunchOutWhiteBackgroundsInDarkModePreferenceKey = @"PunchOutWhiteBackgroundsInDarkMode";
+-static NSString * const UseSystemAppearancePreferenceKey = @"UseSystemAppearance";
+-
+-// This default name intentionally overlaps with the key that WebKit2 checks when creating a view.
+-static NSString * const UseRemoteLayerTreeDrawingAreaPreferenceKey = @"WebKit2UseRemoteLayerTreeDrawingArea";
+-
+-static NSString * const PerWindowWebProcessesDisabledKey = @"PerWindowWebProcessesDisabled";
+-static NSString * const NetworkCacheSpeculativeRevalidationDisabledKey = @"NetworkCacheSpeculativeRevalidationDisabled";
+-static NSString * const ProcessSwapOnWindowOpenWithOpenerKey = @"ProcessSwapOnWindowOpenWithOpener";
+-
+-typedef NS_ENUM(NSInteger, DebugOverylayMenuItemTag) {
+-    NonFastScrollableRegionOverlayTag = 100,
+-    WheelEventHandlerRegionOverlayTag,
+-    ExperimentalFeatureTag,
+-    InternalDebugFeatureTag,
+-};
+-
+-@interface SettingsController ()
+-@property (nonatomic, retain) NSMenu *menu;
+-@end
+-
+-@implementation SettingsController
+-
+-- (instancetype)initWithMenu:(NSMenu *)menu
+-{
+-    self = [super init];
+-    if (!self)
+-        return nil;
+-
+-    _menu = [menu retain];
+-
+-    NSArray *onByDefaultPrefs = @[
+-        UseWebKit2ByDefaultPreferenceKey,
+-        AcceleratedDrawingEnabledPreferenceKey,
+-        SimpleLineLayoutEnabledPreferenceKey,
+-        SubpixelAntialiasedLayerTextEnabledPreferenceKey,
+-        LargeImageAsyncDecodingEnabledPreferenceKey,
+-        AnimatedImageAsyncDecodingEnabledPreferenceKey,
+-    ];
+-    
+-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+-    for (NSString *prefName in onByDefaultPrefs) {
+-        if (![userDefaults objectForKey:prefName])
+-            [userDefaults setBool:YES forKey:prefName];
+-    }
+-
+-    [self _populateMenu];
+-
+-    return self;
+-}
+-
+-- (void)dealloc
+-{
+-    [_menu release];
+-    [super dealloc];
+-}
+-
+-- (void)_addItemWithTitle:(NSString *)title action:(SEL)action indented:(BOOL)indented
+-{
+-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title action:action keyEquivalent:@""];
+-    [item setTarget:self];
+-    if (indented)
+-        [item setIndentationLevel:1];
+-    [_menu addItem:item];
+-    [item release];
+-}
+-
+-- (void)_addHeaderWithTitle:(NSString *)title
+-{
+-    [_menu addItem:[NSMenuItem separatorItem]];
+-    [_menu addItem:[[[NSMenuItem alloc] initWithTitle:title action:nil keyEquivalent:@""] autorelease]];
+-}
+-
+-- (void)_populateMenu
+-{
+-    [self _addItemWithTitle:@"Use WebKit2 By Default" action:@selector(toggleUseWebKit2ByDefault:) indented:NO];
+-    [self _addItemWithTitle:@"Create Editor By Default" action:@selector(toggleCreateEditorByDefault:) indented:NO];
+-    [self _addItemWithTitle:@"Set Default URL to Current URL" action:@selector(setDefaultURLToCurrentURL:) indented:NO];
+-
+-    [_menu addItem:[NSMenuItem separatorItem]];
+-
+-    NSMenuItem *userAgentSubmenuItem = [[NSMenuItem alloc] initWithTitle:@"User Agent" action:nil keyEquivalent:@""];
+-    NSMenu *userAgentMenu = [[NSMenu alloc] initWithTitle:@"User Agent"];
+-    [self buildUserAgentsMenu:userAgentMenu];
+-    [userAgentSubmenuItem setSubmenu:userAgentMenu];
+-    [_menu addItem:userAgentSubmenuItem];
+-    [userAgentMenu release];
+-    [userAgentSubmenuItem release];
+-
+-    [_menu addItem:[NSMenuItem separatorItem]];
+-
+-    [self _addItemWithTitle:@"Use Transparent Windows" action:@selector(toggleUseTransparentWindows:) indented:NO];
+-    [self _addItemWithTitle:@"Use Paginated Mode" action:@selector(toggleUsePaginatedMode:) indented:NO];
+-    [self _addItemWithTitle:@"Show Layer Borders" action:@selector(toggleShowLayerBorders:) indented:NO];
+-    [self _addItemWithTitle:@"Disable Simple Line Layout" action:@selector(toggleSimpleLineLayoutEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Show Simple Line Layout Borders" action:@selector(toggleSimpleLineLayoutDebugBordersEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Suppress Incremental Rendering in New Windows" action:@selector(toggleIncrementalRenderingSuppressed:) indented:NO];
+-    [self _addItemWithTitle:@"Enable Accelerated Drawing" action:@selector(toggleAcceleratedDrawingEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Enable Display List Drawing" action:@selector(toggleDisplayListDrawingEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Enable Subpixel-antialiased Layer Text" action:@selector(toggleSubpixelAntialiasedLayerTextEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Enable Resource Load Statistics" action:@selector(toggleResourceLoadStatisticsEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Enable Large Image Async Decoding" action:@selector(toggleLargeImageAsyncDecodingEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Enable Animated Image Async Decoding" action:@selector(toggleAnimatedImageAsyncDecodingEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Enable color-filter" action:@selector(toggleAppleColorFilterEnabled:) indented:NO];
+-    [self _addItemWithTitle:@"Punch Out White Backgrounds in Dark Mode" action:@selector(togglePunchOutWhiteBackgroundsInDarkMode:) indented:NO];
+-    [self _addItemWithTitle:@"Use System Appearance" action:@selector(toggleUseSystemAppearance:) indented:NO];
+-    [self _addHeaderWithTitle:@"WebKit2-only Settings"];
+-
+-    [self _addItemWithTitle:@"Reserve Space For Banners" action:@selector(toggleReserveSpaceForBanners:) indented:YES];
+-    [self _addItemWithTitle:@"Show Tiled Scrolling Indicator" action:@selector(toggleShowTiledScrollingIndicator:) indented:YES];
+-    [self _addItemWithTitle:@"Use UI-Side Compositing" action:@selector(toggleUseUISideCompositing:) indented:YES];
+-    [self _addItemWithTitle:@"Disable Per-Window Web Processes" action:@selector(togglePerWindowWebProcessesDisabled:) indented:YES];
+-    [self _addItemWithTitle:@"Show Resource Usage Overlay" action:@selector(toggleShowResourceUsageOverlay:) indented:YES];
+-    [self _addItemWithTitle:@"Load All Site Icons Per-Page" action:@selector(toggleLoadsAllSiteIcons:) indented:YES];
+-    [self _addItemWithTitle:@"Use GameController.framework on macOS (Restart required)" action:@selector(toggleUsesGameControllerFramework:) indented:YES];
+-    [self _addItemWithTitle:@"Disable network cache speculative revalidation" action:@selector(toggleNetworkCacheSpeculativeRevalidationDisabled:) indented:YES];
+-    [self _addItemWithTitle:@"Enable Process Swap on window.open() with an opener" action:@selector(toggleProcessSwapOnWindowOpenWithOpener:) indented:YES];
+-
+-    NSMenuItem *debugOverlaysSubmenuItem = [[NSMenuItem alloc] initWithTitle:@"Debug Overlays" action:nil keyEquivalent:@""];
+-    NSMenu *debugOverlaysMenu = [[NSMenu alloc] initWithTitle:@"Debug Overlays"];
+-    [debugOverlaysSubmenuItem setSubmenu:debugOverlaysMenu];
+-
+-    NSMenuItem *nonFastScrollableRegionItem = [[NSMenuItem alloc] initWithTitle:@"Non-fast Scrollable Region" action:@selector(toggleDebugOverlay:) keyEquivalent:@""];
+-    [nonFastScrollableRegionItem setTag:NonFastScrollableRegionOverlayTag];
+-    [nonFastScrollableRegionItem setTarget:self];
+-    [debugOverlaysMenu addItem:[nonFastScrollableRegionItem autorelease]];
+-
+-    NSMenuItem *wheelEventHandlerRegionItem = [[NSMenuItem alloc] initWithTitle:@"Wheel Event Handler Region" action:@selector(toggleDebugOverlay:) keyEquivalent:@""];
+-    [wheelEventHandlerRegionItem setTag:WheelEventHandlerRegionOverlayTag];
+-    [wheelEventHandlerRegionItem setTarget:self];
+-    [debugOverlaysMenu addItem:[wheelEventHandlerRegionItem autorelease]];
+-    [debugOverlaysMenu release];
+-    
+-    [_menu addItem:debugOverlaysSubmenuItem];
+-    [debugOverlaysSubmenuItem release];
+-
+-    NSMenuItem *experimentalFeaturesSubmenuItem = [[NSMenuItem alloc] initWithTitle:@"Experimental Features" action:nil keyEquivalent:@""];
+-    NSMenu *experimentalFeaturesMenu = [[NSMenu alloc] initWithTitle:@"Experimental Features"];
+-    [experimentalFeaturesSubmenuItem setSubmenu:experimentalFeaturesMenu];
+-
+-    NSArray<_WKExperimentalFeature *> *experimentalFeatures = [WKPreferences _experimentalFeatures];
+-
+-    for (_WKExperimentalFeature *feature in experimentalFeatures) {
+-        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:feature.name action:@selector(toggleExperimentalFeature:) keyEquivalent:@""];
+-        item.toolTip = feature.details;
+-        item.representedObject = feature;
+-
+-        [item setTag:ExperimentalFeatureTag];
+-        [item setTarget:self];
+-        [experimentalFeaturesMenu addItem:[item autorelease]];
+-    }
+-
+-    [_menu addItem:experimentalFeaturesSubmenuItem];
+-    [experimentalFeaturesSubmenuItem release];
+-    [experimentalFeaturesMenu release];
+-
+-    NSMenuItem *internalDebugFeaturesSubmenuItem = [[NSMenuItem alloc] initWithTitle:@"Internal Features" action:nil keyEquivalent:@""];
+-    NSMenu *internalDebugFeaturesMenu = [[NSMenu alloc] initWithTitle:@"Internal Features"];
+-    [internalDebugFeaturesSubmenuItem setSubmenu:internalDebugFeaturesMenu];
+-
+-    NSArray<_WKInternalDebugFeature *> *internalDebugFeatures = [WKPreferences _internalDebugFeatures];
+-
+-    for (_WKInternalDebugFeature *feature in internalDebugFeatures) {
+-        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:feature.name action:@selector(toggleInternalDebugFeature:) keyEquivalent:@""];
+-        item.toolTip = feature.details;
+-        item.representedObject = feature;
+-
+-        [item setTag:InternalDebugFeatureTag];
+-        [item setTarget:self];
+-        [internalDebugFeaturesMenu addItem:[item autorelease]];
+-    }
+-
+-    [_menu addItem:internalDebugFeaturesSubmenuItem];
+-    [internalDebugFeaturesSubmenuItem release];
+-    [internalDebugFeaturesMenu release];
+-
+-    [self _addHeaderWithTitle:@"WebKit1-only Settings"];
+-    [self _addItemWithTitle:@"Enable Subpixel CSSOM Metrics" action:@selector(toggleEnableSubPixelCSSOMMetrics:) indented:YES];
+-}
+-
+-+ (NSArray *)userAgentData
+-{
+-    return @[
+-        @{
+-            @"label" : @"Safari 13.1",
+-            @"identifier" : @"safari",
+-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15"
+-        },
+-        @{
+-            @"label" : @"-",
+-        },
+-        @{
+-            @"label" : @"Safari—iOS 13.4—iPhone",
+-            @"identifier" : @"iphone-safari",
+-            @"userAgent" : @"Mozilla/5.0 (iPhone; CPU iPhone OS 13_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1 Mobile/15E148 Safari/604.1"
+-        },
+-        @{
+-            @"label" : @"-",
+-        },
+-        @{
+-            @"label" : @"Firefox—macOS",
+-            @"identifier" : @"firefox",
+-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:70.0) Gecko/20100101 Firefox/70.0"
+-        },
+-        @{
+-            @"label" : @"Firefox—Windows",
+-            @"identifier" : @"windows-firefox",
+-            @"userAgent" : @"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/71.0"
+-        },
+-        @{
+-            @"label" : @"-",
+-        },
+-        @{
+-            @"label" : @"Chrome—macOS",
+-            @"identifier" : @"chrome",
+-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+-        },
+-        @{
+-            @"label" : @"Chrome—Windows",
+-            @"identifier" : @"windows-chrome",
+-            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+-        },
+-        @{
+-            @"label" : @"Chrome—Android",
+-            @"identifier" : @"android-chrome",
+-            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+-        },
+-    ];
+-}
+-
+-- (void)buildUserAgentsMenu:(NSMenu *)menu
+-{
+-    NSDictionary* defaultUAInfo = @{
+-        @"label" : @"Default",
+-        @"identifier" : @"default",
+-    };
+-
+-    NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:@"Default" action:@selector(changeCutomUserAgent:) keyEquivalent:@""];
+-    [menuItem setTarget:self];
+-    [menuItem setRepresentedObject:defaultUAInfo];
+-
+-    [menu addItem:menuItem];
+-    [menuItem release];
+-
+-    [menu addItem:[NSMenuItem separatorItem]];
+-
+-    for (NSDictionary *userAgentData in [[self class] userAgentData]) {
+-        NSString *name = userAgentData[@"label"];
+-        
+-        if ([name isEqualToString:@"-"]) {
+-            [menu addItem:[NSMenuItem separatorItem]];
+-            continue;
+-        }
+-        
+-        menuItem = [[NSMenuItem alloc] initWithTitle:name action:@selector(changeCutomUserAgent:) keyEquivalent:@""];
+-        [menuItem setTarget:self];
+-        [menuItem setRepresentedObject:userAgentData];
+-        [menu addItem:menuItem];
+-        [menuItem release];
+-    }
+-}
+-
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wdeprecated-implementations"
+-- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+-#pragma GCC diagnostic pop
+-{
+-    SEL action = [menuItem action];
+-
+-    if (action == @selector(toggleUseWebKit2ByDefault:))
+-        [menuItem setState:[self useWebKit2ByDefault] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleCreateEditorByDefault:))
+-        [menuItem setState:[self createEditorByDefault] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleUseTransparentWindows:))
+-        [menuItem setState:[self useTransparentWindows] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleUsePaginatedMode:))
+-        [menuItem setState:[self usePaginatedMode] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleShowLayerBorders:))
+-        [menuItem setState:[self layerBordersVisible] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleSimpleLineLayoutEnabled:))
+-        [menuItem setState:[self simpleLineLayoutEnabled] ? NSControlStateValueOff : NSControlStateValueOn];
+-    else if (action == @selector(toggleSimpleLineLayoutDebugBordersEnabled:))
+-        [menuItem setState:[self simpleLineLayoutDebugBordersEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleIncrementalRenderingSuppressed:))
+-        [menuItem setState:[self incrementalRenderingSuppressed] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleAcceleratedDrawingEnabled:))
+-        [menuItem setState:[self acceleratedDrawingEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleDisplayListDrawingEnabled:))
+-        [menuItem setState:[self displayListDrawingEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleSubpixelAntialiasedLayerTextEnabled:))
+-        [menuItem setState:[self subpixelAntialiasedLayerTextEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleResourceLoadStatisticsEnabled:))
+-        [menuItem setState:[self resourceLoadStatisticsEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleLargeImageAsyncDecodingEnabled:))
+-        [menuItem setState:[self largeImageAsyncDecodingEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleAnimatedImageAsyncDecodingEnabled:))
+-        [menuItem setState:[self animatedImageAsyncDecodingEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleAppleColorFilterEnabled:))
+-        [menuItem setState:[self appleColorFilterEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(togglePunchOutWhiteBackgroundsInDarkMode:))
+-        [menuItem setState:[self punchOutWhiteBackgroundsInDarkMode] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleUseSystemAppearance:))
+-        [menuItem setState:[self useSystemAppearance] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleReserveSpaceForBanners:))
+-        [menuItem setState:[self isSpaceReservedForBanners] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleShowTiledScrollingIndicator:))
+-        [menuItem setState:[self tiledScrollingIndicatorVisible] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleShowResourceUsageOverlay:))
+-        [menuItem setState:[self resourceUsageOverlayVisible] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleLoadsAllSiteIcons:))
+-        [menuItem setState:[self loadsAllSiteIcons] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleUsesGameControllerFramework:))
+-        [menuItem setState:[self usesGameControllerFramework] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleNetworkCacheSpeculativeRevalidationDisabled:))
+-        [menuItem setState:[self networkCacheSpeculativeRevalidationDisabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleProcessSwapOnWindowOpenWithOpener:))
+-        [menuItem setState:[self processSwapOnWindowOpenWithOpenerEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleUseUISideCompositing:))
+-        [menuItem setState:[self useUISideCompositing] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(togglePerWindowWebProcessesDisabled:))
+-        [menuItem setState:[self perWindowWebProcessesDisabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleEnableSubPixelCSSOMMetrics:))
+-        [menuItem setState:[self subPixelCSSOMMetricsEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleDebugOverlay:))
+-        [menuItem setState:[self debugOverlayVisible:menuItem] ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(changeCutomUserAgent:)) {
+-
+-        NSString *savedUAIdentifier = [[NSUserDefaults standardUserDefaults] stringForKey:CustomUserAgentPreferenceKey];
+-        NSDictionary *userAgentDict = [menuItem representedObject];
+-        if (userAgentDict) {
+-            BOOL isCurrentUA = [userAgentDict[@"identifier"] isEqualToString:savedUAIdentifier];
+-            [menuItem setState:isCurrentUA ? NSControlStateValueOn : NSControlStateValueOff];
+-        } else
+-            [menuItem setState:NSControlStateValueOff];
+-    }
+-
+-    WKPreferences *defaultPreferences = [[NSApplication sharedApplication] browserAppDelegate].defaultPreferences;
+-    if (menuItem.tag == ExperimentalFeatureTag) {
+-        _WKExperimentalFeature *feature = menuItem.representedObject;
+-        [menuItem setState:[defaultPreferences _isEnabledForExperimentalFeature:feature] ? NSControlStateValueOn : NSControlStateValueOff];
+-    }
+-    if (menuItem.tag == InternalDebugFeatureTag) {
+-        _WKInternalDebugFeature *feature = menuItem.representedObject;
+-        [menuItem setState:[defaultPreferences _isEnabledForInternalDebugFeature:feature] ? NSControlStateValueOn : NSControlStateValueOff];
+-    }
+-
+-    return YES;
+-}
+-
+-- (void)_toggleBooleanDefault:(NSString *)defaultName
+-{
+-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+-    [defaults setBool:![defaults boolForKey:defaultName] forKey:defaultName];
+-
+-    [[[NSApplication sharedApplication] browserAppDelegate] didChangeSettings];
+-}
+-
+-- (void)toggleUseWebKit2ByDefault:(id)sender
+-{
+-    [self _toggleBooleanDefault:UseWebKit2ByDefaultPreferenceKey];
+-}
+-
+-- (BOOL)useWebKit2ByDefault
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:UseWebKit2ByDefaultPreferenceKey];
+-}
+-
+-- (void)toggleCreateEditorByDefault:(id)sender
+-{
+-    [self _toggleBooleanDefault:CreateEditorByDefaultPreferenceKey];
+-}
+-
+-- (BOOL)createEditorByDefault
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:CreateEditorByDefaultPreferenceKey];
+-}
+-
+-- (void)toggleUseTransparentWindows:(id)sender
+-{
+-    [self _toggleBooleanDefault:UseTransparentWindowsPreferenceKey];
+-}
+-
+-- (BOOL)useTransparentWindows
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:UseTransparentWindowsPreferenceKey];
+-}
+-
+-- (void)toggleUsePaginatedMode:(id)sender
+-{
+-    [self _toggleBooleanDefault:UsePaginatedModePreferenceKey];
+-}
+-
+-- (BOOL)usePaginatedMode
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:UsePaginatedModePreferenceKey];
+-}
+-
+-- (void)toggleUseUISideCompositing:(id)sender
+-{
+-    [self _toggleBooleanDefault:UseRemoteLayerTreeDrawingAreaPreferenceKey];
+-}
+-
+-- (BOOL)useUISideCompositing
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:UseRemoteLayerTreeDrawingAreaPreferenceKey];
+-}
+-
+-- (void)togglePerWindowWebProcessesDisabled:(id)sender
+-{
+-    NSAlert *alert = [[NSAlert alloc] init];
+-    [alert setMessageText:self.perWindowWebProcessesDisabled ? @"Are you sure you want to switch to per-window web processes?" : @"Are you sure you want to switch to a single web process?"];
+-    [alert setInformativeText:@"This requires quitting and relaunching MiniBrowser. I'll do the quitting. You will have to do the relaunching."];
+-    [alert addButtonWithTitle:@"Switch and Quit"];
+-    [alert addButtonWithTitle:@"Cancel"];
+-
+-    NSModalResponse response = [alert runModal];    
+-    [alert release];
+-
+-    if (response != NSAlertFirstButtonReturn)
+-        return;
+-
+-    [self _toggleBooleanDefault:PerWindowWebProcessesDisabledKey];
+-    [NSApp terminate:self];
+-}
+-
+-- (BOOL)perWindowWebProcessesDisabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:PerWindowWebProcessesDisabledKey];
+-}
+-
+-- (void)toggleIncrementalRenderingSuppressed:(id)sender
+-{
+-    [self _toggleBooleanDefault:IncrementalRenderingSuppressedPreferenceKey];
+-}
+-
+-- (BOOL)incrementalRenderingSuppressed
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:IncrementalRenderingSuppressedPreferenceKey];
+-}
+-
+-- (void)toggleShowLayerBorders:(id)sender
+-{
+-    [self _toggleBooleanDefault:LayerBordersVisiblePreferenceKey];
+-}
+-
+-- (BOOL)layerBordersVisible
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:LayerBordersVisiblePreferenceKey];
+-}
+-
+-- (void)toggleSimpleLineLayoutEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:SimpleLineLayoutEnabledPreferenceKey];
+-}
+-
+-- (BOOL)simpleLineLayoutEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:SimpleLineLayoutEnabledPreferenceKey];
+-}
+-
+-- (void)toggleSimpleLineLayoutDebugBordersEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:SimpleLineLayoutDebugBordersEnabledPreferenceKey];
+-}
+-
+-- (BOOL)simpleLineLayoutDebugBordersEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:SimpleLineLayoutDebugBordersEnabledPreferenceKey];
+-}
+-
+-- (void)toggleAcceleratedDrawingEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:AcceleratedDrawingEnabledPreferenceKey];
+-}
+-
+-- (BOOL)acceleratedDrawingEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:AcceleratedDrawingEnabledPreferenceKey];
+-}
+-
+-- (void)toggleDisplayListDrawingEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:DisplayListDrawingEnabledPreferenceKey];
+-}
+-
+-- (BOOL)displayListDrawingEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:DisplayListDrawingEnabledPreferenceKey];
+-}
+-
+-- (void)toggleSubpixelAntialiasedLayerTextEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:SubpixelAntialiasedLayerTextEnabledPreferenceKey];
+-}
+-
+-- (BOOL)subpixelAntialiasedLayerTextEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:SubpixelAntialiasedLayerTextEnabledPreferenceKey];
+-}
+-
+-- (void)toggleReserveSpaceForBanners:(id)sender
+-{
+-    [self _toggleBooleanDefault:ReserveSpaceForBannersPreferenceKey];
+-}
+-
+-- (void)toggleShowTiledScrollingIndicator:(id)sender
+-{
+-    [self _toggleBooleanDefault:TiledScrollingIndicatorVisiblePreferenceKey];
+-}
+-
+-- (void)toggleShowResourceUsageOverlay:(id)sender
+-{
+-    [self _toggleBooleanDefault:ResourceUsageOverlayVisiblePreferenceKey];
+-}
+-
+-- (BOOL)loadsAllSiteIcons
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:LoadsAllSiteIconsKey];
+-}
+-
+-- (void)toggleLoadsAllSiteIcons:(id)sender
+-{
+-    [self _toggleBooleanDefault:LoadsAllSiteIconsKey];
+-}
+-
+-- (BOOL)usesGameControllerFramework
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:UsesGameControllerFrameworkKey];
+-}
+-
+-- (void)toggleUsesGameControllerFramework:(id)sender
+-{
+-    [self _toggleBooleanDefault:UsesGameControllerFrameworkKey];
+-}
+-
+-- (BOOL)networkCacheSpeculativeRevalidationDisabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:NetworkCacheSpeculativeRevalidationDisabledKey];
+-}
+-
+-- (void)toggleNetworkCacheSpeculativeRevalidationDisabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:NetworkCacheSpeculativeRevalidationDisabledKey];
+-}
+-
+-- (BOOL)processSwapOnWindowOpenWithOpenerEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:ProcessSwapOnWindowOpenWithOpenerKey];
+-}
+-
+-- (void)toggleProcessSwapOnWindowOpenWithOpener:(id)sender
+-{
+-    [self _toggleBooleanDefault:ProcessSwapOnWindowOpenWithOpenerKey];
+-}
+-
+-- (BOOL)isSpaceReservedForBanners
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:ReserveSpaceForBannersPreferenceKey];
+-}
+-
+-- (BOOL)tiledScrollingIndicatorVisible
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:TiledScrollingIndicatorVisiblePreferenceKey];
+-}
+-
+-- (BOOL)resourceUsageOverlayVisible
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:ResourceUsageOverlayVisiblePreferenceKey];
+-}
+-
+-- (void)toggleResourceLoadStatisticsEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:ResourceLoadStatisticsEnabledPreferenceKey];
+-}
+-
+-- (BOOL)resourceLoadStatisticsEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:ResourceLoadStatisticsEnabledPreferenceKey];
+-}
+-
+-- (void)toggleLargeImageAsyncDecodingEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:LargeImageAsyncDecodingEnabledPreferenceKey];
+-}
+-
+-- (BOOL)largeImageAsyncDecodingEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:LargeImageAsyncDecodingEnabledPreferenceKey];
+-}
+-
+-- (void)toggleAnimatedImageAsyncDecodingEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:AnimatedImageAsyncDecodingEnabledPreferenceKey];
+-}
+-
+-- (BOOL)animatedImageAsyncDecodingEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:AnimatedImageAsyncDecodingEnabledPreferenceKey];
+-}
+-
+-- (void)toggleAppleColorFilterEnabled:(id)sender
+-{
+-    [self _toggleBooleanDefault:AppleColorFilterEnabledPreferenceKey];
+-}
+-
+-- (BOOL)appleColorFilterEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:AppleColorFilterEnabledPreferenceKey];
+-}
+-
+-- (void)togglePunchOutWhiteBackgroundsInDarkMode:(id)sender
+-{
+-    [self _toggleBooleanDefault:PunchOutWhiteBackgroundsInDarkModePreferenceKey];
+-}
+-
+-- (BOOL)punchOutWhiteBackgroundsInDarkMode
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:PunchOutWhiteBackgroundsInDarkModePreferenceKey];
+-}
+-
+-- (void)toggleUseSystemAppearance:(id)sender
+-{
+-    [self _toggleBooleanDefault:UseSystemAppearancePreferenceKey];
+-}
+-
+-- (BOOL)useSystemAppearance
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:UseSystemAppearancePreferenceKey];
+-}
+-
+-- (void)toggleEnableSubPixelCSSOMMetrics:(id)sender
+-{
+-    [self _toggleBooleanDefault:EnableSubPixelCSSOMMetricsPreferenceKey];
+-}
+-
+-- (BOOL)subPixelCSSOMMetricsEnabled
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:EnableSubPixelCSSOMMetricsPreferenceKey];
+-}
+-
+-- (BOOL)nonFastScrollableRegionOverlayVisible
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:NonFastScrollableRegionOverlayVisiblePreferenceKey];
+-}
+-
+-- (BOOL)wheelEventHandlerRegionOverlayVisible
+-{
+-    return [[NSUserDefaults standardUserDefaults] boolForKey:WheelEventHandlerRegionOverlayVisiblePreferenceKey];
+-}
+-
+-- (NSString *)preferenceKeyForRegionOverlayTag:(NSUInteger)tag
+-{
+-    switch (tag) {
+-    case NonFastScrollableRegionOverlayTag:
+-        return NonFastScrollableRegionOverlayVisiblePreferenceKey;
+-
+-    case WheelEventHandlerRegionOverlayTag:
+-        return WheelEventHandlerRegionOverlayVisiblePreferenceKey;
+-    }
+-    return nil;
+-}
+-
+-- (void)toggleDebugOverlay:(id)sender
+-{
+-    NSString *preferenceKey = [self preferenceKeyForRegionOverlayTag:[sender tag]];
+-    if (preferenceKey)
+-        [self _toggleBooleanDefault:preferenceKey];
+-}
+-
+-- (void)toggleExperimentalFeature:(id)sender
+-{
+-    _WKExperimentalFeature *feature = ((NSMenuItem *)sender).representedObject;
+-    WKPreferences *preferences = [[NSApplication sharedApplication] browserAppDelegate].defaultPreferences;
+-
+-    BOOL currentlyEnabled = [preferences _isEnabledForExperimentalFeature:feature];
+-    [preferences _setEnabled:!currentlyEnabled forExperimentalFeature:feature];
+-
+-    [[NSUserDefaults standardUserDefaults] setBool:!currentlyEnabled forKey:feature.key];
+-}
+-
+-- (void)toggleInternalDebugFeature:(id)sender
+-{
+-    _WKInternalDebugFeature *feature = ((NSMenuItem *)sender).representedObject;
+-    WKPreferences *preferences = [[NSApplication sharedApplication] browserAppDelegate].defaultPreferences;
+-
+-    BOOL currentlyEnabled = [preferences _isEnabledForInternalDebugFeature:feature];
+-    [preferences _setEnabled:!currentlyEnabled forInternalDebugFeature:feature];
+-
+-    [[NSUserDefaults standardUserDefaults] setBool:!currentlyEnabled forKey:feature.key];
+-}
+-
+-- (BOOL)debugOverlayVisible:(NSMenuItem *)menuItem
+-{
+-    NSString *preferenceKey = [self preferenceKeyForRegionOverlayTag:[menuItem tag]];
+-    if (preferenceKey)
+-        return [[NSUserDefaults standardUserDefaults] boolForKey:preferenceKey];
+-
+-    return NO;
+-}
+-
+-- (NSString *)customUserAgent
+-{
+-    NSString *uaIdentifier = [[NSUserDefaults standardUserDefaults] stringForKey:CustomUserAgentPreferenceKey];
+-    if (uaIdentifier) {
+-        for (NSDictionary *item in [[self class] userAgentData]) {
+-            if ([item[@"identifier"] isEqualToString:uaIdentifier])
+-                return item[@"userAgent"];
+-        }
+-    }
+-
+-    return nil;
+-}
+-
+-- (void)changeCutomUserAgent:(id)sender
+-{
+-    NSDictionary *userAgentDict = [sender representedObject];
+-    if (!userAgentDict)
+-        return;
+-
+-    NSString *uaIdentifier = userAgentDict[@"identifier"];
+-    if (uaIdentifier)
+-        [[NSUserDefaults standardUserDefaults] setObject:uaIdentifier forKey:CustomUserAgentPreferenceKey];
+-        
+-    [[NSNotificationCenter defaultCenter] postNotificationName:kUserAgentChangedNotificationName object:self];
+-}
+-
+-- (NSString *)defaultURL
+-{
+-    NSString *customDefaultURL = [[NSUserDefaults standardUserDefaults] stringForKey:DefaultURLPreferenceKey];
+-    if (customDefaultURL)
+-        return customDefaultURL;
+-    return defaultURL;
+-}
+-
+-- (void)setDefaultURLToCurrentURL:(id)sender
+-{
+-    NSWindowController *windowController = [[NSApp keyWindow] windowController];
+-    NSString *customDefaultURL = nil;
+-
+-    if ([windowController isKindOfClass:[BrowserWindowController class]])
+-        customDefaultURL = [[(BrowserWindowController *)windowController currentURL] absoluteString];
+-
+-    if (customDefaultURL)
+-        [[NSUserDefaults standardUserDefaults] setObject:customDefaultURL forKey:DefaultURLPreferenceKey];
+-}
+-
+-@end
+diff --git a/Tools/MiniBrowser/mac/WK1BrowserWindowController.m b/Tools/MiniBrowser/mac/WK1BrowserWindowController.m
+deleted file mode 100644
+index 2aa5366995a464f22ba5085b039a67e75c274d86..0000000000000000000000000000000000000000
+--- a/Tools/MiniBrowser/mac/WK1BrowserWindowController.m
++++ /dev/null
+@@ -1,472 +0,0 @@
+-/*
+- * Copyright (C) 2010 Apple Inc. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- *
+- * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
+- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+- * THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-#import "WK1BrowserWindowController.h"
+-
+-#import "AppDelegate.h"
+-#import "SettingsController.h"
+-#import <WebKit/WebInspector.h>
+-#import <WebKit/WebKit.h>
+-#import <WebKit/WebNSURLExtras.h>
+-#import <WebKit/WebPreferences.h>
+-#import <WebKit/WebPreferencesPrivate.h>
+-#import <WebKit/WebPreferenceKeysPrivate.h>
+-#import <WebKit/WebViewPrivate.h>
+-
+-@interface WK1BrowserWindowController () <WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate, WebUIDelegate>
+-@end
+-
+-@implementation WK1BrowserWindowController
+-
+-- (void)awakeFromNib
+-{
+-    _webView = [[WebView alloc] initWithFrame:[containerView bounds] frameName:nil groupName:@"MiniBrowser"];
+-    [_webView setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
+-
+-    _webView.editable = self.isEditable;
+-
+-    [_webView setFrameLoadDelegate:self];
+-    [_webView setUIDelegate:self];
+-    [_webView setResourceLoadDelegate:self];
+-    [_webView setPolicyDelegate:self];
+-
+-    [[WebPreferences standardPreferences] setFullScreenEnabled:YES];
+-    [[WebPreferences standardPreferences] setDeveloperExtrasEnabled:YES];
+-    [[WebPreferences standardPreferences] setImageControlsEnabled:YES];
+-    [[WebPreferences standardPreferences] setServiceControlsEnabled:YES];
+-    [[WebPreferences standardPreferences] setJavaScriptCanOpenWindowsAutomatically:YES];
+-
+-    [_webView _listenForLayoutMilestones:WebDidFirstLayout | WebDidFirstVisuallyNonEmptyLayout | WebDidHitRelevantRepaintedObjectsAreaThreshold];
+-
+-    SettingsController *settingsController = [[NSApplication sharedApplication] browserAppDelegate].settingsController;
+-    if (settingsController.customUserAgent)
+-        _webView.customUserAgent = settingsController.customUserAgent;
+-
+-    [self didChangeSettings];
+-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userAgentDidChange:) name:kUserAgentChangedNotificationName object:nil];
+-
+-    [containerView addSubview:_webView];
+-}
+-
+-- (void)dealloc
+-{
+-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+-    [_webView setFrameLoadDelegate:nil];
+-    [_webView setUIDelegate:nil];
+-    [_webView setResourceLoadDelegate:nil];
+-    [_webView release];
+-
+-    [super dealloc];
+-}
+-
+-- (void)userAgentDidChange:(NSNotification *)notification
+-{
+-    SettingsController *settingsController = [[NSApplication sharedApplication] browserAppDelegate].settingsController;
+-    _webView.customUserAgent = settingsController.customUserAgent;
+-    [_webView reload:nil];
+-}
+-
+-- (void)loadURLString:(NSString *)urlString
+-{
+-    // FIXME: We shouldn't have to set the url text here.
+-    [urlText setStringValue:urlString];
+-    [self fetch:nil];
+-}
+-
+-- (void)loadHTMLString:(NSString *)HTMLString
+-{
+-    [_webView.mainFrame loadHTMLString:HTMLString baseURL:nil];
+-}
+-
+-- (IBAction)fetch:(id)sender
+-{
+-    [urlText setStringValue:[self addProtocolIfNecessary:urlText.stringValue]];
+-    NSURL *url = [NSURL _webkit_URLWithUserTypedString:urlText.stringValue];
+-    [[_webView mainFrame] loadRequest:[NSURLRequest requestWithURL:url]];
+-}
+-
+-- (IBAction)setPageScale:(id)sender
+-{
+-    CGFloat scale = [self pageScaleForMenuItemTag:[sender tag]];
+-    [_webView _scaleWebView:scale atOrigin:NSZeroPoint];
+-}
+-
+-- (IBAction)setViewScale:(id)sender
+-{
+-}
+-
+-- (IBAction)reload:(id)sender
+-{
+-    [_webView reload:sender];
+-}
+-
+-- (IBAction)forceRepaint:(id)sender
+-{
+-    [_webView setNeedsDisplay:YES];
+-}
+-
+-- (IBAction)goBack:(id)sender
+-{
+-    [_webView goBack:sender];
+-}
+-
+-- (IBAction)goForward:(id)sender
+-{
+-    [_webView goForward:sender];
+-}
+-
+-static BOOL areEssentiallyEqual(double a, double b)
+-{
+-    double tolerance = 0.001;
+-    return (fabs(a - b) <= tolerance);
+-}
+-
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wdeprecated-implementations"
+-- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+-#pragma GCC diagnostic pop
+-{
+-    SEL action = [menuItem action];
+-
+-    if (action == @selector(saveAsPDF:))
+-        return NO;
+-    if (action == @selector(saveAsWebArchive:))
+-        return NO;
+-
+-    if (action == @selector(zoomIn:))
+-        return [self canZoomIn];
+-    if (action == @selector(zoomOut:))
+-        return [self canZoomOut];
+-    if (action == @selector(resetZoom:))
+-        return [self canResetZoom];
+-
+-    if (action == @selector(showHideWebView:))
+-        [menuItem setTitle:[_webView isHidden] ? @"Show Web View" : @"Hide Web View"];
+-    else if (action == @selector(removeReinsertWebView:))
+-        [menuItem setTitle:[_webView window] ? @"Remove Web View" : @"Insert Web View"];
+-    else if (action == @selector(toggleZoomMode:))
+-        [menuItem setState:_zoomTextOnly ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleEditable:))
+-        [menuItem setState:self.isEditable ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(showHideWebInspector:))
+-        [menuItem setTitle:_webView.inspector.isOpen ? @"Close Web Inspector" : @"Show Web Inspector"];
+-    else if (action == @selector(toggleAlwaysShowsHorizontalScroller:))
+-        menuItem.state = _webView.alwaysShowHorizontalScroller ? NSControlStateValueOn : NSControlStateValueOff;
+-    else if (action == @selector(toggleAlwaysShowsVerticalScroller:))
+-        menuItem.state = _webView.alwaysShowVerticalScroller ? NSControlStateValueOn : NSControlStateValueOff;
+-
+-    if (action == @selector(setPageScale:))
+-        [menuItem setState:areEssentiallyEqual([_webView _viewScaleFactor], [self pageScaleForMenuItemTag:[menuItem tag]])];
+-
+-    return YES;
+-}
+-
+-- (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)item
+-{
+-    SEL action = [item action];
+-
+-    if (action == @selector(goBack:))
+-        return [_webView canGoBack];
+-    
+-    if (action == @selector(goForward:))
+-        return [_webView canGoForward];
+-    
+-    return YES;
+-}
+-
+-- (void)validateToolbar
+-{
+-    [toolbar validateVisibleItems];
+-}
+-
+-- (BOOL)windowShouldClose:(id)sender
+-{
+-    return YES;
+-}
+-
+-- (void)windowWillClose:(NSNotification *)notification
+-{
+-    [[[NSApplication sharedApplication] browserAppDelegate] browserWindowWillClose:self.window];
+-    [self autorelease];
+-}
+-
+-- (double)currentZoomFactor
+-{
+-    return 1;
+-}
+-
+-- (BOOL)canZoomIn
+-{
+-    return [_webView canMakeTextLarger];
+-}
+-
+-- (void)zoomIn:(id)sender
+-{
+-    if (![self canZoomIn])
+-        return;
+-
+-    if (_zoomTextOnly)
+-        [_webView makeTextLarger:sender];
+-    else
+-        [_webView zoomPageIn:sender];
+-
+-}
+-
+-- (BOOL)canZoomOut
+-{
+-    return [_webView canMakeTextSmaller];
+-}
+-
+-- (void)zoomOut:(id)sender
+-{
+-    if (![self canZoomIn])
+-        return;
+-
+-    if (_zoomTextOnly)
+-        [_webView makeTextSmaller:sender];
+-    else
+-        [_webView zoomPageOut:sender];
+-}
+-
+-- (BOOL)canResetZoom
+-{
+-    return _zoomTextOnly ? [_webView canMakeTextStandardSize] : [_webView canResetPageZoom];
+-}
+-
+-- (void)resetZoom:(id)sender
+-{
+-    if (![self canResetZoom])
+-        return;
+-
+-    if (_zoomTextOnly)
+-        [_webView makeTextStandardSize:sender];
+-    else
+-        [_webView resetPageZoom:sender];
+-}
+-
+-- (IBAction)toggleZoomMode:(id)sender
+-{
+-    // FIXME: non-text zoom not implemented.
+-    _zoomTextOnly = !_zoomTextOnly;
+-}
+-
+-- (IBAction)toggleShrinkToFit:(id)sender
+-{
+-}
+-
+-- (IBAction)dumpSourceToConsole:(id)sender
+-{
+-}
+-
+-- (IBAction)showHideWebInspector:(id)sender
+-{
+-    WebInspector *inspector = _webView.inspector;
+-    if (inspector.isOpen)
+-        [inspector close:sender];
+-    else
+-        [inspector show:sender];
+-}
+-
+-- (IBAction)toggleAlwaysShowsHorizontalScroller:(id)sender
+-{
+-    _webView.alwaysShowHorizontalScroller = !_webView.alwaysShowHorizontalScroller;
+-}
+-
+-- (IBAction)toggleAlwaysShowsVerticalScroller:(id)sender
+-{
+-    _webView.alwaysShowVerticalScroller = !_webView.alwaysShowVerticalScroller;
+-}
+-
+-- (NSURL *)currentURL
+-{
+-    return _webView.mainFrame.dataSource.request.URL;
+-}
+-
+-- (NSView *)mainContentView
+-{
+-    return _webView;
+-}
+-
+-- (void)setEditable:(BOOL)editable
+-{
+-    [super setEditable:editable];
+-    _webView.editable = editable;
+-}
+-
+-- (void)didChangeSettings
+-{
+-    SettingsController *settings = [[NSApplication sharedApplication] browserAppDelegate].settingsController;
+-
+-    [[WebPreferences standardPreferences] setSubpixelCSSOMElementMetricsEnabled:settings.subPixelCSSOMMetricsEnabled];
+-    [[WebPreferences standardPreferences] setShowDebugBorders:settings.layerBordersVisible];
+-    [[WebPreferences standardPreferences] setSimpleLineLayoutEnabled:settings.simpleLineLayoutEnabled];
+-    [[WebPreferences standardPreferences] setSimpleLineLayoutDebugBordersEnabled:settings.simpleLineLayoutDebugBordersEnabled];
+-    [[WebPreferences standardPreferences] setShowRepaintCounter:settings.layerBordersVisible];
+-    [[WebPreferences standardPreferences] setSuppressesIncrementalRendering:settings.incrementalRenderingSuppressed];
+-    [[WebPreferences standardPreferences] setAcceleratedDrawingEnabled:settings.acceleratedDrawingEnabled];
+-    [[WebPreferences standardPreferences] setSubpixelAntialiasedLayerTextEnabled:settings.subpixelAntialiasedLayerTextEnabled];
+-    [[WebPreferences standardPreferences] setResourceLoadStatisticsEnabled:settings.resourceLoadStatisticsEnabled];
+-    [[WebPreferences standardPreferences] setLargeImageAsyncDecodingEnabled:settings.largeImageAsyncDecodingEnabled];
+-    [[WebPreferences standardPreferences] setAnimatedImageAsyncDecodingEnabled:settings.animatedImageAsyncDecodingEnabled];
+-    [[WebPreferences standardPreferences] setColorFilterEnabled:settings.appleColorFilterEnabled];
+-    [[WebPreferences standardPreferences] setPunchOutWhiteBackgroundsInDarkMode:settings.punchOutWhiteBackgroundsInDarkMode];
+-
+-    _webView._useSystemAppearance = settings.useSystemAppearance;
+-
+-    BOOL useTransparentWindows = settings.useTransparentWindows;
+-    if (useTransparentWindows != !self.window.isOpaque) {
+-        [self.window setOpaque:!useTransparentWindows];
+-        [self.window setBackgroundColor:[NSColor clearColor]];
+-        [self.window setHasShadow:!useTransparentWindows];
+-
+-        [_webView setBackgroundColor:useTransparentWindows ? [NSColor clearColor] : [NSColor whiteColor]];
+-
+-        [self.window display];
+-    }
+-
+-    BOOL usePaginatedMode = settings.usePaginatedMode;
+-    if (usePaginatedMode != (_webView._paginationMode != WebPaginationModeUnpaginated)) {
+-        if (usePaginatedMode) {
+-            [_webView _setPaginationMode:WebPaginationModeLeftToRight];
+-            [_webView _setPageLength:_webView.bounds.size.width / 2];
+-            [_webView _setGapBetweenPages:10];
+-        } else
+-            [_webView _setPaginationMode:WebPaginationModeUnpaginated];
+-    }
+-}
+-
+-- (IBAction)printWebView:(id)sender
+-{
+-    [[[[_webView mainFrame] frameView] printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]] runOperationModalForWindow:self.window delegate:nil didRunSelector:nil contextInfo:nil];
+-}
+-
+-- (void)webView:(WebView *)sender didLayout:(WebLayoutMilestones)milestones
+-{
+-    if (milestones & WebDidFirstLayout)
+-        LOG(@"layout milestone: %@", @"first layout");
+-
+-    if (milestones & WebDidFirstVisuallyNonEmptyLayout)
+-        LOG(@"layout milestone: %@", @"first non-empty layout");
+-
+-    if (milestones & WebDidHitRelevantRepaintedObjectsAreaThreshold)
+-        LOG(@"layout milestone: %@", @"relevant repainted objects area threshold");
+-}
+-
+-- (void)webView:(WebView *)webView decidePolicyForNavigationAction:(NSDictionary *)actionInformation request:(NSURLRequest *)request frame:(WebFrame *)frame decisionListener:(id<WebPolicyDecisionListener>)listener
+-{
+-    [listener use];
+-}
+-
+-// WebFrameLoadDelegate Methods
+-- (void)webView:(WebView *)sender didStartProvisionalLoadForFrame:(WebFrame *)frame
+-{
+-}
+-
+-- (void)updateTitle:(NSString *)title
+-{
+-    if (!title) {
+-        NSURL *url = _webView.mainFrame.dataSource.request.URL;
+-        title = url.lastPathComponent ?: url._web_userVisibleString;
+-    }
+-
+-    [self.window setTitle:[title stringByAppendingFormat:@" [WK1]%@", _webView.editable ? @" [Editable]" : @""]];
+-}
+-
+-- (WebView *)webView:(WebView *)sender createWebViewWithRequest:(NSURLRequest *)request
+-{
+-    WK1BrowserWindowController *newBrowserWindowController = [[WK1BrowserWindowController alloc] initWithWindowNibName:@"BrowserWindow"];
+-    [newBrowserWindowController.window makeKeyAndOrderFront:self];
+-
+-    return newBrowserWindowController->_webView;
+-}
+-
+-- (void)webView:(WebView *)sender didCommitLoadForFrame:(WebFrame *)frame
+-{
+-    if (frame != [sender mainFrame])
+-        return;
+-
+-    NSURL *committedURL = [[[frame dataSource] request] URL];
+-    urlText.stringValue = committedURL._web_userVisibleString;
+-
+-    [self updateTitle:nil];
+-}
+-
+-- (void)webView:(WebView *)sender didChangeLocationWithinPageForFrame:(WebFrame *)frame
+-{
+-    if (frame != [sender mainFrame])
+-        return;
+-
+-    NSURL *committedURL = [[[frame dataSource] request] URL];
+-    urlText.stringValue = committedURL._web_userVisibleString;
+-}
+-
+-- (void)webView:(WebView *)sender didReceiveTitle:(NSString *)title forFrame:(WebFrame *)frame
+-{
+-    if (frame != [sender mainFrame])
+-        return;
+-
+-    [self updateTitle:title];
+-}
+-
+-- (NSArray *)webView:(WebView *)sender contextMenuItemsForElement:(NSDictionary *)element defaultMenuItems:(NSArray *)defaultMenuItems
+-{
+-    return defaultMenuItems;
+-}
+-
+-- (void)webView:(WebView *)sender runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WebFrame *)frame
+-{
+-    NSAlert *alert = [[NSAlert alloc] init];
+-    [alert addButtonWithTitle:@"OK"];
+-
+-    alert.messageText = [NSString stringWithFormat:@"JavaScript alert dialog from %@.", frame.dataSource.request.URL.absoluteString];
+-    alert.informativeText = message;
+-
+-    [alert runModal];
+-    [alert release];
+-}
+-
+-- (BOOL)webView:(WebView *)sender runBeforeUnloadConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WebFrame *)frame
+-{
+-    NSAlert *alert = [[NSAlert alloc] init];
+-
+-    alert.messageText = [NSString stringWithFormat:@"JavaScript before unload dialog from %@.", frame.dataSource.request.URL.absoluteString];
+-    alert.informativeText = message;
+-
+-    [alert addButtonWithTitle:@"Leave Page"];
+-    [alert addButtonWithTitle:@"Stay On Page"];
+-
+-    NSModalResponse response = [alert runModal];
+-    
+-    [alert release];
+-
+-    return response == NSAlertFirstButtonReturn;
+-}
+-
+-- (NSUInteger)webView:(WebView *)webView dragDestinationActionMaskForDraggingInfo:(id <NSDraggingInfo>)draggingInfo
+-{
+-    return WebDragDestinationActionAny;
+-}
+-
+-@end
 diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.h b/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
 index 6f0949b0f4ad0ec86b8a6f27c6a53ce9ad691500..e774433031a66b2ae606d74deb2417fa510e59e3 100644
 --- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
@@ -11676,10 +14293,27 @@ index 6f0949b0f4ad0ec86b8a6f27c6a53ce9ad691500..e774433031a66b2ae606d74deb2417fa
  
  @end
 diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951f41ea811 100644
+index 031edd533ae1b791bc6862c631b909ae99dac886..5ac93063486780648344000cddd8810158916fb5 100644
 --- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
 +++ b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-@@ -73,6 +73,7 @@ @implementation WK2BrowserWindowController {
+@@ -26,7 +26,6 @@
+ #import "WK2BrowserWindowController.h"
+ 
+ #import "AppDelegate.h"
+-#import "SettingsController.h"
+ #import <WebKit/WKFrameInfo.h>
+ #import <WebKit/WKNavigationActionPrivate.h>
+ #import <WebKit/WKNavigationDelegate.h>
+@@ -44,8 +43,6 @@
+ #import <WebKit/_WKUserInitiatedAction.h>
+ 
+ static void* keyValueObservingContext = &keyValueObservingContext;
+-static const int testHeaderBannerHeight = 42;
+-static const int testFooterBannerHeight = 58;
+ 
+ @interface MiniBrowserNSTextFinder : NSTextFinder
+ 
+@@ -73,6 +70,7 @@ @implementation WK2BrowserWindowController {
      WKWebView *_webView;
      BOOL _zoomTextOnly;
      BOOL _isPrivateBrowsingWindow;
@@ -11687,27 +14321,57 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
  
      BOOL _useShrinkToFit;
  
-@@ -83,7 +84,10 @@ @implementation WK2BrowserWindowController {
+@@ -83,12 +81,13 @@ @implementation WK2BrowserWindowController {
  
  - (void)awakeFromNib
  {
 +    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
 +
      _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
+-    [self didChangeSettings];
 +    _webView._windowOcclusionDetectionEnabled = NO;
-     [self didChangeSettings];
  
      _webView.allowsMagnification = YES;
-@@ -107,7 +111,7 @@ - (void)awakeFromNib
-     // telling WebKit to load every icon referenced by the page.
-     if (settingsController.loadsAllSiteIcons)
-         _webView._iconLoadingDelegate = self;
+     _webView.allowsBackForwardNavigationGestures = YES;
+-    _webView._editable = self.isEditable;
+ 
+     [_webView setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
+     [containerView addSubview:_webView];
+@@ -102,21 +101,13 @@ - (void)awakeFromNib
+     _webView.navigationDelegate = self;
+     _webView.UIDelegate = self;
+ 
+-    SettingsController *settingsController = [[NSApplication sharedApplication] browserAppDelegate].settingsController;
+-    // This setting installs the new WK2 Icon Loading Delegate and tests that mechanism by
+-    // telling WebKit to load every icon referenced by the page.
+-    if (settingsController.loadsAllSiteIcons)
+-        _webView._iconLoadingDelegate = self;
 -    
-+
      _webView._observedRenderingProgressEvents = _WKRenderingProgressEventFirstLayout
          | _WKRenderingProgressEventFirstVisuallyNonEmptyLayout
          | _WKRenderingProgressEventFirstPaintWithSignificantArea
-@@ -147,14 +151,11 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
+         | _WKRenderingProgressEventFirstLayoutAfterSuppressedIncrementalRendering
+         | _WKRenderingProgressEventFirstPaintAfterSuppressedIncrementalRendering;
+ 
+-
+-    if (settingsController.customUserAgent)
+-        _webView.customUserAgent = settingsController.customUserAgent;
++    _webView.customUserAgent = @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15";
+ 
+     _webView._usePlatformFindUI = NO;
+ 
+@@ -136,38 +127,25 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
+ {
+     if (!(self = [super initWithWindowNibName:@"BrowserWindow"]))
+         return nil;
+-
+     _configuration = [configuration copy];
+     _isPrivateBrowsingWindow = !_configuration.websiteDataStore.isPersistent;
+-
+-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userAgentDidChange:) name:kUserAgentChangedNotificationName object:nil];
+     return self;
+ }
+ 
  - (void)dealloc
  {
      [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -11722,7 +14386,108 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
      [_webView release];
      [_configuration release];
  
-@@ -387,9 +388,15 @@ - (BOOL)windowShouldClose:(id)sender
+     [super dealloc];
+ }
+ 
+-- (void)userAgentDidChange:(NSNotification *)notification
+-{
+-    SettingsController *settingsController = [[NSApplication sharedApplication] browserAppDelegate].settingsController;
+-    _webView.customUserAgent = settingsController.customUserAgent;
+-    [_webView reload];
+-}
+-
+ - (IBAction)fetch:(id)sender
+ {
+     [urlText setStringValue:[self addProtocolIfNecessary:urlText.stringValue]];
+@@ -237,25 +215,10 @@ - (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+     if (action == @selector(resetZoom:))
+         return [self canResetZoom];
+     
+-    // Disabled until missing WK2 functionality is exposed via API/SPI.
+-    if (action == @selector(dumpSourceToConsole:)
+-        || action == @selector(forceRepaint:))
+-        return NO;
+-    
+-    if (action == @selector(showHideWebView:))
+-        [menuItem setTitle:[_webView isHidden] ? @"Show Web View" : @"Hide Web View"];
+-    else if (action == @selector(removeReinsertWebView:))
+-        [menuItem setTitle:[_webView window] ? @"Remove Web View" : @"Insert Web View"];
+-    else if (action == @selector(toggleZoomMode:))
++    if (action == @selector(toggleZoomMode:))
+         [menuItem setState:_zoomTextOnly ? NSControlStateValueOn : NSControlStateValueOff];
+-    else if (action == @selector(toggleEditable:))
+-        [menuItem setState:self.isEditable ? NSControlStateValueOn : NSControlStateValueOff];
+     else if (action == @selector(showHideWebInspector:))
+         [menuItem setTitle:_webView._inspector.isVisible ? @"Close Web Inspector" : @"Show Web Inspector"];
+-    else if (action == @selector(toggleAlwaysShowsHorizontalScroller:))
+-        menuItem.state = _webView._alwaysShowsHorizontalScroller ? NSControlStateValueOn : NSControlStateValueOff;
+-    else if (action == @selector(toggleAlwaysShowsVerticalScroller:))
+-        menuItem.state = _webView._alwaysShowsVerticalScroller ? NSControlStateValueOn : NSControlStateValueOff;
+ 
+     if (action == @selector(setPageScale:))
+         [menuItem setState:areEssentiallyEqual([_webView _pageScale], [self pageScaleForMenuItemTag:[menuItem tag]])];
+@@ -271,12 +234,6 @@ - (IBAction)reload:(id)sender
+     [_webView reload];
+ }
+ 
+-- (IBAction)forceRepaint:(id)sender
+-{
+-    // FIXME: This doesn't actually force a repaint.
+-    [_webView setNeedsDisplay:YES];
+-}
+-
+ - (IBAction)goBack:(id)sender
+ {
+     [_webView goBack];
+@@ -318,17 +275,6 @@ - (BOOL)canResetZoom
+     return _zoomTextOnly ? (_webView._textZoomFactor != 1) : (_webView.pageZoom != 1);
+ }
+ 
+-- (IBAction)toggleShrinkToFit:(id)sender
+-{
+-    _useShrinkToFit = !_useShrinkToFit;
+-    toggleUseShrinkToFitButton.image = _useShrinkToFit ? [NSImage imageNamed:@"NSExitFullScreenTemplate"] : [NSImage imageNamed:@"NSEnterFullScreenTemplate"];
+-    [_webView _setLayoutMode:_useShrinkToFit ? _WKLayoutModeDynamicSizeComputedFromMinimumDocumentSize : _WKLayoutModeViewSize];
+-}
+-
+-- (IBAction)dumpSourceToConsole:(id)sender
+-{
+-}
+-
+ - (IBAction)showHideWebInspector:(id)sender
+ {
+     _WKInspector *inspector = _webView._inspector;
+@@ -338,16 +284,6 @@ - (IBAction)showHideWebInspector:(id)sender
+         [inspector show];
+ }
+ 
+-- (IBAction)toggleAlwaysShowsHorizontalScroller:(id)sender
+-{
+-    _webView._alwaysShowsHorizontalScroller = !_webView._alwaysShowsHorizontalScroller;
+-}
+-
+-- (IBAction)toggleAlwaysShowsVerticalScroller:(id)sender
+-{
+-    _webView._alwaysShowsVerticalScroller = !_webView._alwaysShowsVerticalScroller;
+-}
+-
+ - (NSURL *)currentURL
+ {
+     return _webView.URL;
+@@ -358,12 +294,6 @@ - (NSView *)mainContentView
+     return _webView;
+ }
+ 
+-- (void)setEditable:(BOOL)editable
+-{
+-    [super setEditable:editable];
+-    _webView._editable = editable;
+-}
+-
+ - (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)item
+ {
+     SEL action = item.action;
+@@ -387,9 +317,15 @@ - (BOOL)windowShouldClose:(id)sender
  - (void)windowWillClose:(NSNotification *)notification
  {
      [[[NSApplication sharedApplication] browserAppDelegate] browserWindowWillClose:self.window];
@@ -11738,7 +14503,79 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
  #define DefaultMinimumZoomFactor (.5)
  #define DefaultMaximumZoomFactor (3.0)
  #define DefaultZoomFactorRatio (1.2)
-@@ -527,9 +534,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
+@@ -433,62 +369,6 @@ - (void)zoomOut:(id)sender
+     self.currentZoomFactor /= DefaultZoomFactorRatio;
+ }
+ 
+-- (void)didChangeSettings
+-{
+-    SettingsController *settings = [[NSApplication sharedApplication] browserAppDelegate].settingsController;
+-    WKPreferences *preferences = _webView.configuration.preferences;
+-
+-    _webView._useSystemAppearance = settings.useSystemAppearance;
+-
+-    preferences._tiledScrollingIndicatorVisible = settings.tiledScrollingIndicatorVisible;
+-    preferences._compositingBordersVisible = settings.layerBordersVisible;
+-    preferences._compositingRepaintCountersVisible = settings.layerBordersVisible;
+-    preferences._simpleLineLayoutEnabled = settings.simpleLineLayoutEnabled;
+-    preferences._simpleLineLayoutDebugBordersEnabled = settings.simpleLineLayoutDebugBordersEnabled;
+-    preferences._acceleratedDrawingEnabled = settings.acceleratedDrawingEnabled;
+-    preferences._resourceUsageOverlayVisible = settings.resourceUsageOverlayVisible;
+-    preferences._displayListDrawingEnabled = settings.displayListDrawingEnabled;
+-    preferences._subpixelAntialiasedLayerTextEnabled = settings.subpixelAntialiasedLayerTextEnabled;
+-    preferences._largeImageAsyncDecodingEnabled = settings.largeImageAsyncDecodingEnabled;
+-    preferences._animatedImageAsyncDecodingEnabled = settings.animatedImageAsyncDecodingEnabled;
+-    preferences._colorFilterEnabled = settings.appleColorFilterEnabled;
+-    preferences._punchOutWhiteBackgroundsInDarkMode = settings.punchOutWhiteBackgroundsInDarkMode;
+-
+-    _webView.configuration.websiteDataStore._resourceLoadStatisticsEnabled = settings.resourceLoadStatisticsEnabled;
+-
+-    BOOL useTransparentWindows = settings.useTransparentWindows;
+-    if (useTransparentWindows != !_webView._drawsBackground) {
+-        [self.window setOpaque:!useTransparentWindows];
+-        [self.window setBackgroundColor:[NSColor clearColor]];
+-        [self.window setHasShadow:!useTransparentWindows];
+-
+-        _webView._drawsBackground = !useTransparentWindows;
+-
+-        [self.window display];
+-    }
+-
+-    BOOL usePaginatedMode = settings.usePaginatedMode;
+-    if (usePaginatedMode != (_webView._paginationMode != _WKPaginationModeUnpaginated)) {
+-        if (usePaginatedMode) {
+-            _webView._paginationMode = _WKPaginationModeLeftToRight;
+-            _webView._pageLength = _webView.bounds.size.width / 2;
+-            _webView._gapBetweenPages = 10;
+-        } else
+-            _webView._paginationMode = _WKPaginationModeUnpaginated;
+-    }
+-    
+-    NSUInteger visibleOverlayRegions = 0;
+-    if (settings.nonFastScrollableRegionOverlayVisible)
+-        visibleOverlayRegions |= _WKNonFastScrollableRegion;
+-    if (settings.wheelEventHandlerRegionOverlayVisible)
+-        visibleOverlayRegions |= _WKWheelEventHandlerRegion;
+-    
+-    preferences._visibleDebugOverlayRegions = visibleOverlayRegions;
+-
+-    [_webView _setHeaderBannerHeight:[settings isSpaceReservedForBanners] ? testHeaderBannerHeight : 0];
+-    [_webView _setFooterBannerHeight:[settings isSpaceReservedForBanners] ? testFooterBannerHeight : 0];
+-}
+-
+ - (void)updateTitle:(NSString *)title
+ {
+     if (!title) {
+@@ -496,7 +376,7 @@ - (void)updateTitle:(NSString *)title
+         title = url.lastPathComponent ?: url._web_userVisibleString;
+     }
+ 
+-    self.window.title = [NSString stringWithFormat:@"%@%@ [WK2 %d]%@", _isPrivateBrowsingWindow ? @"🙈 " : @"", title, _webView._webProcessIdentifier, _webView._editable ? @" [Editable]" : @""];
++    self.window.title = [NSString stringWithFormat:@"%@%@ %d%@", _isPrivateBrowsingWindow ? @"🙈 " : @"", title, _webView._webProcessIdentifier, @""];
+ }
+ 
+ - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+@@ -527,9 +407,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
      [alert setInformativeText:message];
      [alert addButtonWithTitle:@"OK"];
  
@@ -11750,7 +14587,7 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
      }];
  }
  
-@@ -543,9 +552,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
+@@ -543,9 +425,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
      [alert addButtonWithTitle:@"OK"];
      [alert addButtonWithTitle:@"Cancel"];
  
@@ -11762,7 +14599,7 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
      }];
  }
  
-@@ -563,13 +574,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
+@@ -563,13 +447,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
      [input setStringValue:defaultText];
      [alert setAccessoryView:input];
      
@@ -11788,7 +14625,7 @@ index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951
  #if __has_feature(objc_generics)
  - (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> * URLs))completionHandler
  #else
-@@ -863,4 +886,9 @@ - (IBAction)saveAsWebArchive:(id)sender
+@@ -863,4 +759,9 @@ - (IBAction)saveAsWebArchive:(id)sender
      }];
  }
  
@@ -12234,6 +15071,131 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..867e7d08fd5f922e32e09550ac19a21d
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
+diff --git a/Tools/WebEditingTester/AppDelegate.h b/Tools/WebEditingTester/AppDelegate.h
+index 0f073a6e33c2af63e422f83e9a9876ba07ddc50f..6569794fcc3ce45915f409121543a9d4f6325653 100644
+--- a/Tools/WebEditingTester/AppDelegate.h
++++ b/Tools/WebEditingTester/AppDelegate.h
+@@ -27,14 +27,11 @@
+ 
+ @interface WebEditingAppDelegate : NSObject <NSApplicationDelegate> {
+     NSMutableSet *_webDocuments;
+-    IBOutlet NSMenuItem *_newWebKit1EditorItem;
+-    IBOutlet NSMenuItem *_newWebKit2EditorItem;
+     IBOutlet NSPanel *_operationsPanel;
+ }
+ 
+ - (IBAction)newEditor:(id)sender;
+ - (IBAction)showOperations:(id)sender;
+-- (IBAction)toggleUseWebKit2ByDefault:(id)sender;
+ 
+ - (IBAction)performTextFinderAction:(id)sender;
+ 
+diff --git a/Tools/WebEditingTester/AppDelegate.m b/Tools/WebEditingTester/AppDelegate.m
+index 640adc52893733ec81d71849da277924ee7d1f9e..07480b136703bc58e1fc13a5faba84397ef4d676 100644
+--- a/Tools/WebEditingTester/AppDelegate.m
++++ b/Tools/WebEditingTester/AppDelegate.m
+@@ -52,7 +52,6 @@ - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+     [WKBrowsingContextController registerSchemeForCustomProtocol:@"canned"];
+ 
+     [self newEditor:self];
+-    [self _updateNewWindowKeyEquivalents];
+ }
+ 
+ - (IBAction)newEditor:(id)sender
+@@ -61,10 +60,6 @@ - (IBAction)newEditor:(id)sender
+ 
+     if (sender == self)
+         controllerClass = self._defaultWebDocumentControllerClass;
+-    else if (sender == _newWebKit2EditorItem)
+-        controllerClass = [WK2WebDocumentController class];
+-    else if (sender == _newWebKit1EditorItem)
+-        controllerClass = [WK1WebDocumentController class];
+     
+     WebDocumentController *controller = [[controllerClass alloc] init];
+     [[controller window] makeKeyAndOrderFront:sender];
+@@ -129,23 +124,13 @@ - (BOOL)useWebKit2ByDefault
+ {
+     return [[NSUserDefaults standardUserDefaults] boolForKey:UseWebKit2ByDefaultPreferenceKey];
+ }
+-
+-- (IBAction)toggleUseWebKit2ByDefault:(id)sender
+-{
+-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+-    [defaults setBool:![defaults boolForKey:UseWebKit2ByDefaultPreferenceKey] forKey:UseWebKit2ByDefaultPreferenceKey];
+-    [self _updateNewWindowKeyEquivalents];
+-}
+-
++/*
+ - (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+ {
+-    SEL action = [menuItem action];
+-    
+-    if (action == @selector(toggleUseWebKit2ByDefault:))
+-        [menuItem setState:[self useWebKit2ByDefault] ? NSOnState : NSOffState];
+-    
++    SEL action = [menuItem action];    
+     return YES;
+ }
++*/
+ 
+ - (void)_openDocumentWithWebKit1:(id)sender
+ {
+@@ -164,16 +149,13 @@ - (IBAction)openDocument:(id)sender
+     NSButtonCell *radioButtonPrototype = [[NSButtonCell alloc] init];
+     radioButtonPrototype.buttonType = NSRadioButton;
+ 
+-    NSMatrix *openPanelAccessoryView = [[NSMatrix alloc] initWithFrame:NSZeroRect mode:NSRadioModeMatrix prototype:radioButtonPrototype numberOfRows:2 numberOfColumns:1];
++    NSMatrix *openPanelAccessoryView = [[NSMatrix alloc] initWithFrame:NSZeroRect mode:NSRadioModeMatrix prototype:radioButtonPrototype numberOfRows:1 numberOfColumns:1];
+     openPanelAccessoryView.autorecalculatesCellSize = YES;
+     openPanelAccessoryView.autosizesCells = YES;
+     NSArray *cells = openPanelAccessoryView.cells;
+-    [[cells objectAtIndex:0] setTitle:@"Open with WebKit1"];
+-    [[cells objectAtIndex:0] setAction:@selector(_openDocumentWithWebKit1:)];
+-    [[cells objectAtIndex:0] setState:!self.useWebKit2ByDefault];
+-    [[cells objectAtIndex:1] setTitle:@"Open with WebKit2"];
+-    [[cells objectAtIndex:1] setAction:@selector(_openDocumentWithWebKit2:)];
+-    [[cells objectAtIndex:1] setState:self.useWebKit2ByDefault];
++    [[cells objectAtIndex:0] setTitle:@"Open with WebKit"];
++    [[cells objectAtIndex:0] setAction:@selector(_openDocumentWithWebKit2:)];
++    [[cells objectAtIndex:0] setState:self.useWebKit2ByDefault];
+     [openPanelAccessoryView sizeToFit];
+ 
+     NSOpenPanel *panel = [NSOpenPanel openPanel];
+@@ -199,17 +181,6 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
+     return YES;
+ }
+ 
+-- (void)_updateNewWindowKeyEquivalents
+-{
+-    if (self.useWebKit2ByDefault) {
+-        [_newWebKit1EditorItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagOption];
+-        [_newWebKit2EditorItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+-    } else {
+-        [_newWebKit1EditorItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
+-        [_newWebKit2EditorItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagOption];
+-    }
+-}
+-
+ - (void)performTextFinderAction:(id)sender
+ {
+     id keyWindowDelegate = [NSApplication sharedApplication].keyWindow.delegate;
+diff --git a/Tools/WebEditingTester/MainMenu.xib b/Tools/WebEditingTester/MainMenu.xib
+index c986fb773feaabee37b83da270ade6200bb4ea24..31392fb69bd1f7a52ecbb53ae69f16b145470836 100644
+--- a/Tools/WebEditingTester/MainMenu.xib
++++ b/Tools/WebEditingTester/MainMenu.xib
+@@ -670,12 +670,6 @@
+                                     <action selector="pasteAsMarkup:" target="-1" id="Ejb-zz-08R"/>
+                                 </connections>
+                             </menuItem>
+-                            <menuItem title="Use WebKit2 by Default" id="AiO-8z-Uwi">
+-                                <modifierMask key="keyEquivalentModifierMask"/>
+-                                <connections>
+-                                    <action selector="toggleUseWebKit2ByDefault:" target="Voe-Tx-rLC" id="MFc-Wa-XWw"/>
+-                                </connections>
+-                            </menuItem>
+                         </items>
+                     </menu>
+                 </menuItem>
 diff --git a/Tools/WebKitTestRunner/TestController.cpp b/Tools/WebKitTestRunner/TestController.cpp
 index fcecdd6a6ed518b02ded768d5d6601f418b74c9a..fa6e079bbe26d471c3205bc356871da32b4a6e90 100644
 --- a/Tools/WebKitTestRunner/TestController.cpp
@@ -12324,39 +15286,29 @@ index 9788ab56abeb2f769d615029f615844a24d89cc2..fb32c4ff95e67b2e764e902dc0000d25
      ${TOOLS_DIR}/wpe/backends/ViewBackend.cpp
      ${TOOLS_DIR}/wpe/backends/WebKitAccessibleApplication.cpp
      ${TOOLS_DIR}/wpe/backends/WindowViewBackend.cpp
-diff --git a/Tools/wpe/backends/NullViewBackend.cpp b/Tools/wpe/backends/NullViewBackend.cpp
-new file mode 100644
-index 0000000000000000000000000000000000000000..033ff802d3971a455667cd64c0e68dd10f448aa7
---- /dev/null
+diff --git a/Tools/MiniBrowser/mac/ExtensionManagerWindowController.h b/Tools/wpe/backends/NullViewBackend.cpp
+similarity index 68%
+rename from Tools/MiniBrowser/mac/ExtensionManagerWindowController.h
+rename to Tools/wpe/backends/NullViewBackend.cpp
+index 3f1091e0986aa3fdb400202cdb7f3bc14eeedc15..033ff802d3971a455667cd64c0e68dd10f448aa7 100644
+--- a/Tools/MiniBrowser/mac/ExtensionManagerWindowController.h
 +++ b/Tools/wpe/backends/NullViewBackend.cpp
-@@ -0,0 +1,41 @@
-+/*
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2015 Apple Inc. All rights reserved.
 + * Copyright (C) Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
+  *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions
+@@ -23,10 +23,19 @@
+  * THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#import <Cocoa/Cocoa.h>
 +#include "NullViewBackend.h"
-+
+ 
+-@interface ExtensionManagerWindowController : NSWindowController {
+-    IBOutlet NSArrayController *arrayController;
 +#include <wpe/fdo-egl.h>
 +
 +namespace WPEToolingBackends {
@@ -12368,49 +15320,42 @@ index 0000000000000000000000000000000000000000..033ff802d3971a455667cd64c0e68dd1
 +    m_exportable = wpe_view_backend_exportable_fdo_egl_create(&exportableClient, this, 1, 1);
 +    initializeAccessibility();
 +    addActivityState(wpe_view_activity_state_visible | wpe_view_activity_state_focused | wpe_view_activity_state_in_window);
-+}
-+
+ }
+ 
+-@end
 +} // namespace WPEToolingBackends
-diff --git a/Tools/wpe/backends/NullViewBackend.h b/Tools/wpe/backends/NullViewBackend.h
-new file mode 100644
-index 0000000000000000000000000000000000000000..7a2a03491c33231de1c1d692e18fb71cc478b90f
---- /dev/null
+diff --git a/Tools/MiniBrowser/mac/WK1BrowserWindowController.h b/Tools/wpe/backends/NullViewBackend.h
+similarity index 75%
+rename from Tools/MiniBrowser/mac/WK1BrowserWindowController.h
+rename to Tools/wpe/backends/NullViewBackend.h
+index 44ed8d21edf48516d2296681e250451a2f08d53e..7a2a03491c33231de1c1d692e18fb71cc478b90f 100644
+--- a/Tools/MiniBrowser/mac/WK1BrowserWindowController.h
 +++ b/Tools/wpe/backends/NullViewBackend.h
-@@ -0,0 +1,43 @@
-+/*
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2010 Apple Inc. All rights reserved.
 + * Copyright (C) Microsoft Corporation.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
-+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-+ * THE POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
+  *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions
+@@ -23,13 +23,21 @@
+  * THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#import "BrowserWindowController.h"
 +#pragma once
-+
+ 
+-@class WebView;
 +#include "ViewBackend.h"
 +#include <cairo.h>
 +#include <glib.h>
 +#include <unordered_map>
-+
+ 
+-@interface WK1BrowserWindowController : BrowserWindowController {
+-    WebView *_webView;
+-}
 +namespace WPEToolingBackends {
-+
+ 
 +class NullViewBackend final : public ViewBackend {
 +public:
 +    NullViewBackend();
@@ -12418,5 +15363,6 @@ index 0000000000000000000000000000000000000000..7a2a03491c33231de1c1d692e18fb71c
 +private:
 +    void displayBuffer(struct wpe_fdo_egl_exported_image*) override { };
 +};
-+
+ 
+-@end
 +} // namespace WPEToolingBackends
