@@ -38,10 +38,14 @@ Each bot configuration has 3 parts:
 
 ## Setting Up Browser Toolchains
 
-We currently only build firefox on Windows. Follow instructions on [Building Firefox for Windows](https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Build_Instructions/Windows_Prerequisites). Get the checkout with mercurial and run "./mach bootstrap" from mercurial root.
+We currently use MINGW environment that comes with Firefox to run our buildbot infrastructure on Windows.
+Browser toolchains:
+- Firefox: Follow instructions on [Building Firefox for Windows](https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Build_Instructions/Windows_Prerequisites). Get the checkout with mercurial and run "./mach bootstrap" from mercurial root.
+- WebKit: mostly follow instructions on [Building WebKit For Windows](https://trac.webkit.org/wiki/BuildingCairoOnWindows). Use chocolatey to install dependencies; we don't use clang to compile webkit on windows. (**NOTE**: we didn't need to install pywin32 with pip and just skipped that step).
 
-After this step, you should have `c:\mozilla-build` folder
-and `c:\mozilla-source` folder with firefox checkout.
+After this step, you should:
+- have `c:\mozilla-build` folder and `c:\mozilla-source` folder with firefox checkout.
+- being able to build webkit-cairo from `cmd.exe`. 
 
 ## Setting Bot Environment
 
@@ -59,8 +63,12 @@ Run `cmd` as administrator and run the following line:
 
 This command will create a `c:\Windows\az` file that will call azure-cli with passed parameters (Not the most beautiful solution, but it works!)
 
+### 3. Install node.js 
 
-### 3. Set custom env variables to mingw env
+Node.js: https://nodejs.org/en/download/
+
+
+### 4. Set custom env variables to mingw env
 
 Edit `c:\mozilla-build\start-shell.bat` and add the following lines in the beginning:
 
@@ -68,17 +76,32 @@ Edit `c:\mozilla-build\start-shell.bat` and add the following lines in the begin
 SET AZ_ACCOUNT_NAME=<account-name>
 SET AZ_ACCOUNT_KEY=<account-key>
 SET TELEGRAM_BOT_KEY=<bot_key>
+SET WEBKIT_BUILD_PATH=<value of "PATH" variable from cmd.exe>
+SET DEVENV="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\devenv.com"
+```
+And right before the `REM Start shell.`, change `PATH` to export locally-installed node.js:
+```bat
+SET "PATH=C:\Program Files\nodejs\;%PATH%"
 ```
 
-change `<account-name>` and `<account-key>` with relevant keys/names.
+Remarks:
+- the `WEBKIT_BUILD_PATH` value is the value of `PATH` variable. To get the value, run `cmd.exe` and run `PATH` command.
+- the `DEVENV` variable should point to VS2019 devenv executable.
+- change `<account-name>` and `<account-key>` with relevant keys/names.
 
 > **NOTE:** No spaces or quotes are allowed here!
 
-### 4. Disable git autocrlf
+### 5. Disable git autocrlf and enable longpaths
 
-Run `c:\mozilla-build\start-shell.bat` and run `git config --global core.autocrlf false`.
+Run `c:\mozilla-build\start-shell.bat` and run:
+- `git config --global core.autocrlf false`
+- `git config --global core.longpaths true`
 
-### 5. Checkout PlayWright to /c/
+The `core.longpaths` is needed for webkit since it has some very long layout paths.
+
+> **NOTE:** If git config fails, run shell as administrator!
+
+### 6. Checkout PlayWright to /c/
 
 Run `c:\mozilla-build\start-shell.bat` and checkout PlayWright repo to `/c/playwright`.
 
