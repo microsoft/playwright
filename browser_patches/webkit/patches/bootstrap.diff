@@ -12234,6 +12234,20 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..867e7d08fd5f922e32e09550ac19a21d
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
+diff --git a/Tools/WebKitTestRunner/TestController.cpp b/Tools/WebKitTestRunner/TestController.cpp
+index fcecdd6a6ed518b02ded768d5d6601f418b74c9a..fa6e079bbe26d471c3205bc356871da32b4a6e90 100644
+--- a/Tools/WebKitTestRunner/TestController.cpp
++++ b/Tools/WebKitTestRunner/TestController.cpp
+@@ -714,7 +714,8 @@ void TestController::createWebViewWithOptions(const TestOptions& options)
+         0, // didResignInputElementStrongPasswordAppearance
+         0, // requestStorageAccessConfirm
+         shouldAllowDeviceOrientationAndMotionAccess,
+-        runWebAuthenticationPanel
++        runWebAuthenticationPanel,
++        0 // handleJavaScriptDialog
+     };
+     WKPageSetPageUIClient(m_mainWebView->page(), &pageUIClient.base);
+ 
 diff --git a/Tools/wpe/backends/CMakeLists.txt b/Tools/wpe/backends/CMakeLists.txt
 index 9788ab56abeb2f769d615029f615844a24d89cc2..fb32c4ff95e67b2e764e902dc0000d255b46ed17 100644
 --- a/Tools/wpe/backends/CMakeLists.txt
