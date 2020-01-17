@@ -112,6 +112,7 @@ export class Request {
 
   constructor(delegate: RequestDelegate | null, frame: frames.Frame | null, redirectChain: Request[], documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: string | undefined, headers: Headers) {
+    assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._delegate = delegate;
     this._frame = frame;
     this._redirectChain = redirectChain;
@@ -194,9 +195,6 @@ export class Request {
   }
 
   async abort(errorCode: string = 'failed') {
-    // Request interception is not supported for data: urls.
-    if (this.url().startsWith('data:'))
-      return;
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
@@ -204,8 +202,6 @@ export class Request {
   }
 
   async fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }) {    // Mocking responses for dataURL requests is not currently supported.
-    if (this.url().startsWith('data:'))
-      return;
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
@@ -213,9 +209,6 @@ export class Request {
   }
 
   async continue(overrides: { headers?: { [key: string]: string } } = {}) {
-    // Request interception is not supported for data: urls.
-    if (this.url().startsWith('data:'))
-      return;
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     await this._delegate!.continue(overrides);

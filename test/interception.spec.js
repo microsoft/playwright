@@ -288,38 +288,39 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       ]));
       expect(results).toEqual(['11', 'FAILED', '22']);
     });
-    it.skip(FFOX)('should navigate to dataURL and fire dataURL requests', async({page, server}) => {
+    it('should navigate to dataURL and not fire dataURL requests', async({page, server}) => {
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
-        requests.push(request);
+        if (!utils.isFavicon(request))
+          requests.push(request);
         request.continue();
       });
       const dataURL = 'data:text/html,<div>yo</div>';
       const response = await page.goto(dataURL);
-      expect(response.status()).toBe(200);
-      expect(requests.length).toBe(1);
-      expect(requests[0].url()).toBe(dataURL);
+      expect(response).toBe(null);
+      expect(requests.length).toBe(0);
     });
-    it.skip(FFOX)('should be able to fetch dataURL and fire dataURL requests', async({page, server}) => {
+    it('should be able to fetch dataURL and not fire dataURL requests', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
-        requests.push(request);
+        if (!utils.isFavicon(request))
+          requests.push(request);
         request.continue();
       });
       const dataURL = 'data:text/html,<div>yo</div>';
       const text = await page.evaluate(url => fetch(url).then(r => r.text()), dataURL);
       expect(text).toBe('<div>yo</div>');
-      expect(requests.length).toBe(1);
-      expect(requests[0].url()).toBe(dataURL);
+      expect(requests.length).toBe(0);
     });
     it.skip(FFOX)('should navigate to URL with hash and and fire requests without hash', async({page, server}) => {
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
-        requests.push(request);
+        if (!utils.isFavicon(request))
+          requests.push(request);
         request.continue();
       });
       const response = await page.goto(server.EMPTY_PAGE + '#hash');
@@ -343,19 +344,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const response = await page.goto(server.PREFIX + '/malformed?rnd=%911');
       expect(response.status()).toBe(200);
     });
-    it.skip(FFOX)('should work with encoded server - 2', async({page, server}) => {
+    it('should work with encoded server - 2', async({page, server}) => {
       // The requestWillBeSent will report URL as-is, whereas interception will
       // report encoded URL for stylesheet. @see crbug.com/759388
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
         request.continue();
-        requests.push(request);
+        if (!utils.isFavicon(request))
+          requests.push(request);
       });
       const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
-      expect(response.status()).toBe(200);
-      expect(requests.length).toBe(2);
-      expect(requests[1].response().status()).toBe(404);
+      expect(response).toBe(null);
+      expect(requests.length).toBe(1);
+      expect(requests[0].response().status()).toBe(404);
     });
     it('should not throw "Invalid Interception Id" if the request was cancelled', async({page, server}) => {
       await page.setContent('<iframe></iframe>');
