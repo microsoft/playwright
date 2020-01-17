@@ -123,7 +123,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     super(context, remoteObject);
     this._context = context;
     this._page = context.frame._page;
-    return helper.logPublicApiCalls('handle', this);
   }
 
   asElement(): ElementHandle<T> | null {

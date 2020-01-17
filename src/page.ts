@@ -139,7 +139,6 @@ export class Page extends platform.EventEmitter {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage();
-    return helper.logPublicApiCalls('page', this);
   }
 
   _didClose() {
@@ -539,7 +538,6 @@ export class Worker {
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
-    return helper.logPublicApiCalls('worker', this);
   }
 
   _createExecutionContext(delegate: js.ExecutionContextDelegate) {
