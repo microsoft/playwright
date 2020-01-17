@@ -18,78 +18,46 @@
  // This file is only run when someone clones the github repo for development
 
 try {
+  console.log('Building playwright...');
   require('child_process').execSync('npm run build', {
     stdio: 'ignore'
   });
 } catch (e) {
 }
+const {downloadBrowser} = require('./download-browser');
 
 (async function() {
   const protocolGenerator = require('./utils/protocol-types-generator');
   try {
-    const chromeRevision = await downloadBrowser('chromium', require('./index').chromium);
+    const chromeRevision = await downloadAndCleanup('chromium');
     await protocolGenerator.generateChromiunProtocol(chromeRevision);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
-    const firefoxRevision = await downloadBrowser('firefox', require('./index').firefox);
+    const firefoxRevision = await downloadAndCleanup('firefox');
     await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
-    const webkitRevision = await downloadBrowser('webkit', require('./index').webkit);
+    const webkitRevision = await downloadAndCleanup('webkit');
     await protocolGenerator.generateWebKitProtocol(webkitRevision);
   } catch (e) {
     console.warn(e.message);
   }
 })();
 
-async function downloadBrowser(browser, playwright) {
-  let progressBar = null;
-  let lastDownloadedBytes = 0;
-  function onProgress(downloadedBytes, totalBytes) {
-    if (!progressBar) {
-      const ProgressBar = require('progress');
-      progressBar = new ProgressBar(`Downloading ${browser} ${playwright._revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
-        complete: '=',
-        incomplete: ' ',
-        width: 20,
-        total: totalBytes,
-      });
-    }
-    const delta = downloadedBytes - lastDownloadedBytes;
-    lastDownloadedBytes = downloadedBytes;
-    progressBar.tick(delta);
-  }
+async function downloadAndCleanup(browser) {
+  const revisionInfo = await downloadBrowser(browser);
 
-  const fetcher = playwright._createBrowserFetcher();
-  const revisionInfo = fetcher.revisionInfo();
-  // Do nothing if the revision is already downloaded.
-  if (revisionInfo.local)
-    return revisionInfo;
-  await fetcher.download(revisionInfo.revision, onProgress);
-  logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
-  const localRevisions = await fetcher.localRevisions();
   // Remove previous revisions.
+  const playwright = require('.')[browser];
+  const fetcher = playwright._createBrowserFetcher();
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);
+
   return revisionInfo;
 }
-
-function toMegabytes(bytes) {
-  const mb = bytes / 1024 / 1024;
-  return `${Math.round(mb * 10) / 10} Mb`;
-}
-
-function logPolitely(toBeLogged) {
-  const logLevel = process.env.npm_config_loglevel;
-  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel) > -1;
-
-  if (!logLevelDisplay)
-    console.log(toBeLogged);
-}
-
