@@ -10,9 +10,6 @@ lib/injected/
 !lib/**/*.d.ts
 !index.d.ts
 
-# Install
-!install.js
-
 # root for "playwright" package
 !index.js
 

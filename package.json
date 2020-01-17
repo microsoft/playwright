@@ -1,5 +1,5 @@
 {
-  "name": "playwright",
+  "name": "playwright-core",
   "version": "0.9.17-post",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
@@ -28,7 +28,8 @@
     "tsc": "tsc -p .",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
-    "apply-next-version": "node utils/apply_next_version.js"
+    "apply-next-version": "node utils/apply_next_version.js",
+    "sync-versions": "node utils/sync_package_versions.js"
   },
   "author": {
     "name": "Microsoft Corporation"
