@@ -195,7 +195,7 @@ export class WKPlaywright implements Playwright {
 
   _createBrowserFetcher(options?: BrowserFetcherOptions): BrowserFetcher {
     const downloadURLs = {
-      linux: '%s/builds/webkit/%s/minibrowser-linux.zip',
+      linux: '%s/builds/webkit/%s/minibrowser-gtk.zip',
       mac: '%s/builds/webkit/%s/minibrowser-mac-%s.zip',
       win64: '%s/builds/webkit/%s/minibrowser-win64.zip',
     };

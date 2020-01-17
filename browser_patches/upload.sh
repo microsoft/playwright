@@ -69,8 +69,8 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
     BLOB_NAME="minibrowser-mac-$MAC_MAJOR_MINOR_VERSION.zip"
     ALIAS="webkit-mac-$MAC_MAJOR_MINOR_VERSION r$BUILD_NUMBER"
   elif [[ "$(uname)" == "Linux" ]]; then
-    BLOB_NAME="minibrowser-linux.zip"
-    ALIAS="webkit-linux r$BUILD_NUMBER"
+    BLOB_NAME="minibrowser-gtk.zip"
+    ALIAS="webkit-gtk r$BUILD_NUMBER"
   elif [[ "$(uname)" == MINGW* ]]; then
     BLOB_NAME="minibrowser-win64.zip"
     ALIAS="webkit-win64 r$BUILD_NUMBER"
