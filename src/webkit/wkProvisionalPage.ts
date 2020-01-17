@@ -16,12 +16,14 @@
 
 import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { RegisteredListener, helper } from '../helper';
+import { RegisteredListener, helper, assert } from '../helper';
+import { Protocol } from './protocol';
 
 export class WKProvisionalPage {
   readonly _session: WKSession;
   private readonly _wkPage: WKPage;
   private _sessionListeners: RegisteredListener[] = [];
+  private _mainFrameId: string | null = null;
 
   constructor(session: WKSession, page: WKPage) {
     this._session = session;
@@ -34,7 +36,19 @@ export class WKProvisionalPage {
       'Network.loadingFinished',
       'Network.loadingFailed',
     ].map(name => helper.addEventListener(this._session, name, args => this._onNetworkEvent(name, args)));
+
+    this._wkPage._initializeSession(session, ({frameTree}) => this._handleFrameTree(frameTree));
   }
+
+  dispose() {
+    helper.removeEventListeners(this._sessionListeners);
+  }
+
+  commit() {
+    assert(this._mainFrameId);
+    this._wkPage._onFrameAttached(this._mainFrameId!, null);
+  }
+
   private _onNetworkEvent(eventName: string, payload: any) {
     // Pretend that the events happened in the same process.
     if (payload.frameId)
@@ -42,7 +56,8 @@ export class WKProvisionalPage {
     this._wkPage._session.emit(eventName, payload);
   }
 
-  dispose() {
-    helper.removeEventListeners(this._sessionListeners);
+  private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
+    assert(!frameTree.frame.parentId);
+    this._mainFrameId = frameTree.frame.id;
   }
 }

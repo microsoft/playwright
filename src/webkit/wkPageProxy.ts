@@ -124,10 +124,7 @@ export class WKPageProxy {
     assert(session, 'One non-provisional target session must exist');
     this._wkPage = new WKPage(this._browserContext, this._pageProxySession);
     this._wkPage.setSession(session!);
-    await Promise.all([
-      this._wkPage._initializePageProxySession(),
-      this._wkPage._initializeSession(session!),
-    ]);
+    await this._wkPage.initialize();
     return this._wkPage._page;
   }
 
@@ -151,7 +148,6 @@ export class WKPageProxy {
     if (targetInfo.isProvisional && this._wkPage) {
       assert(!this._provisionalPage);
       this._provisionalPage = new WKProvisionalPage(session, this._wkPage);
-      this._wkPage._initializeSession(session);
     }
     if (targetInfo.isPaused)
       this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
@@ -188,6 +184,7 @@ export class WKPageProxy {
     oldSession!.errorText = 'Target was swapped out.';
     (newSession as any)[isPovisionalSymbol] = undefined;
     if (this._provisionalPage) {
+      this._provisionalPage.commit();
       this._provisionalPage.dispose();
       this._provisionalPage = null;
     }
