@@ -2,13 +2,13 @@
 
 We currently have 4 build bots that produce the following builds
 - **[buildbot-linux]** Ubuntu 18.04 machine
-    - builds: `Webkit-gtk`, `Firefox-Linux`
+    - builds: `webkit-gtk`, `webkit-wpe`, `firefox-linux`
 - **[buildbot-mac-10.14]** Mac 10.14 machine
-    - builds: `WebKit-mac-10.14`, `Firefox-Mac`
+    - builds: `webKit-mac-10.14`, `firefox-mac`
 - **[buildbot-mac-10.15]** machine
-    - builds: `WebKit-mac-10.15`
+    - builds: `webkit-mac-10.15`
 - **[buildbot-windows]** Windows 10 machine
-    - builds: `Firefox-win32`, `Firefox-win64`, `webkit-win64`
+    - builds: `firefox-win32`, `firefox-win64`, `webkit-win64`
 
 This document describes setting up bots infrastructure to produce
 browser builds.

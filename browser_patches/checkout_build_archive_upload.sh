@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
+  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
   echo
   echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploades if build is missing."
   echo "Script will bail out early if the build for the browser version is already present."
@@ -28,6 +28,7 @@ fi
 
 BROWSER_NAME=""
 EXTRA_BUILD_ARGS=""
+EXTRA_ARCHIVE_ARGS=""
 BUILD_FLAVOR="$1"
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
@@ -47,6 +48,11 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   EXPECTED_HOST_OS="MINGW"
 elif [[ "$BUILD_FLAVOR" == "webkit-gtk" ]]; then
   BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Linux"
+elif [[ "$BUILD_FLAVOR" == "webkit-wpe" ]]; then
+  BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--wpe"
+  EXTRA_ARCHIVE_ARGS="--wpe"
   EXPECTED_HOST_OS="Linux"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
@@ -135,7 +141,7 @@ if ! ./$BROWSER_NAME/build.sh "$EXTRA_BUILD_ARGS"; then
 fi
 
 echo "-- archiving to $ZIP_PATH"
-if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH; then
+if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
   send_telegram_message "$BUILD_ALIAS -- ./archive.sh failed! ❌"
   exit 1
 fi

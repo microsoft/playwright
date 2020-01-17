@@ -59,3 +59,6 @@ git pull origin master
 
 git pull origin master
 ../checkout_build_archive_upload.sh webkit-gtk >/tmp/$(basename $0)--webkit-gtk.log || true
+
+git pull origin master
+../checkout_build_archive_upload.sh webkit-wpe >/tmp/$(basename $0)--webkit-wpe.log || true

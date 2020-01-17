@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0) [--wpe] [output-absolute-path]"
+  echo "usage: $(basename $0) [output-absolute-path] [--wpe]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
@@ -11,11 +11,7 @@ if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
 fi
 
 ZIP_PATH=$1
-USE_WPE=""
-if [[ "$ZIP_PATH" == "--wpe" ]]; then
-  ZIP_PATH=$2
-  USE_WPE="true"
-fi
+USE_WPE=$2
 if [[ $ZIP_PATH != /* ]]; then
   echo "ERROR: path $ZIP_PATH is not absolute"
   exit 1

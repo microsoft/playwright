@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [--check] [zip-path]"
+  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [--check] [zip-path]"
   echo
   echo "Upload .zip as a browser build."
   echo
@@ -49,6 +49,9 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
 elif [[ "$BUILD_FLAVOR" == "webkit-gtk" ]]; then
   BROWSER_NAME="webkit"
   BLOB_NAME="minibrowser-gtk.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-wpe" ]]; then
+  BROWSER_NAME="webkit"
+  BLOB_NAME="minibrowser-wpe.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
   BLOB_NAME="minibrowser-win64.zip"
