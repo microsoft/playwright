@@ -94,7 +94,7 @@ createZipForWindows() {
   cp -t $tmpdir ./WebKitLibraries/win/bin64/*.dll
   cd WebKitBuild/Release/bin64
   cp -r -t $tmpdir WebKit.resources
-  cp -t $tmpdir JavaScriptCore.dll MiniBrowserLib.dll WTF.dll WebKit.dll WebKit2.dll libEGL.dll libGLESv2.dll
+  cp -t $tmpdir JavaScriptCore.dll MiniBrowserLib.dll WTF.dll WebKit2.dll libEGL.dll libGLESv2.dll
   cp -t $tmpdir MiniBrowser.exe WebKitNetworkProcess.exe WebKitWebProcess.exe
   cd -
   cd /c/WEBKIT_WIN64_LIBS
