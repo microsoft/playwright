@@ -173,6 +173,7 @@ export class WKPlaywright implements Playwright {
     const downloadURLs = {
       linux: '%s/builds/webkit/%s/minibrowser-linux.zip',
       mac: '%s/builds/webkit/%s/minibrowser-mac-%s.zip',
+      win64: '%s/builds/webkit/%s/minibrowser-win64.zip',
     };
 
     const defaultOptions = {
@@ -185,7 +186,7 @@ export class WKPlaywright implements Playwright {
         if (platform === 'linux')
           return 'linux';
         if (platform === 'win32')
-          return 'linux';  // Windows gets linux binaries and uses WSL
+          return 'win64';
         return platform;
       })()
     };
@@ -200,7 +201,7 @@ export class WKPlaywright implements Playwright {
         downloadUrl: (platform === 'mac') ?
           util.format(downloadURLs[platform], options!.host, revision, getMacVersion()) :
           util.format((downloadURLs as any)[platform], options!.host, revision),
-        executablePath: 'pw_run.sh',
+        executablePath: platform.startsWith('win') ? 'MiniBrowser.exe' : 'pw_run.sh',
       };
     });
   }
