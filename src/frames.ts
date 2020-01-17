@@ -732,10 +732,10 @@ export class Frame {
     return this._scheduleRerunnableTask(task, 'main', options.timeout);
   }
 
-  async $wait(selector: string, pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
+  $wait: types.$Wait = async (selector, pageFunction, options, ...args) => {
     options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
     const task = dom.waitForFunctionTask(selector, pageFunction, options, ...args);
-    return this._scheduleRerunnableTask(task, 'main', options.timeout);
+    return this._scheduleRerunnableTask(task, 'main', options.timeout) as any;
   }
 
   async title(): Promise<string> {
