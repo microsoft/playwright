@@ -64,8 +64,18 @@ export class WKPageProxy {
     this._pageProxySession.dispatchMessage(message);
   }
 
+  private _isProvisionalCrossProcessLoadInProgress() : boolean {
+    for (const anySession of this._sessions.values()) {
+      if ((anySession as any)[provisionalMessagesSymbol])
+        return true;
+    }
+    return false;
+  }
+
   handleProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
     if (!this._wkPage)
+      return;
+    if (!this._isProvisionalCrossProcessLoadInProgress())
       return;
     let errorText = event.error;
     if (errorText.includes('cancelled'))
