@@ -77,33 +77,40 @@ beforeEach(async({server, httpsServer}) => {
   httpsServer.reset();
 });
 
+const products = ['WebKit', 'Firefox', 'Chromium'];
+let product;
+let events;
 if (process.env.BROWSER === 'firefox') {
-  describe('Firefox', () => {
-    testRunner.loadTests(require('./playwright.spec.js'), {
-      product: 'Firefox',
-      playwrightPath: utils.projectRoot(),
-      testRunner,
-    });
-  });
+  product = 'Firefox';
+  events = {
+    ...require('../lib/events').Events,
+    ...require('../lib/chromium/events').Events,
+  };
 } else if (process.env.BROWSER === 'webkit') {
-  describe('WebKit', () => {
-    testRunner.loadTests(require('./playwright.spec.js'), {
-      product: 'WebKit',
-      playwrightPath: utils.projectRoot(),
-      testRunner,
-    });
-  });
+  product = 'WebKit';
+  events = require('../lib/events').Events;
 } else {
-  describe('Chromium', () => {
-    testRunner.loadTests(require('./playwright.spec.js'), {
-      product: 'Chromium',
-      playwrightPath: utils.projectRoot(),
-      testRunner,
-    });
-    if (process.env.COVERAGE)
-      utils.recordAPICoverage(testRunner, require('../lib/api').Chromium, require('../lib/chromium/events').Events);
-  });
+  product = 'Chromium';
+  events = require('../lib/events').Events;
 }
+
+describe(product, () => {
+  testRunner.loadTests(require('./playwright.spec.js'), {
+    product,
+    playwrightPath: utils.projectRoot(),
+    testRunner,
+  });
+  if (process.env.COVERAGE) {
+    const api = require('../lib/api');
+    const filteredApi = {};
+    Object.keys(api).forEach(name => {
+      if (products.some(p => name.startsWith(p)) && !name.startsWith(product))
+        return;
+      filteredApi[name] = api[name];
+    });
+    utils.recordAPICoverage(testRunner, filteredApi, events);
+  }
+});
 
 if (process.env.CI && testRunner.hasFocusedTestsOrSuites()) {
   console.error('ERROR: "focused" tests/suites are prohibitted on bots. Remove any "fit"/"fdescribe" declarations.');

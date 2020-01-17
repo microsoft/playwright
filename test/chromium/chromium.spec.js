@@ -53,7 +53,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     it('should contain browser target', async({browser}) => {
       const targets = browser.targets();
       const browserTarget = targets.find(target => target.type() === 'browser');
-      expect(browserTarget).toBeTruthy();
+      expect(browserTarget).toBe(browser.browserTarget());
     });
     it('should be able to use the default page in the browser', async({page, server, browser}) => {
       // The pages will be the testing page and the original newtab page

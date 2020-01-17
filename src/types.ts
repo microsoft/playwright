@@ -119,3 +119,12 @@ export type CoverageEntry = {
   text: string,
   ranges : {start: number, end: number}[]
 };
+
+export type CSSCoverageOptions = {
+  resetOnNavigation?: boolean,
+};
+
+export type JSCoverageOptions = {
+  resetOnNavigation?: boolean,
+  reportAnonymousScripts?: boolean,
+};
