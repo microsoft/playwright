@@ -83,7 +83,7 @@ createZipForWindows() {
   cp -t $tmpdir JavaScriptCore.dll MiniBrowserLib.dll WTF.dll WebKit.dll WebKit2.dll libEGL.dll libGLESv2.dll
   cp -t $tmpdir MiniBrowser.exe WebKitNetworkProcess.exe WebKitWebProcess.exe
   cd -
-  cd C:/Windows/System32
+  cd /c/WEBKIT_WIN64_LIBS
   cp -t $tmpdir msvcp140.dll vcruntime140.dll vcruntime140_1.dll
   cd -
 
