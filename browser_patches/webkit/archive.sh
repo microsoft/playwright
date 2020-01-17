@@ -83,6 +83,9 @@ createZipForWindows() {
   cp -t $tmpdir JavaScriptCore.dll MiniBrowserLib.dll WTF.dll WebKit.dll WebKit2.dll libEGL.dll libGLESv2.dll
   cp -t $tmpdir MiniBrowser.exe WebKitNetworkProcess.exe WebKitWebProcess.exe
   cd -
+  cd C:/Windows/System32
+  cp -t $tmpdir msvcp140.dll msvcp140_1.dll msvcp140_2.dll vcruntime140.dll vcruntime140_1.dll
+  cd -
 
   # copy protocol
   node ../concat_protocol.js > $tmpdir/protocol.json
