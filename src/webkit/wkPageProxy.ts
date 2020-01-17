@@ -22,17 +22,16 @@ import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
 import { RegisteredListener, helper, assert, debugError } from '../helper';
 import { Events } from '../events';
+import { WKProvisionalPage } from './wkProvisionalPage';
 
-// We keep provisional messages on the session instace until provisional
-// target is committed. Non-provisional target (there should be just one)
-// has undefined instead.
-const provisionalMessagesSymbol = Symbol('provisionalMessages');
+const isPovisionalSymbol = Symbol('isPovisional');
 
 export class WKPageProxy {
   private readonly _pageProxySession: WKSession;
   readonly _browserContext: BrowserContext;
   private _pagePromise: Promise<Page> | null = null;
   private _wkPage: WKPage | null = null;
+  private _provisionalPage: WKProvisionalPage | null = null;
   private readonly _firstTargetPromise: Promise<void>;
   private _firstTargetCallback?: () => void;
   private readonly _sessions = new Map<string, WKSession>();
@@ -79,7 +78,7 @@ export class WKPageProxy {
 
   private _isProvisionalCrossProcessLoadInProgress() : boolean {
     for (const anySession of this._sessions.values()) {
-      if ((anySession as any)[provisionalMessagesSymbol])
+      if ((anySession as any)[isPovisionalSymbol])
         return true;
     }
     return false;
@@ -113,7 +112,7 @@ export class WKPageProxy {
     await this._firstTargetPromise;
     let session: WKSession | undefined;
     for (const anySession of this._sessions.values()) {
-      if (!(anySession as any)[provisionalMessagesSymbol]) {
+      if (!(anySession as any)[isPovisionalSymbol]) {
         session = anySession;
         break;
       }
@@ -123,7 +122,7 @@ export class WKPageProxy {
     this._wkPage.setSession(session!);
     await Promise.all([
       this._wkPage._initializePageProxySession(),
-      this._wkPage._initializeSession(session!, false),
+      this._wkPage._initializeSession(session!),
     ]);
     return this._wkPage._page;
   }
@@ -144,9 +143,12 @@ export class WKPageProxy {
       this._firstTargetCallback = undefined;
     }
     if (targetInfo.isProvisional)
-      (session as any)[provisionalMessagesSymbol] = [];
-    if (targetInfo.isProvisional && this._wkPage)
-      this._wkPage._initializeSession(session, true);
+      (session as any)[isPovisionalSymbol] = true;
+    if (targetInfo.isProvisional && this._wkPage) {
+      assert(!this._provisionalPage);
+      this._provisionalPage = new WKProvisionalPage(session, this._wkPage);
+      this._wkPage._initializeSession(session);
+    }
     if (targetInfo.isPaused)
       this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
   }
@@ -157,6 +159,10 @@ export class WKPageProxy {
     if (session)
       session.dispose();
     this._sessions.delete(targetId);
+    if (this._provisionalPage && this._provisionalPage._session === session) {
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    }
     if (this._wkPage && this._wkPage._session === session && crashed)
       this._wkPage.didClose(crashed);
   }
@@ -165,11 +171,7 @@ export class WKPageProxy {
     const { targetId, message } = event;
     const session = this._sessions.get(targetId);
     assert(session, 'Unknown target: ' + targetId);
-    const provisionalMessages = (session as any)[provisionalMessagesSymbol];
-    if (provisionalMessages)
-      provisionalMessages.push(message);
-    else
-      session!.dispatchMessage(JSON.parse(message));
+    session!.dispatchMessage(JSON.parse(message));
   }
 
   private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
@@ -180,11 +182,12 @@ export class WKPageProxy {
     assert(oldSession, 'Unknown old target: ' + oldTargetId);
     // TODO: make some calls like screenshot catch swapped out error and retry.
     oldSession!.errorText = 'Target was swapped out.';
-    const provisionalMessages = (newSession as any)[provisionalMessagesSymbol];
-    assert(provisionalMessages, 'Committing target must be provisional');
-    (newSession as any)[provisionalMessagesSymbol] = undefined;
-    for (const message of provisionalMessages)
-      newSession!.dispatchMessage(JSON.parse(message));
-    this._wkPage!.setSession(newSession!);
+    (newSession as any)[isPovisionalSymbol] = undefined;
+    if (this._provisionalPage) {
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    }
+    if (this._wkPage)
+      this._wkPage.setSession(newSession!);
   }
 }

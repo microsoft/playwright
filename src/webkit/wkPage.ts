@@ -89,19 +89,23 @@ export class WKPage implements PageDelegate {
 
   // This method is called for provisional targets as well. The session passed as the parameter
   // may be different from the current session and may be destroyed without becoming current.
-  async _initializeSession(session: WKSession, isProvisional: boolean) {
+  async _initializeSession(session: WKSession) {
+    const isProvisional = this._session !== session;
     const promises : Promise<any>[] = [
       // Page agent must be enabled before Runtime.
-      session.send('Page.enable'),
-      session.send('Page.getResourceTree').then(({frameTree}) => this._handleFrameTree(frameTree)),
-      // Resource tree should be received before first execution context.
-      session.send('Runtime.enable'),
-      session.send('Page.createIsolatedWorld', { name: UTILITY_WORLD_NAME, source: `//# sourceURL=${EVALUATION_SCRIPT_URL}` }),
-      session.send('Console.enable'),
-      session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
-      this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode),
-      this._workers.initializeSession(session),
+      session.send('Page.enable')
     ];
+    if (!isProvisional)
+      promises.push(session.send('Page.getResourceTree').then(({frameTree}) => this._handleFrameTree(frameTree)));
+    promises.push(
+        // Resource tree should be received before first execution context.
+        session.send('Runtime.enable'),
+        session.send('Page.createIsolatedWorld', { name: UTILITY_WORLD_NAME, source: `//# sourceURL=${EVALUATION_SCRIPT_URL}` }),
+        session.send('Console.enable'),
+        session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
+        this._networkManager.initializeSession(session, this._page._state.interceptNetwork, this._page._state.offlineMode),
+        this._workers.initializeSession(session)
+    );
     const contextOptions = this._page.browserContext()._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
@@ -186,7 +190,10 @@ export class WKPage implements PageDelegate {
   }
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
-    const frame = this._page._frameManager.frame(framePayload.id);
+    let frame = this._page._frameManager.frame(framePayload.id);
+    const newProcessMainFrame = !frame && !framePayload.parentId;
+    if (newProcessMainFrame)
+      frame = this._page._frameManager.mainFrame();
     for (const [contextId, context] of this._contextIdToContext) {
       if (context.frame === frame) {
         (context._delegate as WKExecutionContext)._dispose();
@@ -194,6 +201,8 @@ export class WKPage implements PageDelegate {
         frame._contextDestroyed(context);
       }
     }
+    if (newProcessMainFrame)
+      this._onFrameAttached(framePayload.id, null);
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
   }
 
