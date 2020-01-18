@@ -202,6 +202,8 @@ export class WKPage implements PageDelegate {
         frame._contextDestroyed(context);
       }
     }
+    if (!framePayload.parentId)
+      this._workers.clear();
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
   }
 

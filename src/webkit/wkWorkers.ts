@@ -31,8 +31,7 @@ export class WKWorkers {
 
   setSession(session: WKSession) {
     helper.removeEventListeners(this._sessionListeners);
-    this._page._clearWorkers();
-    this._workerSessions.clear();
+    this.clear();
     this._sessionListeners = [
       helper.addEventListener(session, 'Worker.workerCreated', async (event: Protocol.Worker.workerCreatedPayload) => {
         const worker = new Worker(event.url);
@@ -62,15 +61,24 @@ export class WKWorkers {
       }),
       helper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
+        if (!workerSession)
+          return;
         workerSession.dispatchMessage(JSON.parse(event.message));
       }),
       helper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
+        if (!workerSession)
+          return;
         workerSession.dispose();
         this._workerSessions.delete(event.workerId);
         this._page._removeWorker(event.workerId);
       })
     ];
+  }
+
+  clear() {
+    this._page._clearWorkers();
+    this._workerSessions.clear();
   }
 
   async initializeSession(session: WKSession) {
