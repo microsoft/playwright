@@ -29,13 +29,24 @@ export class WKProvisionalPage {
     this._session = session;
     this._wkPage = page;
 
+    const overrideFrameId = (handler: (p: any) => void) => {
+      return (payload: any) => {
+        // Pretend that the events happened in the same process.
+        if (payload.frameId)
+          payload.frameId = this._wkPage._page._frameManager.mainFrame()._id;
+        handler(payload);
+      };
+    };
+    const networkManager = this._wkPage._networkManager;
+
     this._sessionListeners = [
-      'Network.requestWillBeSent',
-      'Network.requestIntercepted',
-      'Network.responseReceived',
-      'Network.loadingFinished',
-      'Network.loadingFailed',
-    ].map(name => helper.addEventListener(this._session, name, args => this._onNetworkEvent(name, args)));
+      helper.addEventListener(session, 'Network.requestWillBeSent', overrideFrameId(e => networkManager._onRequestWillBeSent(session, e))),
+      helper.addEventListener(session, 'Network.requestIntercepted', overrideFrameId(e => networkManager._onRequestIntercepted(e))),
+      helper.addEventListener(session, 'Network.responseReceived', overrideFrameId(e => networkManager._onResponseReceived(e))),
+      helper.addEventListener(session, 'Network.loadingFinished', overrideFrameId(e => networkManager._onLoadingFinished(e))),
+      helper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => networkManager._onLoadingFailed(e))),
+    ];
+
 
     this._wkPage._initializeSession(session, ({frameTree}) => this._handleFrameTree(frameTree));
   }
@@ -47,13 +58,6 @@ export class WKProvisionalPage {
   commit() {
     assert(this._mainFrameId);
     this._wkPage._onFrameAttached(this._mainFrameId!, null);
-  }
-
-  private _onNetworkEvent(eventName: string, payload: any) {
-    // Pretend that the events happened in the same process.
-    if (payload.frameId)
-      payload.frameId = this._wkPage._page._frameManager.mainFrame()._id;
-    this._wkPage._session.emit(eventName, payload, this._session);
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {

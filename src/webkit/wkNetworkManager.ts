@@ -46,11 +46,11 @@ export class WKNetworkManager {
     helper.removeEventListeners(this._sessionListeners);
     this._session = session;
     this._sessionListeners = [
-      helper.addEventListener(this._session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
-      helper.addEventListener(this._session, 'Network.requestIntercepted', this._onRequestIntercepted.bind(this)),
-      helper.addEventListener(this._session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
-      helper.addEventListener(this._session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
-      helper.addEventListener(this._session, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
+      helper.addEventListener(session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(session, e)),
+      helper.addEventListener(session, 'Network.requestIntercepted', e => this._onRequestIntercepted(e)),
+      helper.addEventListener(session, 'Network.responseReceived', e => this._onResponseReceived(e)),
+      helper.addEventListener(session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
+      helper.addEventListener(session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
     ];
   }
 
@@ -83,7 +83,7 @@ export class WKNetworkManager {
     });
   }
 
-  private _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload, session: WKSession) {
+  _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
     let redirectChain: network.Request[] = [];
@@ -104,7 +104,7 @@ export class WKNetworkManager {
     this._page._frameManager.requestStarted(request.request);
   }
 
-  private _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
+  _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (request)
       request._interceptedCallback();
@@ -128,7 +128,7 @@ export class WKNetworkManager {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  private _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
+  _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // FileUpload sends a response without a matching request.
     if (!request)
@@ -137,7 +137,7 @@ export class WKNetworkManager {
     this._page._frameManager.requestReceivedResponse(response);
   }
 
-  private _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
+  _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
@@ -153,7 +153,7 @@ export class WKNetworkManager {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  private _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+  _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
