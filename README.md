@@ -57,7 +57,7 @@ const iPhone11 = pw.devices['iPhone 11 Pro'];
     permissions: { 'https://www.google.com': ['geolocation'] }
   });
 
-  const page = await context.newPage('http://maps.google.com');
+  const page = await context.newPage('https://maps.google.com');
   await page.click('text="Your location"');
   await page.waitForRequest(/.*preview\/pwa/);
   await page.screenshot({ path: 'colosseum-iphone.png' });  
@@ -80,7 +80,7 @@ const pixel2 = pw.devices['Pixel 2'];
     permissions: { 'https://www.google.com': ['geolocation'] }
   });
 
-  const page = await context.newPage('http://maps.google.com');
+  const page = await context.newPage('https://maps.google.com');
   await page.click('text="Your location"');
   await page.waitForRequest(/.*pwa\/net.js.*/);
   await page.screenshot({ path: 'colosseum-android.png' });
