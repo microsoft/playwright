@@ -190,8 +190,6 @@ export class WKPage implements PageDelegate {
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
-    if (!parentFrameId)
-      this._workers.clear();
     this._page._frameManager.frameAttached(frameId, parentFrameId);
   }
 
