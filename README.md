@@ -42,6 +42,52 @@ const pw = require('playwright');
 })();
 ```
 
+This snippet emulates Mobile Safari on a device at a given geolocation, navigates to maps.google.com, performs action and takes a screenshot.
+
+```js
+const pw = require('playwright');
+const iPhone11 = pw.devices['iPhone 11 Pro'];
+
+(async () => {
+  const browser = await pw.webkit.launch();
+  const context = await browser.newContext({
+    viewport: iPhone11.viewport,
+    userAgent: iPhone11.userAgent,
+    geolocation: { longitude: 12.492507, latitude: 41.889938 },
+    permissions: { 'https://www.google.com': ['geolocation'] }
+  });
+
+  const page = await context.newPage('http://maps.google.com');
+  await page.click('text="Your location"');
+  await page.waitForRequest(/.*preview\/pwa/);
+  await page.screenshot({ path: 'colosseum-iphone.png' });  
+  await browser.close();
+})();
+```
+
+And here is the same script for Chrome on Android.
+
+```js
+const pw = require('playwright');
+const pixel2 = pw.devices['Pixel 2'];
+
+(async () => {
+  const browser = await pw.chromium.launch();
+  const context = await browser.newContext({
+    viewport: pixel2.viewport,
+    userAgent: pixel2.userAgent,
+    geolocation: { longitude: 12.492507, latitude: 41.889938 },
+    permissions: { 'https://www.google.com': ['geolocation'] }
+  });
+
+  const page = await context.newPage('http://maps.google.com');
+  await page.click('text="Your location"');
+  await page.waitForRequest(/.*pwa\/net.js.*/);
+  await page.screenshot({ path: 'colosseum-android.png' });
+  await browser.close();
+})();
+```
+
 #### Evaluate script
 
 This code snippet navigates to example.com in Firefox, and executes a script in the page context.
