@@ -7,7 +7,7 @@
 
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
-Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation. Playwright runs headless versions of these browsers by default, but can be configured to run the full versions.
+Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. Playwright is focused on enabling **cross-browser** and **cross-operating-system** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation. Playwright runs headless versions of these browsers by default, but can be configured to run the full versions.
 
 ### Installation
 
@@ -67,10 +67,6 @@ const pw = require('playwright');
   await browser.close();
 })();
 ```
-
-## Limitations
-
-WebKit support on Windows is based on the [WSL](https://docs.microsoft.com/en-us/windows/wsl/about) / [Docker](https://www.docker.com/) containers. We are working on the [WinCairo](https://trac.webkit.org/wiki/BuildingCairoOnWindows)-based version of the browser, but it'll be available later. Stay tuned!
 
 ## Contributing
 
