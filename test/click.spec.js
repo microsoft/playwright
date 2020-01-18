@@ -78,7 +78,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate(() => result)).toBe('Clicked');
     });
-    it.skip(FFOX)('should click with disabled javascript', async({newPage, server}) => {
+    it('should click with disabled javascript', async({newPage, server}) => {
       const page = await newPage({ javaScriptEnabled: false });
       await page.goto(server.PREFIX + '/wrappedlink.html');
       await Promise.all([
