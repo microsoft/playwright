@@ -61,10 +61,14 @@ export class WKWorkers {
       }),
       helper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
+        if (!workerSession)
+          return;
         workerSession.dispatchMessage(JSON.parse(event.message));
       }),
       helper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
+        if (!workerSession)
+          return;
         workerSession.dispose();
         this._workerSessions.delete(event.workerId);
         this._page._removeWorker(event.workerId);
