@@ -60,4 +60,4 @@ git pull origin master
 git pull origin master
 ../checkout_build_archive_upload.sh webkit-gtk >/tmp/$(basename $0)--webkit-gtk.log || true
 ../checkout_build_archive_upload.sh webkit-wpe >/tmp/$(basename $0)--webkit-wpe.log || true
-../webkit/download_gtk_and_wpe_zip_together_and_upload.sh >/tmp/$(basename $0)--webkit-gtk-wpe.log || true
+../checkout_build_archive_upload.sh webkit-gtk-wpe >/tmp/$(basename $0)--webkit-gtk-wpe.log || true

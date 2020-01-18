@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
+  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
   echo
   echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploades if build is missing."
   echo "Script will bail out early if the build for the browser version is already present."
@@ -53,6 +53,9 @@ elif [[ "$BUILD_FLAVOR" == "webkit-wpe" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--wpe"
   EXTRA_ARCHIVE_ARGS="--wpe"
+  EXPECTED_HOST_OS="Linux"
+elif [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
+  BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Linux"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
@@ -120,6 +123,17 @@ cd -
 source ./buildbots/send_telegram_message.sh
 LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
 BUILD_ALIAS="<b>[[$BUILD_FLAVOR r$BUILD_NUMBER]]</b> $LAST_COMMIT_MESSAGE"
+
+if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
+  send_telegram_message "$BUILD_ALIAS -- started ⏳"
+  if ! ./webkit/download_gtk_and_wpe_zip_together_and_upload.sh; then
+    send_telegram_message "$BUILD_ALIAS -- ./download_gtk_and_wpe_zip_together_and_upload.sh failed! ❌"
+    exit 1
+  fi
+  send_telegram_message "$BUILD_ALIAS -- uploaded ✅"
+  exit 0
+fi
+
 send_telegram_message "$BUILD_ALIAS -- started ⏳"
 
 echo "-- preparing checkout"
