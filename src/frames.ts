@@ -191,16 +191,19 @@ export class FrameManager {
       for (const watcher of this._lifecycleWatchers)
         watcher._onNavigationRequest(frame, request);
     }
-    this._page.emit(Events.Page.Request, request);
+    if (!request._isFavicon)
+      this._page.emit(Events.Page.Request, request);
   }
 
   requestReceivedResponse(response: network.Response) {
-    this._page.emit(Events.Page.Response, response);
+    if (!response.request()._isFavicon)
+      this._page.emit(Events.Page.Response, response);
   }
 
   requestFinished(request: network.Request) {
     this._inflightRequestFinished(request);
-    this._page.emit(Events.Page.RequestFinished, request);
+    if (!request._isFavicon)
+      this._page.emit(Events.Page.RequestFinished, request);
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
@@ -216,7 +219,8 @@ export class FrameManager {
           watcher._onAbortedNewDocumentNavigation(frame, request._documentId, errorText);
       }
     }
-    this._page.emit(Events.Page.RequestFailed, request);
+    if (!request._isFavicon)
+      this._page.emit(Events.Page.RequestFailed, request);
   }
 
   provisionalLoadFailed(documentId: string, error: string) {
@@ -236,7 +240,7 @@ export class FrameManager {
 
   private _inflightRequestFinished(request: network.Request) {
     const frame = request.frame();
-    if (!frame || request.url().endsWith('favicon.ico'))
+    if (!frame || request._isFavicon)
       return;
     if (!frame._inflightRequests.has(request))
       return;
@@ -249,7 +253,7 @@ export class FrameManager {
 
   private _inflightRequestStarted(request: network.Request) {
     const frame = request.frame();
-    if (!frame || request.url().endsWith('favicon.ico'))
+    if (!frame || request._isFavicon)
       return;
     frame._inflightRequests.add(request);
     if (frame._inflightRequests.size === 1)

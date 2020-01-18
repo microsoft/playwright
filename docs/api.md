@@ -3565,6 +3565,8 @@ Browser websocket endpoint which can be used as an argument to [firefoxPlaywrigh
 
 #### webkitPlaywright.defaultArgs([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
+  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
 - returns: <[Array]<[string]>>
 
@@ -3575,6 +3577,7 @@ The default flags that WebKit will be launched with.
   - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
   - `executablePath` <[string]> Path to a WebKit executable to run instead of the bundled WebKit. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled WebKit, use at your own risk.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`webKitPlaywright.defaultArgs()`](#webkitplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -3598,6 +3601,7 @@ const browser = await playwright.launch({
   - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
   - `executablePath` <[string]> Path to a WebKit executable to run instead of the bundled WebKit. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled WebKit, use at your own risk.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`webKitPlaywright.defaultArgs()`](#webkitplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.

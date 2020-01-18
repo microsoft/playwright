@@ -122,17 +122,9 @@ const utils = module.exports = {
       frame.src = url;
       frame.id = frameId;
       document.body.appendChild(frame);
-      // TODO(einbinder) do this right
-      // Access a scriptable global object to ensure JS context is
-      // initialized. WebKit will create it lazily only as need be.
-      frame.contentWindow;
       await new Promise(x => frame.onload = x);
       return frame;
     }
-  },
-
-  isFavicon: function(request) {
-    return request.url().includes('favicon.ico');
   },
 
   /**
