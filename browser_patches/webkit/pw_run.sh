@@ -2,18 +2,18 @@
 
 function runOSX() {
   # if script is run as-is
-  if [[ -d $SCRIPT_PATH/checkout/WebKitBuild/Release/MiniBrowser.app ]]; then
+  if [[ -d $SCRIPT_PATH/checkout/WebKitBuild/Release/Playwright.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH/checkout/WebKitBuild/Release"
-  elif [[ -d $SCRIPT_PATH/MiniBrowser.app ]]; then
+  elif [[ -d $SCRIPT_PATH/Playwright.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH"
-  elif [[ -d $SCRIPT_PATH/WebKitBuild/Release/MiniBrowser.app ]]; then
+  elif [[ -d $SCRIPT_PATH/WebKitBuild/Release/Playwright.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH/WebKitBuild/Release"
   else
-    echo "Cannot find a MiniBrowser.app in neither location" 1>&2
+    echo "Cannot find a Playwright.app in neither location" 1>&2
     exit 1
   fi
-  MINIBROWSER="$DYLIB_PATH/MiniBrowser.app/Contents/MacOS/MiniBrowser"
-  DYLD_FRAMEWORK_PATH=$DYLIB_PATH DYLD_LIBRARY_PATH=$DYLIB_PATH $MINIBROWSER "$@"
+  PLAYWRIGHT="$DYLIB_PATH/Playwright.app/Contents/MacOS/Playwright"
+  DYLD_FRAMEWORK_PATH=$DYLIB_PATH DYLD_LIBRARY_PATH=$DYLIB_PATH $PLAYWRIGHT "$@"
 }
 
 function runLinux() {

@@ -121,7 +121,7 @@ createZipForMac() {
   ditto {./WebKitBuild/Release,$tmpdir}/com.apple.WebKit.WebContent.xpc
   ditto {./WebKitBuild/Release,$tmpdir}/JavaScriptCore.framework
   ditto {./WebKitBuild/Release,$tmpdir}/libwebrtc.dylib
-  ditto {./WebKitBuild/Release,$tmpdir}/MiniBrowser.app
+  ditto {./WebKitBuild/Release,$tmpdir}/Playwright.app
   ditto {./WebKitBuild/Release,$tmpdir}/PluginProcessShim.dylib
   ditto {./WebKitBuild/Release,$tmpdir}/SecItemShim.dylib
   ditto {./WebKitBuild/Release,$tmpdir}/WebCore.framework
