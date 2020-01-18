@@ -43,7 +43,7 @@ export class WKPage implements PageDelegate {
   _session: WKSession;
   readonly _page: Page;
   private readonly _pageProxySession: WKSession;
-  private readonly _networkManager: WKNetworkManager;
+  readonly _networkManager: WKNetworkManager;
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
