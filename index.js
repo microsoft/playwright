@@ -17,6 +17,7 @@
 const {helper} = require('./lib/helper');
 const api = require('./lib/api');
 const packageJson = require('./package.json');
+const { DeviceDescriptors } = require('./lib/deviceDescriptors');
 
 for (const className in api) {
   if (typeof api[className] === 'function')
@@ -27,4 +28,5 @@ module.exports = {
   chromium: new api.ChromiumPlaywright(__dirname, packageJson.playwright.chromium_revision),
   firefox: new api.FirefoxPlaywright(__dirname, packageJson.playwright.firefox_revision),
   webkit: new api.WebKitPlaywright(__dirname, packageJson.playwright.webkit_revision),
+  devices: DeviceDescriptors
 };
