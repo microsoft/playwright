@@ -32,7 +32,7 @@ jobs:
     - name: npm install, build, and test
       run: |
         npm install
-        pushd .local-webkit/$(ls .local-webkit); ls -1 | LD_LIBRARY_PATH=$PWD xargs ldd; popd
+        pushd .local-webkit/$(ls .local-webkit)/minibrowser-wpe; ls -1 | LD_LIBRARY_PATH=$PWD xargs ldd; popd
 
         npm run build
         DUMPIO=1 xvfb-run --auto-servernum npm run wunit
