@@ -247,7 +247,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const error = await errorPromise;
       expect(error.message).toContain('navigation');
     });
-    it.skip(FFOX)('should not throw an error when evaluation does a navigation', async({page, server}) => {
+    it('should not throw an error when evaluation does a navigation', async({page, server}) => {
       await page.goto(server.PREFIX + '/one-style.html');
       const result = await page.evaluate(() => {
         window.location = '/empty.html';
@@ -354,7 +354,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const result = await childFrame.evaluate(foo => foo.bar, handle);
       expect(result).toBe('baz');
     });
-    it.skip(FFOX)('should allow cross-frame element handles', async({page, server}) => {
+    it('should allow cross-frame element handles', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const bodyHandle = await page.mainFrame().childFrames()[0].$('body');
       const result = await page.evaluate(body => body.innerHTML, bodyHandle);
