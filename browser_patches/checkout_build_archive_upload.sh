@@ -124,40 +124,38 @@ source ./buildbots/send_telegram_message.sh
 LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
 BUILD_ALIAS="<b>[[$BUILD_FLAVOR r$BUILD_NUMBER]]</b> $LAST_COMMIT_MESSAGE"
 
-if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
-  send_telegram_message "$BUILD_ALIAS -- started ⏳"
-  if ! ./webkit/download_gtk_and_wpe_zip_together_and_upload.sh; then
-    send_telegram_message "$BUILD_ALIAS -- ./download_gtk_and_wpe_zip_together_and_upload.sh failed! ❌"
-    exit 1
-  fi
-  send_telegram_message "$BUILD_ALIAS -- uploaded ✅"
-  exit 0
-fi
-
 send_telegram_message "$BUILD_ALIAS -- started ⏳"
 
-echo "-- preparing checkout"
-if ! ./prepare_checkout.sh $BROWSER_NAME; then
-  send_telegram_message "$BUILD_ALIAS -- ./prepare_checkout.sh failed! ❌"
-  exit 1
-fi
+if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
+  echo "-- combining binaries together"
+  if ! ./webkit/download_gtk_and_wpe_and_zip_together.sh $ZIP_PATH; then
+    send_telegram_message "$BUILD_ALIAS -- ./download_gtk_and_wpe_and_zip_together.sh failed! ❌"
+    exit 1
+  fi
+else
+  echo "-- preparing checkout"
+  if ! ./prepare_checkout.sh $BROWSER_NAME; then
+    send_telegram_message "$BUILD_ALIAS -- ./prepare_checkout.sh failed! ❌"
+    exit 1
+  fi
 
-echo "-- cleaning"
-if ! ./$BROWSER_NAME/clean.sh; then
-  send_telegram_message "$BUILD_ALIAS -- ./clean.sh failed! ❌"
-  exit 1
-fi
+  echo "-- cleaning"
+  if ! ./$BROWSER_NAME/clean.sh; then
+    send_telegram_message "$BUILD_ALIAS -- ./clean.sh failed! ❌"
+    exit 1
+  fi
 
-echo "-- building"
-if ! ./$BROWSER_NAME/build.sh "$EXTRA_BUILD_ARGS"; then
-  send_telegram_message "$BUILD_ALIAS -- ./build.sh failed! ❌"
-  exit 1
-fi
+  echo "-- building"
+  if ! ./$BROWSER_NAME/build.sh "$EXTRA_BUILD_ARGS"; then
+    send_telegram_message "$BUILD_ALIAS -- ./build.sh failed! ❌"
+    exit 1
+  fi
 
-echo "-- archiving to $ZIP_PATH"
-if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
-  send_telegram_message "$BUILD_ALIAS -- ./archive.sh failed! ❌"
-  exit 1
+  echo "-- archiving to $ZIP_PATH"
+  if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
+    send_telegram_message "$BUILD_ALIAS -- ./archive.sh failed! ❌"
+    exit 1
+  fi
 fi
 
 echo "-- uploading"
@@ -165,4 +163,5 @@ if ! ./upload.sh $BUILD_FLAVOR $ZIP_PATH; then
   send_telegram_message "$BUILD_ALIAS -- ./upload.sh failed! ❌"
   exit 1
 fi
-send_telegram_message "$BUILD_ALIAS -- uploaded ✅"
+UPLOAD_SIZE=$(du -h "$ZIP_PATH" | awk '{print $1}')
+send_telegram_message "$BUILD_ALIAS -- $UPLOAD_SIZE uploaded ✅"
