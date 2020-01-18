@@ -52,6 +52,9 @@ unzip archive.zip
 rm archive.zip
 popd
 
+mv minibrowser-gtk/protocol.json .
+rm minibrowser-wpe/protocol.json
+
 zip --symlinks -r $ZIP_PATH ./
 popd
 
