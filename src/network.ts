@@ -97,6 +97,7 @@ export class Request {
   _redirectChain: Request[];
   _finalRequest: Request;
   readonly _documentId?: string;
+  readonly _isFavicon: boolean;
   private _failureText: string | null = null;
   private _url: string;
   private _resourceType: string;
@@ -127,6 +128,7 @@ export class Request {
     this._headers = headers;
     this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
     this._waitForFinishedPromise = new Promise(f => this._waitForFinishedPromiseCallback = f);
+    this._isFavicon = url.endsWith('/favicon.ico');
   }
 
   _setFailureText(failureText: string) {

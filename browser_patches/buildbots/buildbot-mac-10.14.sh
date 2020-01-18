@@ -61,7 +61,7 @@ if [[ -n $(git status -s) ]]; then
 fi
 
 git pull origin master
-../checkout_build_archive_upload.sh firefox >/tmp/$(basename $0)-firefox-log.log || true
+../checkout_build_archive_upload.sh firefox-mac >/tmp/$(basename $0)--firefox-mac.log || true
 
 git pull origin master
-../checkout_build_archive_upload.sh webkit >/tmp/$(basename $0)-webkit-log.log || true
+../checkout_build_archive_upload.sh webkit-mac-10.14 >/tmp/$(basename $0)--webkit-mac-10.14.log || true

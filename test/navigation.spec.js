@@ -125,7 +125,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'domcontentloaded'});
       expect(response.status()).toBe(200);
     });
-    it.skip(WEBKIT)('should work when page calls history API in beforeunload', async({page, server}) => {
+    it('should work when page calls history API in beforeunload', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         window.addEventListener('beforeunload', () => history.replaceState(null, 'initial', window.location.href), false);
@@ -280,7 +280,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     });
     it('should navigate to dataURL and not fire dataURL requests', async({page, server}) => {
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       const dataURL = 'data:text/html,<div>yo</div>';
       const response = await page.goto(dataURL);
       expect(response).toBe(null);
@@ -288,7 +288,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     });
     it('should navigate to URL with hash and fire requests without hash', async({page, server}) => {
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       const response = await page.goto(server.EMPTY_PAGE + '#hash');
       expect(response.status()).toBe(200);
       expect(response.url()).toBe(server.EMPTY_PAGE);

@@ -11147,11 +11147,31 @@ index 4c41864d89f40567ed81ed2efefb501f6753db84..b9cab7c400c0c129ea4a9851dc397682
  
  // For backwards compatibility with the WebBackForwardList API, we honor both
  // a per-WebView and a per-preferences setting for whether to use the back/forward cache.
+diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
+index ba7f352a2adcf7180511cd0a404a015c138adfd9..c27a7f1a2faa8189dbf6c53a915f44e2abdffdb0 100644
+--- a/Source/cmake/OptionsGTK.cmake
++++ b/Source/cmake/OptionsGTK.cmake
+@@ -3,6 +3,7 @@ include(VersioningUtils)
+ 
+ SET_PROJECT_VERSION(2 27 3)
+ set(WEBKITGTK_API_VERSION 4.0)
++set(ENABLE_WEBKIT_LEGACY OFF)
+ 
+ CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(WEBKIT 79 0 42)
+ CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(JAVASCRIPTCORE 33 2 15)
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index 2fbbb581c02b6f4834ae8affa554df0fb2e311e1..1dd53b7970105b3e1191dbfb9545f406ef097646 100644
+index 2fbbb581c02b6f4834ae8affa554df0fb2e311e1..d4e2956db6b1ff83ddf5641436770e09fe0c2df7 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
-@@ -49,6 +49,7 @@ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_XSLT PUBLIC ON)
+@@ -3,6 +3,7 @@ include(VersioningUtils)
+ 
+ SET_PROJECT_VERSION(2 27 3)
+ set(WPE_API_VERSION 1.0)
++set(ENABLE_WEBKIT_LEGACY OFF)
+ 
+ CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(WEBKIT 11 0 8)
+ 
+@@ -49,6 +50,7 @@ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_XSLT PUBLIC ON)
  # Changing these options is completely unsupported.
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_ASYNC_SCROLLING PRIVATE ON)
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_CONTENT_EXTENSIONS PRIVATE ON)
@@ -11160,10 +11180,21 @@ index 2fbbb581c02b6f4834ae8affa554df0fb2e311e1..1dd53b7970105b3e1191dbfb9545f406
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_MHTML PRIVATE ON)
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_NETSCAPE_PLUGIN_API PRIVATE OFF)
 diff --git a/Source/cmake/OptionsWin.cmake b/Source/cmake/OptionsWin.cmake
-index 1019fce94d5389a1f7b15675199dc02ccc68fcc3..5335aed3b8fba48b92407d988d5c7b49b94bc0ce 100644
+index 1019fce94d5389a1f7b15675199dc02ccc68fcc3..785cc43328c8f306e73382a7aaba619f8fc91fe4 100644
 --- a/Source/cmake/OptionsWin.cmake
 +++ b/Source/cmake/OptionsWin.cmake
-@@ -79,6 +79,8 @@ if (${WTF_PLATFORM_WIN_CAIRO})
+@@ -7,8 +7,9 @@ add_definitions(-D_WINDOWS -DWINVER=0x601 -D_WIN32_WINNT=0x601)
+ add_definitions(-DNOMINMAX)
+ add_definitions(-DUNICODE -D_UNICODE)
+ 
++set(ENABLE_WEBKIT_LEGACY OFF)
++
+ if ((NOT DEFINED ENABLE_WEBKIT_LEGACY) OR ENABLE_WEBKIT_LEGACY)
+-    set(ENABLE_WEBKIT_LEGACY ON)
+     set(ENABLE_WEBKIT OFF)
+ endif ()
+ 
+@@ -79,6 +80,8 @@ if (${WTF_PLATFORM_WIN_CAIRO})
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_PUBLIC_SUFFIX_LIST PRIVATE ON)
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_USER_MESSAGE_HANDLERS PRIVATE ON)
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_WEBGL PUBLIC ON)

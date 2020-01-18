@@ -9,8 +9,8 @@
   "main": "index.js",
   "playwright": {
     "chromium_revision": "724623",
-    "firefox_revision": "1015",
-    "webkit_revision": "1097"
+    "firefox_revision": "1016",
+    "webkit_revision": "1099"
   },
   "scripts": {
     "unit": "node test/test.js",

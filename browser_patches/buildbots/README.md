@@ -2,13 +2,13 @@
 
 We currently have 4 build bots that produce the following builds
 - **[buildbot-linux]** Ubuntu 18.04 machine
-    - builds: `Webkit-Linux`, `Firefox-Linux`
+    - builds: `webkit-gtk`, `webkit-wpe`, `firefox-linux`
 - **[buildbot-mac-10.14]** Mac 10.14 machine
-    - builds: `WebKit-mac-10.14`, `Firefox-Mac`
+    - builds: `webKit-mac-10.14`, `firefox-mac`
 - **[buildbot-mac-10.15]** machine
-    - builds: `WebKit-mac-10.15`
+    - builds: `webkit-mac-10.15`
 - **[buildbot-windows]** Windows 10 machine
-    - builds: `Firefox-win32`, `Firefox-win64`, `webkit-win64`
+    - builds: `firefox-win32`, `firefox-win64`, `webkit-win64`
 
 This document describes setting up bots infrastructure to produce
 browser builds.
@@ -104,6 +104,18 @@ The `core.longpaths` is needed for webkit since it has some very long layout pat
 ### 6. Checkout PlayWright to /c/
 
 Run `c:\mozilla-build\start-shell.bat` and checkout PlayWright repo to `/c/playwright`.
+
+### 7. Create a c:\WEBKIT_WIN64_LIBS\ directory with win64 dlls
+
+
+Create a new `c:\WEBKIT_WIN64_LIBS` folder and copy the following libraries from `C:\Windows\System32` into it:
+- `msvcp140.dll`
+- `vcruntime140.dll`
+- `vcruntime140_1.dll`
+
+> **NOTE**: these libraries are expected by `//browser_patches/webkit/archive.sh`. 
+
+This is necessary since mingw is a 32-bit application and cannot access the `C:\Windows\System32` folder due to [Windows FileSystem Redirector](https://docs.microsoft.com/en-us/windows/win32/winprog64/file-system-redirector?redirectedfrom=MSDN). ([StackOverflow question](https://stackoverflow.com/questions/18982551/is-mingw-caching-windows-directory-contents)) 
 
 ## Running Build Loop
 

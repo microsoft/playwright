@@ -10,12 +10,6 @@ if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
   exit 0
 fi
 
-if [[ $# != 1 ]]; then
-  echo "error: missing zip output path"
-  echo "try '$(basename $0) --help' for details"
-  exit 1
-fi
-
 ZIP_PATH=$1
 if [[ $ZIP_PATH != /* ]]; then
   echo "ERROR: path $ZIP_PATH is not absolute"

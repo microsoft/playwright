@@ -28,10 +28,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should intercept', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => {
-        if (utils.isFavicon(request)) {
-          request.continue();
-          return;
-        }
         expect(request.url()).toContain('empty.html');
         expect(request.headers()['user-agent']).toBeTruthy();
         expect(request.method()).toBe('GET');
@@ -94,8 +90,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
-        if (!utils.isFavicon(request))
-          requests.push(request);
+        requests.push(request);
         request.continue();
       });
       await page.goto(server.PREFIX + '/one-style.html');
@@ -217,8 +212,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const requests = [];
       page.on('request', request => {
         request.continue();
-        if (!utils.isFavicon(request))
-          requests.push(request);
+        requests.push(request);
       });
       server.setRedirect('/non-existing-page.html', '/non-existing-page-2.html');
       server.setRedirect('/non-existing-page-2.html', '/non-existing-page-3.html');
@@ -245,8 +239,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const requests = [];
       page.on('request', request => {
         request.continue();
-        if (!utils.isFavicon(request))
-          requests.push(request);
+        requests.push(request);
       });
       server.setRedirect('/one-style.css', '/two-style.css');
       server.setRedirect('/two-style.css', '/three-style.css');
@@ -274,10 +267,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       let spinner = false;
       // Cancel 2nd request.
       page.on('request', request => {
-        if (utils.isFavicon(request)) {
-          request.continue();
-          return;
-        }
         spinner ? request.abort() : request.continue();
         spinner = !spinner;
       });
@@ -292,8 +281,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
-        if (!utils.isFavicon(request))
-          requests.push(request);
+        requests.push(request);
         request.continue();
       });
       const dataURL = 'data:text/html,<div>yo</div>';
@@ -306,8 +294,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
-        if (!utils.isFavicon(request))
-          requests.push(request);
+        requests.push(request);
         request.continue();
       });
       const dataURL = 'data:text/html,<div>yo</div>';
@@ -319,8 +306,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setRequestInterception(true);
       const requests = [];
       page.on('request', request => {
-        if (!utils.isFavicon(request))
-          requests.push(request);
+        requests.push(request);
         request.continue();
       });
       const response = await page.goto(server.EMPTY_PAGE + '#hash');
@@ -351,8 +337,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const requests = [];
       page.on('request', request => {
         request.continue();
-        if (!utils.isFavicon(request))
-          requests.push(request);
+        requests.push(request);
       });
       const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
       expect(response).toBe(null);
@@ -386,7 +371,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.goto(server.EMPTY_PAGE);
       expect(error.message).toContain('Request Interception is not enabled');
     });
-    it.skip(WEBKIT)('should intercept main resource during cross-process navigation', async({page, server}) => {
+    it('should intercept main resource during cross-process navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setRequestInterception(true);
       let intercepted = false;
@@ -414,7 +399,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const notAnError = await request.continue().then(() => null).catch(e => e);
       expect(notAnError).toBe(null);
     });
-    it.skip(WEBKIT)('should not throw when continued after cross-process navigation', async({page, server}) => {
+    it('should not throw when continued after cross-process navigation', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => {
         if (request.url() !== server.PREFIX + '/one-style.css')
