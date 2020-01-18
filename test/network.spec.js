@@ -27,20 +27,20 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   describe('Page.Events.Request', function() {
     it('should fire for navigation requests', async({page, server}) => {
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       expect(requests.length).toBe(1);
     });
     it('should fire for iframes', async({page, server}) => {
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       expect(requests.length).toBe(2);
     });
     it('should fire for fetches', async({page, server}) => {
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => fetch('/empty.html'));
       expect(requests.length).toBe(2);
@@ -50,7 +50,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   describe('Request.frame', function() {
     it('should work for main frame navigation request', async({page, server}) => {
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       expect(requests.length).toBe(1);
       expect(requests[0].frame()).toBe(page.mainFrame());
@@ -58,7 +58,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     it('should work for subframe navigation request', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       expect(requests.length).toBe(1);
       expect(requests[0].frame()).toBe(page.frames()[1]);
@@ -66,7 +66,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     it('should work for fetch requests', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       let requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       await page.evaluate(() => fetch('/digits/1.png'));
       requests = requests.filter(request => !request.url().includes('favicon'));
       expect(requests.length).toBe(1);
@@ -151,7 +151,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       page.on('requestfinished', r => requestFinished = requestFinished || r.url().includes('/get'));
       // send request and wait for server response
       const [pageResponse] = await Promise.all([
-        page.waitForEvent('response', { predicate: r => !utils.isFavicon(r.request()) }),
+        page.waitForEvent('response'),
         page.evaluate(() => fetch('./get', { method: 'GET'})),
         server.waitForRequest('/get'),
       ]);
@@ -207,7 +207,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   describe('Network Events', function() {
     it('Page.Events.Request', async({page, server}) => {
       const requests = [];
-      page.on('request', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('request', request => requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       expect(requests.length).toBe(1);
       expect(requests[0].url()).toBe(server.EMPTY_PAGE);
@@ -220,7 +220,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     // FIXME: WebKit doesn't provide remoteIPAddress in the response.
     it.skip(WEBKIT)('Page.Events.Response', async({page, server}) => {
       const responses = [];
-      page.on('response', response => !utils.isFavicon(response.request()) && responses.push(response));
+      page.on('response', response => responses.push(response));
       await page.goto(server.EMPTY_PAGE);
       expect(responses.length).toBe(1);
       expect(responses[0].url()).toBe(server.EMPTY_PAGE);
@@ -261,7 +261,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
     it('Page.Events.RequestFinished', async({page, server}) => {
       const requests = [];
-      page.on('requestfinished', request => !utils.isFavicon(request) && requests.push(request));
+      page.on('requestfinished', request => requests.push(request));
       await page.goto(server.EMPTY_PAGE);
       expect(requests.length).toBe(1);
       expect(requests[0].url()).toBe(server.EMPTY_PAGE);
@@ -271,18 +271,18 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
     it('should fire events in proper order', async({page, server}) => {
       const events = [];
-      page.on('request', request => !utils.isFavicon(request) && events.push('request'));
-      page.on('response', response => !utils.isFavicon(response.request()) && events.push('response'));
-      page.on('requestfinished', request => !utils.isFavicon(request) && events.push('requestfinished'));
+      page.on('request', request => events.push('request'));
+      page.on('response', response => events.push('response'));
+      page.on('requestfinished', request => events.push('requestfinished'));
       await page.goto(server.EMPTY_PAGE);
       expect(events).toEqual(['request', 'response', 'requestfinished']);
     });
     it('should support redirects', async({page, server}) => {
       const events = [];
-      page.on('request', request => !utils.isFavicon(request) && events.push(`${request.method()} ${request.url()}`));
-      page.on('response', response => !utils.isFavicon(response.request()) && events.push(`${response.status()} ${response.url()}`));
-      page.on('requestfinished', request => !utils.isFavicon(request) && events.push(`DONE ${request.url()}`));
-      page.on('requestfailed', request => !utils.isFavicon(request) && events.push(`FAIL ${request.url()}`));
+      page.on('request', request => events.push(`${request.method()} ${request.url()}`));
+      page.on('response', response => events.push(`${response.status()} ${response.url()}`));
+      page.on('requestfinished', request => events.push(`DONE ${request.url()}`));
+      page.on('requestfailed', request => events.push(`FAIL ${request.url()}`));
       server.setRedirect('/foo.html', '/empty.html');
       const FOO_URL = server.PREFIX + '/foo.html';
       const response = await page.goto(FOO_URL);
