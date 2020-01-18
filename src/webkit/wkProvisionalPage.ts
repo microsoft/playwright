@@ -53,7 +53,7 @@ export class WKProvisionalPage {
     // Pretend that the events happened in the same process.
     if (payload.frameId)
       payload.frameId = this._wkPage._page._frameManager.mainFrame()._id;
-    this._wkPage._session.emit(eventName, payload);
+    this._wkPage._session.emit(eventName, payload, this._session);
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {

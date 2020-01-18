@@ -77,13 +77,13 @@ export class WKNetworkManager {
     await this._session.send('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
   }
 
-  async _updateProtocolCacheDisabled() {
+  private async _updateProtocolCacheDisabled() {
     await this._session.send('Network.setResourceCachingDisabled', {
       disabled: this._userCacheDisabled
     });
   }
 
-  _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
+  private _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload, session: WKSession) {
     if (event.request.url.startsWith('data:'))
       return;
     let redirectChain: network.Request[] = [];
@@ -99,28 +99,28 @@ export class WKNetworkManager {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new InterceptableRequest(this._session, !!this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
+    const request = new InterceptableRequest(session, !!this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
 
-  _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
+  private _onRequestIntercepted(event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (request)
       request._interceptedCallback();
   }
 
-  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
+  private static _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
     const remoteAddress: network.RemoteAddress = { ip: '', port: 0 };
     const getResponseBody = async () => {
-      const response = await this._session.send('Network.getResponseBody', { requestId: request._requestId });
+      const response = await request._session.send('Network.getResponseBody', { requestId: request._requestId });
       return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
     return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), remoteAddress, getResponseBody);
   }
 
-  _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
-    const response = this._createResponse(request, responsePayload);
+  private _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
+    const response = WKNetworkManager._createResponse(request, responsePayload);
     request.request._redirectChain.push(request.request);
     response._requestFinished(new Error('Response body is unavailable for redirect responses'));
     this._requestIdToRequest.delete(request._requestId);
@@ -128,16 +128,16 @@ export class WKNetworkManager {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
+  private _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // FileUpload sends a response without a matching request.
     if (!request)
       return;
-    const response = this._createResponse(request, event.response);
+    const response = WKNetworkManager._createResponse(request, event.response);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
-  _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
+  private _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
@@ -153,7 +153,7 @@ export class WKNetworkManager {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+  private _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
@@ -194,7 +194,7 @@ const errorReasons: { [reason: string]: string } = {
 };
 
 class InterceptableRequest implements network.RequestDelegate {
-  private _session: WKSession;
+  readonly _session: WKSession;
   readonly request: network.Request;
   _requestId: string;
   _documentId: string | undefined;

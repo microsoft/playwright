@@ -386,7 +386,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.goto(server.EMPTY_PAGE);
       expect(error.message).toContain('Request Interception is not enabled');
     });
-    it.skip(WEBKIT)('should intercept main resource during cross-process navigation', async({page, server}) => {
+    it('should intercept main resource during cross-process navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setRequestInterception(true);
       let intercepted = false;
@@ -414,7 +414,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const notAnError = await request.continue().then(() => null).catch(e => e);
       expect(notAnError).toBe(null);
     });
-    it.skip(WEBKIT)('should not throw when continued after cross-process navigation', async({page, server}) => {
+    it('should not throw when continued after cross-process navigation', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => {
         if (request.url() !== server.PREFIX + '/one-style.css')
