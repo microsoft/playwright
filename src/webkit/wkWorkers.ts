@@ -31,8 +31,7 @@ export class WKWorkers {
 
   setSession(session: WKSession) {
     helper.removeEventListeners(this._sessionListeners);
-    this._page._clearWorkers();
-    this._workerSessions.clear();
+    this.clear();
     this._sessionListeners = [
       helper.addEventListener(session, 'Worker.workerCreated', async (event: Protocol.Worker.workerCreatedPayload) => {
         const worker = new Worker(event.url);
@@ -71,6 +70,11 @@ export class WKWorkers {
         this._page._removeWorker(event.workerId);
       })
     ];
+  }
+
+  clear() {
+    this._page._clearWorkers();
+    this._workerSessions.clear();
   }
 
   async initializeSession(session: WKSession) {
