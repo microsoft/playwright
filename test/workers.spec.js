@@ -23,7 +23,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(FFOX)('Workers', function() {
+  describe('Workers', function() {
     it('Page.workers', async function({page, server}) {
       await Promise.all([
         page.waitForEvent('workercreated'),

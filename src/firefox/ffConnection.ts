@@ -58,7 +58,7 @@ export class FFConnection extends platform.EventEmitter {
   }
 
   static fromSession(session: FFSession): FFConnection {
-    return session._connection!;
+    return session._connection;
   }
 
   session(sessionId: string): FFSession | null {
@@ -69,18 +69,21 @@ export class FFConnection extends platform.EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    const id = this._rawSend({method, params});
+    const id = this.nextMessageId();
+    this._rawSend({id, method, params});
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
     });
   }
 
-  _rawSend(message: any): number {
-    const id = ++this._lastId;
-    message = JSON.stringify(Object.assign({}, message, {id}));
+  nextMessageId(): number {
+    return ++this._lastId;
+  }
+
+  _rawSend(message: any) {
+    message = JSON.stringify(message);
     debugProtocol('SEND ► ' + message);
     this._transport.send(message);
-    return id;
   }
 
   async _onMessage(message: string) {
@@ -88,7 +91,7 @@ export class FFConnection extends platform.EventEmitter {
     const object = JSON.parse(message);
     if (object.method === 'Target.attachedToTarget') {
       const sessionId = object.params.sessionId;
-      const session = new FFSession(this, object.params.targetInfo.type, sessionId);
+      const session = new FFSession(this, object.params.targetInfo.type, sessionId, message => this._rawSend({...message, sessionId}));
       this._sessions.set(sessionId, session);
     } else if (object.method === 'Browser.detachedFromTarget') {
       const session = this._sessions.get(object.params.sessionId);
@@ -100,7 +103,7 @@ export class FFConnection extends platform.EventEmitter {
     if (object.sessionId) {
       const session = this._sessions.get(object.sessionId);
       if (session)
-        session._onMessage(object);
+        session.dispatchMessage(object);
     } else if (object.id) {
       const callback = this._callbacks.get(object.id);
       // Callbacks could be all rejected if someone has called `.dispose()`.
@@ -147,22 +150,25 @@ export const FFSessionEvents = {
 };
 
 export class FFSession extends platform.EventEmitter {
-  _connection: FFConnection | null;
+  _connection: FFConnection;
+  _disposed = false;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _targetType: string;
   private _sessionId: string;
+  private _rawSend: (message: any) => void;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(connection: FFConnection, targetType: string, sessionId: string) {
+  constructor(connection: FFConnection, targetType: string, sessionId: string, rawSend: (message: any) => void) {
     super();
     this._callbacks = new Map();
     this._connection = connection;
     this._targetType = targetType;
     this._sessionId = sessionId;
+    this._rawSend = rawSend;
 
     this.on = super.on;
     this.addListener = super.addListener;
@@ -175,15 +181,16 @@ export class FFSession extends platform.EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (!this._connection)
+    if (this._disposed)
       return Promise.reject(new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`));
-    const id = this._connection._rawSend({sessionId: this._sessionId, method, params});
+    const id = this._connection.nextMessageId();
+    this._rawSend({method, params, id});
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
     });
   }
 
-  _onMessage(object: { id?: number; method: string; params: object; error: { message: string; data: any; }; result?: any; }) {
+  dispatchMessage(object: { id?: number; method: string; params: object; error: { message: string; data: any; }; result?: any; }) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
@@ -201,7 +208,7 @@ export class FFSession extends platform.EventEmitter {
     for (const callback of this._callbacks.values())
       callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
-    this._connection = null;
+    this._disposed = true;
     Promise.resolve().then(() => this.emit(FFSessionEvents.Disconnected));
   }
 }

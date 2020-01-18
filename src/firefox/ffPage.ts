@@ -20,7 +20,7 @@ import { helper, RegisteredListener, debugError } from '../helper';
 import * as dom from '../dom';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
-import { Page, PageDelegate, Coverage } from '../page';
+import { Page, PageDelegate, Coverage, Worker } from '../page';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Events } from '../events';
 import * as dialog from '../dialog';
@@ -43,6 +43,7 @@ export class FFPage implements PageDelegate {
   readonly _networkManager: FFNetworkManager;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
+  private _workers = new Map<string, { frameId: string, session: FFSession }>();
 
   constructor(session: FFSession, browserContext: BrowserContext) {
     this._session = session;
@@ -66,6 +67,9 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
       helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
       helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
+      helper.addEventListener(this._session, 'Page.workerCreated', this._onWorkerCreated.bind(this)),
+      helper.addEventListener(this._session, 'Page.workerDestroyed', this._onWorkerDestroyed.bind(this)),
+      helper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
     ];
   }
 
@@ -128,6 +132,10 @@ export class FFPage implements PageDelegate {
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
+    for (const [workerId, worker] of this._workers) {
+      if (worker.frameId === params.frameId)
+        this._onWorkerDestroyed({ workerId });
+    }
     this._page._frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId || '', false);
   }
 
@@ -183,6 +191,48 @@ export class FFPage implements PageDelegate {
     const context = this._contextIdToContext.get(executionContextId)!;
     const handle = context._createHandle(element).asElement()!;
     this._page._onFileChooserOpened(handle);
+  }
+
+  async _onWorkerCreated(event: Protocol.Page.workerCreatedPayload) {
+    const workerId = event.workerId;
+    const worker = new Worker(event.url);
+    const workerSession = new FFSession(this._session._connection, 'worker', workerId, (message: any) => {
+      this._session.send('Page.sendMessageToWorker', {
+        frameId: event.frameId,
+        workerId: workerId,
+        message: JSON.stringify(message)
+      }).catch(e => {
+        workerSession.dispatchMessage({ id: message.id, method: '', params: {}, error: { message: e.message, data: undefined } });
+      });
+    });
+    this._workers.set(workerId, { session: workerSession, frameId: event.frameId });
+    this._page._addWorker(workerId, worker);
+    workerSession.once('Runtime.executionContextCreated', event => {
+      worker._createExecutionContext(new FFExecutionContext(workerSession, event.executionContextId));
+    });
+    workerSession.on('Runtime.console', event => {
+      const {type, args, location} = event;
+      const context = worker._existingExecutionContext!;
+      this._page._addConsoleMessage(type, args.map(arg => context._createHandle(arg)), location);
+    });
+    // Note: we receive worker exceptions directly from the page.
+  }
+
+  async _onWorkerDestroyed(event: Protocol.Page.workerDestroyedPayload) {
+    const workerId = event.workerId;
+    const worker = this._workers.get(workerId);
+    if (!worker)
+      return;
+    worker.session._onClosed();
+    this._workers.delete(workerId);
+    this._page._removeWorker(workerId);
+  }
+
+  async _onDispatchMessageFromWorker(event: Protocol.Page.dispatchMessageFromWorkerPayload) {
+    const worker = this._workers.get(event.workerId);
+    if (!worker)
+      return;
+    worker.session.dispatchMessage(JSON.parse(event.message));
   }
 
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {
