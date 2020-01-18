@@ -19,10 +19,15 @@ function runOSX() {
 function runLinux() {
   # if script is run as-is
   DEPENDENCIES_FOLDER="DependenciesGTK"
+  MINIBROWSER_FOLDER="minibrowser-gtk";
   if [[ "$*" == *--headless* ]]; then
     DEPENDENCIES_FOLDER="DependenciesWPE";
+    MINIBROWSER_FOLDER="minibrowser-wpe";
   fi
-  if [[ -d $SCRIPT_PATH/checkout/WebKitBuild ]]; then
+  if [[ -d $SCRIPT_PATH/$MINIBROWSER_FOLDER ]]; then
+    LD_PATH="$SCRIPT_PATH/$MINIBROWSER_FOLDER"
+    MINIBROWSER="$SCRIPT_PATH/$MINIBROWSER_FOLDER/MiniBrowser"
+  elif [[ -d $SCRIPT_PATH/checkout/WebKitBuild ]]; then
     LD_PATH="$SCRIPT_PATH/checkout/WebKitBuild/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/WebKitBuild/Release/bin"
     MINIBROWSER="$SCRIPT_PATH/checkout/WebKitBuild/Release/bin/MiniBrowser"
   elif [[ -f $SCRIPT_PATH/MiniBrowser ]]; then
