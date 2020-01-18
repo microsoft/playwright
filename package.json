@@ -1,6 +1,6 @@
 {
   "name": "playwright",
-  "version": "0.9.13-post",
+  "version": "0.9.15-post",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "engines": {
@@ -10,7 +10,7 @@
   "playwright": {
     "chromium_revision": "724623",
     "firefox_revision": "1016",
-    "webkit_revision": "1099"
+    "webkit_revision": "1100"
   },
   "scripts": {
     "unit": "node test/test.js",
