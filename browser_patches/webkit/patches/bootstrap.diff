@@ -11294,541 +11294,6 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..17854dbfb1a3223e091ab90c0ca1bfc1
      if (cookiesPolicy) {
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
          GEnumClass *enumClass = g_type_class_ref(WEBKIT_TYPE_COOKIE_ACCEPT_POLICY);
-diff --git a/Tools/MiniBrowser/mac/AppDelegate.h b/Tools/MiniBrowser/mac/AppDelegate.h
-index ca98036e51491695bc976fedcd10c9e63d386144..06c41ff9d246d06fb41e16e1dd46daca7ba71807 100644
---- a/Tools/MiniBrowser/mac/AppDelegate.h
-+++ b/Tools/MiniBrowser/mac/AppDelegate.h
-@@ -23,12 +23,25 @@
-  * THE POSSIBILITY OF SUCH DAMAGE.
-  */
- 
-+#import <WebKit/_WKBrowserInspector.h>
-+
- @class ExtensionManagerWindowController;
- @class SettingsController;
- 
--@interface BrowserAppDelegate : NSObject <NSApplicationDelegate> {
-+WK_CLASS_AVAILABLE(macos(10.14.0))
-+@interface WebViewDialog : NSObject
-+@property (nonatomic, strong) WKWebView *webView;
-+@property (nonatomic, copy) void (^completionHandler)(BOOL accept, NSString* value);
-+@end
-+
-+@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate> {
-     NSMutableSet *_browserWindowControllers;
-     SettingsController *_settingsController;
-+    NSMutableSet *_headlessWindows;
-+    NSMutableSet *_browserContexts;
-+    bool _headless;
-+    NSMutableSet *_dialogs;
-+    NSString* _initialURL;
-     ExtensionManagerWindowController *_extensionManagerWindowController;
- 
-     IBOutlet NSMenu *_settingsMenu;
-diff --git a/Tools/MiniBrowser/mac/AppDelegate.m b/Tools/MiniBrowser/mac/AppDelegate.m
-index 2b79519691b5d55be16bf8b47c3a755f2ddefc72..69549058b067505fa3fe20a8c6271a935be1695b 100644
---- a/Tools/MiniBrowser/mac/AppDelegate.m
-+++ b/Tools/MiniBrowser/mac/AppDelegate.m
-@@ -33,7 +33,9 @@
- #import <WebKit/WKProcessPoolPrivate.h>
- #import <WebKit/WKUserContentControllerPrivate.h>
- #import <WebKit/WKWebViewConfigurationPrivate.h>
-+#import <WebKit/WKWebViewPrivate.h>
- #import <WebKit/WKWebsiteDataStorePrivate.h>
-+#import <WebKit/WebNSURLExtras.h>
- #import <WebKit/WebKit.h>
- #import <WebKit/_WKExperimentalFeature.h>
- #import <WebKit/_WKInternalDebugFeature.h>
-@@ -64,16 +66,53 @@ @interface NSApplication (TouchBar)
- 
- @end
- 
-+@implementation WebViewDialog
-+@end
-+
-+enum {
-+    _NSBackingStoreUnbuffered = 3
-+};
-+
-+NSString* const ActivityReason = @"Batch headless process";
-+const NSActivityOptions ActivityOptions =
-+    (NSActivityUserInitiatedAllowingIdleSystemSleep |
-+     NSActivityLatencyCritical) &
-+    ~(NSActivitySuddenTerminationDisabled |
-+    NSActivityAutomaticTerminationDisabled);
-+
- @implementation BrowserAppDelegate
- 
- - (id)init
- {
-     self = [super init];
--    if (self) {
--        _browserWindowControllers = [[NSMutableSet alloc] init];
--        _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
-+    if (!self)
-+        return nil;
-+
-+    _initialURL = nil;
-+    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
-+    NSRange subargs = NSMakeRange(1, [arguments count] - 1);
-+    NSArray *subArray = [arguments subarrayWithRange:subargs];
-+
-+    for (NSString *argument in subArray) {
-+        if (![argument hasPrefix:@"--"])
-+            _initialURL = argument;
-     }
- 
-+    _headless = [arguments containsObject: @"--headless"];
-+    _browserContexts = [[NSMutableSet alloc] init];
-+
-+    if (_headless) {
-+        _headlessWindows = [[NSMutableSet alloc] init];
-+        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
-+        [[NSProcessInfo processInfo] beginActivityWithOptions:ActivityOptions
-+                                                       reason:ActivityReason];
-+        _dialogs = [[NSMutableSet alloc] init];
-+    } else {
-+        _extensionManagerWindowController = [[ExtensionManagerWindowController alloc] init];
-+        _browserWindowControllers = [[NSMutableSet alloc] init];
-+    }
-+    if ([arguments containsObject: @"--inspector-pipe"])
-+        [_WKBrowserInspector initializeRemoteInspectorPipe:self headless:_headless];
-     return self;
- }
- 
-@@ -99,7 +138,7 @@ - (void)awakeFromNib
-         configuration.networkCacheSpeculativeValidationEnabled = YES;
-         dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
-     }
--    
-+
-     return dataStore;
- }
- 
-@@ -114,13 +153,18 @@ - (WKWebViewConfiguration *)defaultConfiguration
-         configuration.preferences._developerExtrasEnabled = YES;
-         configuration.preferences._mediaDevicesEnabled = YES;
-         configuration.preferences._mockCaptureDevicesEnabled = YES;
-+        configuration.preferences._hiddenPageDOMTimerThrottlingEnabled = NO;
-+        configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
-+        configuration.preferences._pageVisibilityBasedProcessSuppressionEnabled = NO;
-+        configuration.preferences._domTimersThrottlingEnabled = NO;
-+        configuration.preferences._requestAnimationFrameEnabled = YES;
- 
-         _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
-         if (_settingsController.perWindowWebProcessesDisabled)
-             processConfiguration.usesSingleWebProcess = YES;
-         if (_settingsController.processSwapOnWindowOpenWithOpenerEnabled)
-             processConfiguration.processSwapsOnWindowOpenWithOpener = true;
--        
-+
-         configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
- 
-         NSArray<_WKExperimentalFeature *> *experimentalFeatures = [WKPreferences _experimentalFeatures];
-@@ -156,6 +200,9 @@ - (WKPreferences *)defaultPreferences
- 
- - (BrowserWindowController *)createBrowserWindowController:(id)sender
- {
-+    if (_headless)
-+        return nil;
-+
-     BrowserWindowController *controller = nil;
-     BOOL useWebKit2 = NO;
-     BOOL makeEditable = NO;
-@@ -169,9 +216,9 @@ - (BrowserWindowController *)createBrowserWindowController:(id)sender
-     }
- 
-     if (!useWebKit2)
--        controller = [[WK1BrowserWindowController alloc] initWithWindowNibName:@"BrowserWindow"];
-+        controller = [[[WK1BrowserWindowController alloc] initWithWindowNibName:@"BrowserWindow"] autorelease];
-     else
--        controller = [[WK2BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]];
-+        controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]] autorelease];
- 
-     if (makeEditable)
-         controller.editable = YES;
-@@ -196,6 +243,9 @@ - (IBAction)newWindow:(id)sender
- 
- - (IBAction)newPrivateWindow:(id)sender
- {
-+    if (_headless)
-+        return;
-+
-     WKWebViewConfiguration *privateConfiguraton = [self.defaultConfiguration copy];
-     privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
- 
-@@ -225,16 +275,19 @@ - (void)browserWindowWillClose:(NSWindow *)window
- 
- - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
- {
-+    if (_headless) {
-+        [self createNewPage:0];
-+        return;
-+    }
-+
-     WebHistory *webHistory = [[WebHistory alloc] init];
-     [WebHistory setOptionalSharedHistory:webHistory];
-     [webHistory release];
- 
-     [self _updateNewWindowKeyEquivalents];
--
--    if (_settingsController.createEditorByDefault)
--        [self newEditorWindow:self];
--    else
-+    if (!_initialURL)
-         [self newWindow:self];
-+    _initialURL = nil;
- }
- 
- - (BrowserWindowController *)frontmostBrowserWindowController
-@@ -260,12 +313,15 @@ - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filenam
-         return NO;
- 
-     [controller.window makeKeyAndOrderFront:self];
--    [controller loadURLString:[NSURL fileURLWithPath:filename].absoluteString];
-+    [controller loadURLString:_initialURL ? _initialURL : [NSURL fileURLWithPath:filename].absoluteString];
-     return YES;
- }
- 
- - (IBAction)openDocument:(id)sender
- {
-+    if (_headless)
-+        return;
-+
-     BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
- 
-     if (browserWindowController) {
-@@ -295,6 +351,9 @@ - (IBAction)openDocument:(id)sender
- 
- - (void)didChangeSettings
- {
-+    if (_headless)
-+        return;
-+
-     [self _updateNewWindowKeyEquivalents];
- 
-     // Let all of the BrowserWindowControllers know that a setting changed, so they can attempt to dynamically update.
-@@ -323,6 +382,8 @@ - (void)_updateNewWindowKeyEquivalents
- 
- - (IBAction)showExtensionsManager:(id)sender
- {
-+    if (_headless)
-+        return;
-     [_extensionManagerWindowController showWindow:sender];
- }
- 
-@@ -356,4 +417,159 @@ - (IBAction)clearDefaultStoreWebsiteData:(id)sender
-     }];
- }
- 
-+#pragma mark WKBrowserInspectorDelegate
-+
-+- (WKWebViewConfiguration *) sessionConfiguration:(uint64_t)sessionID
-+{
-+    for (_WKBrowserContext *browserContext in _browserContexts) {
-+        if ([[browserContext dataStore] sessionID] != sessionID)
-+            continue;
-+        WKWebViewConfiguration *configuration = [[[self defaultConfiguration] copy] autorelease];
-+        configuration.websiteDataStore = [browserContext dataStore];
-+        configuration.processPool = [browserContext processPool];
-+        return configuration;
-+    }
-+    return [self defaultConfiguration];
-+}
-+
-+- (WKWebView *)createNewPage:(uint64_t)sessionID
-+{
-+    if (_headless)
-+        return [self createHeadlessPage:sessionID];
-+
-+    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
-+    WK2BrowserWindowController *controller = [[[WK2BrowserWindowController alloc] initWithConfiguration:configuration] autorelease];
-+    if (!controller)
-+        return nil;
-+    [[controller window] makeKeyAndOrderFront:nil];
-+    [_browserWindowControllers addObject:controller];
-+    [controller loadURLString:_settingsController.defaultURL];
-+    return [controller webView];
-+}
-+
-+- (WKWebView *)createHeadlessWebView:(WKWebViewConfiguration *)configuration
-+{
-+    NSRect rect = NSMakeRect(0, 0, 1024, 768);
-+    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
-+    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
-+    NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
-+
-+    WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
-+    webView._windowOcclusionDetectionEnabled = NO;
-+    if (!webView)
-+        return nil;
-+
-+    webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-+    [window.contentView addSubview:webView];
-+    NSURL *url = [NSURL _webkit_URLWithUserTypedString:_initialURL ? _initialURL : @"about:blank"];
-+    _initialURL = nil;
-+    [webView loadRequest:[NSURLRequest requestWithURL:url]];
-+    [_headlessWindows addObject:window];
-+    webView.UIDelegate = self;
-+    return [webView autorelease];
-+}
-+
-+- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
-+{
-+    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
-+    return [self createHeadlessWebView:configuration];
-+}
-+
-+- (_WKBrowserContext *)createBrowserContext
-+{
-+    _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
-+    _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
-+    browserContext.dataStore = [WKWebsiteDataStore nonPersistentDataStore];
-+    browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
-+    [_browserContexts addObject:browserContext];
-+    return browserContext;
-+}
-+
-+- (void)deleteBrowserContext:(uint64_t)sessionID
-+{
-+    for (_WKBrowserContext *browserContext in _browserContexts) {
-+        if ([[browserContext dataStore] sessionID] != sessionID)
-+            continue;
-+        [_browserContexts removeObject:browserContext];
-+        return;
-+    }
-+}
-+
-+- (void)quit
-+{
-+    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
-+}
-+
-+#pragma mark WKUIDelegate
-+
-+- (void)webViewDidClose:(WKWebView *)webView {
-+    for (NSWindow *window in _headlessWindows) {
-+        if (webView.window != window)
-+            continue;
-+        [webView removeFromSuperview];
-+        [window close];
-+        [_headlessWindows removeObject:window];
-+        break;
-+    }
-+}
-+
-+- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
-+{
-+    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
-+    dialog.webView = webView;
-+    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
-+        completionHandler();
-+        [_dialogs removeObject:dialog];
-+    };
-+    [_dialogs addObject:dialog];
-+}
-+
-+- (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
-+{
-+    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
-+    dialog.webView = webView;
-+    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
-+        completionHandler(accept);
-+        [_dialogs removeObject:dialog];
-+    };
-+    [_dialogs addObject:dialog];
-+}
-+
-+- (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *result))completionHandler
-+{
-+    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
-+    dialog.webView = webView;
-+    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
-+        completionHandler(accept && value ? value : nil);
-+        [_dialogs removeObject:dialog];
-+    };
-+    [_dialogs addObject:dialog];
-+}
-+
-+- (void)_webView:(WKWebView *)webView runBeforeUnloadConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
-+{
-+    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
-+    dialog.webView = webView;
-+    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
-+        completionHandler(accept);
-+        [_dialogs removeObject:dialog];
-+    };
-+    [_dialogs addObject:dialog];
-+}
-+
-+- (void)webView:(WKWebView *)webView handleJavaScriptDialog:(BOOL)accept value:(NSString *)value
-+{
-+    for (WebViewDialog *dialog in _dialogs) {
-+        if (dialog.webView != webView)
-+            continue;
-+        dialog.completionHandler(accept, value);
-+        break;
-+    }
-+}
-+
-+- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
-+{
-+    return [self createHeadlessWebView:configuration];
-+}
-+
- @end
-diff --git a/Tools/MiniBrowser/mac/SettingsController.m b/Tools/MiniBrowser/mac/SettingsController.m
-index d68c854ad582702c6a6ea638708f1d3f8e4e1b18..3a078cbc6c5b081de013497fe8254bedb8e034d4 100644
---- a/Tools/MiniBrowser/mac/SettingsController.m
-+++ b/Tools/MiniBrowser/mac/SettingsController.m
-@@ -33,7 +33,7 @@
- 
- NSString * const kUserAgentChangedNotificationName = @"UserAgentChangedNotification";
- 
--static NSString * const defaultURL = @"http://www.webkit.org/";
-+static NSString * const defaultURL = @"about:blank";
- static NSString * const DefaultURLPreferenceKey = @"DefaultURL";
- 
- static NSString * const CustomUserAgentPreferenceKey = @"CustomUserAgentIdentifier";
-diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.h b/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
-index 6f0949b0f4ad0ec86b8a6f27c6a53ce9ad691500..e774433031a66b2ae606d74deb2417fa510e59e3 100644
---- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
-+++ b/Tools/MiniBrowser/mac/WK2BrowserWindowController.h
-@@ -25,8 +25,11 @@
- 
- #import "BrowserWindowController.h"
- 
-+@class WKWebView;
-+
- @interface WK2BrowserWindowController : BrowserWindowController
- 
- - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration;
-+- (WKWebView *)webView;
- 
- @end
-diff --git a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-index 031edd533ae1b791bc6862c631b909ae99dac886..0eee1f2071e5e6800f4889a561e94951f41ea811 100644
---- a/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-+++ b/Tools/MiniBrowser/mac/WK2BrowserWindowController.m
-@@ -73,6 +73,7 @@ @implementation WK2BrowserWindowController {
-     WKWebView *_webView;
-     BOOL _zoomTextOnly;
-     BOOL _isPrivateBrowsingWindow;
-+    NSAlert* _alert;
- 
-     BOOL _useShrinkToFit;
- 
-@@ -83,7 +84,10 @@ @implementation WK2BrowserWindowController {
- 
- - (void)awakeFromNib
- {
-+    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
-+
-     _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
-+    _webView._windowOcclusionDetectionEnabled = NO;
-     [self didChangeSettings];
- 
-     _webView.allowsMagnification = YES;
-@@ -107,7 +111,7 @@ - (void)awakeFromNib
-     // telling WebKit to load every icon referenced by the page.
-     if (settingsController.loadsAllSiteIcons)
-         _webView._iconLoadingDelegate = self;
--    
-+
-     _webView._observedRenderingProgressEvents = _WKRenderingProgressEventFirstLayout
-         | _WKRenderingProgressEventFirstVisuallyNonEmptyLayout
-         | _WKRenderingProgressEventFirstPaintWithSignificantArea
-@@ -147,14 +151,11 @@ - (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
- - (void)dealloc
- {
-     [[NSNotificationCenter defaultCenter] removeObserver:self];
--    [_webView removeObserver:self forKeyPath:@"title"];
--    [_webView removeObserver:self forKeyPath:@"URL"];
-     
-     [progressIndicator unbind:NSHiddenBinding];
-     [progressIndicator unbind:NSValueBinding];
- 
-     [_textFinder release];
--
-     [_webView release];
-     [_configuration release];
- 
-@@ -387,9 +388,15 @@ - (BOOL)windowShouldClose:(id)sender
- - (void)windowWillClose:(NSNotification *)notification
- {
-     [[[NSApplication sharedApplication] browserAppDelegate] browserWindowWillClose:self.window];
-+    [_webView removeObserver:self forKeyPath:@"title"];
-+    [_webView removeObserver:self forKeyPath:@"URL"];
-     [self autorelease];
- }
- 
-+- (void)webViewDidClose:(WKWebView *)webView {
-+    [self.window close];
-+}
-+
- #define DefaultMinimumZoomFactor (.5)
- #define DefaultMaximumZoomFactor (3.0)
- #define DefaultZoomFactorRatio (1.2)
-@@ -527,9 +534,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
-     [alert setInformativeText:message];
-     [alert addButtonWithTitle:@"OK"];
- 
-+    _alert = alert;
-     [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
-         completionHandler();
-         [alert release];
-+        _alert = nil;
-     }];
- }
- 
-@@ -543,9 +552,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
-     [alert addButtonWithTitle:@"OK"];
-     [alert addButtonWithTitle:@"Cancel"];
- 
-+    _alert = alert;
-     [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
-         completionHandler(response == NSAlertFirstButtonReturn);
-         [alert release];
-+        _alert = nil;
-     }];
- }
- 
-@@ -563,13 +574,25 @@ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSSt
-     [input setStringValue:defaultText];
-     [alert setAccessoryView:input];
-     
-+    _alert = alert;
-     [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
-         [input validateEditing];
-         completionHandler(response == NSAlertFirstButtonReturn ? [input stringValue] : nil);
-         [alert release];
-+        _alert = nil;
-     }];
- }
- 
-+- (void)webView:(WKWebView *)webView handleJavaScriptDialog:(BOOL)accept value:(NSString *)value
-+{
-+    if (!_alert)
-+        return;
-+    NSTextField* input = (NSTextField*)_alert.accessoryView;
-+    if (accept && input && value)
-+        [input setStringValue:value];
-+    [self.window endSheet:_alert.window returnCode: accept ? NSAlertFirstButtonReturn : NSModalResponseCancel];
-+}
-+
- #if __has_feature(objc_generics)
- - (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> * URLs))completionHandler
- #else
-@@ -863,4 +886,9 @@ - (IBAction)saveAsWebArchive:(id)sender
-     }];
- }
- 
-+- (WKWebView *)webView
-+{
-+    return _webView;
-+}
-+
- @end
 diff --git a/Tools/MiniBrowser/win/Common.cpp b/Tools/MiniBrowser/win/Common.cpp
 index 87fde928c12a91f13a4f8bc2f2dc24097e42f2d0..145a4ac7546bbfbc46ee09ae801f14c96bde5725 100644
 --- a/Tools/MiniBrowser/win/Common.cpp
@@ -12265,6 +11730,2880 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..867e7d08fd5f922e32e09550ac19a21d
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
+diff --git a/Tools/Playwright/Configurations/Base.xcconfig b/Tools/Playwright/Configurations/Base.xcconfig
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc61d5227c8608488514cbd92a28dc7c1c2efaf4
+--- /dev/null
++++ b/Tools/Playwright/Configurations/Base.xcconfig
+@@ -0,0 +1,87 @@
++// Copyright (C) 2010-2017 Apple Inc. All rights reserved.
++//
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions
++// are met:
++// 1. Redistributions of source code must retain the above copyright
++//    notice, this list of conditions and the following disclaimer.
++// 2. Redistributions in binary form must reproduce the above copyright
++//    notice, this list of conditions and the following disclaimer in the
++//    documentation and/or other materials provided with the distribution.
++//
++// THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++// PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
++
++#include? "../../../../Internal/Configurations/HaveInternalSDK.xcconfig"
++#include "SDKVariant.xcconfig"
++
++USE_INTERNAL_SDK = $(USE_INTERNAL_SDK_$(CONFIGURATION));
++USE_INTERNAL_SDK_Production = YES;
++USE_INTERNAL_SDK_Debug = $(HAVE_INTERNAL_SDK);
++USE_INTERNAL_SDK_Release = $(HAVE_INTERNAL_SDK);
++
++GCC_PREPROCESSOR_DEFINITIONS = DISABLE_LEGACY_WEBKIT_DEPRECATIONS $(inherited);
++
++CLANG_CXX_LANGUAGE_STANDARD = gnu++1z;
++CLANG_CXX_LIBRARY = libc++;
++CLANG_ENABLE_OBJC_WEAK = YES;
++DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
++PREBINDING = NO
++GCC_C_LANGUAGE_STANDARD = gnu99
++GCC_ENABLE_CPP_EXCEPTIONS = NO;
++GCC_PRECOMPILE_PREFIX_HEADER = YES
++ENABLE_STRICT_OBJC_MSGSEND = YES;
++GCC_TREAT_WARNINGS_AS_ERRORS = YES
++CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
++CLANG_WARN_BOOL_CONVERSION = YES;
++CLANG_WARN_COMMA = YES;
++CLANG_WARN_CONSTANT_CONVERSION = YES;
++CLANG_WARN_EMPTY_BODY = YES;
++CLANG_WARN_ENUM_CONVERSION = YES;
++CLANG_WARN_INFINITE_RECURSION = YES;
++CLANG_WARN_INT_CONVERSION = YES;
++CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
++CLANG_WARN_STRICT_PROTOTYPES = YES;
++CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
++CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
++CLANG_WARN_SUSPICIOUS_MOVE = YES;
++CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
++CLANG_WARN_UNREACHABLE_CODE = YES;
++GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
++GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
++GCC_WARN_ABOUT_RETURN_TYPE = YES;
++GCC_WARN_UNINITIALIZED_AUTOS = YES;
++GCC_WARN_UNUSED_FUNCTION = YES
++GCC_WARN_UNUSED_VARIABLE = YES
++CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
++GCC_WARN_UNDECLARED_SELECTOR = YES;
++CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
++CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
++GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
++WARNING_CFLAGS = -Wall -W -Wno-unused-parameter
++GCC_NO_COMMON_BLOCKS = YES;
++
++SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx tvos tvsimulator watchos watchsimulator;
++
++TARGET_MAC_OS_X_VERSION_MAJOR = $(TARGET_MAC_OS_X_VERSION_MAJOR$(MACOSX_DEPLOYMENT_TARGET:suffix:identifier));
++TARGET_MAC_OS_X_VERSION_MAJOR_13 = 101300;
++TARGET_MAC_OS_X_VERSION_MAJOR_14 = 101400;
++TARGET_MAC_OS_X_VERSION_MAJOR_15 = 101500;
++TARGET_MAC_OS_X_VERSION_MAJOR_16 = 101600;
++
++SDKROOT = macosx.internal;
++
++OTHER_CFLAGS = $(ASAN_OTHER_CFLAGS);
++OTHER_CPLUSPLUSFLAGS = $(ASAN_OTHER_CPLUSPLUSFLAGS);
++OTHER_LDFLAGS = $(ASAN_OTHER_LDFLAGS);
++
++CODE_SIGN_IDENTITY = -;
+diff --git a/Tools/Playwright/Configurations/DebugRelease.xcconfig b/Tools/Playwright/Configurations/DebugRelease.xcconfig
+new file mode 100644
+index 0000000000000000000000000000000000000000..44dc1139c298bd119368ef4f45bbf0888dc71cdb
+--- /dev/null
++++ b/Tools/Playwright/Configurations/DebugRelease.xcconfig
+@@ -0,0 +1,45 @@
++// Copyright (C) 2010, 2013 Apple Inc. All rights reserved.
++//
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions
++// are met:
++// 1. Redistributions of source code must retain the above copyright
++//    notice, this list of conditions and the following disclaimer.
++// 2. Redistributions in binary form must reproduce the above copyright
++//    notice, this list of conditions and the following disclaimer in the
++//    documentation and/or other materials provided with the distribution.
++//
++// THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++// PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
++
++#include "Base.xcconfig"
++
++ARCHS = $(ARCHS_STANDARD_32_64_BIT);
++
++ONLY_ACTIVE_ARCH = YES;
++
++TARGET_MAC_OS_X_VERSION_MAJOR = $(MAC_OS_X_VERSION_MAJOR);
++
++MACOSX_DEPLOYMENT_TARGET = $(MACOSX_DEPLOYMENT_TARGET_$(TARGET_MAC_OS_X_VERSION_MAJOR))
++MACOSX_DEPLOYMENT_TARGET_101300 = 10.13;
++MACOSX_DEPLOYMENT_TARGET_101400 = 10.14;
++MACOSX_DEPLOYMENT_TARGET_101500 = 10.15;
++MACOSX_DEPLOYMENT_TARGET_101600 = 10.16;
++
++GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = YES;
++
++SDKROOT = $(SDKROOT_$(USE_INTERNAL_SDK));
++SDKROOT_ = macosx;
++SDKROOT_YES = macosx.internal;
++
++WK_CCACHE_DIR = $(SRCROOT)/../ccache;
++#include "../../ccache/ccache.xcconfig"
+diff --git a/Tools/Playwright/Configurations/Playwright.xcconfig b/Tools/Playwright/Configurations/Playwright.xcconfig
+new file mode 100644
+index 0000000000000000000000000000000000000000..085126eb199ec714f7e8d7bc7d7b361ef55ebb73
+--- /dev/null
++++ b/Tools/Playwright/Configurations/Playwright.xcconfig
+@@ -0,0 +1,31 @@
++// Copyright (C) 2010 Apple Inc. All rights reserved.
++//
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions
++// are met:
++// 1. Redistributions of source code must retain the above copyright
++//    notice, this list of conditions and the following disclaimer.
++// 2. Redistributions in binary form must reproduce the above copyright
++//    notice, this list of conditions and the following disclaimer in the
++//    documentation and/or other materials provided with the distribution.
++//
++// THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++// PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
++
++PRODUCT_NAME = Playwright
++CODE_SIGN_ENTITLEMENTS = Playwright.entitlements;
++PRODUCT_BUNDLE_IDENTIFIER = org.webkit.$(PRODUCT_NAME:rfc1034identifier)
++GCC_PREFIX_HEADER = mac/Playwright_Prefix.pch
++INFOPLIST_FILE = mac/Info.plist
++EXCLUDED_SOURCE_FILE_NAMES[sdk=iphone*] = *
++OTHER_LDFLAGS[sdk=macosx*] = $(inherited) -framework Cocoa -framework WebKit
++STRIP_STYLE = debugging;
+diff --git a/Tools/Playwright/Configurations/SDKVariant.xcconfig b/Tools/Playwright/Configurations/SDKVariant.xcconfig
+new file mode 100644
+index 0000000000000000000000000000000000000000..fcdf7e65a67c61fb19ef19c428652f336c180e8e
+--- /dev/null
++++ b/Tools/Playwright/Configurations/SDKVariant.xcconfig
+@@ -0,0 +1,45 @@
++// Copyright (C) 2019 Apple Inc. All rights reserved.
++//
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions
++// are met:
++// 1. Redistributions of source code must retain the above copyright
++//    notice, this list of conditions and the following disclaimer.
++// 2. Redistributions in binary form must reproduce the above copyright
++//    notice, this list of conditions and the following disclaimer in the
++//    documentation and/or other materials provided with the distribution.
++//
++// THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
++// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++// PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
++// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
++// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++WK_EMPTY_ = YES;
++WK_NOT_ = YES;
++WK_NOT_YES = NO;
++
++WK_ALTERNATE_FRAMEWORKS_DIR = $(WK_ALTERNATE_FRAMEWORKS_DIR_$(SDK_VARIANT));
++WK_ALTERNATE_FRAMEWORKS_DIR_iosmac = /System/iOSSupport;
++WK_USE_ALTERNATE_FRAMEWORKS_DIR = $(WK_NOT_$(WK_EMPTY_$(WK_ALTERNATE_FRAMEWORKS_DIR)));
++
++WK_ALTERNATE_PLATFORM_NAME = $(WK_ALTERNATE_PLATFORM_NAME_$(SDK_VARIANT));
++WK_ALTERNATE_PLATFORM_NAME_iosmac = maccatalyst;
++WK_USE_ALTERNATE_PLATFORM_NAME = $(WK_NOT_$(WK_EMPTY_$(WK_ALTERNATE_PLATFORM_NAME)));
++
++WK_ALTERNATE_WEBKIT_SDK_PATH = $(WK_ALTERNATE_WEBKIT_SDK_PATH_$(WK_USE_ALTERNATE_FRAMEWORKS_DIR));
++WK_ALTERNATE_WEBKIT_SDK_PATH_YES = $(WK_ALTERNATE_FRAMEWORKS_DIR)/;
++
++WK_PLATFORM_NAME = $(WK_PLATFORM_NAME_ALTERNATE_$(WK_USE_ALTERNATE_PLATFORM_NAME));
++WK_PLATFORM_NAME_ALTERNATE_YES = $(WK_ALTERNATE_PLATFORM_NAME);
++WK_PLATFORM_NAME_ALTERNATE_NO = $(PLATFORM_NAME);
++
++EFFECTIVE_PLATFORM_NAME = $(EFFECTIVE_PLATFORM_NAME_ALTERNATE_$(WK_USE_ALTERNATE_PLATFORM_NAME));
++EFFECTIVE_PLATFORM_NAME_ALTERNATE_YES = -$(WK_ALTERNATE_PLATFORM_NAME);
++EFFECTIVE_PLATFORM_NAME_ALTERNATE_NO = $(EFFECTIVE_PLATFORM_NAME);
+diff --git a/Tools/Playwright/MBToolbarItem.h b/Tools/Playwright/MBToolbarItem.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..9971d4c1023a9f6e57c6058ae20729e51bb6d503
+--- /dev/null
++++ b/Tools/Playwright/MBToolbarItem.h
+@@ -0,0 +1,27 @@
++/*
++ * Copyright (C) 2010 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++@interface MBToolbarItem : NSToolbarItem
++@end
+diff --git a/Tools/Playwright/MBToolbarItem.m b/Tools/Playwright/MBToolbarItem.m
+new file mode 100644
+index 0000000000000000000000000000000000000000..56f777891519e820105ae50a86141a534ec4794b
+--- /dev/null
++++ b/Tools/Playwright/MBToolbarItem.m
+@@ -0,0 +1,35 @@
++/*
++ * Copyright (C) 2010 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#import "MBToolbarItem.h"
++
++@implementation MBToolbarItem
++
++- (void)validate
++{
++    [self setEnabled:[[self target] validateUserInterfaceItem:self]];
++}
++
++@end
+diff --git a/Tools/Playwright/Makefile b/Tools/Playwright/Makefile
+new file mode 100644
+index 0000000000000000000000000000000000000000..58e52428388d927ae7681d999e6dd28e0fb3ec6b
+--- /dev/null
++++ b/Tools/Playwright/Makefile
+@@ -0,0 +1,21 @@
++# Build Playwright only on SnowLeopard and later.
++
++OSX_VERSION ?= $(shell sw_vers -productVersion | cut -d. -f 2)
++BUILD_PLAYWRIGHT = $(shell (( $(OSX_VERSION) >= 6 )) && echo "YES" )
++
++ifeq "$(BUILD_PLAYWRIGHT)" "YES"
++
++SCRIPTS_PATH = ../Scripts
++include ../../Makefile.shared
++
++else
++
++all: ;
++
++debug d development dev develop: ;
++
++release r deployment dep deploy: ;
++
++clean: ;
++
++endif
+diff --git a/Tools/Playwright/Playwright.entitlements b/Tools/Playwright/Playwright.entitlements
+new file mode 100644
+index 0000000000000000000000000000000000000000..e4c2ba180f395dca1d341db666d5c34c2ea3ec2e
+--- /dev/null
++++ b/Tools/Playwright/Playwright.entitlements
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++	<key>com.apple.security.app-sandbox</key>
++	<true/>
++	<key>com.apple.security.device.usb</key>
++	<true/>
++	<key>com.apple.security.files.user-selected.read-write</key>
++	<true/>
++	<key>com.apple.security.network.client</key>
++	<true/>
++	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
++	<string>/</string>
++	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
++	<array>
++		<string>com.apple.Safari.SafeBrowsing.Service</string>
++		<string>com.apple.WebKit.NetworkingDaemon</string>
++	</array>
++</dict>
++</plist>
+diff --git a/Tools/Playwright/Playwright.xcodeproj/project.pbxproj b/Tools/Playwright/Playwright.xcodeproj/project.pbxproj
+new file mode 100644
+index 0000000000000000000000000000000000000000..75a945e72d9fcad94bb89fc6325df18d3259383d
+--- /dev/null
++++ b/Tools/Playwright/Playwright.xcodeproj/project.pbxproj
+@@ -0,0 +1,264 @@
++// !$*UTF8*$!
++{
++	archiveVersion = 1;
++	classes = {
++	};
++	objectVersion = 46;
++	objects = {
++
++/* Begin PBXBuildFile section */
++		256AC3DA0F4B6AC300CF336A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 256AC3D90F4B6AC300CF336A /* AppDelegate.m */; };
++		51E244FA11EFCE07008228D2 /* MBToolbarItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 51E244F911EFCE07008228D2 /* MBToolbarItem.m */; };
++		BC329487116A92E2008635D1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BC329486116A92E2008635D1 /* main.m */; };
++		BC329498116A941B008635D1 /* BrowserWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = BC329497116A941B008635D1 /* BrowserWindowController.m */; };
++		BC72B89511E57E07001EB4EB /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DDD58150DA1D0A300B3202A /* MainMenu.xib */; };
++		BC72B89611E57E0F001EB4EB /* BrowserWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = BC3294A2116A9852008635D1 /* BrowserWindow.xib */; };
++/* End PBXBuildFile section */
++
++/* Begin PBXFileReference section */
++		1AFFEF761860EE6800DA465F /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
++		1AFFEF781860EE6800DA465F /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
++		1DDD58150DA1D0A300B3202A /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = MainMenu.xib; path = mac/MainMenu.xib; sourceTree = "<group>"; };
++		256AC3D80F4B6AC300CF336A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = mac/AppDelegate.h; sourceTree = "<group>"; };
++		256AC3D90F4B6AC300CF336A /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = mac/AppDelegate.m; sourceTree = "<group>"; };
++		256AC3F00F4B6AF500CF336A /* Playwright_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Playwright_Prefix.pch; path = mac/Playwright_Prefix.pch; sourceTree = "<group>"; };
++		29B97324FDCFA39411CA2CEB /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
++		29B97325FDCFA39411CA2CEB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
++		37BAF90620218053000EA87A /* Playwright.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Playwright.entitlements; sourceTree = "<group>"; };
++		51E244F811EFCE07008228D2 /* MBToolbarItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MBToolbarItem.h; sourceTree = "<group>"; };
++		51E244F911EFCE07008228D2 /* MBToolbarItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MBToolbarItem.m; sourceTree = "<group>"; };
++		8D1107320486CEB800E47091 /* Playwright.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Playwright.app; sourceTree = BUILT_PRODUCTS_DIR; };
++		A1B89B95221E027A00EB4CEB /* SDKVariant.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = SDKVariant.xcconfig; sourceTree = "<group>"; };
++		BC329486116A92E2008635D1 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = mac/main.m; sourceTree = "<group>"; };
++		BC329496116A941B008635D1 /* BrowserWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BrowserWindowController.h; path = mac/BrowserWindowController.h; sourceTree = "<group>"; };
++		BC329497116A941B008635D1 /* BrowserWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BrowserWindowController.m; path = mac/BrowserWindowController.m; sourceTree = "<group>"; };
++		BC3294A2116A9852008635D1 /* BrowserWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = BrowserWindow.xib; path = mac/BrowserWindow.xib; sourceTree = "<group>"; };
++		BC72B89A11E57E8A001EB4EB /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = mac/Info.plist; sourceTree = "<group>"; };
++		BCA8CBDD11E578A000812FB8 /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
++		BCA8CBDE11E578A000812FB8 /* DebugRelease.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = DebugRelease.xcconfig; sourceTree = "<group>"; };
++		BCA8CBDF11E578A000812FB8 /* Playwright.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Playwright.xcconfig; sourceTree = "<group>"; };
++/* End PBXFileReference section */
++
++/* Begin PBXFrameworksBuildPhase section */
++		8D11072E0486CEB800E47091 /* Frameworks */ = {
++			isa = PBXFrameworksBuildPhase;
++			buildActionMask = 2147483647;
++			files = (
++			);
++			runOnlyForDeploymentPostprocessing = 0;
++		};
++/* End PBXFrameworksBuildPhase section */
++
++/* Begin PBXGroup section */
++		080E96DDFE201D6D7F000002 /* Playwright */ = {
++			isa = PBXGroup;
++			children = (
++				256AC3D80F4B6AC300CF336A /* AppDelegate.h */,
++				256AC3D90F4B6AC300CF336A /* AppDelegate.m */,
++				BC72B89A11E57E8A001EB4EB /* Info.plist */,
++				BC329486116A92E2008635D1 /* main.m */,
++				51E244F811EFCE07008228D2 /* MBToolbarItem.h */,
++				51E244F911EFCE07008228D2 /* MBToolbarItem.m */,
++				37BAF90620218053000EA87A /* Playwright.entitlements */,
++				BC329496116A941B008635D1 /* BrowserWindowController.h */,
++				BC329497116A941B008635D1 /* BrowserWindowController.m */,
++			);
++			name = Playwright;
++			sourceTree = "<group>";
++		};
++		1058C7A2FEA54F0111CA2CBC /* Other Frameworks */ = {
++			isa = PBXGroup;
++			children = (
++				29B97324FDCFA39411CA2CEB /* AppKit.framework */,
++				1AFFEF781860EE6800DA465F /* CoreData.framework */,
++				29B97325FDCFA39411CA2CEB /* Foundation.framework */,
++			);
++			name = "Other Frameworks";
++			sourceTree = "<group>";
++		};
++		19C28FACFE9D520D11CA2CBC /* Products */ = {
++			isa = PBXGroup;
++			children = (
++				8D1107320486CEB800E47091 /* Playwright.app */,
++			);
++			name = Products;
++			sourceTree = "<group>";
++		};
++		29B97314FDCFA39411CA2CEB /* Playwright */ = {
++			isa = PBXGroup;
++			children = (
++				256AC3F00F4B6AF500CF336A /* Playwright_Prefix.pch */,
++				080E96DDFE201D6D7F000002 /* Playwright */,
++				29B97317FDCFA39411CA2CEB /* Resources */,
++				BCA8CBDA11E5787800812FB8 /* Configurations */,
++				29B97323FDCFA39411CA2CEB /* Frameworks */,
++				19C28FACFE9D520D11CA2CBC /* Products */,
++			);
++			name = Playwright;
++			sourceTree = "<group>";
++		};
++		29B97317FDCFA39411CA2CEB /* Resources */ = {
++			isa = PBXGroup;
++			children = (
++				BC3294A2116A9852008635D1 /* BrowserWindow.xib */,
++				1DDD58150DA1D0A300B3202A /* MainMenu.xib */,
++			);
++			name = Resources;
++			sourceTree = "<group>";
++		};
++		29B97323FDCFA39411CA2CEB /* Frameworks */ = {
++			isa = PBXGroup;
++			children = (
++				1058C7A2FEA54F0111CA2CBC /* Other Frameworks */,
++				1AFFEF761860EE6800DA465F /* Cocoa.framework */,
++			);
++			name = Frameworks;
++			sourceTree = "<group>";
++		};
++		BCA8CBDA11E5787800812FB8 /* Configurations */ = {
++			isa = PBXGroup;
++			children = (
++				BCA8CBDD11E578A000812FB8 /* Base.xcconfig */,
++				BCA8CBDE11E578A000812FB8 /* DebugRelease.xcconfig */,
++				BCA8CBDF11E578A000812FB8 /* Playwright.xcconfig */,
++				A1B89B95221E027A00EB4CEB /* SDKVariant.xcconfig */,
++			);
++			path = Configurations;
++			sourceTree = "<group>";
++		};
++/* End PBXGroup section */
++
++/* Begin PBXNativeTarget section */
++		8D1107260486CEB800E47091 /* Playwright */ = {
++			isa = PBXNativeTarget;
++			buildConfigurationList = C01FCF4A08A954540054247C /* Build configuration list for PBXNativeTarget "Playwright" */;
++			buildPhases = (
++				8D1107290486CEB800E47091 /* Resources */,
++				8D11072C0486CEB800E47091 /* Sources */,
++				8D11072E0486CEB800E47091 /* Frameworks */,
++			);
++			buildRules = (
++			);
++			dependencies = (
++			);
++			name = Playwright;
++			productInstallPath = "$(HOME)/Applications";
++			productName = Playwright;
++			productReference = 8D1107320486CEB800E47091 /* Playwright.app */;
++			productType = "com.apple.product-type.application";
++		};
++/* End PBXNativeTarget section */
++
++/* Begin PBXProject section */
++		29B97313FDCFA39411CA2CEC /* Project object */ = {
++			isa = PBXProject;
++			attributes = {
++				LastSwiftUpdateCheck = 0700;
++				LastUpgradeCheck = 1000;
++				TargetAttributes = {
++					8D1107260486CEB800E47091 = {
++						SystemCapabilities = {
++							com.apple.Sandbox = {
++								enabled = 1;
++							};
++						};
++					};
++				};
++			};
++			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Playwright" */;
++			compatibilityVersion = "Xcode 3.2";
++			developmentRegion = en;
++			hasScannedForEncodings = 1;
++			knownRegions = (
++				en,
++			);
++			mainGroup = 29B97314FDCFA39411CA2CEB /* Playwright */;
++			projectDirPath = "";
++			projectRoot = "";
++			targets = (
++				8D1107260486CEB800E47091 /* Playwright */,
++			);
++		};
++/* End PBXProject section */
++
++/* Begin PBXResourcesBuildPhase section */
++		8D1107290486CEB800E47091 /* Resources */ = {
++			isa = PBXResourcesBuildPhase;
++			buildActionMask = 2147483647;
++			files = (
++				BC72B89611E57E0F001EB4EB /* BrowserWindow.xib in Resources */,
++				BC72B89511E57E07001EB4EB /* MainMenu.xib in Resources */,
++			);
++			runOnlyForDeploymentPostprocessing = 0;
++		};
++/* End PBXResourcesBuildPhase section */
++
++/* Begin PBXSourcesBuildPhase section */
++		8D11072C0486CEB800E47091 /* Sources */ = {
++			isa = PBXSourcesBuildPhase;
++			buildActionMask = 2147483647;
++			files = (
++				256AC3DA0F4B6AC300CF336A /* AppDelegate.m in Sources */,
++				BC329487116A92E2008635D1 /* main.m in Sources */,
++				51E244FA11EFCE07008228D2 /* MBToolbarItem.m in Sources */,
++				BC329498116A941B008635D1 /* BrowserWindowController.m in Sources */,
++			);
++			runOnlyForDeploymentPostprocessing = 0;
++		};
++/* End PBXSourcesBuildPhase section */
++
++/* Begin XCBuildConfiguration section */
++		C01FCF4B08A954540054247C /* Debug */ = {
++			isa = XCBuildConfiguration;
++			baseConfigurationReference = BCA8CBDF11E578A000812FB8 /* Playwright.xcconfig */;
++			buildSettings = {
++			};
++			name = Debug;
++		};
++		C01FCF4C08A954540054247B /* Release */ = {
++			isa = XCBuildConfiguration;
++			baseConfigurationReference = BCA8CBDF11E578A000812FB8 /* Playwright.xcconfig */;
++			buildSettings = {
++			};
++			name = Release;
++		};
++		C01FCF4F08A954540054247C /* Debug */ = {
++			isa = XCBuildConfiguration;
++			baseConfigurationReference = BCA8CBDE11E578A000812FB8 /* DebugRelease.xcconfig */;
++			buildSettings = {
++				GCC_OPTIMIZATION_LEVEL = 0;
++			};
++			name = Debug;
++		};
++		C01FCF5008A954540054247C /* Release */ = {
++			isa = XCBuildConfiguration;
++			baseConfigurationReference = BCA8CBDE11E578A000812FB8 /* DebugRelease.xcconfig */;
++			buildSettings = {
++			};
++			name = Release;
++		};
++/* End XCBuildConfiguration section */
++
++/* Begin XCConfigurationList section */
++		C01FCF4A08A954540054247C /* Build configuration list for PBXNativeTarget "Playwright" */ = {
++			isa = XCConfigurationList;
++			buildConfigurations = (
++				C01FCF4B08A954540054247C /* Debug */,
++				C01FCF4C08A954540054247B /* Release */,
++			);
++			defaultConfigurationIsVisible = 0;
++			defaultConfigurationName = Release;
++		};
++		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Playwright" */ = {
++			isa = XCConfigurationList;
++			buildConfigurations = (
++				C01FCF4F08A954540054247C /* Debug */,
++				C01FCF5008A954540054247C /* Release */,
++			);
++			defaultConfigurationIsVisible = 0;
++			defaultConfigurationName = Release;
++		};
++/* End XCConfigurationList section */
++	};
++	rootObject = 29B97313FDCFA39411CA2CEC /* Project object */;
++}
+diff --git a/Tools/Playwright/Playwright.xcodeproj/xcshareddata/xcschemes/Playwright.xcscheme b/Tools/Playwright/Playwright.xcodeproj/xcshareddata/xcschemes/Playwright.xcscheme
+new file mode 100644
+index 0000000000000000000000000000000000000000..00fb6b0006c743091a8bbf8edb18b21192ea7d6c
+--- /dev/null
++++ b/Tools/Playwright/Playwright.xcodeproj/xcshareddata/xcschemes/Playwright.xcscheme
+@@ -0,0 +1,78 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<Scheme
++   LastUpgradeVersion = "1140"
++   version = "1.3">
++   <BuildAction
++      parallelizeBuildables = "YES"
++      buildImplicitDependencies = "YES">
++      <BuildActionEntries>
++         <BuildActionEntry
++            buildForTesting = "YES"
++            buildForRunning = "YES"
++            buildForProfiling = "YES"
++            buildForArchiving = "YES"
++            buildForAnalyzing = "YES">
++            <BuildableReference
++               BuildableIdentifier = "primary"
++               BlueprintIdentifier = "8D1107260486CEB800E47090"
++               BuildableName = "Playwright.app"
++               BlueprintName = "Playwright"
++               ReferencedContainer = "container:Playwright.xcodeproj">
++            </BuildableReference>
++         </BuildActionEntry>
++      </BuildActionEntries>
++   </BuildAction>
++   <TestAction
++      buildConfiguration = "Debug"
++      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
++      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
++      shouldUseLaunchSchemeArgsEnv = "YES">
++      <Testables>
++      </Testables>
++   </TestAction>
++   <LaunchAction
++      buildConfiguration = "Debug"
++      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
++      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
++      launchStyle = "0"
++      useCustomWorkingDirectory = "NO"
++      ignoresPersistentStateOnLaunch = "NO"
++      debugDocumentVersioning = "YES"
++      debugServiceExtension = "internal"
++      allowLocationSimulation = "YES">
++      <BuildableProductRunnable
++         runnableDebuggingMode = "0">
++         <BuildableReference
++            BuildableIdentifier = "primary"
++            BlueprintIdentifier = "8D1107260486CEB800E47090"
++            BuildableName = "Playwright.app"
++            BlueprintName = "Playwright"
++            ReferencedContainer = "container:Playwright.xcodeproj">
++         </BuildableReference>
++      </BuildableProductRunnable>
++   </LaunchAction>
++   <ProfileAction
++      buildConfiguration = "Release"
++      shouldUseLaunchSchemeArgsEnv = "YES"
++      savedToolIdentifier = ""
++      useCustomWorkingDirectory = "NO"
++      debugDocumentVersioning = "YES">
++      <BuildableProductRunnable
++         runnableDebuggingMode = "0">
++         <BuildableReference
++            BuildableIdentifier = "primary"
++            BlueprintIdentifier = "8D1107260486CEB800E47090"
++            BuildableName = "Playwright.app"
++            BlueprintName = "Playwright"
++            ReferencedContainer = "container:Playwright.xcodeproj">
++         </BuildableReference>
++      </BuildableProductRunnable>
++   </ProfileAction>
++   <AnalyzeAction
++      buildConfiguration = "Debug">
++   </AnalyzeAction>
++   <ArchiveAction
++      buildConfiguration = "Release"
++      revealArchiveInOrganizer = "YES">
++   </ArchiveAction>
++</Scheme>
+diff --git a/Tools/Playwright/mac/AppDelegate.h b/Tools/Playwright/mac/AppDelegate.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..8d655761a2fb4e0295a965d4fe9e4908deaf89ec
+--- /dev/null
++++ b/Tools/Playwright/mac/AppDelegate.h
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (C) 2010 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#import <WebKit/_WKBrowserInspector.h>
++
++WK_CLASS_AVAILABLE(macos(10.14.0))
++@interface WebViewDialog : NSObject
++@property (nonatomic, strong) WKWebView *webView;
++@property (nonatomic, copy) void (^completionHandler)(BOOL accept, NSString* value);
++@end
++
++@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate> {
++    NSMutableSet *_browserWindowControllers;
++    NSMutableSet *_headlessWindows;
++    NSMutableSet *_browserContexts;
++    bool _headless;
++    NSMutableSet *_dialogs;
++    NSString* _initialURL;
++    IBOutlet NSMenuItem *_newWebKit2WindowItem;
++}
++
++- (void)browserWindowWillClose:(NSWindow *)window;
++
++@property (readonly, nonatomic) WKUserContentController *userContentContoller;
++@property (readonly, nonatomic) WKPreferences *defaultPreferences;
++
++@end
++
++@interface NSApplication (PlaywrightApplicationExtensions)
++
++- (BrowserAppDelegate *)browserAppDelegate;
++
++@end
+diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
+new file mode 100644
+index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1a31459dc
+--- /dev/null
++++ b/Tools/Playwright/mac/AppDelegate.m
+@@ -0,0 +1,448 @@
++/*
++ * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#import "AppDelegate.h"
++
++#import "BrowserWindowController.h"
++#import <WebKit/WKPreferencesPrivate.h>
++#import <WebKit/WKProcessPoolPrivate.h>
++#import <WebKit/WKUserContentControllerPrivate.h>
++#import <WebKit/WKWebViewConfigurationPrivate.h>
++#import <WebKit/WKWebViewPrivate.h>
++#import <WebKit/WKWebsiteDataStorePrivate.h>
++#import <WebKit/WebNSURLExtras.h>
++#import <WebKit/WebKit.h>
++#import <WebKit/_WKExperimentalFeature.h>
++#import <WebKit/_WKInternalDebugFeature.h>
++#import <WebKit/_WKProcessPoolConfiguration.h>
++#import <WebKit/_WKWebsiteDataStoreConfiguration.h>
++
++enum {
++    WebKit1NewWindowTag = 1,
++    WebKit2NewWindowTag = 2,
++    WebKit1NewEditorTag = 3,
++    WebKit2NewEditorTag = 4
++};
++
++@implementation NSApplication (PlaywrightApplicationExtensions)
++
++- (BrowserAppDelegate *)browserAppDelegate
++{
++    return (BrowserAppDelegate *)[self delegate];
++}
++
++@end
++
++@interface NSApplication (TouchBar)
++@property (getter=isAutomaticCustomizeTouchBarMenuItemEnabled) BOOL automaticCustomizeTouchBarMenuItemEnabled;
++
++@property (readonly, nonatomic) WKWebViewConfiguration *defaultConfiguration;
++
++@end
++
++@implementation WebViewDialog
++@end
++
++enum {
++    _NSBackingStoreUnbuffered = 3
++};
++
++NSString* const ActivityReason = @"Batch headless process";
++const NSActivityOptions ActivityOptions =
++    (NSActivityUserInitiatedAllowingIdleSystemSleep |
++     NSActivityLatencyCritical) &
++    ~(NSActivitySuddenTerminationDisabled |
++    NSActivityAutomaticTerminationDisabled);
++
++@implementation BrowserAppDelegate
++
++- (id)init
++{
++    self = [super init];
++    if (!self)
++        return nil;
++
++    _initialURL = nil;
++    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
++    NSRange subargs = NSMakeRange(1, [arguments count] - 1);
++    NSArray *subArray = [arguments subarrayWithRange:subargs];
++
++    for (NSString *argument in subArray) {
++        if (![argument hasPrefix:@"--"])
++            _initialURL = argument;
++    }
++
++    _headless = [arguments containsObject: @"--headless"];
++    _browserContexts = [[NSMutableSet alloc] init];
++
++    if (_headless) {
++        _headlessWindows = [[NSMutableSet alloc] init];
++        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
++        [[NSProcessInfo processInfo] beginActivityWithOptions:ActivityOptions
++                                                       reason:ActivityReason];
++        _dialogs = [[NSMutableSet alloc] init];
++    } else {
++        [NSApp activateIgnoringOtherApps:YES];
++        _browserWindowControllers = [[NSMutableSet alloc] init];
++    }
++    if ([arguments containsObject: @"--inspector-pipe"])
++        [_WKBrowserInspector initializeRemoteInspectorPipe:self headless:_headless];
++    return self;
++}
++
++- (void)awakeFromNib
++{
++    if ([NSApp respondsToSelector:@selector(setAutomaticCustomizeTouchBarMenuItemEnabled:)])
++        [NSApp setAutomaticCustomizeTouchBarMenuItemEnabled:YES];
++}
++
++static WKWebsiteDataStore *persistentDataStore()
++{
++    static WKWebsiteDataStore *dataStore;
++
++    if (!dataStore) {
++        _WKWebsiteDataStoreConfiguration *configuration = [[[_WKWebsiteDataStoreConfiguration alloc] init] autorelease];
++        configuration.networkCacheSpeculativeValidationEnabled = YES;
++        dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
++    }
++
++    return dataStore;
++}
++
++- (WKWebViewConfiguration *)defaultConfiguration
++{
++    static WKWebViewConfiguration *configuration;
++
++    if (!configuration) {
++        configuration = [[WKWebViewConfiguration alloc] init];
++        configuration.websiteDataStore = persistentDataStore();
++        configuration.preferences._fullScreenEnabled = YES;
++        configuration.preferences._developerExtrasEnabled = YES;
++        configuration.preferences._mediaDevicesEnabled = YES;
++        configuration.preferences._mockCaptureDevicesEnabled = YES;
++        configuration.preferences._hiddenPageDOMTimerThrottlingEnabled = NO;
++        configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
++        configuration.preferences._pageVisibilityBasedProcessSuppressionEnabled = NO;
++        configuration.preferences._domTimersThrottlingEnabled = NO;
++        configuration.preferences._requestAnimationFrameEnabled = YES;
++        _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
++        configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
++    }
++    return configuration;
++}
++
++- (WKPreferences *)defaultPreferences
++{
++    return self.defaultConfiguration.preferences;
++}
++
++- (BrowserWindowController *)createBrowserWindowController:(id)sender
++{
++    if (_headless)
++        return nil;
++
++    BrowserWindowController *controller = [[[BrowserWindowController alloc] initWithConfiguration:[self defaultConfiguration]] autorelease];
++    if (!controller)
++        return nil;
++    [_browserWindowControllers addObject:controller];
++    return controller;
++}
++
++- (IBAction)newWindow:(id)sender
++{
++    BrowserWindowController *controller = [self createBrowserWindowController:sender];
++    if (!controller)
++        return;
++
++    [[controller window] makeKeyAndOrderFront:sender];
++    [controller loadURLString:@"about:blank"];
++}
++
++- (IBAction)newPrivateWindow:(id)sender
++{
++    if (_headless)
++        return;
++
++    WKWebViewConfiguration *privateConfiguraton = [self.defaultConfiguration copy];
++    privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
++
++    BrowserWindowController *controller = [[BrowserWindowController alloc] initWithConfiguration:privateConfiguraton];
++    [privateConfiguraton release];
++
++    [[controller window] makeKeyAndOrderFront:sender];
++    [_browserWindowControllers addObject:controller];
++
++    [controller loadURLString:@"about:blank"];
++}
++
++- (void)browserWindowWillClose:(NSWindow *)window
++{
++    [_browserWindowControllers removeObject:window.windowController];
++}
++
++- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
++{
++    if (_headless) {
++        [self createNewPage:0];
++        return;
++    }
++
++    WebHistory *webHistory = [[WebHistory alloc] init];
++    [WebHistory setOptionalSharedHistory:webHistory];
++    [webHistory release];
++
++    [self _updateNewWindowKeyEquivalents];
++    if (!_initialURL)
++        [self newWindow:self];
++    _initialURL = nil;
++}
++
++- (BrowserWindowController *)frontmostBrowserWindowController
++{
++    for (NSWindow* window in [NSApp windows]) {
++        id delegate = [window delegate];
++
++        if (![delegate isKindOfClass:[BrowserWindowController class]])
++            continue;
++
++        BrowserWindowController *controller = (BrowserWindowController *)delegate;
++        assert([_browserWindowControllers containsObject:controller]);
++        return controller;
++    }
++
++    return nil;
++}
++
++- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
++{
++    BrowserWindowController *controller = [self createBrowserWindowController:nil];
++    if (!controller)
++        return NO;
++
++    [controller.window makeKeyAndOrderFront:self];
++    [controller loadURLString:_initialURL ? _initialURL : [NSURL fileURLWithPath:filename].absoluteString];
++    return YES;
++}
++
++- (IBAction)openDocument:(id)sender
++{
++    if (_headless)
++        return;
++
++    BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
++
++    if (browserWindowController) {
++        NSOpenPanel *openPanel = [[NSOpenPanel openPanel] retain];
++        [openPanel beginSheetModalForWindow:browserWindowController.window completionHandler:^(NSInteger result) {
++            if (result != NSModalResponseOK)
++                return;
++
++            NSURL *url = [openPanel.URLs objectAtIndex:0];
++            [browserWindowController loadURLString:[url absoluteString]];
++        }];
++        return;
++    }
++
++    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
++    [openPanel beginWithCompletionHandler:^(NSInteger result) {
++        if (result != NSModalResponseOK)
++            return;
++
++        BrowserWindowController *controller = [self createBrowserWindowController:nil];
++        [controller.window makeKeyAndOrderFront:self];
++
++        NSURL *url = [openPanel.URLs objectAtIndex:0];
++        [controller loadURLString:[url absoluteString]];
++    }];
++}
++
++- (void)_updateNewWindowKeyEquivalents
++{
++    NSString *normalWindowEquivalent = @"n";
++    _newWebKit2WindowItem.keyEquivalentModifierMask = NSEventModifierFlagCommand;
++    _newWebKit2WindowItem.keyEquivalent = normalWindowEquivalent;
++}
++
++- (WKUserContentController *)userContentContoller
++{
++    return self.defaultConfiguration.userContentController;
++}
++
++#pragma mark WKBrowserInspectorDelegate
++
++- (WKWebViewConfiguration *) sessionConfiguration:(uint64_t)sessionID
++{
++    for (_WKBrowserContext *browserContext in _browserContexts) {
++        if ([[browserContext dataStore] sessionID] != sessionID)
++            continue;
++        WKWebViewConfiguration *configuration = [[[self defaultConfiguration] copy] autorelease];
++        configuration.websiteDataStore = [browserContext dataStore];
++        configuration.processPool = [browserContext processPool];
++        return configuration;
++    }
++    return [self defaultConfiguration];
++}
++
++- (WKWebView *)createNewPage:(uint64_t)sessionID
++{
++    if (_headless)
++        return [self createHeadlessPage:sessionID];
++
++    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
++    BrowserWindowController *controller = [[[BrowserWindowController alloc] initWithConfiguration:configuration] autorelease];
++    if (!controller)
++        return nil;
++    [[controller window] makeKeyAndOrderFront:nil];
++    [_browserWindowControllers addObject:controller];
++    [controller loadURLString:@"about:blank"];
++    return [controller webView];
++}
++
++- (WKWebView *)createHeadlessWebView:(WKWebViewConfiguration *)configuration
++{
++    NSRect rect = NSMakeRect(0, 0, 1024, 768);
++    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
++    NSRect windowRect = NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000);
++    NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
++
++    WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
++    webView._windowOcclusionDetectionEnabled = NO;
++    if (!webView)
++        return nil;
++
++    webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
++    [window.contentView addSubview:webView];
++    NSURL *url = [NSURL _webkit_URLWithUserTypedString:_initialURL ? _initialURL : @"about:blank"];
++    _initialURL = nil;
++    [webView loadRequest:[NSURLRequest requestWithURL:url]];
++    [_headlessWindows addObject:window];
++    webView.UIDelegate = self;
++    return [webView autorelease];
++}
++
++- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
++{
++    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
++    return [self createHeadlessWebView:configuration];
++}
++
++- (_WKBrowserContext *)createBrowserContext
++{
++    _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
++    _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
++    browserContext.dataStore = [WKWebsiteDataStore nonPersistentDataStore];
++    browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
++    [_browserContexts addObject:browserContext];
++    return browserContext;
++}
++
++- (void)deleteBrowserContext:(uint64_t)sessionID
++{
++    for (_WKBrowserContext *browserContext in _browserContexts) {
++        if ([[browserContext dataStore] sessionID] != sessionID)
++            continue;
++        [_browserContexts removeObject:browserContext];
++        return;
++    }
++}
++
++- (void)quit
++{
++    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
++}
++
++#pragma mark WKUIDelegate
++
++- (void)webViewDidClose:(WKWebView *)webView {
++    for (NSWindow *window in _headlessWindows) {
++        if (webView.window != window)
++            continue;
++        [webView removeFromSuperview];
++        [window close];
++        [_headlessWindows removeObject:window];
++        break;
++    }
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler();
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler(accept);
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *result))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler(accept && value ? value : nil);
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)_webView:(WKWebView *)webView runBeforeUnloadConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
++{
++    WebViewDialog* dialog = [[WebViewDialog alloc] autorelease];
++    dialog.webView = webView;
++    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
++        completionHandler(accept);
++        [_dialogs removeObject:dialog];
++    };
++    [_dialogs addObject:dialog];
++}
++
++- (void)webView:(WKWebView *)webView handleJavaScriptDialog:(BOOL)accept value:(NSString *)value
++{
++    for (WebViewDialog *dialog in _dialogs) {
++        if (dialog.webView != webView)
++            continue;
++        dialog.completionHandler(accept, value);
++        break;
++    }
++}
++
++- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
++{
++    return [self createHeadlessWebView:configuration];
++}
++
++@end
+diff --git a/Tools/Playwright/mac/BrowserWindow.xib b/Tools/Playwright/mac/BrowserWindow.xib
+new file mode 100644
+index 0000000000000000000000000000000000000000..aed963e861f27a467bb6a38859f8d3a446f578b8
+--- /dev/null
++++ b/Tools/Playwright/mac/BrowserWindow.xib
+@@ -0,0 +1,169 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11191" systemVersion="16D17a" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
++    <dependencies>
++        <deployment identifier="macosx"/>
++        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11191"/>
++    </dependencies>
++    <objects>
++        <customObject id="-2" userLabel="File's Owner" customClass="BrowserWindowController">
++            <connections>
++                <outlet property="backButton" destination="40" id="46"/>
++                <outlet property="containerView" destination="9" id="37"/>
++                <outlet property="forwardButton" destination="42" id="47"/>
++                <outlet property="progressIndicator" destination="21" id="33"/>
++                <outlet property="reloadButton" destination="23" id="34"/>
++                <outlet property="share" destination="1hB-AH-eUl" id="si4-8e-DsM"/>
++                <outlet property="toggleUseShrinkToFitButton" destination="82" id="9w7-AB-Ye3"/>
++                <outlet property="toolbar" destination="48" id="67"/>
++                <outlet property="urlText" destination="10" id="32"/>
++                <outlet property="window" destination="1" id="3"/>
++            </connections>
++        </customObject>
++        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
++        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
++        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" frameAutosaveName="Main Window" animationBehavior="default" id="1">
++            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" unifiedTitleAndToolbar="YES" fullSizeContentView="YES"/>
++            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
++            <rect key="contentRect" x="517" y="330" width="776" height="608"/>
++            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1177"/>
++            <view key="contentView" id="2">
++                <rect key="frame" x="0.0" y="0.0" width="776" height="608"/>
++                <autoresizingMask key="autoresizingMask"/>
++                <subviews>
++                    <customView id="9">
++                        <rect key="frame" x="0.0" y="0.0" width="776" height="608"/>
++                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
++                    </customView>
++                </subviews>
++            </view>
++            <toolbar key="toolbar" implicitIdentifier="994A0CB1-7575-4F39-A65B-7165AB1E8015" displayMode="iconOnly" sizeMode="regular" id="48">
++                <allowedToolbarItems>
++                    <toolbarItem implicitItemIdentifier="73DE9F4B-73E2-4036-A134-2D9E029DA980" label="Go Back" paletteLabel="Go Back" image="NSGoLeftTemplate" id="56" customClass="MBToolbarItem">
++                        <nil key="toolTip"/>
++                        <size key="minSize" width="32" height="27"/>
++                        <size key="maxSize" width="32" height="25"/>
++                        <button key="view" verticalHuggingPriority="750" id="40">
++                            <rect key="frame" x="10" y="14" width="32" height="25"/>
++                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
++                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSGoLeftTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="41">
++                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
++                                <font key="font" metaFont="system"/>
++                            </buttonCell>
++                        </button>
++                        <connections>
++                            <action selector="goBack:" target="-2" id="61"/>
++                        </connections>
++                    </toolbarItem>
++                    <toolbarItem implicitItemIdentifier="E1A9D32A-59E3-467B-9ABA-A95780416E69" label="Go Forward" paletteLabel="Go Forward" image="NSGoRightTemplate" id="57" customClass="MBToolbarItem">
++                        <nil key="toolTip"/>
++                        <size key="minSize" width="32" height="27"/>
++                        <size key="maxSize" width="32" height="27"/>
++                        <button key="view" verticalHuggingPriority="750" id="42">
++                            <rect key="frame" x="18" y="14" width="32" height="25"/>
++                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
++                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSGoRightTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="43">
++                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
++                                <font key="font" metaFont="system"/>
++                            </buttonCell>
++                        </button>
++                        <connections>
++                            <action selector="goForward:" target="-2" id="62"/>
++                        </connections>
++                    </toolbarItem>
++                    <toolbarItem implicitItemIdentifier="88C16109-D40F-4682-BCE4-CBEE2EDE32D2" label="Refresh" paletteLabel="Refresh" image="NSRefreshTemplate" id="58" customClass="MBToolbarItem">
++                        <nil key="toolTip"/>
++                        <size key="minSize" width="29" height="27"/>
++                        <size key="maxSize" width="29" height="27"/>
++                        <button key="view" verticalHuggingPriority="750" id="23">
++                            <rect key="frame" x="10" y="14" width="29" height="25"/>
++                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
++                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSRefreshTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="24">
++                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
++                                <font key="font" metaFont="system"/>
++                            </buttonCell>
++                            <connections>
++                                <action selector="reload:" target="-2" id="35"/>
++                            </connections>
++                        </button>
++                    </toolbarItem>
++                    <toolbarItem implicitItemIdentifier="76DCF2B0-1DDE-47D2-9212-705E6E310CCE" label="Use Shrink To Fit" paletteLabel="Use Shrink To Fit" image="NSEnterFullScreenTemplate" id="81" customClass="MBToolbarItem">
++                        <nil key="toolTip"/>
++                        <size key="minSize" width="29" height="27"/>
++                        <size key="maxSize" width="29" height="27"/>
++                        <button key="view" verticalHuggingPriority="750" id="82">
++                            <rect key="frame" x="34" y="14" width="29" height="25"/>
++                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
++                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSEnterFullScreenTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="83">
++                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
++                                <font key="font" metaFont="system"/>
++                            </buttonCell>
++                            <connections>
++                                <action selector="toggleShrinkToFit:" target="-2" id="gp7-Vk-KTI"/>
++                            </connections>
++                        </button>
++                    </toolbarItem>
++                    <toolbarItem implicitItemIdentifier="F1738B7F-895C-48F7-955D-0915E150BE1B" label="Share" paletteLabel="Share" image="NSShareTemplate" id="dJx-dw-gcC" customClass="MBToolbarItem">
++                        <nil key="toolTip"/>
++                        <size key="minSize" width="29" height="27"/>
++                        <size key="maxSize" width="29" height="27"/>
++                        <button key="view" verticalHuggingPriority="750" id="1hB-AH-eUl">
++                            <rect key="frame" x="5" y="14" width="29" height="25"/>
++                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
++                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSShareTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="S1v-UD-QhI">
++                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
++                                <font key="font" metaFont="system"/>
++                                <connections>
++                                    <action selector="share:" target="-2" id="5e3-hg-bKN"/>
++                                </connections>
++                            </buttonCell>
++                        </button>
++                    </toolbarItem>
++                    <toolbarItem implicitItemIdentifier="255D29F2-C9AA-4B4B-BB43-B38FCD6A0BBB" label="Location" paletteLabel="Location" id="59">
++                        <nil key="toolTip"/>
++                        <size key="minSize" width="200" height="22"/>
++                        <size key="maxSize" width="100000" height="22"/>
++                        <textField key="view" verticalHuggingPriority="750" id="10">
++                            <rect key="frame" x="0.0" y="14" width="565" height="22"/>
++                            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
++                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="11">
++                                <font key="font" metaFont="system"/>
++                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
++                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
++                            </textFieldCell>
++                            <connections>
++                                <action selector="fetch:" target="-2" id="36"/>
++                            </connections>
++                        </textField>
++                    </toolbarItem>
++                    <toolbarItem implicitItemIdentifier="86912BAA-B8D0-400F-BFEE-71FC166986E6" label="Progress" paletteLabel="Progress" tag="-1" id="60">
++                        <nil key="toolTip"/>
++                        <size key="minSize" width="16" height="16"/>
++                        <size key="maxSize" width="16" height="16"/>
++                        <progressIndicator key="view" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="1" displayedWhenStopped="NO" bezeled="NO" controlSize="small" style="spinning" id="21">
++                            <rect key="frame" x="19" y="14" width="16" height="16"/>
++                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
++                        </progressIndicator>
++                    </toolbarItem>
++                </allowedToolbarItems>
++                <defaultToolbarItems>
++                    <toolbarItem reference="56"/>
++                    <toolbarItem reference="57"/>
++                    <toolbarItem reference="58"/>
++                    <toolbarItem reference="59"/>
++                    <toolbarItem reference="60"/>
++                    <toolbarItem reference="dJx-dw-gcC"/>
++                </defaultToolbarItems>
++            </toolbar>
++            <connections>
++                <outlet property="delegate" destination="-2" id="4"/>
++            </connections>
++        </window>
++    </objects>
++    <resources>
++        <image name="NSEnterFullScreenTemplate" width="15" height="15"/>
++        <image name="NSGoLeftTemplate" width="9" height="12"/>
++        <image name="NSGoRightTemplate" width="9" height="12"/>
++        <image name="NSRefreshTemplate" width="11" height="15"/>
++        <image name="NSShareTemplate" width="11" height="16"/>
++    </resources>
++</document>
+diff --git a/Tools/Playwright/mac/BrowserWindowController.h b/Tools/Playwright/mac/BrowserWindowController.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..4dbf13c8fb31a745ae8e1965a457d4fbcd8e5866
+--- /dev/null
++++ b/Tools/Playwright/mac/BrowserWindowController.h
+@@ -0,0 +1,46 @@
++/*
++ * Copyright (C) 2010 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++@class WKWebView;
++
++@interface BrowserWindowController : NSWindowController
++
++- (IBAction)goBack:(id)sender;
++- (IBAction)goForward:(id)sender;
++- (IBAction)reload:(id)sender;
++- (IBAction)saveAsPDF:(id)sender;
++- (IBAction)saveAsWebArchive:(id)sender;
++- (IBAction)zoomIn:(id)sender;
++- (IBAction)zoomOut:(id)sender;
++- (IBAction)resetZoom:(id)sender;
++- (IBAction)showHideWebInspector:(id)sender;
++
++- (IBAction)setPageScale:(id)sender;
++- (IBAction)setViewScale:(id)sender;
++- (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration;
++- (void)loadURLString:(NSString *)urlString;
++- (WKWebView *)webView;
++
++@end
+diff --git a/Tools/Playwright/mac/BrowserWindowController.m b/Tools/Playwright/mac/BrowserWindowController.m
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881ddbc19bb45
+--- /dev/null
++++ b/Tools/Playwright/mac/BrowserWindowController.m
+@@ -0,0 +1,834 @@
++/*
++ * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#import "BrowserWindowController.h"
++
++#import "AppDelegate.h"
++#import <WebKit/WKFrameInfo.h>
++#import <WebKit/WKNavigationActionPrivate.h>
++#import <WebKit/WKNavigationDelegate.h>
++#import <WebKit/WKPreferencesPrivate.h>
++#import <WebKit/WKUIDelegate.h>
++#import <WebKit/WKUIDelegatePrivate.h>
++#import <WebKit/WKWebViewConfigurationPrivate.h>
++#import <WebKit/WKWebViewPrivate.h>
++#import <WebKit/WKWebViewPrivateForTesting.h>
++#import <WebKit/WKWebsiteDataStorePrivate.h>
++#import <WebKit/WebNSURLExtras.h>
++#import <WebKit/_WKIconLoadingDelegate.h>
++#import <WebKit/_WKInspector.h>
++#import <WebKit/_WKLinkIconParameters.h>
++#import <WebKit/_WKUserInitiatedAction.h>
++
++static void* keyValueObservingContext = &keyValueObservingContext;
++
++@interface PlaywrightNSTextFinder : NSTextFinder
++
++@property (nonatomic, copy) dispatch_block_t hideInterfaceCallback;
++
++@end
++
++@implementation PlaywrightNSTextFinder
++
++- (void)performAction:(NSTextFinderAction)op
++{
++    [super performAction:op];
++
++    if (op == NSTextFinderActionHideFindInterface && _hideInterfaceCallback)
++        _hideInterfaceCallback();
++}
++
++@end
++
++@interface BrowserWindowController () <NSTextFinderBarContainer, WKNavigationDelegate, WKUIDelegate, _WKIconLoadingDelegate, NSSharingServicePickerDelegate, NSSharingServiceDelegate>
++@end
++
++@implementation BrowserWindowController {
++    IBOutlet NSProgressIndicator *progressIndicator;
++    IBOutlet NSButton *reloadButton;
++    IBOutlet NSButton *backButton;
++    IBOutlet NSButton *forwardButton;
++    IBOutlet NSButton *share;
++    IBOutlet NSToolbar *toolbar;
++    IBOutlet NSTextField *urlText;
++    IBOutlet NSView *containerView;
++    IBOutlet NSButton *toggleUseShrinkToFitButton;
++
++    WKWebViewConfiguration *_configuration;
++    WKWebView *_webView;
++    BOOL _zoomTextOnly;
++    BOOL _isPrivateBrowsingWindow;
++    NSAlert* _alert;
++
++    BOOL _useShrinkToFit;
++
++    PlaywrightNSTextFinder *_textFinder;
++    NSView *_textFindBarView;
++    BOOL _findBarVisible;
++}
++
++- (id)initWithWindow:(NSWindow *)window
++{
++    self = [super initWithWindow:window];
++    return self;
++}
++
++- (void)windowDidLoad
++{
++    [share sendActionOn:NSEventMaskLeftMouseDown];
++    [super windowDidLoad];
++}
++
++- (IBAction)openLocation:(id)sender
++{
++    [[self window] makeFirstResponder:urlText];
++}
++
++- (NSString *)addProtocolIfNecessary:(NSString *)address
++{
++    if ([address rangeOfString:@"://"].length > 0)
++        return address;
++
++    if ([address hasPrefix:@"data:"])
++        return address;
++
++    if ([address hasPrefix:@"about:"])
++        return address;
++
++    return [@"http://" stringByAppendingString:address];
++}
++
++- (IBAction)share:(id)sender
++{
++    NSSharingServicePicker *picker = [[NSSharingServicePicker alloc] initWithItems:@[ self.currentURL ]];
++    picker.delegate = self;
++    [picker showRelativeToRect:NSZeroRect ofView:sender preferredEdge:NSRectEdgeMinY];
++}
++
++- (IBAction)showHideWebView:(id)sender
++{
++    self.mainContentView.hidden = !self.mainContentView.isHidden;
++}
++
++- (CGFloat)pageScaleForMenuItemTag:(NSInteger)tag
++{
++    if (tag == 1)
++        return 1;
++    if (tag == 2)
++        return 1.25;
++    if (tag == 3)
++        return 1.5;
++    if (tag == 4)
++        return 2.0;
++
++    return 1;
++}
++
++- (void)awakeFromNib
++{
++    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
++
++    _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
++    _webView._windowOcclusionDetectionEnabled = NO;
++
++    _webView.allowsMagnification = YES;
++    _webView.allowsBackForwardNavigationGestures = YES;
++
++    [_webView setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
++    [containerView addSubview:_webView];
++
++    [progressIndicator bind:NSHiddenBinding toObject:_webView withKeyPath:@"loading" options:@{ NSValueTransformerNameBindingOption : NSNegateBooleanTransformerName }];
++    [progressIndicator bind:NSValueBinding toObject:_webView withKeyPath:@"estimatedProgress" options:nil];
++
++    [_webView addObserver:self forKeyPath:@"title" options:0 context:keyValueObservingContext];
++    [_webView addObserver:self forKeyPath:@"URL" options:0 context:keyValueObservingContext];
++
++    _webView.navigationDelegate = self;
++    _webView.UIDelegate = self;
++
++    _webView._observedRenderingProgressEvents = _WKRenderingProgressEventFirstLayout
++        | _WKRenderingProgressEventFirstVisuallyNonEmptyLayout
++        | _WKRenderingProgressEventFirstPaintWithSignificantArea
++        | _WKRenderingProgressEventFirstLayoutAfterSuppressedIncrementalRendering
++        | _WKRenderingProgressEventFirstPaintAfterSuppressedIncrementalRendering;
++
++    _webView.customUserAgent = @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15";
++
++    _webView._usePlatformFindUI = NO;
++
++    _textFinder = [[PlaywrightNSTextFinder alloc] init];
++    _textFinder.incrementalSearchingEnabled = YES;
++    _textFinder.incrementalSearchingShouldDimContentView = NO;
++    _textFinder.client = _webView;
++    _textFinder.findBarContainer = self;
++    _textFinder.hideInterfaceCallback = ^{
++        [_webView _hideFindUI];
++    };
++
++    _zoomTextOnly = NO;
++}
++
++- (instancetype)initWithConfiguration:(WKWebViewConfiguration *)configuration
++{
++    if (!(self = [super initWithWindowNibName:@"BrowserWindow"]))
++        return nil;
++    _configuration = [configuration copy];
++    _isPrivateBrowsingWindow = !_configuration.websiteDataStore.isPersistent;
++    return self;
++}
++
++- (void)dealloc
++{
++    [[NSNotificationCenter defaultCenter] removeObserver:self];
++    
++    [progressIndicator unbind:NSHiddenBinding];
++    [progressIndicator unbind:NSValueBinding];
++
++    [_textFinder release];
++    [_webView release];
++    [_configuration release];
++
++    [super dealloc];
++}
++
++- (IBAction)fetch:(id)sender
++{
++    [urlText setStringValue:[self addProtocolIfNecessary:urlText.stringValue]];
++    NSURL *url = [NSURL _webkit_URLWithUserTypedString:urlText.stringValue];
++    [_webView loadRequest:[NSURLRequest requestWithURL:url]];
++}
++
++- (IBAction)setPageScale:(id)sender
++{
++    CGFloat scale = [self pageScaleForMenuItemTag:[sender tag]];
++    [_webView _setPageScale:scale withOrigin:CGPointZero];
++}
++
++- (CGFloat)viewScaleForMenuItemTag:(NSInteger)tag
++{
++    if (tag == 1)
++        return 1;
++    if (tag == 2)
++        return 0.75;
++    if (tag == 3)
++        return 0.5;
++    if (tag == 4)
++        return 0.25;
++
++    return 1;
++}
++
++- (IBAction)setViewScale:(id)sender
++{
++    CGFloat scale = [self viewScaleForMenuItemTag:[sender tag]];
++    CGFloat oldScale = [_webView _viewScale];
++
++    if (scale == oldScale)
++        return;
++
++    [_webView _setLayoutMode:_WKLayoutModeDynamicSizeComputedFromViewScale];
++
++    NSRect oldFrame = self.window.frame;
++    NSSize newFrameSize = NSMakeSize(oldFrame.size.width * (scale / oldScale), oldFrame.size.height * (scale / oldScale));
++    [self.window setFrame:NSMakeRect(oldFrame.origin.x, oldFrame.origin.y - (newFrameSize.height - oldFrame.size.height), newFrameSize.width, newFrameSize.height) display:NO animate:NO];
++
++    [_webView _setViewScale:scale];
++}
++
++static BOOL areEssentiallyEqual(double a, double b)
++{
++    double tolerance = 0.001;
++    return (fabs(a - b) <= tolerance);
++}
++
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wdeprecated-implementations"
++- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
++#pragma GCC diagnostic pop
++{
++    SEL action = menuItem.action;
++
++    if (action == @selector(saveAsPDF:))
++        return YES;
++    if (action == @selector(saveAsWebArchive:))
++        return YES;
++
++    if (action == @selector(zoomIn:))
++        return [self canZoomIn];
++    if (action == @selector(zoomOut:))
++        return [self canZoomOut];
++    if (action == @selector(resetZoom:))
++        return [self canResetZoom];
++    
++    if (action == @selector(toggleZoomMode:))
++        [menuItem setState:_zoomTextOnly ? NSControlStateValueOn : NSControlStateValueOff];
++    else if (action == @selector(showHideWebInspector:))
++        [menuItem setTitle:_webView._inspector.isVisible ? @"Close Web Inspector" : @"Show Web Inspector"];
++
++    if (action == @selector(setPageScale:))
++        [menuItem setState:areEssentiallyEqual([_webView _pageScale], [self pageScaleForMenuItemTag:[menuItem tag]])];
++
++    if (action == @selector(setViewScale:))
++        [menuItem setState:areEssentiallyEqual([_webView _viewScale], [self viewScaleForMenuItemTag:[menuItem tag]])];
++
++    return YES;
++}
++
++- (IBAction)reload:(id)sender
++{
++    [_webView reload];
++}
++
++- (IBAction)goBack:(id)sender
++{
++    [_webView goBack];
++}
++
++- (IBAction)goForward:(id)sender
++{
++    [_webView goForward];
++}
++
++- (IBAction)toggleZoomMode:(id)sender
++{
++    if (_zoomTextOnly) {
++        _zoomTextOnly = NO;
++        double currentTextZoom = _webView._textZoomFactor;
++        _webView._textZoomFactor = 1;
++        _webView.pageZoom = currentTextZoom;
++    } else {
++        _zoomTextOnly = YES;
++        double currentPageZoom = _webView._pageZoomFactor;
++        _webView._textZoomFactor = currentPageZoom;
++        _webView.pageZoom = 1;
++    }
++}
++
++- (IBAction)resetZoom:(id)sender
++{
++    if (![self canResetZoom])
++        return;
++
++    if (_zoomTextOnly)
++        _webView._textZoomFactor = 1;
++    else
++        _webView.pageZoom = 1;
++}
++
++- (BOOL)canResetZoom
++{
++    return _zoomTextOnly ? (_webView._textZoomFactor != 1) : (_webView.pageZoom != 1);
++}
++
++- (IBAction)showHideWebInspector:(id)sender
++{
++    _WKInspector *inspector = _webView._inspector;
++    if (inspector.isVisible)
++        [inspector hide];
++    else
++        [inspector show];
++}
++
++- (NSURL *)currentURL
++{
++    return _webView.URL;
++}
++
++- (NSView *)mainContentView
++{
++    return _webView;
++}
++
++- (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)item
++{
++    SEL action = item.action;
++
++    if (action == @selector(goBack:) || action == @selector(goForward:))
++        return [_webView validateUserInterfaceItem:item];
++
++    return YES;
++}
++
++- (void)validateToolbar
++{
++    [toolbar validateVisibleItems];
++}
++
++- (BOOL)windowShouldClose:(id)sender
++{
++    return YES;
++}
++
++- (void)windowWillClose:(NSNotification *)notification
++{
++    [[[NSApplication sharedApplication] browserAppDelegate] browserWindowWillClose:self.window];
++    [_webView removeObserver:self forKeyPath:@"title"];
++    [_webView removeObserver:self forKeyPath:@"URL"];
++    [self autorelease];
++}
++
++- (void)webViewDidClose:(WKWebView *)webView {
++    [self.window close];
++}
++
++#define DefaultMinimumZoomFactor (.5)
++#define DefaultMaximumZoomFactor (3.0)
++#define DefaultZoomFactorRatio (1.2)
++
++- (CGFloat)currentZoomFactor
++{
++    return _zoomTextOnly ? _webView._textZoomFactor : _webView.pageZoom;
++}
++
++- (void)setCurrentZoomFactor:(CGFloat)factor
++{
++    if (_zoomTextOnly)
++        _webView._textZoomFactor = factor;
++    else
++        _webView.pageZoom = factor;
++}
++
++- (BOOL)canZoomIn
++{
++    return self.currentZoomFactor * DefaultZoomFactorRatio < DefaultMaximumZoomFactor;
++}
++
++- (void)zoomIn:(id)sender
++{
++    if (!self.canZoomIn)
++        return;
++
++    self.currentZoomFactor *= DefaultZoomFactorRatio;
++}
++
++- (BOOL)canZoomOut
++{
++    return self.currentZoomFactor / DefaultZoomFactorRatio > DefaultMinimumZoomFactor;
++}
++
++- (void)zoomOut:(id)sender
++{
++    if (!self.canZoomIn)
++        return;
++
++    self.currentZoomFactor /= DefaultZoomFactorRatio;
++}
++
++- (void)updateTitle:(NSString *)title
++{
++    if (!title) {
++        NSURL *url = _webView.URL;
++        title = url.lastPathComponent ?: url._web_userVisibleString;
++    }
++
++    self.window.title = [NSString stringWithFormat:@"%@%@ [%d]%@", _isPrivateBrowsingWindow ? @"🙈 " : @"", title, _webView._webProcessIdentifier, @""];
++}
++
++- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
++{
++    if (context != keyValueObservingContext || object != _webView)
++        return;
++
++    if ([keyPath isEqualToString:@"title"])
++        [self updateTitle:_webView.title];
++    else if ([keyPath isEqualToString:@"URL"])
++        [self updateTextFieldFromURL:_webView.URL];
++}
++
++- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
++{
++    BrowserWindowController *controller = [[BrowserWindowController alloc] initWithConfiguration:configuration];
++    [controller awakeFromNib];
++    [controller.window makeKeyAndOrderFront:self];
++
++    return controller->_webView;
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
++{
++    NSAlert* alert = [[NSAlert alloc] init];
++
++    [alert setMessageText:[NSString stringWithFormat:@"JavaScript alert dialog from %@.", [frame.request.URL absoluteString]]];
++    [alert setInformativeText:message];
++    [alert addButtonWithTitle:@"OK"];
++
++    _alert = alert;
++    [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
++        completionHandler();
++        [alert release];
++        _alert = nil;
++    }];
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
++{
++    NSAlert* alert = [[NSAlert alloc] init];
++
++    [alert setMessageText:[NSString stringWithFormat:@"JavaScript confirm dialog from %@.", [frame.request.URL  absoluteString]]];
++    [alert setInformativeText:message];
++    
++    [alert addButtonWithTitle:@"OK"];
++    [alert addButtonWithTitle:@"Cancel"];
++
++    _alert = alert;
++    [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
++        completionHandler(response == NSAlertFirstButtonReturn);
++        [alert release];
++        _alert = nil;
++    }];
++}
++
++- (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *result))completionHandler
++{
++    NSAlert* alert = [[NSAlert alloc] init];
++
++    [alert setMessageText:[NSString stringWithFormat:@"JavaScript prompt dialog from %@.", [frame.request.URL absoluteString]]];
++    [alert setInformativeText:prompt];
++    
++    [alert addButtonWithTitle:@"OK"];
++    [alert addButtonWithTitle:@"Cancel"];
++    
++    NSTextField* input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
++    [input setStringValue:defaultText];
++    [alert setAccessoryView:input];
++    
++    _alert = alert;
++    [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
++        [input validateEditing];
++        completionHandler(response == NSAlertFirstButtonReturn ? [input stringValue] : nil);
++        [alert release];
++        _alert = nil;
++    }];
++}
++
++- (void)webView:(WKWebView *)webView handleJavaScriptDialog:(BOOL)accept value:(NSString *)value
++{
++    if (!_alert)
++        return;
++    NSTextField* input = (NSTextField*)_alert.accessoryView;
++    if (accept && input && value)
++        [input setStringValue:value];
++    [self.window endSheet:_alert.window returnCode: accept ? NSAlertFirstButtonReturn : NSModalResponseCancel];
++}
++
++#if __has_feature(objc_generics)
++- (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> * URLs))completionHandler
++#else
++- (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray *URLs))completionHandler
++#endif
++{
++    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
++
++    openPanel.allowsMultipleSelection = parameters.allowsMultipleSelection;
++
++    [openPanel beginSheetModalForWindow:webView.window completionHandler:^(NSInteger result) {
++        if (result == NSModalResponseOK)
++            completionHandler(openPanel.URLs);
++        else
++            completionHandler(nil);
++    }];
++}
++
++- (void)_webView:(WebView *)sender runBeforeUnloadConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL result))completionHandler
++{
++    NSAlert *alert = [[NSAlert alloc] init];
++
++    alert.messageText = [NSString stringWithFormat:@"JavaScript before unload dialog from %@.", [frame.request.URL absoluteString]];
++    alert.informativeText = message;
++
++    [alert addButtonWithTitle:@"Leave Page"];
++    [alert addButtonWithTitle:@"Stay On Page"];
++
++    [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
++        completionHandler(response == NSAlertFirstButtonReturn);
++        [alert release];
++    }];
++}
++
++- (WKDragDestinationAction)_webView:(WKWebView *)webView dragDestinationActionMaskForDraggingInfo:(id)draggingInfo
++{
++    return WKDragDestinationActionAny;
++}
++
++- (void)updateTextFieldFromURL:(NSURL *)URL
++{
++    if (!URL)
++        return;
++
++    if (!URL.absoluteString.length)
++        return;
++
++    urlText.stringValue = [URL _web_userVisibleString];
++}
++
++- (void)loadURLString:(NSString *)urlString
++{
++    // FIXME: We shouldn't have to set the url text here.
++    [urlText setStringValue:urlString];
++    [self fetch:nil];
++}
++
++- (void)loadHTMLString:(NSString *)HTMLString
++{
++    [_webView loadHTMLString:HTMLString baseURL:nil];
++}
++
++static NSSet *dataTypes()
++{
++    return [WKWebsiteDataStore allWebsiteDataTypes];
++}
++
++- (IBAction)fetchWebsiteData:(id)sender
++{
++    [_configuration.websiteDataStore _fetchDataRecordsOfTypes:dataTypes() withOptions:_WKWebsiteDataStoreFetchOptionComputeSizes completionHandler:^(NSArray *websiteDataRecords) {
++        NSLog(@"did fetch website data %@.", websiteDataRecords);
++    }];
++}
++
++- (IBAction)fetchAndClearWebsiteData:(id)sender
++{
++    [_configuration.websiteDataStore fetchDataRecordsOfTypes:dataTypes() completionHandler:^(NSArray *websiteDataRecords) {
++        [_configuration.websiteDataStore removeDataOfTypes:dataTypes() forDataRecords:websiteDataRecords completionHandler:^{
++            [_configuration.websiteDataStore fetchDataRecordsOfTypes:dataTypes() completionHandler:^(NSArray *websiteDataRecords) {
++                NSLog(@"did clear website data, after clearing data is %@.", websiteDataRecords);
++            }];
++        }];
++    }];
++}
++
++- (IBAction)clearWebsiteData:(id)sender
++{
++    [_configuration.websiteDataStore removeDataOfTypes:dataTypes() modifiedSince:[NSDate distantPast] completionHandler:^{
++        NSLog(@"Did clear website data.");
++    }];
++}
++
++- (IBAction)printWebView:(id)sender
++{
++    [[_webView printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]] runOperationModalForWindow:self.window delegate:nil didRunSelector:nil contextInfo:nil];
++}
++
++#pragma mark WKNavigationDelegate
++
++- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
++{
++    LOG(@"decidePolicyForNavigationAction");
++
++    if (navigationAction._canHandleRequest) {
++        decisionHandler(WKNavigationActionPolicyAllow);
++        return;
++    }
++
++    if (navigationAction._userInitiatedAction && !navigationAction._userInitiatedAction.isConsumed) {
++        [navigationAction._userInitiatedAction consume];
++        [[NSWorkspace sharedWorkspace] openURL:navigationAction.request.URL];
++    }
++
++    decisionHandler(WKNavigationActionPolicyCancel);
++}
++
++- (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
++{
++    LOG(@"decidePolicyForNavigationResponse");
++    decisionHandler(WKNavigationResponsePolicyAllow);
++}
++
++- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation
++{
++    LOG(@"didStartProvisionalNavigation: %@", navigation);
++}
++
++- (void)webView:(WKWebView *)webView didReceiveServerRedirectForProvisionalNavigation:(WKNavigation *)navigation
++{
++    LOG(@"didReceiveServerRedirectForProvisionalNavigation: %@", navigation);
++}
++
++- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
++{
++    LOG(@"didFailProvisionalNavigation: %@navigation, error: %@", navigation, error);
++}
++
++- (void)webView:(WKWebView *)webView didCommitNavigation:(WKNavigation *)navigation
++{
++    LOG(@"didCommitNavigation: %@", navigation);
++    [self updateTitle:nil];
++}
++
++- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
++{
++    LOG(@"didFinishNavigation: %@", navigation);
++}
++
++- (void)webView:(WKWebView *)webView didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *__nullable credential))completionHandler
++{
++    LOG(@"didReceiveAuthenticationChallenge: %@", challenge);
++    if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodHTTPBasic]) {
++        NSAlert *alert = [[NSAlert alloc] init];
++        NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 200, 48)] autorelease];
++        NSTextField *userInput = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 24, 200, 24)] autorelease];
++        NSTextField *passwordInput = [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
++        
++        [alert setMessageText:[NSString stringWithFormat:@"Log in to %@:%lu.", challenge.protectionSpace.host, challenge.protectionSpace.port]];
++        [alert addButtonWithTitle:@"Log in"];
++        [alert addButtonWithTitle:@"Cancel"];
++        [container addSubview:userInput];
++        [container addSubview:passwordInput];
++        [alert setAccessoryView:container];
++        [userInput setNextKeyView:passwordInput];
++        [alert.window setInitialFirstResponder:userInput];
++        
++        [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response) {
++            [userInput validateEditing];
++            if (response == NSAlertFirstButtonReturn)
++                completionHandler(NSURLSessionAuthChallengeUseCredential, [[[NSURLCredential alloc] initWithUser:[userInput stringValue] password:[passwordInput stringValue] persistence:NSURLCredentialPersistenceForSession] autorelease]);
++            else
++                completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
++            [alert release];
++        }];
++        return;
++    }
++    completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
++}
++
++- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
++{
++    LOG(@"didFailNavigation: %@, error %@", navigation, error);
++}
++
++- (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView
++{
++    NSLog(@"WebContent process crashed; reloading");
++    [self reload:nil];
++}
++
++- (void)_webView:(WKWebView *)webView renderingProgressDidChange:(_WKRenderingProgressEvents)progressEvents
++{
++    if (progressEvents & _WKRenderingProgressEventFirstLayout)
++        LOG(@"renderingProgressDidChange: %@", @"first layout");
++
++    if (progressEvents & _WKRenderingProgressEventFirstVisuallyNonEmptyLayout)
++        LOG(@"renderingProgressDidChange: %@", @"first visually non-empty layout");
++
++    if (progressEvents & _WKRenderingProgressEventFirstPaintWithSignificantArea)
++        LOG(@"renderingProgressDidChange: %@", @"first paint with significant area");
++
++    if (progressEvents & _WKRenderingProgressEventFirstLayoutAfterSuppressedIncrementalRendering)
++        LOG(@"renderingProgressDidChange: %@", @"first layout after suppressed incremental rendering");
++
++    if (progressEvents & _WKRenderingProgressEventFirstPaintAfterSuppressedIncrementalRendering)
++        LOG(@"renderingProgressDidChange: %@", @"first paint after suppressed incremental rendering");
++}
++
++- (void)webView:(WKWebView *)webView shouldLoadIconWithParameters:(_WKLinkIconParameters *)parameters completionHandler:(void (^)(void (^)(NSData*)))completionHandler
++{
++    completionHandler(^void (NSData *data) {
++        LOG(@"Icon URL %@ received icon data of length %u", parameters.url, (unsigned)data.length);
++    });
++}
++
++#pragma mark Find in Page
++
++- (IBAction)performTextFinderAction:(id)sender
++{
++    [_textFinder performAction:[sender tag]];
++}
++
++- (NSView *)findBarView
++{
++    return _textFindBarView;
++}
++
++- (void)setFindBarView:(NSView *)findBarView
++{
++    _textFindBarView = findBarView;
++    _findBarVisible = YES;
++    [_textFindBarView setFrame:NSMakeRect(0, 0, containerView.bounds.size.width, _textFindBarView.frame.size.height)];
++}
++
++- (BOOL)isFindBarVisible
++{
++    return _findBarVisible;
++}
++
++- (void)setFindBarVisible:(BOOL)findBarVisible
++{
++    _findBarVisible = findBarVisible;
++    if (findBarVisible)
++        [containerView addSubview:_textFindBarView];
++    else
++        [_textFindBarView removeFromSuperview];
++}
++
++- (NSView *)contentView
++{
++    return _webView;
++}
++
++- (void)findBarViewDidChangeHeight
++{
++}
++
++- (void)_webView:(WKWebView *)webView requestMediaCaptureAuthorization: (_WKCaptureDevices)devices decisionHandler:(void (^)(BOOL authorized))decisionHandler
++{
++    decisionHandler(true);
++}
++
++- (void)_webView:(WKWebView *)webView includeSensitiveMediaDeviceDetails:(void (^)(BOOL includeSensitiveDetails))decisionHandler
++{
++    decisionHandler(false);
++}
++
++- (IBAction)saveAsPDF:(id)sender
++{
++    NSSavePanel *panel = [NSSavePanel savePanel];
++    panel.allowedFileTypes = @[ @"pdf" ];
++    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
++        if (result == NSModalResponseOK) {
++            [_webView createPDFWithConfiguration:nil completionHandler:^(NSData *pdfSnapshotData, NSError *error) {
++                [pdfSnapshotData writeToURL:[panel URL] options:0 error:nil];
++            }];
++        }
++    }];
++}
++
++- (IBAction)saveAsWebArchive:(id)sender
++{
++    NSSavePanel *panel = [NSSavePanel savePanel];
++    panel.allowedFileTypes = @[ @"webarchive" ];
++    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
++        if (result == NSModalResponseOK) {
++            [_webView createWebArchiveDataWithCompletionHandler:^(NSData *archiveData, NSError *error) {
++                [archiveData writeToURL:[panel URL] options:0 error:nil];
++            }];
++        }
++    }];
++}
++
++- (WKWebView *)webView
++{
++    return _webView;
++}
++
++@end
+diff --git a/Tools/Playwright/mac/CMakeLists.txt b/Tools/Playwright/mac/CMakeLists.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..410d47425b79367114b17274355350894a70a5e6
+--- /dev/null
++++ b/Tools/Playwright/mac/CMakeLists.txt
+@@ -0,0 +1,43 @@
++set(PLAYWRIGHT_DIR "${TOOLS_DIR}/Playwright/mac")
++
++#FIXME: This should not need WEBCORE_EXPORT defined.  This means we are including WebCore headers, and we should not.
++add_definitions("-include Playwright_Prefix.pch -DWEBCORE_EXPORT=")
++
++set(Playwright_SOURCES
++    ${PLAYWRIGHT_DIR}/AppDelegate.m
++    ${PLAYWRIGHT_DIR}/BrowserWindowController.m
++    ${PLAYWRIGHT_DIR}/main.m
++    ${TOOLS_DIR}/Playwright/MBToolbarItem.m
++)
++
++set(Playwright_INCLUDE_DIRECTORIES
++    ${CMAKE_SOURCE_DIR}/Source
++    ${FORWARDING_HEADERS_DIR}
++    ${PLAYWRIGHT_DIR}
++)
++
++set(Playwright_LIBRARIES
++    WebKit
++)
++
++set(CMAKE_EXE_LINKER_FLAGS "-framework Cocoa")
++
++set(EXECUTABLE_NAME Playwright)
++set(PRODUCT_NAME Playwright)
++
++set(Playwright_Contents_Directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Playwright.app/Contents)
++make_directory(${Playwright_Contents_Directory}/Resources)
++add_custom_command(OUTPUT ${Playwright_Contents_Directory}/Resources/BrowserWindow.nib
++    COMMAND ibtool --compile ${Playwright_Contents_Directory}/Resources/BrowserWindow.nib ${PLAYWRIGHT_DIR}/BrowserWindow.xib VERBATIM)
++add_custom_command(OUTPUT ${Playwright_Contents_Directory}/Resources/MainMenu.nib
++    COMMAND ibtool --compile ${Playwright_Contents_Directory}/Resources/MainMenu.nib ${PLAYWRIGHT_DIR}/MainMenu.xib VERBATIM)
++add_custom_target(PlaywrightNibs ALL DEPENDS
++    ${Playwright_Contents_Directory}/Resources/BrowserWindow.nib
++    ${Playwright_Contents_Directory}/Resources/MainMenu.nib
++)
++
++include_directories(${Playwright_INCLUDE_DIRECTORIES})
++add_executable(Playwright MACOSX_BUNDLE ${Playwright_SOURCES})
++set_target_properties(Playwright PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${PLAYWRIGHT_DIR}/Info.plist)
++target_link_libraries(Playwright ${Playwright_LIBRARIES})
++add_dependencies(Playwright PlaywrightNibs)
+diff --git a/Tools/Playwright/mac/Info.plist b/Tools/Playwright/mac/Info.plist
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ed50c40f2f0dfd0ddf7c546b3451ab426c0501e
+--- /dev/null
++++ b/Tools/Playwright/mac/Info.plist
+@@ -0,0 +1,56 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++	<key>CFBundleDevelopmentRegion</key>
++	<string>English</string>
++	<key>CFBundleExecutable</key>
++	<string>${EXECUTABLE_NAME}</string>
++	<key>CFBundleIconFile</key>
++	<string>WebKit Browser</string>
++	<key>CFBundleIdentifier</key>
++	<string>${PRODUCT_BUNDLE_IDENTIFIER}</string>
++	<key>CFBundleInfoDictionaryVersion</key>
++	<string>6.0</string>
++	<key>CFBundleName</key>
++	<string>${PRODUCT_NAME}</string>
++	<key>CFBundlePackageType</key>
++	<string>APPL</string>
++	<key>CFBundleSignature</key>
++	<string>????</string>
++	<key>CFBundleShortVersionString</key>
++	<string>1.0</string>
++	<key>LSMinimumSystemVersion</key>
++	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
++	<key>CFBundleVersion</key>
++	<string>1</string>
++	<key>NSMainNibFile</key>
++	<string>MainMenu</string>
++	<key>NSPrincipalClass</key>
++	<string>NSApplication</string>
++	<key>NSAppTransportSecurity</key>
++	<dict>
++		<key>NSAllowsArbitraryLoads</key>
++		<true/>
++	</dict>
++	<key>NSSupportsAutomaticGraphicsSwitching</key>
++	<true/>
++	<key>CFBundleDocumentTypes</key>
++	<array>
++		<dict>
++			<key>CFBundleTypeExtensions</key>
++			<array>
++				<string>html</string>
++			</array>
++			<key>CFBundleTypeMIMETypes</key>
++			<array>
++				<string>text/html</string>
++			</array>
++			<key>CFBundleTypeName</key>
++			<string>HTML</string>
++			<key>CFBundleTypeRole</key>
++			<string>Editor</string>
++		</dict>
++	</array>
++</dict>
++</plist>
+diff --git a/Tools/Playwright/mac/MainMenu.xib b/Tools/Playwright/mac/MainMenu.xib
+new file mode 100644
+index 0000000000000000000000000000000000000000..a291f32251271200132b8eb08d513f6936e5a0a5
+--- /dev/null
++++ b/Tools/Playwright/mac/MainMenu.xib
+@@ -0,0 +1,366 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
++    <dependencies>
++        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15505"/>
++    </dependencies>
++    <objects>
++        <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
++            <connections>
++                <outlet property="delegate" destination="494" id="495"/>
++            </connections>
++        </customObject>
++        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
++        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
++        <menu title="AMainMenu" systemMenu="main" id="29">
++            <items>
++                <menuItem title="Playwright" id="56">
++                    <menu key="submenu" title="Playwright" systemMenu="apple" id="57">
++                        <items>
++                            <menuItem title="About Playwright" id="58">
++                                <modifierMask key="keyEquivalentModifierMask"/>
++                                <connections>
++                                    <action selector="orderFrontStandardAboutPanel:" target="-2" id="142"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="236">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Preferences…" keyEquivalent="," id="129"/>
++                            <menuItem isSeparatorItem="YES" id="143">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Services" id="131">
++                                <menu key="submenu" title="Services" systemMenu="services" id="130"/>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="144">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Hide Playwright" keyEquivalent="h" id="134">
++                                <connections>
++                                    <action selector="hide:" target="-1" id="367"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Hide Others" keyEquivalent="h" id="145">
++                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
++                                <connections>
++                                    <action selector="hideOtherApplications:" target="-1" id="368"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Show All" id="150">
++                                <connections>
++                                    <action selector="unhideAllApplications:" target="-1" id="370"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="149">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Quit Playwright" keyEquivalent="q" id="136">
++                                <connections>
++                                    <action selector="terminate:" target="-3" id="449"/>
++                                </connections>
++                            </menuItem>
++                        </items>
++                    </menu>
++                </menuItem>
++                <menuItem title="File" id="83">
++                    <menu key="submenu" title="File" id="81">
++                        <items>
++                            <menuItem title="Open Location " tag="1" keyEquivalent="l" id="82">
++                                <connections>
++                                    <action selector="openLocation:" target="-1" id="575"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="New Window" tag="2" keyEquivalent="n" id="571">
++                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
++                                <connections>
++                                    <action selector="newWindow:" target="-1" id="572"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="New Private Window" tag="2" id="Zqs-AO-XAX">
++                                <modifierMask key="keyEquivalentModifierMask"/>
++                                <connections>
++                                    <action selector="newPrivateWindow:" target="-1" id="mf5-zi-a5R"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Open…" keyEquivalent="o" id="72">
++                                <connections>
++                                    <action selector="openDocument:" target="-1" id="374"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Open Recent" id="124">
++                                <menu key="submenu" title="Open Recent" systemMenu="recentDocuments" id="125">
++                                    <items>
++                                        <menuItem title="Clear Menu" id="126">
++                                            <connections>
++                                                <action selector="clearRecentDocuments:" target="-1" id="127"/>
++                                            </connections>
++                                        </menuItem>
++                                    </items>
++                                </menu>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="79">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Close" keyEquivalent="w" id="73">
++                                <connections>
++                                    <action selector="performClose:" target="-1" id="193"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Save" keyEquivalent="s" id="75">
++                                <connections>
++                                    <action selector="saveDocument:" target="-1" id="362"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Save As…" keyEquivalent="S" id="80">
++                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
++                                <connections>
++                                    <action selector="saveDocumentAs:" target="-1" id="363"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Save As PDF…" keyEquivalent="S" id="gmS-3Q-oLs">
++                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
++                                <connections>
++                                    <action selector="saveAsPDF:" target="-1" id="25T-Id-334"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Save As WebArchive..." id="112">
++                                <modifierMask key="keyEquivalentModifierMask"/>
++                                <connections>
++                                    <action selector="saveAsWebArchive:" target="-1" id="AGx-3e-6Nt"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="74">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Page Setup..." keyEquivalent="P" id="77">
++                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
++                                <connections>
++                                    <action selector="runPageLayout:" target="-1" id="87"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Print…" keyEquivalent="p" id="78">
++                                <connections>
++                                    <action selector="printWebView:" target="-1" id="86"/>
++                                </connections>
++                            </menuItem>
++                        </items>
++                    </menu>
++                </menuItem>
++                <menuItem title="Edit" id="217">
++                    <menu key="submenu" title="Edit" id="205">
++                        <items>
++                            <menuItem title="Undo" keyEquivalent="z" id="207">
++                                <connections>
++                                    <action selector="undo:" target="-1" id="223"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Redo" keyEquivalent="Z" id="215">
++                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
++                                <connections>
++                                    <action selector="redo:" target="-1" id="231"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="206">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Cut" keyEquivalent="x" id="199">
++                                <connections>
++                                    <action selector="cut:" target="-1" id="228"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Copy" keyEquivalent="c" id="197">
++                                <connections>
++                                    <action selector="copy:" target="-1" id="224"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Paste" keyEquivalent="v" id="203">
++                                <connections>
++                                    <action selector="paste:" target="-1" id="226"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Delete" id="202">
++                                <connections>
++                                    <action selector="delete:" target="-1" id="235"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Select All" keyEquivalent="a" id="198">
++                                <connections>
++                                    <action selector="selectAll:" target="-1" id="232"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="214">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Find" id="218">
++                                <menu key="submenu" title="Find" id="220">
++                                    <items>
++                                        <menuItem title="Find…" tag="1" keyEquivalent="f" id="209">
++                                            <connections>
++                                                <action selector="performTextFinderAction:" target="-1" id="241"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="Find Next" tag="2" keyEquivalent="g" id="208">
++                                            <connections>
++                                                <action selector="performTextFinderAction:" target="-1" id="487"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="Find Previous" tag="3" keyEquivalent="G" id="213">
++                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
++                                            <connections>
++                                                <action selector="performTextFinderAction:" target="-1" id="488"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="Use Selection for Find" tag="7" keyEquivalent="e" id="221">
++                                            <connections>
++                                                <action selector="performTextFinderAction:" target="-1" id="489"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="Jump to Selection" keyEquivalent="j" id="210">
++                                            <connections>
++                                                <action selector="centerSelectionInVisibleArea:" target="-1" id="245"/>
++                                            </connections>
++                                        </menuItem>
++                                    </items>
++                                </menu>
++                            </menuItem>
++                        </items>
++                    </menu>
++                </menuItem>
++                <menuItem title="View" id="295">
++                    <menu key="submenu" title="View" id="296">
++                        <items>
++                            <menuItem title="Zoom In" keyEquivalent="+" id="555">
++                                <connections>
++                                    <action selector="zoomIn:" target="-1" id="559"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Zoom Out" keyEquivalent="-" id="557">
++                                <connections>
++                                    <action selector="zoomOut:" target="-1" id="560"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Reset Zoom" keyEquivalent="0" id="558">
++                                <connections>
++                                    <action selector="resetZoom:" target="-1" id="561"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Zoom Text Only" id="562">
++                                <modifierMask key="keyEquivalentModifierMask"/>
++                                <connections>
++                                    <action selector="toggleZoomMode:" target="-1" id="564"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Page Scale" id="Hzb-c3-Qfv">
++                                <modifierMask key="keyEquivalentModifierMask"/>
++                                <menu key="submenu" title="Page Scale" id="jdo-5V-3CM">
++                                    <items>
++                                        <menuItem title="100%" state="on" tag="1" keyEquivalent="1" id="wHb-mR-Fv0">
++                                            <connections>
++                                                <action selector="setPageScale:" target="-1" id="uMw-eY-289"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="125%" tag="2" keyEquivalent="2" id="u4i-F7-rPb">
++                                            <connections>
++                                                <action selector="setPageScale:" target="-1" id="IbE-Ep-hfc"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="150%" tag="3" keyEquivalent="3" id="fwT-Iy-oK9">
++                                            <connections>
++                                                <action selector="setPageScale:" target="-1" id="9c0-eN-0f5"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="200%" tag="4" keyEquivalent="4" id="R5e-ct-O2u">
++                                            <connections>
++                                                <action selector="setPageScale:" target="-1" id="mkk-gh-dlN"/>
++                                            </connections>
++                                        </menuItem>
++                                    </items>
++                                </menu>
++                            </menuItem>
++                            <menuItem title="View Scale" id="8UY-Pj-H13">
++                                <modifierMask key="keyEquivalentModifierMask"/>
++                                <menu key="submenu" title="View Scale" id="Ml8-mk-ffu">
++                                    <items>
++                                        <menuItem title="100%" state="on" tag="1" id="EAm-Xn-VrC">
++                                            <modifierMask key="keyEquivalentModifierMask"/>
++                                            <connections>
++                                                <action selector="setViewScale:" target="-1" id="dkW-CI-RG4"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="75%" tag="2" id="jcA-I1-Cbq">
++                                            <modifierMask key="keyEquivalentModifierMask"/>
++                                            <connections>
++                                                <action selector="setViewScale:" target="-1" id="BAF-Ym-IqV"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="50%" tag="3" id="BRM-D5-YNO">
++                                            <modifierMask key="keyEquivalentModifierMask"/>
++                                            <connections>
++                                                <action selector="setViewScale:" target="-1" id="nXy-2b-9Zz"/>
++                                            </connections>
++                                        </menuItem>
++                                        <menuItem title="25%" tag="4" id="gzk-YK-x0W">
++                                            <modifierMask key="keyEquivalentModifierMask"/>
++                                            <connections>
++                                                <action selector="setViewScale:" target="-1" id="KXK-f6-24N"/>
++                                            </connections>
++                                        </menuItem>
++                                    </items>
++                                </menu>
++                            </menuItem>
++                            <menuItem title="Reload Page" keyEquivalent="r" id="579">
++                                <connections>
++                                    <action selector="reload:" target="-1" id="582"/>
++                                </connections>
++                            </menuItem>
++                        </items>
++                    </menu>
++                </menuItem>
++                <menuItem title="Debug" id="534">
++                    <modifierMask key="keyEquivalentModifierMask"/>
++                    <menu key="submenu" title="Debug" id="535">
++                        <items>
++                            <menuItem title="Show Web Inspector" keyEquivalent="i" id="xso-9z-R4u">
++                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
++                                <connections>
++                                    <action selector="showHideWebInspector:" target="-1" id="Cmx-g7-EPb"/>
++                                </connections>
++                            </menuItem>
++                        </items>
++                    </menu>
++                </menuItem>
++                <menuItem title="Window" id="19">
++                    <menu key="submenu" title="Window" systemMenu="window" id="24">
++                        <items>
++                            <menuItem title="Minimize" keyEquivalent="m" id="23">
++                                <connections>
++                                    <action selector="performMiniaturize:" target="-1" id="37"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem title="Zoom" id="239">
++                                <connections>
++                                    <action selector="performZoom:" target="-1" id="240"/>
++                                </connections>
++                            </menuItem>
++                            <menuItem isSeparatorItem="YES" id="92">
++                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
++                            </menuItem>
++                            <menuItem title="Bring All to Front" id="5">
++                                <connections>
++                                    <action selector="arrangeInFront:" target="-1" id="39"/>
++                                </connections>
++                            </menuItem>
++                        </items>
++                    </menu>
++                </menuItem>
++            </items>
++            <point key="canvasLocation" x="139" y="-50"/>
++        </menu>
++        <customObject id="494" customClass="BrowserAppDelegate">
++            <connections>
++                <outlet property="_newWebKit2WindowItem" destination="571" id="1Gv-mK-aul"/>
++            </connections>
++        </customObject>
++        <customObject id="420" customClass="NSFontManager"/>
++    </objects>
++</document>
+diff --git a/Tools/Playwright/mac/Playwright_Prefix.pch b/Tools/Playwright/mac/Playwright_Prefix.pch
+new file mode 100644
+index 0000000000000000000000000000000000000000..ab6e9bce9a41291bb35664c2c63751c3413601f2
+--- /dev/null
++++ b/Tools/Playwright/mac/Playwright_Prefix.pch
+@@ -0,0 +1,37 @@
++/*
++ * Copyright (C) 2010 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifdef __OBJC__
++#import <Cocoa/Cocoa.h>
++#import <WebKit/WebKit.h>
++#endif
++
++#define ENABLE_LOGGING 0
++
++#if ENABLE_LOGGING
++#define LOG NSLog
++#else
++#define LOG(...) ((void)0)
++#endif
+diff --git a/Tools/Playwright/mac/main.m b/Tools/Playwright/mac/main.m
+new file mode 100644
+index 0000000000000000000000000000000000000000..ba2ca12482c0ab809998131f693c876019c595f1
+--- /dev/null
++++ b/Tools/Playwright/mac/main.m
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (C) 2010 Apple Inc. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
++ * THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#import <Cocoa/Cocoa.h>
++
++int main(int argc, char *argv[])
++{
++    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"WebKitLinkedOnOrAfterEverything"];
++
++    return NSApplicationMain(argc,  (const char **) argv);
++}
+diff --git a/Tools/Scripts/build-webkit b/Tools/Scripts/build-webkit
+index d96a01bcdab9e454f3dfe3b94ebd0389cd88bd1b..637e06b59f2c3d0c1f3fc53017bbe54a30bc78f1 100755
+--- a/Tools/Scripts/build-webkit
++++ b/Tools/Scripts/build-webkit
+@@ -245,7 +245,7 @@ if (isAppleCocoaWebKit()) {
+     push @projects, ("Source/WebKit");
+ 
+     if (!isIOSWebKit()) {
+-        push @projects, ("Tools/MiniBrowser");
++        push @projects, ("Tools/Playwright");
+ 
+         # WebInspectorUI must come after JavaScriptCore and WebCore but before WebKit and WebKit2
+         my $webKitIndex = first { $projects[$_] eq "Source/WebKitLegacy" } 0..$#projects;
 diff --git a/Tools/WebKitTestRunner/TestController.cpp b/Tools/WebKitTestRunner/TestController.cpp
 index fcecdd6a6ed518b02ded768d5d6601f418b74c9a..fa6e079bbe26d471c3205bc356871da32b4a6e90 100644
 --- a/Tools/WebKitTestRunner/TestController.cpp
