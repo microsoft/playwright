@@ -6,6 +6,13 @@
 - YOU WERE INVITED, THIS REPO IS TO GO PUBLIC Jan 21st -
 - ==================================================== -
 ```
+Join [slack](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg) to tell us what you think!
+```diff
+- ==================================================== -
+-                    THANK YOU!                        -
+- ==================================================== -
+```
+
 
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
