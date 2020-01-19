@@ -7,7 +7,7 @@
 
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
-Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. Playwright is focused on enabling **cross-browser** and **cross-operating-system** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation. Playwright runs headless versions of these browsers by default, but can be configured to run the full versions.
+Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation. Playwright runs headless versions of these browsers by default, but can be configured to run the full versions.
 
 ### Installation
 
@@ -124,19 +124,33 @@ Check out our [contributing guide](https://github.com/microsoft/playwright/blob/
 
 We are the same team that built Puppeteer. Puppeteer proved that there is a lot of interest in the new generation of ever-green, capable and reliable automation drivers. With Playwright, we'd like to take it one step further and offer the same functionality for **all** the popular rendering engines. We'd like to see Playwright vendor-neutral and shared goverened.
 
-With Playwright, we are making the APIs more testing friendly as well. We are taking the lessons learned from Puppeteer and incorporate them into the API, for example, user agent / device emulation is set up consistently on the `BrowserContext` level to enable multi-page scenarios, `click` now waits for the element to be available and visible by default, etc.
+With Playwright, we are making the APIs more testing-friendly as well. We are taking the lessons learned from Puppeteer and incorporate them into the API, for example, user agent / device emulation is set up consistently on the `BrowserContext` level to enable multi-page scenarios, `click` waits for the element to be available and visible by default, there is a way to wait for network and other events, etc.
 
-Playwright also aims at being even more cloud-friendly. Rather than a single page, `BrowserContext` abstraction is now central to the library operation. `BrowserContext`s are isolated, they can be either created locally or provided by the server-side factories.
+Playwright also aims at being cloud-native. Rather than a single page, `BrowserContext` abstraction is now central to the library operation. `BrowserContext`s are isolated, they can be either created locally or provided as a service.
 
-All the changes and improvements above would require breaking changes to the Puppeteer API, so we chose to start with a clean slate instead. Due to the similarity of the concepts and the APIs, migration between the two is still a mechanical task.
+All the changes and improvements above would require breaking changes to the Puppeteer API, so we chose to start with a clean slate instead. Due to the similarity of the concepts and the APIs, migration between the two should be a mechanical task.
 
 **Q: What about the [WebDriver](https://www.w3.org/TR/webdriver/)?**
 
-WIP
+We recognize WebDriver as a universal standard for the web automation and testing. At the same time we were excited to see Puppeteer affect the WebDriver agenda, steer it towards the bi-directional communication channel, etc. We hope that Playwright can take it further and pioneer support for numerous PWA features across the browers as they emerge:
 
 - [*capabilities*] With Playwright, we aim at providing a more capable driver, including support for [mobile viewports](https://developer.mozilla.org/en-US/docs/Mozilla/Mobile/Viewport_meta_tag), [touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events/Using_Touch_Events), [web](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) & [service workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API), [geolocation](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API), [csp](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP), [cookie policies](https://web.dev/samesite-cookies-explained/), [permissions](https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API), [accessibility](https://developer.mozilla.org/en-US/docs/Web/Accessibility), etc.
 
-- [*reliability*] Playwright's communication with all the browsers is event-driven, based on the [full-duplex](https://en.wikipedia.org/wiki/Duplex_(telecommunications)) transport, which eliminates the need for polling. (Polling is one of the greatest sources of test flakiness).
+- [*ergonomics*] We continue the trend set with Puppeteer and provide ergonomically-sound APIs for frames, workers, handles, etc.
+
+- [*reliability*] With Playwright, we encourage `setTimeout`-free automation. The notion of the wall time is incompatible with the operation in the cloud / CI. It is a major source of flakiness and pain and we would like to provide an alternative. With that, Playwright aims at providing sufficient amount of events based on the browser instrumentation to make it possible.
+
+**Q: What browser versions does Playwright use?**
+
+- *Chromium*: Playwright uses upstream versions of Chromium. When we need changes in the browser, they go into the browser directly and then we roll our dependency to that version of Chromium. As of today, we update Chromium as needed or at least once a month. We plan to synchronize our npm release cycle with the Chromium stable channel cadence.
+
+- *WebKit*: Playwright makes a number of modifications to `WebCore` and `WebKit2` in order to extend WebKit's remote debugging capabilities and support the full set of Playwright APIs. It also modifies the `Minibrowser` embedders to allow headless operation and headful debugging on all platforms. We use WebKit2 in a modern process isolation mode, enable mobile viewport, touch and geolocation on non-iOS platforms, etc. etc.
+
+  We'd like to switch to the upstream-first mode of operation, so we will be offering all of the WebKit patches for review upstream. Until then, they can be found in the `browser_patches/webkit` folder.
+
+- *Firefox*: Playwright makes a number of modifications to Firefox as well. Those are adding support for content script debugging, workers, CSP, emulation, network interception, etc. etc.
+
+  Similarly to WebKit, we'd like to offer all of those for review upstream, for now they can be found in the `browser_patches/firefox` folder.
 
 **Q: Is Playwright ready?**
 
