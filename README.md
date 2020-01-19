@@ -1,4 +1,9 @@
 # Playwright
+```diff
+- ==================================================== -
+- YOU WERE INVITED, THIS REPO IS TO GO PUBLIC Jan 21st -
+- ==================================================== -
+```
 
 [![npm version](https://badge.fury.io/js/playwright.svg)](https://www.npmjs.com/package/playwright)
 <img src="./docs/cr-version.svg">
