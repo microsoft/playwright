@@ -3,8 +3,8 @@
 
 ```diff
 - ============================ -
-- YOU WERE INVITED, THIS REPO  -
--   WILL GO PUBLIC JAN 21ST    -
+-  WILL GO PUBLIC ON / AFTER   -
+-           JAN 21ST           -
 - ============================ -
 ```
 Join [slack](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg) to tell us what you think!
