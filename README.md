@@ -1,14 +1,10 @@
-# Playwright
+# Playwright &middot; [![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/microsoft/playwright/blob/master/CONTRIBUTING.md) [![GitHub license](https://img.shields.io/badge/license-Apache2-blue.svg)](https://github.com/microsoft/playwright/blob/master/LICENSE) [![Chromium version](https://img.shields.io/badge/chromium-81.0.4032-orange.svg)](https://www.chromium.org/Home) [![Firefox version](https://img.shields.io/badge/firefox-73.0b3-orange.svg)](https://www.mozilla.org/en-US/firefox/new/) [![WebKit version](https://img.shields.io/badge/webkit-r254081-orange.svg)](https://webkit.org/)
+
 ```diff
 - ==================================================== -
 - YOU WERE INVITED, THIS REPO IS TO GO PUBLIC Jan 21st -
 - ==================================================== -
 ```
-
-[![npm version](https://badge.fury.io/js/playwright.svg)](https://www.npmjs.com/package/playwright)
-<img src="./docs/cr-version.svg">
-<img src="./docs/wk-version.svg">
-<img src="./docs/ff-version.svg">
 
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
