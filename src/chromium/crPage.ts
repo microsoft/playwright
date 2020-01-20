@@ -241,12 +241,7 @@ export class CRPage implements PageDelegate {
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Events.Page.PageError, exceptionToError(exception.exceptionDetails)));
-    session.on('Fetch.requestPaused', event => this._networkManager._onRequestPaused(event));
-    session.on('Fetch.authRequired', event => this._networkManager._onAuthRequired(event));
-    session.on('Network.requestWillBeSent', event => this._networkManager._onRequestWillBeSent(event));
-    session.on('Network.responseReceived', event => this._networkManager._onResponseReceived(event));
-    session.on('Network.loadingFinished', event => this._networkManager._onLoadingFinished(event));
-    session.on('Network.loadingFailed', event => this._networkManager._onLoadingFailed(event));
+    this._networkManager.instrumentNetworkEvents(session);
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {

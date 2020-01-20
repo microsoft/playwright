@@ -63,7 +63,7 @@ class TestServer {
     else
       this._server = http.createServer(this._onRequest.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
-    this._wsServer = new WebSocketServer({server: this._server});
+    this._wsServer = new WebSocketServer({server: this._server, path: '/ws'});
     this._wsServer.on('connection', this._onWebSocketConnection.bind(this));
     this._server.listen(port);
     this._dirPath = dirPath;
@@ -264,8 +264,8 @@ class TestServer {
     });
   }
 
-  _onWebSocketConnection(connection) {
-    connection.send('opened');
+  _onWebSocketConnection(ws) {
+    ws.send('incoming');
   }
 }
 

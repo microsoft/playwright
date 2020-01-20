@@ -113,5 +113,25 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(response.request()).toBe(request);
       expect(response.ok()).toBe(true);
     });
+    it.skip(FFOX)('should report web socket activity', async function({page, server}) {
+      const [worker] = await Promise.all([
+        page.waitForEvent('workercreated'),
+        page.goto(server.PREFIX + '/worker/worker.html'),
+      ]);
+      const log = [];
+      let socketClosed;
+      const socketClosePromise = new Promise(f => socketClosed = f);
+      page.on('websocket', ws => {
+        ws.on('open', () => log.push(`open<${ws.url()}>`));
+        ws.on('close', () => { log.push('close'); socketClosed(); });
+      });
+      worker.evaluate((port) => {
+        const ws = new WebSocket('ws://localhost:' + port + '/ws');
+        ws.addEventListener('open', () => ws.close());
+      }, server.PORT);
+
+      await socketClosePromise;
+      expect(log.join(':')).toBe(`open<ws://localhost:${server.PORT}/ws>:close`);
+    });
   });
 };
