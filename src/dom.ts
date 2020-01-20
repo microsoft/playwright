@@ -472,10 +472,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  $x(expression: string): Promise<ElementHandle<Element>[]> {
-    return this._context._$$('xpath=' + expression, this);
-  }
-
   visibleRatio(): Promise<number> {
     return this._evaluateInUtility(async (node: Node) => {
       if (node.nodeType !== Node.ELEMENT_NODE)

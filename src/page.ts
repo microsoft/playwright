@@ -221,10 +221,6 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().$$(selector);
   }
 
-  async $x(expression: string): Promise<dom.ElementHandle<Element>[]> {
-    return this.mainFrame().$x(expression);
-  }
-
   async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<dom.ElementHandle> {
     return this.mainFrame().addScriptTag(options);
   }

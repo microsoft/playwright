@@ -43,7 +43,6 @@
   * [elementHandle.$$(selector)](#elementhandleselector-1)
   * [elementHandle.$$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args)
   * [elementHandle.$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args-1)
-  * [elementHandle.$x(expression)](#elementhandlexexpression)
   * [elementHandle.boundingBox()](#elementhandleboundingbox)
   * [elementHandle.click([options])](#elementhandleclickoptions)
   * [elementHandle.contentFrame()](#elementhandlecontentframe)
@@ -67,7 +66,6 @@
   * [frame.$$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args)
   * [frame.$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args-1)
   * [frame.$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args)
-  * [frame.$x(expression)](#framexexpression)
   * [frame.addScriptTag(options)](#frameaddscripttagoptions)
   * [frame.addStyleTag(options)](#frameaddstyletagoptions)
   * [frame.childFrames()](#framechildframes)
@@ -138,7 +136,6 @@
   * [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
   * [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
   * [page.$wait(selector, pageFunction[, options[, ...args]])](#pagewaitselector-pagefunction-options-args)
-  * [page.$x(expression)](#pagexexpression)
   * [page.accessibility](#pageaccessibility)
   * [page.addScriptTag(options)](#pageaddscripttagoptions)
   * [page.addStyleTag(options)](#pageaddstyletagoptions)
@@ -714,12 +711,6 @@ expect(await tweetHandle.$eval('.like', node => node.innerText)).toBe('100');
 expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
 ```
 
-#### elementHandle.$x(expression)
-- `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
-- returns: <[Promise]<[Array]<[ElementHandle]>>>
-
-The method evaluates the XPath expression relative to the elementHandle. If there are no such elements, the method will resolve to an empty array.
-
 #### elementHandle.boundingBox()
 - returns: <[Promise]<?[Object]>>
   - x <[number]> the x coordinate of the element in pixels.
@@ -999,12 +990,6 @@ This method runs `document.querySelector` within the frame and passes it as the 
 
 If `pageFunction` returns a [Promise], then `page.$wait` would wait for the promise to resolve and return its value. The function
 is being called on the element periodically until either timeout expires or the function returns the truthy value.
-
-#### frame.$x(expression)
-- `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
-- returns: <[Promise]<[Array]<[ElementHandle]>>>
-
-The method evaluates the XPath expression.
 
 #### frame.addScriptTag(options)
 - `options` <[Object]>
@@ -1916,14 +1901,6 @@ If `pageFunction` returns a [Promise], then `page.$wait` would wait for the prom
 is being called on the element periodically until either timeout expires or the function returns the truthy value.
 
 Shortcut for [page.mainFrame().$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args).
-
-#### page.$x(expression)
-- `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
-- returns: <[Promise]<[Array]<[ElementHandle]>>>
-
-The method evaluates the XPath expression.
-
-Shortcut for [page.mainFrame().$x(expression)](#framexexpression)
 
 #### page.accessibility
 - returns: <[Accessibility]>
