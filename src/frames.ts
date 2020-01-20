@@ -421,11 +421,6 @@ export class Frame {
     return handle;
   }
 
-  async $x(expression: string): Promise<dom.ElementHandle<Element>[]> {
-    const context = await this._mainContext();
-    return context._$$('xpath=' + expression);
-  }
-
   $eval: types.$Eval = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const elementHandle = await context._$(selector);
