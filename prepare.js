@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
- // This file is only run when someone clones the github repo for development
+ // This file is only run when someone installs via the github repo
 
 try {
   console.log('Building playwright...');
@@ -56,6 +56,7 @@ async function downloadAndCleanup(browser) {
   // Remove previous revisions.
   const playwright = require('.')[browser];
   const fetcher = playwright._createBrowserFetcher();
+  const localRevisions = await fetcher.localRevisions();
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);
 

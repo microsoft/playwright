@@ -19,7 +19,7 @@
     "debug-unit": "node --inspect-brk test/test.js",
     "test-doclint": "node utils/doclint/check_public_api/test/test.js && node utils/doclint/preprocessor/test.js",
     "test": "npm run lint --silent && npm run coverage && npm run test-doclint && node utils/testrunner/test/test.js",
-    "install": "node -e \"try { require('./install-development.js'); } catch(e) { }\"",
+    "prepare": "node prepare.js",
     "lint": "([ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src) && npm run tsc && npm run doc",
     "doc": "node utils/doclint/cli.js",
     "coverage": "cross-env COVERAGE=true npm run unit",
