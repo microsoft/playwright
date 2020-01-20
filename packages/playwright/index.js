@@ -13,9 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const {downloadBrowser} = require('playwright-core/download-browser');
-(async function() {
-  await downloadBrowser('chromium');
-  await downloadBrowser('firefox');
-  await downloadBrowser('webkit');
-})();
+module.exports = require('playwright-core');

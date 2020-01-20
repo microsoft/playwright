@@ -1,2 +1,2 @@
 # playwright
-This is a placeholder package for [Playwright](http://github.com/microsoft/playwright). Install one of `playwright-chromium`, `playwright-webkit`, or `playwright-firefox` to use playwright.
+This packagage contains the [Chromium](https://www.chromium.org/), [Firefox](https://www.mozilla.org/firefox/) and [WebKit](https://www.webkit.org/) flavors of [Playwright](http://github.com/microsoft/playwright).

@@ -16,11 +16,8 @@
 const fs = require('fs');
 const path = require('path');
 const {version} = require('../package.json');
-updatePackage('playwright', packageJSON => {
-  packageJSON.version = version;
-});
 
-for (const packageName of ['playwright-chromium', 'playwright-firefox', 'playwright-webkit']) {
+for (const packageName of ['playwright-chromium', 'playwright-firefox', 'playwright-webkit', 'playwright']) {
   updatePackage(packageName, packageJSON => {
     packageJSON.version = version;
     packageJSON.dependencies['playwright-core'] = `=${version}`;

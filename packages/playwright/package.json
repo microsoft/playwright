@@ -10,5 +10,8 @@
   "author": {
     "name": "Microsoft Corporation"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "playwright-core": "=0.9.13-post"
+  }
 }
