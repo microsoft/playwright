@@ -219,7 +219,7 @@ export class FFPlaywright implements Playwright {
 
     const defaultOptions = {
       path: path.join(this._projectRoot, '.local-firefox'),
-      host: 'https://playwright.blob.core.windows.net',
+      host: 'https://playwright2.blob.core.windows.net',
       platform: (() => {
         const platform = os.platform();
         if (platform === 'darwin')
