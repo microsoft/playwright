@@ -2107,7 +2107,7 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index ca8f169d18a697a4dea405c933398e67feef01c6..e1dfdf06bccaf40ca52622cd1b2dd670e3d80ca8 100644
+index ca8f169d18a697a4dea405c933398e67feef01c6..56e427e23f9e7bb878a18bcf2e3821a5302aaad4 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -56,6 +56,7 @@
@@ -2118,7 +2118,7 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..e1dfdf06bccaf40ca52622cd1b2dd670
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
-@@ -99,6 +100,11 @@ using namespace Inspector;
+@@ -99,6 +100,23 @@ using namespace Inspector;
  
  namespace {
  
@@ -2127,10 +2127,22 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..e1dfdf06bccaf40ca52622cd1b2dd670
 +    return "InspectorPageAgent.navigate referrer:"_s;
 +}
 +
++Ref<Inspector::Protocol::Network::WebSocketFrame> buildWebSocketMessage(const WebSocketFrame& frame)
++{
++    return Inspector::Protocol::Network::WebSocketFrame::create()
++        .setOpcode(frame.opCode)
++        .setMask(frame.masked)
++        .setPayloadData(frame.opCode == 1
++              ? String::fromUTF8WithLatin1Fallback(frame.payload, frame.payloadLength)
++              : base64Encode(frame.payload, frame.payloadLength))
++        .setPayloadLength(frame.payloadLength)
++        .release();
++}
++
  class InspectorThreadableLoaderClient final : public ThreadableLoaderClient {
      WTF_MAKE_NONCOPYABLE(InspectorThreadableLoaderClient);
  public:
-@@ -437,6 +443,13 @@ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLo
+@@ -437,6 +455,13 @@ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLo
      for (auto& entry : m_extraRequestHeaders)
          request.setHTTPHeaderField(entry.key, entry.value);
  
@@ -2144,6 +2156,33 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..e1dfdf06bccaf40ca52622cd1b2dd670
      auto protocolResourceType = InspectorPageAgent::resourceTypeJSON(type);
  
      Document* document = loader && loader->frame() ? loader->frame()->document() : nullptr;
+@@ -769,24 +794,12 @@ void InspectorNetworkAgent::didCloseWebSocket(unsigned long identifier)
+ 
+ void InspectorNetworkAgent::didReceiveWebSocketFrame(unsigned long identifier, const WebSocketFrame& frame)
+ {
+-    auto frameObject = Inspector::Protocol::Network::WebSocketFrame::create()
+-        .setOpcode(frame.opCode)
+-        .setMask(frame.masked)
+-        .setPayloadData(String::fromUTF8WithLatin1Fallback(frame.payload, frame.payloadLength))
+-        .setPayloadLength(frame.payloadLength)
+-        .release();
+-    m_frontendDispatcher->webSocketFrameReceived(IdentifiersFactory::requestId(identifier), timestamp(), WTFMove(frameObject));
++    m_frontendDispatcher->webSocketFrameReceived(IdentifiersFactory::requestId(identifier), timestamp(), buildWebSocketMessage(frame));
+ }
+ 
+ void InspectorNetworkAgent::didSendWebSocketFrame(unsigned long identifier, const WebSocketFrame& frame)
+ {
+-    auto frameObject = Inspector::Protocol::Network::WebSocketFrame::create()
+-        .setOpcode(frame.opCode)
+-        .setMask(frame.masked)
+-        .setPayloadData(String::fromUTF8WithLatin1Fallback(frame.payload, frame.payloadLength))
+-        .setPayloadLength(frame.payloadLength)
+-        .release();
+-    m_frontendDispatcher->webSocketFrameSent(IdentifiersFactory::requestId(identifier), timestamp(), WTFMove(frameObject));
++    m_frontendDispatcher->webSocketFrameSent(IdentifiersFactory::requestId(identifier), timestamp(), buildWebSocketMessage(frame));
+ }
+ 
+ void InspectorNetworkAgent::didReceiveWebSocketFrameError(unsigned long identifier, const String& errorMessage)
 @@ -838,6 +851,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
      m_resourcesData->clear();
      m_extraRequestHeaders.clear();
@@ -2238,16 +2277,14 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..e1dfdf06bccaf40ca52622cd1b2dd670
 -        errorString = "Missing pending intercept response for given requestId"_s;
 +    if (pendingInterceptResponse) {
 +        pendingInterceptResponse->respondWithOriginalResponse();
-         return;
-     }
- 
--    pendingInterceptResponse->respondWithOriginalResponse();
++        return;
++    }
++
 +    errorString = "Missing pending intercept response for given requestId"_s;
- }
- 
--void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
++}
++
 +void InspectorNetworkAgent::interceptAsError(ErrorString& errorString, const String& requestId, const String& reason)
- {
++{
 +    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
 +    if (pendingRequest) {
 +        ResourceLoader* loader = pendingRequest->m_loader.get();
@@ -2264,14 +2301,16 @@ index ca8f169d18a697a4dea405c933398e67feef01c6..e1dfdf06bccaf40ca52622cd1b2dd670
 +            error = ResourceError(errorDomainWebKitInternal, 0, loader->url(), "Request timed out"_s, ResourceError::Type::Timeout);
 +        loader->didFail(error);
 +        pendingRequest->m_callback(true);
-+        return;
-+    }
-+
+         return;
+     }
+ 
+-    pendingInterceptResponse->respondWithOriginalResponse();
 +    errorString = "Missing pending intercept response for given requestId"_s;
-+}
-+
+ }
+ 
+-void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
 +void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers)
-+{
+ {
 +    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
 +    if (pendingRequest && status && statusText && mimeType && headers) {
 +        RefPtr<ResourceLoader> loader = pendingRequest->m_loader.get();
