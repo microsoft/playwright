@@ -83,5 +83,35 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(page.workers().length).toBe(0);
     });
+    it('should report network activity', async function({page, server}) {
+      const [worker] = await Promise.all([
+        page.waitForEvent('workercreated'),
+        page.goto(server.PREFIX + '/worker/worker.html'),
+      ]);
+      const url = server.PREFIX + '/one-style.css';
+      const requestPromise = page.waitForRequest(url);
+      const responsePromise = page.waitForResponse(url);
+      await worker.evaluate(url => fetch(url).then(response => response.text()).then(console.log), url);
+      const request = await requestPromise;
+      const response = await responsePromise;
+      expect(request.url()).toBe(url);
+      expect(response.request()).toBe(request);
+      expect(response.ok()).toBe(true);
+    });
+    it.skip(CHROMIUM)('should report network activity on worker creation', async function({page, server}) {
+      // Chromium needs waitForDebugger enabled for this one.
+      await page.goto(server.EMPTY_PAGE);
+      const url = server.PREFIX + '/one-style.css';
+      const requestPromise = page.waitForRequest(url);
+      const responsePromise = page.waitForResponse(url);
+      await page.evaluate(url => new Worker(URL.createObjectURL(new Blob([`
+        fetch("${url}").then(response => response.text()).then(console.log);
+      `], {type: 'application/javascript'}))), url);
+      const request = await requestPromise;
+      const response = await responsePromise;
+      expect(request.url()).toBe(url);
+      expect(response.request()).toBe(request);
+      expect(response.ok()).toBe(true);
+    });
   });
 };

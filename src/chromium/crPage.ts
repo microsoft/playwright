@@ -20,10 +20,10 @@ import * as js from '../javascript';
 import * as frames from '../frames';
 import { debugError, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
-import { CRSession } from './crConnection';
+import { CRSession, CRConnection } from './crConnection';
 import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
-import { Page, Coverage } from '../page';
+import { Page, Coverage, Worker } from '../page';
 import { Protocol } from './protocol';
 import { Events } from '../events';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
@@ -33,7 +33,6 @@ import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRCoverage } from './crCoverage';
 import { CRPDF } from './crPdf';
-import { CRWorkers } from './crWorkers';
 import { CRBrowser } from './crBrowser';
 import { BrowserContext } from '../browserContext';
 import * as types from '../types';
@@ -46,7 +45,6 @@ export class CRPage implements PageDelegate {
   _client: CRSession;
   private readonly _page: Page;
   readonly _networkManager: CRNetworkManager;
-  private _workers: CRWorkers;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
   private _eventListeners: RegisteredListener[];
@@ -65,7 +63,6 @@ export class CRPage implements PageDelegate {
     this._coverage = new CRCoverage(client);
     this._page = new Page(this, browserContext);
     this._networkManager = new CRNetworkManager(client, this._page);
-    this._workers = new CRWorkers(client, this._page);
 
     this._eventListeners = [
       helper.addEventListener(client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
@@ -84,6 +81,8 @@ export class CRPage implements PageDelegate {
       helper.addEventListener(client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       helper.addEventListener(client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
       helper.addEventListener(client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
+      helper.addEventListener(client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
+      helper.addEventListener(client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
     ];
   }
 
@@ -221,6 +220,37 @@ export class CRPage implements PageDelegate {
   _onExecutionContextsCleared() {
     for (const contextId of Array.from(this._contextIdToContext.keys()))
       this._onExecutionContextDestroyed(contextId);
+  }
+
+  _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
+    if (event.targetInfo.type !== 'worker')
+      return;
+    const url = event.targetInfo.url;
+    const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
+    const worker = new Worker(url);
+    this._page._addWorker(event.sessionId, worker);
+    session.once('Runtime.executionContextCreated', async event => {
+      worker._createExecutionContext(new CRExecutionContext(session, event.context));
+    });
+    Promise.all([
+      session.send('Runtime.enable'),
+      session.send('Network.enable'),
+    ]).catch(debugError);  // This might fail if the target is closed before we initialize.
+    session.on('Runtime.consoleAPICalled', event => {
+      const args = event.args.map(o => worker._existingExecutionContext!._createHandle(o));
+      this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
+    });
+    session.on('Runtime.exceptionThrown', exception => this._page.emit(Events.Page.PageError, exceptionToError(exception.exceptionDetails)));
+    session.on('Fetch.requestPaused', event => this._networkManager._onRequestPaused(event));
+    session.on('Fetch.authRequired', event => this._networkManager._onAuthRequired(event));
+    session.on('Network.requestWillBeSent', event => this._networkManager._onRequestWillBeSent(event));
+    session.on('Network.responseReceived', event => this._networkManager._onResponseReceived(event));
+    session.on('Network.loadingFinished', event => this._networkManager._onLoadingFinished(event));
+    session.on('Network.loadingFailed', event => this._networkManager._onLoadingFailed(event));
+  }
+
+  _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
+    this._page._removeWorker(event.sessionId);
   }
 
   async _onConsoleAPI(event: Protocol.Runtime.consoleAPICalledPayload) {
