@@ -178,7 +178,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       if (WEBKIT)
         expect(failedRequest.failure().errorText).toBe('Request intercepted');
       else if (FFOX)
-        expect(failedRequest.failure().errorText).toBe('NS_ERROR_FAILURE');
+        expect(failedRequest.failure().errorText).toBe('NS_ERROR_OFFLINE');
       else
         expect(failedRequest.failure().errorText).toBe('net::ERR_INTERNET_DISCONNECTED');
     });
@@ -438,7 +438,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.skip(FFOX)('interception.fulfill', function() {
+  describe('interception.fulfill', function() {
     it('should work', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => {
@@ -506,7 +506,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.skip(FFOX)('Interception.authenticate', function() {
+  describe('Page.authenticate', function() {
     it('should work', async({page, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       let response = await page.goto(server.EMPTY_PAGE);
