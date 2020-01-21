@@ -1,12 +1,11 @@
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,47 +14,8 @@
  * limitations under the License.
  */
 
- // This file is only run when someone clones the github repo for development
-
-try {
-  require('child_process').execSync('npm run build', {
-    stdio: 'ignore'
-  });
-} catch (e) {
-}
-
-(async function() {
-  let protocolGenerator;
-  try {
-    protocolGenerator = require('./utils/protocol-types-generator');
-  } catch (e) {
-    // Release mode
-  }
-  try {
-    const chromeRevision = await downloadBrowser('chromium', require('./index').chromium);
-    if (protocolGenerator)
-      await protocolGenerator.generateChromiunProtocol(chromeRevision);
-  } catch (e) {
-    console.warn(e.message);
-  }
-
-  try {
-    const firefoxRevision = await downloadBrowser('firefox', require('./index').firefox);
-    if (protocolGenerator)
-      await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
-  } catch (e) {
-    console.warn(e.message);
-  }
-  try {
-    const webkitRevision = await downloadBrowser('webkit', require('./index').webkit);
-    if (protocolGenerator)
-      await protocolGenerator.generateWebKitProtocol(webkitRevision);
-  } catch (e) {
-    console.warn(e.message);
-  }
-})();
-
-async function downloadBrowser(browser, playwright) {
+async function downloadBrowser(browser) {
+  const playwright = require('.')[browser];
   let progressBar = null;
   let lastDownloadedBytes = 0;
   function onProgress(downloadedBytes, totalBytes) {
@@ -80,12 +40,9 @@ async function downloadBrowser(browser, playwright) {
     return revisionInfo;
   await fetcher.download(revisionInfo.revision, onProgress);
   logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
-  const localRevisions = await fetcher.localRevisions();
-  // Remove previous revisions.
-  const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
-  await Promise.all([...cleanupOldVersions]);
   return revisionInfo;
 }
+
 
 function toMegabytes(bytes) {
   const mb = bytes / 1024 / 1024;
@@ -100,3 +57,4 @@ function logPolitely(toBeLogged) {
     console.log(toBeLogged);
 }
 
+module.exports = {downloadBrowser};

@@ -1,5 +1,5 @@
 {
-  "name": "playwright",
+  "name": "playwright-core",
   "version": "0.9.17-post",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
@@ -19,7 +19,7 @@
     "debug-unit": "node --inspect-brk test/test.js",
     "test-doclint": "node utils/doclint/check_public_api/test/test.js && node utils/doclint/preprocessor/test.js",
     "test": "npm run lint --silent && npm run coverage && npm run test-doclint && node utils/testrunner/test/test.js",
-    "install": "node install.js",
+    "prepare": "node prepare.js",
     "lint": "([ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src) && npm run tsc && npm run doc",
     "doc": "node utils/doclint/cli.js",
     "coverage": "cross-env COVERAGE=true npm run unit",
@@ -28,7 +28,8 @@
     "tsc": "tsc -p .",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
-    "apply-next-version": "node utils/apply_next_version.js"
+    "apply-next-version": "node utils/apply_next_version.js",
+    "version": "node utils/sync_package_versions.js"
   },
   "author": {
     "name": "Microsoft Corporation"

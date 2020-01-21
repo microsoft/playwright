@@ -10,11 +10,11 @@ lib/injected/
 !lib/**/*.d.ts
 !index.d.ts
 
-# Install
-!install.js
+# used for npm install scripts
+!download-browser.js
 
-# root for "playwright" package
+# root for "playwright-core" package
 !index.js
 
-# root for "playwright/web"
+# root for "playwright-core/web"
 !web.js
