@@ -343,5 +343,116 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(error.message).toBe('Expected value of header "foo" to be String, but "number" is found.');
     });
   });
-};
 
+  describe.skip(FFOX)('WebSocket', function() {
+    it('should work', async({page, server}) => {
+      const value = await page.evaluate((port) => {
+        let cb;
+        const result = new Promise(f => cb = f);
+        const ws = new WebSocket('ws://localhost:' + port + '/ws');
+        ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+        return result;
+      }, server.PORT);
+      expect(value).toBe('incoming');
+    });
+    it('should emit open/close events', async({page, server}) => {
+      let socketClosed;
+      const socketClosePromise = new Promise(f => socketClosed = f);
+      const log = [];
+      page.on('websocket', ws => {
+        ws.on('open', () => log.push(`open<${ws.url()}>`));
+        ws.on('close', () => { log.push('close'); socketClosed(); });
+      });
+      page.evaluate((port) => {
+        const ws = new WebSocket('ws://localhost:' + port + '/ws');
+        ws.addEventListener('open', () => ws.close());
+      }, server.PORT);
+      await socketClosePromise;
+      expect(log.join(':')).toBe(`open<ws://localhost:${server.PORT}/ws>:close`);
+    });
+    it('should expose status', async({page, server}) => {
+      let callback;
+      const result = new Promise(f => callback = f);
+      page.on('websocket', ws => ws.on('open', () => callback(ws)));
+      page.evaluate((port) => {
+        const ws = new WebSocket('ws://localhost:' + port + '/ws');
+        ws.addEventListener('open', () => ws.close());
+      }, server.PORT);
+      const ws = await result;
+      expect(ws.status()).toBe(101);
+      expect(ws.statusText()).toBe('Switching Protocols');
+    });
+    it('should emit error', async({page, server}) => {
+      let callback;
+      const result = new Promise(f => callback = f);
+      page.on('websocket', ws => ws.on('error', callback));
+      page.evaluate((port) => {
+        new WebSocket('ws://localhost:' + port + '/bogus-ws');
+      }, server.PORT);
+      const message = await result;
+      expect(message).toContain('Unexpected response code: 400');
+    });
+    it('should emit frame events', async({page, server}) => {
+      let socketClosed;
+      const socketClosePromise = new Promise(f => socketClosed = f);
+      const log = [];
+      page.on('websocket', ws => {
+        ws.on('open', () => log.push('open'));
+        ws.on('messageSent', d => log.push('sent<' + d + '>'));
+        ws.on('messageReceived', d => log.push('received<' + d + '>'));
+        ws.on('close', () => { log.push('close'); socketClosed(); });
+      });
+      page.evaluate((port) => {
+        const ws = new WebSocket('ws://localhost:' + port + '/ws');
+        ws.addEventListener('open', () => ws.send('outgoing'));
+        ws.addEventListener('message', () => { ws.close(); });
+      }, server.PORT);
+      await socketClosePromise;
+      expect(log.join(':')).toBe('open:sent<outgoing>:received<incoming>:close');
+    });
+    it('should emit binary frame events', async({page, server}) => {
+      let doneCallback;
+      const donePromise = new Promise(f => doneCallback = f);
+      const sent = [];
+      page.on('websocket', ws => {
+        ws.on('close', doneCallback);
+        ws.on('messageSent', d => sent.push(d));
+      });
+      page.evaluate((port) => {
+        const ws = new WebSocket('ws://localhost:' + port + '/ws');
+        ws.addEventListener('open', () => {
+          const binary = new Uint8Array(5);
+          for (let i = 0; i < 5; ++i)
+            binary[i] = i;
+          ws.send('text');
+          ws.send(binary);
+          ws.close();
+        });
+      }, server.PORT);
+      await donePromise;
+      expect(sent[0]).toBe('text');
+      for (let i = 0; i < 5; ++i)
+        expect(sent[1][i]).toBe(i);
+    });
+    it('should report headers', async({page, server}) => {
+      let socketClosed;
+      let requestHeaders;
+      let responseHeaders;
+      const socketClosePromise = new Promise(f => socketClosed = f);
+      page.on('websocket', ws => {
+        requestHeaders = ws.requestHeaders();
+        ws.on('open', () => {
+          responseHeaders = ws.responseHeaders();
+        });
+        ws.on('close', socketClosed);
+      });
+      page.evaluate((port) => {
+        const ws = new WebSocket('ws://localhost:' + port + '/ws');
+        ws.addEventListener('open', () => ws.close());
+      }, server.PORT);
+      await socketClosePromise;
+      expect(requestHeaders['connection']).toBe('Upgrade');
+      expect(responseHeaders['upgrade']).toBe('websocket');
+    });
+  });
+};
