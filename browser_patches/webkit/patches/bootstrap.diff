@@ -65,27 +65,44 @@ index dece6ac51e3a85b1e094e405effc6203887ddfd4..9bf7519d894eceb06b40d754c4fb7940
                  return nullptr;
              inspectorObject->setValue(name.string(), WTFMove(inspectorValue));
 diff --git a/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp b/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp
-index 95cd87b01b15cb8667e57bc5bb51a71f06bc3760..1a32831a9f242430c18a7adb919b9cc49677d2e6 100644
+index 95cd87b01b15cb8667e57bc5bb51a71f06bc3760..0481fa93227f297be9d9cf000c5a72235956a390 100644
 --- a/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp
 +++ b/Source/JavaScriptCore/inspector/IdentifiersFactory.cpp
-@@ -27,6 +27,8 @@
- #include "config.h"
- #include "IdentifiersFactory.h"
- 
-+#include <wtf/ProcessID.h>
-+
+@@ -30,14 +30,21 @@
  namespace Inspector {
  
  namespace {
-@@ -35,7 +37,7 @@ static long s_lastUsedIdentifier = 0;
++static uint64_t s_processID = 0;
+ static long s_lastUsedIdentifier = 0;
+ }
  
  static String addPrefixToIdentifier(const String& identifier)
  {
 -    return makeString("0.", identifier);
-+    return makeString(getCurrentProcessID(), ".", identifier);
++    return makeString(s_processID, ".", identifier);
  }
  
++void IdentifiersFactory::initializeWithProcessID(uint64_t processID) {
++    ASSERT(!s_processID);
++    s_processID = processID;
++}
++
++
  String IdentifiersFactory::createIdentifier()
+ {
+     return addPrefixToIdentifier(String::number(++s_lastUsedIdentifier));
+diff --git a/Source/JavaScriptCore/inspector/IdentifiersFactory.h b/Source/JavaScriptCore/inspector/IdentifiersFactory.h
+index eb25aedee4cd9ebe007e06c2515b37ee095b06f4..badf6559595c8377db1089ca3c25008e1be2c8f1 100644
+--- a/Source/JavaScriptCore/inspector/IdentifiersFactory.h
++++ b/Source/JavaScriptCore/inspector/IdentifiersFactory.h
+@@ -31,6 +31,7 @@ namespace Inspector {
+ 
+ class JS_EXPORT_PRIVATE IdentifiersFactory {
+ public:
++    static void initializeWithProcessID(uint64_t);
+     static String createIdentifier();
+     static String requestId(unsigned long identifier);
+ };
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 index 038cb646d31706905deff8935040d63c0afd00f9..2fca7b043f15a8cce3819cc827912fb719a345db 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
@@ -11159,6 +11176,27 @@ index 6cbd7fad5ff91afd858da346adbfeed6424b0b2b..176c46f186bc925fd28492d14d8d9e11
  
      void connect(Inspector::FrontendChannel::ConnectionType) override;
      void disconnect() override;
+diff --git a/Source/WebKit/WebProcess/WebProcess.cpp b/Source/WebKit/WebProcess/WebProcess.cpp
+index ca418cd702f8ecd36d211ee6ddbaa6af79f0e25f..630cb13398f6b89c53f2c7ca52904c9e4401cd89 100644
+--- a/Source/WebKit/WebProcess/WebProcess.cpp
++++ b/Source/WebKit/WebProcess/WebProcess.cpp
+@@ -77,6 +77,7 @@
+ #include "WebsiteData.h"
+ #include "WebsiteDataStoreParameters.h"
+ #include "WebsiteDataType.h"
++#include <JavaScriptCore/IdentifiersFactory.h>
+ #include <JavaScriptCore/JSLock.h>
+ #include <JavaScriptCore/MemoryStatistics.h>
+ #include <JavaScriptCore/WasmFaultSignalHandler.h>
+@@ -253,6 +254,8 @@ void WebProcess::initializeProcess(const AuxiliaryProcessInitializationParameter
+     
+     platformInitializeProcess(parameters);
+     updateCPULimit();
++
++    Inspector::IdentifiersFactory::initializeWithProcessID(parameters.processIdentifier->toUInt64());
+ }
+ 
+ void WebProcess::initializeConnection(IPC::Connection* connection)
 diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 index b2a1d085938ef3e7d2259fef166ddbcf53897f8d..9a362468b347e053a079f6f5531753d2ebae169c 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
