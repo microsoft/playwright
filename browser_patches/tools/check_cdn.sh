@@ -18,7 +18,7 @@ fi
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
-HOST="https://playwright.blob.core.windows.net/builds"
+HOST="https://playwright2.blob.core.windows.net/builds"
 
 FFOX_REVISION=$(cat ../firefox/BUILD_NUMBER)
 FFOX_ARCHIVES=(
