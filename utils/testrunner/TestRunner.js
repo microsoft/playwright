@@ -330,12 +330,22 @@ class TestRunner extends EventEmitter {
     this.xdescribe = this._addSuite.bind(this, TestMode.Skip);
     this.xdescribe.skip = () => this.xdescribe; // no-op
 
+    const duplicateTest = (amount, mode, timeout) => {
+      return (name, callback) => {
+        for (let i = 0; i < amount; ++i)
+          this._addTest(name, callback, mode, timeout);
+      }
+    }
+
     this.it = (name, callback) => void this._addTest(name, callback, TestMode.Run, this._timeout);
     this.it.skip = condition => condition ? this.xit : this.it;
+    this.it.repeat = number => duplicateTest(number, TestMode.Run, this._timeout);
     this.fit = (name, callback) => void this._addTest(name, callback, TestMode.Focus, this._timeout);
     this.fit.skip = () => this.fit; // no-op
+    this.fit.repeat = number => duplicateTest(number, TestMode.Focus, this._timeout);
     this.xit = (name, callback) => void this._addTest(name, callback, TestMode.Skip, this._timeout);
     this.xit.skip = () => this.xit; // no-op
+    this.xit.repeat = number => duplicateTest(number, TestMode.Skip, this._timeout);
 
     this._debuggerLogBreakpointLines = new Multimap();
     this.dit = (name, callback) => {
