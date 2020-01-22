@@ -30,7 +30,8 @@ import * as platform from '../platform';
 
 export type WKConnectOptions = {
   slowMo?: number,
-  transport: ConnectionTransport;
+  browserWSEndpoint?: string,
+  transport?: ConnectionTransport,
 };
 
 export class WKBrowser extends platform.EventEmitter implements Browser {
@@ -148,12 +149,14 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     pageProxy.handleProvisionalLoadFailed(event);
   }
 
-  disconnect() {
-    throw new Error('Unsupported operation');
+  async disconnect() {
+    const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
+    this._connection.close();
+    await disconnected;
   }
 
   isConnected(): boolean {
-    return true;
+    return !this._connection.isClosed();
   }
 
   async close() {
@@ -227,6 +230,11 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 }
 
 export async function createTransport(options: WKConnectOptions): Promise<ConnectionTransport> {
-  assert(!!options.transport, 'Transport must be passed to connect');
-  return SlowMoTransport.wrap(options.transport, options.slowMo);
+  assert(Number(!!options.browserWSEndpoint) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint or transport must be passed to connect');
+  let transport: ConnectionTransport | undefined;
+  if (options.transport)
+    transport = options.transport;
+  else if (options.browserWSEndpoint)
+    transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
+  return SlowMoTransport.wrap(transport!, options.slowMo);
 }

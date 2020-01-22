@@ -81,8 +81,6 @@ export class CRConnection extends platform.EventEmitter {
   }
 
   _onClose() {
-    if (this._closed)
-      return;
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
@@ -92,9 +90,9 @@ export class CRConnection extends platform.EventEmitter {
     Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
-  dispose() {
-    this._onClose();
-    this._transport.close();
+  close() {
+    if (!this._closed)
+      this._transport.close();
   }
 
   async createSession(targetInfo: Protocol.Target.TargetInfo): Promise<CRSession> {

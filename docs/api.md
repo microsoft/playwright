@@ -173,6 +173,7 @@ Closes browser and all of its pages (if any were opened). The [Browser] object i
 Returns the default browser context. The default browser context can not be closed.
 
 #### browser.disconnect()
+- returns: <[Promise]>
 
 Disconnects Playwright from the browser, but leaves the browser process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
 
@@ -3603,10 +3604,20 @@ Browser websocket endpoint which can be used as an argument to [firefoxPlaywrigh
 * extends: [Playwright]
 
 <!-- GEN:toc -->
+- [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions)
 - [webkitPlaywright.defaultArgs([options])](#webkitplaywrightdefaultargsoptions)
 - [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions)
 - [webkitPlaywright.launchServer([options])](#webkitplaywrightlaunchserveroptions)
 <!-- GEN:stop -->
+
+#### webkitPlaywright.connect(options)
+- `options` <[Object]>
+  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
+- returns: <[Promise]<[WebKitBrowser]>>
+
+This methods attaches Playwright to an existing WebKit instance.
 
 #### webkitPlaywright.defaultArgs([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
@@ -3631,6 +3642,7 @@ The default flags that WebKit will be launched with.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
 - returns: <[Promise]<[WebKitBrowser]>> Promise which resolves to browser instance.
 
 
@@ -3655,6 +3667,7 @@ const browser = await playwright.launch({
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
 - returns: <[Promise]<[WebKitBrowserServer]>> Promise which resolves to browser server instance.
 
 ### class: WebKitBrowser
@@ -3670,6 +3683,7 @@ WebKit browser instance does not expose WebKit-specific features.
 - [webKitBrowserServer.connect()](#webkitbrowserserverconnect)
 - [webKitBrowserServer.connectOptions()](#webkitbrowserserverconnectoptions)
 - [webKitBrowserServer.process()](#webkitbrowserserverprocess)
+- [webKitBrowserServer.wsEndpoint()](#webkitbrowserserverwsendpoint)
 <!-- GEN:stop -->
 
 #### webKitBrowserServer.close()
@@ -3691,6 +3705,11 @@ This options object can be passed to [webKitPlaywright.connect(options)](#webkit
 
 #### webKitBrowserServer.process()
 - returns: <?[ChildProcess]> Spawned browser server process.
+
+#### webKitBrowserServer.wsEndpoint()
+- returns: <?[string]> Browser websocket url.
+
+Browser websocket endpoint which can be used as an argument to [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions).
 
 ### Working with selectors
 

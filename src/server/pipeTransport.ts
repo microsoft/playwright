@@ -69,5 +69,7 @@ export class PipeTransport implements ConnectionTransport {
   close() {
     this._pipeWrite = null;
     helper.removeEventListeners(this._eventListeners);
+    if (this.onclose)
+      this.onclose.call(null);
   }
 }
