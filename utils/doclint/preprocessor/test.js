@@ -192,6 +192,32 @@ describe('runCommands', function() {
         ### some [link](#foobar) here
       `);
     });
+    it('should be able to create sub-table-of-contents', () => {
+      const source = new Source('doc.md', `
+        ## First
+        <!-- gen:toc -->XXX<!-- gen:stop -->
+        ### first.1
+        ### first.2
+        #### first.2.1
+        ## Second
+      `);
+      const messages = runCommands([source], '1.3.0');
+      expect(messages.length).toBe(1);
+      expect(messages[0].type).toBe('warning');
+      expect(messages[0].text).toContain('doc.md');
+      expect(source.text()).toBe(`
+        ## First
+        <!-- gen:toc -->
+- [first.1](#first1)
+- [first.2](#first2)
+  * [first.2.1](#first21)
+<!-- gen:stop -->
+        ### first.1
+        ### first.2
+        #### first.2.1
+        ## Second
+      `);
+    });
   });
   it('should work with multiple commands', function() {
     const source = new Source('doc.md', `

@@ -4,282 +4,35 @@
 
 ##### Table of Contents
 
-<!-- GEN:toc -->
+<!-- GEN:toc-top-level -->
 - [class: Playwright](#class-playwright)
-  * [playwright.devices](#playwrightdevices)
-  * [playwright.errors](#playwrighterrors)
-  * [playwright.executablePath()](#playwrightexecutablepath)
 - [class: Browser](#class-browser)
-  * [event: 'disconnected'](#event-disconnected)
-  * [browser.browserContexts()](#browserbrowsercontexts)
-  * [browser.close()](#browserclose)
-  * [browser.defaultContext()](#browserdefaultcontext)
-  * [browser.disconnect()](#browserdisconnect)
-  * [browser.isConnected()](#browserisconnected)
-  * [browser.newContext(options)](#browsernewcontextoptions)
 - [class: BrowserContext](#class-browsercontext)
-  * [browserContext.clearCookies()](#browsercontextclearcookies)
-  * [browserContext.clearPermissions()](#browsercontextclearpermissions)
-  * [browserContext.close()](#browsercontextclose)
-  * [browserContext.cookies([...urls])](#browsercontextcookiesurls)
-  * [browserContext.newPage(url)](#browsercontextnewpageurl)
-  * [browserContext.pages()](#browsercontextpages)
-  * [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
-  * [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
-  * [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 - [class: ConsoleMessage](#class-consolemessage)
-  * [consoleMessage.args()](#consolemessageargs)
-  * [consoleMessage.location()](#consolemessagelocation)
-  * [consoleMessage.text()](#consolemessagetext)
-  * [consoleMessage.type()](#consolemessagetype)
 - [class: Dialog](#class-dialog)
-  * [dialog.accept([promptText])](#dialogacceptprompttext)
-  * [dialog.defaultValue()](#dialogdefaultvalue)
-  * [dialog.dismiss()](#dialogdismiss)
-  * [dialog.message()](#dialogmessage)
-  * [dialog.type()](#dialogtype)
 - [class: ElementHandle](#class-elementhandle)
-  * [elementHandle.$(selector)](#elementhandleselector)
-  * [elementHandle.$$(selector)](#elementhandleselector-1)
-  * [elementHandle.$$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args)
-  * [elementHandle.$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args-1)
-  * [elementHandle.boundingBox()](#elementhandleboundingbox)
-  * [elementHandle.click([options])](#elementhandleclickoptions)
-  * [elementHandle.contentFrame()](#elementhandlecontentframe)
-  * [elementHandle.dblclick([options])](#elementhandledblclickoptions)
-  * [elementHandle.fill(value)](#elementhandlefillvalue)
-  * [elementHandle.focus()](#elementhandlefocus)
-  * [elementHandle.hover([options])](#elementhandlehoveroptions)
-  * [elementHandle.ownerFrame()](#elementhandleownerframe)
-  * [elementHandle.press(key[, options])](#elementhandlepresskey-options)
-  * [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
-  * [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
-  * [elementHandle.select(...values)](#elementhandleselectvalues)
-  * [elementHandle.setInputFiles(...files)](#elementhandlesetinputfilesfiles)
-  * [elementHandle.toString()](#elementhandletostring)
-  * [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
-  * [elementHandle.type(text[, options])](#elementhandletypetext-options)
-  * [elementHandle.visibleRatio()](#elementhandlevisibleratio)
 - [class: Frame](#class-frame)
-  * [frame.$(selector)](#frameselector)
-  * [frame.$$(selector)](#frameselector-1)
-  * [frame.$$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args)
-  * [frame.$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args-1)
-  * [frame.$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args)
-  * [frame.addScriptTag(options)](#frameaddscripttagoptions)
-  * [frame.addStyleTag(options)](#frameaddstyletagoptions)
-  * [frame.childFrames()](#framechildframes)
-  * [frame.click(selector[, options])](#frameclickselector-options)
-  * [frame.content()](#framecontent)
-  * [frame.dblclick(selector[, options])](#framedblclickselector-options)
-  * [frame.evaluate(pageFunction[, ...args])](#frameevaluatepagefunction-args)
-  * [frame.evaluateHandle(pageFunction[, ...args])](#frameevaluatehandlepagefunction-args)
-  * [frame.fill(selector, value, options)](#framefillselector-value-options)
-  * [frame.focus(selector, options)](#framefocusselector-options)
-  * [frame.goto(url[, options])](#framegotourl-options)
-  * [frame.hover(selector[, options])](#framehoverselector-options)
-  * [frame.isDetached()](#frameisdetached)
-  * [frame.name()](#framename)
-  * [frame.parentFrame()](#frameparentframe)
-  * [frame.select(selector, value, options)](#frameselectselector-value-options)
-  * [frame.setContent(html[, options])](#framesetcontenthtml-options)
-  * [frame.title()](#frametitle)
-  * [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
-  * [frame.type(selector, text[, options])](#frametypeselector-text-options)
-  * [frame.url()](#frameurl)
-  * [frame.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args)
-  * [frame.waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args)
-  * [frame.waitForLoadState([options])](#framewaitforloadstateoptions)
-  * [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
-  * [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
 - [class: JSHandle](#class-jshandle)
-  * [jsHandle.asElement()](#jshandleaselement)
-  * [jsHandle.dispose()](#jshandledispose)
-  * [jsHandle.evaluate(pageFunction[, ...args])](#jshandleevaluatepagefunction-args)
-  * [jsHandle.evaluateHandle(pageFunction[, ...args])](#jshandleevaluatehandlepagefunction-args)
-  * [jsHandle.getProperties()](#jshandlegetproperties)
-  * [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
-  * [jsHandle.jsonValue()](#jshandlejsonvalue)
 - [class: Keyboard](#class-keyboard)
-  * [keyboard.down(key[, options])](#keyboarddownkey-options)
-  * [keyboard.press(key[, options])](#keyboardpresskey-options)
-  * [keyboard.sendCharacters(text)](#keyboardsendcharacterstext)
-  * [keyboard.type(text[, options])](#keyboardtypetext-options)
-  * [keyboard.up(key)](#keyboardupkey)
 - [class: Mouse](#class-mouse)
-  * [mouse.click(x, y[, options])](#mouseclickx-y-options)
-  * [mouse.dblclick(x, y[, options])](#mousedblclickx-y-options)
-  * [mouse.down([options])](#mousedownoptions)
-  * [mouse.move(x, y[, options])](#mousemovex-y-options)
-  * [mouse.tripleclick(x, y[, options])](#mousetripleclickx-y-options)
-  * [mouse.up([options])](#mouseupoptions)
 - [class: Page](#class-page)
-  * [event: 'close'](#event-close)
-  * [event: 'console'](#event-console)
-  * [event: 'dialog'](#event-dialog)
-  * [event: 'domcontentloaded'](#event-domcontentloaded)
-  * [event: 'filechooser'](#event-filechooser)
-  * [event: 'frameattached'](#event-frameattached)
-  * [event: 'framedetached'](#event-framedetached)
-  * [event: 'framenavigated'](#event-framenavigated)
-  * [event: 'load'](#event-load)
-  * [event: 'pageerror'](#event-pageerror)
-  * [event: 'popup'](#event-popup)
-  * [event: 'request'](#event-request)
-  * [event: 'requestfailed'](#event-requestfailed)
-  * [event: 'requestfinished'](#event-requestfinished)
-  * [event: 'response'](#event-response)
-  * [event: 'workercreated'](#event-workercreated)
-  * [event: 'workerdestroyed'](#event-workerdestroyed)
-  * [page.$(selector)](#pageselector)
-  * [page.$$(selector)](#pageselector-1)
-  * [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
-  * [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
-  * [page.$wait(selector, pageFunction[, options[, ...args]])](#pagewaitselector-pagefunction-options-args)
-  * [page.accessibility](#pageaccessibility)
-  * [page.addScriptTag(options)](#pageaddscripttagoptions)
-  * [page.addStyleTag(options)](#pageaddstyletagoptions)
-  * [page.authenticate(credentials)](#pageauthenticatecredentials)
-  * [page.browserContext()](#pagebrowsercontext)
-  * [page.click(selector[, options])](#pageclickselector-options)
-  * [page.close([options])](#pagecloseoptions)
-  * [page.content()](#pagecontent)
-  * [page.coverage](#pagecoverage)
-  * [page.dblclick(selector[, options])](#pagedblclickselector-options)
-  * [page.emulateMedia(options)](#pageemulatemediaoptions)
-  * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
-  * [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
-  * [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
-  * [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
-  * [page.fill(selector, value, options)](#pagefillselector-value-options)
-  * [page.focus(selector, options)](#pagefocusselector-options)
-  * [page.frames()](#pageframes)
-  * [page.goBack([options])](#pagegobackoptions)
-  * [page.goForward([options])](#pagegoforwardoptions)
-  * [page.goto(url[, options])](#pagegotourl-options)
-  * [page.hover(selector[, options])](#pagehoverselector-options)
-  * [page.isClosed()](#pageisclosed)
-  * [page.keyboard](#pagekeyboard)
-  * [page.mainFrame()](#pagemainframe)
-  * [page.mouse](#pagemouse)
-  * [page.pdf([options])](#pagepdfoptions)
-  * [page.reload([options])](#pagereloadoptions)
-  * [page.screenshot([options])](#pagescreenshotoptions)
-  * [page.select(selector, value, options)](#pageselectselector-value-options)
-  * [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
-  * [page.setContent(html[, options])](#pagesetcontenthtml-options)
-  * [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
-  * [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
-  * [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
-  * [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
-  * [page.setRequestInterception(enabled)](#pagesetrequestinterceptionenabled)
-  * [page.setViewport(viewport)](#pagesetviewportviewport)
-  * [page.title()](#pagetitle)
-  * [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
-  * [page.type(selector, text[, options])](#pagetypeselector-text-options)
-  * [page.url()](#pageurl)
-  * [page.viewport()](#pageviewport)
-  * [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
-  * [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
-  * [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
-  * [page.waitForLoadState([options])](#pagewaitforloadstateoptions)
-  * [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
-  * [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
-  * [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
-  * [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
-  * [page.workers()](#pageworkers)
 - [class: Request](#class-request)
-  * [request.abort([errorCode])](#requestaborterrorcode)
-  * [request.continue([overrides])](#requestcontinueoverrides)
-  * [request.failure()](#requestfailure)
-  * [request.frame()](#requestframe)
-  * [request.fulfill(response)](#requestfulfillresponse)
-  * [request.headers()](#requestheaders)
-  * [request.isNavigationRequest()](#requestisnavigationrequest)
-  * [request.method()](#requestmethod)
-  * [request.postData()](#requestpostdata)
-  * [request.redirectChain()](#requestredirectchain)
-  * [request.resourceType()](#requestresourcetype)
-  * [request.response()](#requestresponse)
-  * [request.url()](#requesturl)
 - [class: Response](#class-response)
-  * [response.buffer()](#responsebuffer)
-  * [response.frame()](#responseframe)
-  * [response.headers()](#responseheaders)
-  * [response.json()](#responsejson)
-  * [response.ok()](#responseok)
-  * [response.remoteAddress()](#responseremoteaddress)
-  * [response.request()](#responserequest)
-  * [response.status()](#responsestatus)
-  * [response.statusText()](#responsestatustext)
-  * [response.text()](#responsetext)
-  * [response.url()](#responseurl)
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
-  * [accessibility.snapshot([options])](#accessibilitysnapshotoptions)
 - [class: Coverage](#class-coverage)
-  * [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
-  * [coverage.startJSCoverage([options])](#coveragestartjscoverageoptions)
-  * [coverage.stopCSSCoverage()](#coveragestopcsscoverage)
-  * [coverage.stopJSCoverage()](#coveragestopjscoverage)
 - [class: Worker](#class-worker)
-  * [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
-  * [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
-  * [worker.url()](#workerurl)
 - [class: ChromiumPlaywright](#class-chromiumplaywright)
-  * [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
-  * [chromiumPlaywright.defaultArgs([options])](#chromiumplaywrightdefaultargsoptions)
-  * [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
-  * [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
-  * [event: 'targetchanged'](#event-targetchanged)
-  * [event: 'targetcreated'](#event-targetcreated)
-  * [event: 'targetdestroyed'](#event-targetdestroyed)
-  * [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
-  * [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
-  * [chromiumBrowser.serviceWorker(target)](#chromiumbrowserserviceworkertarget)
-  * [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
-  * [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
-  * [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
-  * [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
 - [class: ChromiumBrowserServer](#class-chromiumbrowserserver)
-  * [chromiumBrowserServer.close()](#chromiumbrowserserverclose)
-  * [chromiumBrowserServer.connect()](#chromiumbrowserserverconnect)
-  * [chromiumBrowserServer.connectOptions()](#chromiumbrowserserverconnectoptions)
-  * [chromiumBrowserServer.process()](#chromiumbrowserserverprocess)
-  * [chromiumBrowserServer.wsEndpoint()](#chromiumbrowserserverwsendpoint)
 - [class: ChromiumSession](#class-chromiumsession)
-  * [chromiumSession.detach()](#chromiumsessiondetach)
-  * [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
 - [class: ChromiumTarget](#class-chromiumtarget)
-  * [chromiumTarget.browserContext()](#chromiumtargetbrowsercontext)
-  * [chromiumTarget.createCDPSession()](#chromiumtargetcreatecdpsession)
-  * [chromiumTarget.opener()](#chromiumtargetopener)
-  * [chromiumTarget.page()](#chromiumtargetpage)
-  * [chromiumTarget.type()](#chromiumtargettype)
-  * [chromiumTarget.url()](#chromiumtargeturl)
 - [class: FirefoxPlaywright](#class-firefoxplaywright)
-  * [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions)
-  * [firefoxPlaywright.defaultArgs([options])](#firefoxplaywrightdefaultargsoptions)
-  * [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions)
-  * [firefoxPlaywright.launchServer([options])](#firefoxplaywrightlaunchserveroptions)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: FirefoxBrowserServer](#class-firefoxbrowserserver)
-  * [firefoxBrowserServer.close()](#firefoxbrowserserverclose)
-  * [firefoxBrowserServer.connect()](#firefoxbrowserserverconnect)
-  * [firefoxBrowserServer.connectOptions()](#firefoxbrowserserverconnectoptions)
-  * [firefoxBrowserServer.process()](#firefoxbrowserserverprocess)
-  * [firefoxBrowserServer.wsEndpoint()](#firefoxbrowserserverwsendpoint)
 - [class: WebKitPlaywright](#class-webkitplaywright)
-  * [webkitPlaywright.defaultArgs([options])](#webkitplaywrightdefaultargsoptions)
-  * [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions)
-  * [webkitPlaywright.launchServer([options])](#webkitplaywrightlaunchserveroptions)
 - [class: WebKitBrowser](#class-webkitbrowser)
 - [class: WebKitBrowserServer](#class-webkitbrowserserver)
-  * [webKitBrowserServer.close()](#webkitbrowserserverclose)
-  * [webKitBrowserServer.connect()](#webkitbrowserserverconnect)
-  * [webKitBrowserServer.connectOptions()](#webkitbrowserserverconnectoptions)
-  * [webKitBrowserServer.process()](#webkitbrowserserverprocess)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
 - [Downloaded browsers](#downloaded-browsers)
@@ -304,6 +57,12 @@ const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 See [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions), [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions) or [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions) for browser-specific launch methods.
 
 Playwright automatically downloads browser executables during installation, see [Downloaded browsers](#downloaded-browsers) for more information.
+
+<!-- GEN:toc -->
+- [playwright.devices](#playwrightdevices)
+- [playwright.errors](#playwrighterrors)
+- [playwright.executablePath()](#playwrightexecutablepath)
+<!-- GEN:stop -->
 
 #### playwright.devices
 - returns: <[Object]>
@@ -382,6 +141,15 @@ const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
   await browser.close();
 })();
 ```
+<!-- GEN:toc -->
+- [event: 'disconnected'](#event-disconnected)
+- [browser.browserContexts()](#browserbrowsercontexts)
+- [browser.close()](#browserclose)
+- [browser.defaultContext()](#browserdefaultcontext)
+- [browser.disconnect()](#browserdisconnect)
+- [browser.isConnected()](#browserisconnected)
+- [browser.newContext(options)](#browsernewcontextoptions)
+<!-- GEN:stop -->
 
 #### event: 'disconnected'
 Emitted when Playwright gets disconnected from the browser instance. This might happen because of one of the following:
@@ -465,6 +233,18 @@ const page = await context.newPage('https://example.com');
 // Dispose context once it's no longer needed.
 await context.close();
 ```
+
+<!-- GEN:toc -->
+- [browserContext.clearCookies()](#browsercontextclearcookies)
+- [browserContext.clearPermissions()](#browsercontextclearpermissions)
+- [browserContext.close()](#browsercontextclose)
+- [browserContext.cookies([...urls])](#browsercontextcookiesurls)
+- [browserContext.newPage(url)](#browsercontextnewpageurl)
+- [browserContext.pages()](#browsercontextpages)
+- [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
+- [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
+- [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
+<!-- GEN:stop -->
 
 #### browserContext.clearCookies()
 - returns: <[Promise]>
@@ -584,6 +364,13 @@ await context.setPermissions('https://html5demos.com', ['geolocation']);
 
 [ConsoleMessage] objects are dispatched by page via the ['console'](#event-console) event.
 
+<!-- GEN:toc -->
+- [consoleMessage.args()](#consolemessageargs)
+- [consoleMessage.location()](#consolemessagelocation)
+- [consoleMessage.text()](#consolemessagetext)
+- [consoleMessage.type()](#consolemessagetype)
+<!-- GEN:stop -->
+
 #### consoleMessage.args()
 - returns: <[Array]<[JSHandle]>>
 
@@ -622,6 +409,14 @@ const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 })();
 ```
 
+<!-- GEN:toc -->
+- [dialog.accept([promptText])](#dialogacceptprompttext)
+- [dialog.defaultValue()](#dialogdefaultvalue)
+- [dialog.dismiss()](#dialogdismiss)
+- [dialog.message()](#dialogmessage)
+- [dialog.type()](#dialogtype)
+<!-- GEN:stop -->
+
 #### dialog.accept([promptText])
 - `promptText` <[string]> A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt.
 - returns: <[Promise]> Promise which resolves when the dialog has been accepted.
@@ -659,6 +454,30 @@ const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 ElementHandle prevents DOM element from garbage collection unless the handle is [disposed](#elementhandledispose). ElementHandles are auto-disposed when their origin frame gets navigated.
 
 ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalselector-pagefunction-args) and [`page.evaluate()`](#pageevaluatepagefunction-args) methods.
+
+<!-- GEN:toc -->
+- [elementHandle.$(selector)](#elementhandleselector)
+- [elementHandle.$$(selector)](#elementhandleselector-1)
+- [elementHandle.$$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args)
+- [elementHandle.$eval(selector, pageFunction[, ...args])](#elementhandleevalselector-pagefunction-args-1)
+- [elementHandle.boundingBox()](#elementhandleboundingbox)
+- [elementHandle.click([options])](#elementhandleclickoptions)
+- [elementHandle.contentFrame()](#elementhandlecontentframe)
+- [elementHandle.dblclick([options])](#elementhandledblclickoptions)
+- [elementHandle.fill(value)](#elementhandlefillvalue)
+- [elementHandle.focus()](#elementhandlefocus)
+- [elementHandle.hover([options])](#elementhandlehoveroptions)
+- [elementHandle.ownerFrame()](#elementhandleownerframe)
+- [elementHandle.press(key[, options])](#elementhandlepresskey-options)
+- [elementHandle.screenshot([options])](#elementhandlescreenshotoptions)
+- [elementHandle.scrollIntoViewIfNeeded()](#elementhandlescrollintoviewifneeded)
+- [elementHandle.select(...values)](#elementhandleselectvalues)
+- [elementHandle.setInputFiles(...files)](#elementhandlesetinputfilesfiles)
+- [elementHandle.toString()](#elementhandletostring)
+- [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
+- [elementHandle.type(text[, options])](#elementhandletypetext-options)
+- [elementHandle.visibleRatio()](#elementhandlevisibleratio)
+<!-- GEN:stop -->
 
 #### elementHandle.$(selector)
 - `selector` <[string]> A selector to query element for
@@ -930,6 +749,40 @@ An example of getting text from an iframe element:
   const text = await frame.$eval('.selector', element => element.textContent);
   console.log(text);
 ```
+
+<!-- GEN:toc -->
+- [frame.$(selector)](#frameselector)
+- [frame.$$(selector)](#frameselector-1)
+- [frame.$$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args)
+- [frame.$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args-1)
+- [frame.$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args)
+- [frame.addScriptTag(options)](#frameaddscripttagoptions)
+- [frame.addStyleTag(options)](#frameaddstyletagoptions)
+- [frame.childFrames()](#framechildframes)
+- [frame.click(selector[, options])](#frameclickselector-options)
+- [frame.content()](#framecontent)
+- [frame.dblclick(selector[, options])](#framedblclickselector-options)
+- [frame.evaluate(pageFunction[, ...args])](#frameevaluatepagefunction-args)
+- [frame.evaluateHandle(pageFunction[, ...args])](#frameevaluatehandlepagefunction-args)
+- [frame.fill(selector, value, options)](#framefillselector-value-options)
+- [frame.focus(selector, options)](#framefocusselector-options)
+- [frame.goto(url[, options])](#framegotourl-options)
+- [frame.hover(selector[, options])](#framehoverselector-options)
+- [frame.isDetached()](#frameisdetached)
+- [frame.name()](#framename)
+- [frame.parentFrame()](#frameparentframe)
+- [frame.select(selector, value, options)](#frameselectselector-value-options)
+- [frame.setContent(html[, options])](#framesetcontenthtml-options)
+- [frame.title()](#frametitle)
+- [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
+- [frame.type(selector, text[, options])](#frametypeselector-text-options)
+- [frame.url()](#frameurl)
+- [frame.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args)
+- [frame.waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args)
+- [frame.waitForLoadState([options])](#framewaitforloadstateoptions)
+- [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
+- [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
+<!-- GEN:stop -->
 
 #### frame.$(selector)
 - `selector` <[string]> A selector to query frame for
@@ -1435,6 +1288,16 @@ JSHandle prevents the referenced JavaScript object being garbage collected unles
 
 JSHandle instances can be used as arguments in [`page.$eval()`](#pageevalselector-pagefunction-args), [`page.evaluate()`](#pageevaluatepagefunction-args) and [`page.evaluateHandle`](#pageevaluatehandlepagefunction-args) methods.
 
+<!-- GEN:toc -->
+- [jsHandle.asElement()](#jshandleaselement)
+- [jsHandle.dispose()](#jshandledispose)
+- [jsHandle.evaluate(pageFunction[, ...args])](#jshandleevaluatepagefunction-args)
+- [jsHandle.evaluateHandle(pageFunction[, ...args])](#jshandleevaluatehandlepagefunction-args)
+- [jsHandle.getProperties()](#jshandlegetproperties)
+- [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
+- [jsHandle.jsonValue()](#jshandlejsonvalue)
+<!-- GEN:stop -->
+
 #### jsHandle.asElement()
 - returns: <?[ElementHandle]>
 
@@ -1530,6 +1393,14 @@ await page.keyboard.up('Shift');
 
 > **NOTE** On MacOS, keyboard shortcuts like `⌘ A` -> Select All do not work. See [#1313](https://github.com/GoogleChrome/puppeteer/issues/1313)
 
+<!-- GEN:toc -->
+- [keyboard.down(key[, options])](#keyboarddownkey-options)
+- [keyboard.press(key[, options])](#keyboardpresskey-options)
+- [keyboard.sendCharacters(text)](#keyboardsendcharacterstext)
+- [keyboard.type(text[, options])](#keyboardtypetext-options)
+- [keyboard.up(key)](#keyboardupkey)
+<!-- GEN:stop -->
+
 #### keyboard.down(key[, options])
 - `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
 - `options` <[Object]>
@@ -1610,6 +1481,15 @@ await page.mouse.move(100, 0);
 await page.mouse.move(0, 0);
 await page.mouse.up();
 ```
+
+<!-- GEN:toc -->
+- [mouse.click(x, y[, options])](#mouseclickx-y-options)
+- [mouse.dblclick(x, y[, options])](#mousedblclickx-y-options)
+- [mouse.down([options])](#mousedownoptions)
+- [mouse.move(x, y[, options])](#mousemovex-y-options)
+- [mouse.tripleclick(x, y[, options])](#mousetripleclickx-y-options)
+- [mouse.up([options])](#mouseupoptions)
+<!-- GEN:stop -->
 
 #### mouse.click(x, y[, options])
 - `x` <[number]>
@@ -1715,6 +1595,83 @@ page.on('request', logRequest);
 // Sometime later...
 page.removeListener('request', logRequest);
 ```
+
+<!-- GEN:toc -->
+- [event: 'close'](#event-close)
+- [event: 'console'](#event-console)
+- [event: 'dialog'](#event-dialog)
+- [event: 'domcontentloaded'](#event-domcontentloaded)
+- [event: 'filechooser'](#event-filechooser)
+- [event: 'frameattached'](#event-frameattached)
+- [event: 'framedetached'](#event-framedetached)
+- [event: 'framenavigated'](#event-framenavigated)
+- [event: 'load'](#event-load)
+- [event: 'pageerror'](#event-pageerror)
+- [event: 'popup'](#event-popup)
+- [event: 'request'](#event-request)
+- [event: 'requestfailed'](#event-requestfailed)
+- [event: 'requestfinished'](#event-requestfinished)
+- [event: 'response'](#event-response)
+- [event: 'workercreated'](#event-workercreated)
+- [event: 'workerdestroyed'](#event-workerdestroyed)
+- [page.$(selector)](#pageselector)
+- [page.$$(selector)](#pageselector-1)
+- [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
+- [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
+- [page.$wait(selector, pageFunction[, options[, ...args]])](#pagewaitselector-pagefunction-options-args)
+- [page.accessibility](#pageaccessibility)
+- [page.addScriptTag(options)](#pageaddscripttagoptions)
+- [page.addStyleTag(options)](#pageaddstyletagoptions)
+- [page.authenticate(credentials)](#pageauthenticatecredentials)
+- [page.browserContext()](#pagebrowsercontext)
+- [page.click(selector[, options])](#pageclickselector-options)
+- [page.close([options])](#pagecloseoptions)
+- [page.content()](#pagecontent)
+- [page.coverage](#pagecoverage)
+- [page.dblclick(selector[, options])](#pagedblclickselector-options)
+- [page.emulateMedia(options)](#pageemulatemediaoptions)
+- [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
+- [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
+- [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
+- [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
+- [page.fill(selector, value, options)](#pagefillselector-value-options)
+- [page.focus(selector, options)](#pagefocusselector-options)
+- [page.frames()](#pageframes)
+- [page.goBack([options])](#pagegobackoptions)
+- [page.goForward([options])](#pagegoforwardoptions)
+- [page.goto(url[, options])](#pagegotourl-options)
+- [page.hover(selector[, options])](#pagehoverselector-options)
+- [page.isClosed()](#pageisclosed)
+- [page.keyboard](#pagekeyboard)
+- [page.mainFrame()](#pagemainframe)
+- [page.mouse](#pagemouse)
+- [page.pdf([options])](#pagepdfoptions)
+- [page.reload([options])](#pagereloadoptions)
+- [page.screenshot([options])](#pagescreenshotoptions)
+- [page.select(selector, value, options)](#pageselectselector-value-options)
+- [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
+- [page.setContent(html[, options])](#pagesetcontenthtml-options)
+- [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
+- [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
+- [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
+- [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
+- [page.setRequestInterception(enabled)](#pagesetrequestinterceptionenabled)
+- [page.setViewport(viewport)](#pagesetviewportviewport)
+- [page.title()](#pagetitle)
+- [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
+- [page.type(selector, text[, options])](#pagetypeselector-text-options)
+- [page.url()](#pageurl)
+- [page.viewport()](#pageviewport)
+- [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
+- [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
+- [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
+- [page.waitForLoadState([options])](#pagewaitforloadstateoptions)
+- [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
+- [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
+- [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
+- [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
+- [page.workers()](#pageworkers)
+<!-- GEN:stop -->
 
 #### event: 'close'
 
@@ -2812,6 +2769,22 @@ If request fails at some point, then instead of `'requestfinished'` event (and p
 
 If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new request is  issued to a redirected url.
 
+<!-- GEN:toc -->
+- [request.abort([errorCode])](#requestaborterrorcode)
+- [request.continue([overrides])](#requestcontinueoverrides)
+- [request.failure()](#requestfailure)
+- [request.frame()](#requestframe)
+- [request.fulfill(response)](#requestfulfillresponse)
+- [request.headers()](#requestheaders)
+- [request.isNavigationRequest()](#requestisnavigationrequest)
+- [request.method()](#requestmethod)
+- [request.postData()](#requestpostdata)
+- [request.redirectChain()](#requestredirectchain)
+- [request.resourceType()](#requestresourcetype)
+- [request.response()](#requestresponse)
+- [request.url()](#requesturl)
+<!-- GEN:stop -->
+
 #### request.abort([errorCode])
 - `errorCode` <[string]> Optional error code. Defaults to `failed`, could be
   one of the following:
@@ -2958,6 +2931,20 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 
 [Response] class represents responses which are received by page.
 
+<!-- GEN:toc -->
+- [response.buffer()](#responsebuffer)
+- [response.frame()](#responseframe)
+- [response.headers()](#responseheaders)
+- [response.json()](#responsejson)
+- [response.ok()](#responseok)
+- [response.remoteAddress()](#responseremoteaddress)
+- [response.request()](#responserequest)
+- [response.status()](#responsestatus)
+- [response.statusText()](#responsestatustext)
+- [response.text()](#responsetext)
+- [response.url()](#responseurl)
+<!-- GEN:stop -->
+
 #### response.buffer()
 - returns: <Promise<[Buffer]>> Promise which resolves to a buffer with response body.
 
@@ -3019,6 +3006,10 @@ Blink - Chromium's rendering engine - has a concept of "accessibility tree", whi
 access to the Blink Accessibility Tree.
 
 Most of the accessibility tree gets filtered out when converting from Blink AX Tree to Platform-specific AX-Tree or by assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing only the "interesting" nodes of the tree.
+
+<!-- GEN:toc -->
+- [accessibility.snapshot([options])](#accessibilitysnapshotoptions)
+<!-- GEN:stop -->
 
 #### accessibility.snapshot([options])
 - `options` <[Object]>
@@ -3115,6 +3106,13 @@ console.log(`Bytes used: ${usedBytes / totalBytes * 100}%`);
 _To output coverage in a form consumable by [Istanbul](https://github.com/istanbuljs),
   see [playwright-to-istanbul](https://github.com/istanbuljs/playwright-to-istanbul)._
 
+<!-- GEN:toc -->
+- [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
+- [coverage.startJSCoverage([options])](#coveragestartjscoverageoptions)
+- [coverage.stopCSSCoverage()](#coveragestopcsscoverage)
+- [coverage.stopJSCoverage()](#coveragestopjscoverage)
+<!-- GEN:stop -->
+
 #### coverage.startCSSCoverage([options])
 - `options` <[Object]>  Set of configurable options for coverage
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
@@ -3163,6 +3161,12 @@ for (const worker of page.workers())
   console.log('  ' + worker.url());
 ```
 
+<!-- GEN:toc -->
+- [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
+- [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
+- [worker.url()](#workerurl)
+<!-- GEN:stop -->
+
 #### worker.evaluate(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
 - `...args` <...[Serializable]|[JSHandle]> Arguments to pass to `pageFunction`
@@ -3187,6 +3191,13 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 ### class: ChromiumPlaywright
 
 * extends: [Playwright]
+
+<!-- GEN:toc -->
+- [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
+- [chromiumPlaywright.defaultArgs([options])](#chromiumplaywrightdefaultargsoptions)
+- [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
+- [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
+<!-- GEN:stop -->
 
 #### chromiumPlaywright.connect(options)
 - `options` <[Object]>
@@ -3273,6 +3284,19 @@ await page.goto('https://www.google.com');
 await browser.stopTracing();
 ```
 
+<!-- GEN:toc -->
+- [event: 'targetchanged'](#event-targetchanged)
+- [event: 'targetcreated'](#event-targetcreated)
+- [event: 'targetdestroyed'](#event-targetdestroyed)
+- [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
+- [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
+- [chromiumBrowser.serviceWorker(target)](#chromiumbrowserserviceworkertarget)
+- [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
+- [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
+- [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
+- [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
+<!-- GEN:stop -->
+
 #### event: 'targetchanged'
 - <[Target]>
 
@@ -3346,6 +3370,14 @@ const newWindowTarget = await browser.chromium.waitForTarget(target => target.ur
 
 ### class: ChromiumBrowserServer
 
+<!-- GEN:toc -->
+- [chromiumBrowserServer.close()](#chromiumbrowserserverclose)
+- [chromiumBrowserServer.connect()](#chromiumbrowserserverconnect)
+- [chromiumBrowserServer.connectOptions()](#chromiumbrowserserverconnectoptions)
+- [chromiumBrowserServer.process()](#chromiumbrowserserverprocess)
+- [chromiumBrowserServer.wsEndpoint()](#chromiumbrowserserverwsendpoint)
+<!-- GEN:stop -->
+
 #### chromiumBrowserServer.close()
 - returns: <[Promise]>
 
@@ -3398,6 +3430,11 @@ await client.send('Animation.setPlaybackRate', {
 });
 ```
 
+<!-- GEN:toc -->
+- [chromiumSession.detach()](#chromiumsessiondetach)
+- [chromiumSession.send(method[, params])](#chromiumsessionsendmethod-params)
+<!-- GEN:stop -->
+
 #### chromiumSession.detach()
 - returns: <[Promise]>
 
@@ -3410,6 +3447,16 @@ to send messages.
 - returns: <[Promise]<[Object]>>
 
 ### class: ChromiumTarget
+
+
+<!-- GEN:toc -->
+- [chromiumTarget.browserContext()](#chromiumtargetbrowsercontext)
+- [chromiumTarget.createCDPSession()](#chromiumtargetcreatecdpsession)
+- [chromiumTarget.opener()](#chromiumtargetopener)
+- [chromiumTarget.page()](#chromiumtargetpage)
+- [chromiumTarget.type()](#chromiumtargettype)
+- [chromiumTarget.url()](#chromiumtargeturl)
+<!-- GEN:stop -->
 
 #### chromiumTarget.browserContext()
 
@@ -3443,6 +3490,13 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 ### class: FirefoxPlaywright
 
 * extends: [Playwright]
+
+<!-- GEN:toc -->
+- [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions)
+- [firefoxPlaywright.defaultArgs([options])](#firefoxplaywrightdefaultargsoptions)
+- [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions)
+- [firefoxPlaywright.launchServer([options])](#firefoxplaywrightlaunchserveroptions)
+<!-- GEN:stop -->
 
 #### firefoxPlaywright.connect(options)
 - `options` <[Object]>
@@ -3510,6 +3564,14 @@ Firefox browser instance does not expose Firefox-specific features.
 
 ### class: FirefoxBrowserServer
 
+<!-- GEN:toc -->
+- [firefoxBrowserServer.close()](#firefoxbrowserserverclose)
+- [firefoxBrowserServer.connect()](#firefoxbrowserserverconnect)
+- [firefoxBrowserServer.connectOptions()](#firefoxbrowserserverconnectoptions)
+- [firefoxBrowserServer.process()](#firefoxbrowserserverprocess)
+- [firefoxBrowserServer.wsEndpoint()](#firefoxbrowserserverwsendpoint)
+<!-- GEN:stop -->
+
 #### firefoxBrowserServer.close()
 - returns: <[Promise]>
 
@@ -3539,6 +3601,12 @@ Browser websocket endpoint which can be used as an argument to [firefoxPlaywrigh
 ### class: WebKitPlaywright
 
 * extends: [Playwright]
+
+<!-- GEN:toc -->
+- [webkitPlaywright.defaultArgs([options])](#webkitplaywrightdefaultargsoptions)
+- [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions)
+- [webkitPlaywright.launchServer([options])](#webkitplaywrightlaunchserveroptions)
+<!-- GEN:stop -->
 
 #### webkitPlaywright.defaultArgs([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
@@ -3596,6 +3664,13 @@ const browser = await playwright.launch({
 WebKit browser instance does not expose WebKit-specific features.
 
 ### class: WebKitBrowserServer
+
+<!-- GEN:toc -->
+- [webKitBrowserServer.close()](#webkitbrowserserverclose)
+- [webKitBrowserServer.connect()](#webkitbrowserserverconnect)
+- [webKitBrowserServer.connectOptions()](#webkitbrowserserverconnectoptions)
+- [webKitBrowserServer.process()](#webkitbrowserserverprocess)
+<!-- GEN:stop -->
 
 #### webKitBrowserServer.close()
 - returns: <[Promise]>
