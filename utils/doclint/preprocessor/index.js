@@ -18,7 +18,7 @@ const Message = require('../Message');
 
 module.exports.ensureReleasedAPILinks = function(sources, version) {
   // Release version is everything that doesn't include "-".
-  const apiLinkRegex = /https:\/\/github.com\/GoogleChrome\/playwright\/blob\/v[^/]*\/docs\/api.md/ig;
+  const apiLinkRegex = /https:\/\/github.com\/Microsoft\/playwright\/blob\/v[^/]*\/docs\/api.md/ig;
   const lastReleasedAPI = `https://github.com/Microsoft/playwright/blob/v${version.split('-')[0]}/docs/api.md`;
 
   const messages = [];
@@ -69,7 +69,9 @@ module.exports.runCommands = function(sources, version) {
     else if (command.name === 'empty-if-release')
       newText = isReleaseVersion ? '' : command.originalText;
     else if (command.name === 'toc')
-      newText = generateTableOfContents(command.source.text().substring(command.to));
+      newText = generateTableOfContents(command.source.text(), command.to, false /* topLevelOnly */);
+    else if (command.name === 'toc-top-level')
+      newText = generateTableOfContents(command.source.text(), command.to, true /* topLevelOnly */);
     if (newText === null)
       messages.push(Message.error(`Unknown command 'gen:${command.name}'`));
     else if (applyCommand(command, newText))
@@ -91,22 +93,22 @@ function applyCommand(command, editText) {
   return command.source.setText(newText);
 }
 
-function generateTableOfContents(mdText) {
+function getTOCEntriesForText(text) {
   const ids = new Set();
   const titles = [];
   let insideCodeBlock = false;
-  for (const aLine of mdText.split('\n')) {
+  let offset = 0;
+  text.split('\n').forEach((aLine, lineNumber) => {
     const line = aLine.trim();
-    if (line.startsWith('```')) {
+    if (line.startsWith('```'))
       insideCodeBlock = !insideCodeBlock;
-      continue;
-    }
-    if (!insideCodeBlock && line.startsWith('#'))
-      titles.push(line);
-  }
-  const tocEntries = [];
-  for (const title of titles) {
-    const [, nesting, name] = title.match(/^(#+)\s+(.*)$/);
+    else if (!insideCodeBlock && line.startsWith('#'))
+      titles.push({line, offset: offset + lineNumber});
+    offset += aLine.length;
+  });
+  let tocEntries = [];
+  for (const {line, offset} of titles) {
+    const [, nesting, name] = line.match(/^(#+)\s+(.*)$/);
     const delinkifiedName = name.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     const id = delinkifiedName.trim().toLowerCase().replace(/\s/g, '-').replace(/[^-0-9a-zа-яё]/ig, '');
     let dedupId = id;
@@ -117,12 +119,33 @@ function generateTableOfContents(mdText) {
     tocEntries.push({
       level: nesting.length,
       name: delinkifiedName,
-      id: dedupId
+      id: dedupId,
+      offset,
     });
+  }
+  return tocEntries;
+}
+
+function generateTableOfContents(text, offset, topLevelOnly) {
+  const allTocEntries = getTOCEntriesForText(text);
+
+  let tocEntries = [];
+  let nesting = 0;
+  for (const tocEntry of allTocEntries) {
+    if (tocEntry.offset < offset)
+      continue;
+    if (tocEntries.length) {
+      nesting += tocEntry.level - tocEntries[tocEntries.length - 1].level;
+      if (nesting < 0)
+        break;
+    }
+    tocEntries.push(tocEntry);
   }
 
   const minLevel = Math.min(...tocEntries.map(entry => entry.level));
   tocEntries.forEach(entry => entry.level -= minLevel);
+  if (topLevelOnly)
+    tocEntries = tocEntries.filter(entry => !entry.level);
   return '\n' + tocEntries.map(entry => {
     const prefix = entry.level % 2 === 0 ? '-' : '*';
     const padding = '  '.repeat(entry.level);
