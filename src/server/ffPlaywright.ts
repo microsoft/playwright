@@ -203,6 +203,8 @@ export class FFPlaywright implements Playwright {
       firefoxArguments.push('-profile', userDataDir);
     if (headless)
       firefoxArguments.push('-headless');
+    else
+      firefoxArguments.push('-wait-for-browser');
     firefoxArguments.push(...args);
     if (args.every(arg => arg.startsWith('-')))
       firefoxArguments.push('about:blank');
