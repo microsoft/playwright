@@ -76,7 +76,6 @@ export class WKPage implements PageDelegate {
 
   private _setSession(session: WKSession) {
     helper.removeEventListeners(this._sessionListeners);
-    this._disconnectFromTarget();
     this._session = session;
     this.rawKeyboard.setSession(session);
     this._addSessionListeners();
@@ -165,7 +164,6 @@ export class WKPage implements PageDelegate {
 
   didClose(crashed: boolean) {
     helper.removeEventListeners(this._sessionListeners);
-    this._disconnectFromTarget();
     if (crashed)
       this._page._didCrash();
     else
@@ -206,14 +204,6 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Network.webSocketClosed', e => this._page._frameManager.webSocketClosed(e.requestId)),
       helper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page._frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
-  }
-
-  private _disconnectFromTarget() {
-    for (const context of this._contextIdToContext.values()) {
-      (context._delegate as WKExecutionContext)._dispose();
-      context.frame._contextDestroyed(context);
-    }
-    this._contextIdToContext.clear();
   }
 
   private async _updateState<T extends keyof Protocol.CommandParameters>(
