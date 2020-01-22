@@ -102,7 +102,6 @@ class Source {
   }
   
   async saveAs(path) {
-    console.log(path);
     await writeFileAsync(path, this.text());
   }
 
