@@ -100,6 +100,11 @@ class Source {
   async save() {
     await writeFileAsync(this.filePath(), this.text());
   }
+  
+  async saveAs(path) {
+    console.log(path);
+    await writeFileAsync(path, this.text());
+  }
 
   /**
    * @param {string} filePath
