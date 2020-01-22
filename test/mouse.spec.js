@@ -56,7 +56,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       expect(event.isTrusted).toBe(true);
       expect(event.button).toBe(0);
     });
-    it('should resize the textarea', async({page, server}) => {
+    it.skip(WEBKIT)('should resize the textarea', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       const {x, y, width, height} = await page.evaluate(dimensions);
       const mouse = page.mouse;
@@ -71,7 +71,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       expect(newDimensions.width).toBe(Math.round(width + 104));
       expect(newDimensions.height).toBe(Math.round(height + 104));
     });
-    it('should select the text with mouse', async({page, server}) => {
+    it.skip(WEBKIT)('should select the text with mouse', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
       const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
