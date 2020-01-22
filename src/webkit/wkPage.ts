@@ -220,16 +220,18 @@ export class WKPage implements PageDelegate {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<void> {
-    const promises = [
-      this._session.send(method, params)
+    await this._forAllsSessions(session => session.send(method, params).then());
+  }
+
+  private async _forAllsSessions(callback: ((session: WKSession) => Promise<void>)): Promise<void> {
+    const sessions = [
+      this._session
     ];
     // If the state changes during provisional load, push it to the provisional page
     // as well to always be in sync with the backend.
     if (this._provisionalPage)
-      promises.push(this._provisionalPage._session.send(method, params));
-    for (const p of promises)
-      p.catch(debugError);
-    await Promise.all(promises);
+      sessions.push(this._provisionalPage._session);
+    await Promise.all(sessions.map(session => callback(session).catch(debugError)));
   }
 
   private _onFrameStoppedLoading(frameId: string) {
@@ -373,7 +375,7 @@ export class WKPage implements PageDelegate {
   }
 
   async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
-    await WKPage._setEmulateMedia(this._session, mediaType, colorScheme);
+    await this._forAllsSessions(session => WKPage._setEmulateMedia(session, mediaType, colorScheme));
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
