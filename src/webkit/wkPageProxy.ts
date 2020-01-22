@@ -22,7 +22,6 @@ import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
 import { RegisteredListener, helper, assert, debugError } from '../helper';
 import { Events } from '../events';
-import { WKProvisionalPage } from './wkProvisionalPage';
 
 const isPovisionalSymbol = Symbol('isPovisional');
 
@@ -31,7 +30,6 @@ export class WKPageProxy {
   readonly _browserContext: BrowserContext;
   private _pagePromise: Promise<Page> | null = null;
   private _wkPage: WKPage | null = null;
-  private _provisionalPage: WKProvisionalPage | null = null;
   private readonly _firstTargetPromise: Promise<void>;
   private _firstTargetCallback?: () => void;
   private readonly _sessions = new Map<string, WKSession>();
@@ -68,12 +66,8 @@ export class WKPageProxy {
     for (const session of this._sessions.values())
       session.dispose();
     this._sessions.clear();
-    if (this._provisionalPage) {
-      this._provisionalPage.dispose();
-      this._provisionalPage = null;
-    }
     if (this._wkPage)
-      this._wkPage.didDisconnect();
+      this._wkPage.dispose();
   }
 
   dispatchMessageToSession(message: any) {
@@ -145,10 +139,8 @@ export class WKPageProxy {
     }
     if (targetInfo.isProvisional)
       (session as any)[isPovisionalSymbol] = true;
-    if (targetInfo.isProvisional && this._wkPage) {
-      assert(!this._provisionalPage);
-      this._provisionalPage = new WKProvisionalPage(session, this._wkPage);
-    }
+    if (targetInfo.isProvisional && this._wkPage)
+      this._wkPage.onProvisionalLoadStarted(session);
     if (targetInfo.isPaused)
       this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
   }
@@ -156,15 +148,11 @@ export class WKPageProxy {
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
     const { targetId, crashed } = event;
     const session = this._sessions.get(targetId);
-    if (session)
-      session.dispose();
+    assert(session, 'Unknown target destroyed: ' + targetId);
+    session!.dispose();
     this._sessions.delete(targetId);
-    if (this._provisionalPage && this._provisionalPage._session === session) {
-      this._provisionalPage.dispose();
-      this._provisionalPage = null;
-    }
-    if (this._wkPage && this._wkPage._session === session && crashed)
-      this._wkPage.didClose(crashed);
+    if (this._wkPage)
+      this._wkPage.onSessionDestroyed(session!, crashed);
   }
 
   private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
@@ -183,12 +171,7 @@ export class WKPageProxy {
     // TODO: make some calls like screenshot catch swapped out error and retry.
     oldSession!.errorText = 'Target was swapped out.';
     (newSession as any)[isPovisionalSymbol] = undefined;
-    if (this._provisionalPage) {
-      this._provisionalPage.commit();
-      this._provisionalPage.dispose();
-      this._provisionalPage = null;
-    }
     if (this._wkPage)
-      this._wkPage.setSession(newSession!);
+      this._wkPage.onProvisionalLoadCommitted(newSession!);
   }
 }

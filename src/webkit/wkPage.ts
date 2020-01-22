@@ -16,7 +16,7 @@
  */
 
 import * as frames from '../frames';
-import { debugError, helper, RegisteredListener } from '../helper';
+import { debugError, helper, RegisteredListener, assert } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
 import { WKSession } from './wkConnection';
@@ -33,6 +33,7 @@ import * as types from '../types';
 import * as accessibility from '../accessibility';
 import * as platform from '../platform';
 import { getAccessibilityTree } from './wkAccessibility';
+import { WKProvisionalPage } from './wkProvisionalPage';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -41,6 +42,7 @@ export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   _session: WKSession;
+  private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;
   private readonly _pageProxySession: WKSession;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
@@ -79,8 +81,6 @@ export class WKPage implements PageDelegate {
     this.rawKeyboard.setSession(session);
     this._addSessionListeners();
     this._workers.setSession(session);
-    // New bootstrap scripts may have been added during provisional load, push them
-    // again to be on the safe side.
     if (this._bootstrapScripts.length)
       this._setBootstrapScripts(session).catch(e => debugError(e));
   }
@@ -121,8 +121,10 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
-    if (isProvisional)
-      promises.push(this._setBootstrapScripts(session));
+    if (isProvisional && this._bootstrapScripts.length) {
+      const source = this._bootstrapScripts.join(';');
+      promises.push(session.send('Page.setBootstrapScript', { source }));
+    }
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.extraHTTPHeaders !== null)
@@ -139,6 +141,30 @@ export class WKPage implements PageDelegate {
     });
   }
 
+  onProvisionalLoadStarted(provisionalSession: WKSession) {
+    assert(!this._provisionalPage);
+    this._provisionalPage = new WKProvisionalPage(provisionalSession, this);
+  }
+
+  onProvisionalLoadCommitted(session: WKSession) {
+    assert(this._provisionalPage);
+    assert(this._provisionalPage!._session === session);
+    this._provisionalPage!.commit();
+    this._provisionalPage!.dispose();
+    this._provisionalPage = null;
+    this.setSession(session);
+  }
+
+  onSessionDestroyed(session: WKSession, crashed: boolean) {
+    if (this._provisionalPage && this._provisionalPage._session === session) {
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+      return;
+    }
+    if (this._session === session && crashed)
+      this.didClose(crashed);
+  }
+
   didClose(crashed: boolean) {
     helper.removeEventListeners(this._sessionListeners);
     this.disconnectFromTarget();
@@ -148,7 +174,11 @@ export class WKPage implements PageDelegate {
       this._page._didClose();
   }
 
-  didDisconnect() {
+  dispose() {
+    if (this._provisionalPage) {
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    }
     this._page._didDisconnect();
   }
 
@@ -186,6 +216,22 @@ export class WKPage implements PageDelegate {
       context.frame._contextDestroyed(context);
     }
     this._contextIdToContext.clear();
+  }
+
+  private async _updateState<T extends keyof Protocol.CommandParameters>(
+    method: T,
+    params?: Protocol.CommandParameters[T]
+  ): Promise<void> {
+    const promises = [
+      this._session.send(method, params)
+    ];
+    // If the state changes during provisional load, push it to the provisional page
+    // as well to always be in sync with the backend.
+    if (this._provisionalPage)
+      promises.push(this._provisionalPage._session.send(method, params));
+    for (const p of promises)
+      p.catch(debugError);
+    await Promise.all(promises);
   }
 
   _onFrameStoppedLoading(frameId: string) {
@@ -344,21 +390,21 @@ export class WKPage implements PageDelegate {
     this._page._state.hasTouch = !!viewport.isMobile;
     await Promise.all([
       this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {width, height, fixedLayout, deviceScaleFactor }),
-      this._session.send('Page.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }),
+      this._updateState('Page.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }),
     ]);
   }
 
   async setCacheEnabled(enabled: boolean): Promise<void> {
     const disabled = !enabled;
-    await this._session.send('Network.setResourceCachingDisabled', { disabled });
+    await this._updateState('Network.setResourceCachingDisabled', { disabled });
   }
 
   async setRequestInterception(enabled: boolean): Promise<void> {
-    await this._session.send('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
+    await this._updateState('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
   }
 
   async setOfflineMode(offline: boolean) {
-    await this._session.send('Network.setEmulateOfflineState', { offline });
+    await this._updateState('Network.setEmulateOfflineState', { offline });
   }
 
   async authenticate(credentials: types.Credentials | null) {
@@ -388,18 +434,18 @@ export class WKPage implements PageDelegate {
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {
     const script = `self.${name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${bindingFunction}`;
     this._bootstrapScripts.unshift(script);
-    await this._setBootstrapScripts(this._session);
+    await this._setBootstrapScripts();
     await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(debugError)));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
     this._bootstrapScripts.push(script);
-    await this._setBootstrapScripts(this._session);
+    await this._setBootstrapScripts();
   }
 
-  private async _setBootstrapScripts(session: WKSession) {
+  private async _setBootstrapScripts() {
     const source = this._bootstrapScripts.join(';');
-    await session.send('Page.setBootstrapScript', { source });
+    await this._updateState('Page.setBootstrapScript', { source });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
