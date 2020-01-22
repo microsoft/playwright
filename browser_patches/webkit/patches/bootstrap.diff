@@ -3667,6 +3667,156 @@ index e24fded2225f1c1918f454017566717e20484eab..30e4b7a986418c4b4f6c799b858b6082
  }
  
  void ProgressTracker::incrementProgress(unsigned long identifier, const ResourceResponse& response)
+diff --git a/Source/WebCore/page/EventHandler.cpp b/Source/WebCore/page/EventHandler.cpp
+index 529ecb07cdc880d37b966ea5cfa7c6b2b8dd4ef0..b1d373d90b7a3c3c5b421d025ac5e6f536cb4ada 100644
+--- a/Source/WebCore/page/EventHandler.cpp
++++ b/Source/WebCore/page/EventHandler.cpp
+@@ -801,9 +801,7 @@ bool EventHandler::handleMousePressEvent(const MouseEventWithHitTestResults& eve
+     m_mousePressNode = event.targetNode();
+     m_frame.document()->setFocusNavigationStartingNode(event.targetNode());
+ 
+-#if ENABLE(DRAG_SUPPORT)
+     m_dragStartPosition = event.event().position();
+-#endif
+ 
+     m_mousePressed = true;
+     m_selectionInitiationState = HaveNotStartedSelection;
+@@ -842,8 +840,6 @@ VisiblePosition EventHandler::selectionExtentRespectingEditingBoundary(const Vis
+     return targetNode->renderer()->positionForPoint(LayoutPoint(selectionEndPoint), nullptr);
+ }
+ 
+-#if ENABLE(DRAG_SUPPORT)
+-
+ #if !PLATFORM(IOS_FAMILY)
+ 
+ bool EventHandler::supportsSelectionUpdatesOnMouseDrag() const
+@@ -865,8 +861,10 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+ 
+     Ref<Frame> protectedFrame(m_frame);
+ 
++#if ENABLE(DRAG_SUPPORT)
+     if (handleDrag(event, checkDragHysteresis))
+         return true;
++#endif
+ 
+     Node* targetNode = event.targetNode();
+     if (event.event().button() != LeftButton || !targetNode)
+@@ -887,7 +885,9 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+     ASSERT(m_mouseDownMayStartSelect || m_mouseDownMayStartAutoscroll);
+ #endif
+ 
++#if ENABLE(DRAG_SUPPORT)
+     m_mouseDownMayStartDrag = false;
++#endif
+ 
+     if (m_mouseDownMayStartAutoscroll && !panScrollInProgress()) {
+         m_autoscrollController->startAutoscrollForSelection(renderer);
+@@ -904,6 +904,8 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+     return true;
+ }
+     
++#if ENABLE(DRAG_SUPPORT)
++
+ bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
+ {
+     // This is a pre-flight check of whether the event might lead to a drag being started.  Be careful
+@@ -935,6 +937,8 @@ bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
+     return targetElement && page->dragController().draggableElement(&m_frame, targetElement, result.roundedPointInInnerNodeFrame(), state);
+ }
+ 
++#endif // ENABLE(DRAG_SUPPORT)
++
+ void EventHandler::updateSelectionForMouseDrag()
+ {
+     if (!supportsSelectionUpdatesOnMouseDrag())
+@@ -1026,7 +1030,6 @@ void EventHandler::updateSelectionForMouseDrag(const HitTestResult& hitTestResul
+     m_frame.selection().setSelectionByMouseIfDifferent(newSelection, m_frame.selection().granularity(),
+         FrameSelection::AdjustEndpointsAtBidiBoundary);
+ }
+-#endif // ENABLE(DRAG_SUPPORT)
+ 
+ void EventHandler::lostMouseCapture()
+ {
+@@ -1074,9 +1077,7 @@ bool EventHandler::handleMouseReleaseEvent(const MouseEventWithHitTestResults& e
+     // on the selection, the selection goes away.  However, if we are
+     // editing, place the caret.
+     if (m_mouseDownWasSingleClickInSelection && m_selectionInitiationState != ExtendedSelection
+-#if ENABLE(DRAG_SUPPORT)
+             && m_dragStartPosition == event.event().position()
+-#endif
+             && m_frame.selection().isRange()
+             && event.event().button() != RightButton) {
+         VisibleSelection newSelection;
+@@ -2029,10 +2030,8 @@ bool EventHandler::handleMouseMoveEvent(const PlatformMouseEvent& platformMouseE
+         return true;
+     
+     swallowEvent = !dispatchMouseEvent(eventNames().mousemoveEvent, mouseEvent.targetNode(), false, 0, platformMouseEvent, true);
+-#if ENABLE(DRAG_SUPPORT)
+     if (!swallowEvent)
+         swallowEvent = handleMouseDraggedEvent(mouseEvent);
+-#endif
+ 
+     return swallowEvent;
+ }
+diff --git a/Source/WebCore/page/EventHandler.h b/Source/WebCore/page/EventHandler.h
+index d33ad47d4aa0a776b0b27ab682d577fd4717556d..491159be12564fd98259c4dd52a99c5ac686c16f 100644
+--- a/Source/WebCore/page/EventHandler.h
++++ b/Source/WebCore/page/EventHandler.h
+@@ -132,9 +132,7 @@ public:
+ 
+     WEBCORE_EXPORT VisiblePosition selectionExtentRespectingEditingBoundary(const VisibleSelection&, const LayoutPoint&, Node*);
+ 
+-#if ENABLE(DRAG_SUPPORT)
+     void updateSelectionForMouseDrag();
+-#endif
+ 
+ #if ENABLE(PAN_SCROLLING)
+     void didPanScrollStart();
+@@ -366,10 +364,8 @@ private:
+     bool handleMousePressEventDoubleClick(const MouseEventWithHitTestResults&);
+     bool handleMousePressEventTripleClick(const MouseEventWithHitTestResults&);
+ 
+-#if ENABLE(DRAG_SUPPORT)
+     bool handleMouseDraggedEvent(const MouseEventWithHitTestResults&, CheckDragHysteresis = ShouldCheckDragHysteresis);
+     bool shouldAllowMouseDownToStartDrag() const;
+-#endif
+ 
+     WEBCORE_EXPORT bool handleMouseReleaseEvent(const MouseEventWithHitTestResults&);
+ 
+@@ -455,10 +451,8 @@ private:
+     void defaultTabEventHandler(KeyboardEvent&);
+     void defaultArrowEventHandler(FocusDirection, KeyboardEvent&);
+ 
+-#if ENABLE(DRAG_SUPPORT)
+     DragSourceAction updateDragSourceActionsAllowed() const;
+     bool supportsSelectionUpdatesOnMouseDrag() const;
+-#endif
+ 
+     // The following are called at the beginning of handleMouseUp and handleDrag.  
+     // If they return true it indicates that they have consumed the event.
+@@ -466,9 +460,10 @@ private:
+ 
+ #if ENABLE(DRAG_SUPPORT)
+     bool eventLoopHandleMouseDragged(const MouseEventWithHitTestResults&);
+-    void updateSelectionForMouseDrag(const HitTestResult&);
+ #endif
+ 
++    void updateSelectionForMouseDrag(const HitTestResult&);
++
+     enum class SetOrClearLastScrollbar { Clear, Set };
+     void updateLastScrollbarUnderMouse(Scrollbar*, SetOrClearLastScrollbar);
+     
+@@ -516,10 +511,7 @@ private:
+     enum SelectionInitiationState { HaveNotStartedSelection, PlacedCaret, ExtendedSelection };
+     SelectionInitiationState m_selectionInitiationState { HaveNotStartedSelection };
+ 
+-#if ENABLE(DRAG_SUPPORT)
+     LayoutPoint m_dragStartPosition;
+-#endif
+-
+     Timer m_hoverTimer;
+     Timer m_cursorUpdateTimer;
+ 
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
 index dc0266d881ba94f35c2ab15612986392bb45f91b..33ea93b7512e114d10beb507f603e4ca464f56ce 100644
 --- a/Source/WebCore/page/Frame.cpp
