@@ -3,7 +3,16 @@
 
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
-Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation. Playwright runs headless versions of these browsers by default, but can be configured to run the full versions.
+
+Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
+
+
+|          | ver | Linux | macOS | Win |
+|   ---:   | :---: | :---: | :---:  | :---: |
+| Chromium| 81.0.4032 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| WebKit | 13.0.4 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Firefox |73.0b3 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+- Headless is supported for all browsers on all platforms.
 
 ### Installation
 
