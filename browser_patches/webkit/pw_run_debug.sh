@@ -18,15 +18,15 @@ function runOSX() {
 
 function runLinux() {
   # if script is run as-is
-  if [ -d $SCRIPT_PATH/checkout/WebKitBuild ]; then
-    LD_PATH="$SCRIPT_PATH/checkout/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/checkout/WebKitBuild/Debug/bin"
-    MINIBROWSER="$SCRIPT_PATH/checkout/WebKitBuild/Debug/bin/MiniBrowser"
+  if [ -d $SCRIPT_PATH/checkout/WebKitBuildGTK ]; then
+    LD_PATH="$SCRIPT_PATH/checkout/WebKitBuildGTK/DependenciesGTK/Root/lib:$SCRIPT_PATH/checkout/WebKitBuildGTK/Debug/bin"
+    MINIBROWSER="$SCRIPT_PATH/checkout/WebKitBuildGTK/Debug/bin/MiniBrowser"
   elif [ -f $SCRIPT_PATH/MiniBrowser ]; then
     LD_PATH="$SCRIPT_PATH"
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
-  elif [ -d $SCRIPT_PATH/WebKitBuild ]; then
-    LD_PATH="$SCRIPT_PATH/WebKitBuild/DependenciesGTK/Root/lib:$SCRIPT_PATH/WebKitBuild/Debug/bin"
-    MINIBROWSER="$SCRIPT_PATH/WebKitBuild/Debug/bin/MiniBrowser"
+  elif [ -d $SCRIPT_PATH/WebKitBuildGTK ]; then
+    LD_PATH="$SCRIPT_PATH/WebKitBuildGTK/DependenciesGTK/Root/lib:$SCRIPT_PATH/WebKitBuildGTK/Debug/bin"
+    MINIBROWSER="$SCRIPT_PATH/WebKitBuildGTK/Debug/bin/MiniBrowser"
   else
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1

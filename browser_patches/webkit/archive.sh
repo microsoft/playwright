@@ -57,24 +57,24 @@ createZipForLinux() {
 
   if [[ -n $USE_WPE ]]; then
     # copy all relevant binaries
-    cp -t $tmpdir ./WebKitBuild/Release/bin/MiniBrowser ./WebKitBuild/Release/bin/WPE*Process
+    cp -t $tmpdir ./WebKitBuildWPE/Release/bin/MiniBrowser ./WebKitBuildWPE/Release/bin/WPE*Process
     # copy all relevant shared objects
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesWPE/Root/lib" ldd WebKitBuild/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesWPE/Root/lib" ldd WebKitBuild/Release/bin/WPENetworkProcess | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesWPE/Root/lib" ldd WebKitBuild/Release/bin/WPEWebProcess | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuildWPE/DependenciesWPE/Root/lib" ldd WebKitBuildWPE/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuildWPE/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuildWPE/DependenciesWPE/Root/lib" ldd WebKitBuildWPE/Release/bin/WPENetworkProcess | grep -o '[^ ]*WebKitBuildWPE/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuildWPE/DependenciesWPE/Root/lib" ldd WebKitBuildWPE/Release/bin/WPEWebProcess | grep -o '[^ ]*WebKitBuildWPE/[^ ]*' | xargs cp -t $tmpdir
     mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/DependenciesWPE/Root/lib/gio/modules/*
+    cp -t $tmpdir/gio/modules $PWD/WebKitBuildWPE/DependenciesWPE/Root/lib/gio/modules/*
 
     cd $tmpdir
     ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
     cd -
   else
     # copy all relevant binaries
-    cp -t $tmpdir ./WebKitBuild/Release/bin/MiniBrowser ./WebKitBuild/Release/bin/WebKit*Process
+    cp -t $tmpdir ./WebKitBuildGTK/Release/bin/MiniBrowser ./WebKitBuildGTK/Release/bin/WebKit*Process
     # copy all relevant shared objects
-    LD_LIBRARY_PATH="$PWD/WebKitBuild/DependenciesGTK/Root/lib" ldd WebKitBuild/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuild/[^ ]*' | xargs cp -t $tmpdir
+    LD_LIBRARY_PATH="$PWD/WebKitBuildGTK/DependenciesGTK/Root/lib" ldd WebKitBuildGTK/Release/bin/MiniBrowser | grep -o '[^ ]*WebKitBuildGTK/[^ ]*' | xargs cp -t $tmpdir
     mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/DependenciesGTK/Root/lib/gio/modules/*
+    cp -t $tmpdir/gio/modules $PWD/WebKitBuildGTK/DependenciesGTK/Root/lib/gio/modules/*
 
     # we failed to nicely build libgdk_pixbuf - expect it in the env
     rm $tmpdir/libgdk_pixbuf*
