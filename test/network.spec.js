@@ -342,6 +342,21 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       }
       expect(error.message).toBe('Expected value of header "foo" to be String, but "number" is found.');
     });
+    WEBKIT && it('should be pushed to cross-process provisional page', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const pagePath = '/one-style.html';
+      server.setRoute(pagePath, async (req, res) => {
+        await page.setExtraHTTPHeaders({ foo: 'bar' });
+        server.serveFile(req, res, pagePath);
+      });
+      const [htmlReq, cssReq] = await Promise.all([
+        server.waitForRequest(pagePath),
+        server.waitForRequest('/one-style.css'),
+        page.goto(server.CROSS_PROCESS_PREFIX + pagePath)
+      ]);
+      expect(htmlReq.headers['foo']).toBe(undefined);
+      expect(cssReq.headers['foo']).toBe('bar');
+    });
   });
 
   false && describe.skip(FFOX)('WebSocket', function() {

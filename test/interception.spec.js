@@ -561,6 +561,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setOfflineMode(false);
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
     });
+    it('should continue if the interception gets disabled during provisional load', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setRequestInterception(true);
+      expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+      let intercepted;
+      page.on('request', async request => {
+        intercepted = true;
+        await page.setRequestInterception(false);
+      });
+      const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      expect(intercepted).toBe(true);
+      expect(response.status()).toBe(200);
+    });
   });
 
   describe('Interception vs isNavigationRequest', () => {
