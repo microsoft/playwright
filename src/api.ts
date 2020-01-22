@@ -24,7 +24,7 @@ export { TimeoutError } from './errors';
 export { Frame } from './frames';
 export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
-export { Request, Response, WebSocket } from './network';
+export { Request, Response } from './network';
 export { Coverage, FileChooser, Page, Worker } from './page';
 
 export { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';

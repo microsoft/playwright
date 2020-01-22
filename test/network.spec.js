@@ -344,7 +344,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
   });
 
-  describe.skip(FFOX)('WebSocket', function() {
+  false && describe.skip(FFOX)('WebSocket', function() {
     it('should work', async({page, server}) => {
       const value = await page.evaluate((port) => {
         let cb;

@@ -129,7 +129,6 @@
   * [event: 'requestfailed'](#event-requestfailed)
   * [event: 'requestfinished'](#event-requestfinished)
   * [event: 'response'](#event-response)
-  * [event: 'websocket'](#event-websocket)
   * [event: 'workercreated'](#event-workercreated)
   * [event: 'workerdestroyed'](#event-workerdestroyed)
   * [page.$(selector)](#pageselector)
@@ -215,17 +214,6 @@
   * [response.statusText()](#responsestatustext)
   * [response.text()](#responsetext)
   * [response.url()](#responseurl)
-- [class: WebSocket](#class-websocket)
-  * [event: 'close'](#event-close-1)
-  * [event: 'error'](#event-error)
-  * [event: 'messageReceived'](#event-messagereceived)
-  * [event: 'messageSent'](#event-messagesent)
-  * [event: 'open'](#event-open)
-  * [webSocket.requestHeaders()](#websocketrequestheaders)
-  * [webSocket.responseHeaders()](#websocketresponseheaders)
-  * [webSocket.status()](#websocketstatus)
-  * [webSocket.statusText()](#websocketstatustext)
-  * [webSocket.url()](#websocketurl)
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
   * [accessibility.snapshot([options])](#accessibilitysnapshotoptions)
@@ -1836,11 +1824,6 @@ Emitted when a request finishes successfully.
 
 Emitted when a [response] is received.
 
-#### event: 'websocket'
-- <[WebSocket]>
-
-Emitted when a WebSocket request is made.
-
 #### event: 'workercreated'
 - <[Worker]>
 
@@ -3019,54 +3002,6 @@ Contains the status text of the response (e.g. usually an "OK" for a success).
 - returns: <[string]>
 
 Contains the URL of the response.
-
-### class: WebSocket
-
-[WebSocket] class represents web sockets that are created by page.
-
-#### event: 'close'
-
-Emitted when web socket closes.
-
-#### event: 'error'
-<[string]>
-
-Emitted on error while establishing the connection, sending or receiving the web socket frame.
-
-#### event: 'messageReceived'
-- <[string]|[Buffer]>
-
-Emitted when web socket receives data.
-
-#### event: 'messageSent'
-- <[string]|[Buffer]>
-
-Emitted when web socket sends data.
-
-#### event: 'open'
-
-Emitted when web socket opens.
-
-#### webSocket.requestHeaders()
-- returns: <[Object]> An object with HTTP headers associated with the WebSocket upgrade request. All header names are lower-case.
-
-#### webSocket.responseHeaders()
-- returns: <[Object]> An object with HTTP headers associated with the WebSocket upgrade response. All header names are lower-case.
-
-#### webSocket.status()
-- returns: <[number]>
-
-Contains the status code of the web socket (e.g., 101 for a successful upgrade).
-
-#### webSocket.statusText()
-- returns: <[string]>
-
-Contains the status text of the web socket response (e.g. usually "Switching Protocols" for a successful upgrade).
-
-#### webSocket.url()
-- returns: <[string]>
-
-Contains the URL of the web socket.
 
 ### class: TimeoutError
 
