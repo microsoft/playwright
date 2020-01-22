@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-set +x
+set -x
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
@@ -11,15 +11,15 @@ if [[ "$(uname)" == "Darwin" ]]; then
 elif [[ "$(uname)" == "Linux" ]]; then
   cd "checkout"
   if [[ "$1" == "--wpe" ]]; then
-    if ! [[ -d ./WebKitBuild/DependenciesWPE ]]; then
-      yes | DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitwpe-libs
+    if ! [[ -d ./WebKitBuild/WPE/DependenciesWPE ]]; then
+      yes | WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitwpe-libs
     fi
-    ./Tools/Scripts/build-webkit --wpe --release --touch-events MiniBrowser
+    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release --touch-events MiniBrowser
   else
-    if ! [[ -d ./WebKitBuild/DependenciesGTK ]]; then
-      yes | DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
+    if ! [[ -d ./WebKitBuild/GTK/DependenciesGTK ]]; then
+      yes | WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
     fi
-    ./Tools/Scripts/build-webkit --gtk --release --touch-events MiniBrowser
+    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release --touch-events MiniBrowser
   fi
 elif [[ "$(uname)" == MINGW* ]]; then
   /c/Windows/System32/cmd.exe "/c buildwin.bat"
