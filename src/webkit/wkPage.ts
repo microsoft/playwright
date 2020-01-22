@@ -220,10 +220,10 @@ export class WKPage implements PageDelegate {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<void> {
-    await this._forAllsSessions(session => session.send(method, params).then());
+    await this._forAllSessions(session => session.send(method, params).then());
   }
 
-  private async _forAllsSessions(callback: ((session: WKSession) => Promise<void>)): Promise<void> {
+  private async _forAllSessions(callback: ((session: WKSession) => Promise<void>)): Promise<void> {
     const sessions = [
       this._session
     ];
@@ -375,7 +375,7 @@ export class WKPage implements PageDelegate {
   }
 
   async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
-    await this._forAllsSessions(session => WKPage._setEmulateMedia(session, mediaType, colorScheme));
+    await this._forAllSessions(session => WKPage._setEmulateMedia(session, mediaType, colorScheme));
   }
 
   async setViewport(viewport: types.Viewport): Promise<void> {
