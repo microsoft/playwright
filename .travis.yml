@@ -25,7 +25,6 @@ cache:
   directories:
     - node_modules
 script:
-  - "pushd .local-webkit/$(ls .local-webkit)/minibrowser-wpe; ls -1 | grep -v pw_run.sh | LD_LIBRARY_PATH=$PWD xargs ldd; popd"
   - "npm run build"
   - "xvfb-run --auto-servernum npm run unit"
   - "xvfb-run --auto-servernum npm run funit"
