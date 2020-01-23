@@ -52,6 +52,7 @@ export class FFPage implements PageDelegate {
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
     this._networkManager = new FFNetworkManager(session, this._page);
+    this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame));
     this._eventListeners = [
       helper.addEventListener(this._session, 'Page.eventFired', this._onEventFired.bind(this)),
       helper.addEventListener(this._session, 'Page.frameAttached', this._onFrameAttached.bind(this)),
@@ -120,6 +121,13 @@ export class FFPage implements PageDelegate {
       return;
     this._contextIdToContext.delete(executionContextId);
     context.frame._contextDestroyed(context as dom.FrameExecutionContext);
+  }
+
+  private _removeContextsForFrame(frame: frames.Frame) {
+    for (const [contextId, context] of this._contextIdToContext) {
+      if (context.frame === frame)
+        this._contextIdToContext.delete(contextId);
+    }
   }
 
   _onNavigationStarted() {

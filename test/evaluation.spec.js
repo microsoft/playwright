@@ -331,6 +331,20 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(await page.frames()[0].evaluate(() => document.body.textContent.trim())).toBe('');
       expect(await page.frames()[1].evaluate(() => document.body.textContent.trim())).toBe(`Hi, I'm frame`);
     });
+    it('should dispose context on navigation', async({page, server}) => {
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+      expect(page.frames().length).toBe(2);
+      expect(page._delegate._contextIdToContext.size).toBe(4);
+      await page.goto(server.EMPTY_PAGE);
+      expect(page._delegate._contextIdToContext.size).toBe(2);
+    });
+    it('should dispose context on cross-origin navigation', async({page, server}) => {
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+      expect(page.frames().length).toBe(2);
+      expect(page._delegate._contextIdToContext.size).toBe(4);
+      await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      expect(page._delegate._contextIdToContext.size).toBe(2);
+    });
     it('should execute after cross-site navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const mainFrame = page.mainFrame();
