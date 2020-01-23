@@ -26,6 +26,7 @@ cache:
     - node_modules
 script:
   - "npm run build"
+  - "npm run lint"
   - "xvfb-run --auto-servernum npm run unit"
   - "xvfb-run --auto-servernum npm run funit"
   - "xvfb-run --auto-servernum npm run wunit"
