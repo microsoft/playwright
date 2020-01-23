@@ -140,7 +140,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Playwright.connect', function() {
     it.skip(WEBKIT)('should be able to reconnect to a browser', async({server}) => {
       const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const browser = await browserServer.connect();
+      const browser = await playwright.connect(browserServer.connectOptions());
       const browserWSEndpoint = browserServer.wsEndpoint();
       const page = await browser.defaultContext().newPage();
       await page.goto(server.PREFIX + '/frames/nested-frames.html');

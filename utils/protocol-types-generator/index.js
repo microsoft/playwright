@@ -12,7 +12,8 @@ async function generateChromiunProtocol(revision) {
   const playwright = await require('../../index').chromium;
   const browserServer = await playwright.launchServer({executablePath: revision.executablePath});
   const origin = browserServer.wsEndpoint().match(/ws:\/\/([0-9A-Za-z:\.]*)\//)[1];
-  const page = await (await browserServer.connect()).defaultContext().newPage();
+  const browser = await playwright.connect(browserServer.connectOptions());
+  const page = await browser.defaultContext().newPage();
   await page.goto(`http://${origin}/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
   await browserServer.close();

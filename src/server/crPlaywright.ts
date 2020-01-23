@@ -66,13 +66,6 @@ export class CRBrowserServer {
     this._connectOptions = connectOptions;
   }
 
-  async connect(): Promise<CRBrowser> {
-    const browser = await CRBrowser.connect(this._connectOptions);
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = this._gracefullyClose;
-    return browser;
-  }
-
   process(): ChildProcess {
     return this._process;
   }
@@ -101,7 +94,10 @@ export class CRPlaywright implements Playwright {
 
   async launch(options?: LaunchOptions): Promise<CRBrowser> {
     const server = await this.launchServer(options);
-    return server.connect();
+    const browser = await CRBrowser.connect(server.connectOptions());
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    browser.close = () => server.close();
+    return browser;
   }
 
   async launchServer(options: LaunchOptions = {}): Promise<CRBrowserServer> {

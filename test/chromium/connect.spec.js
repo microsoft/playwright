@@ -25,7 +25,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Playwright.connect', function() {
     it('should be able to connect multiple times to the same browser', async({server}) => {
       const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const local = await browserServer.connect();
+      const local = await playwright.connect(browserServer.connectOptions());
       const remote = await playwright.connect({
         ...defaultBrowserOptions,
         browserWSEndpoint: browserServer.wsEndpoint()
@@ -40,7 +40,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should be able to close remote browser', async({server}) => {
       const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const local = await browserServer.connect();
+      const local = await playwright.connect(browserServer.connectOptions());
       const remote = await playwright.connect({
         ...defaultBrowserOptions,
         browserWSEndpoint: browserServer.wsEndpoint()
@@ -53,7 +53,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     // @see https://github.com/GoogleChrome/puppeteer/issues/4197#issuecomment-481793410
     it('should be able to connect to the same page simultaneously', async({server}) => {
       const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const local = await browserServer.connect();
+      const local = await playwright.connect(browserServer.connectOptions());
       const remote = await playwright.connect({ ...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint() });
       const [page1, page2] = await Promise.all([
         new Promise(x => local.once('targetcreated', target => x(target.page()))),

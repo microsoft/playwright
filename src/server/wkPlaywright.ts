@@ -69,13 +69,6 @@ export class WKBrowserServer {
     this._connectOptions = connectOptions;
   }
 
-  async connect(): Promise<WKBrowser> {
-    const browser = await WKBrowser.connect(this._connectOptions);
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = this._gracefullyClose;
-    return browser;
-  }
-
   process(): ChildProcess {
     return this._process;
   }
@@ -104,7 +97,10 @@ export class WKPlaywright implements Playwright {
 
   async launch(options?: LaunchOptions): Promise<WKBrowser> {
     const server = await this.launchServer(options);
-    return server.connect();
+    const browser = await WKBrowser.connect(server.connectOptions());
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    browser.close = () => server.close();
+    return browser;
   }
 
   async launchServer(options: LaunchOptions = {}): Promise<WKBrowserServer> {

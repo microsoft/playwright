@@ -63,13 +63,6 @@ export class FFBrowserServer {
     this._connectOptions = connectOptions;
   }
 
-  async connect(): Promise<FFBrowser> {
-    const browser = await FFBrowser.connect(this._connectOptions);
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = this._gracefullyClose;
-    return browser;
-  }
-
   process(): ChildProcess {
     return this._process;
   }
@@ -98,7 +91,10 @@ export class FFPlaywright implements Playwright {
 
   async launch(options: LaunchOptions): Promise<FFBrowser> {
     const server = await this.launchServer(options);
-    return server.connect();
+    const browser = await FFBrowser.connect(server.connectOptions());
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    browser.close = () => server.close();
+    return browser;
   }
 
   async launchServer(options: LaunchOptions = {}): Promise<FFBrowserServer> {
