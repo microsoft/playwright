@@ -566,13 +566,17 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.setRequestInterception(true);
       expect(await page.evaluate(() => navigator.onLine)).toBe(true);
       let intercepted;
-      page.on('request', async request => {
-        intercepted = true;
-        await page.setRequestInterception(false);
-      });
+      const finished = new Promise(callback => {
+        page.on('request', async request => {
+          intercepted = true;
+          await page.setRequestInterception(false);
+          callback();
+        });
+      })
       const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(intercepted).toBe(true);
       expect(response.status()).toBe(200);
+      await finished;
     });
   });
 
