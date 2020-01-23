@@ -218,11 +218,6 @@ export class Request {
   }
 }
 
-export type RemoteAddress = {
-  ip: string,
-  port: number,
-};
-
 type GetResponseBodyCallback = () => Promise<platform.BufferType>;
 
 export class Response {
@@ -230,20 +225,18 @@ export class Response {
   private _contentPromise: Promise<platform.BufferType> | null = null;
   _finishedPromise: Promise<Error | null>;
   private _finishedPromiseCallback: any;
-  private _remoteAddress: RemoteAddress;
   private _status: number;
   private _statusText: string;
   private _url: string;
   private _headers: Headers;
   private _getResponseBodyCallback: GetResponseBodyCallback;
 
-  constructor(request: Request, status: number, statusText: string, headers: Headers, remoteAddress: RemoteAddress, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: Headers, getResponseBodyCallback: GetResponseBodyCallback) {
     this._request = request;
     this._status = status;
     this._statusText = statusText;
     this._url = request.url();
     this._headers = headers;
-    this._remoteAddress = remoteAddress;
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._finishedPromise = new Promise(f => {
       this._finishedPromiseCallback = f;
@@ -253,10 +246,6 @@ export class Response {
 
   _requestFinished(error?: Error) {
     this._finishedPromiseCallback.call(null, error);
-  }
-
-  remoteAddress(): RemoteAddress {
-    return this._remoteAddress;
   }
 
   url(): string {

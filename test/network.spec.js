@@ -217,8 +217,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(requests[0].frame() === page.mainFrame()).toBe(true);
       expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
     });
-    // FIXME: WebKit doesn't provide remoteIPAddress in the response.
-    it.skip(WEBKIT)('Page.Events.Response', async({page, server}) => {
+    it('Page.Events.Response', async({page, server}) => {
       const responses = [];
       page.on('response', response => responses.push(response));
       await page.goto(server.EMPTY_PAGE);
@@ -227,10 +226,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(responses[0].status()).toBe(200);
       expect(responses[0].ok()).toBe(true);
       expect(responses[0].request()).toBeTruthy();
-      const remoteAddress = responses[0].remoteAddress();
-      // Either IPv6 or IPv4, depending on environment.
-      expect(remoteAddress.ip.includes('::1') || remoteAddress.ip === '127.0.0.1').toBe(true);
-      expect(remoteAddress.port).toBe(server.PORT);
     });
 
     it.skip(FFOX)('Page.Events.RequestFailed', async({page, server}) => {

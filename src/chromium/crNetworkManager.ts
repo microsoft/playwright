@@ -200,12 +200,11 @@ export class CRNetworkManager {
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
-    const remoteAddress: network.RemoteAddress = { ip: responsePayload.remoteIPAddress || '', port: responsePayload.remotePort || 0 };
     const getResponseBody = async () => {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
       return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
-    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), remoteAddress, getResponseBody);
+    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), getResponseBody);
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
