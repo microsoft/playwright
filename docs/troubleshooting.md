@@ -181,7 +181,7 @@ export CHROME_DEVEL_SANDBOX=/usr/local/sbin/chrome-devel-sandbox
 
 ### Running Playwright on Travis CI
 
-> 👋 We run our tests for Playwright on Travis CI - see our [`.travis.yml`](https://github.com/playwright/playwright/blob/master/.travis.yml) for reference.
+> 👋 We run our tests for Playwright on Travis CI - see our [`.travis.yml`](https://github.com/microsoft/playwright/blob/master/.travis.yml) for reference.
 
 Tips-n-tricks:
 - The `libnss3` package must be installed in order to run Chromium on Ubuntu Trusty
