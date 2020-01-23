@@ -78,7 +78,7 @@ const iPhone = playwright.devices['iPhone 6'];
   const browser = await playwright.launch();
   const context = await browser.newContext({
     viewport: iPhone.viewport,
-    userAgent: iPhone.userAgent;
+    userAgent: iPhone.userAgent
   });
   const page = await context.newPage('http://example.com');
   // other actions...
