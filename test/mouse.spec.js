@@ -56,7 +56,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       expect(event.isTrusted).toBe(true);
       expect(event.button).toBe(0);
     });
-    it.skip(WEBKIT)('should select the text with mouse', async({page, server}) => {
+    it('should select the text with mouse', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.focus('textarea');
       const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
