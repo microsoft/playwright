@@ -5393,6 +5393,49 @@ index 1d2febfba8833912f72216aa53c8c20090ee2d8b..1b2c3d84b15b12f1a187c0b7622db43c
  } WKPageUIClientV14;
  
  #ifdef __cplusplus
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
+index 08e5b9f0135eafe1aa8f4de4a82b6b890bb919b3..aeba2827bf182556aed407dd8956ef93d267893d 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
++++ b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
+@@ -47,6 +47,7 @@
+ #import "_WKDownloadDelegate.h"
+ #import "_WKDownloadInternal.h"
+ #import "_WKProcessPoolConfigurationInternal.h"
++#import "_WKWebsiteDataStoreInternal.h"
+ #import <WebCore/CertificateInfo.h>
+ #import <WebCore/PluginData.h>
+ #import <WebCore/RegistrableDomain.h>
+@@ -84,6 +85,18 @@ static WKProcessPool *sharedProcessPool;
+     return self;
+ }
+ 
++- (instancetype)_initWithConfiguration:(_WKProcessPoolConfiguration *)configuration AndDataStore:(WKWebsiteDataStore*)dataStore
++{
++    if (!(self = [super init]))
++        return nil;
++
++    API::Object::constructInWrapper<WebKit::WebProcessPool>(self, *configuration->_processPoolConfiguration);
++    _processPool->setPrimaryDataStore(*dataStore->_websiteDataStore);
++
++    return self;
++}
++
++
+ - (instancetype)init
+ {
+     return [self _initWithConfiguration:adoptNS([[_WKProcessPoolConfiguration alloc] init]).get()];
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h
+index 7cfd05697f25ca66a530b2d497706adbf284b068..c24081d210e4baeb5f7f7868eddd5afc111f687b 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h
++++ b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h
+@@ -37,6 +37,7 @@
+ 
+ @interface WKProcessPool ()
+ - (instancetype)_initWithConfiguration:(_WKProcessPoolConfiguration *)configuration __attribute__((objc_method_family(init))) NS_DESIGNATED_INITIALIZER;
++- (instancetype)_initWithConfiguration:(_WKProcessPoolConfiguration *)configuration AndDataStore:(WKWebsiteDataStore *)dataStore __attribute__((objc_method_family(init))) NS_DESIGNATED_INITIALIZER;
+ @end
+ 
+ @interface WKProcessPool (WKPrivate)
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h b/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
 index cad87f3ef2ab93d93a74cec0c34b47c695de6bc6..66145a384638b97ee08516e56e1e86a83713c634 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
@@ -12111,10 +12154,10 @@ index 0000000000000000000000000000000000000000..44dc1139c298bd119368ef4f45bbf088
 +#include "../../ccache/ccache.xcconfig"
 diff --git a/Tools/Playwright/Configurations/Playwright.xcconfig b/Tools/Playwright/Configurations/Playwright.xcconfig
 new file mode 100644
-index 0000000000000000000000000000000000000000..085126eb199ec714f7e8d7bc7d7b361ef55ebb73
+index 0000000000000000000000000000000000000000..d05c841a5b0f5fce481f16b8c98caf3a5846db77
 --- /dev/null
 +++ b/Tools/Playwright/Configurations/Playwright.xcconfig
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,30 @@
 +// Copyright (C) 2010 Apple Inc. All rights reserved.
 +//
 +// Redistribution and use in source and binary forms, with or without
@@ -12139,7 +12182,6 @@ index 0000000000000000000000000000000000000000..085126eb199ec714f7e8d7bc7d7b361e
 +// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 +
 +PRODUCT_NAME = Playwright
-+CODE_SIGN_ENTITLEMENTS = Playwright.entitlements;
 +PRODUCT_BUNDLE_IDENTIFIER = org.webkit.$(PRODUCT_NAME:rfc1034identifier)
 +GCC_PREFIX_HEADER = mac/Playwright_Prefix.pch
 +INFOPLIST_FILE = mac/Info.plist
@@ -12298,33 +12340,6 @@ index 0000000000000000000000000000000000000000..58e52428388d927ae7681d999e6dd28e
 +clean: ;
 +
 +endif
-diff --git a/Tools/Playwright/Playwright.entitlements b/Tools/Playwright/Playwright.entitlements
-new file mode 100644
-index 0000000000000000000000000000000000000000..e4c2ba180f395dca1d341db666d5c34c2ea3ec2e
---- /dev/null
-+++ b/Tools/Playwright/Playwright.entitlements
-@@ -0,0 +1,21 @@
-+<?xml version="1.0" encoding="UTF-8"?>
-+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-+<plist version="1.0">
-+<dict>
-+	<key>com.apple.security.app-sandbox</key>
-+	<true/>
-+	<key>com.apple.security.device.usb</key>
-+	<true/>
-+	<key>com.apple.security.files.user-selected.read-write</key>
-+	<true/>
-+	<key>com.apple.security.network.client</key>
-+	<true/>
-+	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
-+	<string>/</string>
-+	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
-+	<array>
-+		<string>com.apple.Safari.SafeBrowsing.Service</string>
-+		<string>com.apple.WebKit.NetworkingDaemon</string>
-+	</array>
-+</dict>
-+</plist>
 diff --git a/Tools/Playwright/Playwright.xcodeproj/project.pbxproj b/Tools/Playwright/Playwright.xcodeproj/project.pbxproj
 new file mode 100644
 index 0000000000000000000000000000000000000000..75a945e72d9fcad94bb89fc6325df18d3259383d
@@ -12681,10 +12696,10 @@ index 0000000000000000000000000000000000000000..00fb6b0006c743091a8bbf8edb18b211
 +</Scheme>
 diff --git a/Tools/Playwright/mac/AppDelegate.h b/Tools/Playwright/mac/AppDelegate.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..8d655761a2fb4e0295a965d4fe9e4908deaf89ec
+index 0000000000000000000000000000000000000000..465cb7827fc47927c4e1fc6e47c6608f4ef21d26
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.h
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,56 @@
 +/*
 + * Copyright (C) 2010 Apple Inc. All rights reserved.
 + *
@@ -12725,6 +12740,7 @@ index 0000000000000000000000000000000000000000..8d655761a2fb4e0295a965d4fe9e4908
 +    bool _headless;
 +    NSMutableSet *_dialogs;
 +    NSString* _initialURL;
++    NSString* _userDataDir;
 +    IBOutlet NSMenuItem *_newWebKit2WindowItem;
 +}
 +
@@ -12742,10 +12758,10 @@ index 0000000000000000000000000000000000000000..8d655761a2fb4e0295a965d4fe9e4908
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1a31459dc
+index 0000000000000000000000000000000000000000..84e0cd9c2d20111e936e4b16519d20bcd5aa37db
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,448 @@
+@@ -0,0 +1,486 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -12833,6 +12849,7 @@ index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1
 +        return nil;
 +
 +    _initialURL = nil;
++    _userDataDir = nil;
 +    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
 +    NSRange subargs = NSMakeRange(1, [arguments count] - 1);
 +    NSArray *subArray = [arguments subarrayWithRange:subargs];
@@ -12840,6 +12857,10 @@ index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1
 +    for (NSString *argument in subArray) {
 +        if (![argument hasPrefix:@"--"])
 +            _initialURL = argument;
++        if ([argument hasPrefix:@"--user-data-dir="]) {
++            NSRange range = NSMakeRange(16, [argument length] - 16);
++            _userDataDir = [[argument substringWithRange:range] copy];
++        }
 +    }
 +
 +    _headless = [arguments containsObject: @"--headless"];
@@ -12866,13 +12887,46 @@ index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1
 +        [NSApp setAutomaticCustomizeTouchBarMenuItemEnabled:YES];
 +}
 +
-+static WKWebsiteDataStore *persistentDataStore()
++- (WKWebsiteDataStore *)persistentDataStore
 +{
 +    static WKWebsiteDataStore *dataStore;
 +
 +    if (!dataStore) {
 +        _WKWebsiteDataStoreConfiguration *configuration = [[[_WKWebsiteDataStoreConfiguration alloc] init] autorelease];
-+        configuration.networkCacheSpeculativeValidationEnabled = YES;
++        if (_userDataDir) {
++            NSURL *cookieFile = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/cookie.db", _userDataDir]];
++            [configuration _setCookieStorageFile:cookieFile];
++
++            NSURL *applicationCacheDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/ApplicationCache", _userDataDir]];
++            [configuration setApplicationCacheDirectory:applicationCacheDirectory];
++
++            NSURL *cacheStorageDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/CacheStorage", _userDataDir]];
++            [configuration _setCacheStorageDirectory:cacheStorageDirectory];
++
++            NSURL *indexedDBDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/IndexedDB", _userDataDir]];
++            [configuration _setIndexedDBDatabaseDirectory:indexedDBDirectory];
++
++            NSURL *localStorageDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/LocalStorage", _userDataDir]];
++            [configuration _setWebStorageDirectory:localStorageDirectory];
++
++            NSURL *mediaCacheDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/MediaCache", _userDataDir]];
++            [configuration setMediaCacheDirectory:mediaCacheDirectory];
++
++            NSURL *mediaKeysDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/MediaKeys", _userDataDir]];
++            [configuration setMediaKeysStorageDirectory:mediaKeysDirectory];
++
++            NSURL *networkCacheDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/NetworkCache", _userDataDir]];
++            [configuration setNetworkCacheDirectory:networkCacheDirectory];
++
++            NSURL *loadStatsDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/ResourceLoadStatistics", _userDataDir]];
++            [configuration _setResourceLoadStatisticsDirectory:loadStatsDirectory];
++
++            NSURL *serviceWorkersDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/ServiceWorkers", _userDataDir]];
++            [configuration _setServiceWorkerRegistrationDirectory:serviceWorkersDirectory];
++
++            NSURL *webSqlDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/WebSQL", _userDataDir]];
++            [configuration _setWebSQLDatabaseDirectory:webSqlDirectory];
++        }
 +        dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
 +    }
 +
@@ -12885,7 +12939,7 @@ index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1
 +
 +    if (!configuration) {
 +        configuration = [[WKWebViewConfiguration alloc] init];
-+        configuration.websiteDataStore = persistentDataStore();
++        configuration.websiteDataStore = [self persistentDataStore];
 +        configuration.preferences._fullScreenEnabled = YES;
 +        configuration.preferences._developerExtrasEnabled = YES;
 +        configuration.preferences._mediaDevicesEnabled = YES;
@@ -12896,7 +12950,7 @@ index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1
 +        configuration.preferences._domTimersThrottlingEnabled = NO;
 +        configuration.preferences._requestAnimationFrameEnabled = YES;
 +        _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
-+        configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
++        configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration AndDataStore:configuration.websiteDataStore] autorelease];
 +    }
 +    return configuration;
 +}
@@ -13196,10 +13250,10 @@ index 0000000000000000000000000000000000000000..46c514097df0555f4f4ad5a135359fe1
 +@end
 diff --git a/Tools/Playwright/mac/BrowserWindow.xib b/Tools/Playwright/mac/BrowserWindow.xib
 new file mode 100644
-index 0000000000000000000000000000000000000000..aed963e861f27a467bb6a38859f8d3a446f578b8
+index 0000000000000000000000000000000000000000..f6f3d8e3a0f163e61b2f3d54819e9d25a0a3eb75
 --- /dev/null
 +++ b/Tools/Playwright/mac/BrowserWindow.xib
-@@ -0,0 +1,169 @@
+@@ -0,0 +1,153 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11191" systemVersion="16D17a" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
 +    <dependencies>
@@ -13285,22 +13339,6 @@ index 0000000000000000000000000000000000000000..aed963e861f27a467bb6a38859f8d3a4
 +                            </buttonCell>
 +                            <connections>
 +                                <action selector="reload:" target="-2" id="35"/>
-+                            </connections>
-+                        </button>
-+                    </toolbarItem>
-+                    <toolbarItem implicitItemIdentifier="76DCF2B0-1DDE-47D2-9212-705E6E310CCE" label="Use Shrink To Fit" paletteLabel="Use Shrink To Fit" image="NSEnterFullScreenTemplate" id="81" customClass="MBToolbarItem">
-+                        <nil key="toolTip"/>
-+                        <size key="minSize" width="29" height="27"/>
-+                        <size key="maxSize" width="29" height="27"/>
-+                        <button key="view" verticalHuggingPriority="750" id="82">
-+                            <rect key="frame" x="34" y="14" width="29" height="25"/>
-+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-+                            <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSEnterFullScreenTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="83">
-+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-+                                <font key="font" metaFont="system"/>
-+                            </buttonCell>
-+                            <connections>
-+                                <action selector="toggleShrinkToFit:" target="-2" id="gp7-Vk-KTI"/>
 +                            </connections>
 +                        </button>
 +                    </toolbarItem>
