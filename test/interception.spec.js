@@ -545,7 +545,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe.skip(FFOX)('Interception.setOfflineMode', function() {
-    it('should work', async({page, server}) => {
+    it.skip(WEBKIT)('should work', async({page, server}) => {
       await page.setOfflineMode(true);
       let error = null;
       await page.goto(server.EMPTY_PAGE).catch(e => error = e);
