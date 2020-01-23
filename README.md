@@ -4,7 +4,9 @@
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
 
-Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
+Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. This includes support for the new Microsoft Edge browser, which is based on Chromium.
+
+Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
 
 
 |          | ver | Linux | macOS | Win |
