@@ -91,6 +91,18 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(remote.isConnected()).toBe(false);
       await browserServer.close();
     });
+    it('should throw when used after isConnected returns false', async({server}) => {
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const page = await remote.defaultContext().newPage();
+      await Promise.all([
+        browserServer.close(),
+        new Promise(f => remote.once('disconnected', f)),
+      ]);
+      expect(remote.isConnected()).toBe(false);
+      const error = await page.evaluate('1 + 1').catch(e => e);
+      expect(error.message).toContain('has been closed');
+    });
   });
 
   describe('Browser.disconnect', function() {
@@ -115,6 +127,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await remote.disconnect();
       const error = await watchdog;
       expect(error.message).toContain('Protocol error');
+      await browserServer.close();
+    });
+    it('should throw if used after disconnect', async({server}) => {
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const page = await remote.defaultContext().newPage();
+      await remote.disconnect();
+      const error = await page.evaluate('1 + 1').catch(e => e);
+      expect(error.message).toContain('has been closed');
       await browserServer.close();
     });
   });
