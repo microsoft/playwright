@@ -26,6 +26,8 @@
     "fcoverage": "cross-env COVERAGE=true BROWSER=firefox npm run unit",
     "wcoverage": "cross-env COVERAGE=true BROWSER=webkit npm run unit",
     "tsc": "tsc -p .",
+    "clean": "rimraf lib",
+    "prepublishOnly": "npm run clean",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
     "apply-next-version": "node utils/apply_next_version.js",
