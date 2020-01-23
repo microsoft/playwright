@@ -3807,10 +3807,10 @@ index 0000000000000000000000000000000000000000..a2d3b79469566ca2edb7d864621f7085
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..708059a95b3a01f3d9c7b7ef4714ee6f8ab26b94
+index 0000000000000000000000000000000000000000..9bf14b3c4842d15508f67daa10f350475551a73e
 --- /dev/null
 +++ b/testing/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,72 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -3829,6 +3829,12 @@ index 0000000000000000000000000000000000000000..708059a95b3a01f3d9c7b7ef4714ee6f
 +  }
 +
 +  async close() {
++    let browserWindow = Services.wm.getMostRecentWindow(
++      "navigator:browser"
++    );
++    if (browserWindow && browserWindow.gBrowserInit) {
++      await browserWindow.gBrowserInit.idleTasksFinishedPromise;
++    }
 +    Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
 +  }
 +
