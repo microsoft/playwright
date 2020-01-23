@@ -283,7 +283,12 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport) {
     }
     socket = s;
     s.on('message', message => transport.send(Buffer.from(message).toString()));
-    transport.onmessage = message => s.send(message);
+    transport.onmessage = message => {
+      // We are not notified when socket starts closing, and sending messages to a closing
+      // socket throws an error.
+      if (s.readyState !== ws.CLOSING)
+        s.send(message);
+    };
     s.on('close', () => {
       socket = undefined;
       transport.onmessage = undefined;
