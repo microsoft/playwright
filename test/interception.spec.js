@@ -572,7 +572,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
           await page.setRequestInterception(false);
           callback();
         });
-      })
+      });
       const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(intercepted).toBe(true);
       expect(response.status()).toBe(200);
