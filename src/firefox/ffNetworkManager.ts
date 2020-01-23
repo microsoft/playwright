@@ -71,7 +71,6 @@ export class FFNetworkManager {
     const request = this._requests.get(event.requestId);
     if (!request)
       return;
-    const remoteAddress: network.RemoteAddress = { ip: event.remoteIPAddress || '', port: event.remotePort || 0 };
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', {
         requestId: request._id
@@ -83,7 +82,7 @@ export class FFNetworkManager {
     const headers: network.Headers = {};
     for (const {name, value} of event.headers)
       headers[name.toLowerCase()] = value;
-    const response = new network.Response(request.request, event.status, event.statusText, headers, remoteAddress, getResponseBody);
+    const response = new network.Response(request.request, event.status, event.statusText, headers, getResponseBody);
     this._page._frameManager.requestReceivedResponse(response);
   }
 

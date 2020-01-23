@@ -109,12 +109,11 @@ export class WKInterceptableRequest implements network.RequestDelegate {
   }
 
   createResponse(responsePayload: Protocol.Network.Response): network.Response {
-    const remoteAddress: network.RemoteAddress = { ip: '', port: 0 };
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
       return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
-    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), remoteAddress, getResponseBody);
+    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), getResponseBody);
   }
 }
 
