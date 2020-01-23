@@ -23,14 +23,15 @@ import { BrowserFetcher, BrowserFetcherOptions } from '../server/browserFetcher'
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as types from '../types';
 import { assert } from '../helper';
-import { CRBrowser, CRConnectOptions, createTransport } from '../chromium/crBrowser';
+import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
 import { TimeoutError } from '../errors';
 import { launchProcess, waitForLine } from '../server/processLauncher';
-import { ChildProcess } from 'child_process';
 import { CRConnection } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
 import { Playwright } from './playwright';
+import { createTransport, ConnectOptions } from '../browser';
+import { BrowserApp } from './browserApp';
 
 export type SlowMoOptions = {
   slowMo?: number,
@@ -55,34 +56,6 @@ export type LaunchOptions = ChromiumArgOptions & SlowMoOptions & {
   pipe?: boolean,
 };
 
-export class CRBrowserServer {
-  private _process: ChildProcess;
-  private _gracefullyClose: () => Promise<void>;
-  private _connectOptions: CRConnectOptions;
-
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: CRConnectOptions) {
-    this._process = process;
-    this._gracefullyClose = gracefullyClose;
-    this._connectOptions = connectOptions;
-  }
-
-  process(): ChildProcess {
-    return this._process;
-  }
-
-  wsEndpoint(): string | null {
-    return this._connectOptions.browserWSEndpoint || null;
-  }
-
-  connectOptions(): CRConnectOptions {
-    return this._connectOptions;
-  }
-
-  async close(): Promise<void> {
-    await this._gracefullyClose();
-  }
-}
-
 export class CRPlaywright implements Playwright {
   private _projectRoot: string;
   readonly _revision: string;
@@ -93,14 +66,14 @@ export class CRPlaywright implements Playwright {
   }
 
   async launch(options?: LaunchOptions): Promise<CRBrowser> {
-    const server = await this.launchServer(options);
-    const browser = await CRBrowser.connect(server.connectOptions());
+    const app = await this.launchBrowserApp(options);
+    const browser = await CRBrowser.connect(app.connectOptions());
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => server.close();
+    browser.close = () => app.close();
     return browser;
   }
 
-  async launchServer(options: LaunchOptions = {}): Promise<CRBrowserServer> {
+  async launchBrowserApp(options: LaunchOptions = {}): Promise<BrowserApp> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -165,7 +138,7 @@ export class CRPlaywright implements Playwright {
       },
     });
 
-    let connectOptions: CRConnectOptions | undefined;
+    let connectOptions: ConnectOptions | undefined;
     if (!usePipe) {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
       const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
@@ -175,10 +148,23 @@ export class CRPlaywright implements Playwright {
       const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
       connectOptions = { slowMo, transport };
     }
-    return new CRBrowserServer(launchedProcess, gracefullyClose, connectOptions);
+    return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
   }
 
-  async connect(options: CRConnectOptions): Promise<CRBrowser> {
+  async connect(options: ConnectOptions & { browserURL?: string }): Promise<CRBrowser> {
+    if (options.browserURL) {
+      assert(!options.browserWSEndpoint && !options.transport, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to connect');
+      let connectionURL: string;
+      try {
+        const data = await platform.fetchUrl(new URL('/json/version', options.browserURL).href);
+        connectionURL = JSON.parse(data).webSocketDebuggerUrl;
+      } catch (e) {
+        e.message = `Failed to fetch browser webSocket url from ${options.browserURL}: ` + e.message;
+        throw e;
+      }
+      const transport = await platform.createWebSocketTransport(connectionURL);
+      options = { ...options, transport };
+    }
     return CRBrowser.connect(options);
   }
 

@@ -20,8 +20,7 @@ import { DeviceDescriptors } from '../deviceDescriptors';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
 import { WKBrowser } from '../webkit/wkBrowser';
-import { WKConnectOptions } from '../webkit/wkBrowser';
-import { execSync, ChildProcess } from 'child_process';
+import { execSync } from 'child_process';
 import { PipeTransport } from './pipeTransport';
 import { launchProcess } from './processLauncher';
 import * as fs from 'fs';
@@ -35,6 +34,8 @@ import { Playwright } from './playwright';
 import { ConnectionTransport } from '../transport';
 import * as ws from 'ws';
 import * as uuidv4 from 'uuid/v4';
+import { ConnectOptions } from '../browser';
+import { BrowserApp } from './browserApp';
 
 export type SlowMoOptions = {
   slowMo?: number,
@@ -58,34 +59,6 @@ export type LaunchOptions = WebKitArgOptions & SlowMoOptions & {
   pipe?: boolean,
 };
 
-export class WKBrowserServer {
-  private _process: ChildProcess;
-  private _gracefullyClose: () => Promise<void>;
-  private _connectOptions: WKConnectOptions;
-
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: WKConnectOptions) {
-    this._process = process;
-    this._gracefullyClose = gracefullyClose;
-    this._connectOptions = connectOptions;
-  }
-
-  process(): ChildProcess {
-    return this._process;
-  }
-
-  wsEndpoint(): string | null {
-    return this._connectOptions.browserWSEndpoint || null;
-  }
-
-  connectOptions(): WKConnectOptions {
-    return this._connectOptions;
-  }
-
-  async close(): Promise<void> {
-    await this._gracefullyClose();
-  }
-}
-
 export class WKPlaywright implements Playwright {
   private _projectRoot: string;
   readonly _revision: string;
@@ -96,14 +69,14 @@ export class WKPlaywright implements Playwright {
   }
 
   async launch(options?: LaunchOptions): Promise<WKBrowser> {
-    const server = await this.launchServer(options);
-    const browser = await WKBrowser.connect(server.connectOptions());
+    const app = await this.launchBrowserApp(options);
+    const browser = await WKBrowser.connect(app.connectOptions());
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => server.close();
+    browser.close = () => app.close();
     return browser;
   }
 
-  async launchServer(options: LaunchOptions = {}): Promise<WKBrowserServer> {
+  async launchBrowserApp(options: LaunchOptions = {}): Promise<BrowserApp> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -166,17 +139,17 @@ export class WKPlaywright implements Playwright {
 
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
 
-    let connectOptions: WKConnectOptions;
+    let connectOptions: ConnectOptions;
     if (!pipe) {
       const browserWSEndpoint = wrapTransportWithWebSocket(transport);
       connectOptions = { browserWSEndpoint, slowMo };
     } else {
       connectOptions = { transport, slowMo };
     }
-    return new WKBrowserServer(launchedProcess, gracefullyClose, connectOptions);
+    return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
   }
 
-  async connect(options: WKConnectOptions): Promise<WKBrowser> {
+  async connect(options: ConnectOptions): Promise<WKBrowser> {
     return WKBrowser.connect(options);
   }
 

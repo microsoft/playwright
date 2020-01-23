@@ -15,24 +15,18 @@
  * limitations under the License.
  */
 
-import { Browser } from '../browser';
+import { Browser, createTransport, ConnectOptions } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page } from '../page';
-import { ConnectionTransport, SlowMoTransport } from '../transport';
+import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { Events } from '../events';
 import { Protocol } from './protocol';
 import { WKConnection, WKSession, kPageProxyMessageReceived, PageProxyMessageReceivedPayload } from './wkConnection';
 import { WKPageProxy } from './wkPageProxy';
 import * as platform from '../platform';
-
-export type WKConnectOptions = {
-  slowMo?: number,
-  browserWSEndpoint?: string,
-  transport?: ConnectionTransport,
-};
 
 export class WKBrowser extends platform.EventEmitter implements Browser {
   private readonly _connection: WKConnection;
@@ -45,7 +39,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   private _firstPageProxyCallback?: () => void;
   private readonly _firstPageProxyPromise: Promise<void>;
 
-  static async connect(options: WKConnectOptions): Promise<WKBrowser> {
+  static async connect(options: ConnectOptions): Promise<WKBrowser> {
     const transport = await createTransport(options);
     const browser = new WKBrowser(transport);
     // TODO: figure out the timeout.
@@ -227,14 +221,4 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     }, options);
     return context;
   }
-}
-
-export async function createTransport(options: WKConnectOptions): Promise<ConnectionTransport> {
-  assert(Number(!!options.browserWSEndpoint) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint or transport must be passed to connect');
-  let transport: ConnectionTransport | undefined;
-  if (options.transport)
-    transport = options.transport;
-  else if (options.browserWSEndpoint)
-    transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
-  return SlowMoTransport.wrap(transport!, options.slowMo);
 }

@@ -15,7 +15,9 @@
  */
 
 import { BrowserContext, BrowserContextOptions } from './browserContext';
+import { ConnectionTransport, SlowMoTransport } from './transport';
 import * as platform from './platform';
+import { assert } from './helper';
 
 export interface Browser extends platform.EventEmitterType {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
@@ -25,4 +27,20 @@ export interface Browser extends platform.EventEmitterType {
   disconnect(): Promise<void>;
   isConnected(): boolean;
   close(): Promise<void>;
+}
+
+export type ConnectOptions = {
+  slowMo?: number,
+  browserWSEndpoint?: string;
+  transport?: ConnectionTransport;
+};
+
+export async function createTransport(options: ConnectOptions): Promise<ConnectionTransport> {
+  assert(Number(!!options.browserWSEndpoint) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint or transport must be passed to connect');
+  let transport: ConnectionTransport | undefined;
+  if (options.transport)
+    transport = options.transport;
+  else if (options.browserWSEndpoint)
+    transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
+  return SlowMoTransport.wrap(transport!, options.slowMo);
 }

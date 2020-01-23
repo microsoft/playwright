@@ -7,6 +7,7 @@
 <!-- GEN:toc-top-level -->
 - [class: Playwright](#class-playwright)
 - [class: Browser](#class-browser)
+- [class: BrowserApp](#class-browserapp)
 - [class: BrowserContext](#class-browsercontext)
 - [class: ConsoleMessage](#class-consolemessage)
 - [class: Dialog](#class-dialog)
@@ -24,15 +25,12 @@
 - [class: Worker](#class-worker)
 - [class: ChromiumPlaywright](#class-chromiumplaywright)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
-- [class: ChromiumBrowserServer](#class-chromiumbrowserserver)
 - [class: ChromiumSession](#class-chromiumsession)
 - [class: ChromiumTarget](#class-chromiumtarget)
 - [class: FirefoxPlaywright](#class-firefoxplaywright)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
-- [class: FirefoxBrowserServer](#class-firefoxbrowserserver)
 - [class: WebKitPlaywright](#class-webkitplaywright)
 - [class: WebKitBrowser](#class-webkitbrowser)
-- [class: WebKitBrowserServer](#class-webkitbrowserserver)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
 - [Downloaded browsers](#downloaded-browsers)
@@ -128,17 +126,17 @@ const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
 })();
 ```
 
-An example of disconnecting from and reconnecting to a [Browser]:
+An example of launching a browser executable and connecting to a [Browser] later:
 ```js
 const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
 
 (async () => {
-  const browserServer = await playwright.launchServer();
-  const browserWSEndpoint = browserServer.wsEndpoint();
-  // Use the endpoint to establish a connection
-  const browser = await playwright.connect({browserWSEndpoint});
-  // Close Chromium
-  await browser.close();
+  const browserApp = await playwright.launchBrowserApp();
+  const connectOptions = browserApp.connectOptions();
+  // Use connect options later to establish a connection.
+  const browser = await playwright.connect(connectOptions);
+  // Close browser instance.
+  await browserApp.close();
 })();
 ```
 <!-- GEN:toc -->
@@ -213,6 +211,38 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   const page = await context.newPage('https://example.com');
 })();
 ```
+
+### class: BrowserApp
+
+<!-- GEN:toc -->
+- [browserApp.close()](#browserappclose)
+- [browserApp.connectOptions()](#browserappconnectoptions)
+- [browserApp.process()](#browserappprocess)
+- [browserApp.wsEndpoint()](#browserappwsendpoint)
+<!-- GEN:stop -->
+
+#### browserApp.close()
+- returns: <[Promise]>
+
+Closes the browser gracefully and makes sure the process is terminated.
+
+#### browserApp.connectOptions()
+- returns: <[Object]>
+  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `slowMo` <[number]>
+  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
+
+This options object can be passed to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions), [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions) or [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions) to establish connection to the browser.
+
+#### browserApp.process()
+- returns: <?[ChildProcess]> Spawned browser server process.
+
+#### browserApp.wsEndpoint()
+- returns: <?[string]> Browser websocket url.
+
+Browser websocket endpoint which can be used as an argument to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions), [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions) or [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions) to establish connection to the browser.
+
+Learn more about [Chromium devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
 
 ### class: BrowserContext
 
@@ -3191,7 +3221,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 - [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
 - [chromiumPlaywright.defaultArgs([options])](#chromiumplaywrightdefaultargsoptions)
 - [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
-- [chromiumPlaywright.launchServer([options])](#chromiumplaywrightlaunchserveroptions)
+- [chromiumPlaywright.launchBrowserApp([options])](#chromiumplaywrightlaunchbrowserappoptions)
 <!-- GEN:stop -->
 
 #### chromiumPlaywright.connect(options)
@@ -3248,7 +3278,7 @@ const browser = await playwright.launch({
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
 
-#### chromiumPlaywright.launchServer([options])
+#### chromiumPlaywright.launchBrowserApp([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run Chromium in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
@@ -3264,7 +3294,7 @@ const browser = await playwright.launch({
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
-- returns: <[Promise]<[ChromiumBrowserServer]>> Promise which resolves to browser server instance.
+- returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
 
 ### class: ChromiumBrowser
 
@@ -3363,39 +3393,6 @@ await page.evaluate(() => window.open('https://www.example.com/'));
 const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
-### class: ChromiumBrowserServer
-
-<!-- GEN:toc -->
-- [chromiumBrowserServer.close()](#chromiumbrowserserverclose)
-- [chromiumBrowserServer.connectOptions()](#chromiumbrowserserverconnectoptions)
-- [chromiumBrowserServer.process()](#chromiumbrowserserverprocess)
-- [chromiumBrowserServer.wsEndpoint()](#chromiumbrowserserverwsendpoint)
-<!-- GEN:stop -->
-
-#### chromiumBrowserServer.close()
-- returns: <[Promise]>
-
-Closes the browser gracefully and makes sure the process is terminated.
-
-#### chromiumBrowserServer.connectOptions()
-- returns: <[Object]>
-  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
-  - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-  - `slowMo` <[number]>
-  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
-
-This options object can be passed to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions) to establish connection to the browser.
-
-#### chromiumBrowserServer.process()
-- returns: <?[ChildProcess]> Spawned browser server process.
-
-#### chromiumBrowserServer.wsEndpoint()
-- returns: <?[string]> Browser websocket url.
-
-Browser websocket endpoint which can be used as an argument to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions).
-
-Learn more about the [devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-
 ### class: ChromiumSession
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
@@ -3484,7 +3481,7 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 - [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions)
 - [firefoxPlaywright.defaultArgs([options])](#firefoxplaywrightdefaultargsoptions)
 - [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions)
-- [firefoxPlaywright.launchServer([options])](#firefoxplaywrightlaunchserveroptions)
+- [firefoxPlaywright.launchBrowserApp([options])](#firefoxplaywrightlaunchbrowserappoptions)
 <!-- GEN:stop -->
 
 #### firefoxPlaywright.connect(options)
@@ -3529,7 +3526,7 @@ const browser = await playwright.launch({
 });
 ```
 
-#### firefoxPlaywright.launchServer([options])
+#### firefoxPlaywright.launchBrowserApp([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run Firefox in [headless mode](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true`.
   - `executablePath` <[string]> Path to a Firefox executable to run instead of the bundled Firefox. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Firefox, use at your own risk.
@@ -3543,7 +3540,7 @@ const browser = await playwright.launch({
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-- returns: <[Promise]<[FirefoxBrowserServer]>> Promise which resolves to browser server instance.
+- returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
 
 ### class: FirefoxBrowser
 
@@ -3551,35 +3548,6 @@ const browser = await playwright.launch({
 
 Firefox browser instance does not expose Firefox-specific features.
 
-### class: FirefoxBrowserServer
-
-<!-- GEN:toc -->
-- [firefoxBrowserServer.close()](#firefoxbrowserserverclose)
-- [firefoxBrowserServer.connectOptions()](#firefoxbrowserserverconnectoptions)
-- [firefoxBrowserServer.process()](#firefoxbrowserserverprocess)
-- [firefoxBrowserServer.wsEndpoint()](#firefoxbrowserserverwsendpoint)
-<!-- GEN:stop -->
-
-#### firefoxBrowserServer.close()
-- returns: <[Promise]>
-
-Closes the browser gracefully and makes sure the process is terminated.
-
-#### firefoxBrowserServer.connectOptions()
-- returns: <[Object]>
-  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
-  - `slowMo` <[number]>
-  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
-
-This options object can be passed to [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions) to establish connection to the browser.
-
-#### firefoxBrowserServer.process()
-- returns: <?[ChildProcess]> Spawned browser server process.
-
-#### firefoxBrowserServer.wsEndpoint()
-- returns: <?[string]> Browser websocket url.
-
-Browser websocket endpoint which can be used as an argument to [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions).
 
 ### class: WebKitPlaywright
 
@@ -3589,7 +3557,7 @@ Browser websocket endpoint which can be used as an argument to [firefoxPlaywrigh
 - [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions)
 - [webkitPlaywright.defaultArgs([options])](#webkitplaywrightdefaultargsoptions)
 - [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions)
-- [webkitPlaywright.launchServer([options])](#webkitplaywrightlaunchserveroptions)
+- [webkitPlaywright.launchBrowserApp([options])](#webkitplaywrightlaunchbrowserappoptions)
 <!-- GEN:stop -->
 
 #### webkitPlaywright.connect(options)
@@ -3635,7 +3603,7 @@ const browser = await playwright.launch({
 });
 ```
 
-#### webkitPlaywright.launchServer([options])
+#### webkitPlaywright.launchBrowserApp([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
   - `executablePath` <[string]> Path to a WebKit executable to run instead of the bundled WebKit. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled WebKit, use at your own risk.
@@ -3650,42 +3618,13 @@ const browser = await playwright.launch({
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
-- returns: <[Promise]<[WebKitBrowserServer]>> Promise which resolves to browser server instance.
+- returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
 
 ### class: WebKitBrowser
 
 * extends: [Browser]
 
 WebKit browser instance does not expose WebKit-specific features.
-
-### class: WebKitBrowserServer
-
-<!-- GEN:toc -->
-- [webKitBrowserServer.close()](#webkitbrowserserverclose)
-- [webKitBrowserServer.connectOptions()](#webkitbrowserserverconnectoptions)
-- [webKitBrowserServer.process()](#webkitbrowserserverprocess)
-- [webKitBrowserServer.wsEndpoint()](#webkitbrowserserverwsendpoint)
-<!-- GEN:stop -->
-
-#### webKitBrowserServer.close()
-- returns: <[Promise]>
-
-Closes the browser gracefully and makes sure the process is terminated.
-
-#### webKitBrowserServer.connectOptions()
-- returns: <[Object]>
-  - `slowMo` <[number]>
-  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
-
-This options object can be passed to [webKitPlaywright.connect(options)](#webkitplaywrightconnectoptions) to establish connection to the browser.
-
-#### webKitBrowserServer.process()
-- returns: <?[ChildProcess]> Spawned browser server process.
-
-#### webKitBrowserServer.wsEndpoint()
-- returns: <?[string]> Browser websocket url.
-
-Browser websocket endpoint which can be used as an argument to [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions).
 
 ### Working with selectors
 
@@ -3768,12 +3707,12 @@ During installation Playwright downloads browser executables, according to revis
 [Accessibility]: #class-accessibility "Accessibility"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Body]: #class-body  "Body"
+[BrowserApp]: #class-browserapp  "BrowserApp"
 [BrowserContext]: #class-browsercontext  "BrowserContext"
 [Browser]: #class-browser  "Browser"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
-[ChromiumBrowserServer]: #class-chromiumbrowserserver "ChromiumBrowserServer"
 [ChromiumPlaywright]: #class-chromiumplaywright "ChromiumPlaywright"
 [ChromiumSession]: #class-chromiumsession  "ChromiumSession"
 [ChromiumTarget]: #class-chromiumtarget "ChromiumTarget"
@@ -3787,7 +3726,6 @@ During installation Playwright downloads browser executables, according to revis
 [File]: #class-file "https://developer.mozilla.org/en-US/docs/Web/API/File"
 [FileChooser]: #class-filechooser "FileChooser"
 [FirefoxBrowser]: #class-firefoxbrowser "FirefoxBrowser"
-[FirefoxBrowserServer]: #class-firefoxbrowserserver "FirefoxBrowserServer"
 [FirefoxPlaywright]: #class-firefoxplaywright "FirefoxPlaywright"
 [Frame]: #class-frame "Frame"
 [JSHandle]: #class-jshandle "JSHandle"
@@ -3809,7 +3747,6 @@ During installation Playwright downloads browser executables, according to revis
 [USKeyboardLayout]: ../lib/USKeyboardLayout.js "USKeyboardLayout"
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
 [WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
-[WebKitBrowserServer]: #class-webkitbrowserserver "WebKitBrowserServer"
 [WebKitPlaywright]: #class-webkitplaywright "WebKitPlaywright"
 [Worker]: #class-worker "Worker"
 [boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"

@@ -17,7 +17,7 @@
   if (product.toLowerCase() === 'firefox')
     options.args.push('-juggler', '-profile');
   try {
-    await require(playwrightRoot)[product.toLowerCase()].launchServer(options);
+    await require(playwrightRoot)[product.toLowerCase()].launchBrowserApp(options);
     console.error('Browser launch unexpectedly succeeded.');
   } catch (e) {
   }

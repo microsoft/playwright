@@ -90,14 +90,14 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
   describe('Browser', function() {
     beforeAll(async state => {
-      state.browserServer = await playwright.launchServer(defaultBrowserOptions);
-      state.browser = await playwright.connect(state.browserServer.connectOptions());
+      state.browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      state.browser = await playwright.connect(state.browserApp.connectOptions());
     });
 
     afterAll(async state => {
-      await state.browserServer.close();
+      await state.browserApp.close();
       state.browser = null;
-      state.browserServer = null;
+      state.browserApp = null;
     });
 
     beforeEach(async(state, test) => {
@@ -106,7 +106,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
       let rl;
       if (!WEBKIT) {
-        rl = require('readline').createInterface({ input: state.browserServer.process().stderr });
+        rl = require('readline').createInterface({ input: state.browserApp.process().stderr });
         test.output = '';
         rl.on('line', onLine);
       }
