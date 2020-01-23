@@ -472,7 +472,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should allow mocking binary responses', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => {
-        const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
+        const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'digits', '0.png'));
         request.fulfill({
           contentType: 'image/png',
           body: imageBuffer
