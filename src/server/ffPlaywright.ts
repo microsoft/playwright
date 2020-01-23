@@ -369,6 +369,12 @@ const DEFAULT_PREFERENCES = {
   'geo.provider.testing': true,
   // Do not scan Wifi
   'geo.wifi.scan': false,
+
+  // No ICC color correction. See
+  // https://developer.mozilla.org/en/docs/Mozilla/Firefox/Releases/3.5/ICC_color_correction_in_Firefox.
+  'gfx.color_management.mode': 0,
+  'gfx.color_management.rendering_intent': 3,
+
   // No hang monitor
   'hangmonitor.timeout': 0,
   // Show chrome errors and warnings in the error console
