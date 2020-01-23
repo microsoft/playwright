@@ -59,6 +59,7 @@ export class WKPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
+    this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame, false));
   }
 
   private async _initializePageProxySession() {
@@ -248,13 +249,8 @@ export class WKPage implements PageDelegate {
 
   private _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     const frame = this._page._frameManager.frame(framePayload.id);
-    for (const [contextId, context] of this._contextIdToContext) {
-      if (context.frame === frame) {
-        (context._delegate as WKExecutionContext)._dispose();
-        this._contextIdToContext.delete(contextId);
-        frame._contextDestroyed(context);
-      }
-    }
+    assert(frame);
+    this._removeContextsForFrame(frame!, true);
     if (!framePayload.parentId)
       this._workers.clear();
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
@@ -266,6 +262,17 @@ export class WKPage implements PageDelegate {
 
   private _onFrameDetached(frameId: string) {
     this._page._frameManager.frameDetached(frameId);
+  }
+
+  private _removeContextsForFrame(frame: frames.Frame, notifyFrame: boolean) {
+    for (const [contextId, context] of this._contextIdToContext) {
+      if (context.frame === frame) {
+        (context._delegate as WKExecutionContext)._dispose();
+        this._contextIdToContext.delete(contextId);
+        if (notifyFrame)
+          frame._contextDestroyed(context);
+      }
+    }
   }
 
   private _onExecutionContextCreated(contextPayload : Protocol.Runtime.ExecutionContextDescription) {
