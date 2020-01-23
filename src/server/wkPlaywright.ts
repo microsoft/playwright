@@ -19,7 +19,7 @@ import { BrowserFetcher, BrowserFetcherOptions } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
-import { WKBrowser, createTransport } from '../webkit/wkBrowser';
+import { WKBrowser } from '../webkit/wkBrowser';
 import { WKConnectOptions } from '../webkit/wkBrowser';
 import { execSync, ChildProcess } from 'child_process';
 import { PipeTransport } from './pipeTransport';
@@ -32,6 +32,9 @@ import * as os from 'os';
 import { assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { Playwright } from './playwright';
+import { ConnectionTransport } from '../transport';
+import * as ws from 'ws';
+import * as uuidv4 from 'uuid/v4';
 
 export type SlowMoOptions = {
   slowMo?: number,
@@ -52,6 +55,7 @@ export type LaunchOptions = WebKitArgOptions & SlowMoOptions & {
   timeout?: number,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
+  pipe?: boolean,
 };
 
 export class WKBrowserServer {
@@ -74,6 +78,10 @@ export class WKBrowserServer {
 
   process(): ChildProcess {
     return this._process;
+  }
+
+  wsEndpoint(): string | null {
+    return this._connectOptions.browserWSEndpoint || null;
   }
 
   connectOptions(): WKConnectOptions {
@@ -110,6 +118,7 @@ export class WKPlaywright implements Playwright {
       handleSIGTERM = true,
       handleSIGHUP = true,
       slowMo = 0,
+      pipe = false,
     } = options;
 
     const webkitArguments = [];
@@ -142,7 +151,7 @@ export class WKPlaywright implements Playwright {
     if (options.headless !== false)
       webkitArguments.push('--headless');
 
-    let connectOptions: WKConnectOptions | undefined = undefined;
+    let transport: PipeTransport | undefined = undefined;
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: webkitExecutable!,
@@ -155,18 +164,28 @@ export class WKPlaywright implements Playwright {
       pipe: true,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!connectOptions)
+        if (!transport)
           return Promise.reject();
         // We try to gracefully close to prevent crash reporting and core dumps.
-        const transport = await createTransport(connectOptions);
         const message = JSON.stringify({method: 'Browser.close', params: {}, id: kBrowserCloseMessageId});
         transport.send(message);
       },
     });
 
-    const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-    connectOptions = { transport, slowMo };
+    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+
+    let connectOptions: WKConnectOptions;
+    if (!pipe) {
+      const browserWSEndpoint = wrapTransportWithWebSocket(transport);
+      connectOptions = { browserWSEndpoint, slowMo };
+    } else {
+      connectOptions = { transport, slowMo };
+    }
     return new WKBrowserServer(launchedProcess, gracefullyClose, connectOptions);
+  }
+
+  async connect(options: WKConnectOptions): Promise<WKBrowser> {
+    return WKBrowser.connect(options);
   }
 
   executablePath(): string {
@@ -252,3 +271,39 @@ function getMacVersion() {
   return cachedMacVersion;
 }
 
+function wrapTransportWithWebSocket(transport: ConnectionTransport) {
+  const server = new ws.Server({ port: 0 });
+  let socket: ws | undefined;
+  const guid = uuidv4();
+
+  server.on('connection', (s, req) => {
+    if (req.url !== '/' + guid) {
+      s.close();
+      return;
+    }
+    if (socket) {
+      s.close(undefined, 'Multiple connections are not supported');
+      return;
+    }
+    socket = s;
+    s.on('message', message => transport.send(Buffer.from(message).toString()));
+    transport.onmessage = message => s.send(message);
+    s.on('close', () => {
+      socket = undefined;
+      transport.onmessage = undefined;
+    });
+  });
+
+  transport.onclose = () => {
+    if (socket)
+      socket.close(undefined, 'Browser disconnected');
+    server.close();
+    transport.onmessage = undefined;
+    transport.onclose = undefined;
+  };
+
+  const address = server.address();
+  if (typeof address === 'string')
+    return address + '/' + guid;
+  return 'ws://127.0.0.1:' + address.port + '/' + guid;
+}

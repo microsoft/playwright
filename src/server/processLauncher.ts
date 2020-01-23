@@ -130,7 +130,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     debugLauncher(`[${id}] <kill>`);
     helper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
-      // Force kill chrome.
+      // Force kill the browser.
       try {
         if (process.platform === 'win32')
           childProcess.execSync(`taskkill /pid ${spawnedProcess.pid} /T /F`);

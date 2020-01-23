@@ -17,7 +17,7 @@
 
 export interface ConnectionTransport {
   send(s: string): void;
-  close(): void;
+  close(): void;  // Note: calling close is expected to issue onclose at some point.
   onmessage?: (message: string) => void,
   onclose?: () => void,
 }
@@ -27,7 +27,6 @@ export class SlowMoTransport {
   private readonly _delegate: ConnectionTransport;
   private _incomingMessageQueue: string[] = [];
   private _dispatchTimerId?: NodeJS.Timer;
-  private _closed = false;
 
   onmessage?: (message: string) => void;
   onclose?: () => void;
@@ -60,8 +59,6 @@ export class SlowMoTransport {
   }
 
   private _dispatchOneMessageFromQueue() {
-    if (this._closed)
-      return;
     const message = this._incomingMessageQueue.shift();
     try {
       if (this.onmessage)
@@ -72,11 +69,8 @@ export class SlowMoTransport {
   }
 
   private _onClose() {
-    if (this._closed)
-      return;
     if (this.onclose)
       this.onclose();
-    this._closed = true;
     this._delegate.onmessage = undefined;
     this._delegate.onclose = undefined;
   }
@@ -86,7 +80,6 @@ export class SlowMoTransport {
   }
 
   close() {
-    this._closed = true;
     this._delegate.close();
   }
 }

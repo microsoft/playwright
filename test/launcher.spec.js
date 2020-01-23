@@ -80,4 +80,84 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(Devices['iPhone 6']).toBe(playwright.devices['iPhone 6']);
     });
   });
+
+  describe('Browser.isConnected', () => {
+    it('should set the browser connected state', async () => {
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const browserWSEndpoint = browserServer.wsEndpoint();
+      const remote = await playwright.connect({browserWSEndpoint});
+      expect(remote.isConnected()).toBe(true);
+      await remote.disconnect();
+      expect(remote.isConnected()).toBe(false);
+      await browserServer.close();
+    });
+  });
+
+  describe('Browser.disconnect', function() {
+    it('should reject navigation when browser closes', async({server}) => {
+      server.setRoute('/one-style.css', () => {});
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const page = await remote.defaultContext().newPage();
+      const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
+      await server.waitForRequest('/one-style.css');
+      await remote.disconnect();
+      const error = await navigationPromise;
+      expect(error.message).toBe('Navigation failed because browser has disconnected!');
+      await browserServer.close();
+    });
+    it('should reject waitForSelector when browser closes', async({server}) => {
+      server.setRoute('/empty.html', () => {});
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const page = await remote.defaultContext().newPage();
+      const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
+      await remote.disconnect();
+      const error = await watchdog;
+      expect(error.message).toContain('Protocol error');
+      await browserServer.close();
+    });
+  });
+
+  describe('Browser.close', function() {
+    it('should terminate network waiters', async({context, server}) => {
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const newPage = await remote.defaultContext().newPage();
+      const results = await Promise.all([
+        newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
+        newPage.waitForResponse(server.EMPTY_PAGE).catch(e => e),
+        browserServer.close()
+      ]);
+      for (let i = 0; i < 2; i++) {
+        const message = results[i].message;
+        expect(message).toContain('Target closed');
+        expect(message).not.toContain('Timeout');
+      }
+    });
+  });
+
+  describe('Playwright.connect', function() {
+    it.skip(WEBKIT)('should be able to reconnect to a browser', async({server}) => {
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const browser = await browserServer.connect();
+      const browserWSEndpoint = browserServer.wsEndpoint();
+      const page = await browser.defaultContext().newPage();
+      await page.goto(server.PREFIX + '/frames/nested-frames.html');
+      await browser.disconnect();
+
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint});
+      const pages = await remote.defaultContext().pages();
+      const restoredPage = pages.find(page => page.url() === server.PREFIX + '/frames/nested-frames.html');
+      expect(utils.dumpFrames(restoredPage.mainFrame())).toEqual([
+        'http://localhost:<PORT>/frames/nested-frames.html',
+        '    http://localhost:<PORT>/frames/frame.html (aframe)',
+        '    http://localhost:<PORT>/frames/two-frames.html (2frames)',
+        '        http://localhost:<PORT>/frames/frame.html (dos)',
+        '        http://localhost:<PORT>/frames/frame.html (uno)',
+      ]);
+      expect(await restoredPage.evaluate(() => 7 * 8)).toBe(56);
+      await browserServer.close();
+    });
+  });
 };

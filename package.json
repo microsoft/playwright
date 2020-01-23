@@ -45,6 +45,7 @@
     "progress": "^2.0.3",
     "proxy-from-env": "^1.0.0",
     "rimraf": "^2.6.1",
+    "uuid": "^3.4.0",
     "ws": "^6.1.0"
   },
   "devDependencies": {
@@ -56,6 +57,7 @@
     "@types/pngjs": "^3.4.0",
     "@types/proxy-from-env": "^1.0.0",
     "@types/rimraf": "^2.0.2",
+    "@types/uuid": "^3.4.6",
     "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "^2.6.1",
     "@typescript-eslint/parser": "^2.6.1",

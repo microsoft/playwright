@@ -299,8 +299,10 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return CRTarget.fromPage(page);
   }
 
-  disconnect() {
-    this._connection.dispose();
+  async disconnect() {
+    const disconnected = new Promise(f => this.once(CommonEvents.Browser.Disconnected, f));
+    this._connection.close();
+    await disconnected;
   }
 
   isConnected(): boolean {

@@ -73,8 +73,6 @@ export class WKConnection {
   }
 
   _onClose() {
-    if (this._closed)
-      return;
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
@@ -82,9 +80,13 @@ export class WKConnection {
     this._onDisconnect();
   }
 
-  dispose() {
-    this._onClose();
-    this._transport.close();
+  isClosed() {
+    return this._closed;
+  }
+
+  close() {
+    if (!this._closed)
+      this._transport.close();
   }
 }
 

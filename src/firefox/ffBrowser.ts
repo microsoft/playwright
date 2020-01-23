@@ -70,8 +70,10 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     ];
   }
 
-  disconnect() {
-    this._connection.dispose();
+  async disconnect() {
+    const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
+    this._connection.close();
+    await disconnected;
   }
 
   isConnected(): boolean {
