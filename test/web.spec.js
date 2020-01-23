@@ -21,18 +21,18 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   (CHROMIUM || FFOX) && describe('Web SDK', function() {
     beforeAll(async state => {
-      state.controlledBrowserServer = await playwright.launchServer({ ...defaultBrowserOptions, pipe: false });
-      state.hostBrowserServer = await playwright.launchServer(defaultBrowserOptions);
-      state.hostBrowser = await playwright.connect(state.hostBrowserServer.connectOptions());
+      state.controlledBrowserApp = await playwright.launchBrowserApp({ ...defaultBrowserOptions, pipe: false });
+      state.hostBrowserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      state.hostBrowser = await playwright.connect(state.hostBrowserApp.connectOptions());
     });
 
     afterAll(async state => {
-      await state.hostBrowserServer.close();
+      await state.hostBrowserApp.close();
       state.hostBrowser = null;
-      state.hostBrowserServer = null;
+      state.hostBrowserApp = null;
 
-      await state.controlledBrowserServer.close();
-      state.controlledBrowserServer = null;
+      await state.controlledBrowserApp.close();
+      state.controlledBrowserApp = null;
       state.webUrl = null;
     });
 
@@ -40,7 +40,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       state.page = await state.hostBrowser.defaultContext().newPage();
       state.page.on('console', message => console.log('TEST: ' + message.text()));
       await state.page.goto(state.sourceServer.PREFIX + '/test/assets/playwrightweb.html');
-      await state.page.evaluate((product, connectOptions) => setup(product, connectOptions), product.toLowerCase(), state.controlledBrowserServer.connectOptions());
+      await state.page.evaluate((product, connectOptions) => setup(product, connectOptions), product.toLowerCase(), state.controlledBrowserApp.connectOptions());
     });
 
     afterEach(async state => {

@@ -22,7 +22,7 @@ import { Protocol } from './protocol';
 
 const debugProtocol = platform.debug('pw:protocol');
 
-// WKBrowserServer uses this special id to issue Browser.close command which we
+// WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
 export const kBrowserCloseMessageId = -9999;
 

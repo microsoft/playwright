@@ -90,20 +90,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Browser.isConnected', () => {
     it('should set the browser connected state', async () => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const browserWSEndpoint = browserServer.wsEndpoint();
+      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const browserWSEndpoint = browserApp.wsEndpoint();
       const remote = await playwright.connect({browserWSEndpoint});
       expect(remote.isConnected()).toBe(true);
       await remote.disconnect();
       expect(remote.isConnected()).toBe(false);
-      await browserServer.close();
+      await browserApp.close();
     });
     it('should throw when used after isConnected returns false', async({server}) => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserApp.wsEndpoint()});
       const page = await remote.defaultContext().newPage();
       await Promise.all([
-        browserServer.close(),
+        browserApp.close(),
         new Promise(f => remote.once('disconnected', f)),
       ]);
       expect(remote.isConnected()).toBe(false);
@@ -115,47 +115,47 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Browser.disconnect', function() {
     it('should reject navigation when browser closes', async({server}) => {
       server.setRoute('/one-style.css', () => {});
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserApp.wsEndpoint()});
       const page = await remote.defaultContext().newPage();
       const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
       await server.waitForRequest('/one-style.css');
       await remote.disconnect();
       const error = await navigationPromise;
       expect(error.message).toBe('Navigation failed because browser has disconnected!');
-      await browserServer.close();
+      await browserApp.close();
     });
     it('should reject waitForSelector when browser closes', async({server}) => {
       server.setRoute('/empty.html', () => {});
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserApp.wsEndpoint()});
       const page = await remote.defaultContext().newPage();
       const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
       await remote.disconnect();
       const error = await watchdog;
       expect(error.message).toContain('Protocol error');
-      await browserServer.close();
+      await browserApp.close();
     });
     it('should throw if used after disconnect', async({server}) => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserApp.wsEndpoint()});
       const page = await remote.defaultContext().newPage();
       await remote.disconnect();
       const error = await page.evaluate('1 + 1').catch(e => e);
       expect(error.message).toContain('has been closed');
-      await browserServer.close();
+      await browserApp.close();
     });
   });
 
   describe('Browser.close', function() {
     it('should terminate network waiters', async({context, server}) => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserServer.wsEndpoint()});
+      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const remote = await playwright.connect({...defaultBrowserOptions, browserWSEndpoint: browserApp.wsEndpoint()});
       const newPage = await remote.defaultContext().newPage();
       const results = await Promise.all([
         newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
         newPage.waitForResponse(server.EMPTY_PAGE).catch(e => e),
-        browserServer.close()
+        browserApp.close()
       ]);
       for (let i = 0; i < 2; i++) {
         const message = results[i].message;
@@ -167,9 +167,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Playwright.connect', function() {
     it.skip(WEBKIT)('should be able to reconnect to a browser', async({server}) => {
-      const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const browser = await playwright.connect(browserServer.connectOptions());
-      const browserWSEndpoint = browserServer.wsEndpoint();
+      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const browser = await playwright.connect(browserApp.connectOptions());
+      const browserWSEndpoint = browserApp.wsEndpoint();
       const page = await browser.defaultContext().newPage();
       await page.goto(server.PREFIX + '/frames/nested-frames.html');
       await browser.disconnect();
@@ -185,7 +185,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         '        http://localhost:<PORT>/frames/frame.html (uno)',
       ]);
       expect(await restoredPage.evaluate(() => 7 * 8)).toBe(56);
-      await browserServer.close();
+      await browserApp.close();
     });
   });
 
@@ -228,15 +228,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should filter out ignored default arguments', async() => {
       // Make sure we launch with `--enable-automation` by default.
       const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
-      const browserServer = await playwright.launchServer(Object.assign({}, defaultBrowserOptions, {
+      const browserApp = await playwright.launchBrowserApp(Object.assign({}, defaultBrowserOptions, {
         // Ignore first and third default argument.
         ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
       }));
-      const spawnargs = browserServer.process().spawnargs;
+      const spawnargs = browserApp.process().spawnargs;
       expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
       expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
       expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
-      await browserServer.close();
+      await browserApp.close();
     });
     it('userDataDir option should restore state', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);

@@ -36,6 +36,7 @@ export { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
 export { WKBrowser as WebKitBrowser } from './webkit/wkBrowser';
 
 export { Playwright } from './server/playwright';
-export { CRPlaywright as ChromiumPlaywright, CRBrowserServer as ChromiumBrowserServer } from './server/crPlaywright';
-export { FFPlaywright as FirefoxPlaywright, FFBrowserServer as FirefoxBrowserServer } from './server/ffPlaywright';
-export { WKPlaywright as WebKitPlaywright, WKBrowserServer as WebKitBrowserServer } from './server/wkPlaywright';
+export { BrowserApp } from './server/browserApp';
+export { CRPlaywright as ChromiumPlaywright } from './server/crPlaywright';
+export { FFPlaywright as FirefoxPlaywright } from './server/ffPlaywright';
+export { WKPlaywright as WebKitPlaywright } from './server/wkPlaywright';

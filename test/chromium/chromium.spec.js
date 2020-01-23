@@ -22,12 +22,12 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Chromium', function() {
-    it('should work across sessions', async function({browserServer, server, browser, newContext}) {
+    it('should work across sessions', async function({browserApp, server, browser, newContext}) {
       expect(browser.browserContexts().length).toBe(2);
       await newContext();
       expect(browser.browserContexts().length).toBe(3);
       const remoteBrowser = await playwright.connect({
-        browserWSEndpoint: browserServer.wsEndpoint()
+        browserWSEndpoint: browserApp.wsEndpoint()
       });
       const contexts = remoteBrowser.browserContexts();
       expect(contexts.length).toBe(3);

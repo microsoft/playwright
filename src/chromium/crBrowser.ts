@@ -24,19 +24,11 @@ import { Page, Worker } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
-import { Browser } from '../browser';
+import { Browser, createTransport, ConnectOptions } from '../browser';
 import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
-import { ConnectionTransport, SlowMoTransport } from '../transport';
 import { readProtocolStream } from './crProtocolHelper';
-
-export type CRConnectOptions = {
-  slowMo?: number,
-  browserWSEndpoint?: string;
-  browserURL?: string;
-  transport?: ConnectionTransport;
-};
 
 export class CRBrowser extends platform.EventEmitter implements Browser {
   _connection: CRConnection;
@@ -49,7 +41,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
-  static async connect(options: CRConnectOptions): Promise<CRBrowser> {
+  static async connect(options: ConnectOptions): Promise<CRBrowser> {
     const transport = await createTransport(options);
     const connection = new CRConnection(transport);
     const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
@@ -308,25 +300,4 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   isConnected(): boolean {
     return !this._connection._closed;
   }
-}
-
-export async function createTransport(options: CRConnectOptions): Promise<ConnectionTransport> {
-  assert(Number(!!options.browserWSEndpoint) + Number(!!options.browserURL) + Number(!!options.transport) === 1, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to connect');
-  let transport: ConnectionTransport | undefined;
-  if (options.transport) {
-    transport = options.transport;
-  } else if (options.browserWSEndpoint) {
-    transport = await platform.createWebSocketTransport(options.browserWSEndpoint);
-  } else if (options.browserURL) {
-    let connectionURL: string;
-    try {
-      const data = await platform.fetchUrl(new URL('/json/version', options.browserURL).href);
-      connectionURL = JSON.parse(data).webSocketDebuggerUrl;
-    } catch (e) {
-      e.message = `Failed to fetch browser webSocket url from ${options.browserURL}: ` + e.message;
-      throw e;
-    }
-    transport = await platform.createWebSocketTransport(connectionURL);
-  }
-  return SlowMoTransport.wrap(transport!, options.slowMo);
 }

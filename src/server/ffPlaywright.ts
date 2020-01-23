@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-import { FFBrowser, FFConnectOptions, createTransport } from '../firefox/ffBrowser';
+import { FFBrowser } from '../firefox/ffBrowser';
 import { BrowserFetcher, BrowserFetcherOptions } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { launchProcess, waitForLine } from './processLauncher';
 import * as types from '../types';
 import * as platform from '../platform';
 import { FFConnection } from '../firefox/ffConnection';
-import { ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -30,6 +29,8 @@ import * as util from 'util';
 import { TimeoutError } from '../errors';
 import { assert } from '../helper';
 import { Playwright } from './playwright';
+import { createTransport, ConnectOptions } from '../browser';
+import { BrowserApp } from './browserApp';
 
 export type SlowMoOptions = {
   slowMo?: number,
@@ -52,34 +53,6 @@ export type LaunchOptions = FirefoxArgOptions & SlowMoOptions & {
   env?: {[key: string]: string} | undefined,
 };
 
-export class FFBrowserServer {
-  private _process: ChildProcess;
-  private _gracefullyClose: () => Promise<void>;
-  private _connectOptions: FFConnectOptions;
-
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: FFConnectOptions) {
-    this._process = process;
-    this._gracefullyClose = gracefullyClose;
-    this._connectOptions = connectOptions;
-  }
-
-  process(): ChildProcess {
-    return this._process;
-  }
-
-  wsEndpoint(): string | null {
-    return this._connectOptions.browserWSEndpoint || null;
-  }
-
-  connectOptions(): FFConnectOptions {
-    return this._connectOptions;
-  }
-
-  async close(): Promise<void> {
-    await this._gracefullyClose();
-  }
-}
-
 export class FFPlaywright implements Playwright {
   private _projectRoot: string;
   readonly _revision: string;
@@ -90,14 +63,14 @@ export class FFPlaywright implements Playwright {
   }
 
   async launch(options: LaunchOptions): Promise<FFBrowser> {
-    const server = await this.launchServer(options);
-    const browser = await FFBrowser.connect(server.connectOptions());
+    const app = await this.launchBrowserApp(options);
+    const browser = await FFBrowser.connect(app.connectOptions());
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => server.close();
+    browser.close = () => app.close();
     return browser;
   }
 
-  async launchServer(options: LaunchOptions = {}): Promise<FFBrowserServer> {
+  async launchBrowserApp(options: LaunchOptions = {}): Promise<BrowserApp> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -136,7 +109,7 @@ export class FFPlaywright implements Playwright {
       firefoxExecutable = executablePath;
     }
 
-    let connectOptions: FFConnectOptions | undefined = undefined;
+    let connectOptions: ConnectOptions | undefined = undefined;
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: firefoxExecutable,
@@ -168,10 +141,10 @@ export class FFPlaywright implements Playwright {
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const url = match[1];
     connectOptions = { browserWSEndpoint: url, slowMo };
-    return new FFBrowserServer(launchedProcess, gracefullyClose, connectOptions);
+    return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
   }
 
-  async connect(options: FFConnectOptions): Promise<FFBrowser> {
+  async connect(options: ConnectOptions): Promise<FFBrowser> {
     return FFBrowser.connect(options);
   }
 
