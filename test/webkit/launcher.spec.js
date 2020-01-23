@@ -21,12 +21,6 @@ module.exports.describe = function ({ testRunner, expect, playwright, defaultBro
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('WKPlaywright', function() {
-    describe('Playwright.launch', function() {
-      it('should return the default arguments', async() => {
-        expect(playwright.defaultArgs().length).toBe(0);
-      });
-    });
-
     describe('Playwright.launch |pipe| option', function() {
       it('should have websocket by default', async() => {
         const options = Object.assign({pipe: false}, defaultBrowserOptions);

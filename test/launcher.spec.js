@@ -15,10 +15,17 @@
  * limitations under the License.
  */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
-const utils = require('./utils');
+const util = require('util');
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, WEBKIT}) {
+const utils = require('./utils');
+const rmAsync = util.promisify(require('rimraf'));
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+
+const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
+
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, CHROMIUM, FFOX, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -179,6 +186,106 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       ]);
       expect(await restoredPage.evaluate(() => 7 * 8)).toBe(56);
       await browserServer.close();
+    });
+  });
+
+  describe.skip(FFOX | WEBKIT)('Playwright.launch({userDataDir})', function() {
+    it('userDataDir option', async({server}) => {
+      const userDataDir = await mkdtempAsync(TMP_FOLDER);
+      const options = Object.assign({userDataDir}, defaultBrowserOptions);
+      const browser = await playwright.launch(options);
+      // Open a page to make sure its functional.
+      await browser.defaultContext().newPage();
+      expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+      await browser.close();
+      expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+      // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+      await rmAsync(userDataDir).catch(e => {});
+    });
+    it('userDataDir argument', async({server}) => {
+      const userDataDir = await mkdtempAsync(TMP_FOLDER);
+      const options = Object.assign({}, defaultBrowserOptions);
+      options.args = [
+        ...(defaultBrowserOptions.args || []),
+        `--user-data-dir=${userDataDir}`
+      ];
+      const browser = await playwright.launch(options);
+      // Open a page to make sure its functional.
+      await browser.defaultContext().newPage();
+      expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+      await browser.close();
+      expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+      // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+      await rmAsync(userDataDir).catch(e => {});
+    });
+    it('should return the default arguments', async() => {
+      if (CHROMIUM)
+        expect(playwright.defaultArgs()).toContain('--no-first-run');
+      expect(playwright.defaultArgs()).toContain('--headless');
+      expect(playwright.defaultArgs({headless: false})).not.toContain('--headless');
+      expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain('--user-data-dir=foo');
+    });
+    it('should filter out ignored default arguments', async() => {
+      // Make sure we launch with `--enable-automation` by default.
+      const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
+      const browserServer = await playwright.launchServer(Object.assign({}, defaultBrowserOptions, {
+        // Ignore first and third default argument.
+        ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
+      }));
+      const spawnargs = browserServer.process().spawnargs;
+      expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
+      expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
+      expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
+      await browserServer.close();
+    });
+    it('userDataDir option should restore state', async({server}) => {
+      const userDataDir = await mkdtempAsync(TMP_FOLDER);
+      const options = Object.assign({userDataDir}, defaultBrowserOptions);
+      const browser = await playwright.launch(options);
+      const page = await browser.defaultContext().newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => localStorage.hey = 'hello');
+      await browser.close();
+
+      const browser2 = await playwright.launch(options);
+      const page2 = await browser2.defaultContext().newPage();
+      await page2.goto(server.EMPTY_PAGE);
+      expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
+      await browser2.close();
+
+      const browser3 = await playwright.launch(defaultBrowserOptions);
+      const page3 = await browser3.defaultContext().newPage();
+      await page3.goto(server.EMPTY_PAGE);
+      expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
+      await browser3.close();
+
+      // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+      await rmAsync(userDataDir).catch(e => {});
+    });
+    // This mysteriously fails on Windows on AppVeyor. See https://github.com/GoogleChrome/puppeteer/issues/4111
+    it('userDataDir option should restore cookies', async({server}) => {
+      const userDataDir = await mkdtempAsync(TMP_FOLDER);
+      const options = Object.assign({userDataDir}, defaultBrowserOptions);
+      const browser = await playwright.launch(options);
+      const page = await browser.defaultContext().newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
+      await browser.close();
+
+      const browser2 = await playwright.launch(options);
+      const page2 = await browser2.defaultContext().newPage();
+      await page2.goto(server.EMPTY_PAGE);
+      expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
+      await browser2.close();
+
+      const browser3 = await playwright.launch(defaultBrowserOptions);
+      const page3 = await browser3.defaultContext().newPage();
+      await page3.goto(server.EMPTY_PAGE);
+      expect(await page3.evaluate(() => localStorage.hey)).not.toBe('doSomethingOnlyOnce=true');
+      await browser3.close();
+
+      // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+      await rmAsync(userDataDir).catch(e => {});
     });
   });
 };

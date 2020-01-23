@@ -143,10 +143,6 @@ export class WKPlaywright implements Playwright {
         throw new Error(missingText);
       webkitExecutable = executablePath;
     }
-    webkitArguments.push('--inspector-pipe');
-    if (options.headless !== false)
-      webkitArguments.push('--headless');
-
     let transport: PipeTransport | undefined = undefined;
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
@@ -198,12 +194,15 @@ export class WKPlaywright implements Playwright {
 
   defaultArgs(options: WebKitArgOptions = {}): string[] {
     const {
+      headless = true,
       args = [],
       userDataDir = null
     } = options;
-    const webkitArguments = [...DEFAULT_ARGS];
+    const webkitArguments = ['--inspector-pipe'];
     if (userDataDir)
       webkitArguments.push(`--user-data-dir=${userDataDir}`);
+    if (headless)
+      webkitArguments.push('--headless');
     webkitArguments.push(...args);
     return webkitArguments;
   }
@@ -256,7 +255,6 @@ export class WKPlaywright implements Playwright {
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
-const DEFAULT_ARGS: string[] = [];
 
 let cachedMacVersion: string | undefined = undefined;
 function getMacVersion() {

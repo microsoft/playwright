@@ -32,53 +32,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('CrPlaywright', function() {
-    describe('Playwright.launch', function() {
-      it('userDataDir option', async({server}) => {
-        const userDataDir = await mkdtempAsync(TMP_FOLDER);
-        const options = Object.assign({userDataDir}, defaultBrowserOptions);
-        const browser = await playwright.launch(options);
-        // Open a page to make sure its functional.
-        await browser.defaultContext().newPage();
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        await browser.close();
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-        await rmAsync(userDataDir).catch(e => {});
-      });
-      it('userDataDir argument', async({server}) => {
-        const userDataDir = await mkdtempAsync(TMP_FOLDER);
-        const options = Object.assign({}, defaultBrowserOptions);
-        options.args = [
-          ...(defaultBrowserOptions.args || []),
-          `--user-data-dir=${userDataDir}`
-        ];
-        const browser = await playwright.launch(options);
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        await browser.close();
-        expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-        await rmAsync(userDataDir).catch(e => {});
-      });
-      it('should return the default arguments', async() => {
-        expect(playwright.defaultArgs()).toContain('--no-first-run');
-        expect(playwright.defaultArgs()).toContain('--headless');
-        expect(playwright.defaultArgs({headless: false})).not.toContain('--headless');
-        expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain('--user-data-dir=foo');
-      });
-      it('should filter out ignored default arguments', async() => {
-        // Make sure we launch with `--enable-automation` by default.
-        const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
-        const browserServer = await playwright.launchServer(Object.assign({}, defaultBrowserOptions, {
-          // Ignore first and third default argument.
-          ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
-        }));
-        const spawnargs = browserServer.process().spawnargs;
-        expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
-        expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
-        expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
-        await browserServer.close();
-      });
-    });
     describe('Playwright.launch |browserURL| option', function() {
       it('should be able to connect using browserUrl, with and without trailing slash', async({server}) => {
         const originalBrowser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
@@ -119,41 +72,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.connect({browserURL}).catch(e => error = e);
         expect(error.message).toContain('Failed to fetch browser webSocket url from');
         originalBrowser.close();
-      });
-      it('userDataDir option should restore state', async({server}) => {
-        const userDataDir = await mkdtempAsync(TMP_FOLDER);
-        const options = Object.assign({userDataDir}, defaultBrowserOptions);
-        const browser = await playwright.launch(options);
-        const page = await browser.defaultContext().newPage();
-        await page.goto(server.EMPTY_PAGE);
-        await page.evaluate(() => localStorage.hey = 'hello');
-        await browser.close();
-
-        const browser2 = await playwright.launch(options);
-        const page2 = await browser2.defaultContext().newPage();
-        await page2.goto(server.EMPTY_PAGE);
-        expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
-        await browser2.close();
-        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-        await rmAsync(userDataDir).catch(e => {});
-      });
-      // This mysteriously fails on Windows on AppVeyor. See https://github.com/GoogleChrome/puppeteer/issues/4111
-      it('userDataDir option should restore cookies', async({server}) => {
-        const userDataDir = await mkdtempAsync(TMP_FOLDER);
-        const options = Object.assign({userDataDir}, defaultBrowserOptions);
-        const browser = await playwright.launch(options);
-        const page = await browser.defaultContext().newPage();
-        await page.goto(server.EMPTY_PAGE);
-        await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
-        await browser.close();
-
-        const browser2 = await playwright.launch(options);
-        const page2 = await browser2.defaultContext().newPage();
-        await page2.goto(server.EMPTY_PAGE);
-        expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
-        await browser2.close();
-        // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-        await rmAsync(userDataDir).catch(e => {});
       });
     });
 
