@@ -19,6 +19,7 @@
 - [class: Page](#class-page)
 - [class: Request](#class-request)
 - [class: Response](#class-response)
+- [class: WebSocket](#class-websocket)
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
 - [class: Coverage](#class-coverage)
@@ -1643,6 +1644,7 @@ page.removeListener('request', logRequest);
 - [event: 'requestfailed'](#event-requestfailed)
 - [event: 'requestfinished'](#event-requestfinished)
 - [event: 'response'](#event-response)
+- [event: 'websocket'](#event-websocket)
 - [event: 'workercreated'](#event-workercreated)
 - [event: 'workerdestroyed'](#event-workerdestroyed)
 - [page.$(selector)](#pageselector)
@@ -1811,6 +1813,11 @@ Emitted when a request finishes successfully.
 - <[Response]>
 
 Emitted when a [response] is received.
+
+#### event: 'websocket'
+- <[WebSocket]> websocket
+
+Emitted when a <[WebSocket]> is opened.
 
 #### event: 'workercreated'
 - <[Worker]>
@@ -3015,6 +3022,67 @@ Contains the status text of the response (e.g. usually an "OK" for a success).
 
 Contains the URL of the response.
 
+### class: WebSocket
+
+The [WebSocket] class represents websocket connections in the page.
+
+<!-- GEN:toc -->
+- [event: 'close'](#event-close-1)
+- [event: 'error'](#event-error)
+- [event: 'messageReceived'](#event-messagereceived)
+- [event: 'messageSent'](#event-messagesent)
+- [event: 'open'](#event-open)
+- [webSocket.requestHeaders()](#websocketrequestheaders)
+- [webSocket.responseHeaders()](#websocketresponseheaders)
+- [webSocket.status()](#websocketstatus)
+- [webSocket.statusText()](#websocketstatustext)
+- [webSocket.url()](#websocketurl)
+<!-- GEN:stop -->
+
+#### event: 'close'
+
+Fired when the websocket closes.
+
+#### event: 'error'
+- <[String]> the error message
+
+Fired when the websocket has an error.
+
+#### event: 'messageReceived'
+-<[Buffer]|[String]> data recieved
+
+Fired when the websocket recieves a message.
+
+#### event: 'messageSent'
+-<[Buffer]|[String]> data recieved
+
+Fired when the websocket sends a message.
+
+#### event: 'open'
+
+Fired when the websocket opens.
+
+#### webSocket.requestHeaders()
+- returns: <[Promise]<[Object]>>
+
+#### webSocket.responseHeaders()
+- returns: <[Promise]<[Object]>>
+
+#### webSocket.status()
+- returns: <[number]>
+
+Contains the status code of the WebSocket (e.g., 200 for a success).
+
+#### webSocket.statusText()
+- returns: <[string]>
+
+Contains the status text of the WebSocket (e.g. usually an "OK" for a success).
+
+#### webSocket.url()
+- returns: <[string]>
+
+Contains the URL of the WebSocket.
+
 ### class: TimeoutError
 
 * extends: [Error]
@@ -3748,6 +3816,7 @@ During installation Playwright downloads browser executables, according to revis
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
 [WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
 [WebKitPlaywright]: #class-webkitplaywright "WebKitPlaywright"
+[WebSocket]: #class-websocket "WebSocket"
 [Worker]: #class-worker "Worker"
 [boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
 [function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
