@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {helper} = require('./lib/helper');
+const { helper } = require('./lib/helper');
 const api = require('./lib/api');
 const packageJson = require('./package.json');
 const { DeviceDescriptors } = require('./lib/deviceDescriptors');
