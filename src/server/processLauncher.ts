@@ -166,7 +166,7 @@ export function waitForLine(process: childProcess.ChildProcess, inputStream: str
         'Failed to launch browser!' + (error ? ' ' + error.message : ''),
         stderr,
         '',
-        'TROUBLESHOOTING: https://github.com/Microsoft/playwright/blob/master/docs/troubleshooting.md',
+        'DOCUMENTATION: https://github.com/Microsoft/playwright/blob/master/docs/api.md',
         '',
       ].join('\n')));
     }
