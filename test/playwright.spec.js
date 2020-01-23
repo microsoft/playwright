@@ -181,6 +181,9 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
         testRunner.loadTests(require('./features/permissions.spec.js'), testOptions);
       }
 
+      if (WEBKIT) {
+        testRunner.loadTests(require('./webkit/provisional.spec.js'), testOptions);
+      }
     });
 
     // Browser-level tests that are given a browser.
