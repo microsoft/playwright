@@ -155,7 +155,7 @@ class InterceptableRequest implements network.RequestDelegate {
     for (const {name, value} of payload.headers)
       headers[name.toLowerCase()] = value;
 
-    this.request = new network.Request(payload.suspended ? this : null, frame, redirectChain, payload.navigationId,
+    this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectChain, payload.navigationId,
         payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData, headers);
   }
 
@@ -163,23 +163,53 @@ class InterceptableRequest implements network.RequestDelegate {
     const {
       headers,
     } = overrides;
-    await this._session.send('Network.resumeSuspendedRequest', {
+    await this._session.send('Network.resumeInterceptedRequest', {
       requestId: this._id,
-      headers: headers ? Object.entries(headers).filter(([, value]) => !Object.is(value, undefined)).map(([name, value]) => ({name, value})) : undefined,
+      headers: headers ? headersArray(headers) : undefined,
     }).catch(error => {
       debugError(error);
     });
   }
 
   async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
-    throw new Error('Fulfill is not supported in Firefox');
-  }
+    const responseBody = response.body && helper.isString(response.body) ? platform.Buffer.from(response.body) : (response.body || null);
 
-  async abort() {
-    await this._session.send('Network.abortSuspendedRequest', {
+    const responseHeaders: { [s: string]: string; } = {};
+    if (response.headers) {
+      for (const header of Object.keys(response.headers))
+        responseHeaders[header.toLowerCase()] = response.headers[header];
+    }
+    if (response.contentType)
+      responseHeaders['content-type'] = response.contentType;
+    if (responseBody && !('content-length' in responseHeaders))
+      responseHeaders['content-length'] = String(platform.Buffer.byteLength(responseBody));
+
+    await this._session.send('Network.fulfillInterceptedRequest', {
       requestId: this._id,
+      status: response.status || 200,
+      statusText: network.STATUS_TEXTS[String(response.status || 200)] || '',
+      headers: headersArray(responseHeaders),
+      base64body: responseBody ? responseBody.toString('base64') : undefined,
     }).catch(error => {
       debugError(error);
     });
   }
+
+  async abort(errorCode: string) {
+    await this._session.send('Network.abortInterceptedRequest', {
+      requestId: this._id,
+      errorCode,
+    }).catch(error => {
+      debugError(error);
+    });
+  }
+}
+
+function headersArray(headers: network.Headers): Protocol.Network.HTTPHeader[] {
+  const result: Protocol.Network.HTTPHeader[] = [];
+  for (const name in headers) {
+    if (!Object.is(headers[name], undefined))
+      result.push({name, value: headers[name] + ''});
+  }
+  return result;
 }
