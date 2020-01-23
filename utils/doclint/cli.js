@@ -39,7 +39,8 @@ async function run() {
   {
     const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
     const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-    const mdSources = [readme, api];
+    const troubleshooting = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'troubleshooting.md'));
+    const mdSources = [readme, api, troubleshooting];
 
     const preprocessor = require('./preprocessor');
     messages.push(...await preprocessor.runCommands(mdSources, VERSION));
