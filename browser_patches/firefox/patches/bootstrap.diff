@@ -648,10 +648,10 @@ index 0000000000000000000000000000000000000000..673e93b0278a3502d94006696cea7e6e
 +
 diff --git a/testing/juggler/NetworkObserver.js b/testing/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca30a73e723
+index 0000000000000000000000000000000000000000..e38c9b37b531de4eac67c2a138b68a34053b155b
 --- /dev/null
 +++ b/testing/juggler/NetworkObserver.js
-@@ -0,0 +1,450 @@
+@@ -0,0 +1,674 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -701,11 +701,14 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +    this._activityDistributor = Cc["@mozilla.org/network/http-activity-distributor;1"].getService(Ci.nsIHttpActivityDistributor);
 +    this._activityDistributor.addObserver(this);
 +
-+    this._redirectMap = new Map();
++    this._redirectMap = new Map();  // oldId => newId
++    this._resumedRequestIdToHeaders = new Map();  // requestId => { headers }
++    this._postResumeChannelIdToRequestId = new Map();  // post-resume channel id => pre-resume request id
++
 +    this._channelSink = {
 +      QueryInterface: ChromeUtils.generateQI([Ci.nsIChannelEventSink]),
 +      asyncOnChannelRedirect: (oldChannel, newChannel, flags, callback) => {
-+        this._onRedirect(oldChannel, newChannel);
++        this._onRedirect(oldChannel, newChannel, flags);
 +        callback.onRedirectVerifyCallback(Cr.NS_OK);
 +      },
 +    };
@@ -718,10 +721,10 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +    registrar.registerFactory(SINK_CLASS_ID, SINK_CLASS_DESCRIPTION, SINK_CONTRACT_ID, this._channelSinkFactory);
 +    Services.catMan.addCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID, SINK_CONTRACT_ID, false, true);
 +
-+    // Request interception state.
-+    this._browserSuspendedChannels = new Map();
++    this._browserInterceptors = new Map();  // Browser => (requestId => interceptor).
 +    this._extraHTTPHeaders = new Map();
 +    this._browserResponseStorages = new Map();
++    this._browserAuthCredentials = new Map();
 +
 +    this._eventListeners = [
 +      helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request'),
@@ -739,36 +742,32 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +  }
 +
 +  enableRequestInterception(browser) {
-+    if (!this._browserSuspendedChannels.has(browser))
-+      this._browserSuspendedChannels.set(browser, new Map());
++    if (!this._browserInterceptors.has(browser))
++      this._browserInterceptors.set(browser, new Map());
 +  }
 +
 +  disableRequestInterception(browser) {
-+    const suspendedChannels = this._browserSuspendedChannels.get(browser);
-+    if (!suspendedChannels)
++    const interceptors = this._browserInterceptors.get(browser);
++    if (!interceptors)
 +      return;
-+    this._browserSuspendedChannels.delete(browser);
-+    for (const channel of suspendedChannels.values())
-+      channel.resume();
++    this._browserInterceptors.delete(browser);
++    for (const interceptor of interceptors.values())
++      interceptor._resume();
 +  }
 +
-+  resumeSuspendedRequest(browser, requestId, headers) {
-+    const suspendedChannels = this._browserSuspendedChannels.get(browser);
-+    if (!suspendedChannels)
++  _takeInterceptor(browser, requestId) {
++    const interceptors = this._browserInterceptors.get(browser);
++    if (!interceptors)
 +      throw new Error(`Request interception is not enabled`);
-+    const httpChannel = suspendedChannels.get(requestId);
-+    if (!httpChannel)
++    const interceptor = interceptors.get(requestId);
++    if (!interceptor)
 +      throw new Error(`Cannot find request "${requestId}"`);
-+    if (headers) {
-+      // 1. Clear all previous headers.
-+      for (const header of requestHeaders(httpChannel))
-+        httpChannel.setRequestHeader(header.name, '', false /* merge */);
-+      // 2. Set new headers.
-+      for (const header of headers)
-+        httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
-+    }
-+    suspendedChannels.delete(requestId);
-+    httpChannel.resume();
++    interceptors.delete(requestId);
++    return interceptor;
++  }
++
++  resumeInterceptedRequest(browser, requestId, headers) {
++    this._takeInterceptor(browser, requestId)._resume(headers);
 +  }
 +
 +  getResponseBody(browser, requestId) {
@@ -778,30 +777,50 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +    return responseStorage.getBase64EncodedResponse(requestId);
 +  }
 +
-+  abortSuspendedRequest(browser, aRequestId) {
-+    const suspendedChannels = this._browserSuspendedChannels.get(browser);
-+    if (!suspendedChannels)
-+      throw new Error(`Request interception is not enabled`);
-+    const httpChannel = suspendedChannels.get(aRequestId);
-+    if (!httpChannel)
-+      throw new Error(`Cannot find request "${aRequestId}"`);
-+    suspendedChannels.delete(aRequestId);
-+    httpChannel.cancel(Cr.NS_ERROR_FAILURE);
-+    httpChannel.resume();
-+    this.emit('requestfailed', httpChannel, {
-+      requestId: requestId(httpChannel),
-+      errorCode: helper.getNetworkErrorStatusText(httpChannel.status),
-+    });
++  fulfillInterceptedRequest(browser, requestId, status, statusText, headers, base64body) {
++    this._takeInterceptor(browser, requestId)._fulfill(status, statusText, headers, base64body);
 +  }
 +
-+  _onRedirect(oldChannel, newChannel) {
-+    if (!(oldChannel instanceof Ci.nsIHttpChannel))
++  abortInterceptedRequest(browser, requestId, errorCode) {
++    this._takeInterceptor(browser, requestId)._abort(errorCode);
++  }
++
++  setAuthCredentials(browser, username, password) {
++    this._browserAuthCredentials.set(browser, { username, password });
++  }
++
++  _requestId(httpChannel) {
++    const id = httpChannel.channelId + '';
++    return this._postResumeChannelIdToRequestId.get(id) || id;
++  }
++
++  _onRedirect(oldChannel, newChannel, flags) {
++    if (!(oldChannel instanceof Ci.nsIHttpChannel) || !(newChannel instanceof Ci.nsIHttpChannel))
 +      return;
-+    const httpChannel = oldChannel.QueryInterface(Ci.nsIHttpChannel);
-+    const loadContext = getLoadContext(httpChannel);
-+    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++    const oldHttpChannel = oldChannel.QueryInterface(Ci.nsIHttpChannel);
++    const newHttpChannel = newChannel.QueryInterface(Ci.nsIHttpChannel);
++    const browser = this._getBrowserForChannel(oldHttpChannel);
++    if (!browser)
 +      return;
-+    this._redirectMap.set(newChannel, oldChannel);
++    const oldRequestId = this._requestId(oldHttpChannel);
++    const newRequestId = this._requestId(newHttpChannel);
++    if (this._resumedRequestIdToHeaders.has(oldRequestId)) {
++      // When we call resetInterception on a request, we get a new "redirected" request for it.
++      const { headers } = this._resumedRequestIdToHeaders.get(oldRequestId);
++      if (headers) {
++        // Apply new request headers from interception resume.
++        for (const header of requestHeaders(newChannel))
++          newChannel.setRequestHeader(header.name, '', false /* merge */);
++        for (const header of headers)
++          newChannel.setRequestHeader(header.name, header.value, false /* merge */);
++      }
++      // Use the old request id for the new "redirected" request for protocol consistency.
++      this._resumedRequestIdToHeaders.delete(oldRequestId);
++      this._postResumeChannelIdToRequestId.set(newRequestId, oldRequestId);
++    } else if (!(flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL)) {
++      // Regular (non-internal) redirect.
++      this._redirectMap.set(newRequestId, oldRequestId);
++    }
 +  }
 +
 +  observeActivity(channel, activityType, activitySubtype, timestamp, extraSizeData, extraStringData) {
@@ -810,56 +829,130 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +    if (!(channel instanceof Ci.nsIHttpChannel))
 +      return;
 +    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
-+    const loadContext = getLoadContext(httpChannel);
-+    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++    const browser = this._getBrowserForChannel(httpChannel);
++    if (!browser)
 +      return;
 +    if (activitySubtype !== Ci.nsIHttpActivityObserver.ACTIVITY_SUBTYPE_TRANSACTION_CLOSE)
 +      return;
-+    this.emit('requestfinished', httpChannel, {
-+      requestId: requestId(httpChannel),
-+    });
++    if (this._isResumedChannel(httpChannel))
++      return;
++    this._sendOnRequestFinished(httpChannel);
++  }
++
++  _getBrowserForChannel(httpChannel) {
++    let loadContext = null;
++    try {
++      if (httpChannel.notificationCallbacks)
++        loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
++    } catch (e) {}
++    try {
++      if (!loadContext && httpChannel.loadGroup)
++        loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
++    } catch (e) { }
++    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++      return;
++    return loadContext.topFrameElement;
++  }
++
++  _isResumedChannel(httpChannel) {
++    return this._postResumeChannelIdToRequestId.has(httpChannel.channelId + '');
 +  }
 +
 +  _onRequest(channel, topic) {
 +    if (!(channel instanceof Ci.nsIHttpChannel))
 +      return;
 +    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
-+    const loadContext = getLoadContext(httpChannel);
-+    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++    const browser = this._getBrowserForChannel(httpChannel);
++    if (!browser)
 +      return;
-+    const extraHeaders = this._extraHTTPHeaders.get(loadContext.topFrameElement);
++    if (this._isResumedChannel(httpChannel)) {
++      // Ignore onRequest for resumed requests, but listen to their response.
++      new ResponseBodyListener(this, browser, httpChannel);
++      return;
++    }
++    const extraHeaders = this._extraHTTPHeaders.get(browser);
 +    if (extraHeaders) {
 +      for (const header of extraHeaders)
 +        httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
 +    }
-+    const causeType = httpChannel.loadInfo ? httpChannel.loadInfo.externalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
-+    const suspendedChannels = this._browserSuspendedChannels.get(loadContext.topFrameElement);
-+    if (suspendedChannels) {
-+      httpChannel.suspend();
-+      suspendedChannels.set(requestId(httpChannel), httpChannel);
++    const requestId = this._requestId(httpChannel);
++    const isRedirect = this._redirectMap.has(requestId);
++    const interceptors = this._browserInterceptors.get(browser);
++    if (!interceptors) {
++      new NotificationCallbacks(this, browser, httpChannel, false);
++      this._sendOnRequest(httpChannel, false);
++      new ResponseBodyListener(this, browser, httpChannel);
++    } else if (isRedirect) {
++      // We pretend that redirect is interceptable in the protocol, although it's actually not
++      // and therefore we do not instantiate the interceptor.
++      // TODO: look into REDIRECT_MODE_MANUAL.
++      interceptors.set(requestId, {
++        _resume: () => {},
++        _abort: () => {},
++        _fulfill: () => {},
++      });
++      new NotificationCallbacks(this, browser, httpChannel, false);
++      this._sendOnRequest(httpChannel, true);
++      new ResponseBodyListener(this, browser, httpChannel);
++    } else {
++      new NotificationCallbacks(this, browser, httpChannel, true);
++      // We'll issue onRequest once it's intercepted.
 +    }
-+    const oldChannel = this._redirectMap.get(httpChannel);
-+    this._redirectMap.delete(httpChannel);
++  }
 +
-+    // Install response body hooks.
-+    new ResponseBodyListener(this, loadContext.topFrameElement, httpChannel);
++  _onIntercepted(httpChannel, interceptor) {
++    const browser = this._getBrowserForChannel(httpChannel);
++    if (!browser) {
++      interceptor._resume();
++      return;
++    }
++    const interceptors = this._browserInterceptors.get(browser);
++    this._sendOnRequest(httpChannel, !!interceptors);
++    if (interceptors)
++      interceptors.set(this._requestId(httpChannel), interceptor);
++    else
++      interceptor._resume();
++  }
 +
++  _sendOnRequest(httpChannel, isIntercepted) {
++    const browser = this._getBrowserForChannel(httpChannel);
++    if (!browser)
++      return;
++    const causeType = httpChannel.loadInfo ? httpChannel.loadInfo.externalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
++    const requestId = this._requestId(httpChannel);
++    const redirectedFrom = this._redirectMap.get(requestId);
++    this._redirectMap.delete(requestId);
 +    this.emit('request', httpChannel, {
 +      url: httpChannel.URI.spec,
-+      suspended: suspendedChannels ? true : undefined,
-+      requestId: requestId(httpChannel),
-+      redirectedFrom: oldChannel ? requestId(oldChannel) : undefined,
++      isIntercepted,
++      requestId,
++      redirectedFrom,
 +      postData: readRequestPostData(httpChannel),
 +      headers: requestHeaders(httpChannel),
 +      method: httpChannel.requestMethod,
-+      navigationId: httpChannel.isMainDocumentChannel ? requestId(httpChannel) : undefined,
++      navigationId: httpChannel.isMainDocumentChannel ? this._requestId(httpChannel) : undefined,
 +      cause: causeTypeToString(causeType),
 +    });
 +  }
 +
++  _sendOnRequestFinished(httpChannel) {
++    this.emit('requestfinished', httpChannel, {
++      requestId: this._requestId(httpChannel),
++    });
++    this._postResumeChannelIdToRequestId.delete(httpChannel.channelId + '');
++  }
++
++  _sendOnRequestFailed(httpChannel, error) {
++    this.emit('requestfailed', httpChannel, {
++      requestId: this._requestId(httpChannel),
++      errorCode: helper.getNetworkErrorStatusText(error),
++    });
++    this._postResumeChannelIdToRequestId.delete(httpChannel.channelId + '');
++  }
++
 +  _onResponse(fromCache, httpChannel, topic) {
-+    const loadContext = getLoadContext(httpChannel);
-+    if (!loadContext || !this._browserSessionCount.has(loadContext.topFrameElement))
++    const browser = this._getBrowserForChannel(httpChannel);
++    if (!browser)
 +      return;
 +    httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
 +    const headers = [];
@@ -876,7 +969,7 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +      // remoteAddress is not defined for cached requests.
 +    }
 +    this.emit('response', httpChannel, {
-+      requestId: requestId(httpChannel),
++      requestId: this._requestId(httpChannel),
 +      securityDetails: getSecurityDetails(httpChannel),
 +      fromCache,
 +      headers,
@@ -892,16 +985,14 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +    if (!responseStorage)
 +      return;
 +    responseStorage.addResponseBody(httpChannel, body);
-+    this.emit('requestfinished', httpChannel, {
-+      requestId: requestId(httpChannel),
-+    });
++    this._sendOnRequestFinished(httpChannel);
 +  }
 +
 +  startTrackingBrowserNetwork(browser) {
 +    const value = this._browserSessionCount.get(browser) || 0;
 +    this._browserSessionCount.set(browser, value + 1);
 +    if (value === 0)
-+      this._browserResponseStorages.set(browser, new ResponseStorage(MAX_RESPONSE_STORAGE_SIZE, MAX_RESPONSE_STORAGE_SIZE / 10));
++      this._browserResponseStorages.set(browser, new ResponseStorage(this, MAX_RESPONSE_STORAGE_SIZE, MAX_RESPONSE_STORAGE_SIZE / 10));
 +    return () => this.stopTrackingBrowserNetwork(browser);
 +  }
 +
@@ -912,6 +1003,8 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +    } else {
 +      this._browserSessionCount.delete(browser);
 +      this._browserResponseStorages.delete(browser);
++      this._browserAuthCredentials.delete(browser);
++      this._browserInterceptors.delete(browser);
 +    }
 +  }
 +
@@ -982,23 +1075,6 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +  return text;
 +}
 +
-+function getLoadContext(httpChannel) {
-+  let loadContext = null;
-+  try {
-+    if (httpChannel.notificationCallbacks)
-+      loadContext = httpChannel.notificationCallbacks.getInterface(Ci.nsILoadContext);
-+  } catch (e) {}
-+  try {
-+    if (!loadContext && httpChannel.loadGroup)
-+      loadContext = httpChannel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
-+  } catch (e) { }
-+  return loadContext;
-+}
-+
-+function requestId(httpChannel) {
-+  return httpChannel.channelId + '';
-+}
-+
 +function requestHeaders(httpChannel) {
 +  const headers = [];
 +  httpChannel.visitRequestHeaders({
@@ -1016,7 +1092,8 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +}
 +
 +class ResponseStorage {
-+  constructor(maxTotalSize, maxResponseSize) {
++  constructor(networkObserver, maxTotalSize, maxResponseSize) {
++    this._networkObserver = networkObserver;
 +    this._totalSize = 0;
 +    this._maxResponseSize = maxResponseSize;
 +    this._maxTotalSize = maxTotalSize;
@@ -1036,7 +1113,7 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +      const encodingHeader = httpChannel.getResponseHeader("Content-Encoding");
 +      encodings = encodingHeader.split(/\s*\t*,\s*\t*/);
 +    }
-+    this._responses.set(requestId(httpChannel), {body, encodings});
++    this._responses.set(this._networkObserver._requestId(httpChannel), {body, encodings});
 +    this._totalSize += body.length;
 +    if (this._totalSize > this._maxTotalSize) {
 +      for (let [requestId, response] of this._responses) {
@@ -1099,6 +1176,153 @@ index 0000000000000000000000000000000000000000..2afbc74a4170233e76dadd7e7b294ca3
 +    this._networkObserver._onResponseFinished(this._browser, this._httpChannel, body);
 +  }
 +}
++
++class NotificationCallbacks {
++  constructor(networkObserver, browser, httpChannel, shouldIntercept) {
++    this._networkObserver = networkObserver;
++    this._browser = browser;
++    this._shouldIntercept = shouldIntercept;
++    this._httpChannel = httpChannel;
++    this._previousCallbacks = httpChannel.notificationCallbacks;
++    httpChannel.notificationCallbacks = this;
++
++    const qis = [
++      Ci.nsIAuthPrompt2,
++      Ci.nsIAuthPromptProvider,
++      Ci.nsIInterfaceRequestor,
++    ];
++    if (shouldIntercept)
++      qis.push(Ci.nsINetworkInterceptController);
++    this.QueryInterface = ChromeUtils.generateQI(qis);
++  }
++
++  getInterface(iid) {
++    if (iid.equals(Ci.nsIAuthPrompt2) || iid.equals(Ci.nsIAuthPromptProvider))
++      return this;
++    if (this._shouldIntercept && iid.equals(Ci.nsINetworkInterceptController))
++      return this;
++    if (iid.equals(Ci.nsIAuthPrompt))  // Block nsIAuthPrompt - we want nsIAuthPrompt2 to be used instead.
++      throw Cr.NS_ERROR_NO_INTERFACE;
++    if (this._previousCallbacks)
++      return this._previousCallbacks.getInterface(iid);
++    throw Cr.NS_ERROR_NO_INTERFACE;
++  }
++
++  _forward(iid, method, args) {
++    if (!this._previousCallbacks)
++      return;
++    try {
++      const impl = this._previousCallbacks.getInterface(iid);
++      impl[method].apply(impl, args);
++    } catch (e) {
++      if (e.result != Cr.NS_ERROR_NO_INTERFACE)
++        throw e;
++    }
++  }
++
++  // nsIAuthPromptProvider
++  getAuthPrompt(aPromptReason, iid) {
++    return this;
++  }
++
++  // nsIAuthPrompt2
++  asyncPromptAuth(aChannel, aCallback, aContext, level, authInfo) {
++    let canceled = false;
++    Promise.resolve().then(() => {
++      if (canceled)
++        return;
++      const hasAuth = this.promptAuth(aChannel, level, authInfo);
++      if (hasAuth)
++        aCallback.onAuthAvailable(aContext, authInfo);
++      else
++        aCallback.onAuthCancelled(aContext, true);
++    });
++    return {
++      QueryInterface: ChromeUtils.generateQI([Ci.nsICancelable]),
++      cancel: () => {
++        aCallback.onAuthCancelled(aContext, false);
++        canceled = true;
++      }
++    };
++  }
++
++  // nsIAuthPrompt2
++  promptAuth(aChannel, level, authInfo) {
++    if (authInfo.flags & Ci.nsIAuthInformation.PREVIOUS_FAILED)
++      return false;
++    const credentials = this._networkObserver._browserAuthCredentials.get(this._browser);
++    if (!credentials || credentials.username === null)
++      return false;
++    authInfo.username = credentials.username;
++    authInfo.password = credentials.password;
++    return true;
++  }
++
++  // nsINetworkInterceptController
++  shouldPrepareForIntercept(aURI, channel) {
++    if (!(channel instanceof Ci.nsIHttpChannel))
++      return false;
++    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
++    return httpChannel.channelId === this._httpChannel.channelId;
++  }
++
++  // nsINetworkInterceptController
++  channelIntercepted(intercepted) {
++    this._intercepted = intercepted.QueryInterface(Ci.nsIInterceptedChannel);
++    const httpChannel = this._intercepted.channel.QueryInterface(Ci.nsIHttpChannel);
++    this._networkObserver._onIntercepted(httpChannel, this);
++  }
++
++  _resume(headers) {
++    this._networkObserver._resumedRequestIdToHeaders.set(this._networkObserver._requestId(this._httpChannel), { headers });
++    this._intercepted.resetInterception();
++  }
++
++  _fulfill(status, statusText, headers, base64body) {
++    this._intercepted.synthesizeStatus(status, statusText);
++    for (const header of headers)
++      this._intercepted.synthesizeHeader(header.name, header.value);
++    const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
++    if (base64body)
++      synthesized.data = atob(base64body);
++    else
++      synthesized.data = '';
++    this._intercepted.startSynthesizedResponse(synthesized, null, null, '', false);
++    this._intercepted.finishSynthesizedResponse();
++    this._networkObserver.emit('response', this._httpChannel, {
++      requestId: this._networkObserver._requestId(this._httpChannel),
++      securityDetails: null,
++      fromCache: false,
++      headers,
++      status,
++      statusText,
++    });
++    this._networkObserver._sendOnRequestFinished(this._httpChannel);
++  }
++
++  _abort(errorCode) {
++    const error = errorMap[errorCode] || Cr.NS_ERROR_FAILURE;
++    this._intercepted.cancelInterception(error);
++    this._networkObserver._sendOnRequestFailed(this._httpChannel, error);
++  }
++}
++
++const errorMap = {
++  'aborted': Cr.NS_ERROR_ABORT,
++  'accessdenied': Cr.NS_ERROR_PORT_ACCESS_NOT_ALLOWED,
++  'addressunreachable': Cr.NS_ERROR_UNKNOWN_HOST,
++  'blockedbyclient': Cr.NS_ERROR_FAILURE,
++  'blockedbyresponse': Cr.NS_ERROR_FAILURE,
++  'connectionaborted': Cr.NS_ERROR_NET_INTERRUPT,
++  'connectionclosed': Cr.NS_ERROR_FAILURE,
++  'connectionfailed': Cr.NS_ERROR_FAILURE,
++  'connectionrefused': Cr.NS_ERROR_CONNECTION_REFUSED,
++  'connectionreset': Cr.NS_ERROR_NET_RESET,
++  'internetdisconnected': Cr.NS_ERROR_OFFLINE,
++  'namenotresolved': Cr.NS_ERROR_UNKNOWN_HOST,
++  'timedout': Cr.NS_ERROR_NET_TIMEOUT,
++  'failed': Cr.NS_ERROR_FAILURE,
++};
 +
 +var EXPORTED_SYMBOLS = ['NetworkObserver'];
 +this.NetworkObserver = NetworkObserver;
@@ -3915,10 +4139,10 @@ index 0000000000000000000000000000000000000000..956988738079272be8d3998dcbbaa91a
 +
 diff --git a/testing/juggler/protocol/NetworkHandler.js b/testing/juggler/protocol/NetworkHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..f5e7e919594b3778fd3046bf69d34878cccefa64
+index 0000000000000000000000000000000000000000..22e7b4f9397e592f26ce447aafd6318398ad5b48
 --- /dev/null
 +++ b/testing/juggler/protocol/NetworkHandler.js
-@@ -0,0 +1,154 @@
+@@ -0,0 +1,166 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -3943,6 +4167,7 @@ index 0000000000000000000000000000000000000000..f5e7e919594b3778fd3046bf69d34878
 +    this._requestInterception = false;
 +    this._eventListeners = [];
 +    this._pendingRequstWillBeSentEvents = new Set();
++    this._requestIdToFrameId = new Map();
 +  }
 +
 +  async enable() {
@@ -3976,12 +4201,20 @@ index 0000000000000000000000000000000000000000..f5e7e919594b3778fd3046bf69d34878
 +    await Promise.all(Array.from(this._pendingRequstWillBeSentEvents));
 +  }
 +
-+  async resumeSuspendedRequest({requestId, headers}) {
-+    this._networkObserver.resumeSuspendedRequest(this._browser, requestId, headers);
++  async resumeInterceptedRequest({requestId, headers}) {
++    this._networkObserver.resumeInterceptedRequest(this._browser, requestId, headers);
 +  }
 +
-+  async abortSuspendedRequest({requestId}) {
-+    this._networkObserver.abortSuspendedRequest(this._browser, requestId);
++  async abortInterceptedRequest({requestId, errorCode}) {
++    this._networkObserver.abortInterceptedRequest(this._browser, requestId, errorCode);
++  }
++
++  async fulfillInterceptedRequest({requestId, status, statusText, headers, base64body}) {
++    this._networkObserver.fulfillInterceptedRequest(this._browser, requestId, status, statusText, headers, base64body);
++  }
++
++  async setAuthCredentials({username, password}) {
++    this._networkObserver.setAuthCredentials(this._browser, username, password);
 +  }
 +
 +  dispose() {
@@ -4042,9 +4275,12 @@ index 0000000000000000000000000000000000000000..f5e7e919594b3778fd3046bf69d34878
 +        return;
 +      }
 +    }
++    // Inherit frameId for redirects when details are not available.
++    const frameId = details ? details.frameId : (eventDetails.redirectedFrom ? this._requestIdToFrameId.get(eventDetails.redirectedFrom) : undefined);
++    this._requestIdToFrameId.set(eventDetails.requestId, frameId);
 +    const activity = this._ensureHTTPActivity(eventDetails.requestId);
 +    activity.request = {
-+      frameId: details ? details.frameId : undefined,
++      frameId,
 +      ...eventDetails,
 +    };
 +    this._reportHTTPAcitivityEvents(activity);
@@ -4515,10 +4751,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1eecb6120f101cb7506fcf8d40c177089e62671b
+index 0000000000000000000000000000000000000000..a0913f7728931a938b850083213560a511b624a8
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,731 @@
+@@ -0,0 +1,747 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4815,7 +5051,7 @@ index 0000000000000000000000000000000000000000..1eecb6120f101cb7506fcf8d40c17708
 +      redirectedFrom: t.Optional(t.String),
 +      postData: t.Optional(t.String),
 +      headers: t.Array(networkTypes.HTTPHeader),
-+      suspended: t.Optional(t.Boolean),
++      isIntercepted: t.Boolean,
 +      url: t.String,
 +      method: t.String,
 +      navigationId: t.Optional(t.String),
@@ -4851,15 +5087,25 @@ index 0000000000000000000000000000000000000000..1eecb6120f101cb7506fcf8d40c17708
 +        headers: t.Array(networkTypes.HTTPHeader),
 +      },
 +    },
-+    'abortSuspendedRequest': {
++    'abortInterceptedRequest': {
 +      params: {
 +        requestId: t.String,
++        errorCode: t.String,
 +      },
 +    },
-+    'resumeSuspendedRequest': {
++    'resumeInterceptedRequest': {
 +      params: {
 +        requestId: t.String,
 +        headers: t.Optional(t.Array(networkTypes.HTTPHeader)),
++      },
++    },
++    'fulfillInterceptedRequest': {
++      params: {
++        requestId: t.String,
++        status: t.Number,
++        statusText: t.String,
++        headers: t.Array(networkTypes.HTTPHeader),
++        base64body: t.Optional(t.String),  // base64-encoded
 +      },
 +    },
 +    'getResponseBody': {
@@ -4869,6 +5115,12 @@ index 0000000000000000000000000000000000000000..1eecb6120f101cb7506fcf8d40c17708
 +      returns: {
 +        base64body: t.String,
 +        evicted: t.Optional(t.Boolean),
++      },
++    },
++    'setAuthCredentials': {
++      params: {
++        username: t.Nullable(t.String),
++        password: t.Nullable(t.String),
 +      },
 +    },
 +  },
