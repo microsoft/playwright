@@ -161,7 +161,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       it('should support the pipe option', async() => {
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
         const browserServer = await playwright.launchServer(options);
-        const browser = await browserServer.connect();
+        const browser = await playwright.connect(browserServer.connectOptions());
         expect((await browser.defaultContext().pages()).length).toBe(1);
         expect(browserServer.wsEndpoint()).toBe(null);
         const page = await browser.defaultContext().newPage();
@@ -173,7 +173,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = ['--remote-debugging-pipe'].concat(options.args || []);
         const browserServer = await playwright.launchServer(options);
-        const browser = await browserServer.connect();
+        const browser = await playwright.connect(browserServer.connectOptions());
         expect(browserServer.wsEndpoint()).toBe(null);
         const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
@@ -183,7 +183,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       it('should fire "disconnected" when closing with pipe', async() => {
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
         const browserServer = await playwright.launchServer(options);
-        const browser = await browserServer.connect();
+        const browser = await playwright.connect(browserServer.connectOptions());
         const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
         // Emulate user exiting browser.
         browserServer.process().kill();
@@ -210,7 +210,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Browser.Events.disconnected', function() {
     it('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async() => {
       const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const originalBrowser = await browserServer.connect();
+      const originalBrowser = await playwright.connect(browserServer.connectOptions());
       const browserWSEndpoint = browserServer.wsEndpoint();
       const remoteBrowser1 = await playwright.connect({browserWSEndpoint});
       const remoteBrowser2 = await playwright.connect({browserWSEndpoint});

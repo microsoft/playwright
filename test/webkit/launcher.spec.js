@@ -31,7 +31,7 @@ module.exports.describe = function ({ testRunner, expect, playwright, defaultBro
       it('should have websocket by default', async() => {
         const options = Object.assign({pipe: false}, defaultBrowserOptions);
         const browserServer = await playwright.launchServer(options);
-        const browser = await browserServer.connect();
+        const browser = await playwright.connect(browserServer.connectOptions());
         expect((await browser.defaultContext().pages()).length).toBe(1);
         expect(browserServer.wsEndpoint()).not.toBe(null);
         const page = await browser.defaultContext().newPage();
@@ -42,7 +42,7 @@ module.exports.describe = function ({ testRunner, expect, playwright, defaultBro
       it('should support the pipe option', async() => {
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
         const browserServer = await playwright.launchServer(options);
-        const browser = await browserServer.connect();
+        const browser = await playwright.connect(browserServer.connectOptions());
         expect((await browser.defaultContext().pages()).length).toBe(1);
         expect(browserServer.wsEndpoint()).toBe(null);
         const page = await browser.defaultContext().newPage();
@@ -53,7 +53,7 @@ module.exports.describe = function ({ testRunner, expect, playwright, defaultBro
       it('should fire "disconnected" when closing with pipe', async() => {
         const options = Object.assign({pipe: true}, defaultBrowserOptions);
         const browserServer = await playwright.launchServer(options);
-        const browser = await browserServer.connect();
+        const browser = await playwright.connect(browserServer.connectOptions());
         const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
         // Emulate user exiting browser.
         process.kill(-browserServer.process().pid, 'SIGKILL');
@@ -62,7 +62,7 @@ module.exports.describe = function ({ testRunner, expect, playwright, defaultBro
       it('should fire "disconnected" when closing with websocket', async() => {
         const options = Object.assign({pipe: false}, defaultBrowserOptions);
         const browserServer = await playwright.launchServer(options);
-        const browser = await browserServer.connect();
+        const browser = await playwright.connect(browserServer.connectOptions());
         const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
         // Emulate user exiting browser.
         process.kill(-browserServer.process().pid, 'SIGKILL');

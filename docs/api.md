@@ -3373,7 +3373,6 @@ const newWindowTarget = await browser.chromium.waitForTarget(target => target.ur
 
 <!-- GEN:toc -->
 - [chromiumBrowserServer.close()](#chromiumbrowserserverclose)
-- [chromiumBrowserServer.connect()](#chromiumbrowserserverconnect)
 - [chromiumBrowserServer.connectOptions()](#chromiumbrowserserverconnectoptions)
 - [chromiumBrowserServer.process()](#chromiumbrowserserverprocess)
 - [chromiumBrowserServer.wsEndpoint()](#chromiumbrowserserverwsendpoint)
@@ -3383,11 +3382,6 @@ const newWindowTarget = await browser.chromium.waitForTarget(target => target.ur
 - returns: <[Promise]>
 
 Closes the browser gracefully and makes sure the process is terminated.
-
-#### chromiumBrowserServer.connect()
-- returns: <[Promise]<[ChromiumBrowser]>>
-
-Connects to the browser server and returns a <[ChromiumBrowser]> object.
 
 #### chromiumBrowserServer.connectOptions()
 - returns: <[Object]>
@@ -3567,7 +3561,6 @@ Firefox browser instance does not expose Firefox-specific features.
 
 <!-- GEN:toc -->
 - [firefoxBrowserServer.close()](#firefoxbrowserserverclose)
-- [firefoxBrowserServer.connect()](#firefoxbrowserserverconnect)
 - [firefoxBrowserServer.connectOptions()](#firefoxbrowserserverconnectoptions)
 - [firefoxBrowserServer.process()](#firefoxbrowserserverprocess)
 - [firefoxBrowserServer.wsEndpoint()](#firefoxbrowserserverwsendpoint)
@@ -3577,11 +3570,6 @@ Firefox browser instance does not expose Firefox-specific features.
 - returns: <[Promise]>
 
 Closes the browser gracefully and makes sure the process is terminated.
-
-#### firefoxBrowserServer.connect()
-- returns: <[Promise]<[FirefoxBrowser]>>
-
-Connects to the browser server and returns a <[FirefoxBrowser]> object.
 
 #### firefoxBrowserServer.connectOptions()
 - returns: <[Object]>
@@ -3680,7 +3668,6 @@ WebKit browser instance does not expose WebKit-specific features.
 
 <!-- GEN:toc -->
 - [webKitBrowserServer.close()](#webkitbrowserserverclose)
-- [webKitBrowserServer.connect()](#webkitbrowserserverconnect)
 - [webKitBrowserServer.connectOptions()](#webkitbrowserserverconnectoptions)
 - [webKitBrowserServer.process()](#webkitbrowserserverprocess)
 - [webKitBrowserServer.wsEndpoint()](#webkitbrowserserverwsendpoint)
@@ -3690,11 +3677,6 @@ WebKit browser instance does not expose WebKit-specific features.
 - returns: <[Promise]>
 
 Closes the browser gracefully and makes sure the process is terminated.
-
-#### webKitBrowserServer.connect()
-- returns: <[Promise]<[WebKitBrowser]>>
-
-Connects to the browser server and returns a <[WebKitBrowser]> object.
 
 #### webKitBrowserServer.connectOptions()
 - returns: <[Object]>

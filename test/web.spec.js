@@ -23,7 +23,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     beforeAll(async state => {
       state.controlledBrowserServer = await playwright.launchServer({ ...defaultBrowserOptions, pipe: false });
       state.hostBrowserServer = await playwright.launchServer(defaultBrowserOptions);
-      state.hostBrowser = await state.hostBrowserServer.connect();
+      state.hostBrowser = await playwright.connect(state.hostBrowserServer.connectOptions());
     });
 
     afterAll(async state => {
