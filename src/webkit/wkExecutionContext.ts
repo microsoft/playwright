@@ -111,7 +111,15 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       serializableArgs = args;
     }
 
-    const thisObjectId = await this._contextGlobalObjectId();
+    let thisObjectId;
+    try {
+      thisObjectId = await this._contextGlobalObjectId();
+    } catch (error) {
+      if (error.message.includes('Missing injected script for given'))
+        throw new Error('Execution context was destroyed, most likely because of a navigation.');
+      throw error;
+    }
+
     let callFunctionOnPromise;
     try {
       callFunctionOnPromise = this._session.send('Runtime.callFunctionOn', {

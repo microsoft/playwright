@@ -181,8 +181,8 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-webgl.png');
     });
-    // firefox and webkit are flaky
-    it.skip(FFOX || WEBKIT)('should work while navigating', async({page, server}) => {
+    // firefox is flaky
+    it.skip(FFOX)('should work while navigating', async({page, server}) => {
       await page.setViewport({width: 500, height: 500});
       await page.goto(server.PREFIX + '/redirectloop1.html');
       for (let i = 0; i < 10; i++) {
