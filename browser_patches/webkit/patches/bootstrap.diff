@@ -364,10 +364,10 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..7709bcc2ec69aab0589ca1b954db1fb2
      FrontendChannel::ConnectionType connectionType() const;
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..c5d94e331f4a0f5a188d38cbb852bdbd6787a33d
+index 0000000000000000000000000000000000000000..b9ac6ebfb1ba16f83663f3fbe29e619ba2befe13
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
-@@ -0,0 +1,201 @@
+@@ -0,0 +1,202 @@
 +{
 +    "domain": "Browser",
 +    "availability": ["web"],
@@ -445,6 +445,7 @@ index 0000000000000000000000000000000000000000..c5d94e331f4a0f5a188d38cbb852bdbd
 +    "commands": [
 +        {
 +            "name": "close",
++            "async": true,
 +            "description": "Close browser."
 +        },
 +        {
@@ -6838,10 +6839,10 @@ index 4896c404bc8b25d69360de7d1c509383282b2317..14bdebf732e929ea367c961f9d0bec85
      static constexpr Seconds didUpdateBackingStoreStateTimeout() { return Seconds::fromMilliseconds(500); }
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e3fdebc6d86036f93361c3f0b9d7fbd0e7ac67bf
+index 0000000000000000000000000000000000000000..d8dbb6391594955a23a5ed3cb34b05ca0b47acc1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,482 @@
+@@ -0,0 +1,497 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -6984,13 +6985,31 @@ index 0000000000000000000000000000000000000000..e3fdebc6d86036f93361c3f0b9d7fbd0
 +    m_isConnected = false;
 +}
 +
-+void InspectorBrowserAgent::close(ErrorString& errorString)
++void InspectorBrowserAgent::close(Ref<CloseCallback>&& callback)
 +{
-+    if (m_client == nullptr) {
-+        errorString = "no platform delegate to close browser";
-+    } else {
-+        m_client->closeBrowser();
++    Vector<WebPageProxy*> pages;
++    for (auto& pool : WebProcessPool::allProcessPools()) {
++        for (auto& process : pool->processes()) {
++            for (auto* page : process->pages())
++                pages.append(page);
++        }
 +    }
++    for (auto* page : pages)
++        page->closePage();
++
++    WebProcessPool::allProcessPools().first()->syncLocalStorage([this, callback = WTFMove(callback)] () {
++        if (!callback->isActive())
++            return;
++
++        m_browserContexts.clear();
++        if (m_client == nullptr) {
++            callback->sendFailure("no platform delegate to close browser");
++        } else {
++            m_client->closeBrowser();
++            callback->sendSuccess();
++        }
++    });
++
 +}
 +
 +void InspectorBrowserAgent::createContext(ErrorString& errorString, String* browserContextID)
@@ -7305,14 +7324,11 @@ index 0000000000000000000000000000000000000000..e3fdebc6d86036f93361c3f0b9d7fbd0
 +BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
 +{
 +    if (!browserContextID) {
-+        for (auto& pool : WebProcessPool::allProcessPools()) {
-+            BrowserContext context;
-+            context.processPool = pool;
-+            context.dataStore = pool->websiteDataStore();
-+            return context;
-+        }
-+        errorString = "No default context"_s;
-+        return BrowserContext();
++        auto* pool = WebProcessPool::allProcessPools().first();
++        BrowserContext context;
++        context.processPool = pool;
++        context.dataStore = pool->websiteDataStore();
++        return context;
 +    }
 +
 +    BrowserContext browserContext = m_browserContexts.get(*browserContextID);
@@ -7326,7 +7342,7 @@ index 0000000000000000000000000000000000000000..e3fdebc6d86036f93361c3f0b9d7fbd0
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..71a26862762e695015ca27aac2e4645d69234bc1
+index 0000000000000000000000000000000000000000..8f224acabb5b2010368f25b9b6d5ca0a3b75cd0b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 @@ -0,0 +1,113 @@
@@ -7408,7 +7424,7 @@ index 0000000000000000000000000000000000000000..71a26862762e695015ca27aac2e4645d
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
 +
 +    // BrowserBackendDispatcherHandler
-+    void close(Inspector::ErrorString&) override;
++    void close(Ref<CloseCallback>&&) override;
 +    void createContext(Inspector::ErrorString&, String* browserContextID) override;
 +    void deleteContext(Inspector::ErrorString&, const String& browserContextID) override;
 +    void createPage(Inspector::ErrorString&, const String* browserContextID, String* pageProxyID) override;
@@ -9394,10 +9410,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d3f969edbd888c4f9265c04e07814d0a3e337802
+index 0000000000000000000000000000000000000000..0038b09d06d3d92b885d70bfffa9b111766b3f57
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
-@@ -0,0 +1,132 @@
+@@ -0,0 +1,115 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -9441,27 +9457,6 @@ index 0000000000000000000000000000000000000000..d3f969edbd888c4f9265c04e07814d0a
 +
 +namespace WebKit {
 +
-+static Vector<WebPageProxy*> collectPages(Optional<PAL::SessionID> sessionID)
-+{
-+    Vector<WebPageProxy*> result;
-+    for (WebProcessPool* pool : WebProcessPool::allProcessPools()) {
-+        for (auto& process : pool->processes()) {
-+            for (auto* page : process->pages()) {
-+                if (!sessionID || page->sessionID() == sessionID)
-+                    result.append(page);
-+            }
-+        }
-+    }
-+    return result;
-+}
-+
-+static void closeAllPages(Optional<PAL::SessionID> sessionID)
-+{
-+    Vector<WebPageProxy*> pages = collectPages(sessionID);
-+    for (auto* page : pages)
-+        page->closePage();
-+}
-+
 +InspectorBrowserAgentClientGlib::InspectorBrowserAgentClientGlib(GMainLoop* mainLoop)
 +    : m_mainLoop(mainLoop)
 +{
@@ -9470,26 +9465,30 @@ index 0000000000000000000000000000000000000000..d3f969edbd888c4f9265c04e07814d0a
 +RefPtr<WebPageProxy> InspectorBrowserAgentClientGlib::createPage(WTF::String& error, const BrowserContext& browserContext)
 +{
 +    auto sessionID = browserContext.dataStore->sessionID();
-+    WebKitWebContext* context;
-+    if (!sessionID || webkitWebContextGetProcessPool(webkit_web_context_get_default()).websiteDataStore()->sessionID() == sessionID)
-+      context = webkit_web_context_get_default();
-+    else
-+      context = m_idToContext.get(sessionID);
-+
-+    if (context == nullptr) {
++    WebKitWebContext* context = m_idToContext.get(sessionID);
++    if (!context && !browserContext.dataStore->isPersistent()) {
++        ASSERT_NOT_REACHED();
 +        error = "Context with provided id not found";
 +        return nullptr;
 +    }
 +
 +    RefPtr<WebPageProxy> page = webkitBrowserInspectorCreateNewPageInContext(context);
-+    if (page == nullptr)
++    if (page == nullptr) {
 +        error = "Failed to create new page in the context";
++        return nullptr;
++    }
++
++    if (context == nullptr && sessionID != page->sessionID()) {
++        ASSERT_NOT_REACHED();
++        error = " Failed to create new page in default context";
++        return nullptr;
++    }
++
 +    return page;
 +}
 +
 +void InspectorBrowserAgentClientGlib::closeBrowser()
 +{
-+    closeAllPages(Optional<PAL::SessionID>());
 +    m_idToContext.clear();
 +#if PLATFORM(GTK)
 +    gtk_main_quit();
@@ -11495,7 +11494,7 @@ index 1570d65effb5d601ee3c44a2a7461436f4691c2c..456f96cf589320efa70a76f76e230b67
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..17854dbfb1a3223e091ab90c0ca1bfc1e1f13d44 100644
+index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..19a6d2cd9605a83b5233604be9d371f61c8529dd 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -53,6 +53,9 @@ static const char *cookiesFile;
@@ -11518,12 +11517,17 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..17854dbfb1a3223e091ab90c0ca1bfc1
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, 0, "[URL…]" },
      { 0, 0, 0, 0, 0, 0, 0 }
  };
-@@ -498,6 +504,29 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -498,6 +504,36 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
++static WebKitWebContext *persistentWebContext = NULL;
++
 +static WebKitWebView *createNewPage(WebKitBrowserInspector *browser_inspector, WebKitWebContext *context)
 +{
++    if (context == NULL)
++        context = persistentWebContext;
++
 +    WebKitWebView *newWebView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
 +        "web-context", context,
 +        "is-ephemeral", webkit_web_context_is_ephemeral(context),
@@ -11537,8 +11541,10 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..17854dbfb1a3223e091ab90c0ca1bfc1
 +    return newWebView;
 +}
 +
-+static void configureBrowserInspectorPipe()
++static void configureBrowserInspectorPipe(WebKitWebContext *webContext)
 +{
++    persistentWebContext = webContext;
++
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
 +
@@ -11548,16 +11554,16 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..17854dbfb1a3223e091ab90c0ca1bfc1
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -541,10 +570,22 @@ int main(int argc, char *argv[])
+@@ -541,10 +577,22 @@ int main(int argc, char *argv[])
          return 0;
      }
  
 -    WebKitWebsiteDataManager *manager = (privateMode || automationMode) ? webkit_website_data_manager_new_ephemeral() : webkit_website_data_manager_new(NULL);
 +    WebKitWebsiteDataManager *manager;
-+    if (inspectorPipe) {
-+        manager = webkit_web_context_get_website_data_manager(webkit_web_context_get_default());
-+        g_object_ref(manager);
-+    } else if (privateMode || automationMode) {
++    if (userDataDir) {
++        manager = webkit_website_data_manager_new("base-data-directory", userDataDir, "base-cache-directory", userDataDir, NULL);
++        cookiesFile = g_build_filename(userDataDir, "cookies.txt", NULL);
++    } else if (inspectorPipe || privateMode || automationMode) {
 +        manager = webkit_website_data_manager_new_ephemeral();
 +    } else {
 +        manager = webkit_website_data_manager_new(NULL);
@@ -11567,7 +11573,7 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..17854dbfb1a3223e091ab90c0ca1bfc1
      g_object_unref(manager);
  
 +    if (inspectorPipe)
-+        configureBrowserInspectorPipe();
++        configureBrowserInspectorPipe(webContext);
 +
      if (cookiesPolicy) {
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
@@ -11873,7 +11879,7 @@ index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed
      ${WPEBACKEND_FDO_INCLUDE_DIRS}
  )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..867e7d08fd5f922e32e09550ac19a21d0c8fb7d1 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e6396ce0a2fd 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -11937,7 +11943,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..867e7d08fd5f922e32e09550ac19a21d
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -164,14 +184,48 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -164,14 +184,54 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
  
@@ -11974,13 +11980,19 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..867e7d08fd5f922e32e09550ac19a21d
 +    return createWebViewImpl(webView, nullptr);
 +}
 +
++static WebKitWebContext *persistentWebContext = NULL;
++
 +static WebKitWebView* createNewPage(WebKitBrowserInspector*, WebKitWebContext *webContext)
 +{
++    if (!webContext)
++        webContext = persistentWebContext;
 +    return createWebViewImpl(nullptr, webContext);
 +}
 +
-+static void configureBrowserInspector(GMainLoop* mainLoop)
++static void configureBrowserInspector(GMainLoop* mainLoop, WebKitWebContext *webContext)
 +{
++    persistentWebContext = webContext;
++
 +    WebKitBrowserInspector* browserInspector = webkit_browser_inspector_get_default();
 +    g_signal_connect(browserInspector, "create-new-page", G_CALLBACK(createNewPage), NULL);
 +    webkit_browser_inspector_initialize_pipe(mainLoop);
@@ -11989,17 +12001,37 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..867e7d08fd5f922e32e09550ac19a21d
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -280,6 +334,9 @@ int main(int argc, char *argv[])
+@@ -215,7 +275,18 @@ int main(int argc, char *argv[])
+         return 1;
+     }
+ 
+-    auto* webContext = (privateMode || automationMode) ? webkit_web_context_new_ephemeral() : webkit_web_context_get_default();
++    WebKitWebsiteDataManager *manager;
++    if (userDataDir) {
++        manager = webkit_website_data_manager_new("base-data-directory", userDataDir, "base-cache-directory", userDataDir, NULL);
++        cookiesFile = g_build_filename(userDataDir, "cookies.txt", NULL);
++    } else if (inspectorPipe || privateMode || automationMode) {
++        manager = webkit_website_data_manager_new_ephemeral();
++    } else {
++        manager = webkit_website_data_manager_new(NULL);
++    }
++
++    WebKitWebContext *webContext = WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager, "process-swap-on-cross-site-navigation-enabled", TRUE, NULL));
++    g_object_unref(manager);
+ 
+     if (cookiesPolicy) {
+         auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
+@@ -280,6 +351,9 @@ int main(int argc, char *argv[])
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
  
 +    if (inspectorPipe)
-+        configureBrowserInspector(loop);
++        configureBrowserInspector(loop, webContext);
 +
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
-@@ -318,7 +375,7 @@ int main(int argc, char *argv[])
+@@ -318,7 +392,7 @@ int main(int argc, char *argv[])
          g_object_unref(file);
          webkit_web_view_load_uri(webView, url);
          g_free(url);
