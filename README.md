@@ -36,7 +36,7 @@ Playwright can be used to create a browser instance, open pages, and then manipu
 
 #### Page screenshot
 
-This code snippet navigates to thismachine.info in Chromium, Firefox and WebKit, and saves 3 screenshots.
+This code snippet navigates to whatsmyuseragent.org in Chromium, Firefox and WebKit, and saves 3 screenshots.
 
 ```js
 const pw = require('playwright');
@@ -47,7 +47,7 @@ const pw = require('playwright');
   browsers.forEach(async browserName => {
     const browser = await pw[browserName].launch();
     const context = await browser.newContext();
-    const page = await context.newPage('http://thismachine.info/');
+    const page = await context.newPage('http://whatsmyuseragent.org/');
 
     await page.screenshot({ path: `example-${browserName}.png` });
     await browser.close();
@@ -134,6 +134,10 @@ const pw = require('playwright');
 Check out our [contributing guide](https://github.com/microsoft/playwright/blob/master/CONTRIBUTING.md).
 
 ## FAQ
+
+**Q: Can I use a single API to automate different browsers?**
+
+Yes, you can. See [Browser](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-browser) in the API reference for the common set of APIs across Chromium, Firefox and WebKit. A small set of features are specific to browsers, for example see [ChromiumBrowser](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-chromiumbrowser).
 
 **Q: How does Playwright relate to [Puppeteer](https://github.com/puppeteer/puppeteer)?**
 
