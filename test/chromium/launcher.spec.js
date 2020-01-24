@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-const { waitEvent } = require('../utils');
 const util = require('util');
 const fs = require('fs');
 const path = require('path');
@@ -32,19 +31,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('CrPlaywright', function() {
-    describe('BrowserContext', function() {
-      it('should work across sessions', async () => {
-        const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
-        const browser = await playwright.connect(browserApp.connectOptions());
-        expect(browser.browserContexts().length).toBe(1);
-        await browser.newContext();
-        expect(browser.browserContexts().length).toBe(2);
-        const remoteBrowser = await playwright.connect(browserApp.connectOptions());
-        const contexts = remoteBrowser.browserContexts();
-        expect(contexts.length).toBe(2);
-        await browserApp.close();
-      });
-    });
     describe('Playwright.launch |browserURL| option', function() {
       function getBrowserUrl(wsEndpoint) {
         const port = wsEndpoint.match(/ws:\/\/([0-9A-Za-z\.]*):(\d+)\//)[2];
@@ -131,42 +117,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.close();
       expect(events).toEqual(['CREATED', 'CHANGED', 'DESTROYED']);
       await browser.close();
-    });
-  });
-
-  describe('Browser.Events.disconnected', function() {
-    it('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async() => {
-      const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
-      const originalBrowser = await playwright.connect(browserApp.connectOptions());
-      const browserWSEndpoint = browserApp.wsEndpoint();
-      const remoteBrowser1 = await playwright.connect({browserWSEndpoint});
-      const remoteBrowser2 = await playwright.connect({browserWSEndpoint});
-
-      let disconnectedOriginal = 0;
-      let disconnectedRemote1 = 0;
-      let disconnectedRemote2 = 0;
-      originalBrowser.on('disconnected', () => ++disconnectedOriginal);
-      remoteBrowser1.on('disconnected', () => ++disconnectedRemote1);
-      remoteBrowser2.on('disconnected', () => ++disconnectedRemote2);
-
-      await Promise.all([
-        waitEvent(remoteBrowser2, 'disconnected'),
-        remoteBrowser2.disconnect(),
-      ]);
-
-      expect(disconnectedOriginal).toBe(0);
-      expect(disconnectedRemote1).toBe(0);
-      expect(disconnectedRemote2).toBe(1);
-
-      await Promise.all([
-        waitEvent(remoteBrowser1, 'disconnected'),
-        waitEvent(originalBrowser, 'disconnected'),
-        browserApp.close(),
-      ]);
-
-      expect(disconnectedOriginal).toBe(1);
-      expect(disconnectedRemote1).toBe(1);
-      expect(disconnectedRemote2).toBe(1);
     });
   });
 

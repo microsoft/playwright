@@ -187,15 +187,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     });
 
     // Browser-level tests that are given a browser.
-    testRunner.loadTests(require('./browser.spec.js'), testOptions);
     testRunner.loadTests(require('./browsercontext.spec.js'), testOptions);
     testRunner.loadTests(require('./ignorehttpserrors.spec.js'), testOptions);
-    if (CHROMIUM) {
-      testRunner.loadTests(require('./chromium/browser.spec.js'), testOptions);
-    }
-    if (FFOX) {
-      testRunner.loadTests(require('./firefox/browser.spec.js'), testOptions);
-    }
   });
 
   // Top-level tests that launch Browser themselves.
@@ -204,19 +197,14 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   testRunner.loadTests(require('./launcher.spec.js'), testOptions);
 
   if (CHROMIUM) {
-    testRunner.loadTests(require('./chromium/connect.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/launcher.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/headful.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/oopif.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/tracing.spec.js'), testOptions);
   }
 
-  if (FFOX) {
-    testRunner.loadTests(require('./firefox/launcher.spec.js'), testOptions);
-  }
-
-  if (WEBKIT) {
-    testRunner.loadTests(require('./webkit/launcher.spec.js'), testOptions);
+  if (CHROMIUM || FFOX) {
+    testRunner.loadTests(require('./multiclient.spec.js'), testOptions);
   }
 
   testRunner.loadTests(require('./web.spec.js'), testOptions);

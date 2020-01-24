@@ -155,6 +155,19 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(createdTarget.opener()).toBe(browser.pageTarget(page));
       expect(browser.pageTarget(page).opener()).toBe(null);
     });
+    it('should close all belonging targets once closing context', async function({browser, newContext}) {
+      const targets = async () => (await browser.targets()).filter(t => t.type() === 'page');
+      // There is one page in a default profile and one page created by test harness.
+      expect((await targets()).length).toBe(2);
+
+      const context = await newContext();
+      await context.newPage();
+      expect((await targets()).length).toBe(3);
+      expect((await context.pages()).length).toBe(1);
+
+      await context.close();
+      expect((await targets()).length).toBe(2);
+    });
   });
 
   describe('Chromium.waitForTarget', () => {
