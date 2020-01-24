@@ -5,7 +5,8 @@
 ##### Table of Contents
 
 <!-- GEN:toc-top-level -->
-- [class: Playwright](#class-playwright)
+- [Playwright module](#playwright-module)
+- [class: BrowserType](#class-browsertype)
 - [class: Browser](#class-browser)
 - [class: BrowserApp](#class-browserapp)
 - [class: BrowserContext](#class-browsercontext)
@@ -34,15 +35,15 @@
 - [Downloaded browsers](#downloaded-browsers)
 <!-- GEN:stop -->
 
-### class: Playwright
+### Playwright module
 
 Playwright module provides a method to launch a browser instance.
 The following is a typical example of using Playwright to drive automation:
 ```js
-const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
+const { chromium, firefox, webkit } = require('playwright');
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await chromium.launch();  // Or 'firefox' or 'webkit'.
   const context = await browser.newContext();
   const page = await context.newPage('http://example.com');
   // other actions...
@@ -53,34 +54,17 @@ const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 Playwright automatically downloads browser executables during installation, see [Downloaded browsers](#downloaded-browsers) for more information.
 
 <!-- GEN:toc -->
-- [playwright.connect(options)](#playwrightconnectoptions)
-- [playwright.defaultArgs([options])](#playwrightdefaultargsoptions)
+- [playwright.chromium](#playwrightchromium)
 - [playwright.devices](#playwrightdevices)
 - [playwright.errors](#playwrighterrors)
-- [playwright.executablePath()](#playwrightexecutablepath)
-- [playwright.launch([options])](#playwrightlaunchoptions)
-- [playwright.launchBrowserApp([options])](#playwrightlaunchbrowserappoptions)
+- [playwright.firefox](#playwrightfirefox)
+- [playwright.webkit](#playwrightwebkit)
 <!-- GEN:stop -->
 
-#### playwright.connect(options)
-- `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> A browser websocket endpoint to connect to.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `browserURL` <?[string]> **Chromium-only** A browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
-- returns: <[Promise]<[Browser]>>
+#### playwright.chromium
+- returns: <[BrowserType]>
 
-This methods attaches Playwright to an existing browser instance.
-
-#### playwright.defaultArgs([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
-  - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-- returns: <[Array]<[string]>>
-
-The default flags that browser will be launched with.
+This object can be used to launch or connect to Chromium, returning instances of [ChromiumBrowser].
 
 #### playwright.devices
 - returns: <[Object]>
@@ -89,11 +73,11 @@ Returns a list of devices to be used with [`page.emulate(options)`](#pageemulate
 devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
 
 ```js
-const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
-const iPhone = playwright.devices['iPhone 6'];
+const { webkit, devices } = require('playwright');
+const iPhone = devices['iPhone 6'];
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await webkit.launch();
   const context = await browser.newContext({
     viewport: iPhone.viewport,
     userAgent: iPhone.userAgent
@@ -112,7 +96,7 @@ Playwright methods might throw errors if they are unable to fulfill a request. F
 might fail if the selector doesn't match any nodes during the given timeframe.
 
 For certain types of errors Playwright uses specific error classes.
-These classes are available via [`playwright.errors`](#playwrighterrors).
+These classes are available via [`browserType.errors`](#browsertypeerrors) or [`playwright.errors`](#playwrighterrors).
 
 An example of handling a timeout error:
 ```js
@@ -125,16 +109,116 @@ try {
 }
 ```
 
-#### playwright.executablePath()
+#### playwright.firefox
+- returns: <[BrowserType]>
+
+This object can be used to launch or connect to Firefox, returning instances of [FirefoxBrowser].
+
+#### playwright.webkit
+- returns: <[BrowserType]>
+
+This object can be used to launch or connect to WebKit, returning instances of [WebKitBrowser].
+
+### class: BrowserType
+
+BrowserType provides methods to launch a specific browser instance or connect to an existing one.
+The following is a typical example of using Playwright to drive automation:
+```js
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage('http://example.com');
+  // other actions...
+  await browser.close();
+})();
+```
+
+<!-- GEN:toc -->
+- [browserType.connect(options)](#browsertypeconnectoptions)
+- [browserType.defaultArgs([options])](#browsertypedefaultargsoptions)
+- [browserType.devices](#browsertypedevices)
+- [browserType.errors](#browsertypeerrors)
+- [browserType.executablePath()](#browsertypeexecutablepath)
+- [browserType.launch([options])](#browsertypelaunchoptions)
+- [browserType.launchBrowserApp([options])](#browsertypelaunchbrowserappoptions)
+<!-- GEN:stop -->
+
+#### browserType.connect(options)
+- `options` <[Object]>
+  - `browserWSEndpoint` <?[string]> A browser websocket endpoint to connect to.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `browserURL` <?[string]> **Chromium-only** A browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
+  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
+- returns: <[Promise]<[Browser]>>
+
+This methods attaches Playwright to an existing browser instance.
+
+#### browserType.defaultArgs([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
+  - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+- returns: <[Array]<[string]>>
+
+The default flags that browser will be launched with.
+
+#### browserType.devices
+- returns: <[Object]>
+
+Returns a list of devices to be used with [`page.emulate(options)`](#pageemulateoptions). Actual list of
+devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+
+```js
+const { webkit } = require('playwright');
+const iPhone = webkit.devices['iPhone 6'];
+
+(async () => {
+  const browser = await webkit.launch();
+  const context = await browser.newContext({
+    viewport: iPhone.viewport,
+    userAgent: iPhone.userAgent
+  });
+  const page = await context.newPage('http://example.com');
+  // other actions...
+  await browser.close();
+})();
+```
+
+#### browserType.errors
+- returns: <[Object]>
+  - `TimeoutError` <[function]> A class of [TimeoutError].
+
+Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
+might fail if the selector doesn't match any nodes during the given timeframe.
+
+For certain types of errors Playwright uses specific error classes.
+These classes are available via [`browserType.errors`](#browsertypeerrors) or [`playwright.errors`](#playwrighterrors).
+
+An example of handling a timeout error:
+```js
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+try {
+  await page.waitForSelector('.foo');
+} catch (e) {
+  if (e instanceof webkit.errors.TimeoutError) {
+    // Do something if this is a timeout.
+  }
+}
+```
+
+#### browserType.executablePath()
 - returns: <[string]> A path where Playwright expects to find a bundled browser.
 
-#### playwright.launch([options])
+#### browserType.launch([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
@@ -149,7 +233,7 @@ try {
 
 You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
 ```js
-const browser = await playwright.launch({
+const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   ignoreDefaultArgs: ['--mute-audio']
 });
 ```
@@ -158,17 +242,17 @@ const browser = await playwright.launch({
 >
 > If Google Chrome (rather than Chromium) is preferred, a [Chrome Canary](https://www.google.com/chrome/browser/canary.html) or [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
 >
-> In [playwright.launch([options])](#playwrightlaunchoptions) above, any mention of Chromium also applies to Chrome.
+> In [browserType.launch([options])](#browsertypelaunchoptions) above, any mention of Chromium also applies to Chrome.
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
 
-#### playwright.launchBrowserApp([options])
+#### browserType.launchBrowserApp([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
@@ -184,14 +268,14 @@ const browser = await playwright.launch({
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
-A Browser is created when Playwright connects to a browser instance, either through [`playwright.launch`](#playwrightlaunchoptions) or [`playwright.connect`](#playwrightconnectoptions).
+A Browser is created when Playwright connects to a browser instance, either through [`browserType.launch`](#browsertypelaunchoptions) or [`browserType.connect`](#browsertypeconnectoptions).
 
 An example of using a [Browser] to create a [Page]:
 ```js
-const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
+const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await firefox.launch();
   const context = await browser.newContext();
   const page = await context.newPage('https://example.com');
   await browser.close();
@@ -200,19 +284,19 @@ const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
 
 An example of launching a browser executable and connecting to a [Browser] later:
 ```js
-const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 (async () => {
-  const browserApp = await playwright.launchBrowserApp({ webSocket: true });
+  const browserApp = await webkit.launchBrowserApp({ webSocket: true });
   const connectOptions = browserApp.connectOptions();
   // Use connect options later to establish a connection.
-  const browser = await playwright.connect(connectOptions);
+  const browser = await webkit.connect(connectOptions);
   // Close browser instance.
   await browserApp.close();
 })();
 ```
 
-See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [playwright.connect(options)](#playwrightconnectoptions) and [playwright.launch(options)](#playwrightlaunchoptions) always return a specific browser instance, based on the browser being connected to or launched.
+See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [browserType.connect(options)](#browsertypeconnectoptions) and [browserType.launch(options)](#browsertypelaunchoptions) always return a specific browser instance, based on the browser being connected to or launched.
 
 <!-- GEN:toc -->
 - [event: 'disconnected'](#event-disconnected)
@@ -225,9 +309,9 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 <!-- GEN:stop -->
 
 #### event: 'disconnected'
-Emitted when Playwright gets disconnected from the browser instance. This might happen because of one of the following:
-- Browser is closed or crashed
-- The [`browser.disconnect`](#browserdisconnect) method was called
+Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
+- Browser application is closed or crashed.
+- The [`browser.disconnect`](#browserdisconnect) method was called.
 
 #### browser.browserContexts()
 - returns: <[Array]<[BrowserContext]>>
@@ -248,7 +332,7 @@ Returns the default browser context. The default browser context can not be clos
 #### browser.disconnect()
 - returns: <[Promise]>
 
-Disconnects Playwright from the browser, but leaves the browser process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
+Disconnects Browser from the browser application, but leaves the application process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
 
 #### browser.isConnected()
 
@@ -279,7 +363,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 
 ```js
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await playwright.firefox.launch();  // Or 'chromium' or 'webkit'.
   // Create a new incognito browser context.
   const context = await browser.newContext();
   // Create a new page in a pristine context.
@@ -307,7 +391,7 @@ Closes the browser gracefully and makes sure the process is terminated.
   - `slowMo` <[number]>
   - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
 
-This options object can be passed to [playwright.connect(options)](#playwrightconnectoptions) to establish connection to the browser.
+This options object can be passed to [browserType.connect(options)](#browsertypeconnectoptions) to establish connection to the browser.
 
 #### browserApp.process()
 - returns: <?[ChildProcess]> Spawned browser application process.
@@ -315,7 +399,7 @@ This options object can be passed to [playwright.connect(options)](#playwrightco
 #### browserApp.wsEndpoint()
 - returns: <?[string]> Browser websocket url.
 
-Browser websocket endpoint which can be used as an argument to [playwright.connect(options)] to establish connection to the browser.
+Browser websocket endpoint which can be used as an argument to [browserType.connect(options)] to establish connection to the browser.
 
 ### class: BrowserContext
 
@@ -498,10 +582,10 @@ One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'
 
 An example of using `Dialog` class:
 ```js
-const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   page.on('dialog', async dialog => {
@@ -543,10 +627,10 @@ const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 ElementHandle represents an in-page DOM element. ElementHandles can be created with the [page.$](#pageselector) method.
 
 ```js
-const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage('https://example.com');
   const hrefElement = await page.$('a');
@@ -828,10 +912,10 @@ At every point of time, page exposes its current frame tree via the [page.mainFr
 An example of dumping frame tree:
 
 ```js
-const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
+const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await firefox.launch();
   const context = await browser.newContext();
   const page = await context.newPage('https://www.google.com/chrome/browser/canary.html');
   dumpFrameTree(page.mainFrame(), '');
@@ -1287,10 +1371,10 @@ await page.waitFor(selector => !!document.querySelector(selector), {}, selector)
 
 The `waitForFunction` can be used to observe viewport size change:
 ```js
-const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
+const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await firefox.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
@@ -1362,10 +1446,10 @@ immediately. If the selector doesn't appear after the `timeout` milliseconds of 
 
 This method works across navigations:
 ```js
-const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await webkit.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   let currentURL;
@@ -1671,10 +1755,10 @@ Page provides methods to interact with a single tab or [extension background pag
 
 This example creates a page, navigates it to a URL, and then saves a screenshot:
 ```js
-const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await webkit.launch();
   const context = await browser.newContext();
   const page = await context.newPage('https://example.com');
   await page.screenshot({path: 'screenshot.png'});
@@ -2214,11 +2298,11 @@ If the `playwrightFunction` returns a [Promise], it will be awaited.
 
 An example of adding an `md5` function into the page:
 ```js
-const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
+const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 const crypto = require('crypto');
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await firefox.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   page.on('console', msg => console.log(msg.text()));
@@ -2238,11 +2322,11 @@ const crypto = require('crypto');
 An example of adding a `window.readfile` function into the page:
 
 ```js
-const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 const fs = require('fs');
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   page.on('console', msg => console.log(msg.text()));
@@ -2734,10 +2818,10 @@ Waits for event to fire and passes its value into the predicate function. Resolv
 
 The `waitForFunction` can be used to observe viewport size change:
 ```js
-const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await webkit.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   const watchDog = page.waitForFunction('window.innerWidth < 100');
@@ -2842,10 +2926,10 @@ immediately. If the selector doesn't appear after the `timeout` milliseconds of 
 
 This method works across navigations:
 ```js
-const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
-  const browser = await playwright.launch();
+  const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   let currentURL;
@@ -3159,7 +3243,7 @@ Contains the URL of the WebSocket.
 
 * extends: [Error]
 
-TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options) or [playwright.launch([options])](#playwrightlaunchoptions).
+TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options) or [browserType.launch([options])](#browsertypelaunchoptions).
 
 ### class: Accessibility
 
@@ -3267,9 +3351,6 @@ for (const entry of coverage) {
 }
 console.log(`Bytes used: ${usedBytes / totalBytes * 100}%`);
 ```
-
-_To output coverage in a form consumable by [Istanbul](https://github.com/istanbuljs),
-  see [playwright-to-istanbul](https://github.com/istanbuljs/playwright-to-istanbul)._
 
 <!-- GEN:toc -->
 - [coverage.startCSSCoverage([options])](#coveragestartcsscoverageoptions)
@@ -3587,18 +3668,18 @@ Playwright can be used for testing Chrome Extensions.
 
 The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
 ```js
-const playwright = require('playwright').chromium;
+const { chromium } = require('playwright');
 
 (async () => {
   const pathToExtension = require('path').join(__dirname, 'my-extension');
-  const browser = await playwright.launch({
+  const browser = await chromium.launch({
     headless: false,
     args: [
       `--disable-extensions-except=${pathToExtension}`,
       `--load-extension=${pathToExtension}`
     ]
   });
-  const targets = await browser.chromium.targets();
+  const targets = await browser.targets();
   const backgroundPageTarget = targets.find(target => target.type() === 'background_page');
   const backgroundPage = await backgroundPageTarget.page();
   // Test the background page as you would any other page.
@@ -3625,6 +3706,7 @@ During installation Playwright downloads browser executables, according to revis
 [Body]: #class-body  "Body"
 [BrowserApp]: #class-browserapp  "BrowserApp"
 [BrowserContext]: #class-browsercontext  "BrowserContext"
+[BrowserType]: #class-browsertype "BrowserType"
 [Browser]: #class-browser  "Browser"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"

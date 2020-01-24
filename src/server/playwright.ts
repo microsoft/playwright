@@ -16,35 +16,23 @@
 
 import * as types from '../types';
 import { TimeoutError } from '../errors';
-import { Browser, ConnectOptions } from '../browser';
-import { BrowserApp } from './browserApp';
+import { DeviceDescriptors } from '../deviceDescriptors';
+import { Chromium } from './chromium';
+import { WebKit } from './webkit';
+import { Firefox } from './firefox';
 
-export type BrowserArgOptions = {
-  headless?: boolean,
-  args?: string[],
-  userDataDir?: string,
-  devtools?: boolean,
-};
+export class Playwright {
+  readonly devices: types.Devices;
+  readonly errors: { TimeoutError: typeof TimeoutError };
+  readonly chromium: Chromium;
+  readonly firefox: Firefox;
+  readonly webkit: WebKit;
 
-export type LaunchOptions = BrowserArgOptions & {
-  executablePath?: string,
-  ignoreDefaultArgs?: boolean | string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  dumpio?: boolean,
-  env?: {[key: string]: string} | undefined,
-  webSocket?: boolean,
-  slowMo?: number,  // TODO: we probably don't want this in launchBrowserApp.
-};
-
-export interface Playwright {
-  executablePath(): string;
-  launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp>;
-  launch(options?: LaunchOptions): Promise<Browser>;
-  defaultArgs(options?: BrowserArgOptions): string[];
-  connect(options: ConnectOptions & { browserURL?: string }): Promise<Browser>;
-  devices: types.Devices;
-  errors: { TimeoutError: typeof TimeoutError };
+  constructor(projectRoot: string, revisions: { chromium_revision: string, firefox_revision: string, webkit_revision: string }) {
+    this.devices = DeviceDescriptors;
+    this.errors = { TimeoutError };
+    this.chromium = new Chromium(projectRoot, revisions.chromium_revision);
+    this.firefox = new Firefox(projectRoot, revisions.firefox_revision);
+    this.webkit = new WebKit(projectRoot, revisions.webkit_revision);
+  }
 }

@@ -28,11 +28,11 @@ import * as path from 'path';
 import * as util from 'util';
 import { TimeoutError } from '../errors';
 import { assert } from '../helper';
-import { Playwright, LaunchOptions, BrowserArgOptions } from './playwright';
+import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { createTransport, ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
 
-export class FFPlaywright implements Playwright {
+export class Firefox implements BrowserType {
   private _projectRoot: string;
   readonly _revision: string;
 

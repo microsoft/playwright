@@ -29,11 +29,11 @@ import { TimeoutError } from '../errors';
 import { launchProcess, waitForLine } from '../server/processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
-import { Playwright, LaunchOptions, BrowserArgOptions } from './playwright';
+import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { createTransport, ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
 
-export class CRPlaywright implements Playwright {
+export class Chromium implements BrowserType {
   private _projectRoot: string;
   readonly _revision: string;
 

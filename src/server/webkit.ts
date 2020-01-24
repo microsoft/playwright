@@ -30,14 +30,14 @@ import * as util from 'util';
 import * as os from 'os';
 import { assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { Playwright, BrowserArgOptions, LaunchOptions } from './playwright';
+import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectionTransport } from '../transport';
 import * as ws from 'ws';
 import * as uuidv4 from 'uuid/v4';
 import { ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
 
-export class WKPlaywright implements Playwright {
+export class WebKit implements BrowserType {
   private _projectRoot: string;
   readonly _revision: string;
 
