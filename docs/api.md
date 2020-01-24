@@ -24,13 +24,10 @@
 - [class: Accessibility](#class-accessibility)
 - [class: Coverage](#class-coverage)
 - [class: Worker](#class-worker)
-- [class: ChromiumPlaywright](#class-chromiumplaywright)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
 - [class: ChromiumSession](#class-chromiumsession)
 - [class: ChromiumTarget](#class-chromiumtarget)
-- [class: FirefoxPlaywright](#class-firefoxplaywright)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
-- [class: WebKitPlaywright](#class-webkitplaywright)
 - [class: WebKitBrowser](#class-webkitbrowser)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
@@ -53,21 +50,43 @@ const playwright = require('playwright').chromium;  // Or 'firefox' or 'webkit'.
 })();
 ```
 
-See [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions), [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions) or [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions) for browser-specific launch methods.
-
 Playwright automatically downloads browser executables during installation, see [Downloaded browsers](#downloaded-browsers) for more information.
 
 <!-- GEN:toc -->
+- [playwright.connect(options)](#playwrightconnectoptions)
+- [playwright.defaultArgs([options])](#playwrightdefaultargsoptions)
 - [playwright.devices](#playwrightdevices)
 - [playwright.errors](#playwrighterrors)
 - [playwright.executablePath()](#playwrightexecutablepath)
+- [playwright.launch([options])](#playwrightlaunchoptions)
+- [playwright.launchBrowserApp([options])](#playwrightlaunchbrowserappoptions)
 <!-- GEN:stop -->
+
+#### playwright.connect(options)
+- `options` <[Object]>
+  - `browserWSEndpoint` <?[string]> A browser websocket endpoint to connect to.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `browserURL` <?[string]> **Chromium-only** A browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
+  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
+- returns: <[Promise]<[Browser]>>
+
+This methods attaches Playwright to an existing browser instance.
+
+#### playwright.defaultArgs([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
+  - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+- returns: <[Array]<[string]>>
+
+The default flags that browser will be launched with.
 
 #### playwright.devices
 - returns: <[Object]>
 
 Returns a list of devices to be used with [`page.emulate(options)`](#pageemulateoptions). Actual list of
-devices can be found in [lib/deviceDescriptors.js](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
 
 ```js
 const playwright = require('playwright').firefox;  // Or 'chromium' or 'webkit'.
@@ -93,7 +112,7 @@ Playwright methods might throw errors if they are unable to fulfill a request. F
 might fail if the selector doesn't match any nodes during the given timeframe.
 
 For certain types of errors Playwright uses specific error classes.
-These classes are available via [`playwright.errors`](#playwrighterrors)
+These classes are available via [`playwright.errors`](#playwrighterrors).
 
 An example of handling a timeout error:
 ```js
@@ -107,7 +126,59 @@ try {
 ```
 
 #### playwright.executablePath()
-- returns: <[string]> A path where Playwright expects to find bundled browser.
+- returns: <[string]> A path where Playwright expects to find a bundled browser.
+
+#### playwright.launch([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
+  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
+  - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+- returns: <[Promise]<[Browser]>> Promise which resolves to browser instance.
+
+
+You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
+```js
+const browser = await playwright.launch({
+  ignoreDefaultArgs: ['--mute-audio']
+});
+```
+
+> **Chromium-only** Playwright can also be used to control the Chrome browser, but it works best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use `executablePath` option with extreme caution.
+>
+> If Google Chrome (rather than Chromium) is preferred, a [Chrome Canary](https://www.google.com/chrome/browser/canary.html) or [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
+>
+> In [playwright.launch([options])](#playwrightlaunchoptions) above, any mention of Chromium also applies to Chrome.
+>
+> See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
+
+#### playwright.launchBrowserApp([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
+  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`playwright.defaultArgs()`](#playwrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
+  - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+- returns: <[Promise]<[BrowserApp]>> Promise which resolves to the browser app instance.
 
 ### class: Browser
 
@@ -140,6 +211,9 @@ const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
   await browserApp.close();
 })();
 ```
+
+See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [playwright.connect(options)](#playwrightconnectoptions) and [playwright.launch(options)](#playwrightlaunchoptions) always return a specific browser instance, based on the browser being connected to or launched.
+
 <!-- GEN:toc -->
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
@@ -233,15 +307,15 @@ Closes the browser gracefully and makes sure the process is terminated.
   - `slowMo` <[number]>
   - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
 
-This options object can be passed to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions), [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions) or [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions) to establish connection to the browser.
+This options object can be passed to [playwright.connect(options)](#playwrightconnectoptions) to establish connection to the browser.
 
 #### browserApp.process()
-- returns: <?[ChildProcess]> Spawned browser server process.
+- returns: <?[ChildProcess]> Spawned browser application process.
 
 #### browserApp.wsEndpoint()
 - returns: <?[string]> Browser websocket url.
 
-Browser websocket endpoint which can be used as an argument to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions), [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions) or [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions) to establish connection to the browser.
+Browser websocket endpoint which can be used as an argument to [playwright.connect(options)] to establish connection to the browser.
 
 ### class: BrowserContext
 
@@ -3279,89 +3353,6 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 #### worker.url()
 - returns: <[string]>
 
-### class: ChromiumPlaywright
-
-* extends: [Playwright]
-
-<!-- GEN:toc -->
-- [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions)
-- [chromiumPlaywright.defaultArgs([options])](#chromiumplaywrightdefaultargsoptions)
-- [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions)
-- [chromiumPlaywright.launchBrowserApp([options])](#chromiumplaywrightlaunchbrowserappoptions)
-<!-- GEN:stop -->
-
-#### chromiumPlaywright.connect(options)
-- `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
-  - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
-- returns: <[Promise]<[ChromiumBrowser]>>
-
-This methods attaches Playwright to an existing Chromium instance.
-
-#### chromiumPlaywright.defaultArgs([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run Chromium in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
-  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-- returns: <[Array]<[string]>>
-
-The default flags that Chromium will be launched with.
-
-#### chromiumPlaywright.launch([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run Chromium in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
-  - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`chromiumPlaywright.defaultArgs()`](#chromiumplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
-- returns: <[Promise]<[ChromiumBrowser]>> Promise which resolves to browser instance.
-
-
-You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
-```js
-const browser = await playwright.launch({
-  ignoreDefaultArgs: ['--mute-audio']
-});
-```
-
-> **NOTE** Playwright can also be used to control the Chrome browser, but it works best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use `executablePath` option with extreme caution.
->
-> If Google Chrome (rather than Chromium) is preferred, a [Chrome Canary](https://www.google.com/chrome/browser/canary.html) or [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
->
-> In [chromiumPlaywright.launch([options])](#chromiumplaywrightlaunchoptions) above, any mention of Chromium also applies to Chrome.
->
-> See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
-
-#### chromiumPlaywright.launchBrowserApp([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run Chromium in [headless mode](https://developers.google.com/web/updates/2017/04/headless-chrome). Defaults to `true` unless the `devtools` option is `true`.
-  - `executablePath` <[string]> Path to a Chromium or Chrome executable to run instead of the bundled Chromium. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`chromiumPlaywright.defaultArgs()`](#chromiumplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
-- returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
-
 ### class: ChromiumBrowser
 
 * extends: [Browser]
@@ -3539,154 +3530,11 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 #### chromiumTarget.url()
 - returns: <[string]>
 
-### class: FirefoxPlaywright
-
-* extends: [Playwright]
-
-<!-- GEN:toc -->
-- [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions)
-- [firefoxPlaywright.defaultArgs([options])](#firefoxplaywrightdefaultargsoptions)
-- [firefoxPlaywright.launch([options])](#firefoxplaywrightlaunchoptions)
-- [firefoxPlaywright.launchBrowserApp([options])](#firefoxplaywrightlaunchbrowserappoptions)
-<!-- GEN:stop -->
-
-#### firefoxPlaywright.connect(options)
-- `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
-- returns: <[Promise]<[FirefoxBrowser]>>
-
-This methods attaches Playwright to an existing Firefox instance.
-
-#### firefoxPlaywright.defaultArgs([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run Firefox in [headless mode](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true`.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Firefox flags can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
-- returns: <[Array]<[string]>>
-
-The default flags that Firefox will be launched with.
-
-#### firefoxPlaywright.launch([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run Firefox in [headless mode](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true`.
-  - `executablePath` <[string]> Path to a Firefox executable to run instead of the bundled Firefox. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Firefox, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Firefox flags can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`firefoxPlaywright.defaultArgs()`](#firefoxplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
-- returns: <[Promise]<[FirefoxBrowser]>> Promise which resolves to browser instance.
-
-
-You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
-```js
-const browser = await playwright.launch({
-  ignoreDefaultArgs: ['--mute-audio']
-});
-```
-
-#### firefoxPlaywright.launchBrowserApp([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run Firefox in [headless mode](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true`.
-  - `executablePath` <[string]> Path to a Firefox executable to run instead of the bundled Firefox. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Firefox, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Firefox flags can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`firefoxPlaywright.defaultArgs()`](#firefoxplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
-- returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
-
 ### class: FirefoxBrowser
 
 * extends: [Browser]
 
 Firefox browser instance does not expose Firefox-specific features.
-
-
-### class: WebKitPlaywright
-
-* extends: [Playwright]
-
-<!-- GEN:toc -->
-- [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions)
-- [webkitPlaywright.defaultArgs([options])](#webkitplaywrightdefaultargsoptions)
-- [webkitPlaywright.launch([options])](#webkitplaywrightlaunchoptions)
-- [webkitPlaywright.launchBrowserApp([options])](#webkitplaywrightlaunchbrowserappoptions)
-<!-- GEN:stop -->
-
-#### webkitPlaywright.connect(options)
-- `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
-- returns: <[Promise]<[WebKitBrowser]>>
-
-This methods attaches Playwright to an existing WebKit instance.
-
-#### webkitPlaywright.defaultArgs([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
-  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
-- returns: <[Array]<[string]>>
-
-The default flags that WebKit will be launched with.
-
-#### webkitPlaywright.launch([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
-  - `executablePath` <[string]> Path to a WebKit executable to run instead of the bundled WebKit. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled WebKit, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`webKitPlaywright.defaultArgs()`](#webkitplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
-- returns: <[Promise]<[WebKitBrowser]>> Promise which resolves to browser instance.
-
-
-You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
-```js
-const browser = await playwright.launch({
-  ignoreDefaultArgs: ['--mute-audio']
-});
-```
-
-#### webkitPlaywright.launchBrowserApp([options])
-- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
-  - `headless` <[boolean]> Whether to run WebKit in headless mode. Defaults to `true`.
-  - `executablePath` <[string]> Path to a WebKit executable to run instead of the bundled WebKit. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled WebKit, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage.
-  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance.
-  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`webKitPlaywright.defaultArgs()`](#webkitplaywrightdefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
-  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
-  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
-- returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
 
 ### class: WebKitBrowser
 
@@ -3781,7 +3629,6 @@ During installation Playwright downloads browser executables, according to revis
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
-[ChromiumPlaywright]: #class-chromiumplaywright "ChromiumPlaywright"
 [ChromiumSession]: #class-chromiumsession  "ChromiumSession"
 [ChromiumTarget]: #class-chromiumtarget "ChromiumTarget"
 [ConnectionTransport]: ../lib/WebSocketTransport.js "ConnectionTransport"
@@ -3794,7 +3641,6 @@ During installation Playwright downloads browser executables, according to revis
 [File]: #class-file "https://developer.mozilla.org/en-US/docs/Web/API/File"
 [FileChooser]: #class-filechooser "FileChooser"
 [FirefoxBrowser]: #class-firefoxbrowser "FirefoxBrowser"
-[FirefoxPlaywright]: #class-firefoxplaywright "FirefoxPlaywright"
 [Frame]: #class-frame "Frame"
 [JSHandle]: #class-jshandle "JSHandle"
 [Keyboard]: #class-keyboard "Keyboard"
@@ -3815,7 +3661,6 @@ During installation Playwright downloads browser executables, according to revis
 [USKeyboardLayout]: ../lib/USKeyboardLayout.js "USKeyboardLayout"
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
 [WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
-[WebKitPlaywright]: #class-webkitplaywright "WebKitPlaywright"
 [WebSocket]: #class-websocket "WebSocket"
 [Worker]: #class-worker "Worker"
 [boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"

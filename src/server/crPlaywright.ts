@@ -29,32 +29,9 @@ import { TimeoutError } from '../errors';
 import { launchProcess, waitForLine } from '../server/processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
-import { Playwright } from './playwright';
+import { Playwright, LaunchOptions, BrowserArgOptions } from './playwright';
 import { createTransport, ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
-
-export type SlowMoOptions = {
-  slowMo?: number,
-};
-
-export type ChromiumArgOptions = {
-  headless?: boolean,
-  args?: string[],
-  userDataDir?: string,
-  devtools?: boolean,
-};
-
-export type LaunchOptions = ChromiumArgOptions & SlowMoOptions & {
-  executablePath?: string,
-  ignoreDefaultArgs?: boolean | string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  dumpio?: boolean,
-  env?: {[key: string]: string} | undefined,
-  webSocket?: boolean,
-};
 
 export class CRPlaywright implements Playwright {
   private _projectRoot: string;
@@ -184,7 +161,7 @@ export class CRPlaywright implements Playwright {
     return { TimeoutError };
   }
 
-  defaultArgs(options: ChromiumArgOptions = {}): string[] {
+  defaultArgs(options: BrowserArgOptions = {}): string[] {
     const {
       devtools = false,
       headless = !devtools,

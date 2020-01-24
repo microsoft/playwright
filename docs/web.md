@@ -4,10 +4,7 @@ Playwright contains a version bundled for web browsers under `playwright/web.js`
 installs playwright under `window.playwrightweb`.
 You can use it in the web page to drive another browser instance.
 
-API consists of a single `connect` function, similar to
-[chromiumPlaywright.connect(options)](api.md#chromiumplaywrightconnectoptions),
-[firefoxPlaywright.connect(options)](api.md#firefoxplaywrightconnectoptions) and
-[webkitPlaywright.connect(options)](api.md#webkitplaywrightconnectoptions).
+API consists of a single `connect` function, similar to [playwright.connect(options)](api.md#playwrightconnectoptions).
 
 ```html
 <script src='playwright/web.js'></script>

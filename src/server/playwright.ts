@@ -16,9 +16,35 @@
 
 import * as types from '../types';
 import { TimeoutError } from '../errors';
+import { Browser, ConnectOptions } from '../browser';
+import { BrowserApp } from './browserApp';
+
+export type BrowserArgOptions = {
+  headless?: boolean,
+  args?: string[],
+  userDataDir?: string,
+  devtools?: boolean,
+};
+
+export type LaunchOptions = BrowserArgOptions & {
+  executablePath?: string,
+  ignoreDefaultArgs?: boolean | string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  dumpio?: boolean,
+  env?: {[key: string]: string} | undefined,
+  webSocket?: boolean,
+  slowMo?: number,  // TODO: we probably don't want this in launchBrowserApp.
+};
 
 export interface Playwright {
   executablePath(): string;
+  launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp>;
+  launch(options?: LaunchOptions): Promise<Browser>;
+  defaultArgs(options?: BrowserArgOptions): string[];
+  connect(options: ConnectOptions & { browserURL?: string }): Promise<Browser>;
   devices: types.Devices;
   errors: { TimeoutError: typeof TimeoutError };
 }

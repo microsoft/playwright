@@ -30,34 +30,12 @@ import * as util from 'util';
 import * as os from 'os';
 import { assert } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { Playwright } from './playwright';
+import { Playwright, BrowserArgOptions, LaunchOptions } from './playwright';
 import { ConnectionTransport } from '../transport';
 import * as ws from 'ws';
 import * as uuidv4 from 'uuid/v4';
 import { ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
-
-export type SlowMoOptions = {
-  slowMo?: number,
-};
-
-export type WebKitArgOptions = {
-  headless?: boolean,
-  args?: string[],
-  userDataDir?: string,
-};
-
-export type LaunchOptions = WebKitArgOptions & SlowMoOptions & {
-  executablePath?: string,
-  ignoreDefaultArgs?: boolean | string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  dumpio?: boolean,
-  env?: {[key: string]: string} | undefined,
-  webSocket?: boolean,
-};
 
 export class WKPlaywright implements Playwright {
   private _projectRoot: string;
@@ -151,7 +129,9 @@ export class WKPlaywright implements Playwright {
     return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
   }
 
-  async connect(options: ConnectOptions): Promise<WKBrowser> {
+  async connect(options: ConnectOptions & { browserURL?: string }): Promise<WKBrowser> {
+    if (options.browserURL)
+      throw new Error('Option "browserURL" is not supported by Firefox');
     if (options.transport && options.transport.onmessage)
       throw new Error('Transport is already in use');
     return WKBrowser.connect(options);
@@ -169,12 +149,15 @@ export class WKPlaywright implements Playwright {
     return { TimeoutError };
   }
 
-  defaultArgs(options: WebKitArgOptions = {}): string[] {
+  defaultArgs(options: BrowserArgOptions = {}): string[] {
     const {
-      headless = true,
+      devtools = false,
+      headless = !devtools,
       args = [],
       userDataDir = null
     } = options;
+    if (devtools)
+      throw new Error('Option "devtools" is not supported by WebKit');
     const webkitArguments = ['--inspector-pipe'];
     if (userDataDir)
       webkitArguments.push(`--user-data-dir=${userDataDir}`);

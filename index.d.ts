@@ -15,7 +15,7 @@
  */
 
 export * from './lib/api';
-export const chromium: import('./lib/api').ChromiumPlaywright;
-export const firefox: import('./lib/api').FirefoxPlaywright;
-export const webkit: import('./lib/api').WebKitPlaywright;
+export const chromium: import('./lib/server/crPlaywright').CRPlaywright;
+export const firefox: import('./lib/server/ffPlaywright').FFPlaywright;
+export const webkit: import('./lib/server/wkPlaywright').WKPlaywright;
 export type PlaywrightWeb = typeof import('./lib/web');
