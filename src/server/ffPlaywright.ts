@@ -21,7 +21,7 @@ import { DeviceDescriptors } from '../deviceDescriptors';
 import { launchProcess, waitForLine } from './processLauncher';
 import * as types from '../types';
 import * as platform from '../platform';
-import { FFConnection } from '../firefox/ffConnection';
+import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -51,6 +51,7 @@ export type LaunchOptions = FirefoxArgOptions & SlowMoOptions & {
   timeout?: number,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
+  webSocket?: boolean,
 };
 
 export class FFPlaywright implements Playwright {
@@ -82,6 +83,7 @@ export class FFPlaywright implements Playwright {
       handleSIGTERM = true,
       slowMo = 0,
       timeout = 30000,
+      webSocket = false,
     } = options;
 
     const firefoxArguments = [];
@@ -129,22 +131,29 @@ export class FFPlaywright implements Playwright {
         if (!connectOptions)
           return Promise.reject();
         // We try to gracefully close to prevent crash reporting and core dumps.
-        // Note that we don't support pipe yet, so there is no issue
-        // with reusing the same connection - we can always create a new one.
+        // Note that it's fine to reuse the pipe transport, since
+        // our connection ignores kBrowserCloseMessageId.
         const transport = await createTransport(connectOptions);
-        const connection = new FFConnection(transport);
-        connection.send('Browser.close');
+        const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
+        transport.send(JSON.stringify(message));
       },
     });
 
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
-    const url = match[1];
-    connectOptions = { browserWSEndpoint: url, slowMo };
+    const browserWSEndpoint = match[1];
+    if (webSocket) {
+      connectOptions = { browserWSEndpoint, slowMo };
+    } else {
+      const transport = await platform.createWebSocketTransport(browserWSEndpoint);
+      connectOptions = { transport, slowMo };
+    }
     return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
+    if (options.transport && options.transport.onmessage)
+      throw new Error('Transport is already in use');
     return FFBrowser.connect(options);
   }
 

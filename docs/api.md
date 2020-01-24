@@ -132,7 +132,7 @@ An example of launching a browser executable and connecting to a [Browser] later
 const playwright = require('playwright').webkit;  // Or 'chromium' or 'firefox'.
 
 (async () => {
-  const browserApp = await playwright.launchBrowserApp();
+  const browserApp = await playwright.launchBrowserApp({ webSocket: true });
   const connectOptions = browserApp.connectOptions();
   // Use connect options later to establish a connection.
   const browser = await playwright.connect(connectOptions);
@@ -229,7 +229,7 @@ Closes the browser gracefully and makes sure the process is terminated.
 
 #### browserApp.connectOptions()
 - returns: <[Object]>
-  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
   - `slowMo` <[number]>
   - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
 
@@ -242,8 +242,6 @@ This options object can be passed to [chromiumPlaywright.connect(options)](#chro
 - returns: <?[string]> Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to [chromiumPlaywright.connect(options)](#chromiumplaywrightconnectoptions), [firefoxPlaywright.connect(options)](#firefoxplaywrightconnectoptions) or [webkitPlaywright.connect(options)](#webkitplaywrightconnectoptions) to establish connection to the browser.
-
-Learn more about [Chromium devtools protocol](https://chromedevtools.github.io/devtools-protocol) and the [browser endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
 
 ### class: BrowserContext
 
@@ -3294,7 +3292,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 
 #### chromiumPlaywright.connect(options)
 - `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
   - `browserURL` <?[string]> a browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
@@ -3327,7 +3325,7 @@ The default flags that Chromium will be launched with.
   - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
 - returns: <[Promise]<[ChromiumBrowser]>> Promise which resolves to browser instance.
 
 
@@ -3361,7 +3359,7 @@ const browser = await playwright.launch({
   - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> Whether to auto-open a DevTools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
 - returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
 
 ### class: ChromiumBrowser
@@ -3554,7 +3552,7 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 
 #### firefoxPlaywright.connect(options)
 - `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
 - returns: <[Promise]<[FirefoxBrowser]>>
@@ -3584,6 +3582,7 @@ The default flags that Firefox will be launched with.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
 - returns: <[Promise]<[FirefoxBrowser]>> Promise which resolves to browser instance.
 
 
@@ -3608,6 +3607,7 @@ const browser = await playwright.launch({
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `userDataDir` <[string]> Path to a [User Data Directory](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
 - returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
 
 ### class: FirefoxBrowser
@@ -3630,7 +3630,7 @@ Firefox browser instance does not expose Firefox-specific features.
 
 #### webkitPlaywright.connect(options)
 - `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> a [browser websocket endpoint](#browserwsendpoint) to connect to.
+  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
 - returns: <[Promise]<[WebKitBrowser]>>
@@ -3660,7 +3660,7 @@ The default flags that WebKit will be launched with.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
 - returns: <[Promise]<[WebKitBrowser]>> Promise which resolves to browser instance.
 
 
@@ -3685,7 +3685,7 @@ const browser = await playwright.launch({
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `pipe` <[boolean]> Connects to the browser over a pipe instead of a WebSocket. Defaults to `false`.
+  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
 - returns: <[Promise]<[BrowserApp]>> Promise which resolves to browser server instance.
 
 ### class: WebKitBrowser

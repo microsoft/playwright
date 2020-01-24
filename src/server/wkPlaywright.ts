@@ -56,7 +56,7 @@ export type LaunchOptions = WebKitArgOptions & SlowMoOptions & {
   timeout?: number,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
-  pipe?: boolean,
+  webSocket?: boolean,
 };
 
 export class WKPlaywright implements Playwright {
@@ -87,7 +87,7 @@ export class WKPlaywright implements Playwright {
       handleSIGTERM = true,
       handleSIGHUP = true,
       slowMo = 0,
-      pipe = false,
+      webSocket = false,
     } = options;
 
     const webkitArguments = [];
@@ -132,6 +132,8 @@ export class WKPlaywright implements Playwright {
         if (!transport)
           return Promise.reject();
         // We try to gracefully close to prevent crash reporting and core dumps.
+        // Note that it's fine to reuse the pipe transport, since
+        // our connection ignores kBrowserCloseMessageId.
         const message = JSON.stringify({method: 'Browser.close', params: {}, id: kBrowserCloseMessageId});
         transport.send(message);
       },
@@ -140,7 +142,7 @@ export class WKPlaywright implements Playwright {
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
 
     let connectOptions: ConnectOptions;
-    if (!pipe) {
+    if (webSocket) {
       const browserWSEndpoint = wrapTransportWithWebSocket(transport);
       connectOptions = { browserWSEndpoint, slowMo };
     } else {
@@ -150,6 +152,8 @@ export class WKPlaywright implements Playwright {
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
+    if (options.transport && options.transport.onmessage)
+      throw new Error('Transport is already in use');
     return WKBrowser.connect(options);
   }
 

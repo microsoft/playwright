@@ -27,7 +27,7 @@ import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
 import { TimeoutError } from '../errors';
 import { launchProcess, waitForLine } from '../server/processLauncher';
-import { CRConnection } from '../chromium/crConnection';
+import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
 import { Playwright } from './playwright';
 import { createTransport, ConnectOptions } from '../browser';
@@ -53,7 +53,7 @@ export type LaunchOptions = ChromiumArgOptions & SlowMoOptions & {
   timeout?: number,
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined,
-  pipe?: boolean,
+  webSocket?: boolean,
 };
 
 export class CRPlaywright implements Playwright {
@@ -79,7 +79,7 @@ export class CRPlaywright implements Playwright {
       args = [],
       dumpio = false,
       executablePath = null,
-      pipe = false,
+      webSocket = false,
       env = process.env,
       handleSIGINT = true,
       handleSIGTERM = true,
@@ -99,7 +99,7 @@ export class CRPlaywright implements Playwright {
     let temporaryUserDataDir: string | null = null;
 
     if (!chromeArguments.some(argument => argument.startsWith('--remote-debugging-')))
-      chromeArguments.push(pipe ? '--remote-debugging-pipe' : '--remote-debugging-port=0');
+      chromeArguments.push(webSocket ? '--remote-debugging-port=0' : '--remote-debugging-pipe');
     if (!chromeArguments.some(arg => arg.startsWith('--user-data-dir'))) {
       temporaryUserDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
       chromeArguments.push(`--user-data-dir=${temporaryUserDataDir}`);
@@ -114,6 +114,8 @@ export class CRPlaywright implements Playwright {
     }
 
     const usePipe = chromeArguments.includes('--remote-debugging-pipe');
+    if (usePipe && webSocket)
+      throw new Error(`Argument "--remote-debugging-pipe" is not compatible with "webSocket" launch option.`);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: chromeExecutable!,
@@ -131,10 +133,10 @@ export class CRPlaywright implements Playwright {
 
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
-        // our connection is tolerant to unknown responses.
+        // our connection ignores kBrowserCloseMessageId.
         const transport = await createTransport(connectOptions);
-        const connection = new CRConnection(transport);
-        connection.rootSession.send('Browser.close');
+        const message = { method: 'Browser.close', id: kBrowserCloseMessageId };
+        transport.send(JSON.stringify(message));
       },
     });
 
@@ -152,6 +154,8 @@ export class CRPlaywright implements Playwright {
   }
 
   async connect(options: ConnectOptions & { browserURL?: string }): Promise<CRBrowser> {
+    if (options.transport && options.transport.onmessage)
+      throw new Error('Transport is already in use');
     if (options.browserURL) {
       assert(!options.browserWSEndpoint && !options.transport, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to connect');
       let connectionURL: string;

@@ -24,9 +24,9 @@ module.exports.describe = function({testRunner, expect, product, playwrightPath,
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Fixtures', function() {
-    it('dumpio option should work with pipe option ', async({server}) => {
+    it('dumpio option should work with webSocket option', async({server}) => {
       let dumpioData = '';
-      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product, 'use-pipe']);
+      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product, 'usewebsocket']);
       res.stderr.on('data', data => dumpioData += data.toString('utf8'));
       await new Promise(resolve => res.on('close', resolve));
       expect(dumpioData).toContain('message from dumpio');

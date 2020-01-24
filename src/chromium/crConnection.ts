@@ -26,6 +26,10 @@ export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
 };
 
+// CRPlaywright uses this special id to issue Browser.close command which we
+// should ignore.
+export const kBrowserCloseMessageId = -9999;
+
 export class CRConnection extends platform.EventEmitter {
   private _lastId = 0;
   private _transport: ConnectionTransport;
@@ -64,6 +68,8 @@ export class CRConnection extends platform.EventEmitter {
   async _onMessage(message: string) {
     debugProtocol('◀ RECV ' + message);
     const object = JSON.parse(message);
+    if (object.id === kBrowserCloseMessageId)
+      return;
     if (object.method === 'Target.attachedToTarget') {
       const sessionId = object.params.sessionId;
       const session = new CRSession(this, object.params.targetInfo.type, sessionId);

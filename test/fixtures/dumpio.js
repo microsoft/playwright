@@ -4,16 +4,16 @@
     console.log('unhandledRejection', error.message);
   });
 
-  const [, , playwrightRoot, product, usePipe] = process.argv;
+  const [, , playwrightRoot, product, useWebSocket] = process.argv;
   const options = {
-    pipe: usePipe === 'use-pipe',
+    webSocket: useWebSocket === 'usewebsocket',
     ignoreDefaultArgs: true,
     dumpio: true,
     timeout: 1,
     executablePath: 'node',
     args: ['-e', 'console.error("message from dumpio")', '--']
   }
-  console.error('using pipe: ' + options.pipe);
+  console.error('using web socket: ' + options.webSocket);
   if (product.toLowerCase() === 'firefox')
     options.args.push('-juggler', '-profile');
   try {

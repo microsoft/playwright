@@ -32,12 +32,28 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('CrPlaywright', function() {
+    describe('BrowserContext', function() {
+      it('should work across sessions', async () => {
+        const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
+        const browser = await playwright.connect(browserApp.connectOptions());
+        expect(browser.browserContexts().length).toBe(1);
+        await browser.newContext();
+        expect(browser.browserContexts().length).toBe(2);
+        const remoteBrowser = await playwright.connect(browserApp.connectOptions());
+        const contexts = remoteBrowser.browserContexts();
+        expect(contexts.length).toBe(2);
+        await browserApp.close();
+      });
+    });
     describe('Playwright.launch |browserURL| option', function() {
+      function getBrowserUrl(wsEndpoint) {
+        const port = wsEndpoint.match(/ws:\/\/([0-9A-Za-z\.]*):(\d+)\//)[2];
+        return `http://127.0.0.1:${port}`;
+      }
+
       it('should be able to connect using browserUrl, with and without trailing slash', async({server}) => {
-        const originalBrowser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
-          args: ['--remote-debugging-port=21222']
-        }));
-        const browserURL = 'http://127.0.0.1:21222';
+        const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
+        const browserURL = getBrowserUrl(browserApp.wsEndpoint());
 
         const browser1 = await playwright.connect({browserURL});
         const page1 = await browser1.defaultContext().newPage();
@@ -48,46 +64,42 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const page2 = await browser2.defaultContext().newPage();
         expect(await page2.evaluate(() => 8 * 7)).toBe(56);
         browser2.disconnect();
-        originalBrowser.close();
+        await browserApp.close();
       });
       it('should throw when using both browserWSEndpoint and browserURL', async({server}) => {
-        const browserApp = await playwright.launchBrowserApp(Object.assign({}, defaultBrowserOptions, {
-          args: ['--remote-debugging-port=21222']
-        }));
-        const browserURL = 'http://127.0.0.1:21222';
+        const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
+        const browserURL = getBrowserUrl(browserApp.wsEndpoint());
 
         let error = null;
         await playwright.connect({browserURL, browserWSEndpoint: browserApp.wsEndpoint()}).catch(e => error = e);
         expect(error.message).toContain('Exactly one of browserWSEndpoint, browserURL or transport');
 
-        browserApp.close();
+        await browserApp.close();
       });
       it('should throw when trying to connect to non-existing browser', async({server}) => {
-        const originalBrowser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
-          args: ['--remote-debugging-port=21222']
-        }));
-        const browserURL = 'http://127.0.0.1:32333';
+        const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
+        const browserURL = getBrowserUrl(browserApp.wsEndpoint());
 
         let error = null;
-        await playwright.connect({browserURL}).catch(e => error = e);
+        await playwright.connect({browserURL: browserURL + 'foo'}).catch(e => error = e);
         expect(error.message).toContain('Failed to fetch browser webSocket url from');
-        originalBrowser.close();
+        await browserApp.close();
       });
     });
 
-    describe('Playwright.launch |pipe| option', function() {
-      it('should support the pipe option', async() => {
-        const options = Object.assign({pipe: true}, defaultBrowserOptions);
+    describe('Playwright.launch webSocket option', function() {
+      it('should support the remote-debugging-port argument', async() => {
+        const options = Object.assign({}, defaultBrowserOptions);
+        options.args = ['--remote-debugging-port=0'].concat(options.args || []);
         const browserApp = await playwright.launchBrowserApp(options);
         const browser = await playwright.connect(browserApp.connectOptions());
-        expect((await browser.defaultContext().pages()).length).toBe(1);
-        expect(browserApp.wsEndpoint()).toBe(null);
+        expect(browserApp.wsEndpoint()).not.toBe(null);
         const page = await browser.defaultContext().newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
         await browserApp.close();
       });
-      it('should support the pipe argument', async() => {
+      it('should support the remote-debugging-pipe argument', async() => {
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = ['--remote-debugging-pipe'].concat(options.args || []);
         const browserApp = await playwright.launchBrowserApp(options);
@@ -98,14 +110,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await page.close();
         await browserApp.close();
       });
-      it('should fire "disconnected" when closing with pipe', async() => {
-        const options = Object.assign({pipe: true}, defaultBrowserOptions);
-        const browserApp = await playwright.launchBrowserApp(options);
-        const browser = await playwright.connect(browserApp.connectOptions());
-        const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
-        // Emulate user exiting browser.
-        browserApp.process().kill();
-        await disconnectedEventPromise;
+      it('should throw with remote-debugging-pipe argument and webSocket', async() => {
+        const options = Object.assign({webSocket: true}, defaultBrowserOptions);
+        options.args = ['--remote-debugging-pipe'].concat(options.args || []);
+        const error = await playwright.launchBrowserApp(options).catch(e => e);
+        expect(error.message).toBe('Argument "--remote-debugging-pipe" is not compatible with "webSocket" launch option.');
       });
     });
   });
@@ -127,7 +136,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Browser.Events.disconnected', function() {
     it('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async() => {
-      const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
       const originalBrowser = await playwright.connect(browserApp.connectOptions());
       const browserWSEndpoint = browserApp.wsEndpoint();
       const remoteBrowser1 = await playwright.connect({browserWSEndpoint});

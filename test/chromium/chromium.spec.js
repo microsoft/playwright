@@ -21,20 +21,6 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Chromium', function() {
-    it('should work across sessions', async function({browserApp, server, browser, newContext}) {
-      expect(browser.browserContexts().length).toBe(2);
-      await newContext();
-      expect(browser.browserContexts().length).toBe(3);
-      const remoteBrowser = await playwright.connect({
-        browserWSEndpoint: browserApp.wsEndpoint()
-      });
-      const contexts = remoteBrowser.browserContexts();
-      expect(contexts.length).toBe(3);
-      remoteBrowser.disconnect();
-    });
-	});
-
 	describe('Target', function() {
     it('Chromium.targets should return all of the targets', async({page, server, browser}) => {
       // The pages will be the testing page and the original newtab page
