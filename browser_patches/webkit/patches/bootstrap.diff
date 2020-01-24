@@ -15016,10 +15016,10 @@ index 0000000000000000000000000000000000000000..033ff802d3971a455667cd64c0e68dd1
 +} // namespace WPEToolingBackends
 diff --git a/Tools/wpe/backends/NullViewBackend.h b/Tools/wpe/backends/NullViewBackend.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..7a2a03491c33231de1c1d692e18fb71cc478b90f
+index 0000000000000000000000000000000000000000..c4489294acfe73adcb3593f2d54a3be625307f28
 --- /dev/null
 +++ b/Tools/wpe/backends/NullViewBackend.h
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,46 @@
 +/*
 + * Copyright (C) Microsoft Corporation.
 + *
@@ -15060,6 +15060,9 @@ index 0000000000000000000000000000000000000000..7a2a03491c33231de1c1d692e18fb71c
 +    virtual ~NullViewBackend() = default;
 +private:
 +    void displayBuffer(struct wpe_fdo_egl_exported_image*) override { };
++#if WPE_FDO_CHECK_VERSION(1, 5, 0)
++    void displayBuffer(struct wpe_fdo_shm_exported_buffer*) override { };
++#endif
 +};
 +
 +} // namespace WPEToolingBackends
