@@ -17,7 +17,11 @@
 const { helper } = require('./lib/helper');
 const api = require('./lib/api');
 const packageJson = require('./package.json');
-const { DeviceDescriptors } = require('./lib/deviceDescriptors');
+const DeviceDescriptors = require('./lib/deviceDescriptors');
+const { TimeoutError } = require('./lib/errors');
+const { Chromium } = require('./lib/server/chromium');
+const { Firefox } = require('./lib/server/firefox');
+const { WebKit } = require('./lib/server/webkit');
 
 for (const className in api) {
   if (typeof api[className] === 'function')
@@ -25,8 +29,9 @@ for (const className in api) {
 }
 
 module.exports = {
-  chromium: new api.ChromiumPlaywright(__dirname, packageJson.playwright.chromium_revision),
-  firefox: new api.FirefoxPlaywright(__dirname, packageJson.playwright.firefox_revision),
-  webkit: new api.WebKitPlaywright(__dirname, packageJson.playwright.webkit_revision),
-  devices: DeviceDescriptors
-};
+  devices: DeviceDescriptors,
+  errors: { TimeoutError },
+  chromium: new Chromium(__dirname, packageJson.playwright.chromium_revision),
+  firefox: new Firefox(__dirname, packageJson.playwright.firefox_revision),
+  webkit: new WebKit(__dirname, packageJson.playwright.webkit_revision),
+}

@@ -54,8 +54,7 @@ async function downloadAndCleanup(browser) {
   const revisionInfo = await downloadBrowser(browser);
 
   // Remove previous revisions.
-  const playwright = require('.')[browser];
-  const fetcher = playwright._createBrowserFetcher();
+  const fetcher = require('.')[browser]._createBrowserFetcher();
   const localRevisions = await fetcher.localRevisions();
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);

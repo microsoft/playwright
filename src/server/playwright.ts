@@ -16,9 +16,23 @@
 
 import * as types from '../types';
 import { TimeoutError } from '../errors';
+import { DeviceDescriptors } from '../deviceDescriptors';
+import { Chromium } from './chromium';
+import { WebKit } from './webkit';
+import { Firefox } from './firefox';
 
-export interface Playwright {
-  executablePath(): string;
-  devices: types.Devices;
-  errors: { TimeoutError: typeof TimeoutError };
+export class Playwright {
+  readonly devices: types.Devices;
+  readonly errors: { TimeoutError: typeof TimeoutError };
+  readonly chromium: Chromium;
+  readonly firefox: Firefox;
+  readonly webkit: WebKit;
+
+  constructor(projectRoot: string, revisions: { chromium_revision: string, firefox_revision: string, webkit_revision: string }) {
+    this.devices = DeviceDescriptors;
+    this.errors = { TimeoutError };
+    this.chromium = new Chromium(projectRoot, revisions.chromium_revision);
+    this.firefox = new Firefox(projectRoot, revisions.firefox_revision);
+    this.webkit = new WebKit(projectRoot, revisions.webkit_revision);
+  }
 }

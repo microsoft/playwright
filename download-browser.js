@@ -15,13 +15,13 @@
  */
 
 async function downloadBrowser(browser) {
-  const playwright = require('.')[browser];
+  const browserType = require('.')[browser];
   let progressBar = null;
   let lastDownloadedBytes = 0;
   function onProgress(downloadedBytes, totalBytes) {
     if (!progressBar) {
       const ProgressBar = require('progress');
-      progressBar = new ProgressBar(`Downloading ${browser} ${playwright._revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
+      progressBar = new ProgressBar(`Downloading ${browser} ${browserType._revision} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
         complete: '=',
         incomplete: ' ',
         width: 20,
@@ -33,7 +33,7 @@ async function downloadBrowser(browser) {
     progressBar.tick(delta);
   }
 
-  const fetcher = playwright._createBrowserFetcher();
+  const fetcher = browserType._createBrowserFetcher();
   const revisionInfo = fetcher.revisionInfo();
   // Do nothing if the revision is already downloaded.
   if (revisionInfo.local)

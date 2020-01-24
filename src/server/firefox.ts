@@ -28,33 +28,11 @@ import * as path from 'path';
 import * as util from 'util';
 import { TimeoutError } from '../errors';
 import { assert } from '../helper';
-import { Playwright } from './playwright';
+import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { createTransport, ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
 
-export type SlowMoOptions = {
-  slowMo?: number,
-};
-
-export type FirefoxArgOptions = {
-  headless?: boolean,
-  args?: string[],
-  userDataDir?: string,
-};
-
-export type LaunchOptions = FirefoxArgOptions & SlowMoOptions & {
-  executablePath?: string,
-  ignoreDefaultArgs?: boolean | string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  dumpio?: boolean,
-  env?: {[key: string]: string} | undefined,
-  webSocket?: boolean,
-};
-
-export class FFPlaywright implements Playwright {
+export class Firefox implements BrowserType {
   private _projectRoot: string;
   readonly _revision: string;
 
@@ -151,7 +129,9 @@ export class FFPlaywright implements Playwright {
     return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
   }
 
-  async connect(options: ConnectOptions): Promise<FFBrowser> {
+  async connect(options: ConnectOptions & { browserURL?: string }): Promise<FFBrowser> {
+    if (options.browserURL)
+      throw new Error('Option "browserURL" is not supported by Firefox');
     if (options.transport && options.transport.onmessage)
       throw new Error('Transport is already in use');
     return FFBrowser.connect(options);
@@ -169,13 +149,15 @@ export class FFPlaywright implements Playwright {
     return { TimeoutError };
   }
 
-  // TODO: rename userDataDir to profile?
-  defaultArgs(options: FirefoxArgOptions = {}): string[] {
+  defaultArgs(options: BrowserArgOptions = {}): string[] {
     const {
-      headless = true,
+      devtools = false,
+      headless = !devtools,
       args = [],
       userDataDir = null,
     } = options;
+    if (devtools)
+      throw new Error('Option "devtools" is not supported by Firefox');
     const firefoxArguments = [...DEFAULT_ARGS];
     if (userDataDir)
       firefoxArguments.push('-profile', userDataDir);

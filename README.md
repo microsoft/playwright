@@ -39,15 +39,15 @@ Playwright can be used to create a browser instance, open pages, and then manipu
 This code snippet navigates to whatsmyuseragent.org in Chromium, Firefox and WebKit, and saves 3 screenshots.
 
 ```js
-const pw = require('playwright');
+const playwright = require('playwright');
 
 (async () => {
-  for (const name of ['chromium', 'firefox', 'webkit']) {
-    const browser = await pw[name].launch();
+  for (const browserType of ['chromium', 'firefox', 'webkit']) {
+    const browser = await playwright[browserType].launch();
     const context = await browser.newContext();
     const page = await context.newPage('http://whatsmyuseragent.org/');
-  
-    await page.screenshot({ path: `example-${name}.png` });
+
+    await page.screenshot({ path: `example-${browserType}.png` });
     await browser.close();
   }
 })();
@@ -58,11 +58,11 @@ const pw = require('playwright');
 This snippet emulates Mobile Safari on a device at a given geolocation, navigates to maps.google.com, performs action and takes a screenshot.
 
 ```js
-const pw = require('playwright');
-const iPhone11 = pw.devices['iPhone 11 Pro'];
+const { webkit, devices } = require('playwright');
+const iPhone11 = devices['iPhone 11 Pro'];
 
 (async () => {
-  const browser = await pw.webkit.launch();
+  const browser = await webkit.launch();
   const context = await browser.newContext({
     viewport: iPhone11.viewport,
     userAgent: iPhone11.userAgent,
@@ -73,7 +73,7 @@ const iPhone11 = pw.devices['iPhone 11 Pro'];
   const page = await context.newPage('https://maps.google.com');
   await page.click('text="Your location"');
   await page.waitForRequest(/.*preview\/pwa/);
-  await page.screenshot({ path: 'colosseum-iphone.png' });  
+  await page.screenshot({ path: 'colosseum-iphone.png' });
   await browser.close();
 })();
 ```
@@ -81,11 +81,11 @@ const iPhone11 = pw.devices['iPhone 11 Pro'];
 And here is the same script for Chrome on Android.
 
 ```js
-const pw = require('playwright');
-const pixel2 = pw.devices['Pixel 2'];
+const { chromium, devices } = require('playwright');
+const pixel2 = devices['Pixel 2'];
 
 (async () => {
-  const browser = await pw.chromium.launch();
+  const browser = await chromium.launch();
   const context = await browser.newContext({
     viewport: pixel2.viewport,
     userAgent: pixel2.userAgent,
@@ -106,10 +106,10 @@ const pixel2 = pw.devices['Pixel 2'];
 This code snippet navigates to example.com in Firefox, and executes a script in the page context.
 
 ```js
-const pw = require('playwright');
+const { firefox } = require('playwright');
 
 (async () => {
-  const browser = await pw.firefox.launch(); // or 'chromium', 'webkit'
+  const browser = await firefox.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
 

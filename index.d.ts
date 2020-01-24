@@ -15,7 +15,9 @@
  */
 
 export * from './lib/api';
-export const chromium: import('./lib/api').ChromiumPlaywright;
-export const firefox: import('./lib/api').FirefoxPlaywright;
-export const webkit: import('./lib/api').WebKitPlaywright;
+export const devices: typeof import('./lib/deviceDescriptors').DeviceDescriptors;
+export const errors: { TimeoutError: typeof import('./lib/errors').TimeoutError };
+export const chromium: import('./lib/api').Chromium;
+export const firefox: import('./lib/api').Firefox;
+export const webkit: import('./lib/api').WebKit;
 export type PlaywrightWeb = typeof import('./lib/web');
