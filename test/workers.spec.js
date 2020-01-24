@@ -80,7 +80,22 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
       await workerCreatedPromise;
       expect(page.workers().length).toBe(1);
+      let destroyed = false;
+      page.once('workerdestroyed', () => destroyed = true);
+      await page.goto(server.PREFIX + '/one-style.html');
+      expect(destroyed).toBe(true);
+      expect(page.workers().length).toBe(0);
+    });
+    it('should clear upon cross-process navigation', async function({server, page}) {
+      await page.goto(server.EMPTY_PAGE);
+      const workerCreatedPromise = page.waitForEvent('workercreated');
+      page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
+      await workerCreatedPromise;
+      expect(page.workers().length).toBe(1);
+      let destroyed = false;
+      page.once('workerdestroyed', () => destroyed = true);
       await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      expect(destroyed).toBe(true);
       expect(page.workers().length).toBe(0);
     });
     it('should report network activity', async function({page, server}) {

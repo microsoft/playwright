@@ -520,7 +520,10 @@ export class Page extends platform.EventEmitter {
   }
 
   _clearWorkers() {
-    this._workers.clear();
+    for (const [workerId, worker] of this._workers) {
+      this.emit(Events.Page.WorkerDestroyed, worker);
+      this._workers.delete(workerId);
+    }
   }
 }
 
