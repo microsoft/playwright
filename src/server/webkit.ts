@@ -36,6 +36,7 @@ import * as ws from 'ws';
 import * as uuidv4 from 'uuid/v4';
 import { ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
+import { Events } from '../events';
 
 export class WebKit implements BrowserType {
   private _projectRoot: string;
@@ -94,8 +95,9 @@ export class WebKit implements BrowserType {
         throw new Error(missingText);
       webkitExecutable = executablePath;
     }
-    let transport: PipeTransport | undefined = undefined;
 
+    let transport: PipeTransport | undefined = undefined;
+    let browserApp: BrowserApp | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: webkitExecutable!,
       args: webkitArguments,
@@ -115,6 +117,10 @@ export class WebKit implements BrowserType {
         const message = JSON.stringify({method: 'Browser.close', params: {}, id: kBrowserCloseMessageId});
         transport.send(message);
       },
+      onkill: () => {
+        if (browserApp)
+          browserApp.emit(Events.BrowserApp.Close);
+      },
     });
 
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
@@ -126,7 +132,8 @@ export class WebKit implements BrowserType {
     } else {
       connectOptions = { transport, slowMo };
     }
-    return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
+    browserApp = new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
+    return browserApp;
   }
 
   async connect(options: ConnectOptions & { browserURL?: string }): Promise<WKBrowser> {

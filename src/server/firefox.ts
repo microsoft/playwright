@@ -31,6 +31,7 @@ import { assert } from '../helper';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { createTransport, ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
+import { Events } from '../events';
 
 export class Firefox implements BrowserType {
   private _projectRoot: string;
@@ -89,8 +90,7 @@ export class Firefox implements BrowserType {
       firefoxExecutable = executablePath;
     }
 
-    let connectOptions: ConnectOptions | undefined = undefined;
-
+    let browserApp: BrowserApp | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
@@ -106,27 +106,33 @@ export class Firefox implements BrowserType {
       pipe: false,
       tempDir: temporaryProfileDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!connectOptions)
+        if (!browserApp)
           return Promise.reject();
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const transport = await createTransport(connectOptions);
+        const transport = await createTransport(browserApp.connectOptions());
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         transport.send(JSON.stringify(message));
+      },
+      onkill: () => {
+        if (browserApp)
+          browserApp.emit(Events.BrowserApp.Close);
       },
     });
 
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const browserWSEndpoint = match[1];
+    let connectOptions: ConnectOptions;
     if (webSocket) {
       connectOptions = { browserWSEndpoint, slowMo };
     } else {
       const transport = await platform.createWebSocketTransport(browserWSEndpoint);
       connectOptions = { transport, slowMo };
     }
-    return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
+    browserApp = new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
+    return browserApp;
   }
 
   async connect(options: ConnectOptions & { browserURL?: string }): Promise<FFBrowser> {

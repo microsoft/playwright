@@ -216,6 +216,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(message).not.toContain('Timeout');
       }
     });
+    it('should be able to close remote browser', async({server}) => {
+      const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
+      const remote = await playwright.connect(browserApp.connectOptions());
+      await Promise.all([
+        new Promise(f => browserApp.once('close', f)),
+        remote.close(),
+      ]);
+    });
   });
 
   describe('Playwright.launch |webSocket| option', function() {
@@ -244,8 +252,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
       const browser = await playwright.connect(browserApp.connectOptions());
       const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
-      // Emulate user exiting browser.
-      process.kill(-browserApp.process().pid, 'SIGKILL');
+      browserApp.kill();
       await disconnectedEventPromise;
     });
     it('should fire "disconnected" when closing with webSocket', async() => {
@@ -253,8 +260,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const browserApp = await playwright.launchBrowserApp(options);
       const browser = await playwright.connect(browserApp.connectOptions());
       const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
-      // Emulate user exiting browser.
-      process.kill(-browserApp.process().pid, 'SIGKILL');
+      browserApp.kill();
       await disconnectedEventPromise;
     });
   });

@@ -40,6 +40,7 @@ export type LaunchProcessOptions = {
 
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
+  onkill: () => void,
 };
 
 type LaunchResult = { launchedProcess: childProcess.ChildProcess, gracefullyClose: () => Promise<void> };
@@ -97,6 +98,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       } else {
         fulfill();
       }
+      options.onkill();
     });
   });
 
