@@ -189,7 +189,7 @@ export class WKPlaywright implements Playwright {
 
     const defaultOptions = {
       path: path.join(this._projectRoot, '.local-webkit'),
-      host: 'https://playwright2.blob.core.windows.net',
+      host: 'https://playwright.azureedge.net',
       platform: (() => {
         const platform = os.platform();
         if (platform === 'darwin')
