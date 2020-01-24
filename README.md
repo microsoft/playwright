@@ -42,16 +42,14 @@ This code snippet navigates to whatsmyuseragent.org in Chromium, Firefox and Web
 const pw = require('playwright');
 
 (async () => {
-  const browsers = ['chromium', 'firefox', 'webkit'];
-
-  browsers.forEach(async browserName => {
-    const browser = await pw[browserName].launch();
+  for (const name of ['chromium', 'firefox', 'webkit']) {
+    const browser = await pw[name].launch();
     const context = await browser.newContext();
     const page = await context.newPage('http://whatsmyuseragent.org/');
-
-    await page.screenshot({ path: `example-${browserName}.png` });
+  
+    await page.screenshot({ path: `example-${name}.png` });
     await browser.close();
-  });
+  }
 })();
 ```
 
