@@ -27,6 +27,7 @@ module.exports.describe = function({testRunner, defaultBrowserOptions, playwrigh
       const options = Object.assign({}, defaultBrowserOptions, {
         // Disable DUMPIO to cleanly read stdout.
         dumpio: false,
+        webSocket: true,
       });
       const res = spawn('node', [path.join(__dirname, '..', 'fixtures', 'closeme.js'), playwrightPath, product, JSON.stringify(options)]);
       let wsEndPointCallback;

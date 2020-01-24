@@ -10,7 +10,7 @@ async function generateChromiunProtocol(revision) {
   if (revision.local && fs.existsSync(outputPath))
     return;
   const playwright = await require('../../index').chromium;
-  const browserApp = await playwright.launchBrowserApp({executablePath: revision.executablePath});
+  const browserApp = await playwright.launchBrowserApp({executablePath: revision.executablePath, webSocket: true});
   const origin = browserApp.wsEndpoint().match(/ws:\/\/([0-9A-Za-z:\.]*)\//)[1];
   const browser = await playwright.connect(browserApp.connectOptions());
   const page = await browser.defaultContext().newPage();

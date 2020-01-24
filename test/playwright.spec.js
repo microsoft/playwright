@@ -105,7 +105,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       const onLine = (line) => test.output += line + '\n';
 
       let rl;
-      if (!WEBKIT) {
+      if (state.browserApp.process().stderr) {
         rl = require('readline').createInterface({ input: state.browserApp.process().stderr });
         test.output = '';
         rl.on('line', onLine);
@@ -113,7 +113,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
       state.tearDown = async () => {
         await Promise.all(contexts.map(c => c.close()));
-        if (!WEBKIT) {
+        if (rl) {
           rl.removeListener('line', onLine);
           rl.close();
         }

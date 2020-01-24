@@ -21,7 +21,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   (CHROMIUM || FFOX) && describe('Web SDK', function() {
     beforeAll(async state => {
-      state.controlledBrowserApp = await playwright.launchBrowserApp({ ...defaultBrowserOptions, pipe: false });
+      state.controlledBrowserApp = await playwright.launchBrowserApp({ ...defaultBrowserOptions, webSocket: true });
       state.hostBrowserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
       state.hostBrowser = await playwright.connect(state.hostBrowserApp.connectOptions());
     });
