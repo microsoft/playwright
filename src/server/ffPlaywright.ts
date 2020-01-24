@@ -63,7 +63,7 @@ export class FFPlaywright implements Playwright {
     this._revision = preferredRevision;
   }
 
-  async launch(options: LaunchOptions): Promise<FFBrowser> {
+  async launch(options?: LaunchOptions): Promise<FFBrowser> {
     const app = await this.launchBrowserApp(options);
     const browser = await FFBrowser.connect(app.connectOptions());
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
