@@ -20,8 +20,8 @@ const {TestRunner, Reporter} = require('../utils/testrunner/');
 const utils = require('./utils');
 
 let parallel = 1;
-if (process.env.PPTR_PARALLEL_TESTS)
-  parallel = parseInt(process.env.PPTR_PARALLEL_TESTS.trim(), 10);
+if (process.env.PW_PARALLEL_TESTS)
+  parallel = parseInt(process.env.PW_PARALLEL_TESTS.trim(), 10);
 const parallelArgIndex = process.argv.indexOf('-j');
 if (parallelArgIndex !== -1)
   parallel = parseInt(process.argv[parallelArgIndex + 1], 10);

@@ -1,5 +1,5 @@
 {
-  "name": "@pptr/testrunner",
+  "name": "@playwright/testrunner",
   "version": "0.8.0",
   "description": "Playwright testrunner",
   "main": "index.js",

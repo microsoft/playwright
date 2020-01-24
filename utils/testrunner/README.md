@@ -11,7 +11,7 @@ This test runner is used internally by Playwright to test Playwright itself.
 ### Installation
 
 ```sh
-npm install --save-dev @pptr/testrunner
+npm install --save-dev @playwright/testrunner
 ```
 
 ### Example
@@ -23,7 +23,7 @@ node test.js
 ```
 
 ```js
-const {TestRunner, Reporter, Matchers} = require('@pptr/testrunner');
+const {TestRunner, Reporter, Matchers} = require('@playwright/testrunner');
 
 // Runner holds and runs all the tests
 const runner = new TestRunner({

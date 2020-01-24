@@ -269,7 +269,7 @@ This will write shared memory files into `/tmp` instead of `/dev/shm`. See [crbu
 
 Seeing other weird errors when launching Chrome? Try running your container
 with `docker run --cap-add=SYS_ADMIN` when developing locally. Since the Dockerfile
-adds a `pptr` user as a non-privileged user, it may not have all the necessary privileges.
+adds a `pwuser` user as a non-privileged user, it may not have all the necessary privileges.
 
 [dumb-init](https://github.com/Yelp/dumb-init) is worth checking out if you're
 experiencing a lot of zombies Chrome processes sticking around. There's special

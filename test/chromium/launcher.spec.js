@@ -23,7 +23,7 @@ const rmAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const statAsync = util.promisify(fs.stat);
 
-const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
+const TMP_FOLDER = path.join(os.tmpdir(), 'pw_tmp_folder-');
 
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;

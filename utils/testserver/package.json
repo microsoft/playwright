@@ -1,5 +1,5 @@
 {
-  "name": "@pptr/testserver",
+  "name": "@playwright/testrunner",
   "version": "0.5.0",
   "description": "testing server",
   "main": "index.js",
