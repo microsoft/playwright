@@ -12696,10 +12696,10 @@ index 0000000000000000000000000000000000000000..00fb6b0006c743091a8bbf8edb18b211
 +</Scheme>
 diff --git a/Tools/Playwright/mac/AppDelegate.h b/Tools/Playwright/mac/AppDelegate.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..465cb7827fc47927c4e1fc6e47c6608f4ef21d26
+index 0000000000000000000000000000000000000000..41b5751cab626971cd12c5066218c6d14c00fba0
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.h
-@@ -0,0 +1,56 @@
+@@ -0,0 +1,55 @@
 +/*
 + * Copyright (C) 2010 Apple Inc. All rights reserved.
 + *
@@ -12727,7 +12727,6 @@ index 0000000000000000000000000000000000000000..465cb7827fc47927c4e1fc6e47c6608f
 +
 +#import <WebKit/_WKBrowserInspector.h>
 +
-+WK_CLASS_AVAILABLE(macos(10.14.0))
 +@interface WebViewDialog : NSObject
 +@property (nonatomic, strong) WKWebView *webView;
 +@property (nonatomic, copy) void (^completionHandler)(BOOL accept, NSString* value);
