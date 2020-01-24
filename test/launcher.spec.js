@@ -18,6 +18,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const util = require('util');
+const {spawn, execSync} = require('child_process');
 
 const utils = require('./utils');
 const rmAsync = util.promisify(require('rimraf'));
@@ -25,7 +26,7 @@ const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 const TMP_FOLDER = path.join(os.tmpdir(), 'pptr_tmp_folder-');
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, CHROMIUM, FFOX, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, product, CHROMIUM, FFOX, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -66,6 +67,37 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(page.url()).toBe(server.EMPTY_PAGE);
         await browser.close();
       });
+      it('should close the browser when the node process closes', async({ server }) => {
+        const options = Object.assign({}, defaultBrowserOptions, {
+          // Disable DUMPIO to cleanly read stdout.
+          dumpio: false,
+          webSocket: true,
+        });
+        const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), playwrightPath, product, JSON.stringify(options)]);
+        let wsEndPointCallback;
+        const wsEndPointPromise = new Promise(x => wsEndPointCallback = x);
+        let output = '';
+        res.stdout.on('data', data => {
+          output += data;
+          if (output.indexOf('\n'))
+            wsEndPointCallback(output.substring(0, output.indexOf('\n')));
+        });
+        const browser = await playwright.connect({ browserWSEndpoint: await wsEndPointPromise });
+        const promises = [
+          new Promise(resolve => browser.once('disconnected', resolve)),
+          new Promise(resolve => res.on('exit', resolve))
+        ];
+        if (process.platform === 'win32')
+          execSync(`taskkill /pid ${res.pid} /T /F`);
+        else
+          process.kill(res.pid);
+        await Promise.all(promises);
+      });
+      it('should return child_process instance', async () => {
+        const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+        expect(browserApp.process().pid).toBeGreaterThan(0);
+        await browserApp.close();
+      });
     });
 
     describe('Playwright.executablePath', function() {
@@ -73,6 +105,28 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         const executablePath = playwright.executablePath();
         expect(fs.existsSync(executablePath)).toBe(true);
         expect(fs.realpathSync(executablePath)).toBe(executablePath);
+      });
+    });
+
+    describe('Playwright.defaultArguments', () => {
+      it('should return the default arguments', async() => {
+        if (CHROMIUM)
+          expect(playwright.defaultArgs()).toContain('--no-first-run');
+        expect(playwright.defaultArgs()).toContain(FFOX ? '-headless' : '--headless');
+        expect(playwright.defaultArgs({headless: false})).not.toContain(FFOX ? '-headless' : '--headless');
+        expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain(FFOX ? 'foo' : '--user-data-dir=foo');
+      });
+      it('should filter out ignored default arguments', async() => {
+        // Make sure we launch with `--enable-automation` by default.
+        const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
+        const browserApp = await playwright.launchBrowserApp(Object.assign({}, defaultBrowserOptions, {
+          // Ignore second default argument.
+          ignoreDefaultArgs: [ defaultArgs[1] ],
+        }));
+        const spawnargs = browserApp.process().spawnargs;
+        expect(spawnargs.indexOf(defaultArgs[0])).not.toBe(-1);
+        expect(spawnargs.indexOf(defaultArgs[1])).toBe(-1);
+        await browserApp.close();
       });
     });
   });
@@ -228,7 +282,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.skip(FFOX || WEBKIT)('Playwright.launch({userDataDir})', function() {
+  describe.skip(WEBKIT)('Playwright.launch({userDataDir})', function() {
     it('userDataDir option', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       const options = Object.assign({userDataDir}, defaultBrowserOptions);
@@ -244,10 +298,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('userDataDir argument', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       const options = Object.assign({}, defaultBrowserOptions);
-      options.args = [
-        ...(defaultBrowserOptions.args || []),
-        `--user-data-dir=${userDataDir}`
-      ];
+      options.args = [...(defaultBrowserOptions.args || [])];
+      if (FFOX)
+        options.args.push('-profile', userDataDir);
+      else
+        options.args.push(`--user-data-dir=${userDataDir}`);
       const browser = await playwright.launch(options);
       // Open a page to make sure its functional.
       await browser.defaultContext().newPage();
@@ -257,27 +312,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
       await rmAsync(userDataDir).catch(e => {});
     });
-    it('should return the default arguments', async() => {
-      if (CHROMIUM)
-        expect(playwright.defaultArgs()).toContain('--no-first-run');
-      expect(playwright.defaultArgs()).toContain('--headless');
-      expect(playwright.defaultArgs({headless: false})).not.toContain('--headless');
-      expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain('--user-data-dir=foo');
-    });
-    it('should filter out ignored default arguments', async() => {
-      // Make sure we launch with `--enable-automation` by default.
-      const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
-      const browserApp = await playwright.launchBrowserApp(Object.assign({}, defaultBrowserOptions, {
-        // Ignore first and third default argument.
-        ignoreDefaultArgs: [ defaultArgs[0], defaultArgs[2] ],
-      }));
-      const spawnargs = browserApp.process().spawnargs;
-      expect(spawnargs.indexOf(defaultArgs[0])).toBe(-1);
-      expect(spawnargs.indexOf(defaultArgs[1])).not.toBe(-1);
-      expect(spawnargs.indexOf(defaultArgs[2])).toBe(-1);
-      await browserApp.close();
-    });
-    it('userDataDir option should restore state', async({server}) => {
+    it.skip(FFOX)('userDataDir option should restore state', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       const options = Object.assign({userDataDir}, defaultBrowserOptions);
       const browser = await playwright.launch(options);
@@ -302,7 +337,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await rmAsync(userDataDir).catch(e => {});
     });
     // This mysteriously fails on Windows on AppVeyor. See https://github.com/GoogleChrome/puppeteer/issues/4111
-    it('userDataDir option should restore cookies', async({server}) => {
+    it.skip(FFOX)('userDataDir option should restore cookies', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       const options = Object.assign({userDataDir}, defaultBrowserOptions);
       const browser = await playwright.launch(options);
