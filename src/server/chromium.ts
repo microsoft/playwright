@@ -32,6 +32,7 @@ import { PipeTransport } from './pipeTransport';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { createTransport, ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
+import { Events } from '../events';
 
 export class Chromium implements BrowserType {
   private _projectRoot: string;
@@ -94,6 +95,7 @@ export class Chromium implements BrowserType {
     if (usePipe && webSocket)
       throw new Error(`Argument "--remote-debugging-pipe" is not compatible with "webSocket" launch option.`);
 
+    let browserApp: BrowserApp | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: chromeExecutable!,
       args: chromeArguments,
@@ -105,19 +107,22 @@ export class Chromium implements BrowserType {
       pipe: usePipe,
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!connectOptions)
+        if (!browserApp)
           return Promise.reject();
-
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const transport = await createTransport(connectOptions);
+        const transport = await createTransport(browserApp.connectOptions());
         const message = { method: 'Browser.close', id: kBrowserCloseMessageId };
         transport.send(JSON.stringify(message));
       },
+      onkill: () => {
+        if (browserApp)
+          browserApp.emit(Events.BrowserApp.Close);
+      },
     });
 
-    let connectOptions: ConnectOptions | undefined;
+    let connectOptions: ConnectOptions;
     if (!usePipe) {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
       const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
@@ -127,7 +132,8 @@ export class Chromium implements BrowserType {
       const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
       connectOptions = { slowMo, transport };
     }
-    return new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
+    browserApp = new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
+    return browserApp;
   }
 
   async connect(options: ConnectOptions & { browserURL?: string }): Promise<CRBrowser> {

@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import { ChildProcess } from 'child_process';
+import { ChildProcess, execSync } from 'child_process';
 import { ConnectOptions } from '../browser';
+import * as platform from '../platform';
 
-export class BrowserApp {
+export class BrowserApp extends platform.EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: () => Promise<void>;
   private _connectOptions: ConnectOptions;
 
   constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: ConnectOptions) {
+    super();
     this._process = process;
     this._gracefullyClose = gracefullyClose;
     this._connectOptions = connectOptions;
@@ -38,6 +40,19 @@ export class BrowserApp {
 
   connectOptions(): ConnectOptions {
     return this._connectOptions;
+  }
+
+  kill() {
+    if (this._process.pid && !this._process.killed) {
+      try {
+        if (process.platform === 'win32')
+          execSync(`taskkill /pid ${this._process.pid} /T /F`);
+        else
+          process.kill(-this._process.pid, 'SIGKILL');
+      } catch (e) {
+        // the process might have already stopped
+      }
+    }
   }
 
   async close(): Promise<void> {
