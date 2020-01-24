@@ -7,7 +7,7 @@
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
 
-Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers. This includes support for the new Microsoft Edge browser, which is based on Chromium.
+Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers with **a single API**. This includes support for the new Microsoft Edge browser, which is based on Chromium.
 
 Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
 
@@ -17,7 +17,8 @@ Playwright is focused on enabling **cross-browser** web automation platform that
 | Chromium| 81.0.4032 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | WebKit | 13.0.4 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Firefox |73.0b3 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-- Headless is supported for all browsers on all platforms.
+
+Headless is supported for all browsers on all platforms.
 
 ### Installation
 
@@ -35,22 +36,24 @@ Playwright can be used to create a browser instance, open pages, and then manipu
 
 #### Page screenshot
 
-This code snippet navigates to example.com in WebKit, and saves a screenshot.
+This code snippet navigates to whatsmyuseragent.org in Chromium, Firefox and WebKit, and saves 3 screenshots.
 
 ```js
 const pw = require('playwright');
 
 (async () => {
-  const browser = await pw.webkit.launch(); // or 'chromium', 'firefox'
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  await page.goto('https://www.example.com/');
-  await page.screenshot({ path: 'example.png' });
-
-  await browser.close();
+  for (const name of ['chromium', 'firefox', 'webkit']) {
+    const browser = await pw[name].launch();
+    const context = await browser.newContext();
+    const page = await context.newPage('http://whatsmyuseragent.org/');
+  
+    await page.screenshot({ path: `example-${name}.png` });
+    await browser.close();
+  }
 })();
 ```
+
+#### Mobile and geolocation
 
 This snippet emulates Mobile Safari on a device at a given geolocation, navigates to maps.google.com, performs action and takes a screenshot.
 
@@ -129,6 +132,10 @@ const pw = require('playwright');
 Check out our [contributing guide](https://github.com/microsoft/playwright/blob/master/CONTRIBUTING.md).
 
 ## FAQ
+
+**Q: Can I use a single API to automate different browsers?**
+
+Yes, you can. See [Browser](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-browser) in the API reference for the common set of APIs across Chromium, Firefox and WebKit. A small set of features are specific to browsers, for example see [ChromiumBrowser](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-chromiumbrowser).
 
 **Q: How does Playwright relate to [Puppeteer](https://github.com/puppeteer/puppeteer)?**
 
