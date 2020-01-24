@@ -30,7 +30,7 @@ function checkSources(sources, externalDependencies) {
   const classEvents = new Map();
   const eventsSources = sources.filter(source => source.name().startsWith('events.ts'));
   for (const eventsSource of eventsSources) {
-    const {Events} = require(eventsSource.filePath().endsWith('.js') ? eventsSource.filePath() : eventsSource.filePath().replace('/src/', '/lib/').replace('.ts', '.js'));
+    const {Events} = require(eventsSource.filePath().endsWith('.js') ? eventsSource.filePath() : eventsSource.filePath().replace(/\bsrc\b/, 'lib').replace('.ts', '.js'));
     for (const [className, events] of Object.entries(Events))
       classEvents.set(className, Array.from(Object.values(events)).filter(e => typeof e === 'string').map(e => Documentation.Member.createEvent(e)));
   }

@@ -12,6 +12,7 @@
   * [Running Playwright in Docker](#running-playwright-in-docker)
     - [Tips](#tips)
 - [Code Transpilation Issues](#code-transpilation-issues)
+- [ReferenceError: URL is not defined](#referenceerror-url-is-not-defined)
 <!-- GEN:stop -->
 ## Chromium
 
@@ -287,6 +288,10 @@ await page.evaluate(`(async() => {
    console.log('1');
 })()`);
 ```
+
+## ReferenceError: URL is not defined
+
+Playwright requires node 10 or higher. Node 8 is not supported, and will cause you to recieve this error.
 
 # Please file an issue
 
