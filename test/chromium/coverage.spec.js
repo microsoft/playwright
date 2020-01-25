@@ -51,7 +51,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(coverage.find(entry => entry.url.startsWith('debugger://'))).not.toBe(null);
       expect(coverage.length).toBe(2);
     });
-    it('should ignore pptr internal scripts if reportAnonymousScripts is true', async function({page, server}) {
+    it('should ignore playwright internal scripts if reportAnonymousScripts is true', async function({page, server}) {
       await page.coverage.startJSCoverage({reportAnonymousScripts: true});
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate('console.log("foo")');

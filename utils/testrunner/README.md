@@ -8,12 +8,6 @@ This test runner is used internally by Playwright to test Playwright itself.
 - modular
 - well-isolated state per execution thread
 
-### Installation
-
-```sh
-npm install --save-dev @pptr/testrunner
-```
-
 ### Example
 
 Save the following as `test.js` and run using `node`:
@@ -23,7 +17,7 @@ node test.js
 ```
 
 ```js
-const {TestRunner, Reporter, Matchers} = require('@pptr/testrunner');
+const {TestRunner, Reporter, Matchers} = require('.');
 
 // Runner holds and runs all the tests
 const runner = new TestRunner({

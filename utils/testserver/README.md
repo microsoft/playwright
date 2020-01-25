@@ -5,7 +5,7 @@ This test server is used internally by Playwright to test Playwright itself.
 ### Example
 
 ```js
-const {TestServer} = require('@pptr/testserver');
+const {TestServer} = require('.');
 
 (async(() => {
   const httpServer = await TestServer.create(__dirname, 8000),

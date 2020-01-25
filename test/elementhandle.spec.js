@@ -58,12 +58,12 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         </svg>
       `);
       const element = await page.$('#therect');
-      const pptrBoundingBox = await element.boundingBox();
+      const pwBoundingBox = await element.boundingBox();
       const webBoundingBox = await page.evaluate(e => {
         const rect = e.getBoundingClientRect();
         return {x: rect.x, y: rect.y, width: rect.width, height: rect.height};
       }, element);
-      expect(pptrBoundingBox).toEqual(webBoundingBox);
+      expect(pwBoundingBox).toEqual(webBoundingBox);
     });
   });
 
