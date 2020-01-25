@@ -1,9 +1,6 @@
 # Playwright
 [![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![Chromium version](https://img.shields.io/badge/chromium-81.0.4032-blue.svg)](https://www.chromium.org/Home) [![Firefox version](https://img.shields.io/badge/firefox-73.0b3-blue.svg)](https://www.mozilla.org/en-US/firefox/new/) [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg)](https://webkit.org/) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
 
-![Chromium Tests](https://github.com/Microsoft/playwright/workflows/Chromium%20Tests/badge.svg) ![Firefox Tests](https://github.com/Microsoft/playwright/workflows/Firefox%20Tests/badge.svg) ![WebKit Tests](https://github.com/Microsoft/playwright/workflows/WebKit%20Tests/badge.svg)
-
-
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
 
