@@ -534,7 +534,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       const result = await page.content();
       expect(result).toBe(expectedOutput);
     });
-    it.skip(FFOX || WEBKIT)('should not confuse with previous navigation', async({page, server}) => {
+    it('should not confuse with previous navigation', async({page, server}) => {
       // TODO: ffox and webkit lack 'init' lifecycle event.
       const imgPath = '/img.png';
       let imgResponse = null;
