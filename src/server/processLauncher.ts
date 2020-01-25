@@ -40,7 +40,7 @@ export type LaunchProcessOptions = {
 
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
-  onkill: () => void,
+  onkill: (exitCode: number | null, signal: string | null) => void,
 };
 
 type LaunchResult = { launchedProcess: childProcess.ChildProcess, gracefullyClose: () => Promise<void> };
@@ -86,10 +86,11 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   let processClosed = false;
   const waitForProcessToClose = new Promise((fulfill, reject) => {
-    spawnedProcess.once('exit', () => {
+    spawnedProcess.once('exit', (exitCode, signal) => {
       debugLauncher(`[${id}] <process did exit>`);
       processClosed = true;
       helper.removeEventListeners(listeners);
+      options.onkill(exitCode, signal);
       // Cleanup as processes exit.
       if (options.tempDir) {
         removeFolderAsync(options.tempDir)
@@ -98,33 +99,36 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       } else {
         fulfill();
       }
-      options.onkill();
     });
   });
 
   const listeners = [ helper.addEventListener(process, 'exit', killProcess) ];
-  if (options.handleSIGINT)
-    listeners.push(helper.addEventListener(process, 'SIGINT', () => { killProcess(); process.exit(130); }));
+  if (options.handleSIGINT) {
+    listeners.push(helper.addEventListener(process, 'SIGINT', () => {
+      gracefullyClose().then(() => process.exit(130));
+    }));
+  }
   if (options.handleSIGTERM)
     listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyClose));
   if (options.handleSIGHUP)
     listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyClose));
-  let gracefullyClosing = false;
-  return { launchedProcess: spawnedProcess, gracefullyClose };
 
+  let gracefullyClosing = false;
   async function gracefullyClose(): Promise<void> {
     // We keep listeners until we are done, to handle 'exit' and 'SIGINT' while
     // asynchronously closing to prevent zombie processes. This might introduce
-    // reentrancy to this function.
-    if (gracefullyClosing)
+    // reentrancy to this function, for example user sends SIGINT second time.
+    // In this case, let's forcefully kill the process.
+    if (gracefullyClosing) {
+      debugLauncher(`[${id}] <forecefully close>`);
+      killProcess();
       return;
+    }
     gracefullyClosing = true;
     debugLauncher(`[${id}] <gracefully close start>`);
     options.attemptToGracefullyClose().catch(() => killProcess());
-    // TODO: forcefully kill the process after some timeout.
     await waitForProcessToClose;
     debugLauncher(`[${id}] <gracefully close end>`);
-    helper.removeEventListeners(listeners);
   }
 
   // This method has to be sync to be used as 'exit' event handler.
@@ -148,6 +152,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         removeFolder.sync(options.tempDir);
     } catch (e) { }
   }
+
+  return { launchedProcess: spawnedProcess, gracefullyClose };
 }
 
 export function waitForLine(process: childProcess.ChildProcess, inputStream: stream.Readable, regex: RegExp, timeout: number, timeoutError: TimeoutError): Promise<RegExpMatchArray> {

@@ -116,9 +116,9 @@ export class Chromium implements BrowserType {
         const message = { method: 'Browser.close', id: kBrowserCloseMessageId };
         transport.send(JSON.stringify(message));
       },
-      onkill: () => {
+      onkill: (exitCode, signal) => {
         if (browserApp)
-          browserApp.emit(Events.BrowserApp.Close);
+          browserApp.emit(Events.BrowserApp.Close, exitCode, signal);
       },
     });
 

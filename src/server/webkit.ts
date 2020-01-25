@@ -117,9 +117,9 @@ export class WebKit implements BrowserType {
         const message = JSON.stringify({method: 'Browser.close', params: {}, id: kBrowserCloseMessageId});
         transport.send(message);
       },
-      onkill: () => {
+      onkill: (exitCode, signal) => {
         if (browserApp)
-          browserApp.emit(Events.BrowserApp.Close);
+          browserApp.emit(Events.BrowserApp.Close, exitCode, signal);
       },
     });
 

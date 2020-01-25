@@ -18,7 +18,6 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const util = require('util');
-const {spawn, execSync} = require('child_process');
 
 const utils = require('./utils');
 const rmAsync = util.promisify(require('rimraf'));
@@ -66,32 +65,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         }
         expect(page.url()).toBe(server.EMPTY_PAGE);
         await browser.close();
-      });
-      it('should close the browser when the node process closes', async({ server }) => {
-        const options = Object.assign({}, defaultBrowserOptions, {
-          // Disable DUMPIO to cleanly read stdout.
-          dumpio: false,
-          webSocket: true,
-        });
-        const res = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), playwrightPath, product, JSON.stringify(options)]);
-        let wsEndPointCallback;
-        const wsEndPointPromise = new Promise(x => wsEndPointCallback = x);
-        let output = '';
-        res.stdout.on('data', data => {
-          output += data;
-          if (output.indexOf('\n'))
-            wsEndPointCallback(output.substring(0, output.indexOf('\n')));
-        });
-        const browser = await playwright.connect({ browserWSEndpoint: await wsEndPointPromise });
-        const promises = [
-          new Promise(resolve => browser.once('disconnected', resolve)),
-          new Promise(resolve => res.on('exit', resolve))
-        ];
-        if (process.platform === 'win32')
-          execSync(`taskkill /pid ${res.pid} /T /F`);
-        else
-          process.kill(res.pid);
-        await Promise.all(promises);
       });
       it('should return child_process instance', async () => {
         const browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
