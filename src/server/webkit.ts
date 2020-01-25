@@ -79,9 +79,9 @@ export class WebKit implements BrowserType {
 
     let userDataDir: string;
     let temporaryUserDataDir: string | null = null;
-    const userDataDirArg = webkitArguments.find(arg => arg.startsWith('--user-data-dir'));
+    const userDataDirArg = webkitArguments.find(arg => arg.startsWith('--user-data-dir='));
     if (userDataDirArg) {
-      userDataDir = userDataDirArg.substr('--user-data-dir'.length).trim();
+      userDataDir = userDataDirArg.substr('--user-data-dir='.length).trim();
     } else {
       userDataDir = await mkdtempAsync(WEBKIT_PROFILE_PATH);
       temporaryUserDataDir = userDataDir;

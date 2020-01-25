@@ -288,7 +288,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.skip(WEBKIT)('Playwright.launch({userDataDir})', function() {
+  describe('Playwright.launch({userDataDir})', function() {
     it('userDataDir option', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       const options = Object.assign({userDataDir}, defaultBrowserOptions);
