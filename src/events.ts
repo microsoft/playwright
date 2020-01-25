@@ -41,6 +41,7 @@ export const Events = {
     FrameDetached: 'framedetached',
     FrameNavigated: 'framenavigated',
     Load: 'load',
+    PageCreated: 'pagecreated',
     Popup: 'popup',
     WebSocket: 'websocket',
     WorkerCreated: 'workercreated',

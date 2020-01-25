@@ -139,6 +139,7 @@ export class Page extends platform.EventEmitter {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage();
+    this.emit(Events.Page.PageCreated);
   }
 
   _didClose() {
