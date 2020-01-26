@@ -11508,6 +11508,30 @@ index 935a7fd136754694c5301100ad4699ccb2210e67..2a04380900326ec5ef03ff5b78c67643
  
      # Experimental features
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_APPLICATION_MANIFEST PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
+diff --git a/Tools/MiniBrowser/gtk/BrowserTab.c b/Tools/MiniBrowser/gtk/BrowserTab.c
+index 9e9978efd3d821c7afcd7b65e14c64e36b355802..ab97c2301577989461aadc853055076d8dfab451 100644
+--- a/Tools/MiniBrowser/gtk/BrowserTab.c
++++ b/Tools/MiniBrowser/gtk/BrowserTab.c
+@@ -147,6 +147,11 @@ static void loadChanged(WebKitWebView *webView, WebKitLoadEvent loadEvent, Brows
+     gtk_container_foreach(GTK_CONTAINER(tab), (GtkCallback)removeChildIfInfoBar, tab);
+ }
+ 
++static void loadFailed()
++{
++    return TRUE;
++}
++
+ static GtkWidget *createInfoBarQuestionMessage(const char *title, const char *text)
+ {
+     GtkWidget *dialog = gtk_info_bar_new_with_buttons("No", GTK_RESPONSE_NO, "Yes", GTK_RESPONSE_YES, NULL);
+@@ -457,6 +462,7 @@ static void browserTabConstructed(GObject *gObject)
+     g_signal_connect(tab->webView, "notify::is-loading", G_CALLBACK(isLoadingChanged), tab);
+     g_signal_connect(tab->webView, "decide-policy", G_CALLBACK(decidePolicy), tab);
+     g_signal_connect(tab->webView, "load-changed", G_CALLBACK(loadChanged), tab);
++    g_signal_connect(tab->webView, "load-failed", G_CALLBACK(loadFailed), tab);
+     g_signal_connect(tab->webView, "load-failed-with-tls-errors", G_CALLBACK(loadFailedWithTLSerrors), tab);
+     g_signal_connect(tab->webView, "permission-request", G_CALLBACK(decidePermissionRequest), tab);
+     g_signal_connect(tab->webView, "run-color-chooser", G_CALLBACK(runColorChooserCallback), tab);
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.h b/Tools/MiniBrowser/gtk/BrowserWindow.h
 index 1570d65effb5d601ee3c44a2a7461436f4691c2c..456f96cf589320efa70a76f76e230b6795886b5a 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.h
@@ -12183,7 +12207,7 @@ index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed
      ${WPEBACKEND_FDO_INCLUDE_DIRS}
  )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e6396ce0a2fd 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..05df1b0713cd6c7cf22d8f3a298d86364fdbc5e6 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -12222,7 +12246,17 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e639
      return std::make_unique<WPEToolingBackends::WindowViewBackend>(width, height);
  }
  
-@@ -152,7 +156,23 @@ static void webViewClose(WebKitWebView* webView, gpointer)
+@@ -147,12 +151,33 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+     g_main_loop_quit(data->mainLoop);
+ }
+ 
++static gboolean webViewLoadFailed()
++{
++    return TRUE;
++}
++
+ static void webViewClose(WebKitWebView* webView, gpointer)
+ {
      g_object_unref(webView);
  }
  
@@ -12247,7 +12281,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e639
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -164,14 +184,54 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -164,14 +189,55 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
  
@@ -12272,6 +12306,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e639
  
      g_signal_connect(newWebView, "close", G_CALLBACK(webViewClose), nullptr);
 -
++    g_signal_connect(newWebView, "load-failed", G_CALLBACK(webViewLoadFailed), nullptr);
 +    g_signal_connect(newWebView, "script-dialog", G_CALLBACK(scriptDialog), nullptr);
 +    g_signal_connect(newWebView, "script-dialog-handled", G_CALLBACK(scriptDialogHandled), nullptr);
 +    g_signal_connect(newWebView, "create", G_CALLBACK(createWebView), nullptr);
@@ -12305,7 +12340,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e639
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -215,7 +275,18 @@ int main(int argc, char *argv[])
+@@ -215,7 +281,18 @@ int main(int argc, char *argv[])
          return 1;
      }
  
@@ -12325,7 +12360,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e639
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -280,6 +351,9 @@ int main(int argc, char *argv[])
+@@ -280,6 +357,9 @@ int main(int argc, char *argv[])
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
  
@@ -12335,7 +12370,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..249c35ffd8344212cb11aec4e2b7e639
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
-@@ -318,7 +392,7 @@ int main(int argc, char *argv[])
+@@ -318,7 +398,7 @@ int main(int argc, char *argv[])
          g_object_unref(file);
          webkit_web_view_load_uri(webView, url);
          g_free(url);
