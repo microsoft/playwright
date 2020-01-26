@@ -374,5 +374,35 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate('window.clicked')).toBe(true);
     });
+    it('should click on an animated button', async({page}) => {
+      const buttonSize = 50;
+      const containerWidth = 500;
+      const transition = 500;
+      await page.setContent(`
+      <html>
+      <body>
+      <div style="border: 1px solid black; height: 50px; overflow: auto; width: ${containerWidth}px;">
+      <button id="button" style="height: ${buttonSize}px; width: ${buttonSize}px; transition: left ${transition}ms linear 0s; left: 0; position: relative" onClick="window.clicked++">hi</button>
+      </div>
+      </body>
+      <script>
+      const animateLeft = () => {
+        const button = document.querySelector('#button');
+        document.querySelector('#button').style.left = button.style.left === '0px' ? '${containerWidth - buttonSize}px' : '0px';
+      };
+      window.clicked = 0;
+      window.setTimeout(animateLeft, 0);
+      window.setInterval(animateLeft, ${transition});
+      </script>
+      </html>
+      `);
+      await page.click('button');
+      expect(await page.evaluate('window.clicked')).toBe(1);
+      expect(await page.evaluate('document.querySelector("#button").style.left')).toBe(`${containerWidth - buttonSize}px`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await page.click('button');
+      expect(await page.evaluate('window.clicked')).toBe(2);
+      expect(await page.evaluate('document.querySelector("#button").style.left')).toBe('0px');
+    });
   });
 };
