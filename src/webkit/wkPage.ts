@@ -48,6 +48,7 @@ export class WKPage implements PageDelegate {
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
+  private _mainFrameContextId?: number;
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
@@ -287,6 +288,8 @@ export class WKPage implements PageDelegate {
       frame._contextCreated('main', context);
     else if (contextPayload.name === UTILITY_WORLD_NAME)
       frame._contextCreated('utility', context);
+    if (contextPayload.isPageContext && frame === this._page.mainFrame())
+      this._mainFrameContextId = contextPayload.id;
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -298,11 +301,9 @@ export class WKPage implements PageDelegate {
     return { newDocumentId: result.loaderId, isSameDocument: !result.loaderId };
   }
 
-  needsLifecycleResetOnSetContent(): boolean {
-    return true;
-  }
-
-  private async _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
+  private _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {
+    // Note: do no introduce await in this function, otherwise we lose the ordering.
+    // For example, frame.setContent relies on this.
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber, source } = event.message;
     if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
       const parsedObjectId = JSON.parse(parameters[1].objectId!);
@@ -323,14 +324,13 @@ export class WKPage implements PageDelegate {
     else if (type === 'timing')
       derivedType = 'timeEnd';
 
-    const mainFrameContext = await this._page.mainFrame()._mainContext();
     const handles = (parameters || []).map(p => {
       let context: dom.FrameExecutionContext | null = null;
       if (p.objectId) {
         const objectId = JSON.parse(p.objectId);
         context = this._contextIdToContext.get(objectId.injectedScriptId)!;
       } else {
-        context = mainFrameContext;
+        context = this._contextIdToContext.get(this._mainFrameContextId!)!;
       }
       return context._createHandle(p);
     });

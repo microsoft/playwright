@@ -260,10 +260,6 @@ export class FFPage implements PageDelegate {
     return { newDocumentId: response.navigationId || undefined, isSameDocument: !response.navigationId };
   }
 
-  needsLifecycleResetOnSetContent(): boolean {
-    return true;
-  }
-
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
     const array = [];
     for (const [name, value] of Object.entries(headers))

@@ -54,6 +54,7 @@ export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'net
 const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
 
 export type WaitForOptions = types.TimeoutOptions & { waitFor?: types.Visibility | 'nowait' };
+type ConsoleTagHandler = () => void;
 
 export class FrameManager {
   private _page: Page;
@@ -61,6 +62,7 @@ export class FrameManager {
   private _webSockets = new Map<string, network.WebSocket>();
   private _mainFrame: Frame;
   readonly _lifecycleWatchers = new Set<LifecycleWatcher>();
+  readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
 
   constructor(page: Page) {
     this._page = page;
@@ -116,8 +118,7 @@ export class FrameManager {
     frame._url = url;
     frame._name = name;
     frame._lastDocumentId = documentId;
-    this.frameLifecycleEvent(frameId, 'clear');
-    this.clearInflightRequests(frame);
+    this.clearFrameLifecycle(frame);
     this.clearWebSockets(frame);
     if (!initial) {
       for (const watcher of this._lifecycleWatchers)
@@ -158,24 +159,21 @@ export class FrameManager {
       this._page.emit(Events.Page.Load);
   }
 
-  frameLifecycleEvent(frameId: string, event: LifecycleEvent | 'clear') {
+  frameLifecycleEvent(frameId: string, event: LifecycleEvent) {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
-    if (event === 'clear') {
-      frame._firedLifecycleEvents.clear();
-    } else {
-      frame._firedLifecycleEvents.add(event);
-      for (const watcher of this._lifecycleWatchers)
-        watcher._onLifecycleEvent(frame);
-    }
+    frame._firedLifecycleEvents.add(event);
+    for (const watcher of this._lifecycleWatchers)
+      watcher._onLifecycleEvent(frame);
     if (frame === this._mainFrame && event === 'load')
       this._page.emit(Events.Page.Load);
     if (frame === this._mainFrame && event === 'domcontentloaded')
       this._page.emit(Events.Page.DOMContentLoaded);
   }
 
-  clearInflightRequests(frame: Frame) {
+  clearFrameLifecycle(frame: Frame) {
+    frame._firedLifecycleEvents.clear();
     // Keep the current navigation request if any.
     frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request._documentId === frame._lastDocumentId));
     this._stopNetworkIdleTimer(frame, 'networkidle0');
@@ -330,6 +328,18 @@ export class FrameManager {
       clearTimeout(timeoutId);
     frame._networkIdleTimers.delete(event);
   }
+
+  interceptConsoleMessage(message: ConsoleMessage): boolean {
+    if (message.type() !== 'debug')
+      return false;
+    const tag = message.text();
+    const handler = this._consoleMessageTags.get(tag);
+    if (!handler)
+      return false;
+    this._consoleMessageTags.delete(tag);
+    handler();
+    return true;
+  }
 }
 
 export class Frame {
@@ -345,6 +355,7 @@ export class Frame {
   _name = '';
   _inflightRequests = new Set<network.Request>();
   readonly _networkIdleTimers = new Map<LifecycleEvent, NodeJS.Timer>();
+  private _setContentCounter = 0;
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     this._id = id;
@@ -510,23 +521,27 @@ export class Frame {
   }
 
   async setContent(html: string, options?: NavigateOptions): Promise<void> {
+    const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
     const context = await this._utilityContext();
-    if (this._page._delegate.needsLifecycleResetOnSetContent()) {
-      this._page._frameManager.frameLifecycleEvent(this._id, 'clear');
-      this._page._frameManager.clearInflightRequests(this);
-    }
-    await context.evaluate(html => {
+    let watcher: LifecycleWatcher;
+    this._page._frameManager._consoleMessageTags.set(tag, () => {
+      // Clear lifecycle right after document.open() - see 'tag' below.
+      this._page._frameManager.clearFrameLifecycle(this);
+      watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
+    });
+    await context.evaluate((html, tag) => {
       window.stop();
       document.open();
+      console.debug(tag);  // eslint-disable-line no-console
       document.write(html);
       document.close();
-    }, html);
-    const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
+    }, html, tag);
+    assert(watcher!, 'Was not able to clear lifecycle in setContent');
     const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.lifecyclePromise,
+      watcher!.timeoutOrTerminationPromise,
+      watcher!.lifecyclePromise,
     ]);
-    watcher.dispose();
+    watcher!.dispose();
     if (error)
       throw error;
   }
