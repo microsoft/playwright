@@ -99,6 +99,10 @@ export class WKPageProxy {
     return this._pagePromise;
   }
 
+  existingPage(): Page | undefined {
+    return this._wkPage ? this._wkPage._page : undefined;
+  }
+
   onPopupCreated(popupPageProxy: WKPageProxy) {
     const wkPage = this._wkPage;
     if (!wkPage || !wkPage._page.listenerCount(Events.Page.Popup))

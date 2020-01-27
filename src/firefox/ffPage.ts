@@ -373,14 +373,12 @@ export class FFPage implements PageDelegate {
     return this._page._frameManager.frame(contentFrameId);
   }
 
-  async getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+  async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     const { ownerFrameId } = await this._session.send('Page.describeNode', {
       frameId: handle._context.frame._id,
       objectId: toRemoteObject(handle).objectId!,
     });
-    if (!ownerFrameId)
-      return null;
-    return this._page._frameManager.frame(ownerFrameId);
+    return ownerFrameId || null;
   }
 
   isElementHandle(remoteObject: any): boolean {

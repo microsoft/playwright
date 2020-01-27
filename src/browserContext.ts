@@ -22,6 +22,7 @@ import { helper } from './helper';
 
 export interface BrowserContextDelegate {
   pages(): Promise<Page[]>;
+  existingPages(): Page[];
   newPage(): Promise<Page>;
   close(): Promise<void>;
 
@@ -67,6 +68,10 @@ export class BrowserContext {
     await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
     if (this._options.geolocation)
       await this.setGeolocation(this._options.geolocation);
+  }
+
+  _existingPages(): Page[] {
+    return this._delegate.existingPages();
   }
 
   async pages(): Promise<Page[]> {

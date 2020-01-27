@@ -164,6 +164,15 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
         return pages.filter(page => !!page);
       },
 
+      existingPages: (): Page[] => {
+        const pages: Page[] = [];
+        for (const target of this._allTargets()) {
+          if (target.browserContext() === context && target._ffPage)
+            pages.push(target._ffPage._page);
+        }
+        return pages;
+      },
+
       newPage: async (): Promise<Page> => {
         const {targetId} = await this._connection.send('Target.newPage', {
           browserContextId: browserContextId || undefined
