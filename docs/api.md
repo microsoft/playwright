@@ -374,11 +374,17 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 ### class: BrowserApp
 
 <!-- GEN:toc -->
+- [event: 'close'](#event-close)
 - [browserApp.close()](#browserappclose)
 - [browserApp.connectOptions()](#browserappconnectoptions)
+- [browserApp.kill()](#browserappkill)
 - [browserApp.process()](#browserappprocess)
 - [browserApp.wsEndpoint()](#browserappwsendpoint)
 <!-- GEN:stop -->
+
+#### event: 'close'
+
+Emitted when the browser app closes.
 
 #### browserApp.close()
 - returns: <[Promise]>
@@ -392,6 +398,10 @@ Closes the browser gracefully and makes sure the process is terminated.
   - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
 
 This options object can be passed to [browserType.connect(options)](#browsertypeconnectoptions) to establish connection to the browser.
+
+#### browserApp.kill()
+
+Kills the browser process.
 
 #### browserApp.process()
 - returns: <?[ChildProcess]> Spawned browser application process.
@@ -1785,7 +1795,7 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close)
+- [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
 - [event: 'dialog'](#event-dialog)
 - [event: 'domcontentloaded'](#event-domcontentloaded)
@@ -3183,7 +3193,7 @@ Contains the URL of the response.
 The [WebSocket] class represents websocket connections in the page.
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-1)
+- [event: 'close'](#event-close-2)
 - [event: 'error'](#event-error)
 - [event: 'messageReceived'](#event-messagereceived)
 - [event: 'messageSent'](#event-messagesent)
