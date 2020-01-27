@@ -1751,7 +1751,7 @@ Dispatches a `mouseup` event.
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
-Page provides methods to interact with a single tab or [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One [Browser] instance might have multiple [Page] instances.
+Page provides methods to interact with a single tab in a [Browser], or an [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One [Browser] instance might have multiple [Page] instances.
 
 This example creates a page, navigates it to a URL, and then saves a screenshot:
 ```js
