@@ -32,7 +32,6 @@
 - [class: WebKitBrowser](#class-webkitbrowser)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
-- [Downloaded browsers](#downloaded-browsers)
 <!-- GEN:stop -->
 
 ### Playwright module
@@ -3699,16 +3698,6 @@ const { chromium } = require('playwright');
 
 > **NOTE** It is not yet possible to test extension popups or content scripts.
 
-### Downloaded browsers
-
-During installation Playwright downloads browser executables, according to revisions in the [package.json](https://github.com/microsoft/playwright/blob/master/package.json) file. Below `<playwright>` refers to playwright's package root.
-
-| | Chromium | Firefox | WebKit |
-| --- | --- | --- | --- |
-| Download host | `https://storage.googleapis.com` | `https://playwrightaccount.blob.core.windows.net` | `https://playwrightaccount.blob.core.windows.net` |
-| Local path  | `<playwright>/.local-chromium` | `<playwright>/.local-firefox` | `<playwright>/.local-webkit` |
-| Supported platforms | `mac`, `win32`, `win64`, `linux` | `mac`, `win32`, `win64`, `linux` | `mac`, `linux`; linux binaries are run with WSL on Windows |
-| Approximate download size | 120mb | 70mb | 50mb |
 
 [AXNode]: #accessibilitysnapshotoptions "AXNode"
 [Accessibility]: #class-accessibility "Accessibility"
