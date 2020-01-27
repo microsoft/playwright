@@ -424,7 +424,7 @@ export class CRPage implements PageDelegate {
     return this._page._frameManager.frame(nodeInfo.node.frameId);
   }
 
-  async getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+  async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     // document.documentElement has frameId of the owner frame.
     const documentElement = await handle.evaluateHandle(node => {
       const doc = node as Document;
@@ -440,10 +440,10 @@ export class CRPage implements PageDelegate {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: remoteObject.objectId
     });
-    const frame = nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
-      this._page._frameManager.frame(nodeInfo.node.frameId) : null;
+    const frameId = nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
+      nodeInfo.node.frameId : null;
     await documentElement.dispose();
-    return frame;
+    return frameId;
   }
 
   isElementHandle(remoteObject: any): boolean {

@@ -484,16 +484,14 @@ export class WKPage implements PageDelegate {
     return this._page._frameManager.frame(nodeInfo.contentFrameId);
   }
 
-  async getOwnerFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
+  async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     const remoteObject = toRemoteObject(handle);
     if (!remoteObject.objectId)
       return null;
     const nodeInfo = await this._session.send('DOM.describeNode', {
       objectId: remoteObject.objectId
     });
-    if (!nodeInfo.ownerFrameId)
-      return null;
-    return this._page._frameManager.frame(nodeInfo.ownerFrameId);
+    return nodeInfo.ownerFrameId || null;
   }
 
   isElementHandle(remoteObject: any): boolean {

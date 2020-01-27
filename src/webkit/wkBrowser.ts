@@ -168,6 +168,18 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
         return await Promise.all(pageProxies.map(proxy => proxy.page()));
       },
 
+      existingPages: (): Page[] => {
+        const pages: Page[] = [];
+        for (const pageProxy of this._pageProxies.values()) {
+          if (pageProxy._browserContext !== context)
+            continue;
+          const page = pageProxy.existingPage();
+          if (page)
+            pages.push(page);
+        }
+        return pages;
+      },
+
       newPage: async (): Promise<Page> => {
         const { pageProxyId } = await this._browserSession.send('Browser.createPage', { browserContextId });
         const pageProxy = this._pageProxies.get(pageProxyId)!;

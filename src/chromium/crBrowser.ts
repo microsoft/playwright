@@ -74,6 +74,15 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
         return pages.filter(page => !!page) as Page[];
       },
 
+      existingPages: (): Page[] => {
+        const pages: Page[] = [];
+        for (const target of this._allTargets()) {
+          if (target.browserContext() === context && target._crPage)
+            pages.push(target._crPage.page());
+        }
+        return pages;
+      },
+
       newPage: async (): Promise<Page> => {
         const { targetId } = await this._client.send('Target.createTarget', { url: 'about:blank', browserContextId: contextId || undefined });
         const target = this._targets.get(targetId)!;

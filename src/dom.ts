@@ -135,7 +135,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
-    return this._page._delegate.getOwnerFrame(this);
+    const frameId = await this._page._delegate.getOwnerFrame(this);
+    if (!frameId)
+      return null;
+    const pages = this._page.browserContext()._existingPages();
+    for (const page of pages) {
+      const frame = page._frameManager.frame(frameId);
+      if (frame)
+        return frame;
+    }
+    return null;
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
