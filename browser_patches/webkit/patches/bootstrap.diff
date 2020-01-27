@@ -228,21 +228,18 @@ index d408d364f1986983161f9d44efbc8bc6f6898676..1375ce9990f0c63d7e6f33ee62930051
      }
  
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
-index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..78455c32fc5ddb0f1b9a828233a652d4f86b4d90 100644
+index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..db2fde501b30c8e4fafcac3b2b403713c768c34f 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
 +++ b/Source/JavaScriptCore/inspector/InspectorTarget.h
-@@ -45,8 +45,10 @@ public:
-     // State.
-     virtual String identifier() const = 0;
+@@ -47,6 +47,7 @@ public:
      virtual InspectorTargetType type() const = 0;
-+    virtual String url() const = 0;
  
      virtual bool isProvisional() const { return false; }
 +    virtual String oldTargetID() const { return String(); }
      bool isPaused() const { return m_isPaused; }
      void pause();
      void resume();
-@@ -56,6 +58,8 @@ public:
+@@ -56,6 +57,8 @@ public:
      virtual void connect(FrontendChannel::ConnectionType) = 0;
      virtual void disconnect() = 0;
      virtual void sendMessageToTargetBackend(const String&) = 0;
@@ -252,7 +249,7 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..78455c32fc5ddb0f1b9a828233a652d4
  private:
      WTF::Function<void()> m_resumeCallback;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..e3006f981fad81d98e09d2118443962cc925f66f 100644
+index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..b56ffaa68a34aa3e7119962cd8404cafb9b420ec 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 @@ -87,6 +87,28 @@ void InspectorTargetAgent::sendMessageToTarget(ErrorString& errorString, const S
@@ -284,11 +281,9 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..e3006f981fad81d98e09d2118443962c
  void InspectorTargetAgent::sendMessageFromTargetToFrontend(const String& targetId, const String& message)
  {
      ASSERT_WITH_MESSAGE(m_targets.get(targetId), "Sending a message from an untracked target to the frontend.");
-@@ -114,9 +136,12 @@ static Ref<Protocol::Target::TargetInfo> buildTargetInfoObject(const InspectorTa
-     auto result = Protocol::Target::TargetInfo::create()
+@@ -115,8 +137,10 @@ static Ref<Protocol::Target::TargetInfo> buildTargetInfoObject(const InspectorTa
          .setTargetId(target.identifier())
          .setType(targetTypeToProtocolType(target.type()))
-+        .setUrl(target.url())
          .release();
 -    if (target.isProvisional())
 +    if (target.isProvisional()) {
@@ -298,7 +293,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..e3006f981fad81d98e09d2118443962c
      if (target.isPaused())
          result->setIsPaused(true);
      return result;
-@@ -144,7 +169,17 @@ void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
+@@ -144,7 +168,17 @@ void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
      if (!m_isConnected)
          return;
  
@@ -317,7 +312,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..e3006f981fad81d98e09d2118443962c
  }
  
  void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID, const String& committedTargetID)
-@@ -159,6 +194,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
+@@ -159,6 +193,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
      m_frontendDispatcher->didCommitProvisionalTarget(oldTargetID, committedTargetID);
  }
  
@@ -1171,23 +1166,20 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..6dc8ac8e247631d2af6418155f088ea3
      ]
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
-index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..55b783d9c429117f1e3d8a3234696f99e37c78d7 100644
+index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..11d40820629d3104408e14a3f92d9f0265b78ce1 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Target.json
-@@ -10,8 +10,10 @@
+@@ -10,7 +10,8 @@
              "properties": [
                  { "name": "targetId", "type": "string", "description": "Unique identifier for the target." },
                  { "name": "type", "type": "string", "enum": ["page", "service-worker", "worker"] },
 -                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "Whether this is a provisional page target." },
--                { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." }
 +                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "True value indicates that this is a provisional page target i.e. Such target may be created when current page starts cross-origin navigation. Eventually each provisional target is either committed and swaps with the current target or gets destroyed, e.g. in case of load request failure." },
 +                { "name": "oldTargetId", "type": "string", "optional": true, "description": "Unique identifier of the target which is going to be replaced if this target is committed. Only set for provisional targets." },
-+                { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." },
-+                { "name": "url", "type": "string" }
+                 { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." }
              ]
          }
-     ],
-@@ -37,6 +39,21 @@
+@@ -37,6 +38,21 @@
                  { "name": "targetId", "type": "string" },
                  { "name": "message", "type": "string", "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
              ]
@@ -1209,7 +1201,7 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..55b783d9c429117f1e3d8a3234696f99
          }
      ],
      "events": [
-@@ -49,7 +66,8 @@
+@@ -49,7 +65,8 @@
          {
              "name": "targetDestroyed",
              "parameters": [
@@ -7717,24 +7709,23 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
-index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a54a1c99c1e255fd34a0c2fad13be32e7889cc8f 100644
+index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..8259a01bb98789c07f88cafd4f3af553e65d0cf9 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.cpp
-@@ -28,10 +28,13 @@
+@@ -27,11 +27,10 @@
+ #include "InspectorTargetProxy.h"
  
  #include "ProvisionalPageProxy.h"
- #include "WebFrameProxy.h"
+-#include "WebFrameProxy.h"
 +#include "WebPageInspectorController.h"
  #include "WebPageInspectorTarget.h"
  #include "WebPageMessages.h"
  #include "WebPageProxy.h"
- #include "WebProcessProxy.h"
-+#include "ProvisionalPageProxy.h"
-+
+-#include "WebProcessProxy.h"
  
  namespace WebKit {
  
-@@ -39,23 +42,29 @@ using namespace Inspector;
+@@ -39,18 +38,17 @@ using namespace Inspector;
  
  std::unique_ptr<InspectorTargetProxy> InspectorTargetProxy::create(WebPageProxy& page, const String& targetId, Inspector::InspectorTargetType type)
  {
@@ -7758,19 +7749,7 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a54a1c99c1e255fd34a0c2fad13be32e
      , m_identifier(targetId)
      , m_type(type)
  {
- }
- 
-+String InspectorTargetProxy::url() const
-+{
-+    if (m_page.provisionalPageProxy())
-+        return m_page.provisionalPageProxy()->provisionalURL().string();
-+    return m_page.pageLoadState().activeURL();
-+}
-+
- void InspectorTargetProxy::connect(Inspector::FrontendChannel::ConnectionType connectionType)
- {
-     if (m_provisionalPage) {
-@@ -83,6 +92,9 @@ void InspectorTargetProxy::disconnect()
+@@ -83,6 +81,9 @@ void InspectorTargetProxy::disconnect()
  
  void InspectorTargetProxy::sendMessageToTargetBackend(const String& message)
  {
@@ -7780,7 +7759,7 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a54a1c99c1e255fd34a0c2fad13be32e
      if (m_provisionalPage) {
          m_provisionalPage->send(Messages::WebPage::SendMessageToTargetBackend(identifier(), message));
          return;
-@@ -97,9 +109,35 @@ void InspectorTargetProxy::didCommitProvisionalTarget()
+@@ -97,9 +98,35 @@ void InspectorTargetProxy::didCommitProvisionalTarget()
      m_provisionalPage = nullptr;
  }
  
@@ -7817,10 +7796,10 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..a54a1c99c1e255fd34a0c2fad13be32e
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorTargetProxy.h b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..8c9960d59c7712b4f56d2c2f9bd862f0af7cf982 100644
+index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..f53bd7717be546157dfeb92b835a1df5513a716a 100644
 --- a/Source/WebKit/UIProcess/InspectorTargetProxy.h
 +++ b/Source/WebKit/UIProcess/InspectorTargetProxy.h
-@@ -37,30 +37,36 @@ class WebPageProxy;
+@@ -37,13 +37,13 @@ class WebPageProxy;
  // NOTE: This UIProcess side InspectorTarget doesn't care about the frontend channel, since
  // any target -> frontend messages will be routed to the WebPageProxy with a targetId.
  
@@ -7837,8 +7816,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..8c9960d59c7712b4f56d2c2f9bd862f0
      ~InspectorTargetProxy() = default;
  
      Inspector::InspectorTargetType type() const final { return m_type; }
-     String identifier() const final { return m_identifier; }
-+    String url() const final;
+@@ -51,16 +51,21 @@ public:
  
      void didCommitProvisionalTarget();
      bool isProvisional() const override;
@@ -11359,43 +11337,6 @@ index d6dd3705763d94e2896c54eb8efd17d731b299dc..45546585228f047bb809bf3137b278b4
      LoadRequestWaitingForProcessLaunch(struct WebKit::LoadParameters loadParameters, URL resourceDirectoryURL, WebKit::WebPageProxyIdentifier pageID, bool checkAssumedReadAccessToResourceURL)
      LoadData(struct WebKit::LoadParameters loadParameters)
      LoadAlternateHTML(struct WebKit::LoadParameters loadParameters)
-diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
-index a70f6fd52096a5dca901ea70a3755f14d6b4a0fd..f02e5c774a49d3e67860adb3b011531313eaf8d1 100644
---- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
-+++ b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.cpp
-@@ -26,6 +26,8 @@
- #include "config.h"
- #include "WebPageInspectorTarget.h"
- 
-+#include "FrameInfoData.h"
-+#include "WebFrame.h"
- #include "WebPage.h"
- #include "WebPageInspectorTargetFrontendChannel.h"
- #include <WebCore/InspectorController.h>
-@@ -45,6 +47,11 @@ String WebPageInspectorTarget::identifier() const
-     return toTargetID(m_page.identifier());
- }
- 
-+String WebPageInspectorTarget::url() const
-+{
-+    return m_page.mainWebFrame()->info().request.url().string();
-+}
-+
- void WebPageInspectorTarget::connect(Inspector::FrontendChannel::ConnectionType connectionType)
- {
-     if (m_channel)
-diff --git a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.h b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.h
-index 6cbd7fad5ff91afd858da346adbfeed6424b0b2b..176c46f186bc925fd28492d14d8d9e11bd8def26 100644
---- a/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.h
-+++ b/Source/WebKit/WebProcess/WebPage/WebPageInspectorTarget.h
-@@ -44,6 +44,7 @@ public:
-     Inspector::InspectorTargetType type() const final { return Inspector::InspectorTargetType::Page; }
- 
-     String identifier() const final;
-+    String url() const final;
- 
-     void connect(Inspector::FrontendChannel::ConnectionType) override;
-     void disconnect() override;
 diff --git a/Source/WebKit/WebProcess/WebProcess.cpp b/Source/WebKit/WebProcess/WebProcess.cpp
 index 65c9bc4ca76ac950dd9682e1224dcb8f6e0e48fe..1c0061063af2df56ad154206372a92a2333c3646 100644
 --- a/Source/WebKit/WebProcess/WebProcess.cpp
