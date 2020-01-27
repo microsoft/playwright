@@ -374,7 +374,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate('window.clicked')).toBe(true);
     });
-    it('should click on an animated button', async({page}) => {
+    it.skip(true)('should click on an animated button', async({page}) => {
       const buttonSize = 50;
       const containerWidth = 500;
       const transition = 500;
