@@ -11509,14 +11509,14 @@ index 935a7fd136754694c5301100ad4699ccb2210e67..2a04380900326ec5ef03ff5b78c67643
      # Experimental features
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_APPLICATION_MANIFEST PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
 diff --git a/Tools/MiniBrowser/gtk/BrowserTab.c b/Tools/MiniBrowser/gtk/BrowserTab.c
-index 9e9978efd3d821c7afcd7b65e14c64e36b355802..ab97c2301577989461aadc853055076d8dfab451 100644
+index 9e9978efd3d821c7afcd7b65e14c64e36b355802..a5eef119bddd011470319ac80a0ac443ff0e5441 100644
 --- a/Tools/MiniBrowser/gtk/BrowserTab.c
 +++ b/Tools/MiniBrowser/gtk/BrowserTab.c
 @@ -147,6 +147,11 @@ static void loadChanged(WebKitWebView *webView, WebKitLoadEvent loadEvent, Brows
      gtk_container_foreach(GTK_CONTAINER(tab), (GtkCallback)removeChildIfInfoBar, tab);
  }
  
-+static void loadFailed()
++static gboolean loadFailed()
 +{
 +    return TRUE;
 +}
