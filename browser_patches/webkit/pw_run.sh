@@ -13,7 +13,7 @@ function runOSX() {
     exit 1
   fi
   PLAYWRIGHT="$DYLIB_PATH/Playwright.app/Contents/MacOS/Playwright"
-  DYLD_FRAMEWORK_PATH=$DYLIB_PATH DYLD_LIBRARY_PATH=$DYLIB_PATH $PLAYWRIGHT "$@"
+  DYLD_FRAMEWORK_PATH="$DYLIB_PATH" DYLD_LIBRARY_PATH="$DYLIB_PATH" "$PLAYWRIGHT" "$@"
 }
 
 function runLinux() {
@@ -47,7 +47,7 @@ function runLinux() {
     echo "Cannot find a MiniBrowser.app in neither location" 1>&2
     exit 1
   fi
-  GIO_MODULE_DIR=$GIO_DIR LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LD_PATH $MINIBROWSER "$@"
+  GIO_MODULE_DIR="$GIO_DIR" LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LD_PATH" "$MINIBROWSER" "$@"
 }
 
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
