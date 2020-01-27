@@ -11546,7 +11546,7 @@ index 1570d65effb5d601ee3c44a2a7461436f4691c2c..456f96cf589320efa70a76f76e230b67
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..19a6d2cd9605a83b5233604be9d371f61c8529dd 100644
+index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..4b1cab0c187352688740c7cca79483fa256aa7fe 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -53,6 +53,9 @@ static const char *cookiesFile;
@@ -11630,6 +11630,16 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..19a6d2cd9605a83b5233604be9d371f6
      if (cookiesPolicy) {
          WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(webContext);
          GEnumClass *enumClass = g_type_class_ref(WEBKIT_TYPE_COOKIE_ACCEPT_POLICY);
+@@ -648,8 +696,7 @@ int main(int argc, char *argv[])
+ 
+     gtk_main();
+ 
+-    if (privateMode)
+-        g_object_unref(webContext);
++    g_object_unref(webContext);
+ 
+     return 0;
+ }
 diff --git a/Tools/MiniBrowser/win/BrowserWindow.h b/Tools/MiniBrowser/win/BrowserWindow.h
 index 564dd6c29b950a213d83a397cf5edc18af170f29..9d772f310fb5fc13b360b45790ae5c01fa17935b 100644
 --- a/Tools/MiniBrowser/win/BrowserWindow.h
@@ -12207,7 +12217,7 @@ index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed
      ${WPEBACKEND_FDO_INCLUDE_DIRS}
  )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..05df1b0713cd6c7cf22d8f3a298d86364fdbc5e6 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df3ab700cc 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -12379,6 +12389,16 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..05df1b0713cd6c7cf22d8f3a298d8636
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
+@@ -326,8 +406,7 @@ int main(int argc, char *argv[])
+     g_main_loop_run(loop);
+ 
+     g_object_unref(webView);
+-    if (privateMode || automationMode)
+-        g_object_unref(webContext);
++    g_object_unref(webContext);
+     g_main_loop_unref(loop);
+ 
+     return 0;
 diff --git a/Tools/Playwright/Configurations/Base.xcconfig b/Tools/Playwright/Configurations/Base.xcconfig
 new file mode 100644
 index 0000000000000000000000000000000000000000..fc61d5227c8608488514cbd92a28dc7c1c2efaf4
