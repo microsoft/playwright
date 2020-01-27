@@ -224,9 +224,11 @@ const mkdtempAsync = platform.promisify(fs.mkdtemp);
 const WEBKIT_PROFILE_PATH = path.join(os.tmpdir(), 'playwright_dev_profile-');
 
 let cachedMacVersion: string | undefined = undefined;
-function getMacVersion() {
+
+function getMacVersion(): string {
   if (!cachedMacVersion) {
     const [major, minor] = execSync('sw_vers -productVersion').toString('utf8').trim().split('.');
+    assert(+major === 10 && +minor >= 14, 'Error: unsupported macOS version, macOS 10.14 and newer are supported');
     cachedMacVersion = major + '.' + minor;
   }
   return cachedMacVersion;
