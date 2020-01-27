@@ -322,20 +322,30 @@ class TestRunner extends EventEmitter {
       }
     }
 
-    // bind methods so that they can be used as a DSL.
-    this.describe = this._addSuite.bind(this, TestMode.Run);
-    this.describe.skip = condition => condition ? this.xdescribe : this.describe;
-    this.fdescribe = this._addSuite.bind(this, TestMode.Focus);
-    this.fdescribe.skip = () => this.fdescribe; // no-op
-    this.xdescribe = this._addSuite.bind(this, TestMode.Skip);
-    this.xdescribe.skip = () => this.xdescribe; // no-op
-
     const duplicateTest = (amount, mode, timeout) => {
       return (name, callback) => {
         for (let i = 0; i < amount; ++i)
           this._addTest(name, callback, mode, timeout);
       }
     }
+
+    const duplicateSuite = (amount, mode) => {
+      return (name, callback, ...args) => {
+        for (let i = 0; i < amount; ++i)
+          this._addSuite(mode, name, callback, ...args);
+      }
+    }
+
+    // bind methods so that they can be used as a DSL.
+    this.describe = this._addSuite.bind(this, TestMode.Run);
+    this.describe.skip = condition => condition ? this.xdescribe : this.describe;
+    this.describe.repeat = number => duplicateSuite(number, TestMode.Run);
+    this.fdescribe = this._addSuite.bind(this, TestMode.Focus);
+    this.fdescribe.skip = () => this.fdescribe; // no-op
+    this.fdescribe.repeat = number => duplicateSuite(number, TestMode.Focus);
+    this.xdescribe = this._addSuite.bind(this, TestMode.Skip);
+    this.xdescribe.skip = () => this.xdescribe; // no-op
+    this.xdescribe.repeat = number => duplicateSuite(number, TestMode.Skip);
 
     this.it = (name, callback) => void this._addTest(name, callback, TestMode.Run, this._timeout);
     this.it.skip = condition => condition ? this.xit : this.it;
