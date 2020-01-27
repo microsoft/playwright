@@ -72,6 +72,8 @@ module.exports.runCommands = function(sources, version) {
       newText = generateTableOfContents(command.source.text(), command.to, false /* topLevelOnly */);
     else if (command.name === 'toc-top-level')
       newText = generateTableOfContents(command.source.text(), command.to, true /* topLevelOnly */);
+    else if (command.name.startsWith('toc-extends-'))
+      newText = generateTableOfContentsForSuperclass(command.source.text(), 'class: ' + command.name.substring('toc-extends-'.length));
     if (newText === null)
       messages.push(Message.error(`Unknown command 'gen:${command.name}'`));
     else if (applyCommand(command, newText))
@@ -151,4 +153,16 @@ function generateTableOfContents(text, offset, topLevelOnly) {
     const padding = '  '.repeat(entry.level);
     return `${padding}${prefix} [${entry.name}](#${entry.id})`;
   }).join('\n') + '\n';
+}
+
+function generateTableOfContentsForSuperclass(text, name) {
+  const allTocEntries = getTOCEntriesForText(text);
+
+  for (const tocEntry of allTocEntries) {
+    if (tocEntry.name !== name)
+      continue;
+    const offset = text.indexOf('<!-- GEN:stop -->', tocEntry.offset);
+    return generateTableOfContents(text, offset, false);
+  }
+  return text;
 }

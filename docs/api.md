@@ -675,6 +675,15 @@ ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalse
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.visibleRatio()](#elementhandlevisibleratio)
 <!-- GEN:stop -->
+<!-- GEN:toc-extends-JSHandle -->
+- [jsHandle.asElement()](#jshandleaselement)
+- [jsHandle.dispose()](#jshandledispose)
+- [jsHandle.evaluate(pageFunction[, ...args])](#jshandleevaluatepagefunction-args)
+- [jsHandle.evaluateHandle(pageFunction[, ...args])](#jshandleevaluatehandlepagefunction-args)
+- [jsHandle.getProperties()](#jshandlegetproperties)
+- [jsHandle.getProperty(propertyName)](#jshandlegetpropertypropertyname)
+- [jsHandle.jsonValue()](#jshandlejsonvalue)
+<!-- GEN:stop -->
 
 #### elementHandle.$(selector)
 - `selector` <[string]> A selector to query element for
@@ -3468,6 +3477,15 @@ await browser.stopTracing();
 - [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
 - [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
 <!-- GEN:stop -->
+<!-- GEN:toc-extends-Browser -->
+- [event: 'disconnected'](#event-disconnected)
+- [browser.browserContexts()](#browserbrowsercontexts)
+- [browser.close()](#browserclose)
+- [browser.defaultContext()](#browserdefaultcontext)
+- [browser.disconnect()](#browserdisconnect)
+- [browser.isConnected()](#browserisconnected)
+- [browser.newContext(options)](#browsernewcontextoptions)
+<!-- GEN:stop -->
 
 #### event: 'targetchanged'
 - <[Target]>
@@ -3626,11 +3644,31 @@ Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](h
 
 Firefox browser instance does not expose Firefox-specific features.
 
+<!-- GEN:toc-extends-Browser -->
+- [event: 'disconnected'](#event-disconnected)
+- [browser.browserContexts()](#browserbrowsercontexts)
+- [browser.close()](#browserclose)
+- [browser.defaultContext()](#browserdefaultcontext)
+- [browser.disconnect()](#browserdisconnect)
+- [browser.isConnected()](#browserisconnected)
+- [browser.newContext(options)](#browsernewcontextoptions)
+<!-- GEN:stop -->
+
 ### class: WebKitBrowser
 
 * extends: [Browser]
 
 WebKit browser instance does not expose WebKit-specific features.
+
+<!-- GEN:toc-extends-Browser -->
+- [event: 'disconnected'](#event-disconnected)
+- [browser.browserContexts()](#browserbrowsercontexts)
+- [browser.close()](#browserclose)
+- [browser.defaultContext()](#browserdefaultcontext)
+- [browser.disconnect()](#browserdisconnect)
+- [browser.isConnected()](#browserisconnected)
+- [browser.newContext(options)](#browsernewcontextoptions)
+<!-- GEN:stop -->
 
 ### Working with selectors
 
