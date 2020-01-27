@@ -1401,7 +1401,7 @@ await page.waitForFunction(selector => !!document.querySelector(selector), {}, s
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]> Promise which resolves when the load state has been achieved.
 
-This resolves when the page reaches a required load state, `load` by dedault. The navigation can be in progress when it is called.
+This resolves when the page reaches a required load state, `load` by default. The navigation can be in progress when it is called.
 If navigation is already at a required state, resolves immediately.
 
 ```js
@@ -2850,7 +2850,7 @@ Shortcut for [page.mainFrame().waitForFunction(pageFunction[, options[, ...args]
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]> Promise which resolves when the load state has been achieved.
 
-This resolves when the page reaches a required load state, `load` by dedault. The navigation can be in progress when it is called.
+This resolves when the page reaches a required load state, `load` by default. The navigation can be in progress when it is called.
 If navigation is already at a required state, resolves immediately.
 
 ```js
