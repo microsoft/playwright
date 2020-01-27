@@ -13089,10 +13089,10 @@ index 0000000000000000000000000000000000000000..41b5751cab626971cd12c5066218c6d1
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..84e0cd9c2d20111e936e4b16519d20bcd5aa37db
+index 0000000000000000000000000000000000000000..828d172381e12ea0455045fdc098dfa7726ae040
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,486 @@
+@@ -0,0 +1,488 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -13453,7 +13453,7 @@ index 0000000000000000000000000000000000000000..84e0cd9c2d20111e936e4b16519d20bc
 +    return [controller webView];
 +}
 +
-+- (WKWebView *)createHeadlessWebView:(WKWebViewConfiguration *)configuration
++- (WKWebView *)createHeadlessWebView:(WKWebViewConfiguration *)configuration forPopup:(BOOL)popup
 +{
 +    NSRect rect = NSMakeRect(0, 0, 1024, 768);
 +    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
@@ -13467,9 +13467,11 @@ index 0000000000000000000000000000000000000000..84e0cd9c2d20111e936e4b16519d20bc
 +
 +    webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 +    [window.contentView addSubview:webView];
-+    NSURL *url = [NSURL _webkit_URLWithUserTypedString:_initialURL ? _initialURL : @"about:blank"];
-+    _initialURL = nil;
-+    [webView loadRequest:[NSURLRequest requestWithURL:url]];
++    if (!popup) {
++      NSURL *url = [NSURL _webkit_URLWithUserTypedString:_initialURL ? _initialURL : @"about:blank"];
++      _initialURL = nil;
++      [webView loadRequest:[NSURLRequest requestWithURL:url]];
++    }
 +    [_headlessWindows addObject:window];
 +    webView.UIDelegate = self;
 +    return [webView autorelease];
@@ -13478,7 +13480,7 @@ index 0000000000000000000000000000000000000000..84e0cd9c2d20111e936e4b16519d20bc
 +- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
 +{
 +    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
-+    return [self createHeadlessWebView:configuration];
++    return [self createHeadlessWebView:configuration forPopup:NO];
 +}
 +
 +- (_WKBrowserContext *)createBrowserContext
@@ -13575,7 +13577,7 @@ index 0000000000000000000000000000000000000000..84e0cd9c2d20111e936e4b16519d20bc
 +
 +- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 +{
-+    return [self createHeadlessWebView:configuration];
++    return [self createHeadlessWebView:configuration forPopup:YES];
 +}
 +
 +@end
@@ -13792,10 +13794,10 @@ index 0000000000000000000000000000000000000000..4dbf13c8fb31a745ae8e1965a457d4fb
 +@end
 diff --git a/Tools/Playwright/mac/BrowserWindowController.m b/Tools/Playwright/mac/BrowserWindowController.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881ddbc19bb45
+index 0000000000000000000000000000000000000000..033c4fcda83002cda5d069205d4f605d02f1e1f5
 --- /dev/null
 +++ b/Tools/Playwright/mac/BrowserWindowController.m
-@@ -0,0 +1,834 @@
+@@ -0,0 +1,826 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -13946,8 +13948,6 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +
 +- (void)awakeFromNib
 +{
-+    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
-+
 +    _webView = [[WKWebView alloc] initWithFrame:[containerView bounds] configuration:_configuration];
 +    _webView._windowOcclusionDetectionEnabled = NO;
 +
@@ -13994,13 +13994,14 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +        return nil;
 +    _configuration = [configuration copy];
 +    _isPrivateBrowsingWindow = !_configuration.websiteDataStore.isPersistent;
++    self.window.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
 +    return self;
 +}
 +
 +- (void)dealloc
 +{
 +    [[NSNotificationCenter defaultCenter] removeObserver:self];
-+    
++
 +    [progressIndicator unbind:NSHiddenBinding];
 +    [progressIndicator unbind:NSValueBinding];
 +
@@ -14079,7 +14080,7 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +        return [self canZoomOut];
 +    if (action == @selector(resetZoom:))
 +        return [self canResetZoom];
-+    
++
 +    if (action == @selector(toggleZoomMode:))
 +        [menuItem setState:_zoomTextOnly ? NSControlStateValueOn : NSControlStateValueOff];
 +    else if (action == @selector(showHideWebInspector:))
@@ -14258,7 +14259,6 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 +{
 +    BrowserWindowController *controller = [[BrowserWindowController alloc] initWithConfiguration:configuration];
-+    [controller awakeFromNib];
 +    [controller.window makeKeyAndOrderFront:self];
 +
 +    return controller->_webView;
@@ -14286,7 +14286,7 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +
 +    [alert setMessageText:[NSString stringWithFormat:@"JavaScript confirm dialog from %@.", [frame.request.URL  absoluteString]]];
 +    [alert setInformativeText:message];
-+    
++
 +    [alert addButtonWithTitle:@"OK"];
 +    [alert addButtonWithTitle:@"Cancel"];
 +
@@ -14304,14 +14304,14 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +
 +    [alert setMessageText:[NSString stringWithFormat:@"JavaScript prompt dialog from %@.", [frame.request.URL absoluteString]]];
 +    [alert setInformativeText:prompt];
-+    
++
 +    [alert addButtonWithTitle:@"OK"];
 +    [alert addButtonWithTitle:@"Cancel"];
-+    
++
 +    NSTextField* input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
 +    [input setStringValue:defaultText];
 +    [alert setAccessoryView:input];
-+    
++
 +    _alert = alert;
 +    [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
 +        [input validateEditing];
@@ -14438,12 +14438,6 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +        decisionHandler(WKNavigationActionPolicyAllow);
 +        return;
 +    }
-+
-+    if (navigationAction._userInitiatedAction && !navigationAction._userInitiatedAction.isConsumed) {
-+        [navigationAction._userInitiatedAction consume];
-+        [[NSWorkspace sharedWorkspace] openURL:navigationAction.request.URL];
-+    }
-+
 +    decisionHandler(WKNavigationActionPolicyCancel);
 +}
 +
@@ -14487,7 +14481,7 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +        NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 200, 48)] autorelease];
 +        NSTextField *userInput = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 24, 200, 24)] autorelease];
 +        NSTextField *passwordInput = [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
-+        
++
 +        [alert setMessageText:[NSString stringWithFormat:@"Log in to %@:%lu.", challenge.protectionSpace.host, challenge.protectionSpace.port]];
 +        [alert addButtonWithTitle:@"Log in"];
 +        [alert addButtonWithTitle:@"Cancel"];
@@ -14496,7 +14490,7 @@ index 0000000000000000000000000000000000000000..7a745879d076017df30afd77ded881dd
 +        [alert setAccessoryView:container];
 +        [userInput setNextKeyView:passwordInput];
 +        [alert.window setInitialFirstResponder:userInput];
-+        
++
 +        [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response) {
 +            [userInput validateEditing];
 +            if (response == NSAlertFirstButtonReturn)
