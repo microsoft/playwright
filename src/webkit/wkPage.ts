@@ -234,17 +234,27 @@ export class WKPage implements PageDelegate {
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
-    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
+    const frame = this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
+
+    frame._utilityContext().then(async context => {
+      const readyState = await context.evaluate(() => document.readyState).catch(e => 'loading');
+      if (frame.isDetached())
+        return;
+      if (readyState === 'interactive' || readyState === 'complete')
+        this._page._frameManager.frameLifecycleEvent(frame._id, 'domcontentloaded');
+      if (readyState === 'complete')
+        this._page._frameManager.frameLifecycleEvent(frame._id, 'load');
+    });
+
     if (!frameTree.childFrames)
       return;
-
     for (const child of frameTree.childFrames)
       this._handleFrameTree(child);
   }
 
-  _onFrameAttached(frameId: string, parentFrameId: string | null) {
-    this._page._frameManager.frameAttached(frameId, parentFrameId);
+  _onFrameAttached(frameId: string, parentFrameId: string | null): frames.Frame {
+    return this._page._frameManager.frameAttached(frameId, parentFrameId);
   }
 
   private _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {

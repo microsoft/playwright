@@ -759,15 +759,21 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       response.end('Not found');
       await navigationPromise;
     });
-    it.skip(WEBKIT || FFOX)('should work with pages that have loaded before being connected to', async({page, context, server}) => {
+    it.skip(FFOX)('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(async () => {
         const child = window.open(document.location.href);
-        while(child.document.readyState !== 'complete' || child.document.location.href === 'about:blank')
-          await new Promise(setTimeout);
+        while (child.document.readyState !== 'complete' || child.document.location.href === 'about:blank')
+          await new Promise(f => setTimeout(f, 100));
       });
-      const [, childPage] = await context.pages();
-      await childPage.waitForLoadState();
+      const pages = await context.pages();
+      expect(pages.length).toBe(2);
+      expect(pages[0]).toBe(page);
+      expect(pages[0].url()).toBe(server.EMPTY_PAGE);
+
+      expect(pages[1].url()).toBe(server.EMPTY_PAGE);
+      await pages[1].waitForLoadState();
+      expect(pages[1].url()).toBe(server.EMPTY_PAGE);
     });
   });
 
