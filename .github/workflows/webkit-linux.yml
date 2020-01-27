@@ -1,0 +1,40 @@
+name: WebKit Linux Tests
+
+on:
+  push:
+    branches: 
+      - master
+  pull_request:
+    branches: 
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-18.04
+
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: install required packages
+      run: |
+        sudo apt update
+        sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1
+        sudo apt-get install xvfb
+
+    - name: npm install, build, and test
+      run: |
+        npm install
+        # The following logs LDD status of all webkit-wpe shared objects and executables.
+        # pushd .local-webkit/$(ls .local-webkit)/minibrowser-wpe; ls -1 | grep -v pw_run.sh | LD_LIBRARY_PATH=$PWD xargs ldd; popd
+
+        xvfb-run --auto-servernum npm run wunit
+      env:
+        CI: true
