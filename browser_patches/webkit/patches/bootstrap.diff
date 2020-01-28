@@ -6235,10 +6235,10 @@ index 02e258253e47fbf6594c20f743d0faeac8a4eefe..e051fdf396dc65717def6b36168b5538
  #include <wpe/WebKitContextMenuItem.h>
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorController.cpp b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3be737758e3718c3f55f569a212e878030157830
+index 0000000000000000000000000000000000000000..5f4c95a9599141c98a1d12f4db12a5fbaf0cfcd7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/BrowserInspectorController.cpp
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,238 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -6437,6 +6437,8 @@ index 0000000000000000000000000000000000000000..3be737758e3718c3f55f569a212e8780
 +    String pageProxyID = InspectorBrowserAgent::toPageProxyIDProtocolString(page);
 +    auto pageProxyChannel = makeUnique<PageProxyChannel>(*m_frontendChannel, pageProxyID, page);
 +    page.inspectorController().connectFrontend(*pageProxyChannel);
++    // Always pause new targets if controlled remotely.
++    page.inspectorController().setPauseOnStart(true);
 +    m_pageProxyChannels.set(pageProxyID, WTFMove(pageProxyChannel));
 +}
 +
@@ -8162,7 +8164,7 @@ index 846a5aa27dfab3d274cffa4873861f2587d17fd8..cf0dc99f5601636c48abff09cd47ace4
  }
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..17a7f735dd0024bf6f701571b74d5ffbbe8256ba 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..444894102b535a957cadb41fab23f37c217f5b1c 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.cpp
 @@ -26,10 +26,16 @@
@@ -8383,7 +8385,41 @@ index 1ee28bf716374371433215148aa20a51927a8a33..17a7f735dd0024bf6f701571b74d5ffb
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -186,7 +322,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -167,6 +303,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
+     m_targetAgent->sendMessageFromTargetToFrontend(targetId, message);
+ }
+ 
++void WebPageInspectorController::setPauseOnStart(bool shouldPause)
++{
++    ASSERT(m_frontendRouter->hasFrontends());
++    String errorString;
++    m_targetAgent->setPauseOnStart(errorString, shouldPause);
++}
++
++bool WebPageInspectorController::shouldPauseLoading() const
++{
++    if (!m_frontendRouter->hasFrontends())
++        return false;
++
++    if (!m_page.isPageOpenedByDOMShowingInitialEmptyDocument())
++        return false;
++
++    auto* target = m_targets.get(WebPageInspectorTarget::toTargetID(m_page.webPageID()));
++    ASSERT(target);
++    return target->isPaused();
++}
++
++void WebPageInspectorController::setContinueLoadingCallback(WTF::Function<void()>&& callback)
++{
++    auto* target = m_targets.get(WebPageInspectorTarget::toTargetID(m_page.webPageID()));
++    ASSERT(target);
++    target->setResumeCallback(WTFMove(callback));
++}
++
+ bool WebPageInspectorController::shouldPauseLoading(const ProvisionalPageProxy& provisionalPage) const
+ {
+     if (!m_frontendRouter->hasFrontends())
+@@ -186,7 +349,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -8392,7 +8428,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..17a7f735dd0024bf6f701571b74d5ffb
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +354,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +381,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -8410,7 +8446,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..17a7f735dd0024bf6f701571b74d5ffb
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorController.h b/Source/WebKit/UIProcess/WebPageInspectorController.h
-index 78caedf0c0ce83675569502d150fcc44e5f9868c..c5c375b9aef58d1df2dad223462bce2da4b1aef2 100644
+index 78caedf0c0ce83675569502d150fcc44e5f9868c..46b9901263286eab6de0bc4f899349d56b1efb33 100644
 --- a/Source/WebKit/UIProcess/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/WebPageInspectorController.h
 @@ -26,6 +26,7 @@
@@ -8468,7 +8504,7 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..c5c375b9aef58d1df2dad223462bce2d
  
      bool hasLocalFrontend() const;
  
-@@ -57,11 +86,19 @@ public:
+@@ -57,15 +86,28 @@ public:
      void disconnectAllFrontends();
  
      void dispatchMessageFromFrontend(const String& message);
@@ -8488,7 +8524,16 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..c5c375b9aef58d1df2dad223462bce2d
      void createInspectorTarget(const String& targetId, Inspector::InspectorTargetType);
      void destroyInspectorTarget(const String& targetId);
      void sendMessageToInspectorFrontend(const String& targetId, const String& message);
-@@ -75,13 +112,18 @@ public:
+ 
++    void setPauseOnStart(bool);
++
++    bool shouldPauseLoading() const;
++    void setContinueLoadingCallback(WTF::Function<void()>&&);
++
+     bool shouldPauseLoading(const ProvisionalPageProxy&) const;
+     void setContinueLoadingCallback(const ProvisionalPageProxy&, WTF::Function<void()>&&);
+ 
+@@ -75,13 +117,18 @@ public:
  
  private:
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -9022,7 +9067,7 @@ index 0000000000000000000000000000000000000000..76290475097e756e3d932d22be4d8c79
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f939796bc 100644
+index 6f1a3ea0b45d339fc8029046de6895530208db5d..83956f40de2f476c313244298f686390a0f7c786 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -903,6 +903,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -9118,7 +9163,26 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
      // If the provisional page's load fails then we destroy the provisional page.
      if (m_provisionalPage && m_provisionalPage->mainFrame() == frame && willContinueLoading == WillContinueLoading::No)
          m_provisionalPage = nullptr;
-@@ -5430,6 +5463,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
+@@ -4857,8 +4890,16 @@ void WebPageProxy::decidePolicyForNavigationActionAsync(FrameIdentifier frameID,
+     NavigationActionData&& navigationActionData, FrameInfoData&& frameInfoData, Optional<WebPageProxyIdentifier> originatingPageID, const WebCore::ResourceRequest& originalRequest, WebCore::ResourceRequest&& request,
+     IPC::FormDataReference&& requestBody, WebCore::ResourceResponse&& redirectResponse, const UserData& userData, uint64_t listenerID)
+ {
+-    decidePolicyForNavigationActionAsyncShared(m_process.copyRef(), m_webPageID, frameID, WTFMove(frameSecurityOrigin), identifier, navigationID, WTFMove(navigationActionData),
+-        WTFMove(frameInfoData), originatingPageID, originalRequest, WTFMove(request), WTFMove(requestBody), WTFMove(redirectResponse), userData, listenerID);
++    if (m_inspectorController->shouldPauseLoading())
++        m_inspectorController->setContinueLoadingCallback([this, protectedThis = makeRef(*this), frameID, frameSecurityOrigin = WTFMove(frameSecurityOrigin), identifier, navigationID, navigationActionData = WTFMove(navigationActionData),
++                frameInfoData = WTFMove(frameInfoData), originatingPageID, originalRequest, request = WTFMove(request), requestBody = WTFMove(requestBody), redirectResponse = WTFMove(redirectResponse), userData, listenerID] () mutable {
++            decidePolicyForNavigationActionAsyncShared(m_process.copyRef(), m_webPageID, frameID, WTFMove(frameSecurityOrigin), identifier, navigationID, WTFMove(navigationActionData),
++                WTFMove(frameInfoData), originatingPageID, originalRequest, WTFMove(request), WTFMove(requestBody), WTFMove(redirectResponse), userData, listenerID);
++        });
++    else {
++        decidePolicyForNavigationActionAsyncShared(m_process.copyRef(), m_webPageID, frameID, WTFMove(frameSecurityOrigin), identifier, navigationID, WTFMove(navigationActionData),
++            WTFMove(frameInfoData), originatingPageID, originalRequest, WTFMove(request), WTFMove(requestBody), WTFMove(redirectResponse), userData, listenerID);
++    }
+ }
+ 
+ void WebPageProxy::decidePolicyForNavigationActionAsyncShared(Ref<WebProcessProxy>&& process, PageIdentifier webPageID, FrameIdentifier frameID, WebCore::SecurityOriginData&& frameSecurityOrigin,
+@@ -5430,6 +5471,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -9127,7 +9191,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
      m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
  
-@@ -5449,6 +5484,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
+@@ -5449,6 +5492,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -9136,7 +9200,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
  
      m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5468,6 +5505,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
+@@ -5468,6 +5513,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -9145,7 +9209,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
  
      m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5627,6 +5666,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
+@@ -5627,6 +5674,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
              return;
          }
      }
@@ -9154,7 +9218,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer and the tryClose timer.
      m_process->responsivenessTimer().stop();
-@@ -6686,6 +6727,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6686,6 +6735,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              pageClient().didFinishProcessingAllPendingMouseEvents();
@@ -9162,7 +9226,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
          }
  
          break;
-@@ -6712,7 +6754,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6712,7 +6762,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -9170,7 +9234,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -6732,7 +6773,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6732,7 +6781,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -9178,7 +9242,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -6741,6 +6781,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6741,6 +6789,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -9186,7 +9250,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
          }
          break;
      }
-@@ -7209,8 +7250,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
+@@ -7209,8 +7258,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
  void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
  {
      RELEASE_LOG_IF_ALLOWED(Loading, "dispatchProcessDidTerminate: reason = %d", reason);
@@ -9198,7 +9262,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -7668,6 +7711,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
+@@ -7668,6 +7719,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge)
  {
@@ -9213,7 +9277,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
      m_navigationClient->didReceiveAuthenticationChallenge(*this, authenticationChallenge.get());
  }
  
-@@ -7729,7 +7780,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7729,7 +7788,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
      MESSAGE_CHECK(m_process, frame);
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
@@ -9223,7 +9287,7 @@ index 6f1a3ea0b45d339fc8029046de6895530208db5d..16e73d3494187640f0fdd73df3d8260f
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -7737,6 +7789,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7737,6 +7797,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
          else
              request->deny();
      };
