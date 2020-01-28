@@ -17,7 +17,7 @@
 const { helper } = require('./lib/helper');
 const api = require('./lib/api');
 const packageJson = require('./package.json');
-const DeviceDescriptors = require('./lib/deviceDescriptors');
+const { DeviceDescriptors } = require('./lib/deviceDescriptors');
 const { TimeoutError } = require('./lib/errors');
 const { Chromium } = require('./lib/server/chromium');
 const { Firefox } = require('./lib/server/firefox');
