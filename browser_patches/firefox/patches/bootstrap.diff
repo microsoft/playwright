@@ -648,10 +648,10 @@ index 0000000000000000000000000000000000000000..673e93b0278a3502d94006696cea7e6e
 +
 diff --git a/testing/juggler/NetworkObserver.js b/testing/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e38c9b37b531de4eac67c2a138b68a34053b155b
+index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e33da53803
 --- /dev/null
 +++ b/testing/juggler/NetworkObserver.js
-@@ -0,0 +1,674 @@
+@@ -0,0 +1,681 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -766,8 +766,8 @@ index 0000000000000000000000000000000000000000..e38c9b37b531de4eac67c2a138b68a34
 +    return interceptor;
 +  }
 +
-+  resumeInterceptedRequest(browser, requestId, headers) {
-+    this._takeInterceptor(browser, requestId)._resume(headers);
++  resumeInterceptedRequest(browser, requestId, method, headers, postData) {
++    this._takeInterceptor(browser, requestId)._resume(method, headers, postData);
 +  }
 +
 +  getResponseBody(browser, requestId) {
@@ -806,13 +806,20 @@ index 0000000000000000000000000000000000000000..e38c9b37b531de4eac67c2a138b68a34
 +    const newRequestId = this._requestId(newHttpChannel);
 +    if (this._resumedRequestIdToHeaders.has(oldRequestId)) {
 +      // When we call resetInterception on a request, we get a new "redirected" request for it.
-+      const { headers } = this._resumedRequestIdToHeaders.get(oldRequestId);
++      const { method, headers, postData } = this._resumedRequestIdToHeaders.get(oldRequestId);
 +      if (headers) {
 +        // Apply new request headers from interception resume.
 +        for (const header of requestHeaders(newChannel))
 +          newChannel.setRequestHeader(header.name, '', false /* merge */);
 +        for (const header of headers)
 +          newChannel.setRequestHeader(header.name, header.value, false /* merge */);
++      }
++      if (method)
++        newChannel.requestMethod = method;
++      if (postData && newChannel instanceof Ci.nsIUploadChannel) {
++        const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
++        synthesized.data = atob(postData);
++        newChannel.setUploadStream(synthesized, 'application/octet-stream', -1);
 +      }
 +      // Use the old request id for the new "redirected" request for protocol consistency.
 +      this._resumedRequestIdToHeaders.delete(oldRequestId);
@@ -1273,8 +1280,8 @@ index 0000000000000000000000000000000000000000..e38c9b37b531de4eac67c2a138b68a34
 +    this._networkObserver._onIntercepted(httpChannel, this);
 +  }
 +
-+  _resume(headers) {
-+    this._networkObserver._resumedRequestIdToHeaders.set(this._networkObserver._requestId(this._httpChannel), { headers });
++  _resume(method, headers, postData) {
++    this._networkObserver._resumedRequestIdToHeaders.set(this._networkObserver._requestId(this._httpChannel), { method, headers, postData });
 +    this._intercepted.resetInterception();
 +  }
 +
@@ -4145,7 +4152,7 @@ index 0000000000000000000000000000000000000000..956988738079272be8d3998dcbbaa91a
 +
 diff --git a/testing/juggler/protocol/NetworkHandler.js b/testing/juggler/protocol/NetworkHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..22e7b4f9397e592f26ce447aafd6318398ad5b48
+index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9cf800f869
 --- /dev/null
 +++ b/testing/juggler/protocol/NetworkHandler.js
 @@ -0,0 +1,166 @@
@@ -4207,8 +4214,8 @@ index 0000000000000000000000000000000000000000..22e7b4f9397e592f26ce447aafd63183
 +    await Promise.all(Array.from(this._pendingRequstWillBeSentEvents));
 +  }
 +
-+  async resumeInterceptedRequest({requestId, headers}) {
-+    this._networkObserver.resumeInterceptedRequest(this._browser, requestId, headers);
++  async resumeInterceptedRequest({requestId, method, headers, postData}) {
++    this._networkObserver.resumeInterceptedRequest(this._browser, requestId, method, headers, postData);
 +  }
 +
 +  async abortInterceptedRequest({requestId, errorCode}) {
@@ -4757,10 +4764,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a0913f7728931a938b850083213560a511b624a8
+index 0000000000000000000000000000000000000000..d0d27b9bd8132190841a7a4785d31a20738e3b18
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,747 @@
+@@ -0,0 +1,749 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5102,7 +5109,9 @@ index 0000000000000000000000000000000000000000..a0913f7728931a938b850083213560a5
 +    'resumeInterceptedRequest': {
 +      params: {
 +        requestId: t.String,
++        method: t.Optional(t.String),
 +        headers: t.Optional(t.Array(networkTypes.HTTPHeader)),
++        postData: t.Optional(t.String),
 +      },
 +    },
 +    'fulfillInterceptedRequest': {
