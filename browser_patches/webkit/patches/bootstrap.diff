@@ -12243,7 +12243,7 @@ index 245f319abf2595e154d03e1ee8b3250d7f46aafd..9cae87b23deade7c163f34aade2b2aed
      ${WPEBACKEND_FDO_INCLUDE_DIRS}
  )
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df3ab700cc 100644
+index 2d183d394123bd84545dc51f53eb9be796fb8873..07f31f2442bc957378dc6da026fa3c4802e1e2f9 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -12317,7 +12317,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -164,14 +189,55 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -164,14 +189,56 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
  
@@ -12346,7 +12346,6 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df
 +    g_signal_connect(newWebView, "script-dialog", G_CALLBACK(scriptDialog), nullptr);
 +    g_signal_connect(newWebView, "script-dialog-handled", G_CALLBACK(scriptDialogHandled), nullptr);
 +    g_signal_connect(newWebView, "create", G_CALLBACK(createWebView), nullptr);
-+    webkit_web_view_load_uri(newWebView, "about:blank");
      return newWebView;
  }
  
@@ -12361,7 +12360,9 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df
 +{
 +    if (!webContext)
 +        webContext = persistentWebContext;
-+    return createWebViewImpl(nullptr, webContext);
++    WebKitWebView* webView = createWebViewImpl(nullptr, webContext);
++    webkit_web_view_load_uri(webView, "about:blank");
++    return webView;
 +}
 +
 +static void configureBrowserInspector(GMainLoop* mainLoop, WebKitWebContext *webContext)
@@ -12376,7 +12377,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -215,7 +281,18 @@ int main(int argc, char *argv[])
+@@ -215,7 +282,18 @@ int main(int argc, char *argv[])
          return 1;
      }
  
@@ -12396,7 +12397,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -280,6 +357,9 @@ int main(int argc, char *argv[])
+@@ -280,6 +358,9 @@ int main(int argc, char *argv[])
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
  
@@ -12406,7 +12407,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
-@@ -318,7 +398,7 @@ int main(int argc, char *argv[])
+@@ -318,7 +399,7 @@ int main(int argc, char *argv[])
          g_object_unref(file);
          webkit_web_view_load_uri(webView, url);
          g_free(url);
@@ -12415,7 +12416,7 @@ index 2d183d394123bd84545dc51f53eb9be796fb8873..355c94aff2b99de7e9ab29d2d39986df
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -326,8 +406,7 @@ int main(int argc, char *argv[])
+@@ -326,8 +407,7 @@ int main(int argc, char *argv[])
      g_main_loop_run(loop);
  
      g_object_unref(webView);
