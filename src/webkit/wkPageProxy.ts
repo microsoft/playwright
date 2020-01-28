@@ -146,9 +146,9 @@ export class WKPageProxy {
       this._wkPage.onProvisionalLoadStarted(session);
     if (targetInfo.isPaused) {
       const resume = () => this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
-      if (targetInfo.isProvisional)
+      if (targetInfo.isProvisional || !this._pagePromise)
         resume();
-      else if (this._pagePromise)
+      else
         this._pagePromise.then(resume);
     }
   }
