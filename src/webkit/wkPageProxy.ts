@@ -32,6 +32,7 @@ export class WKPageProxy {
   private _wkPage: WKPage | null = null;
   private readonly _firstTargetPromise: Promise<void>;
   private _firstTargetCallback?: () => void;
+  private _pagePausedOnStart: boolean = false;
   private readonly _sessions = new Map<string, WKSession>();
   private readonly _eventListeners: RegisteredListener[];
 
@@ -121,7 +122,11 @@ export class WKPageProxy {
     }
     assert(session, 'One non-provisional target session must exist');
     this._wkPage = new WKPage(this._browserContext, this._pageProxySession);
-    await this._wkPage.initialize(session!);
+    await this._wkPage.initialize(session!, this._pagePausedOnStart);
+    if (this._pagePausedOnStart) {
+      this._resumeTarget(session!.sessionId);
+      this._pagePausedOnStart = false;
+    }
     return this._wkPage._page;
   }
 
@@ -140,17 +145,24 @@ export class WKPageProxy {
       this._firstTargetCallback();
       this._firstTargetCallback = undefined;
     }
-    if (targetInfo.isProvisional)
+    if (targetInfo.isProvisional) {
       (session as any)[isPovisionalSymbol] = true;
-    if (targetInfo.isProvisional && this._wkPage)
-      this._wkPage.onProvisionalLoadStarted(session);
-    if (targetInfo.isPaused) {
-      const resume = () => this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
-      if (targetInfo.isProvisional || !this._pagePromise)
-        resume();
-      else
-        this._pagePromise.then(resume);
+      if (this._wkPage)
+        this._wkPage.onProvisionalLoadStarted(session);
+      if (targetInfo.isPaused)
+        this._resumeTarget(targetInfo.targetId);
+    } else if (this._pagePromise) {
+      assert(!this._pagePausedOnStart);
+      // This is the first time page target is created, will resume
+      // after finishing intialization.
+      this._pagePausedOnStart = !!targetInfo.isPaused;
+    } else if (targetInfo.isPaused) {
+      this._resumeTarget(targetInfo.targetId);
     }
+  }
+
+  private _resumeTarget(targetId: string) {
+    this._pageProxySession.send('Target.resume', { targetId }).catch(debugError);
   }
 
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {

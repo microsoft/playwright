@@ -84,11 +84,11 @@ export class WKPage implements PageDelegate {
     this._workers.setSession(session);
   }
 
-  async initialize(session: WKSession) {
+  async initialize(session: WKSession, pagePausedOnStart: boolean) {
     this._setSession(session);
     await Promise.all([
       this._initializePageProxySession(),
-      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree)),
+      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree, pagePausedOnStart)),
     ]);
   }
 
@@ -234,24 +234,26 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 
-  private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
+  private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree, pagePausedOnStart: boolean) {
     const frame = this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
 
-    frame._utilityContext().then(async context => {
-      const readyState = await context.evaluate(() => document.readyState).catch(e => 'loading');
-      if (frame.isDetached())
-        return;
-      if (readyState === 'interactive' || readyState === 'complete')
-        this._page._frameManager.frameLifecycleEvent(frame._id, 'domcontentloaded');
-      if (readyState === 'complete')
-        this._page._frameManager.frameLifecycleEvent(frame._id, 'load');
-    });
+    if (!pagePausedOnStart) {
+      frame._utilityContext().then(async context => {
+        const readyState = await context.evaluate(() => document.readyState).catch(e => 'loading');
+        if (frame.isDetached())
+          return;
+        if (readyState === 'interactive' || readyState === 'complete')
+          this._page._frameManager.frameLifecycleEvent(frame._id, 'domcontentloaded');
+        if (readyState === 'complete')
+          this._page._frameManager.frameLifecycleEvent(frame._id, 'load');
+      });
+    }
 
     if (!frameTree.childFrames)
       return;
     for (const child of frameTree.childFrames)
-      this._handleFrameTree(child);
+      this._handleFrameTree(child, pagePausedOnStart);
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null): frames.Frame {
