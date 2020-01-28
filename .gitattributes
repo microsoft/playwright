@@ -1,0 +1,3 @@
+# .txt files must be lf for golden file tests to work
+*.txt eol=lf
+
