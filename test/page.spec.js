@@ -122,7 +122,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe('Page.Events.Popup', function() {
+  fdescribe('Page.Events.Popup', function() {
     it('should work', async({page}) => {
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),
