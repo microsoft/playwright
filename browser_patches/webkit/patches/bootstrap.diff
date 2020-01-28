@@ -887,7 +887,7 @@ index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80ca
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Network.json b/Source/JavaScriptCore/inspector/protocol/Network.json
-index 658f14f8af68073b99a01dd7332628223b67fcd7..bf7c6b49ac403a3b877f60b0f2e236971dc3b592 100644
+index 658f14f8af68073b99a01dd7332628223b67fcd7..cd28887b9a01826c2d374bdada487c81467fdade 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Network.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Network.json
 @@ -231,7 +231,8 @@
@@ -900,13 +900,15 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..bf7c6b49ac403a3b877f60b0f2e23697
              ]
          },
          {
-@@ -258,7 +259,16 @@
+@@ -258,7 +259,18 @@
              "name": "interceptContinue",
              "description": "Continue an interception with no modifications.",
              "parameters": [
 -                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request or response to continue." }
 +                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request or response to continue." },
-+                { "name": "headers", "$ref": "Headers", "optional": true, "description": "HTTP response headers. Pass through original values if unmodified." }
++                { "name": "method", "type": "string", "optional": true,"description": "HTTP request method." },
++                { "name": "headers", "$ref": "Headers", "optional": true, "description": "HTTP response headers. Pass through original values if unmodified." },
++                { "name": "postData", "type": "string", "optional": true, "description": "HTTP POST request data." }
 +            ]
 +        },
 +        {
@@ -918,7 +920,7 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..bf7c6b49ac403a3b877f60b0f2e23697
              ]
          },
          {
-@@ -266,13 +276,20 @@
+@@ -266,13 +278,20 @@
              "description": "Provide response content for an intercepted response.",
              "parameters": [
                  { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network response to modify." },
@@ -941,7 +943,7 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..bf7c6b49ac403a3b877f60b0f2e23697
          }
      ],
      "events": [
-@@ -356,6 +373,14 @@
+@@ -356,6 +375,14 @@
                  { "name": "response", "$ref": "Response", "description": "Original response content that would proceed if this is continued." }
              ]
          },
@@ -2117,10 +2119,18 @@ index b578660fbb3ce176e4e0aeb5a22021dc880e47f0..a7c968bc9f88c7d26e1887bb53106b4a
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5088d2531 100644
+index 31382c765d05a28ca7e787e20730c303f67b8776..c7321a9af1a52eea7a02a818d2a75f68fafccb9e 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-@@ -56,6 +56,7 @@
+@@ -44,6 +44,7 @@
+ #include "DocumentLoader.h"
+ #include "DocumentThreadableLoader.h"
+ #include "Frame.h"
++#include "FormData.h"
+ #include "FrameLoader.h"
+ #include "HTTPHeaderMap.h"
+ #include "HTTPHeaderNames.h"
+@@ -56,6 +57,7 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "NetworkResourcesData.h"
@@ -2128,7 +2138,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
-@@ -99,6 +100,23 @@ using namespace Inspector;
+@@ -99,6 +101,23 @@ using namespace Inspector;
  
  namespace {
  
@@ -2152,7 +2162,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
  class InspectorThreadableLoaderClient final : public ThreadableLoaderClient {
      WTF_MAKE_NONCOPYABLE(InspectorThreadableLoaderClient);
  public:
-@@ -438,6 +456,13 @@ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLo
+@@ -438,6 +457,13 @@ void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLo
      for (auto& entry : m_extraRequestHeaders)
          request.setHTTPHeaderField(entry.key, entry.value);
  
@@ -2166,7 +2176,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
      auto protocolResourceType = InspectorPageAgent::resourceTypeJSON(type);
  
      Document* document = loader && loader->frame() ? loader->frame()->document() : nullptr;
-@@ -770,24 +795,12 @@ void InspectorNetworkAgent::didCloseWebSocket(unsigned long identifier)
+@@ -770,24 +796,12 @@ void InspectorNetworkAgent::didCloseWebSocket(unsigned long identifier)
  
  void InspectorNetworkAgent::didReceiveWebSocketFrame(unsigned long identifier, const WebSocketFrame& frame)
  {
@@ -2193,7 +2203,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
  }
  
  void InspectorNetworkAgent::didReceiveWebSocketFrameError(unsigned long identifier, const String& errorMessage)
-@@ -839,6 +852,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
+@@ -839,6 +853,7 @@ void InspectorNetworkAgent::disable(ErrorString&)
      m_resourcesData->clear();
      m_extraRequestHeaders.clear();
  
@@ -2201,7 +2211,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
      continuePendingResponses();
  
      setResourceCachingDisabled(false);
-@@ -862,6 +876,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
+@@ -862,6 +877,16 @@ bool InspectorNetworkAgent::shouldIntercept(URL url)
      return false;
  }
  
@@ -2218,7 +2228,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
  void InspectorNetworkAgent::continuePendingResponses()
  {
      for (auto& pendingInterceptResponse : m_pendingInterceptResponses.values())
-@@ -1018,17 +1042,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
+@@ -1018,17 +1043,15 @@ void InspectorNetworkAgent::resolveWebSocket(ErrorString& errorString, const Str
      result = injectedScript.wrapObject(webSocketAsScriptValue(state, webSocket), objectGroupName);
  }
  
@@ -2240,7 +2250,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
  }
  
  void InspectorNetworkAgent::addInterception(ErrorString& errorString, const String& url, const bool* optionalCaseSensitive, const bool* optionalIsRegex, const String* networkStageString)
-@@ -1110,19 +1132,117 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
+@@ -1110,19 +1133,128 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
      m_frontendDispatcher->responseIntercepted(requestId, buildObjectForResourceResponse(response, nullptr));
  }
  
@@ -2258,7 +2268,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
 +    return true;
 +}
 +
-+void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId, const JSON::Object* headers)
++void InspectorNetworkAgent::interceptContinue(ErrorString& errorString, const String& requestId, const String* method, const JSON::Object* headers, const String* postData)
 +{
 +    auto pendingRequest = m_pendingInterceptRequests.take(requestId);
 +    if (pendingRequest) {
@@ -2267,9 +2277,11 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
 +            // Do not throw upon continue of canceled requests.
 +            return;
 +        }
++        // Safe to const cast at this point, we are only adjusting the method / headers / post.
++        ResourceRequest* request = const_cast<ResourceRequest*>(&loader->request());
++        if (method)
++            request->setHTTPMethod(*method);
 +        if (headers) {
-+            // Safe to const cast at this point, we are only adjusting the headers.
-+            ResourceRequest* request = const_cast<ResourceRequest*>(&loader->request());
 +            HTTPHeaderMap explicitHeaders;
 +            for (auto& header : *headers) {
 +                String headerValue;
@@ -2277,6 +2289,15 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
 +                    explicitHeaders.add(header.key, headerValue);
 +            }
 +            request->setHTTPHeaderFields(WTFMove(explicitHeaders));
++        }
++        if (postData) {
++            Vector<uint8_t> buffer;
++            if (!base64Decode(*postData, buffer)) {
++                errorString = "Unable to decode given postData"_s;
++                return;
++            }
++            Ref<FormData> data = FormData::create(buffer);
++            request->setHTTPBody(WTFMove(data));
 +        }
 +        pendingRequest->m_callback(false);
 +        return;
@@ -2364,7 +2385,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
      auto pendingInterceptResponse = m_pendingInterceptResponses.take(requestId);
      if (!pendingInterceptResponse) {
          errorString = "Missing pending intercept response for given requestId"_s;
-@@ -1150,20 +1270,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
+@@ -1150,20 +1282,26 @@ void InspectorNetworkAgent::interceptWithResponse(ErrorString& errorString, cons
      }
  
      RefPtr<SharedBuffer> overrideData;
@@ -2395,7 +2416,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1293,6 +1419,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
+@@ -1293,6 +1431,11 @@ void InspectorNetworkAgent::searchInRequest(ErrorString& errorString, const Stri
      results = ContentSearchUtilities::searchInTextByLines(resourceData->content(), query, caseSensitive, isRegex);
  }
  
@@ -2408,7 +2429,7 @@ index 31382c765d05a28ca7e787e20730c303f67b8776..f062a480d834479a0d993923073b35d5
  {
      m_resourcesData->clear(loaderIdentifier(&loader));
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index a68f84520736977c8b9216616c5a178fbf5275d6..b839460cf769887f49d1944d780a526fcb681b90 100644
+index a68f84520736977c8b9216616c5a178fbf5275d6..8d6ed7188bca75fb46d1a5963983f08838a48cbe 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 @@ -87,11 +87,13 @@ public:
@@ -2421,7 +2442,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..b839460cf769887f49d1944d780a526f
      void removeInterception(ErrorString&, const String& url, const bool* caseSensitive, const bool* isRegex, const String* networkStageString) final;
 -    void interceptContinue(ErrorString&, const String& requestId) final;
 -    void interceptWithResponse(ErrorString&, const String& requestId, const String& content, bool base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers) final;
-+    void interceptContinue(ErrorString&, const String& requestId, const JSON::Object* headers) final;
++    void interceptContinue(ErrorString&, const String& requestId, const String* method, const JSON::Object* headers, const String* postData) final;
 +    void interceptAsError(ErrorString&, const String& requestId, const String& reason) final;
 +    void interceptWithResponse(ErrorString&, const String& requestId, const String* content, const bool* base64Encoded, const String* mimeType, const int* status, const String* statusText, const JSON::Object* headers) final;
 +    void setEmulateOfflineState(ErrorString&, bool offline) final;
