@@ -46,14 +46,6 @@ export class WKPageProxy {
       helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
     ];
-
-    // Intercept provisional targets during cross-process navigation.
-    this._pageProxySession.send('Target.setPauseOnStart', { pauseOnStart: true }).catch(e => {
-      if (this._pageProxySession.isDisposed())
-        return;
-      debugError(e);
-      throw e;
-    });
   }
 
   didClose() {
