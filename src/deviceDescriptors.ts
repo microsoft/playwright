@@ -409,6 +409,16 @@ const descriptors: types.DeviceDescriptor[] = [
     }
   },
   {
+    'name': 'iPhone 11 landscape',
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 896,
+      'height': 414,
+      'deviceScaleFactor': 2,
+      'isMobile': true
+    }
+  },
+  {
     'name': 'iPhone 11 Pro',
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
@@ -419,11 +429,31 @@ const descriptors: types.DeviceDescriptor[] = [
     }
   },
   {
+    'name': 'iPhone 11 Pro landscape',
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 812,
+      'height': 375,
+      'deviceScaleFactor': 3,
+      'isMobile': true
+    }
+  },
+  {
     'name': 'iPhone 11 Pro Max',
     'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
     'viewport': {
       'width': 414,
       'height': 896,
+      'deviceScaleFactor': 3,
+      'isMobile': true
+    }
+  },
+  {
+    'name': 'iPhone 11 Pro Max landscape',
+    'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1',
+    'viewport': {
+      'width': 896,
+      'height': 414,
       'deviceScaleFactor': 3,
       'isMobile': true
     }
@@ -494,6 +524,16 @@ const descriptors: types.DeviceDescriptor[] = [
     'viewport': {
       'width': 640,
       'height': 360,
+      'deviceScaleFactor': 2,
+      'isMobile': true
+    }
+  },
+  {
+    'name': 'Microsoft Lumia 550 landscape',
+    'userAgent': 'Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 550) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Mobile Safari/537.36 Edge/14.14263',
+    'viewport': {
+      'width': 360,
+      'height': 640,
       'deviceScaleFactor': 2,
       'isMobile': true
     }
