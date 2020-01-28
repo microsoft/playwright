@@ -36,7 +36,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   const LINUX = os.platform() === 'linux';
   const WIN = os.platform() === 'win32';
 
-  const playwright = require(playwrightPath)[product.toLowerCase()];
+  const playwrightModule = require(playwrightPath);
+  const playwright = playwrightModule[product.toLowerCase()];
 
   const headless = (process.env.HEADLESS || 'true').trim().toLowerCase() === 'true';
   const slowMo = parseInt((process.env.SLOW_MO || '0').trim(), 10);
@@ -81,6 +82,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     LINUX,
     WIN,
     playwright,
+    selectors: playwrightModule.selectors,
     expect,
     defaultBrowserOptions,
     playwrightPath,

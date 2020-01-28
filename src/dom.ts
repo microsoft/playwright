@@ -19,16 +19,17 @@ import * as input from './input';
 import * as js from './javascript';
 import * as types from './types';
 import * as injectedSource from './generated/injectedSource';
-import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import { assert, helper, debugError } from './helper';
 import Injected from './injected/injected';
 import { Page } from './page';
 import * as platform from './platform';
+import { Selectors } from './selectors';
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
 
   private _injectedPromise?: Promise<js.JSHandle>;
+  private _injectedGeneration = -1;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
     super(delegate);
@@ -69,14 +70,19 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   _injected(): Promise<js.JSHandle> {
+    const selectors = Selectors._instance();
+    if (this._injectedPromise && selectors._generation !== this._injectedGeneration) {
+      this._injectedPromise.then(handle => handle.dispose());
+      this._injectedPromise = undefined;
+    }
     if (!this._injectedPromise) {
-      const additionalEngineSources = [zsSelectorEngineSource.source];
       const source = `
         new (${injectedSource.source})([
-          ${additionalEngineSources.join(',\n')},
+          ${selectors._sources.join(',\n')},
         ])
       `;
       this._injectedPromise = this.evaluateHandle(source);
+      this._injectedGeneration = selectors._generation;
     }
     return this._injectedPromise;
   }

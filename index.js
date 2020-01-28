@@ -31,6 +31,7 @@ for (const className in api) {
 module.exports = {
   devices: DeviceDescriptors,
   errors: { TimeoutError },
+  selectors: api.Selectors._instance(),
   chromium: new Chromium(__dirname, packageJson.playwright.chromium_revision),
   firefox: new Firefox(__dirname, packageJson.playwright.firefox_revision),
   webkit: new WebKit(__dirname, packageJson.playwright.webkit_revision),
