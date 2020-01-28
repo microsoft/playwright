@@ -143,7 +143,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
         page.click('a'),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
