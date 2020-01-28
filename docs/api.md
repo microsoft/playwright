@@ -3847,7 +3847,7 @@ const { chromium } = require('playwright');
 [TimeoutError]: #class-timeouterror "TimeoutError"
 [UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
 [URL]: https://nodejs.org/api/url.html
-[USKeyboardLayout]: ../lib/USKeyboardLayout.js "USKeyboardLayout"
+[USKeyboardLayout]: ../src/usKeyboardLayout.ts "USKeyboardLayout"
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
 [WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
 [WebSocket]: #class-websocket "WebSocket"
