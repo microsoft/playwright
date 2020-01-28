@@ -43,7 +43,6 @@ export interface PageDelegate {
   closePage(runBeforeUnload: boolean): Promise<void>;
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
-  needsLifecycleResetOnSetContent(): boolean;
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
   setViewport(viewport: types.Viewport): Promise<void>;
@@ -296,11 +295,12 @@ export class Page extends platform.EventEmitter {
   }
 
   _addConsoleMessage(type: string, args: js.JSHandle[], location: ConsoleMessageLocation, text?: string) {
-    if (!this.listenerCount(Events.Page.Console)) {
+    const message = new ConsoleMessage(type, text, args, location);
+    const intercepted = this._frameManager.interceptConsoleMessage(message);
+    if (intercepted || !this.listenerCount(Events.Page.Console))
       args.forEach(arg => arg.dispose());
-      return;
-    }
-    this.emit(Events.Page.Console, new ConsoleMessage(type, text, args, location));
+    else
+      this.emit(Events.Page.Console, message);
   }
 
   url(): string {

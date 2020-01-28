@@ -130,16 +130,8 @@ export class CRPage implements PageDelegate {
     return { newDocumentId: response.loaderId, isSameDocument: !response.loaderId };
   }
 
-  needsLifecycleResetOnSetContent(): boolean {
-    // We rely upon the fact that document.open() will reset frame lifecycle with "init"
-    // lifecycle event. @see https://crrev.com/608658
-    return false;
-  }
-
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
-    if (event.name === 'init')
-      this._page._frameManager.frameLifecycleEvent(event.frameId, 'clear');
-    else if (event.name === 'load')
+    if (event.name === 'load')
       this._page._frameManager.frameLifecycleEvent(event.frameId, 'load');
     else if (event.name === 'DOMContentLoaded')
       this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded');
