@@ -138,7 +138,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should require top-level DeviceDescriptors', async() => {
       const Devices = require(path.join(utils.projectRoot(), '/lib/deviceDescriptors.js')).DeviceDescriptors;
+      expect(Devices['iPhone 6']).toBeTruthy();
       expect(Devices['iPhone 6']).toBe(playwright.devices['iPhone 6']);
+      expect(Devices['iPhone 6']).toBe(require(playwrightPath).devices['iPhone 6']);
     });
   });
 
