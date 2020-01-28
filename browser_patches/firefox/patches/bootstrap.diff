@@ -30,6 +30,53 @@ index 7054749357ec13f175be8022852b42fcfeda9134..c9064880ecf7e70290c6a84bfc209e08
  #if defined(ENABLE_TESTS) && defined(MOZ_DEBUG)
  @RESPATH@/components/TestInterfaceJS.js
  @RESPATH@/components/TestInterfaceJS.manifest
+diff --git a/devtools/server/socket/websocket-server.js b/devtools/server/socket/websocket-server.js
+index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c2835307f88 100644
+--- a/devtools/server/socket/websocket-server.js
++++ b/devtools/server/socket/websocket-server.js
+@@ -133,13 +133,12 @@ function writeHttpResponse(output, response) {
+  * Process the WebSocket handshake headers and return the key to be sent in
+  * Sec-WebSocket-Accept response header.
+  */
+-function processRequest({ requestLine, headers }) {
++function processRequest({ requestLine, headers }, expectedPath) {
+   const [method, path] = requestLine.split(" ");
+   if (method !== "GET") {
+     throw new Error("The handshake request must use GET method");
+   }
+-
+-  if (path !== "/") {
++  if (path !== expectedPath) {
+     throw new Error("The handshake request has unknown path");
+   }
+ 
+@@ -189,13 +188,13 @@ function computeKey(key) {
+ /**
+  * Perform the server part of a WebSocket opening handshake on an incoming connection.
+  */
+-const serverHandshake = async function(input, output) {
++const serverHandshake = async function(input, output, expectedPath) {
+   // Read the request
+   const request = await readHttpRequest(input);
+ 
+   try {
+     // Check and extract info from the request
+-    const { acceptKey } = processRequest(request);
++    const { acceptKey } = processRequest(request, expectedPath);
+ 
+     // Send response headers
+     await writeHttpResponse(output, [
+@@ -217,8 +216,8 @@ const serverHandshake = async function(input, output) {
+  * Performs the WebSocket handshake and waits for the WebSocket to open.
+  * Returns Promise with a WebSocket ready to send and receive messages.
+  */
+-const accept = async function(transport, input, output) {
+-  await serverHandshake(input, output);
++const accept = async function(transport, input, output, expectedPath) {
++  await serverHandshake(input, output, expectedPath || "/");
+ 
+   const transportProvider = {
+     setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
 index b30c186c88daa7dd62f69e452dedc9e968511bb5..3a9bda87d5c577fd578bf3a523854d46c2a8db6a 100644
 --- a/docshell/base/nsDocShell.cpp
@@ -1528,10 +1575,10 @@ index 0000000000000000000000000000000000000000..da5e4ee371d03bd0c6524cef694b12b7
 +this.TargetRegistry = TargetRegistry;
 diff --git a/testing/juggler/components/juggler.js b/testing/juggler/components/juggler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..9654aeeb257d2741e728c45c1a81d9c3d2c654af
+index 0000000000000000000000000000000000000000..f1f13445d04aa4b54fa05a1d33e67710976e4be4
 --- /dev/null
 +++ b/testing/juggler/components/juggler.js
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,119 @@
 +const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Dispatcher} = ChromeUtils.import("chrome://juggler/content/protocol/Dispatcher.js");
@@ -1580,17 +1627,24 @@ index 0000000000000000000000000000000000000000..9654aeeb257d2741e728c45c1a81d9c3
 +    const WebSocketServer = require('devtools/server/socket/websocket-server');
 +    this._server = Cc["@mozilla.org/network/server-socket;1"].createInstance(Ci.nsIServerSocket);
 +    this._server.initSpecialConnection(this._port, Ci.nsIServerSocket.KeepWhenOffline | Ci.nsIServerSocket.LoopbackOnly, 4);
++
++    const rng = Cc["@mozilla.org/security/random-generator;1"].createInstance(
++      Ci.nsIRandomGenerator
++    );
++    const bytes = rng.generateRandomBytes(16);
++    const token = bytes.map(x => ('00' + x.toString(16)).slice(-2)).join('');
++
 +    this._server.asyncListen({
 +      onSocketAccepted: async(socket, transport) => {
 +        const input = transport.openInputStream(0, 0, 0);
 +        const output = transport.openOutputStream(0, 0, 0);
-+        const webSocket = await WebSocketServer.accept(transport, input, output);
++        const webSocket = await WebSocketServer.accept(transport, input, output, "/" + token);
 +        new Dispatcher(webSocket);
 +      }
 +    });
 +
 +    Services.mm.loadFrameScript(FRAME_SCRIPT, true /* aAllowDelayedLoad */);
-+    dump(`Juggler listening on ws://127.0.0.1:${this._server.port}\n`);
++    dump(`Juggler listening on ws://127.0.0.1:${this._server.port}/${token}\n`);
 +  },
 +
 +  QueryInterface: ChromeUtils.generateQI([ Ci.nsICommandLineHandler ]),
