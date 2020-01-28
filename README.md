@@ -130,11 +130,11 @@ Check out our [contributing guide](https://github.com/microsoft/playwright/blob/
 
 ## FAQ
 
-**Q: Can I use a single API to automate different browsers?**
+### Q: Can I use a single API to automate different browsers?
 
 Yes, you can. See [Browser](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-browser) in the API reference for the common set of APIs across Chromium, Firefox and WebKit. A small set of features are specific to browsers, for example see [ChromiumBrowser](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-chromiumbrowser).
 
-**Q: How does Playwright relate to [Puppeteer](https://github.com/puppeteer/puppeteer)?**
+### Q: How does Playwright relate to [Puppeteer](https://github.com/puppeteer/puppeteer)?
 
 Puppeteer is a Node library which provides a high-level API to control Chrome or Chromium over the DevTools Protocol. Puppeteer project is active and is maintained by Google.
 
@@ -146,7 +146,7 @@ Playwright also aims at being cloud-native. Rather than a single page, `BrowserC
 
 All the changes and improvements above would require breaking changes to the Puppeteer API, so we chose to start with a clean slate instead. Due to the similarity of the concepts and the APIs, migration between the two should be a mechanical task.
 
-**Q: What about the [WebDriver](https://www.w3.org/TR/webdriver/)?**
+### Q: What about the [WebDriver](https://www.w3.org/TR/webdriver/)?
 
 We recognize WebDriver as a universal standard for the web automation and testing. At the same time we were excited to see Puppeteer affect the WebDriver agenda, steer it towards the bi-directional communication channel, etc. We hope that Playwright can take it further and pioneer support for numerous PWA features across the browsers as they emerge:
 
@@ -156,7 +156,7 @@ We recognize WebDriver as a universal standard for the web automation and testin
 
 - [*reliability*] With Playwright, we encourage `setTimeout`-free automation. The notion of the wall time is incompatible with the operation in the cloud / CI. It is a major source of flakiness and pain and we would like to provide an alternative. With that, Playwright aims at providing sufficient amount of events based on the browser instrumentation to make it possible.
 
-**Q: What browser versions does Playwright use?**
+### Q: What browser versions does Playwright use?
 
 - *Chromium*: Playwright uses upstream versions of Chromium. When we need changes in the browser, they go into the browser directly and then we roll our dependency to that version of Chromium. As of today, we update Chromium as needed or at least once a month. We plan to synchronize our npm release cycle with the Chromium stable channel cadence.
 
@@ -168,7 +168,7 @@ We recognize WebDriver as a universal standard for the web automation and testin
 
   Similarly to WebKit, we'd like to offer all of those for review upstream, for now they can be found in the `browser_patches/firefox` folder.
 
-**Q: Is Playwright ready?**
+### Q: Is Playwright ready?
 
 Playwright is ready for your feedback. It respects [semver](https://semver.org/), so please expect some API breakages as we release 1.0. All we can promise is that those breakages are going to be based on your feedback with the sole purpose of making our APIs better.
 
