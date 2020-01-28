@@ -117,15 +117,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(playwright.defaultArgs({userDataDir: 'foo'})).toContain(FFOX ? 'foo' : '--user-data-dir=foo');
       });
       it('should filter out ignored default arguments', async() => {
-        // Make sure we launch with `--enable-automation` by default.
-        const defaultArgs = playwright.defaultArgs(defaultBrowserOptions);
+        const defaultArgsWithoutUserDataDir = playwright.defaultArgs(defaultBrowserOptions);
+        const defaultArgsWithUserDataDir = playwright.defaultArgs({...defaultBrowserOptions, userDataDir: 'fake-profile'});
         const browserApp = await playwright.launchBrowserApp(Object.assign({}, defaultBrowserOptions, {
-          // Ignore second default argument.
-          ignoreDefaultArgs: [ defaultArgs[1] ],
+          userDataDir: 'fake-profile',
+          // Filter out any of the args added by the fake profile
+          ignoreDefaultArgs: defaultArgsWithUserDataDir.filter(x => !defaultArgsWithoutUserDataDir.includes(x))
         }));
         const spawnargs = browserApp.process().spawnargs;
-        expect(spawnargs.indexOf(defaultArgs[0])).not.toBe(-1);
-        expect(spawnargs.indexOf(defaultArgs[1])).toBe(-1);
+        expect(spawnargs.some(x => x.includes('fake-profile'))).toBe(false);
         await browserApp.close();
       });
     });
