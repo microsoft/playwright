@@ -211,7 +211,7 @@ Indicates that the browser is connected.
     - `height` <[number]> page height in pixels.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
     - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
-  - `userAgent` <?[string]> Specific user agent to use in this page
+  - `userAgent` <?[string]> Specific user agent to use in this context.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the page. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the page. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
