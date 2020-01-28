@@ -3311,7 +3311,7 @@ Kills the browser process.
 #### browserApp.wsEndpoint()
 - returns: <?[string]> Browser websocket url.
 
-Browser websocket endpoint which can be used as an argument to [browserType.connect(options)] to establish connection to the browser.
+Browser websocket endpoint which can be used as an argument to [browserType.connect(options)] to establish connection to the browser. Requires browser app to be launched with `browserType.launchBrowserApp({ webSocket: true, ... })`.
 
 
 ### class: BrowserType
