@@ -86,6 +86,25 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(destroyed).toBe(true);
       expect(page.workers().length).toBe(0);
     });
+    it.skip(CHROMIUM)('should clear upon frame navigation', async function({server, page}) {
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+      const workerCreatedPromise = page.waitForEvent('workercreated');
+      const frame = page.mainFrame().childFrames()[0];
+      frame.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
+      await workerCreatedPromise;
+      expect(page.workers().length).toBe(1);
+      expect(page.workers()[0].frame()).toBe(frame);
+      let destroyed = false;
+      page.once('workerdestroyed', () => destroyed = true);
+      let navigated = false;
+      page.once('framenavigated', () => {
+        expect(destroyed).toBe(true);
+        expect(page.workers().length).toBe(0);
+        navigated = true;
+      });
+      await frame.goto(server.PREFIX + '/one-style.html');
+      expect(navigated).toBe(true);
+    });
     it('should clear upon cross-process navigation', async function({server, page}) {
       await page.goto(server.EMPTY_PAGE);
       const workerCreatedPromise = page.waitForEvent('workercreated');

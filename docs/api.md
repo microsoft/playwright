@@ -3248,6 +3248,7 @@ for (const worker of page.workers())
 <!-- GEN:toc -->
 - [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
 - [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
+- [worker.frame()](#workerframe)
 - [worker.url()](#workerurl)
 <!-- GEN:stop -->
 
@@ -3268,6 +3269,9 @@ If the function passed to the `worker.evaluate` returns a non-[Serializable] val
 The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns in-page object (JSHandle).
 
 If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for the promise to resolve and return its value.
+
+#### worker.frame()
+- returns: <[Frame]> Frame which has created this worker.
 
 #### worker.url()
 - returns: <[string]>

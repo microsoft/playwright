@@ -104,7 +104,8 @@ export class CRTarget {
     if (!this._workerPromise) {
       // TODO(einbinder): Make workers send their console logs.
       this._workerPromise = this._sessionFactory().then(session => {
-        const worker = new Worker(this._targetInfo.url);
+        // TODO: we should not reuse Worker class (which is web worker) for service workers.
+        const worker = new Worker(this._targetInfo.url, null as any);
         session.once('Runtime.executionContextCreated', async event => {
           worker._createExecutionContext(new CRExecutionContext(session, event.context));
         });
@@ -132,6 +133,8 @@ export class CRTarget {
   }
 
   opener(): CRTarget | null {
+    if (this._targetInfo.type === 'worker')
+      return null;
     const { openerId } = this._targetInfo;
     if (!openerId)
       return null;

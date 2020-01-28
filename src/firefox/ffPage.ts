@@ -203,7 +203,7 @@ export class FFPage implements PageDelegate {
 
   async _onWorkerCreated(event: Protocol.Page.workerCreatedPayload) {
     const workerId = event.workerId;
-    const worker = new Worker(event.url);
+    const worker = new Worker(event.url, this._page._frameManager.frame(event.frameId)!);
     const workerSession = new FFSession(this._session._connection, 'worker', workerId, (message: any) => {
       this._session.send('Page.sendMessageToWorker', {
         frameId: event.frameId,

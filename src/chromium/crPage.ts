@@ -219,7 +219,7 @@ export class CRPage implements PageDelegate {
       return;
     const url = event.targetInfo.url;
     const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
-    const worker = new Worker(url);
+    const worker = new Worker(url, null as any);
     this._page._addWorker(event.sessionId, worker);
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));

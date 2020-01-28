@@ -519,22 +519,26 @@ export class Page extends platform.EventEmitter {
     this._workers.delete(workerId);
   }
 
-  _clearWorkers() {
+  _clearWorkers(frame: frames.Frame) {
     for (const [workerId, worker] of this._workers) {
-      this.emit(Events.Page.WorkerDestroyed, worker);
+      if (worker.frame() !== frame)
+        continue;
       this._workers.delete(workerId);
+      this.emit(Events.Page.WorkerDestroyed, worker);
     }
   }
 }
 
 export class Worker {
   private _url: string;
+  private _frame: frames.Frame;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
-  constructor(url: string) {
+  constructor(url: string, frame: frames.Frame) {
     this._url = url;
+    this._frame = frame;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
@@ -546,6 +550,10 @@ export class Worker {
 
   url(): string {
     return this._url;
+  }
+
+  frame(): frames.Frame {
+    return this._frame;
   }
 
   evaluate: types.Evaluate = async (pageFunction, ...args) => {

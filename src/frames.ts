@@ -120,6 +120,7 @@ export class FrameManager {
     frame._lastDocumentId = documentId;
     this.clearFrameLifecycle(frame);
     this.clearWebSockets(frame);
+    this._page._clearWorkers(frame);
     if (!initial) {
       for (const watcher of this._lifecycleWatchers)
         watcher._onCommittedNewDocumentNavigation(frame);
