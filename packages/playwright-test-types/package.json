@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "name": "playwright-test-types",
+  "version": "0.0.0",
+  "description": "Check types",
+  "main": "index.js",
+  "scripts": {
+    "tsc": "tsc -p ."
+  },
+  "dependencies": {
+    "playwright-core": "^0.9.23"
+  }
+}
