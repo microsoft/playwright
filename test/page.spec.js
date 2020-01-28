@@ -154,7 +154,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup'),
+        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
         page.$eval('a', a => a.click()),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -166,13 +166,13 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
         page.click('a'),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     });
-    it.skip(WEBKIT || FFOX)('should not treat navigations as new popups', async({page, server}) => {
+    it.skip(FFOX)('should not treat navigations as new popups', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([

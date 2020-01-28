@@ -144,8 +144,13 @@ export class WKPageProxy {
       (session as any)[isPovisionalSymbol] = true;
     if (targetInfo.isProvisional && this._wkPage)
       this._wkPage.onProvisionalLoadStarted(session);
-    if (targetInfo.isPaused)
-      this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+    if (targetInfo.isPaused) {
+      const resume = () => this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+      if (targetInfo.isProvisional || !this._pagePromise)
+        resume();
+      else
+        this._pagePromise.then(resume);
+    }
   }
 
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
