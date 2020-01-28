@@ -96,12 +96,14 @@ export class WKInterceptableRequest implements network.RequestDelegate {
     });
   }
 
-  async continue(overrides: { headers?: { [key: string]: string; }; }) {
+  async continue(overrides: { method?: string; headers?: network.Headers; postData?: string }) {
     await this._interceptedPromise;
     await this._session.send('Network.interceptContinue', {
       requestId: this._requestId,
-      ...overrides
-    }).catch(error => {
+      method: overrides.method,
+      headers: overrides.headers,
+      postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
+    }).catch((error: Error) => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
       debugError(error);

@@ -211,7 +211,7 @@ export class Request {
     await this._delegate!.fulfill(response);
   }
 
-  async continue(overrides: { headers?: { [key: string]: string } } = {}) {
+  async continue(overrides: { method?: string; headers?: Headers; postData?: string } = {}) {
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     await this._delegate!.continue(overrides);
@@ -301,7 +301,7 @@ export class Response {
 export interface RequestDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }): Promise<void>;
-  continue(overrides: { url?: string; method?: string; postData?: string; headers?: Headers; }): Promise<void>;
+  continue(overrides: { method?: string; headers?: Headers; postData?: string; }): Promise<void>;
 }
 
 export class WebSocket extends platform.EventEmitter {

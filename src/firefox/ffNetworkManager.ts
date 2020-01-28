@@ -158,13 +158,17 @@ class InterceptableRequest implements network.RequestDelegate {
         payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData, headers);
   }
 
-  async continue(overrides: { headers?: { [key: string]: string } } = {}) {
+  async continue(overrides: { method?: string; headers?: network.Headers; postData?: string }) {
     const {
+      method,
       headers,
+      postData
     } = overrides;
     await this._session.send('Network.resumeInterceptedRequest', {
       requestId: this._id,
+      method,
       headers: headers ? headersArray(headers) : undefined,
+      postData: postData ? Buffer.from(postData).toString('base64') : undefined
     }).catch(error => {
       debugError(error);
     });

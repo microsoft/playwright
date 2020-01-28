@@ -2849,6 +2849,8 @@ Exception is immediately thrown if the request interception is not enabled.
 
 #### request.continue([overrides])
 - `overrides` <[Object]> Optional request overwrites, which can be one of the following:
+  - `method` <[string]> If set changes the request method (e.g. GET or POST)
+  - `postData` <[string]> If set changes the post data of request
   - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
 - returns: <[Promise]>
 

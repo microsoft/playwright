@@ -279,10 +279,12 @@ class InterceptableRequest implements network.RequestDelegate {
         event.request.url, (event.type || '').toLowerCase(), event.request.method, event.request.postData, headersObject(event.request.headers));
   }
 
-  async continue(overrides: { headers?: network.Headers; } = {}) {
+  async continue(overrides: { method?: string; headers?: network.Headers; postData?: string } = {}) {
     await this._client.send('Fetch.continueRequest', {
       requestId: this._interceptionId!,
       headers: overrides.headers ? headersArray(overrides.headers) : undefined,
+      method: overrides.method,
+      postData: overrides.postData
     }).catch(error => {
       // In certain cases, protocol will return error if the request was already canceled
       // or the page was closed. We should tolerate these errors.
