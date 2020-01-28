@@ -416,7 +416,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe('Interception.continue', function() {
+  describe('Request.continue', function() {
     it('should work', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => request.continue());
@@ -436,9 +436,44 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       ]);
       expect(request.headers['foo']).toBe('bar');
     });
+    it('should amend method', async({page, server}) => {
+      const sRequest = server.waitForRequest('/sleep.zzz');
+      await page.goto(server.EMPTY_PAGE);
+      await page.setRequestInterception(true);
+      page.on('request', request => {
+        request.continue({ method: 'POST' });
+      });
+      const [request] = await Promise.all([
+        server.waitForRequest('/sleep.zzz'),
+        page.evaluate(() => fetch('/sleep.zzz'))
+      ]);
+      expect(request.method).toBe('POST');
+      expect((await sRequest).method).toBe('POST');
+    });
+    it('should amend method on main request', async({page, server}) => {
+      const request = server.waitForRequest('/empty.html');
+      await page.setRequestInterception(true);
+      page.on('request', request => {
+        request.continue({ method: 'POST' });
+      });
+      await page.goto(server.EMPTY_PAGE);
+      expect((await request).method).toBe('POST');
+    });
+    it('should amend post data', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setRequestInterception(true);
+      page.on('request', request => {
+        request.continue({ postData: 'doggo' });
+      });
+      const [serverRequest] = await Promise.all([
+        server.waitForRequest('/sleep.zzz'),
+        page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
+      ]);
+      expect(await serverRequest.postBody).toBe('doggo');
+    });
   });
 
-  describe('interception.fulfill', function() {
+  describe('Request.fulfill', function() {
     it('should work', async({page, server}) => {
       await page.setRequestInterception(true);
       page.on('request', request => {
