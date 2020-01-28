@@ -20,4 +20,5 @@ export const errors: { TimeoutError: typeof import('./lib/errors').TimeoutError 
 export const chromium: import('./lib/server/chromium').Chromium;
 export const firefox: import('./lib/server/firefox').Firefox;
 export const webkit: import('./lib/server/webkit').WebKit;
+export const selectors: import('./lib/api').Selectors;
 export type PlaywrightWeb = typeof import('./lib/web');

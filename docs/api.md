@@ -18,6 +18,7 @@
 - [class: Mouse](#class-mouse)
 - [class: Request](#class-request)
 - [class: Response](#class-response)
+- [class: Selectors](#class-selectors)
 - [class: WebSocket](#class-websocket)
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
@@ -57,6 +58,7 @@ Playwright automatically downloads browser executables during installation, see 
 - [playwright.devices](#playwrightdevices)
 - [playwright.errors](#playwrighterrors)
 - [playwright.firefox](#playwrightfirefox)
+- [playwright.selectors](#playwrightselectors)
 - [playwright.webkit](#playwrightwebkit)
 <!-- GEN:stop -->
 
@@ -112,6 +114,11 @@ try {
 - returns: <[BrowserType]>
 
 This object can be used to launch or connect to Firefox, returning instances of [FirefoxBrowser].
+
+#### playwright.selectors
+- returns: <[Selectors]>
+
+Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more information.
 
 #### playwright.webkit
 - returns: <[BrowserType]>
@@ -3016,6 +3023,61 @@ Contains the status text of the response (e.g. usually an "OK" for a success).
 
 Contains the URL of the response.
 
+### class: Selectors
+
+Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more information.
+
+<!-- GEN:toc -->
+- [selectors.register(engineSource)](#selectorsregisterenginesource)
+<!-- GEN:stop -->
+
+#### selectors.register(engineSource)
+- `engineSource` <[string]> String which evaluates to a selector engine instance.
+- returns: <[Promise]>
+
+An example of registering selector engine which selects nodes based on tag name:
+```js
+const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+
+(async () => {
+  const createTagSelector = () => ({
+    // Selectors will be prefixed with "tag=".
+    name: 'tag',
+
+    // Creates a selector which matches given target when queried at the root.
+    create(root, target) {
+      return target.tagName;
+    },
+
+    // Returns the first element matching given selector in the root's subtree.
+    query(root, selector) {
+      return root.querySelector(selector);
+    },
+
+    // Returns all elements matching given selector in the root's subtree.
+    queryAll(root, selector) {
+      return Array.from(root.querySelectorAll(selector));
+    }
+  });
+
+  // Construct an expression which evaluates to our selector instance.
+  await selectors.register(`(${createTagSelector.toString()})()`);
+
+  const browser = await firefox.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage('http://example.com');
+
+  // Use the selector prefixed with its name.
+  const button = await page.$('tag=button');
+  // Combine it with other selector engines.
+  await page.click('tag=div >> text="Click me"');
+  // Can use it in any methods supporting selectors.
+  const buttonCount = await page.$$eval('tag=button', buttons => buttons.length);
+
+  await browser.close();
+})();
+```
+
 ### class: WebSocket
 
 The [WebSocket] class represents websocket connections in the page.
@@ -3779,6 +3841,7 @@ const { chromium } = require('playwright');
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
 [Request]: #class-request  "Request"
 [Response]: #class-response  "Response"
+[Selectors]: #class-selectors  "Selectors"
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [Target]: #class-target "Target"
 [TimeoutError]: #class-timeouterror "TimeoutError"

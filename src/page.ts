@@ -27,7 +27,6 @@ import * as types from './types';
 import { Events } from './events';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
-import Injected from './injected/injected';
 import * as accessibility from './accessibility';
 import * as platform from './platform';
 
@@ -195,13 +194,6 @@ export class Page extends platform.EventEmitter {
 
   async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
     return this.mainFrame().waitForSelector(selector, options);
-  }
-
-  async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
-    const mainContext = await this.mainFrame()._mainContext();
-    return mainContext.evaluate((injected: Injected, target: Element, name: string) => {
-      return injected.engines.get(name)!.create(document.documentElement, target);
-    }, await mainContext._injected(), handle, name);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {

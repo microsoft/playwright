@@ -26,6 +26,7 @@ export { Keyboard, Mouse } from './input';
 export { JSHandle } from './javascript';
 export { Request, Response, WebSocket } from './network';
 export { Coverage, FileChooser, Page, Worker } from './page';
+export { Selectors } from './selectors';
 
 export { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';
 export { CRSession as ChromiumSession } from './chromium/crConnection';

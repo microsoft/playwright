@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -393,28 +393,28 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
 
     it('create', async ({page}) => {
       await page.setContent(`<div>yo</div><div>ya</div><div>ya</div>`);
-      expect(await page._createSelector('zs', await page.$('div'))).toBe('"yo"');
-      expect(await page._createSelector('zs', await page.$('div:nth-child(2)'))).toBe('"ya"');
-      expect(await page._createSelector('zs', await page.$('div:nth-child(3)'))).toBe('"ya"#1');
+      expect(await selectors._createSelector('zs', await page.$('div'))).toBe('"yo"');
+      expect(await selectors._createSelector('zs', await page.$('div:nth-child(2)'))).toBe('"ya"');
+      expect(await selectors._createSelector('zs', await page.$('div:nth-child(3)'))).toBe('"ya"#1');
 
       await page.setContent(`<img alt="foo bar">`);
-      expect(await page._createSelector('zs', await page.$('img'))).toBe('img[alt="foo bar"]');
+      expect(await selectors._createSelector('zs', await page.$('img'))).toBe('img[alt="foo bar"]');
 
       await page.setContent(`<div>yo<span></span></div><span></span>`);
-      expect(await page._createSelector('zs', await page.$('span'))).toBe('"yo"~SPAN');
-      expect(await page._createSelector('zs', await page.$('span:nth-child(2)'))).toBe('SPAN#1');
+      expect(await selectors._createSelector('zs', await page.$('span'))).toBe('"yo"~SPAN');
+      expect(await selectors._createSelector('zs', await page.$('span:nth-child(2)'))).toBe('SPAN#1');
     });
 
     it('children of various display parents', async ({page}) => {
       await page.setContent(`<body><div style='position: fixed;'><span>yo</span></div></body>`);
-      expect(await page._createSelector('zs', await page.$('span'))).toBe('"yo"');
+      expect(await selectors._createSelector('zs', await page.$('span'))).toBe('"yo"');
 
       await page.setContent(`<div style='position: relative;'><span>yo</span></div>`);
-      expect(await page._createSelector('zs', await page.$('span'))).toBe('"yo"');
+      expect(await selectors._createSelector('zs', await page.$('span'))).toBe('"yo"');
 
       // "display: none" makes all children text invisible - fallback to tag name.
       await page.setContent(`<div style='display: none;'><span>yo</span></div>`);
-      expect(await page._createSelector('zs', await page.$('span'))).toBe('SPAN');
+      expect(await selectors._createSelector('zs', await page.$('span'))).toBe('SPAN');
     });
 
     it('boundary', async ({page}) => {
@@ -465,7 +465,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
             <div id=target2>hello</div>
           </div>
         </div>`);
-      expect(await page._createSelector('zs', await page.$('#target'))).toBe('"ya"~"hey"~"hello"');
+      expect(await selectors._createSelector('zs', await page.$('#target'))).toBe('"ya"~"hey"~"hello"');
       expect(await page.$eval(`zs="ya"~"hey"~"hello"`, e => e.outerHTML)).toBe('<div id="target">hello</div>');
       expect(await page.$eval(`zs="ya"~"hey"~"unique"`, e => e.outerHTML).catch(e => e.message)).toBe('Error: failed to find element matching selector "zs="ya"~"hey"~"unique""');
       expect(await page.$$eval(`zs="ya" ~ "hey" ~ "hello"`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div id="target">hello</div>\n<div id="target2">hello</div>');
@@ -498,18 +498,63 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
 
     it('create', async ({page}) => {
       await page.setContent(`<div>yo</div><div>"ya</div><div>ye ye</div>`);
-      expect(await page._createSelector('text', await page.$('div'))).toBe('yo');
-      expect(await page._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');
-      expect(await page._createSelector('text', await page.$('div:nth-child(3)'))).toBe('"ye ye"');
+      expect(await selectors._createSelector('text', await page.$('div'))).toBe('yo');
+      expect(await selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');
+      expect(await selectors._createSelector('text', await page.$('div:nth-child(3)'))).toBe('"ye ye"');
 
       await page.setContent(`<div>yo</div><div>yo<div>ya</div>hey</div>`);
-      expect(await page._createSelector('text', await page.$('div:nth-child(2)'))).toBe('hey');
+      expect(await selectors._createSelector('text', await page.$('div:nth-child(2)'))).toBe('hey');
 
       await page.setContent(`<div> yo <div></div>ya</div>`);
-      expect(await page._createSelector('text', await page.$('div'))).toBe('yo');
+      expect(await selectors._createSelector('text', await page.$('div'))).toBe('yo');
 
       await page.setContent(`<div> "yo <div></div>ya</div>`);
-      expect(await page._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
+      expect(await selectors._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
+    });
+  });
+
+  describe('selectors.register', () => {
+    it('should work', async ({page}) => {
+      const createTagSelector = () => ({
+        name: 'tag',
+        create(root, target) {
+          return target.nodeName;
+        },
+        query(root, selector) {
+          return root.querySelector(selector);
+        },
+        queryAll(root, selector) {
+          return Array.from(root.querySelectorAll(selector));
+        }
+      });
+      await selectors.register(`(${createTagSelector.toString()})()`);
+      await page.setContent('<div><span></span></div><div></div>');
+      expect(await selectors._createSelector('tag', await page.$('div'))).toBe('DIV');
+      expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
+      expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
+      expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
+    });
+    it('should update', async ({page}) => {
+      await page.setContent('<div><dummy id=d1></dummy></div><span><dummy id=d2></dummy></span>');
+      expect(await page.$eval('div', e => e.nodeName)).toBe('DIV');
+      const error = await page.$('dummy=foo').catch(e => e);
+      expect(error.message).toContain('Unknown engine dummy while parsing selector dummy=foo');
+      await selectors.register(`
+        ({
+          name: 'dummy',
+          create(root, target) {
+            return target.nodeName;
+          },
+          query(root, selector) {
+            return root.querySelector('dummy');
+          },
+          queryAll(root, selector) {
+            return Array.from(root.querySelectorAll('dummy'));
+          }
+        })
+      `);
+      expect(await page.$eval('dummy=foo', e => e.id)).toBe('d1');
+      expect(await page.$eval('css=span >> dummy=foo', e => e.id)).toBe('d2');
     });
   });
 };
