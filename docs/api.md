@@ -3578,7 +3578,7 @@ Useful links:
 - Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
 
 ```js
-const client = await browser.pageTarget(page).createCDPSession();
+const client = await chromium.pageTarget(page).createCDPSession();
 await client.send('Animation.enable');
 client.on('Animation.animationCreated', () => console.log('Animation created!'));
 const response = await client.send('Animation.getPlaybackRate');
