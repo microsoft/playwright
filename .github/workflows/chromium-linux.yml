@@ -31,6 +31,6 @@ jobs:
       run: |
         npm install
         npm run build
-        xvfb-run --auto-servernum npm run unit
+        xvfb-run --auto-servernum npm run ctest
       env:
         CI: true

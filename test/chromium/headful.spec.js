@@ -67,7 +67,8 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       expect(pages).toEqual(['about:blank']);
       await browser.close();
     });
-    it('headless should be able to read cookies written by headful', async({server}) => {
+    // see https://github.com/microsoft/playwright/issues/717
+    it.skip(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       // Write a cookie in headful chrome
       const headfulBrowser = await playwright.launch(Object.assign({userDataDir}, headfulOptions));

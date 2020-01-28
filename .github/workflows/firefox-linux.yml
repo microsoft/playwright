@@ -30,6 +30,6 @@ jobs:
     - name: npm install, build, and test
       run: |
         npm install
-        xvfb-run --auto-servernum npm run funit
+        xvfb-run --auto-servernum npm run ftest
       env:
         CI: true

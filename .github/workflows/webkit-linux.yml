@@ -35,6 +35,6 @@ jobs:
         # The following logs LDD status of all webkit-wpe shared objects and executables.
         # pushd .local-webkit/$(ls .local-webkit)/minibrowser-wpe; ls -1 | grep -v pw_run.sh | LD_LIBRARY_PATH=$PWD xargs ldd; popd
 
-        xvfb-run --auto-servernum npm run wunit
+        xvfb-run --auto-servernum npm run wtest
       env:
         CI: true

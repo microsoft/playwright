@@ -27,6 +27,6 @@ jobs:
     - name: npm install, and test
       run: |
         npm install
-        npm run funit
+        npm run ftest
       env:
         CI: true

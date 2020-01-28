@@ -27,6 +27,6 @@ jobs:
     - name: npm install, and test
       run: |
         npm install
-        npm run wunit
+        npm run wtest
       env:
         CI: true
