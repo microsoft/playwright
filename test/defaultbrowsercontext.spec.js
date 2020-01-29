@@ -30,7 +30,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
       delete state.browser;
       delete state.page;
     });
-    it('page.cookies() should work', async({page, server}) => {
+    it('context.cookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         document.cookie = 'username=John Doe';
