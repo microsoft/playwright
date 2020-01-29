@@ -831,9 +831,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const error = await navigationPromise;
       expect(error.message).toContain('frame was detached');
     });
-    it('should return matching responses', async({page, server}) => {
+    it('should return matching responses', async({context, page, server}) => {
       // Disable cache: otherwise, chromium will cache similar requests.
-      await page.setCacheEnabled(false);
+      await context.setCacheEnabled(false);
       await page.goto(server.EMPTY_PAGE);
       // Attach three frames.
       const frames = [

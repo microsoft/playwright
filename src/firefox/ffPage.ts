@@ -90,6 +90,8 @@ export class FFPage implements PageDelegate {
       promises.push(this._session.send('Page.setJavascriptEnabled', { enabled: false }));
     if (options.userAgent)
       promises.push(this._session.send('Page.setUserAgent', { userAgent: options.userAgent }));
+    if (options.cacheEnabled === false)
+      promises.push(this.setCacheEnabled(false));
     await Promise.all(promises);
   }
 
