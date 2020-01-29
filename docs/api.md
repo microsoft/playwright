@@ -3038,22 +3038,24 @@ Selectors can be used to install custom selector engines. See [Working with sele
 <!-- GEN:stop -->
 
 #### selectors.register(engineFunction[, ...args])
-- `engineFunction` <[function]|[string]> Function which evaluates to a selector engine instance.
+- `engineFunction` <[function]|[string]> Function that evaluates to a selector engine instance.
 - `...args` <...[Serializable]> Arguments to pass to `engineFunction`.
 - returns: <[Promise]>
 
-An example of registering selector engine which selects nodes based on tag name:
+An example of registering selector engine that queries elements based on a tag name:
 ```js
 const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
-  const createTagSelector = () => ({
+  // Must be a function that evaluates to a selector engine instance.
+  const createTagNameEngine = () => ({
     // Selectors will be prefixed with "tag=".
     name: 'tag',
 
-    // Creates a selector which matches given target when queried at the root.
+    // Creates a selector that matches given target when queried at the root.
+    // Can return undefined if unable to create one.
     create(root, target) {
-      return target.tagName;
+      return root.querySelector(target.tagName) === target ? target.tagName : undefined;
     },
 
     // Returns the first element matching given selector in the root's subtree.
@@ -3067,7 +3069,8 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
     }
   });
 
-  await selectors.register(createTagSelector);
+  // Register the engine.
+  await selectors.register(createTagNameEngine);
 
   const browser = await firefox.launch();
   const context = await browser.newContext();
@@ -3755,11 +3758,11 @@ WebKit browser instance does not expose WebKit-specific features.
 
 Selector describes an element in the page. It can be used to obtain `ElementHandle` (see [page.$()](#pageselector) for example) or shortcut element operations to avoid intermediate handle (see [page.click()](#pageclickselector-options) for example).
 
-Selector has the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported selector engines (currently, either `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
+Selector has the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported [selector engines](selectors.md) (e.g. `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - selector starting with `//` is assumed to be `xpath=selector`;
-- selector starting with `"` is assumed to be `zs=selector`;
+- selector starting with `"` is assumed to be `text=selector`;
 - otherwise selector is assumed to be `css=selector`.
 
 ```js
@@ -3781,7 +3784,7 @@ const handle = await page.$('div');
 // converted to 'xpath=//html/body/div'
 const handle = await page.$('//html/body/div');
 
-// converted to 'zs="foo"'
+// converted to 'text="foo"'
 const handle = await page.$('"foo"');
 
 // queries 'span' css selector inside the div handle
