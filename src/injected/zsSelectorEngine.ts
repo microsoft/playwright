@@ -589,7 +589,7 @@ class Engine {
           appendCue(`img[alt=${JSON.stringify(alt)}]`, 'imgAlt', this.options.imgAltScore, element, lca, alt);
       }
       if (this.options.ariaLabelScore) {
-        const ariaLabel = element.getAttribute('aira-label');
+        const ariaLabel = element.getAttribute('aria-label');
         if (ariaLabel)
           appendCue(JSON.stringify(`[aria-label=${JSON.stringify(ariaLabel)}]`), 'ariaLabel', this.options.ariaLabelScore, element, lca, ariaLabel);
       }
