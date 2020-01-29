@@ -216,4 +216,196 @@ function firefoxTypeToString(type, indent='    ') {
   return type['$type'];
 }
 
-module.exports = {generateChromiunProtocol, generateFirefoxProtocol, generateWebKitProtocol};
+function generateInternalProtocol() {
+  const pdlPath = path.join(__dirname, '..', '..', 'src', 'protocol', 'protocol.pdl');
+  const tsPath = path.join(__dirname, '..', '..', 'src', 'protocol', 'protocol.ts');
+  const json = pdlToJSON(fs.readFileSync(pdlPath, 'utf-8'));
+  fs.writeFileSync(tsPath, jsonToTS(json));
+  console.log(`Wrote protocol.ts to ${path.relative(process.cwd(), tsPath)}`);
+}
+
+function pdlToJSON(pdl) {
+  const lines = pdl.split('\n');
+  let lineIndex = 0;
+  let current;
+
+  function next() {
+    while (lineIndex < lines.length) {
+      let line = lines[lineIndex++];
+      let indent = 0;
+      while (line[indent] === ' ')
+        indent++;
+      let commentIndex = line.indexOf('#');
+      if (commentIndex !== -1)
+        line = line.substring(0, commentIndex);
+      line = line.trim();
+      if (line) {
+        current = { line, indent };
+        return current;
+      }
+    }
+    current = { indent: -1, line: '' };
+    return current;
+  }
+
+  function readDomains() {
+    const domains = [];
+    while (current.indent !== -1)
+      domains.push(readDomain());
+    return domains;
+  }
+
+  function readDomain() {
+    const indent = current.indent;
+    const match = current.line.match(/^domain\s+([a-zA-Z0-9_]+)$/);
+    next();
+    const domain = {
+      domain: match[1],
+      commands: [],
+      events: [],
+      types: [],
+    };
+    while (current.indent > indent) {
+      if (current.line.startsWith('command'))
+        domain.commands.push(readCommand());
+      else if (current.line.startsWith('event'))
+        domain.events.push(readEvent());
+      else if (current.line.startsWith('type'))
+        domain.types.push(readType());
+      else
+        throw new Error(`Cannot parse: ${current.line}`);
+    }
+    return domain;
+  }
+
+  function readCommand() {
+    const indent = current.indent;
+    const match = current.line.match(/^command\s+([a-zA-Z0-9_]+)$/);
+    next();
+    const command = {
+      name: match[1],
+      parameters: [],
+      returns: [],
+    };
+    while (current.indent > indent) {
+      if (current.line === 'parameters') {
+        const i = current.indent;
+        next();
+        while (current.indent > i)
+          command.parameters.push(readProperty());
+      } else if (current.line === 'returns') {
+        const i = current.indent;
+        next();
+        while (current.indent > i)
+          command.returns.push(readProperty());
+      } else {
+        throw new Error(`Cannot parse: ${current.line}`);
+      }
+    }
+    return command;
+  }
+
+  function readEvent() {
+    const indent = current.indent;
+    const match = current.line.match(/^event\s+([a-zA-Z0-9_]+)$/);
+    next();
+    const event = {
+      name: match[1],
+      parameters: [],
+      returns: [],
+    };
+    while (current.indent > indent) {
+      if (current.line === 'parameters') {
+        const i = current.indent;
+        next();
+        while (current.indent > i)
+          event.parameters.push(readProperty());
+      } else {
+        throw new Error(`Cannot parse: ${current.line}`);
+      }
+    }
+    return event;
+  }
+
+  function readType() {
+    const match = current.line.match(/^type\s+([a-zA-Z0-9_]+)\s+extends(.*)$/);
+    const type = {
+      id: match[1],
+    };
+    let t = type;
+    const words = match[2].split(' ').filter(s => !!s);
+    while (words[0] === 'array' && words[1] === 'of') {
+      t.type = 'array';
+      const items = {};
+      t.items = items;
+      t = items;
+      words.shift();
+      words.shift();
+    }
+    if (words.length !== 1)
+      throw new Error(`Cannot parse: ${current.line}`);
+    if (['boolean', 'integer', 'number'].includes(words[0])) {
+      t.type = words[0];
+      next();
+    } else if (words[0] === 'object') {
+      t.type = 'object';
+      next();
+      if (current.line !== 'properties')
+        throw new Error(`Cannot parse: ${current.line}`);
+      const indent = current.indent;
+      next();
+      t.properties = [];
+      while (current.indent > indent)
+        t.properties.push(readProperty());
+    } else if (words[0] === 'string') {
+      t.type = 'string';
+      next();
+      if (current.line === 'enum') {
+        const indent = current.indent;
+        next();
+        t.enum = [];
+        while (current.indent > indent) {
+          if (!current.line.match(/^[a-zA-Z0-9_]+$/))
+            throw new Error(`Cannot parse: ${current.line}`);
+          t.enum.push(current.line);
+          next();
+        }
+      }
+    } else {
+      t.$ref = words[0];
+      next();
+    }
+    return type;
+  }
+
+  function readProperty() {
+    const match = current.line.match(/^(optional)?\s*(.*)\s+([a-zA-Z0-9_]+)$/);
+    const prop = {
+      optional: !!match[1],
+      name: match[3],
+    };
+    let t = prop;
+    const words = match[2].split(' ').filter(s => !!s);
+    while (words[0] === 'array' && words[1] === 'of') {
+      t.type = 'array';
+      const items = {};
+      t.items = items;
+      t = items;
+      words.shift();
+      words.shift();
+    }
+    if (words.length !== 1)
+      throw new Error(`Cannot parse: ${current.line}`);
+    if (['string', 'boolean', 'integer', 'number'].includes(words[0]))
+      t.type = words[0];
+    else
+      t.$ref = words[0];
+    next();
+    return prop;
+  }
+
+  next();
+  return { domains: readDomains() };
+}
+
+module.exports = {generateChromiunProtocol, generateFirefoxProtocol, generateWebKitProtocol, generateInternalProtocol};

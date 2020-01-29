@@ -1,0 +1,231 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+domain Types
+  type Size extends object
+    properties
+      integer width
+      integer height
+
+domain BrowserContext
+  type BrowserContextId extends string
+
+  type Geolocation extends object
+    properties
+      number longitude
+      number latitude
+      optional number accuracy
+
+  command create
+    parameters
+      optional Types.Size viewportSize
+      optional Geolocation geolocation
+    returns
+      BrowserContextId contextId
+
+  command destroy
+    parameters
+      BrowserContextId contextId
+
+  command setGeolocation
+    parameters
+      BrowserContextId contextId
+      optional Geolocation geolocation
+
+domain Frame
+  type FrameId extends string
+
+  type FrameTree extends object
+    properties
+      FrameId frameId
+      string url
+      optional array of FrameTree childFrames
+
+  type Lifecycle extends string
+    enum
+      domcontentloaded
+      load
+      networkidle0
+      networkidle2
+
+  command createPage
+    parameters
+      BrowserContext.BrowserContextId contextId
+      optional string url
+    returns
+      FrameId mainFrameId
+
+  command destroyPage
+    parameters
+      FrameId mainFrameId
+
+  event pageCreated
+    parameters
+      BrowserContext.BrowserContextId contextId
+      FrameTree frameTree
+
+  event pageDestroyed
+    parameters
+      FrameId mainFrameId
+
+  event attached
+    parameters
+      FrameId frameId
+      FrameId parentFrameId
+
+  event navigated
+    parameters
+      FrameId frameId
+      string url
+
+  event detached
+    parameters
+      FrameId frameId
+
+  command navigate
+    parameters
+      FrameId frameId
+      string url
+      array of Lifecycle waitUntil
+      optional string referrer
+    returns
+      optional Network.RequestId requestId
+
+domain JS
+  type HandleId extends string
+
+  type Handle extends object
+    properties
+      HandleId handleId
+      string asString
+      boolean isDOMElement
+
+  type Value extends object
+    properties
+      optional string string
+      optional number number
+      optional boolean null
+      optional boolean undefined
+      optional boolean boolean
+      optional array of Value values
+      optional array of string keys
+
+  type CallArgument extends object
+    properties
+      optional Value value
+      optional HandleId handleId
+
+  command evaluateHandle
+    parameters
+      string functionExpression
+      array of CallArgument args
+      optional Frame.FrameId frameId
+      optional HandleId handleId
+    returns
+      Handle handle
+
+  command evaluate
+    parameters
+      string functionExpression
+      array of CallArgument args
+      optional Frame.FrameId frameId
+      optional HandleId handleId
+    returns
+      Value value
+
+  command handleAsValue
+    parameters
+      HandleId handleId
+    returns
+      Value value
+
+  command disposeHandle
+    parameters
+      HandleId handleId
+
+domain DOM
+  command ownerFrame
+    parameters
+      JS.HandleId handleId
+    returns
+      optional Frame.FrameId frameId
+
+  command contentFrame
+    parameters
+      JS.HandleId handleId
+    returns
+      optional Frame.FrameId frameId
+
+  command scrollIntoViewIfNeeded
+    parameters
+      JS.HandleId handleId
+
+domain Network
+  type RequestId extends string
+
+  type ResourceType extends string
+    enum
+      document
+
+  type Header extends object
+    properties
+      string name
+      string value
+
+  type Headers extends array of Header
+
+  event requestStarted
+    parameters
+      RequestId requestId
+      Frame.FrameId frameId
+      string url
+      string method
+      ResourceType resourceType
+      Headers headers
+      boolean isIntercepted
+      boolean isNavigation
+      optional RequestId redirectedFrom
+      optional string postData
+
+  event responseReceived
+    parameters
+      RequestId requestId
+
+  event requestFailed
+    parameters
+      RequestId requestId
+      string errorText
+
+  event requestFinished
+    parameters
+      RequestId requestId
+
+  command abortRequest
+    parameters
+      RequestId requestId
+      string errorCode
+
+  command fulfillRequest
+    parameters
+      RequestId requestId
+      integer status
+      Headers headers
+      string contentType
+      string base64body
+
+  command continueRequest
+    parameters
+      RequestId requestId
+      optional Headers headers
+
