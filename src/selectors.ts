@@ -17,6 +17,7 @@
 import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import * as dom from './dom';
 import Injected from './injected/injected';
+import { helper } from './helper';
 
 let selectors: Selectors;
 
@@ -34,8 +35,9 @@ export class Selectors {
     this._sources = [zsSelectorEngineSource.source];
   }
 
-  async register(engineSource: string) {
-    this._sources.push(engineSource);
+  async register(engineFunction: string | Function, ...args: any[]) {
+    const source = helper.evaluationString(engineFunction, ...args);
+    this._sources.push(source);
     ++this._generation;
   }
 

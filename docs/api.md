@@ -3034,11 +3034,12 @@ Contains the URL of the response.
 Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more information.
 
 <!-- GEN:toc -->
-- [selectors.register(engineSource)](#selectorsregisterenginesource)
+- [selectors.register(engineFunction[, ...args])](#selectorsregisterenginefunction-args)
 <!-- GEN:stop -->
 
-#### selectors.register(engineSource)
-- `engineSource` <[string]> String which evaluates to a selector engine instance.
+#### selectors.register(engineFunction[, ...args])
+- `engineFunction` <[function]|[string]> Function which evaluates to a selector engine instance.
+- `...args` <...[Serializable]> Arguments to pass to `engineFunction`.
 - returns: <[Promise]>
 
 An example of registering selector engine which selects nodes based on tag name:
@@ -3066,8 +3067,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
     }
   });
 
-  // Construct an expression which evaluates to our selector instance.
-  await selectors.register(`(${createTagSelector.toString()})()`);
+  await selectors.register(createTagSelector);
 
   const browser = await firefox.launch();
   const context = await browser.newContext();
