@@ -3402,6 +3402,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
 - [browserType.launchBrowserApp([options])](#browsertypelaunchbrowserappoptions)
+- [browserType.webEngine()](#browsertypewebengine)
 <!-- GEN:stop -->
 
 #### browserType.connect(options)
@@ -3522,6 +3523,11 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Promise]<[BrowserApp]>> Promise which resolves to the browser app instance.
+
+#### browserType.webEngine()
+- returns: <[string]>
+
+Returns web engine used in the browser: either `'blink'` (Chromium), `'webkit'` or `'gecko'` (Firefox).
 
 ### class: ChromiumBrowser
 

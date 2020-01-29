@@ -43,6 +43,10 @@ export class Chromium implements BrowserType {
     this._revision = preferredRevision;
   }
 
+  webEngine() {
+    return 'blink';
+  }
+
   async launch(options?: LaunchOptions): Promise<CRBrowser> {
     const app = await this.launchBrowserApp(options);
     const browser = await CRBrowser.connect(app.connectOptions());

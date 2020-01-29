@@ -41,6 +41,7 @@ export type LaunchOptions = BrowserArgOptions & {
 
 export interface BrowserType {
   executablePath(): string;
+  webEngine(): string;
   launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp>;
   launch(options?: LaunchOptions): Promise<Browser>;
   defaultArgs(options?: BrowserArgOptions): string[];
