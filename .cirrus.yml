@@ -29,7 +29,7 @@ task:
         dockerfile: .ci/node8/Dockerfile.linux
       xvfb_start_background_script: Xvfb :99 -ac -screen 0 1024x768x24
   install_script: npm install --unsafe-perm
-  test_script: npm run funit
+  test_script: npm run ftest
 
 task:
   osx_instance:

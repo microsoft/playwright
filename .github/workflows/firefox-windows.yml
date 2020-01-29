@@ -1,4 +1,4 @@
-name: Firefox Tests
+name: Firefox Windows Tests
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-18.04
+    runs-on: windows-latest
 
     strategy:
       matrix:
@@ -23,14 +23,10 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: install required packages
-      run: |
-        sudo apt-get install xvfb
 
-    - name: npm install, build, and test
+    - name: npm install, and test
       run: |
         npm install
-        npm run build
-        xvfb-run --auto-servernum npm run funit
+        npm run ftest
       env:
         CI: true

@@ -1,4 +1,4 @@
-name: WebKit Tests
+name: Chromium Linux Tests
 
 on:
   push:
@@ -25,17 +25,12 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: install required packages
       run: |
-        sudo apt update
-        sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1
         sudo apt-get install xvfb
 
     - name: npm install, build, and test
       run: |
         npm install
-        # The following logs LDD status of all webkit-wpe shared objects and executables.
-        # pushd .local-webkit/$(ls .local-webkit)/minibrowser-wpe; ls -1 | grep -v pw_run.sh | LD_LIBRARY_PATH=$PWD xargs ldd; popd
-
         npm run build
-        xvfb-run --auto-servernum npm run wunit
+        xvfb-run --auto-servernum npm run ctest
       env:
         CI: true

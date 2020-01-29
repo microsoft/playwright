@@ -25,7 +25,7 @@ const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 const TMP_FOLDER = path.join(os.tmpdir(), 'pw_tmp_folder-');
 
-module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, product, CHROMIUM, FFOX, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, product, CHROMIUM, FFOX, WEBKIT, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -317,8 +317,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
       await rmAsync(userDataDir).catch(e => {});
     });
-    // This mysteriously fails on Windows on AppVeyor. See https://github.com/GoogleChrome/puppeteer/issues/4111
-    it.skip(FFOX)('userDataDir option should restore cookies', async({server}) => {
+    // See https://github.com/microsoft/playwright/issues/717
+    it.skip(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
       const userDataDir = await mkdtempAsync(TMP_FOLDER);
       const options = Object.assign({userDataDir}, defaultBrowserOptions);
       const browser = await playwright.launch(options);

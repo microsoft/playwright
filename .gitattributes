@@ -1,0 +1,3 @@
+# text files must be lf for golden file tests to work
+*.txt eol=lf
+*.json eol=lf
