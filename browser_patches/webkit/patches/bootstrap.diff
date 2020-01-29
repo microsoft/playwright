@@ -5158,7 +5158,7 @@ index eaa0d84fa5cfa740d27b78b907ec9569931cb0dc..b26a0c9ed6eea66c741bb17c599cd794
  UIProcess/API/Cocoa/_WKContextMenuElementInfo.mm
  UIProcess/API/Cocoa/_WKCustomHeaderFields.mm @no-unify
 diff --git a/Source/WebKit/SourcesGTK.txt b/Source/WebKit/SourcesGTK.txt
-index 85ab0a3e2c9d614d7f3a95b46fb2f3ae2a18a41c..ade26796a4f3499ebfa75db3bd2157b2a2d571e1 100644
+index 85ab0a3e2c9d614d7f3a95b46fb2f3ae2a18a41c..ce08805c16a597122588a5c99f3550451fd9977b 100644
 --- a/Source/WebKit/SourcesGTK.txt
 +++ b/Source/WebKit/SourcesGTK.txt
 @@ -130,6 +130,7 @@ UIProcess/API/glib/WebKitAuthenticationRequest.cpp @no-unify
@@ -5169,16 +5169,15 @@ index 85ab0a3e2c9d614d7f3a95b46fb2f3ae2a18a41c..ade26796a4f3499ebfa75db3bd2157b2
  UIProcess/API/glib/WebKitContextMenuClient.cpp @no-unify
  UIProcess/API/glib/WebKitCookieManager.cpp @no-unify
  UIProcess/API/glib/WebKitCredential.cpp @no-unify
-@@ -236,6 +237,8 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
+@@ -236,6 +237,7 @@ UIProcess/WebsiteData/unix/WebsiteDataStoreUnix.cpp
  
  UIProcess/cairo/BackingStoreCairo.cpp @no-unify
  
 +UIProcess/glib/InspectorBrowserAgentClientGLib.cpp
-+UIProcess/glib/RemoteInspectorClient.cpp
  UIProcess/glib/WebProcessPoolGLib.cpp
  UIProcess/glib/WebProcessProxyGLib.cpp
  UIProcess/glib/WebsiteDataStoreGLib.cpp @no-unify
-@@ -249,6 +252,7 @@ UIProcess/gtk/AcceleratedBackingStoreX11.cpp @no-unify
+@@ -249,6 +251,7 @@ UIProcess/gtk/AcceleratedBackingStoreX11.cpp @no-unify
  UIProcess/gtk/DragAndDropHandler.cpp
  UIProcess/gtk/GestureController.cpp
  UIProcess/gtk/HardwareAccelerationManager.cpp
@@ -5186,14 +5185,12 @@ index 85ab0a3e2c9d614d7f3a95b46fb2f3ae2a18a41c..ade26796a4f3499ebfa75db3bd2157b2
  UIProcess/gtk/KeyBindingTranslator.cpp
  UIProcess/gtk/PointerLockManager.cpp @no-unify
  UIProcess/gtk/PointerLockManagerWayland.cpp @no-unify
-@@ -260,6 +264,10 @@ UIProcess/gtk/WaylandCompositor.cpp @no-unify
+@@ -260,6 +263,8 @@ UIProcess/gtk/WaylandCompositor.cpp @no-unify
  UIProcess/gtk/WebColorPickerGtk.cpp
  UIProcess/gtk/WebContextMenuProxyGtk.cpp
  UIProcess/gtk/WebDataListSuggestionsDropdownGtk.cpp
-+UIProcess/gtk/WebInspectorProxyGtk.cpp
 +UIProcess/gtk/WebPageInspectorEmulationAgentGtk.cpp
 +UIProcess/gtk/WebPageInspectorInputAgentGtk.cpp
-+UIProcess/gtk/WebKitInspectorWindow.cpp
  UIProcess/gtk/WebPageProxyGtk.cpp @no-unify
  UIProcess/gtk/WebPasteboardProxyGtk.cpp
  UIProcess/gtk/WebPopupMenuProxyGtk.cpp
