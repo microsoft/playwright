@@ -2109,10 +2109,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..37ab5f56739cfd16200a4ada9f4cf83436688eba
+index 0000000000000000000000000000000000000000..8f96af21c037edb74b99210673102a9996884ec9
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,843 @@
+@@ -0,0 +1,859 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2819,7 +2819,22 @@ index 0000000000000000000000000000000000000000..37ab5f56739cfd16200a4ada9f4cf834
 +      .getService(Ci.nsIAccessibilityService);
 +    const document = this._frameTree.mainFrame().domWindow().document;
 +    const docAcc = service.getAccessibleFor(document);
++    const content = this._session.mm().content;
 +
++    async function waitForRoot() {
++      let callback;
++      const result = new Promise(f => callback = f);
++      const poll = () => {
++        if (!docAcc.firstChild && content.document.body.hasChildNodes()) {
++          const timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
++          timer.init(poll, 50, Ci.nsITimer.TYPE_ONE_SHOT);
++        } else {
++          callback();
++        }
++      }
++      poll();
++      return result;
++    }
 +    async function waitForQuiet() {
 +      let state = {};
 +      docAcc.getState(state, {});
@@ -2925,6 +2940,7 @@ index 0000000000000000000000000000000000000000..37ab5f56739cfd16200a4ada9f4cf834
 +        tree.children = children;
 +      return tree;
 +    }
++    await waitForRoot();
 +    await waitForQuiet();
 +    return {
 +      tree: buildNode(docAcc)
