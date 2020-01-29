@@ -269,7 +269,7 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setOfflineMode(enabled)](#browsercontextsetofflinemodeenabled)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
-- [browsercontext.setRequestInterception(enabled)](#browsercontextsetrequestinterceptionenabled)
+- [browserContext.setRequestInterception(enabled)](#browsercontextsetrequestinterceptionenabled)
 <!-- GEN:stop -->
 
 #### browserContext.clearCookies()
@@ -396,7 +396,7 @@ const context = browser.defaultContext();
 await context.setPermissions('https://html5demos.com', ['geolocation']);
 ```
 
-#### browsercontext.setRequestInterception(enabled)
+#### browserContext.setRequestInterception(enabled)
 - `enabled` <[boolean]> Whether to enable request interception.
 - returns: <[Promise]>
 
