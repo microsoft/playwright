@@ -9,7 +9,7 @@ cd "checkout"
 if [[ "$(uname)" == "Darwin" ]]; then
   # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.14.
   # Make sure the SDK is out there.
-  if [[ $(sw_vers -productVersion) == "10.15" ]]; then
+  if [[ $(sw_vers -productVersion) == 10.15* ]]; then
     if ! [[ -d $HOME/SDK-archive/MacOSX10.14.sdk ]]; then
       echo "As of Nov 2019, Firefox does not build on Mac 10.15 without 10.14 SDK."
       echo "Check out instructions on getting 10.14 sdk at https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Build_Instructions/Mac_OS_X_Prerequisites"
