@@ -539,20 +539,19 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       expect(await page.$eval('div', e => e.nodeName)).toBe('DIV');
       const error = await page.$('dummy=foo').catch(e => e);
       expect(error.message).toContain('Unknown engine dummy while parsing selector dummy=foo');
-      await selectors.register(`
-        ({
-          name: 'dummy',
-          create(root, target) {
-            return target.nodeName;
-          },
-          query(root, selector) {
-            return root.querySelector('dummy');
-          },
-          queryAll(root, selector) {
-            return Array.from(root.querySelectorAll('dummy'));
-          }
-        })
-      `);
+      const createDummySelector = (name) => ({
+        name,
+        create(root, target) {
+          return target.nodeName;
+        },
+        query(root, selector) {
+          return root.querySelector(name);
+        },
+        queryAll(root, selector) {
+          return Array.from(root.querySelectorAll(name));
+        }
+      });
+      await selectors.register(createDummySelector, 'dummy');
       expect(await page.$eval('dummy=foo', e => e.id)).toBe('d1');
       expect(await page.$eval('css=span >> dummy=foo', e => e.id)).toBe('d2');
     });
