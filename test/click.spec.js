@@ -349,7 +349,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetY)).toBe(1910);
     });
 
-    it.skip(WEBKIT)('should update modifiers correctly', async({page, server}) => {
+    it('should update modifiers correctly', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.click('button', { modifiers: ['Shift'] });
       expect(await page.evaluate(() => shiftKey)).toBe(true);
