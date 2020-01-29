@@ -1213,6 +1213,29 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..11d40820629d3104408e14a3f92d9f02
              ]
          },
          {
+diff --git a/Source/JavaScriptCore/inspector/protocol/Worker.json b/Source/JavaScriptCore/inspector/protocol/Worker.json
+index 9e2bee913d37c79fedbb918176a43022b84fa45b..ad8926d773144114dad3842fa0fe239155a15d9e 100644
+--- a/Source/JavaScriptCore/inspector/protocol/Worker.json
++++ b/Source/JavaScriptCore/inspector/protocol/Worker.json
+@@ -16,7 +16,7 @@
+             "description": "Sent after the frontend has sent all initialization messages and can resume this worker. This command is required to allow execution in the worker.",
+             "parameters": [
+                 { "name": "workerId", "type": "string" }
+-            ]            
++            ]
+         },
+         {
+             "name": "sendMessageToWorker",
+@@ -32,7 +32,8 @@
+             "name": "workerCreated",
+             "parameters": [
+                 { "name": "workerId", "type": "string" },
+-                { "name": "url", "type": "string" }
++                { "name": "url", "type": "string" },
++                { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame this worker belongs to." }
+             ]
+         },
+         {
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
 index 944025fb4add55074eee3eb915d86fa17dd56d6b..de3020e26037d445c39b6bf549d515788d860633 100644
 --- a/Source/WTF/wtf/PlatformHave.h
@@ -3404,6 +3427,23 @@ index 3f3bbb8fce82044c1c230b0ae7186612cc5d45cf..a25053411467e0c87eaacd1b57d74db6
  };
  
  } // namespace WebCore
+diff --git a/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp b/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp
+index 5b7d17a424be41789f73e795736defb8fdf4ed1b..ee571acbf3a4c34cd7039ddd04febe36164a7346 100644
+--- a/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp
++++ b/Source/WebCore/inspector/agents/InspectorWorkerAgent.cpp
+@@ -160,7 +160,11 @@ void InspectorWorkerAgent::connectToWorkerInspectorProxy(WorkerInspectorProxy* p
+ 
+     m_connectedProxies.set(proxy->identifier(), proxy);
+ 
+-    m_frontendDispatcher->workerCreated(proxy->identifier(), proxy->url());
++    ASSERT(is<Document>(proxy->scriptExecutionContext()));
++    Document& document = downcast<Document>(*proxy->scriptExecutionContext());
++    auto* pageAgent = m_instrumentingAgents.inspectorPageAgent();
++    m_frontendDispatcher->workerCreated(proxy->identifier(), proxy->url(),
++        pageAgent ? pageAgent->frameId(document.frame()) : emptyString());
+ }
+ 
+ void InspectorWorkerAgent::disconnectFromWorkerInspectorProxy(WorkerInspectorProxy* proxy)
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 index 864ce3cfe13994642495f2d7dfbdcc9a4cad9f24..50a4c389709d92a251214b24ba6068d96c2ea17b 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
