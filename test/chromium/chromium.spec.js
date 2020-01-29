@@ -224,7 +224,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   });
 
   describe('Chromium-Specific Page Tests', function() {
-    it('Page.setRequestInterception should work with intervention headers', async({server, page}) => {
+    it('BrowserContext.setRequestInterception should work with intervention headers', async({context, server, page}) => {
       server.setRoute('/intervention', (req, res) => res.end(`
         <script>
           document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
@@ -237,7 +237,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         res.end('console.log(1);');
       });
 
-      await page.setRequestInterception(true);
+      await context.setRequestInterception(true);
       page.on('request', request => request.continue());
       await page.goto(server.PREFIX + '/intervention');
       // Check for feature URL substring rather than https://www.chromestatus.com to

@@ -212,6 +212,9 @@ Indicates that the browser is connected.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
     - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
   - `userAgent` <?[string]> Specific user agent to use in this context.
+  - `cacheEnabled` <?[boolean]> Toggles HTTP cache in the context. By default HTTP cache is enabled.
+  - `interceptNetwork` <?[boolean]> Toggles network interception in the context. Defaults to false.
+  - `offlineMode` <?[boolean]> Toggles offline network mode in the context. Defaults to false.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
@@ -261,9 +264,12 @@ await context.close();
 - [browserContext.cookies([...urls])](#browsercontextcookiesurls)
 - [browserContext.newPage(url)](#browsercontextnewpageurl)
 - [browserContext.pages()](#browsercontextpages)
+- [browserContext.setCacheEnabled([enabled])](#browsercontextsetcacheenabledenabled)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
+- [browserContext.setOfflineMode(enabled)](#browsercontextsetofflinemodeenabled)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
+- [browserContext.setRequestInterception(enabled)](#browsercontextsetrequestinterceptionenabled)
 <!-- GEN:stop -->
 
 #### browserContext.clearCookies()
@@ -321,6 +327,12 @@ Creates a new page in the browser context and optionally navigates it to the spe
 
 An array of all pages inside the browser context.
 
+#### browserContext.setCacheEnabled([enabled])
+- `enabled` <[boolean]> sets the `enabled` state of the HTTP cache.
+- returns: <[Promise]>
+
+Toggles ignoring HTTP cache for each request based on the enabled state. By default, HTTP cache is enabled.
+
 #### browserContext.setCookies(cookies)
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]> **required**
@@ -353,6 +365,10 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 
 > **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
+#### browserContext.setOfflineMode(enabled)
+- `enabled` <[boolean]> When `true`, enables offline mode for the context.
+- returns: <[Promise]>
+
 #### browserContext.setPermissions(origin, permissions[])
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
 - `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
@@ -379,6 +395,32 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 const context = browser.defaultContext();
 await context.setPermissions('https://html5demos.com', ['geolocation']);
 ```
+
+#### browserContext.setRequestInterception(enabled)
+- `enabled` <[boolean]> Whether to enable request interception.
+- returns: <[Promise]>
+
+Activating request interception enables `request.abort`, `request.continue` and
+`request.respond` methods.  This provides the capability to modify network requests that are made by all pages in the context.
+
+Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
+An example of a naïve request interceptor that aborts all image requests:
+
+```js
+const context = await browser.newContext();
+const page = await context.newPage();
+page.on('request', interceptedRequest => {
+  if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg'))
+    interceptedRequest.abort();
+  else
+    interceptedRequest.continue();
+});
+await context.setRequestInterception(true);
+await page.goto('https://example.com');
+await browser.close();
+```
+
+> **NOTE** Enabling request interception disables HTTP cache.
 
 ### class: Page
 
@@ -471,13 +513,10 @@ page.removeListener('request', logRequest);
 - [page.reload([options])](#pagereloadoptions)
 - [page.screenshot([options])](#pagescreenshotoptions)
 - [page.select(selector, value, options)](#pageselectselector-value-options)
-- [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
 - [page.setContent(html[, options])](#pagesetcontenthtml-options)
 - [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
-- [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
-- [page.setRequestInterception(enabled)](#pagesetrequestinterceptionenabled)
 - [page.setViewport(viewport)](#pagesetviewportviewport)
 - [page.title()](#pagetitle)
 - [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
@@ -1222,12 +1261,6 @@ page.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 
 Shortcut for [page.mainFrame().select()](#frameselectselector-values)
 
-#### page.setCacheEnabled([enabled])
-- `enabled` <[boolean]> sets the `enabled` state of the cache.
-- returns: <[Promise]>
-
-Toggles ignoring cache for each request based on the enabled state. By default, caching is enabled.
-
 #### page.setContent(html[, options])
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]> Parameters which might have the following properties:
@@ -1278,35 +1311,6 @@ This setting will change the default maximum time for the following methods and 
 The extra HTTP headers will be sent with every request the page initiates.
 
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
-
-#### page.setOfflineMode(enabled)
-- `enabled` <[boolean]> When `true`, enables offline mode for the page.
-- returns: <[Promise]>
-
-#### page.setRequestInterception(enabled)
-- `enabled` <[boolean]> Whether to enable request interception.
-- returns: <[Promise]>
-
-Activating request interception enables `request.abort`, `request.continue` and
-`request.respond` methods.  This provides the capability to modify network requests that are made by a page.
-
-Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
-An example of a naïve request interceptor that aborts all image requests:
-
-```js
-const page = await browser.newPage();
-await page.setRequestInterception(true);
-page.on('request', interceptedRequest => {
-  if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg'))
-    interceptedRequest.abort();
-  else
-    interceptedRequest.continue();
-});
-await page.goto('https://example.com');
-await browser.close();
-```
-
-> **NOTE** Enabling request interception disables page caching.
 
 #### page.setViewport(viewport)
 - `viewport` <[Object]>

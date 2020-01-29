@@ -19,8 +19,8 @@ module.exports.describe = function ({ testRunner, expect }) {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('provisional page', function() {
-    it('extraHttpHeaders should be pushed to provisional page', async({page, server}) => {
+  describe('Provisional page', function() {
+    it('should receive extraHttpHeaders', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const pagePath = '/one-style.html';
       server.setRoute(pagePath, async (req, res) => {
@@ -35,14 +35,14 @@ module.exports.describe = function ({ testRunner, expect }) {
       expect(htmlReq.headers['foo']).toBe(undefined);
       expect(cssReq.headers['foo']).toBe('bar');
     });
-    it('should continue load when interception gets disabled during provisional load', async({page, server}) => {
+    it('should continue loading when interception gets disabled', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setRequestInterception(true);
+      await context.setRequestInterception(true);
       expect(await page.evaluate(() => navigator.onLine)).toBe(true);
       let intercepted = null;
       const order = [];
       page.on('request', request => {
-        intercepted = page.setRequestInterception(false).then(() => order.push('setRequestInterception'));
+        intercepted = context.setRequestInterception(false).then(() => order.push('setRequestInterception'));
       });
       const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html').then(response => {
         order.push('goto');
