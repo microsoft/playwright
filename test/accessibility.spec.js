@@ -82,6 +82,14 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       };
       expect(await page.accessibility.snapshot()).toEqual(golden);
     });
+    it('should work with blank document', async({page}) => {
+      await page.setContent(``);
+      const snapshot = await page.accessibility.snapshot();
+      expect(snapshot).toEqual({
+        role: FFOX ? 'document' : 'WebArea',
+        name: '',
+      });
+    });
     it.skip(WEBKIT && !MAC)('should work with regular text', async({page}) => {
       await page.setContent(`<div>Hello World</div>`);
       const snapshot = await page.accessibility.snapshot();
