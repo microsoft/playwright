@@ -10189,7 +10189,7 @@ index 8016b56c160acc7b4269600f07f737b3793767bb..651a86c41af3305e215d7baf7f149cc7
      void navigationGestureWillEnd(bool willNavigate, WebBackForwardListItem&) override;
      void navigationGestureDidEnd(bool willNavigate, WebBackForwardListItem&) override;
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..63eb41bc3e52c97b933e6bd8288f6824f71ca675 100644
+index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..e389900c57adb50ae8802b58fd1992c01f44e8ed 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 @@ -78,6 +78,7 @@
@@ -10244,7 +10244,17 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..63eb41bc3e52c97b933e6bd8288f6824
      NSView *activeView = this->activeView();
      NSWindow *activeViewWindow = activeWindow();
  
-@@ -456,6 +473,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
+@@ -278,7 +295,8 @@ void PageClientImpl::didRelaunchProcess()
+ 
+ void PageClientImpl::preferencesDidChange()
+ {
+-    m_impl->preferencesDidChange();
++    if (m_impl)
++        m_impl->preferencesDidChange();
+ }
+ 
+ void PageClientImpl::toolTipChanged(const String& oldToolTip, const String& newToolTip)
+@@ -456,6 +474,8 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
  {
@@ -10253,7 +10263,7 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..63eb41bc3e52c97b933e6bd8288f6824
      m_impl->doneWithKeyEvent(event.nativeEvent(), eventWasHandled);
  }
  
-@@ -760,6 +779,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
+@@ -760,6 +780,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
  
  #endif // ENABLE(FULLSCREEN_API)
  
@@ -10267,7 +10277,7 @@ index bf7dc132b1ef9e081275cbecb562dd1bfd3a2a0e..63eb41bc3e52c97b933e6bd8288f6824
  void PageClientImpl::navigationGestureDidBegin()
  {
      m_impl->dismissContentRelativeChildWindowsWithAnimation(true);
-@@ -931,6 +957,9 @@ void PageClientImpl::didRestoreScrollPosition()
+@@ -931,6 +958,9 @@ void PageClientImpl::didRestoreScrollPosition()
  
  bool PageClientImpl::windowIsFrontWindowUnderMouse(const NativeWebMouseEvent& event)
  {
