@@ -539,8 +539,10 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       let imgResponse = null;
       server.setRoute(imgPath, (req, res) => imgResponse = res);
       let loaded = false;
+      // get the global object to make sure that the main execution context is alive and well.
+      await page.evaluate(() => this);
       // Trigger navigation which might resolve next setContent call.
-      page.evaluate(url => window.location.href = url, server.EMPTY_PAGE);
+      const evalPromise = page.evaluate(url => window.location.href = url, server.EMPTY_PAGE);
       const contentPromise = page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).then(() => loaded = true);
       await server.waitForRequest(imgPath);
 
@@ -551,6 +553,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
 
       imgResponse.end();
       await contentPromise;
+      await evalPromise;
     });
     it('should work with doctype', async({page, server}) => {
       const doctype = '<!DOCTYPE html>';
