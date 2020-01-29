@@ -47,6 +47,10 @@ export class WebKit implements BrowserType {
     this._revision = preferredRevision;
   }
 
+  name() {
+    return 'webkit';
+  }
+
   async launch(options?: LaunchOptions): Promise<WKBrowser> {
     const app = await this.launchBrowserApp(options);
     const browser = await WKBrowser.connect(app.connectOptions());
