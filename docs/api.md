@@ -212,7 +212,7 @@ Indicates that the browser is connected.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
     - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
   - `userAgent` <?[string]> Specific user agent to use in this context.
-  - `cacheEnabled` <?[boolean]> Toggles page cache in the context. By defaul caching is enabled.
+  - `cacheEnabled` <?[boolean]> Toggles HTTP cache in the context. By default HTTP cache is enabled.
   - `interceptNetwork` <?[boolean]> Toggles network interception in the context. Defaults to false.
   - `offlineMode` <?[boolean]> Toggles offline network mode in the context. Defaults to false.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
@@ -328,10 +328,10 @@ Creates a new page in the browser context and optionally navigates it to the spe
 An array of all pages inside the browser context.
 
 #### browserContext.setCacheEnabled([enabled])
-- `enabled` <[boolean]> sets the `enabled` state of the cache.
+- `enabled` <[boolean]> sets the `enabled` state of the HTTP cache.
 - returns: <[Promise]>
 
-Toggles ignoring cache for each request based on the enabled state. By default, caching is enabled.
+Toggles ignoring HTTP cache for each request based on the enabled state. By default, HTTP cache is enabled.
 
 #### browserContext.setCookies(cookies)
 - `cookies` <[Array]<[Object]>>
@@ -366,7 +366,7 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 > **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
 #### browserContext.setOfflineMode(enabled)
-- `enabled` <[boolean]> When `true`, enables offline mode for the page.
+- `enabled` <[boolean]> When `true`, enables offline mode for the context.
 - returns: <[Promise]>
 
 #### browserContext.setPermissions(origin, permissions[])
@@ -401,7 +401,7 @@ await context.setPermissions('https://html5demos.com', ['geolocation']);
 - returns: <[Promise]>
 
 Activating request interception enables `request.abort`, `request.continue` and
-`request.respond` methods.  This provides the capability to modify network requests that are made by a page.
+`request.respond` methods.  This provides the capability to modify network requests that are made by all pages in the context.
 
 Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
 An example of a naïve request interceptor that aborts all image requests:
@@ -420,7 +420,7 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
-> **NOTE** Enabling request interception disables page caching.
+> **NOTE** Enabling request interception disables HTTP cache.
 
 ### class: Page
 

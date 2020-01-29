@@ -339,4 +339,14 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(cachedRequest.headers['if-modified-since']).toBe(undefined);
     });
   });
+
+  describe('BrowserContext({interceptNetwork})', function() {
+    it('should enable request interception', async({newPage, httpsServer}) => {
+      const page = await newPage({ ignoreHTTPSErrors: true, interceptNetwork: true });
+      page.on('request', request => request.abort());
+      let error;
+      await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
+      expect(error).toBeTruthy();
+    });
+  });
 };
