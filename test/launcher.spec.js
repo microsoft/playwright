@@ -81,6 +81,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       });
     });
 
+    describe('Playwright.name', function() {
+      it('should work', async({server}) => {
+        if (WEBKIT)
+          expect(playwright.name()).toBe('webkit');
+        else if (FFOX)
+          expect(playwright.name()).toBe('firefox');
+        else if (CHROMIUM)
+          expect(playwright.name()).toBe('chromium');
+        else
+          throw new Error('Unknown browser');
+      });
+    });
+
     describe('Playwright.defaultArguments', () => {
       it('should return the default arguments', async() => {
         if (CHROMIUM)

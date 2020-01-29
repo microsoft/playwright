@@ -42,6 +42,10 @@ export class Firefox implements BrowserType {
     this._revision = preferredRevision;
   }
 
+  name() {
+    return 'firefox';
+  }
+
   async launch(options?: LaunchOptions): Promise<FFBrowser> {
     const app = await this.launchBrowserApp(options);
     const browser = await FFBrowser.connect(app.connectOptions());
