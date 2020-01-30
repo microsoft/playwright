@@ -139,7 +139,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     });
-    it('should work with clicking target=_blank', async({page, server}) => {
+    it.skip(FFOX)('should work with clicking target=_blank', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
@@ -162,7 +162,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       // FFOX is slow enough to trigger this. We should do something about popups api.
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
     });
-    it('should work with clicking target=_blank and rel=noopener', async({page, server}) => {
+    it.skip(FFOX)('should work with clicking target=_blank and rel=noopener', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
