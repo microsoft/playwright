@@ -381,5 +381,14 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const error = await page.evaluate(body => body.innerHTML, bodyHandle).catch(e => e);
       expect(error.message).toContain('Unable to adopt element handle from a different document');
     });
+    it.skip(FFOX)('should return non-empty Node.constructor.name in utility context', async({page,server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame = page.frames()[1];
+      const context = await frame._utilityContext();
+      const elementHandle = await context.evaluateHandle(() => window.top.document.querySelector('#frame1'));
+      const constructorName = await context.evaluate(node => node.constructor.name, elementHandle);
+      expect(constructorName).toBe('HTMLIFrameElement');
+    });
   });
 };
