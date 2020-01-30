@@ -158,7 +158,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     it.skip(FFOX)('should work for adopted elements', async({page,server}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        page.waitForEvent('popup'),
+        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
         page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE),
       ]);
       const divHandle = await page.evaluateHandle(() => {
