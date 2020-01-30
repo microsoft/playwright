@@ -95,10 +95,24 @@ export class WKPage implements PageDelegate {
   // This method is called for provisional targets as well. The session passed as the parameter
   // may be different from the current session and may be destroyed without becoming current.
   async _initializeSession(session: WKSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void) {
-    const promises : Promise<any>[] = [
+    await this._initializeSessionMayThrow(session, resourceTreeHandler).catch(e => {
+      if (session.isDisposed())
+        return;
+      // Swallow initialization errors due to newer target swap in,
+      // since we will reinitialize again.
+      if (this._session === session)
+        throw e;
+    });
+  }
+
+  private async _initializeSessionMayThrow(session: WKSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void) {
+    const [, frameTree] = await Promise.all([
       // Page agent must be enabled before Runtime.
       session.send('Page.enable'),
-      session.send('Page.getResourceTree').then(resourceTreeHandler),
+      session.send('Page.getResourceTree'),
+    ]);
+    resourceTreeHandler(frameTree);
+    const promises : Promise<any>[] = [
       // Resource tree should be received before first execution context.
       session.send('Runtime.enable'),
       session.send('Page.createUserWorld', { name: UTILITY_WORLD_NAME }).catch(_ => {}),  // Worlds are per-process
@@ -129,19 +143,13 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders }));
     if (this._page._state.hasTouch)
       promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
-    await Promise.all(promises).catch(e => {
-      if (session.isDisposed())
-        return;
-      // Swallow initialization errors due to newer target swap in,
-      // since we will reinitialize again.
-      if (this._session === session)
-        throw e;
-    });
+    await Promise.all(promises);
   }
 
-  onProvisionalLoadStarted(provisionalSession: WKSession) {
+  initializeProvisionalPage(provisionalSession: WKSession) : Promise<void> {
     assert(!this._provisionalPage);
     this._provisionalPage = new WKProvisionalPage(provisionalSession, this);
+    return this._provisionalPage.initializationPromise;
   }
 
   onProvisionalLoadCommitted(session: WKSession) {

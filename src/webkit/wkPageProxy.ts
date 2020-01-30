@@ -139,10 +139,13 @@ export class WKPageProxy {
     }
     if (targetInfo.isProvisional) {
       (session as any)[isPovisionalSymbol] = true;
-      if (this._wkPage)
-        this._wkPage.onProvisionalLoadStarted(session);
-      if (targetInfo.isPaused)
+      if (this._wkPage) {
+        const provisionalPageInitialized = this._wkPage.initializeProvisionalPage(session);
+        if (targetInfo.isPaused)
+          provisionalPageInitialized.then(() => this._resumeTarget(targetInfo.targetId));
+      } else if (targetInfo.isPaused) {
         this._resumeTarget(targetInfo.targetId);
+      }
     } else if (this._pagePromise) {
       assert(!this._pagePausedOnStart);
       // This is the first time page target is created, will resume
