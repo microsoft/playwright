@@ -1,3 +1,63 @@
+diff --git a/accessible/base/NotificationController.h b/accessible/base/NotificationController.h
+index c6aa1cf44c8ba339704a18ebe92fe5a7751e52f5..cfe64bdda54d49ee5b11b2368a2f9856cc9ea3cf 100644
+--- a/accessible/base/NotificationController.h
++++ b/accessible/base/NotificationController.h
+@@ -270,6 +270,8 @@ class NotificationController final : public EventQueue,
+   }
+ #endif
+ 
++  bool IsUpdatePendingForJugglerAccessibility() { return IsUpdatePending(); }
++
+  protected:
+   virtual ~NotificationController();
+ 
+diff --git a/accessible/interfaces/nsIAccessibleDocument.idl b/accessible/interfaces/nsIAccessibleDocument.idl
+index a91df31c96afda66f478a5a38eaa4352039c2a0b..ee777c1746284027fb3aa2f1686f8082af9d89ee 100644
+--- a/accessible/interfaces/nsIAccessibleDocument.idl
++++ b/accessible/interfaces/nsIAccessibleDocument.idl
+@@ -72,4 +72,9 @@ interface nsIAccessibleDocument : nsISupports
+    * Return the child document accessible at the given index.
+    */
+   nsIAccessibleDocument getChildDocumentAt(in unsigned long index);
++
++  /**
++   * Return whether it is updating.
++   */
++  readonly attribute boolean isUpdatePendingForJugglerAccessibility;
+ };
+diff --git a/accessible/xpcom/xpcAccessibleDocument.cpp b/accessible/xpcom/xpcAccessibleDocument.cpp
+index e3dbe73f22252f11080c3f266b2309f842eba9dc..87f50fe3df7cc8f9bc26dabd5ee571cae270912a 100644
+--- a/accessible/xpcom/xpcAccessibleDocument.cpp
++++ b/accessible/xpcom/xpcAccessibleDocument.cpp
+@@ -143,6 +143,15 @@ xpcAccessibleDocument::GetVirtualCursor(nsIAccessiblePivot** aVirtualCursor) {
+   return NS_OK;
+ }
+ 
++
++NS_IMETHODIMP
++xpcAccessibleDocument::GetIsUpdatePendingForJugglerAccessibility(bool* updating) {
++  NS_ENSURE_ARG_POINTER(updating);
++  *updating = Intl()->Controller()->IsUpdatePendingForJugglerAccessibility();
++  return NS_OK;
++}
++
++
+ ////////////////////////////////////////////////////////////////////////////////
+ // xpcAccessibleDocument
+ 
+diff --git a/accessible/xpcom/xpcAccessibleDocument.h b/accessible/xpcom/xpcAccessibleDocument.h
+index f042cc1081850ac60e329b70b5569f8b97d4e4dc..65bcff9b41b9471ef1427e3ea330481c194409bc 100644
+--- a/accessible/xpcom/xpcAccessibleDocument.h
++++ b/accessible/xpcom/xpcAccessibleDocument.h
+@@ -48,6 +48,8 @@ class xpcAccessibleDocument : public xpcAccessibleHyperText,
+                                 nsIAccessibleDocument** aDocument) final;
+   NS_IMETHOD GetVirtualCursor(nsIAccessiblePivot** aVirtualCursor) final;
+ 
++  NS_IMETHOD GetIsUpdatePendingForJugglerAccessibility(bool* aUpdating) final;
++
+   /**
+    * Return XPCOM wrapper for the internal accessible.
+    */
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
 index cf0ae812a9f9741128fac124db03fb158ca54c30..7a0657ae0784e13929daf301549151236f1e53c1 100644
 --- a/browser/installer/allowed-dupes.mn
@@ -2109,10 +2169,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..37ab5f56739cfd16200a4ada9f4cf83436688eba
+index 0000000000000000000000000000000000000000..9e10bd1eb3c1c3dd800e244a2372205a2818e6c5
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,843 @@
+@@ -0,0 +1,846 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2819,6 +2879,9 @@ index 0000000000000000000000000000000000000000..37ab5f56739cfd16200a4ada9f4cf834
 +      .getService(Ci.nsIAccessibilityService);
 +    const document = this._frameTree.mainFrame().domWindow().document;
 +    const docAcc = service.getAccessibleFor(document);
++
++    while (docAcc.document.isUpdatePendingForJugglerAccessibility)
++      await new Promise(x => this._frameTree.mainFrame().domWindow().requestAnimationFrame(x));
 +
 +    async function waitForQuiet() {
 +      let state = {};
