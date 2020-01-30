@@ -3539,7 +3539,7 @@ index 5bc523a07233d6efab4ee18d19a6b8f105274664..d640783477744da05c5baed94dc0c168
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index a1285851f259d82a63a86de58c53de3e3b02d914..b2493d7629504bd11594fb7107a2b8b8acfe3e1c 100644
+index a1285851f259d82a63a86de58c53de3e3b02d914..9b090e501f3212e8522ee77e8aa7fdae521793c1 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1180,6 +1180,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -3577,37 +3577,35 @@ index a1285851f259d82a63a86de58c53de3e3b02d914..b2493d7629504bd11594fb7107a2b8b8
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3946,24 +3953,30 @@ String FrameLoader::referrer() const
+@@ -3946,24 +3953,29 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
 -    if (!m_frame.script().canExecuteScripts(NotAboutToExecuteScript))
 -        return;
--
++    // It is essential that the normal world is cleared first.
++    // Various subsystem (InjectedScriptManager) will reset state upon normal
++    // world initialization.
++    DOMWrapperWorld& mainWorld = mainThreadNormalWorld();
++    dispatchDidClearWindowObjectInWorld(mainWorld);
+ 
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
 -    for (auto& world : worlds)
 -        dispatchDidClearWindowObjectInWorld(world);
-+    // It is essential that the normal world is cleared first.
-+    // Various subsystem (InjectedScriptManager) will reset state upon normal
-+    // world initialization.
-+    Vector<DOMWrapperWorld*> nonNormalWorlds;
 +    for (auto& world : worlds) {
-+        if (world->type() == DOMWrapperWorld::Type::Normal)
++        if (world.ptr() != &mainWorld)
 +            dispatchDidClearWindowObjectInWorld(world);
-+        else
-+            nonNormalWorlds.append(&world.get());
 +    }
-+    for (auto* world : nonNormalWorlds)
-+        dispatchDidClearWindowObjectInWorld(*world);
  }
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {
 -    if (!m_frame.script().canExecuteScripts(NotAboutToExecuteScript) || !m_frame.windowProxy().existingJSWindowProxy(world))
 -        return;
-+    if (m_frame.script().canExecuteScripts(NotAboutToExecuteScript) && m_frame.windowProxy().existingJSWindowProxy(world)) {
-+        m_client.dispatchDidClearWindowObjectInWorld(world);
++    if (m_frame.windowProxy().existingJSWindowProxy(world)) {
++        if (m_frame.script().canExecuteScripts(NotAboutToExecuteScript))
++            m_client.dispatchDidClearWindowObjectInWorld(world);
  
 -    m_client.dispatchDidClearWindowObjectInWorld(world);
 -
