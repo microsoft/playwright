@@ -50,11 +50,10 @@ export class WKWorkers {
         Promise.all([
           workerSession.send('Runtime.enable'),
           workerSession.send('Console.enable'),
-          session.send('Worker.initialized', { workerId: event.workerId }).catch(e => {
-            this._page._removeWorker(event.workerId);
-          })
+          session.send('Worker.initialized', { workerId: event.workerId })
         ]).catch(e => {
           // Worker can go as we are initializing it.
+          this._page._removeWorker(event.workerId);
         });
       }),
       helper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
