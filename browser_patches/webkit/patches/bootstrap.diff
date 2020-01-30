@@ -2507,7 +2507,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..8d6ed7188bca75fb46d1a5963983f088
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eeaafa37089 100644
+index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5809b8726af46cf93007b15cad6904506352b26d 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2535,7 +2535,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -56,18 +61,24 @@
+@@ -56,19 +61,28 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "Page.h"
@@ -2558,9 +2558,33 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  #include <JavaScriptCore/RegularExpression.h>
 +#include <platform/ProcessIdentifier.h>
  #include <wtf/ListHashSet.h>
++#include <wtf/NeverDestroyed.h>
++#include <wtf/Ref.h>
++#include <wtf/RefPtr.h>
  #include <wtf/Stopwatch.h>
  #include <wtf/text/Base64.h>
-@@ -340,6 +351,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+ #include <wtf/text/StringBuilder.h>
+@@ -81,7 +95,6 @@
+ #include "LegacyWebArchive.h"
+ #endif
+ 
+-
+ namespace WebCore {
+ 
+ using namespace Inspector;
+@@ -100,6 +113,11 @@ using namespace Inspector;
+     macro(WebRTCEncryptionEnabled) \
+     macro(WebSecurityEnabled)
+ 
++HashMap<String, Ref<DOMWrapperWorld>>& createdUserWorlds() {
++    static NeverDestroyed<HashMap<String, Ref<DOMWrapperWorld>>> nameToWorld;
++    return nameToWorld;
++}
++
+ static bool decodeBuffer(const char* buffer, unsigned size, const String& textEncodingName, String* result)
+ {
+     if (buffer) {
+@@ -340,6 +358,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -2568,7 +2592,19 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -378,6 +390,8 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -373,11 +392,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+ #if HAVE(OS_DARK_MODE_SUPPORT)
+     defaultAppearanceDidChange(m_inspectedPage.defaultUseDarkAppearance());
+ #endif
++
++    if (!createdUserWorlds().isEmpty()) {
++        Vector<DOMWrapperWorld*> worlds;
++        for (const auto& world : createdUserWorlds().values())
++            worlds.append(world.ptr());
++        ensureUserWorldsExistInAllFrames(worlds);
++    }
+ }
+ 
  void InspectorPageAgent::disable(ErrorString&)
  {
      m_instrumentingAgents.setInspectorPageAgent(nullptr);
@@ -2577,7 +2613,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -415,14 +429,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -415,14 +443,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -2603,15 +2639,15 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
 +        return;
 +
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
-+
-+    if (!resourceRequest.url().isValid()) {
-+        errorString = "Cannot navigate to invalid URL"_s;
-+        return;
-+    }
  
 -    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
 -    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 -    frame.loader().changeLocation(WTFMove(frameLoadRequest));
++    if (!resourceRequest.url().isValid()) {
++        errorString = "Cannot navigate to invalid URL"_s;
++        return;
++    }
++
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
@@ -2619,7 +2655,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -683,15 +719,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -683,15 +733,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -2641,7 +2677,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -699,13 +736,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -699,13 +750,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -2663,7 +2699,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  }
  
  Frame* InspectorPageAgent::frameForId(const String& frameId)
-@@ -717,20 +759,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -717,20 +773,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -2690,7 +2726,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  }
  
  Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
-@@ -741,11 +781,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+@@ -741,11 +795,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
      return frame;
  }
  
@@ -2702,7 +2738,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -766,6 +801,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -766,6 +815,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -2715,7 +2751,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -823,6 +864,38 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -823,6 +878,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -2754,7 +2790,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -966,6 +1039,18 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -966,6 +1053,18 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -2773,7 +2809,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -983,4 +1068,514 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -983,4 +1082,520 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3265,16 +3301,22 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
 +
 +void InspectorPageAgent::createUserWorld(ErrorString& errorString, const String& name)
 +{
-+    static NeverDestroyed<HashSet<String>> createdUserWorlds;
-+    if (createdUserWorlds->contains(name)) {
++    if (createdUserWorlds().contains(name)) {
 +        errorString = "World with the given name already exists"_s;
 +        return;
 +    }
-+    createdUserWorlds->add(name);
 +
 +    Ref<DOMWrapperWorld> world = ScriptController::createWorld(name, ScriptController::WorldType::User);
-+    for (Frame* frame = &m_inspectedPage.mainFrame(); frame; frame = frame->tree().traverseNext())
-+        frame->windowProxy().jsWindowProxy(world)->window();
++    ensureUserWorldsExistInAllFrames({world.ptr()});
++    createdUserWorlds().set(name, WTFMove(world));
++}
++
++void InspectorPageAgent::ensureUserWorldsExistInAllFrames(const Vector<DOMWrapperWorld*>& worlds)
++{
++    for (Frame* frame = &m_inspectedPage.mainFrame(); frame; frame = frame->tree().traverseNext()) {
++        for (auto* world : worlds)
++            frame->windowProxy().jsWindowProxy(*world)->window();
++    }
 +}
 +
 +void InspectorPageAgent::setBypassCSP(ErrorString&, bool enabled)
@@ -3289,7 +3331,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..4732b818204dc5a7e00d38b6635d9eea
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..8cbb35194cfd408e934400ed1e3abd7b1dcd3949 100644
+index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..cba0b43011a390c305aef7c01cc95e5350766283 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,11 +40,16 @@
@@ -3363,7 +3405,15 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..8cbb35194cfd408e934400ed1e3abd7b
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -152,18 +170,19 @@ private:
+@@ -141,6 +159,7 @@ public:
+ 
+ private:
+     double timestamp();
++    void ensureUserWorldsExistInAllFrames(const Vector<DOMWrapperWorld*>&);
+ 
+     static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
+     static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
+@@ -152,18 +171,19 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
