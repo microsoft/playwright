@@ -234,10 +234,18 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
           this is the inner content
           <img alt="yo" src="fakeimg.png">
         </div>`);
-        const golden = {
+        const golden = FFOX ? {
+          role: 'textbox',
+          name: 'my favorite textbox',
+          value: 'this is the inner content yo'
+        } : CHROMIUM ? {
           role: 'textbox',
           name: 'my favorite textbox',
           value: 'this is the inner content '
+        } : {
+          role: 'textbox',
+          name: 'my favorite textbox',
+          value: 'this is the inner content  ',
         };
         const snapshot = await page.accessibility.snapshot();
         expect(snapshot.children[0]).toEqual(golden);
@@ -262,7 +270,11 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
           this is the inner content
           <img alt="yo" src="fakeimg.png">
         </div>`);
-        const golden = {
+        const golden = FFOX ? {
+          role: 'checkbox',
+          name: 'this is the inner content yo',
+          checked: true
+        } : {
           role: 'checkbox',
           name: 'this is the inner content yo',
           checked: true
