@@ -33,7 +33,7 @@ export class WKWorkers {
     helper.removeEventListeners(this._sessionListeners);
     this.clear();
     this._sessionListeners = [
-      helper.addEventListener(session, 'Worker.workerCreated', async (event: Protocol.Worker.workerCreatedPayload) => {
+      helper.addEventListener(session, 'Worker.workerCreated', (event: Protocol.Worker.workerCreatedPayload) => {
         const worker = new Worker(event.url);
         const workerSession = new WKSession(session.connection, event.workerId, 'Most likely the worker has been closed.', (message: any) => {
           session.send('Worker.sendMessageToWorker', {
@@ -47,17 +47,14 @@ export class WKWorkers {
         worker._createExecutionContext(new WKExecutionContext(workerSession, undefined));
         this._page._addWorker(event.workerId, worker);
         workerSession.on('Console.messageAdded', event => this._onConsoleMessage(worker, event));
-        try {
-          Promise.all([
-            workerSession.send('Runtime.enable'),
-            workerSession.send('Console.enable'),
-            session.send('Worker.initialized', { workerId: event.workerId }).catch(e => {
-              this._page._removeWorker(event.workerId);
-            })
-          ]);
-        } catch (e) {
+        Promise.all([
+          workerSession.send('Runtime.enable'),
+          workerSession.send('Console.enable'),
+          session.send('Worker.initialized', { workerId: event.workerId })
+        ]).catch(e => {
           // Worker can go as we are initializing it.
-        }
+          this._page._removeWorker(event.workerId);
+        });
       }),
       helper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
