@@ -21,7 +21,7 @@ import * as dom from '../dom';
 import * as network from '../network';
 import { WKSession } from './wkConnection';
 import { Events } from '../events';
-import { WKExecutionContext, EVALUATION_SCRIPT_URL } from './wkExecutionContext';
+import { WKExecutionContext } from './wkExecutionContext';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKWorkers } from './wkWorkers';
 import { Page, PageDelegate, Coverage } from '../page';
@@ -101,7 +101,7 @@ export class WKPage implements PageDelegate {
       session.send('Page.getResourceTree').then(resourceTreeHandler),
       // Resource tree should be received before first execution context.
       session.send('Runtime.enable'),
-      session.send('Page.createIsolatedWorld', { name: UTILITY_WORLD_NAME, source: `//# sourceURL=${EVALUATION_SCRIPT_URL}` }),
+      session.send('Page.createUserWorld', { name: UTILITY_WORLD_NAME }).catch(_ => {}),  // Worlds are per-process
       session.send('Console.enable'),
       session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
       session.send('Network.enable'),
@@ -295,11 +295,11 @@ export class WKPage implements PageDelegate {
       return;
     const delegate = new WKExecutionContext(this._session, contextPayload.id);
     const context = new dom.FrameExecutionContext(delegate, frame);
-    if (contextPayload.isPageContext)
+    if (contextPayload.type === 'normal')
       frame._contextCreated('main', context);
-    else if (contextPayload.name === UTILITY_WORLD_NAME)
+    else if (contextPayload.type === 'user' && contextPayload.name === UTILITY_WORLD_NAME)
       frame._contextCreated('utility', context);
-    if (contextPayload.isPageContext && frame === this._page.mainFrame())
+    if (contextPayload.type === 'normal' && frame === this._page.mainFrame())
       this._mainFrameContextId = contextPayload.id;
     this._contextIdToContext.set(contextPayload.id, context);
   }
