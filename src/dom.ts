@@ -154,7 +154,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    const isFrameElement = await this._evaluateInUtility(node => node && (node instanceof HTMLIFrameElement || node instanceof HTMLFrameElement));
+    const isFrameElement = await this._evaluateInUtility(node => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'));
     if (!isFrameElement)
       return null;
     return this._page._delegate.getContentFrame(this);
