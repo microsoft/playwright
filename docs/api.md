@@ -51,7 +51,7 @@ const { chromium, firefox, webkit } = require('playwright');
 })();
 ```
 
-Playwright automatically downloads browser executables during installation, see [Downloaded browsers](#downloaded-browsers) for more information.
+By default, the `playwright` NPM package automatically downloads browser executables during installation. The `playwright-core` NPM package can be used to skip automatic downloads.
 
 <!-- GEN:toc -->
 - [playwright.chromium](#playwrightchromium)
