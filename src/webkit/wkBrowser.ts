@@ -28,6 +28,8 @@ import { WKConnection, WKSession, kPageProxyMessageReceived, PageProxyMessageRec
 import { WKPageProxy } from './wkPageProxy';
 import * as platform from '../platform';
 
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
+
 export class WKBrowser extends platform.EventEmitter implements Browser {
   private readonly _connection: WKConnection;
   private readonly _browserSession: WKSession;
@@ -73,6 +75,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     const { browserContextId } = await this._browserSession.send('Browser.createContext');
+    options.userAgent = options.userAgent || DEFAULT_USER_AGENT;
     const context = this._createBrowserContext(browserContextId, options);
     if (options.ignoreHTTPSErrors)
       await this._browserSession.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
