@@ -107,7 +107,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
     });
   });
 
-  describe('BrowserContext({setUserAgent})', function() {
+  describe('BrowserContext({userAgent})', function() {
     it('should work', async({newPage, server}) => {
       {
         const page = await newPage();

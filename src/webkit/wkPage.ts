@@ -142,8 +142,12 @@ export class WKPage implements PageDelegate {
     }
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
-    if (this._page._state.extraHTTPHeaders !== null)
-      promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders }));
+    if (this._page._state.extraHTTPHeaders || contextOptions.language) {
+      const headers = this._page._state.extraHTTPHeaders || {};
+      if (contextOptions.language)
+        headers['Accept-Language'] = contextOptions.language;
+      promises.push(session.send('Network.setExtraHTTPHeaders', { headers }));
+    }
     if (this._page._state.hasTouch)
       promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
     if (contextOptions.timezoneId) {
@@ -375,7 +379,11 @@ export class WKPage implements PageDelegate {
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
-    await this._updateState('Network.setExtraHTTPHeaders', { headers });
+    const copy = { ...headers };
+    const language = this._page.context()._options.language;
+    if (language)
+      copy['Accept-Language'] = language;
+    await this._updateState('Network.setExtraHTTPHeaders', { headers: copy });
   }
 
   async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
