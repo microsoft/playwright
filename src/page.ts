@@ -50,6 +50,7 @@ export interface PageDelegate {
   setRequestInterception(enabled: boolean): Promise<void>;
   setOfflineMode(enabled: boolean): Promise<void>;
   authenticate(credentials: types.Credentials | null): Promise<void>;
+  setFileChooserIntercepted(enabled: boolean): Promise<void>;
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
   canScreenshotOutsideViewport(): boolean;
@@ -120,7 +121,7 @@ export class Page extends platform.EventEmitter {
       colorScheme: null,
       extraHTTPHeaders: null,
       credentials: null,
-      hasTouch: null
+      hasTouch: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
@@ -489,6 +490,22 @@ export class Page extends platform.EventEmitter {
       this.emit(Events.Page.WorkerDestroyed, worker);
       this._workers.delete(workerId);
     }
+  }
+
+  on(event: string | symbol, listener: platform.Listener): this {
+    if (event === Events.Page.FileChooser) {
+      if (!this.listenerCount(event))
+        this._delegate.setFileChooserIntercepted(true);
+    }
+    super.on(event, listener);
+    return this;
+  }
+
+  removeListener(event: string | symbol, listener: platform.Listener): this {
+    super.removeListener(event, listener);
+    if (event === Events.Page.FileChooser && !this.listenerCount(event))
+      this._delegate.setFileChooserIntercepted(false);
+    return this;
   }
 }
 

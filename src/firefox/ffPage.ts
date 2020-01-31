@@ -79,7 +79,6 @@ export class FFPage implements PageDelegate {
       this._session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._session.send('Network.enable'),
       this._session.send('Page.enable'),
-      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true })
     ];
     const options = this._page.browserContext()._options;
     if (options.viewport)
@@ -304,6 +303,10 @@ export class FFPage implements PageDelegate {
 
   async authenticate(credentials: types.Credentials | null): Promise<void> {
     await this._session.send('Network.setAuthCredentials', credentials || { username: null, password: null });
+  }
+
+  async setFileChooserIntercepted(enabled: boolean) {
+    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
   async reload(): Promise<void> {

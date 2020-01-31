@@ -94,7 +94,6 @@ export class CRPage implements PageDelegate {
     this._handleFrameTree(frameTree);
     const promises: Promise<any>[] = [
       this._client.send('Log.enable', {}),
-      this._client.send('Page.setInterceptFileChooserDialog', {enabled: true}),
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._networkManager.initialize(),
@@ -344,6 +343,10 @@ export class CRPage implements PageDelegate {
 
   async authenticate(credentials: types.Credentials | null) {
     await this._networkManager.authenticate(credentials);
+  }
+
+  async setFileChooserIntercepted(enabled: boolean) {
+    await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
   async reload(): Promise<void> {

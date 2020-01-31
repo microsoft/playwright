@@ -117,7 +117,6 @@ export class WKPage implements PageDelegate {
       session.send('Runtime.enable'),
       session.send('Page.createUserWorld', { name: UTILITY_WORLD_NAME }).catch(_ => {}),  // Worlds are per-process
       session.send('Console.enable'),
-      session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
@@ -421,6 +420,10 @@ export class WKPage implements PageDelegate {
 
   async authenticate(credentials: types.Credentials | null) {
     await this._pageProxySession.send('Emulation.setAuthCredentials', { ...(credentials || { username: '', password: '' }) });
+  }
+
+  async setFileChooserIntercepted(enabled: boolean) {
+    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
   async reload(): Promise<void> {
