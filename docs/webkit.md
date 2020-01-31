@@ -3,7 +3,7 @@
 - :elephant: - bundled, but we don't necessarily need it
 - :warning: - missing, we'd like it to be there
 
-|   |Need|Mac|GTK|WPE|Win|
+|   |Target|Mac|Linux|Cloud|Win|
 |---|:---------:|:---:|:---:|:---:|:---:|
 |3D_TRANSFORMS|  +  |  +  |  +  |  +  |  +  |
 |ACCELERATED_2D_CANVAS|     |     |     |     |     |
@@ -22,7 +22,7 @@
 |CACHE_PARTITIONING|     |:elephant:|     |     |     |
 |CHANNEL_MESSAGING|  +  |  +  |  +  |  +  |  +  |
 |CONTENT_EXTENSIONS|  +  |  +  |  +  |  +  |:warning:|
-|CONTENT_FILTERING|  +  |  +  |:warning:|:warning:|:warning:|
+|CONTENT_FILTERING|     |:elephant:|     |     |     |
 |CONTEXT_MENUS|  +  |  +  |  +  |  +  |  +  |
 |CSS3_TEXT|     |     |     |     |     |
 |CSS_BOX_DECORATION_BREAK|  +  |  +  |  +  |  +  |  +  |
@@ -40,7 +40,7 @@
 |CUSTOM_SCHEME_HANDLER|     |     |     |     |     |
 |C_LOOP_DEFAULT|     |     |     |     |     |
 |DARK_MODE_CSS|  +  |  +  |  +  |  +  |  +  |
-|DATACUE_VALUE|  +  |  +  |:warning:|:warning:|:warning:|
+|DATACUE_VALUE|     |:elephant:|     |     |     |
 |DATALIST_ELEMENT|  +  |  +  |  +  |:warning:|:warning:|
 |DATA_INTERACTION|     |     |     |     |     |
 |DEVICE_ORIENTATION|     |     |     |     |     |
@@ -132,7 +132,7 @@
 |STATIC_JSC|     |     |     |     |     |
 |STREAMS_API|  +  |  +  |  +  |  +  |  +  |
 |SVG_FONTS|  +  |  +  |  +  |  +  |  +  |
-|TELEPHONE_NUMBER _DETECTION|  +  |  +  |:warning:|:warning:|:warning:|
+|TELEPHONE_NUMBER _DETECTION|     |:elephant:|     |     |     |
 |TEXT_AUTOSIZING|     |:elephant:|     |     |     |
 |TOUCH_EVENTS|  +  |  +  |  +  |  +  |  +  |
 |TOUCH_SLIDER|     |     |     |     |     |
