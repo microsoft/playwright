@@ -45,6 +45,7 @@ export class WKPage implements PageDelegate {
   private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;
   private readonly _pageProxySession: WKSession;
+  private readonly _openerResolver: () => Promise<Page | null>;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
@@ -52,8 +53,9 @@ export class WKPage implements PageDelegate {
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browserContext: BrowserContext, pageProxySession: WKSession) {
+  constructor(browserContext: BrowserContext, pageProxySession: WKSession, openerResolver: () => Promise<Page | null>) {
     this._pageProxySession = pageProxySession;
+    this._openerResolver = openerResolver;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
@@ -412,6 +414,10 @@ export class WKPage implements PageDelegate {
 
   async setFileChooserIntercepted(enabled: boolean) {
     await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+  }
+
+  async opener() {
+    return await this._openerResolver();
   }
 
   async reload(): Promise<void> {

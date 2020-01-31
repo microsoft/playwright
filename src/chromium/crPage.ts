@@ -38,6 +38,7 @@ import { BrowserContext } from '../browserContext';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import * as platform from '../platform';
+import { CRTarget } from './crTarget';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -347,6 +348,13 @@ export class CRPage implements PageDelegate {
 
   async setFileChooserIntercepted(enabled: boolean) {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+  }
+
+  async opener() : Promise<Page | null> {
+    const openerTarget = CRTarget.fromPage(this._page).opener();
+    if (!openerTarget)
+      return null;
+    return await openerTarget.page();
   }
 
   async reload(): Promise<void> {

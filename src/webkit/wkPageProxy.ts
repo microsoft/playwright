@@ -28,6 +28,7 @@ const isPovisionalSymbol = Symbol('isPovisional');
 export class WKPageProxy {
   private readonly _pageProxySession: WKSession;
   readonly _browserContext: BrowserContext;
+  private readonly _openerResolver: () => WKPageProxy | null;
   private _pagePromise: Promise<Page> | null = null;
   private _wkPage: WKPage | null = null;
   private readonly _firstTargetPromise: Promise<void>;
@@ -36,9 +37,10 @@ export class WKPageProxy {
   private readonly _sessions = new Map<string, WKSession>();
   private readonly _eventListeners: RegisteredListener[];
 
-  constructor(pageProxySession: WKSession, browserContext: BrowserContext) {
+  constructor(pageProxySession: WKSession, browserContext: BrowserContext, openerResolver: () => (WKPageProxy | null)) {
     this._pageProxySession = pageProxySession;
     this._browserContext = browserContext;
+    this._openerResolver = openerResolver;
     this._firstTargetPromise = new Promise(r => this._firstTargetCallback = r);
     this._eventListeners = [
       helper.addEventListener(this._pageProxySession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
@@ -111,7 +113,12 @@ export class WKPageProxy {
       }
     }
     assert(session, 'One non-provisional target session must exist');
-    this._wkPage = new WKPage(this._browserContext, this._pageProxySession);
+    this._wkPage = new WKPage(this._browserContext, this._pageProxySession, async () => {
+      const pageProxy = this._openerResolver();
+      if (!pageProxy)
+        return null;
+      return await pageProxy.page();
+    });
     await this._wkPage.initialize(session!);
     if (this._pagePausedOnStart) {
       this._resumeTarget(session!.sessionId);

@@ -131,6 +131,14 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
     });
+    it('should provide access to the opener page', async({page}) => {
+      const [popup] = await Promise.all([
+        new Promise(x => page.once('popup', x)),
+        page.evaluate(() => window.open('about:blank')),
+      ]);
+      const opener = await popup.opener();
+      expect(opener).toBe(page);
+    });
     it('should work with noopener', async({page}) => {
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),

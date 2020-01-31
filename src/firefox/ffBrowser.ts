@@ -280,7 +280,12 @@ class Target {
     if (!this._pagePromise) {
       this._pagePromise = new Promise(async f => {
         const session = await this._connection.createSession(this._targetId);
-        this._ffPage = new FFPage(session, this._context);
+        this._ffPage = new FFPage(session, this._context, async () => {
+          const openerTarget = this.opener();
+          if (!openerTarget)
+            return null;
+          return await openerTarget.page();
+        });
         const page = this._ffPage._page;
         session.once(FFSessionEvents.Disconnected, () => page._didDisconnect());
         await this._ffPage._initialize();
