@@ -97,10 +97,8 @@ export class WKPageProxy {
   }
 
   onPopupCreated(popupPageProxy: WKPageProxy) {
-    const wkPage = this._wkPage;
-    if (!wkPage || !wkPage._page.listenerCount(Events.Page.Popup))
-      return;
-    popupPageProxy.page().then(page => wkPage._page.emit(Events.Page.Popup, page));
+    if (this._wkPage)
+      popupPageProxy.page().then(page => this._wkPage!._page.emit(Events.Page.Popup, page));
   }
 
   private async _initializeWKPage(): Promise<Page> {
@@ -114,7 +112,7 @@ export class WKPageProxy {
     }
     assert(session, 'One non-provisional target session must exist');
     this._wkPage = new WKPage(this._browserContext, this._pageProxySession);
-    await this._wkPage.initialize(session!, this._pagePausedOnStart);
+    await this._wkPage.initialize(session!);
     if (this._pagePausedOnStart) {
       this._resumeTarget(session!.sessionId);
       this._pagePausedOnStart = false;
