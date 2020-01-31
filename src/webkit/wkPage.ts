@@ -84,11 +84,11 @@ export class WKPage implements PageDelegate {
     this._workers.setSession(session);
   }
 
-  async initialize(session: WKSession, pagePausedOnStart: boolean) {
+  async initialize(session: WKSession) {
     this._setSession(session);
     await Promise.all([
       this._initializePageProxySession(),
-      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree, pagePausedOnStart)),
+      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree)),
     ]);
   }
 
@@ -240,26 +240,14 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 
-  private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree, pagePausedOnStart: boolean) {
-    const frame = this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
+  private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
+    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
-
-    if (!pagePausedOnStart) {
-      frame._utilityContext().then(async context => {
-        const readyState = await context.evaluate(() => document.readyState).catch(e => 'loading');
-        if (frame.isDetached())
-          return;
-        if (readyState === 'interactive' || readyState === 'complete')
-          this._page._frameManager.frameLifecycleEvent(frame._id, 'domcontentloaded');
-        if (readyState === 'complete')
-          this._page._frameManager.frameLifecycleEvent(frame._id, 'load');
-      });
-    }
 
     if (!frameTree.childFrames)
       return;
     for (const child of frameTree.childFrames)
-      this._handleFrameTree(child, pagePausedOnStart);
+      this._handleFrameTree(child);
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null): frames.Frame {
