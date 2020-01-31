@@ -84,9 +84,45 @@ Id engines are selecting based on the corresponding atrribute value. For example
 
 ### zs
 
-ZSelector is an experimental engine that tries to make selectors survive future refactorings. Example: `zs=div ~ "Login"`.
+Z-selector is an experimental engine to define selectors that can **survive future refactorings**. Changes in the UI markup can often cause existing UI selectors to break. While `data-*` attributes can be useful to establish contracts between app and test code, they can be an additional maintenance burden. It can also be difficult to introduce new attributes if you are testing third-party UI.
 
-TODO: write more.
+Z-selector aims to search elements with precision and resiliency against layout changes. It does not depend on strict nesting, and can localize element search through accessible selectors, like text content and type of element. It can then combine that with precise last-mile lookup.
+
+Z-selector selector uses the `~` combinator 
+(not to be confused with the [general sibling combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator) to traverse the hierarchy. Let's see how `zs="Foo" ~ "Bar" ~ "Baz"` works. From the root, it will look for a node with the text "Foo". It will then start climbing up the hierarchy, until it finds a node with text "Bar". From that node it will start climbing until it finds a node "Baz".
+
+<img src="https://raw.githubusercontent.com/arjun27/tsgr/master/zs.png" width="400" />
+
+Let's try this on a more real example. In the HTML snippet below, `zs="Username" ~ input` can be used to select the `input` element.
+
+```html
+<form>
+  <label>Username</label>
+  <input type="text">
+</form>
+```
+
+```js
+await page.$eval(`zs="Username" ~ input`, e => e.outerHTML); // returns <input type="text">
+```
+
+If this UI were to change, with `label` becoming a `div`, and the `input` getting wrapped inside another `div`, the same selector can still be used to locate the `input` element. `"Username"` helps keep the search resilient to layout changes, and the `input` gives us last-mile precision in a sub-tree around `"Username"`.
+
+```html
+<form>
+  <div>Username</div>
+  <div>
+    <input type="text">
+  </div>
+</form>
+```
+
+#### Other combinators
+
+* If the zs selector matches 2 or more elements (for example, `zs=div` will match all `div` elements), you can use `#` to disambiguate. `zs=div#0` will select the first `div`, whereas `zs=div#1` will select the second.
+* The `^` combinator can be used to go up one level in the DOM hierarchy and select the parent element.
+
+If you have an feedback on the Z-selector engine, please [file an issue](https://github.com/microsoft/playwright/issues) and help us make it better.
 
 ## Custom selector engines
 
