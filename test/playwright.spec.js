@@ -197,6 +197,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   testRunner.loadTests(require('./defaultbrowsercontext.spec.js'), testOptions);
   testRunner.loadTests(require('./fixtures.spec.js'), testOptions);
   testRunner.loadTests(require('./launcher.spec.js'), testOptions);
+  testRunner.loadTests(require('./headful.spec.js'), testOptions);
 
   if (CHROMIUM) {
     testRunner.loadTests(require('./chromium/launcher.spec.js'), testOptions);

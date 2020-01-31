@@ -44,7 +44,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     ],
   });
 
-  describe('HEADFUL', function() {
+  describe('ChromiumHeadful', function() {
     it('background_page target type should be available', async() => {
       const browserWithExtension = await playwright.launch(extensionOptions);
       const page = await browserWithExtension.defaultContext().newPage();
@@ -60,31 +60,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       expect(await page.evaluate(() => 2 * 3)).toBe(6);
       expect(await page.evaluate(() => window.MAGIC)).toBe(42);
       await browserWithExtension.close();
-    });
-    it('should have default url when launching browser', async function() {
-      const browser = await playwright.launch(extensionOptions);
-      const pages = (await browser.defaultContext().pages()).map(page => page.url());
-      expect(pages).toEqual(['about:blank']);
-      await browser.close();
-    });
-    // see https://github.com/microsoft/playwright/issues/717
-    it.skip(WIN && CHROMIUM)('headless should be able to read cookies written by headful', async({server}) => {
-      const userDataDir = await mkdtempAsync(TMP_FOLDER);
-      // Write a cookie in headful chrome
-      const headfulBrowser = await playwright.launch(Object.assign({userDataDir}, headfulOptions));
-      const headfulPage = await headfulBrowser.defaultContext().newPage();
-      await headfulPage.goto(server.EMPTY_PAGE);
-      await headfulPage.evaluate(() => document.cookie = 'foo=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
-      await headfulBrowser.close();
-      // Read the cookie from headless chrome
-      const headlessBrowser = await playwright.launch(Object.assign({userDataDir}, headlessOptions));
-      const headlessPage = await headlessBrowser.defaultContext().newPage();
-      await headlessPage.goto(server.EMPTY_PAGE);
-      const cookie = await headlessPage.evaluate(() => document.cookie);
-      await headlessBrowser.close();
-      // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-      await rmAsync(userDataDir).catch(e => {});
-      expect(cookie).toBe('foo=true');
     });
     // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
     xit('OOPIF: should report google.com frame', async({server}) => {
@@ -106,15 +81,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         server.EMPTY_PAGE,
         'https://google.com/'
       ]);
-      await browser.close();
-    });
-    it('should close browser with beforeunload page', async({server}) => {
-      const browser = await playwright.launch(headfulOptions);
-      const page = await browser.defaultContext().newPage();
-      await page.goto(server.PREFIX + '/beforeunload.html');
-      // We have to interact with a page so that 'beforeunload' handlers
-      // fire.
-      await page.click('body');
       await browser.close();
     });
     it('should open devtools when "devtools: true" option is given', async({server}) => {
