@@ -2507,7 +2507,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..8d6ed7188bca75fb46d1a5963983f088
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5809b8726af46cf93007b15cad6904506352b26d 100644
+index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f290dc6db 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2576,7 +2576,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5809b8726af46cf93007b15cad690450
      macro(WebRTCEncryptionEnabled) \
      macro(WebSecurityEnabled)
  
-+HashMap<String, Ref<DOMWrapperWorld>>& createdUserWorlds() {
++static HashMap<String, Ref<DOMWrapperWorld>>& createdUserWorlds() {
 +    static NeverDestroyed<HashMap<String, Ref<DOMWrapperWorld>>> nameToWorld;
 +    return nameToWorld;
 +}
