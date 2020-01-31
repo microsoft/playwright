@@ -11,8 +11,10 @@ Playwright is a Node library to automate the [Chromium](https://www.chromium.org
 | Chromium| 81.0.4044 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | WebKit | 13.0.4 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Firefox |73.0b3 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+- Headless is supported for all the browsers on all platforms.
 
-Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation. Headless is supported for all the browsers on all platforms. This includes support for the new Microsoft Edge browser, which is based on Chromium.
+
+Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
 
 ### Installation
 
@@ -164,6 +166,10 @@ We recognize WebDriver as a universal standard for the web automation and testin
 - *Firefox*: Playwright makes a number of modifications to Firefox as well. Those are adding support for content script debugging, workers, CSP, emulation, network interception, etc. etc.
 
   Similarly to WebKit, we'd like to offer all of those for review upstream, for now they can be found in the `browser_patches/firefox` folder.
+
+### Q: Does Playwright support new Microsoft Edge?
+
+The new Microsoft Edge browser is based on Chromium, so Playwright supports it.
 
 ### Q: Is Playwright ready?
 
