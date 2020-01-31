@@ -26,14 +26,13 @@ const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private _globalObjectIdPromise?: Promise<Protocol.Runtime.RemoteObjectId>;
-  _session: WKSession;
-  _contextId: number | undefined;
+  private readonly _session: WKSession;
+  readonly _contextId: number | undefined;
   private _contextDestroyedCallback: () => void = () => {};
-  private _executionContextDestroyedPromise: Promise<unknown>;
-  _jsonStringifyObjectId: Protocol.Runtime.RemoteObjectId | undefined;
+  private readonly _executionContextDestroyedPromise: Promise<unknown>;
 
-  constructor(client: WKSession, contextId: number | undefined) {
-    this._session = client;
+  constructor(session: WKSession, contextId: number | undefined) {
+    this._session = session;
     this._contextId = contextId;
     this._executionContextDestroyedPromise = new Promise((resolve, reject) => {
       this._contextDestroyedCallback = resolve;
