@@ -351,7 +351,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
   });
 
-  describe('BrowserContext.setCookies', function() {
+  describe('BrowserContext.clearCookies', function() {
     it('should clear cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.setCookies([{
