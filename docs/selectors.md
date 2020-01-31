@@ -89,7 +89,7 @@ Z-selector is an experimental engine to define selectors that can **survive futu
 Z-selector aims to search elements with precision and resiliency against layout changes. It does not depend on strict nesting, and can localize element search through accessible selectors, like text content and type of element. It can then combine that with precise last-mile lookup.
 
 Z-selector selector uses the `~` combinator 
-(not to be confused with the [general sibling combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator) to traverse the hierarchy. Let's see how `zs="Foo" ~ "Bar" ~ "Baz"` works. From the root, it will look for a node with the text "Foo". It will then start climbing up the hierarchy, until it finds a node with text "Bar". From that node it will start climbing until it finds a node "Baz".
+(not to be confused with the [general sibling combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator)) to traverse the DOM hierarchy. Let's see how `zs="Foo" ~ "Bar" ~ "Baz"` works. From the root, it will look for a node with the text "Foo". It will then start climbing up the hierarchy, until it finds a node with text "Bar". From that node it will start climbing until it finds a node "Baz".
 
 <img src="https://raw.githubusercontent.com/arjun27/tsgr/master/zs.png" width="400" />
 
