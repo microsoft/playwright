@@ -119,20 +119,19 @@ export class WKSession extends platform.EventEmitter {
     this.once = super.once;
   }
 
-  send<T extends keyof Protocol.CommandParameters>(
+  async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (this._disposed)
-      return Promise.reject(new Error(`Protocol error (${method}): ${this.errorText}`));
+      throw new Error(`Protocol error (${method}): ${this.errorText}`);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     platform.debug('pw:wrapped:' + this.sessionId)('SEND ► ' + JSON.stringify(messageObj, null, 2));
-    const result = new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
+    this._rawSend(messageObj);
+    return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
     });
-    this._rawSend(messageObj);
-    return result;
   }
 
   isDisposed(): boolean {

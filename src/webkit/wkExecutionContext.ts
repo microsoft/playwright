@@ -120,21 +120,17 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       throw error;
     }
 
-    let callFunctionOnPromise;
-    try {
-      callFunctionOnPromise = this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: functionText + '\n' + suffix + '\n',
-        objectId: thisObjectId,
-        arguments: serializableArgs.map((arg: any) => this._convertArgument(arg)),
-        returnByValue: false,
-        emulateUserGesture: true
-      });
-    } catch (err) {
+    return this._session.send('Runtime.callFunctionOn', {
+      functionDeclaration: functionText + '\n' + suffix + '\n',
+      objectId: thisObjectId,
+      arguments: serializableArgs.map((arg: any) => this._convertArgument(arg)),
+      returnByValue: false,
+      emulateUserGesture: true
+    }).catch(err => {
       if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
         err.message += ' Are you passing a nested JSHandle?';
       throw err;
-    }
-    return callFunctionOnPromise.then(response => {
+    }).then(response => {
       if (response.result.type === 'object' && response.result.className === 'Promise') {
         return Promise.race([
           this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
