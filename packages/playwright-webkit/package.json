@@ -1,6 +1,6 @@
 {
   "name": "playwright-webkit",
-  "version": "0.9.24-post",
+  "version": "0.10.0",
   "description": "A high-level API to automate WebKit",
   "repository": "github:Microsoft/playwright",
   "main": "index.js",
@@ -12,6 +12,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "playwright-core": "=0.9.24-post"
+    "playwright-core": "=0.10.0"
   }
 }
