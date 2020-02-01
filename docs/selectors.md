@@ -1,8 +1,16 @@
 # Selector engines
 
-Playwright supports multiple selector engines used to query elements in the web page.
+Playwright supports multiple selector engines to query elements on a web page. Element selectors can be used to obtain `ElementHandle` objects (see [page.$()](api.md#pageselector) for example), or shortcut element operations that avoid intermediate handles (see [page.click()](api.md#pageclickselector-options) for example).
 
-Selector can be used to obtain `ElementHandle` (see [page.$()](api.md#pageselector) for example) or shortcut element operations to avoid intermediate handle (see [page.click()](api.md#pageclickselector-options) for example).
+* [Selector syntax](#selector-syntax)
+   * [Examples](#examples)
+* [Built-in selector engines](#built-in-selector-engines)
+   * [css](#css)
+   * [xpath](#xpath)
+   * [text](#text)
+   * [id, data-testid, data-test-id, data-test](#id-data-testid-data-test-id-data-test)
+   * [zs](#zs)
+* [Custom selector engines](#custom-selector-engines)
 
 ## Selector syntax
 
@@ -27,7 +35,7 @@ For convenience, selectors in the wrong format are heuristically converted to th
 - selector starting with `"` is assumed to be `text=selector`;
 - otherwise selector is assumed to be `css=selector`.
 
-## Examples
+### Examples
 
 ```js
 // queries 'div' css selector
@@ -84,12 +92,15 @@ Id engines are selecting based on the corresponding atrribute value. For example
 
 ### zs
 
-Z-selector is an experimental engine to define selectors that can **survive future refactorings**. Changes in the UI markup can often cause existing UI selectors to break. While `data-*` attributes can be useful to establish contracts between app and test code, they can be an additional maintenance burden. It can also be difficult to introduce new attributes if you are testing third-party UI.
+The z-selector is an experimental engine to define selectors that can **survive future refactorings**. UI selectors that depend on the DOM hierarchy can be susceptible to markup changes. `data-*` attributes can be used to establish contracts that avoid nested node relationships, but they are not always available.
 
-Z-selector aims to search elements with precision and resiliency against layout changes. It does not depend on strict nesting, and can localize element search through accessible selectors, like text content and type of element. It can then combine that with precise last-mile lookup.
+Z-selector attempts to be a readable selector that does not depend on strict nesting, thereby being resilient to certain markup changes. Within a `zs` definition, you can use the following to select nodes: text content (`"Login"`), element type (`input`) and CSS classnames (`.container`). Node relationships are defined with the `~` combinator. Z-selector can also be combined with other selectors using the `>>` combinator as described above.
 
-Z-selector selector uses the `~` combinator 
-(not to be confused with the [general sibling combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator)) to traverse the DOM hierarchy. Let's see how `zs="Foo" ~ "Bar" ~ "Baz"` works. From the root, it will look for a node with the text "Foo". It will then start climbing up the hierarchy, until it finds a node with text "Bar". From that node it will start climbing until it finds a node "Baz".
+#### The `~` combinator
+
+The `~` combinator defines a common ancestral relationship between nodes: it separates two nodes and matches the second node if the two share a common ancestor. This defines a node relationship that is flexible, and does not rely on strict nesting.
+
+To understand how the selector engine traverses the hierarchy, let's see how `zs="Foo" ~ "Bar" ~ "Baz"` works. From the root, it will look for a node with the text "Foo". It will then start climbing up the hierarchy, until it finds a node in the sub-tree with text "Bar". From that node, it will start climbing until it finds a node "Baz".
 
 <img src="https://raw.githubusercontent.com/arjun27/tsgr/master/zs.png" width="400" />
 
@@ -106,7 +117,7 @@ Let's try this on a more real example. In the HTML snippet below, `zs="Username"
 await page.$eval(`zs="Username" ~ input`, e => e.outerHTML); // returns <input type="text">
 ```
 
-If this UI were to change, with `label` becoming a `div`, and the `input` getting wrapped inside another `div`, the same selector can still be used to locate the `input` element. `"Username"` helps keep the search resilient to layout changes, and the `input` gives us last-mile precision in a sub-tree around `"Username"`.
+If this markup were to change, with `label` becoming a `div`, and the `input` getting wrapped inside another `div`, the same selector can still be used to locate the `input` element. `"Username"` helps keep the search resilient to layout changes, and the `input` gives us last-mile precision in a sub-tree around `"Username"`.
 
 ```html
 <form>
@@ -119,10 +130,12 @@ If this UI were to change, with `label` becoming a `div`, and the `input` gettin
 
 #### Other combinators
 
-* If the zs selector matches 2 or more elements (for example, `zs=div` will match all `div` elements), you can use `#` to disambiguate. `zs=div#0` will select the first `div`, whereas `zs=div#1` will select the second.
-* The `^` combinator can be used to go up one level in the DOM hierarchy and select the parent element.
+In some cases, relationships defined with the `~` combinator can be insufficient to locate elements. For last-resort selections, z-selector also supports the `^` and `#` combinators.
 
-If you have an feedback on the Z-selector engine, please [file an issue](https://github.com/microsoft/playwright/issues) and help us make it better.
+* The `^` combinator can be used to go up one level in the DOM hierarchy and select the parent element. In the modified example above, `zs=input^` will select the `div` which wraps the `input` element.
+* The `#n` combinator works as an ordinal selector. In the modified example above, `zs=div#0` will select the first `div` element. `zs=div#1` will select the second.
+
+If you have an feedback on the Z-selector engine, we would love to hear about it. Please [file an issue](https://github.com/microsoft/playwright/issues) and help us make it work better for you.
 
 ## Custom selector engines
 
