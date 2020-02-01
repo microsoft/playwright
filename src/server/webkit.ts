@@ -218,7 +218,7 @@ export class WebKit implements BrowserType {
   _resolveExecutablePath(): { executablePath: string; missingText: string | null; } {
     const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
-    const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install" or "yarn install"` : null;
+    const missingText = !revisionInfo.local ? `WebKit revision is not downloaded. Run "npm install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };
   }
 }
