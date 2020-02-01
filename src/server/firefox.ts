@@ -227,7 +227,7 @@ export class Firefox implements BrowserType {
   _resolveExecutablePath() {
     const browserFetcher = this._createBrowserFetcher();
     const revisionInfo = browserFetcher.revisionInfo();
-    const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install" or "yarn install"` : null;
+    const missingText = !revisionInfo.local ? `Firefox revision is not downloaded. Run "npm install"` : null;
     return { executablePath: revisionInfo.executablePath, missingText };
   }
 }
