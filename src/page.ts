@@ -77,6 +77,9 @@ type PageState = {
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
+  cacheEnabled: boolean | null;
+  interceptNetwork: boolean | null;
+  offlineMode: boolean | null;
   credentials: types.Credentials | null;
   hasTouch: boolean | null;
 };
@@ -120,6 +123,9 @@ export class Page extends platform.EventEmitter {
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,
+      cacheEnabled: null,
+      interceptNetwork: null,
+      offlineMode: null,
       credentials: null,
       hasTouch: null,
     };
@@ -395,6 +401,27 @@ export class Page extends platform.EventEmitter {
   async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
     const source = helper.evaluationString(pageFunction, ...args);
     await this._delegate.evaluateOnNewDocument(source);
+  }
+
+  async setCacheEnabled(enabled: boolean = true) {
+    if (this._state.cacheEnabled === enabled)
+      return;
+    this._state.cacheEnabled = enabled;
+    await this._delegate.setCacheEnabled(enabled);
+  }
+
+  async setRequestInterception(enabled: boolean) {
+    if (this._state.interceptNetwork === enabled)
+      return;
+    this._state.interceptNetwork = enabled;
+    await this._delegate.setRequestInterception(enabled);
+  }
+
+  async setOfflineMode(enabled: boolean) {
+    if (this._state.offlineMode === enabled)
+      return;
+    this._state.offlineMode = enabled;
+    await this._delegate.setOfflineMode(enabled);
   }
 
   async authenticate(credentials: types.Credentials | null) {

@@ -42,9 +42,6 @@ export type BrowserContextOptions = {
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
-  cacheEnabled?: boolean;
-  interceptNetwork?: boolean;
-  offlineMode?: boolean;
   timezoneId?: string,
   geolocation?: types.Geolocation,
   permissions?: { [key: string]: string[] };
@@ -113,27 +110,6 @@ export class BrowserContext {
       geolocation = verifyGeolocation(geolocation);
     this._options.geolocation = geolocation || undefined;
     await this._delegate.setGeolocation(geolocation);
-  }
-
-  async setCacheEnabled(enabled: boolean = true) {
-    if (this._options.cacheEnabled === enabled)
-      return;
-    this._options.cacheEnabled = enabled;
-    await Promise.all(this._existingPages().map(page => page._delegate.setCacheEnabled(enabled)));
-  }
-
-  async setRequestInterception(enabled: boolean) {
-    if (this._options.interceptNetwork === enabled)
-      return;
-    this._options.interceptNetwork = enabled;
-    await Promise.all(this._existingPages().map(page => page._delegate.setRequestInterception(enabled)));
-  }
-
-  async setOfflineMode(enabled: boolean) {
-    if (this._options.offlineMode === enabled)
-      return;
-    this._options.offlineMode = enabled;
-    await Promise.all(this._existingPages().map(page => page._delegate.setOfflineMode(enabled)));
   }
 
   async close() {

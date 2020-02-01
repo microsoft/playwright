@@ -17,7 +17,7 @@
 
 const utils = require('./utils');
 
-module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WEBKIT, FFOX}) {
+module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -311,42 +311,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
     it('should be able to navigate after disabling javascript', async({newPage, server}) => {
       const page = await newPage({ javaScriptEnabled: false });
       await page.goto(server.EMPTY_PAGE);
-    });
-  });
-
-  describe.skip(FFOX)('BrowserContext({offlineMode})', function() {
-    it('should create offline pages', async({newPage, server}) => {
-      const page = await newPage({ offlineMode: true });
-      expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
-      let error = null;
-      await page.goto(server.EMPTY_PAGE).catch(e => error = e);
-      expect(error).toBeTruthy();
-    });
-  });
-
-  describe('BrowserContext({cacheEnabled})', function() {
-    it('should create pages with disabled cache', async({newPage, server}) => {
-      const page = await newPage({ cacheEnabled: false });
-      await page.goto(server.PREFIX + '/cached/one-style.html');
-      // WebKit does r.setCachePolicy(ResourceRequestCachePolicy::ReloadIgnoringCacheData);
-      // when navigating to the same url, load empty.html to avoid that.
-      await page.goto(server.EMPTY_PAGE);
-      const [cachedRequest] = await Promise.all([
-        server.waitForRequest('/cached/one-style.html'),
-        page.goto(server.PREFIX + '/cached/one-style.html'),
-      ]);
-      // Rely on "if-modified-since" caching in our test server.
-      expect(cachedRequest.headers['if-modified-since']).toBe(undefined);
-    });
-  });
-
-  describe('BrowserContext({interceptNetwork})', function() {
-    it('should enable request interception', async({newPage, httpsServer}) => {
-      const page = await newPage({ ignoreHTTPSErrors: true, interceptNetwork: true });
-      page.on('request', request => request.abort());
-      let error;
-      await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-      expect(error).toBeTruthy();
     });
   });
 };

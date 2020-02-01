@@ -121,13 +121,14 @@ export class WKPage implements PageDelegate {
       this._workers.initializeSession(session)
     ];
 
-    const contextOptions = this._page.browserContext()._options;
-    if (contextOptions.interceptNetwork)
+    if (this._page._state.interceptNetwork)
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
-    if (contextOptions.offlineMode)
+    if (this._page._state.offlineMode)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
-    if (contextOptions.cacheEnabled === false)
+    if (this._page._state.cacheEnabled === false)
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
+
+    const contextOptions = this._page.browserContext()._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
@@ -584,7 +585,7 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new WKInterceptableRequest(session, !!this._page.browserContext()._options.interceptNetwork, frame, event, redirectChain, documentId);
+    const request = new WKInterceptableRequest(session, !!this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
