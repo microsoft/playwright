@@ -34,6 +34,8 @@ export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
   readonly rawKeyboard: input.RawKeyboard;
 
+  opener(): Promise<Page | null>;
+
   reload(): Promise<void>;
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
@@ -171,6 +173,10 @@ export class Page extends platform.EventEmitter {
 
   browserContext(): BrowserContext {
     return this._browserContext;
+  }
+
+  async opener(): Promise<Page | null> {
+    return await this._delegate.opener();
   }
 
   mainFrame(): frames.Frame {

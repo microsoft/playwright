@@ -41,12 +41,14 @@ export class FFPage implements PageDelegate {
   readonly _session: FFSession;
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
+  private readonly _openerResolver: () => Promise<Page | null>;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
 
-  constructor(session: FFSession, browserContext: BrowserContext) {
+  constructor(session: FFSession, browserContext: BrowserContext, openerResolver: () => Promise<Page | null>) {
     this._session = session;
+    this._openerResolver = openerResolver;
     this.rawKeyboard = new RawKeyboardImpl(session);
     this.rawMouse = new RawMouseImpl(session);
     this._contextIdToContext = new Map();
@@ -303,6 +305,10 @@ export class FFPage implements PageDelegate {
 
   async setFileChooserIntercepted(enabled: boolean) {
     await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+  }
+
+  async opener() : Promise<Page | null> {
+    return await this._openerResolver();
   }
 
   async reload(): Promise<void> {

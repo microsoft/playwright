@@ -186,6 +186,26 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
   });
 
+  describe('Page.opener', function() {
+    it('should provide access to the opener page', async({page}) => {
+      const [popup] = await Promise.all([
+        new Promise(x => page.once('popup', x)),
+        page.evaluate(() => window.open('about:blank')),
+      ]);
+      const opener = await popup.opener();
+      expect(opener).toBe(page);
+    });
+    it('should return null if parent page has been closed', async({page}) => {
+      const [popup] = await Promise.all([
+        new Promise(x => page.once('popup', x)),
+        page.evaluate(() => window.open('about:blank')),
+      ]);
+      await page.close();
+      const opener = await popup.opener();
+      expect(opener).toBe(null);
+    });
+  });
+
   describe('Page.Events.Console', function() {
     it('should work', async({page, server}) => {
       let message = null;

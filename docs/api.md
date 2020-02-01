@@ -467,6 +467,7 @@ page.removeListener('request', logRequest);
 - [page.keyboard](#pagekeyboard)
 - [page.mainFrame()](#pagemainframe)
 - [page.mouse](#pagemouse)
+- [page.opener()](#pageopener)
 - [page.pdf([options])](#pagepdfoptions)
 - [page.reload([options])](#pagereloadoptions)
 - [page.screenshot([options])](#pagescreenshotoptions)
@@ -1097,6 +1098,10 @@ Page is guaranteed to have a main frame which persists during navigations.
 #### page.mouse
 
 - returns: <[Mouse]>
+
+#### page.opener()
+
+- returns: <[Promise]<?[Page]>> Promise which resolves to the opener for popup pages and `null` for others. If the opener has been closed already the promise may resolve to `null`.
 
 #### page.pdf([options])
 - `options` <[Object]> Options object which might have the following properties:
