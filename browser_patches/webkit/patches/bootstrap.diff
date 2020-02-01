@@ -8237,6 +8237,23 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +};
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/Launcher/win/ProcessLauncherWin.cpp b/Source/WebKit/UIProcess/Launcher/win/ProcessLauncherWin.cpp
+index 8a871bf2916d5eab86becf5fde0faed79283d88c..a19a429c4d53edf81c3028c7053265e6c22c171a 100644
+--- a/Source/WebKit/UIProcess/Launcher/win/ProcessLauncherWin.cpp
++++ b/Source/WebKit/UIProcess/Launcher/win/ProcessLauncherWin.cpp
+@@ -92,8 +92,11 @@ void ProcessLauncher::launchProcess()
+ 
+     STARTUPINFO startupInfo { };
+     startupInfo.cb = sizeof(startupInfo);
+-    startupInfo.dwFlags = STARTF_USESHOWWINDOW;
++    startupInfo.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+     startupInfo.wShowWindow = SW_HIDE;
++    startupInfo.hStdInput = ::GetStdHandle(STD_INPUT_HANDLE);
++    startupInfo.hStdOutput = ::GetStdHandle(STD_OUTPUT_HANDLE);
++    startupInfo.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
+     PROCESS_INFORMATION processInformation { };
+     BOOL result = ::CreateProcess(0, commandLine.data(), 0, 0, true, 0, 0, 0, &startupInfo, &processInformation);
+ 
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..0b4ec2de5671723f4045e98b3e398fc11180b3b8
