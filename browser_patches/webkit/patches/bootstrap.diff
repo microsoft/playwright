@@ -103,6 +103,25 @@ index eb25aedee4cd9ebe007e06c2515b37ee095b06f4..badf6559595c8377db1089ca3c25008e
      static String createIdentifier();
      static String requestId(unsigned long identifier);
  };
+diff --git a/Source/JavaScriptCore/inspector/InjectedScript.cpp b/Source/JavaScriptCore/inspector/InjectedScript.cpp
+index cc849f051fa40518a9d1a03429bc2b4dbcfb3102..11b05346f6098fa23f51ba9abc1af0e0e60a626c 100644
+--- a/Source/JavaScriptCore/inspector/InjectedScript.cpp
++++ b/Source/JavaScriptCore/inspector/InjectedScript.cpp
+@@ -287,9 +287,13 @@ RefPtr<Protocol::Runtime::RemoteObject> InjectedScript::wrapObject(JSC::JSValue
+     auto callResult = callFunctionWithEvalEnabled(wrapFunction);
+     if (!callResult)
+         return nullptr;
++    auto callResultValue = callResult.value();
++    // callResultValue could be missing if the execution was terminated
++    if (!callResultValue)
++        return nullptr;
+ 
+     RefPtr<JSON::Object> resultObject;
+-    bool castSucceeded = toInspectorValue(globalObject(), callResult.value())->asObject(resultObject);
++    bool castSucceeded = toInspectorValue(globalObject(), callResultValue)->asObject(resultObject);
+     ASSERT_UNUSED(castSucceeded, castSucceeded);
+ 
+     return BindingTraits<Protocol::Runtime::RemoteObject>::runtimeCast(resultObject);
 diff --git a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp b/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
 index 038cb646d31706905deff8935040d63c0afd00f9..2fca7b043f15a8cce3819cc827912fb719a345db 100644
 --- a/Source/JavaScriptCore/inspector/InspectorBackendDispatcher.cpp
