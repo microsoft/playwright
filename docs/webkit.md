@@ -13,7 +13,7 @@
 |APPLE_PAY|     |:elephant:|     |     |     |
 |APPLE_PAY_SESSION_V3|     |:elephant:|     |     |     |
 |APPLE_PAY_SESSION_V4|     |:elephant:|     |     |     |
-|APPLICATION_MANIFEST|  +  |  +  |:warning:|:warning:|  +  |
+|APPLICATION_MANIFEST|  +  |  +  |  +  |  +  |  +  |
 |ASYNC_SCROLLING|  +  |  +  |  +  |  +  |:warning:|
 |ATTACHMENT_ELEMENT|     |:elephant:|     |     |:elephant:|
 |AUTOCAPITALIZE|     |     |:elephant:|:elephant:|     |
@@ -27,16 +27,16 @@
 |CSS3_TEXT|     |     |     |     |     |
 |CSS_BOX_DECORATION_BREAK|  +  |  +  |  +  |  +  |  +  |
 |CSS_COMPOSITING|  +  |  +  |  +  |  +  |  +  |
-|CSS_CONIC_GRADIENTS|  +  |  +  |  +  |  +  |:warning:|
+|CSS_CONIC_GRADIENTS|  +  |  +  |  +  |  +  |  +  |
 |CSS_DEVICE_ADAPTATION|     |     |     |     |     |
 |CSS_IMAGE_ORIENTATION|     |     |     |     |     |
 |CSS_IMAGE_RESOLUTION|     |     |     |     |     |
 |CSS_PAINTING_API|  +  |  +  |  +  |  +  |  +  |
 |CSS_SCROLL_SNAP|     |:elephant:|     |     |     |
 |CSS_SELECTORS_LEVEL4|  +  |  +  |  +  |  +  |  +  |
-|CSS_TRAILING_WORD|  +  |  +  |:warning:|:warning:|:warning:|
+|CSS_TRAILING_WORD|  +  |  +  |  +  |  +  |  +  |
 |CSS_TYPED_OM|  +  |  +  |  +  |  +  |  +  |
-|CURSOR_VISIBILITY|  +  |  +  |:warning:|:warning:|  +  |
+|CURSOR_VISIBILITY|  +  |  +  |  +  |  +  |  +  |
 |CUSTOM_SCHEME_HANDLER|     |     |     |     |     |
 |C_LOOP_DEFAULT|     |     |     |     |     |
 |DARK_MODE_CSS|  +  |  +  |  +  |  +  |  +  |
@@ -45,7 +45,7 @@
 |DATA_INTERACTION|     |     |     |     |     |
 |DEVICE_ORIENTATION|     |     |     |     |     |
 |DFG_JIT|  +  |  +  |  +  |  +  |  +  |
-|DOWNLOAD_ATTRIBUTE|  +  |  +  |  +  |:warning:|:warning:|
+|DOWNLOAD_ATTRIBUTE|  +  |  +  |  +  |  +  |  +  |
 |DRAG_SUPPORT|     |:elephant:|:elephant:|     |:elephant:|
 |ENCRYPTED_MEDIA|  +  |  +  |  +  |  +  |:warning:|
 |EXPERIMENTAL_FEATURES|  +  |  +  |  +  |  +  |  +  |
@@ -79,7 +79,7 @@
 |JIT|  +  |  +  |  +  |  +  |  +  |
 |JIT_DEFAULT|     |     |     |     |     |
 |LAYOUT_FORMATTING_CONTEXT|     |:elephant:|     |     |:elephant:|
-|LEGACY_CSS_VENDOR_PREFIXES|  +  |  +  |:warning:|:warning:|  +  |
+|LEGACY_CSS_VENDOR_PREFIXES|  +  |  +  |  +  |  +  |  +  |
 |LEGACY_CUSTOM_ PROTOCOL_MANAGER|     |:elephant:|     |     |     |
 |LEGACY_ENCRYPTED_MEDIA|     |:elephant:|     |     |     |
 |LETTERPRESS|     |     |     |     |     |
@@ -108,7 +108,7 @@
 |PAYMENT_REQUEST|     |:elephant:|     |     |     |
 |PDFKIT_PLUGIN|     |:elephant:|     |     |     |
 |PICTURE_IN_PICTURE_API|     |:elephant:|     |     |     |
-|POINTER_EVENTS|  +  |  +  |  +  |  +  |:warning:|
+|POINTER_EVENTS|  +  |  +  |  +  |  +  |  +  |
 |POINTER_LOCK|     |:elephant:|:elephant:|     |     |
 |PUBLIC_SUFFIX_LIST|  +  |  +  |  +  |  +  |  +  |
 |QUARTZ_TARGET|     |     |     |     |     |
