@@ -24,6 +24,7 @@ export class WKProvisionalPage {
   private readonly _wkPage: WKPage;
   private _sessionListeners: RegisteredListener[] = [];
   private _mainFrameId: string | null = null;
+  readonly initializationPromise: Promise<void>;
 
   constructor(session: WKSession, page: WKPage) {
     this._session = session;
@@ -47,7 +48,7 @@ export class WKProvisionalPage {
       helper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailed(e))),
     ];
 
-    this._wkPage._initializeSession(session, ({frameTree}) => this._handleFrameTree(frameTree));
+    this.initializationPromise = this._wkPage._initializeSession(session, ({frameTree}) => this._handleFrameTree(frameTree));
   }
 
   dispose() {

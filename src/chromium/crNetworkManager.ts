@@ -29,9 +29,12 @@ export class CRNetworkManager {
   private _page: Page;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
+  private _offline = false;
   private _credentials: {username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
+  private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
+  private _userCacheDisabled = false;
   private _requestIdToInterceptionId = new Map<string, string>();
   private _eventListeners: RegisteredListener[];
 
@@ -60,17 +63,7 @@ export class CRNetworkManager {
   }
 
   async initialize() {
-    const promises: Promise<any>[] = [
-      this._client.send('Network.enable')
-    ];
-    const options = this._page.browserContext()._options;
-    if (options.offlineMode)
-      promises.push(this.setOfflineMode(options.offlineMode));
-    if (this._userRequestInterceptionEnabled())
-      promises.push(this._updateProtocolRequestInterception());
-    else if (options.cacheEnabled === false)
-      promises.push(this._updateProtocolCacheDisabled());
-    await Promise.all(promises);
+    await this._client.send('Network.enable');
   }
 
   dispose() {
@@ -82,9 +75,10 @@ export class CRNetworkManager {
     await this._updateProtocolRequestInterception();
   }
 
-  async setOfflineMode(offline: boolean) {
+  async setOfflineMode(value: boolean) {
+    this._offline = value;
     await this._client.send('Network.emulateNetworkConditions', {
-      offline,
+      offline: this._offline,
       // values of 0 remove any active throttling. crbug.com/456324#c9
       latency: 0,
       downloadThroughput: -1,
@@ -97,19 +91,17 @@ export class CRNetworkManager {
   }
 
   async setCacheEnabled(enabled: boolean) {
+    this._userCacheDisabled = !enabled;
     await this._updateProtocolCacheDisabled();
   }
 
   async setRequestInterception(value: boolean) {
+    this._userRequestInterceptionEnabled = value;
     await this._updateProtocolRequestInterception();
   }
 
-  private _userRequestInterceptionEnabled() : boolean {
-    return !!this._page.browserContext()._options.interceptNetwork;
-  }
-
-  private async _updateProtocolRequestInterception() {
-    const enabled = this._userRequestInterceptionEnabled() || !!this._credentials;
+  async _updateProtocolRequestInterception() {
+    const enabled = this._userRequestInterceptionEnabled || !!this._credentials;
     if (enabled === this._protocolRequestInterceptionEnabled)
       return;
     this._protocolRequestInterceptionEnabled = enabled;
@@ -129,15 +121,13 @@ export class CRNetworkManager {
     }
   }
 
-  private async _updateProtocolCacheDisabled() {
-    const options = this._page.browserContext()._options;
-    const cacheDisabled = options.cacheEnabled === false;
+  async _updateProtocolCacheDisabled() {
     await this._client.send('Network.setCacheDisabled', {
-      cacheDisabled: cacheDisabled || this._protocolRequestInterceptionEnabled
+      cacheDisabled: this._userCacheDisabled || this._protocolRequestInterceptionEnabled
     });
   }
 
-  private _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
+  _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
     // Request interception doesn't happen for data URLs with Network Service.
     if (this._protocolRequestInterceptionEnabled && !event.request.url.startsWith('data:')) {
       const requestId = event.requestId;
@@ -153,7 +143,7 @@ export class CRNetworkManager {
     this._onRequest(event, null);
   }
 
-  private _onAuthRequired(event: Protocol.Fetch.authRequiredPayload) {
+  _onAuthRequired(event: Protocol.Fetch.authRequiredPayload) {
     let response: 'Default' | 'CancelAuth' | 'ProvideCredentials' = 'Default';
     if (this._attemptedAuthentications.has(event.requestId)) {
       response = 'CancelAuth';
@@ -168,8 +158,8 @@ export class CRNetworkManager {
     }).catch(debugError);
   }
 
-  private _onRequestPaused(event: Protocol.Fetch.requestPausedPayload) {
-    if (!this._userRequestInterceptionEnabled() && this._protocolRequestInterceptionEnabled) {
+  _onRequestPaused(event: Protocol.Fetch.requestPausedPayload) {
+    if (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled) {
       this._client.send('Fetch.continueRequest', {
         requestId: event.requestId
       }).catch(debugError);
@@ -188,7 +178,7 @@ export class CRNetworkManager {
     }
   }
 
-  private _onRequest(event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
+  _onRequest(event: Protocol.Network.requestWillBeSentPayload, interceptionId: string | null) {
     if (event.request.url.startsWith('data:'))
       return;
     let redirectChain: network.Request[] = [];
@@ -204,12 +194,12 @@ export class CRNetworkManager {
     const frame = event.frameId ? this._page._frameManager.frame(event.frameId) : null;
     const isNavigationRequest = event.requestId === event.loaderId && event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled(), event, redirectChain);
+    const request = new InterceptableRequest(this._client, frame, interceptionId, documentId, this._userRequestInterceptionEnabled, event, redirectChain);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }
 
-  private _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
+  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
     const getResponseBody = async () => {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
       return platform.Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
@@ -217,7 +207,7 @@ export class CRNetworkManager {
     return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), getResponseBody);
   }
 
-  private _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
+  _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
     const response = this._createResponse(request, responsePayload);
     request.request._redirectChain.push(request.request);
     response._requestFinished(new Error('Response body is unavailable for redirect responses'));
@@ -228,7 +218,7 @@ export class CRNetworkManager {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  private _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
+  _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // FileUpload sends a response without a matching request.
     if (!request)
@@ -237,7 +227,7 @@ export class CRNetworkManager {
     this._page._frameManager.requestReceivedResponse(response);
   }
 
-  private _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
+  _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
@@ -255,7 +245,7 @@ export class CRNetworkManager {
     this._page._frameManager.requestFinished(request.request);
   }
 
-  private _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+  _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469

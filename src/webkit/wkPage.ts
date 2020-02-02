@@ -45,6 +45,7 @@ export class WKPage implements PageDelegate {
   private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;
   private readonly _pageProxySession: WKSession;
+  private readonly _openerResolver: () => Promise<Page | null>;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
@@ -52,8 +53,9 @@ export class WKPage implements PageDelegate {
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browserContext: BrowserContext, pageProxySession: WKSession) {
+  constructor(browserContext: BrowserContext, pageProxySession: WKSession, openerResolver: () => Promise<Page | null>) {
     this._pageProxySession = pageProxySession;
+    this._openerResolver = openerResolver;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
@@ -84,37 +86,51 @@ export class WKPage implements PageDelegate {
     this._workers.setSession(session);
   }
 
-  async initialize(session: WKSession, pagePausedOnStart: boolean) {
+  async initialize(session: WKSession) {
     this._setSession(session);
     await Promise.all([
       this._initializePageProxySession(),
-      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree, pagePausedOnStart)),
+      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree)),
     ]);
   }
 
   // This method is called for provisional targets as well. The session passed as the parameter
   // may be different from the current session and may be destroyed without becoming current.
   async _initializeSession(session: WKSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void) {
-    const promises : Promise<any>[] = [
+    await this._initializeSessionMayThrow(session, resourceTreeHandler).catch(e => {
+      if (session.isDisposed())
+        return;
+      // Swallow initialization errors due to newer target swap in,
+      // since we will reinitialize again.
+      if (this._session === session)
+        throw e;
+    });
+  }
+
+  private async _initializeSessionMayThrow(session: WKSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void) {
+    const [, frameTree] = await Promise.all([
       // Page agent must be enabled before Runtime.
       session.send('Page.enable'),
-      session.send('Page.getResourceTree').then(resourceTreeHandler),
+      session.send('Page.getResourceTree'),
+    ]);
+    resourceTreeHandler(frameTree);
+    const promises : Promise<any>[] = [
       // Resource tree should be received before first execution context.
       session.send('Runtime.enable'),
       session.send('Page.createUserWorld', { name: UTILITY_WORLD_NAME }).catch(_ => {}),  // Worlds are per-process
       session.send('Console.enable'),
-      session.send('Page.setInterceptFileChooserDialog', { enabled: true }),
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
 
-    const contextOptions = this._page.browserContext()._options;
-    if (contextOptions.interceptNetwork)
+    if (this._page._state.interceptNetwork)
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
-    if (contextOptions.offlineMode)
+    if (this._page._state.offlineMode)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
-    if (contextOptions.cacheEnabled === false)
+    if (this._page._state.cacheEnabled === false)
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
+
+    const contextOptions = this._page.browserContext()._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
@@ -129,19 +145,13 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders }));
     if (this._page._state.hasTouch)
       promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
-    await Promise.all(promises).catch(e => {
-      if (session.isDisposed())
-        return;
-      // Swallow initialization errors due to newer target swap in,
-      // since we will reinitialize again.
-      if (this._session === session)
-        throw e;
-    });
+    await Promise.all(promises);
   }
 
-  onProvisionalLoadStarted(provisionalSession: WKSession) {
+  initializeProvisionalPage(provisionalSession: WKSession) : Promise<void> {
     assert(!this._provisionalPage);
     this._provisionalPage = new WKProvisionalPage(provisionalSession, this);
+    return this._provisionalPage.initializationPromise;
   }
 
   onProvisionalLoadCommitted(session: WKSession) {
@@ -233,26 +243,14 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 
-  private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree, pagePausedOnStart: boolean) {
-    const frame = this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
+  private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
+    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
-
-    if (!pagePausedOnStart) {
-      frame._utilityContext().then(async context => {
-        const readyState = await context.evaluate(() => document.readyState).catch(e => 'loading');
-        if (frame.isDetached())
-          return;
-        if (readyState === 'interactive' || readyState === 'complete')
-          this._page._frameManager.frameLifecycleEvent(frame._id, 'domcontentloaded');
-        if (readyState === 'complete')
-          this._page._frameManager.frameLifecycleEvent(frame._id, 'load');
-      });
-    }
 
     if (!frameTree.childFrames)
       return;
     for (const child of frameTree.childFrames)
-      this._handleFrameTree(child, pagePausedOnStart);
+      this._handleFrameTree(child);
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null): frames.Frame {
@@ -413,6 +411,14 @@ export class WKPage implements PageDelegate {
 
   async authenticate(credentials: types.Credentials | null) {
     await this._pageProxySession.send('Emulation.setAuthCredentials', { ...(credentials || { username: '', password: '' }) });
+  }
+
+  async setFileChooserIntercepted(enabled: boolean) {
+    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+  }
+
+  async opener() {
+    return await this._openerResolver();
   }
 
   async reload(): Promise<void> {
@@ -585,7 +591,7 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new WKInterceptableRequest(session, !!this._page.browserContext()._options.interceptNetwork, frame, event, redirectChain, documentId);
+    const request = new WKInterceptableRequest(session, !!this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }

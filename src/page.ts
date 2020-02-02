@@ -34,6 +34,8 @@ export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
   readonly rawKeyboard: input.RawKeyboard;
 
+  opener(): Promise<Page | null>;
+
   reload(): Promise<void>;
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
@@ -50,6 +52,7 @@ export interface PageDelegate {
   setRequestInterception(enabled: boolean): Promise<void>;
   setOfflineMode(enabled: boolean): Promise<void>;
   authenticate(credentials: types.Credentials | null): Promise<void>;
+  setFileChooserIntercepted(enabled: boolean): Promise<void>;
 
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
   canScreenshotOutsideViewport(): boolean;
@@ -76,6 +79,9 @@ type PageState = {
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
+  cacheEnabled: boolean | null;
+  interceptNetwork: boolean | null;
+  offlineMode: boolean | null;
   credentials: types.Credentials | null;
   hasTouch: boolean | null;
 };
@@ -119,8 +125,11 @@ export class Page extends platform.EventEmitter {
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,
+      cacheEnabled: null,
+      interceptNetwork: null,
+      offlineMode: null,
       credentials: null,
-      hasTouch: null
+      hasTouch: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
@@ -164,6 +173,10 @@ export class Page extends platform.EventEmitter {
 
   browserContext(): BrowserContext {
     return this._browserContext;
+  }
+
+  async opener(): Promise<Page | null> {
+    return await this._delegate.opener();
   }
 
   mainFrame(): frames.Frame {
@@ -396,6 +409,27 @@ export class Page extends platform.EventEmitter {
     await this._delegate.evaluateOnNewDocument(source);
   }
 
+  async setCacheEnabled(enabled: boolean = true) {
+    if (this._state.cacheEnabled === enabled)
+      return;
+    this._state.cacheEnabled = enabled;
+    await this._delegate.setCacheEnabled(enabled);
+  }
+
+  async setRequestInterception(enabled: boolean) {
+    if (this._state.interceptNetwork === enabled)
+      return;
+    this._state.interceptNetwork = enabled;
+    await this._delegate.setRequestInterception(enabled);
+  }
+
+  async setOfflineMode(enabled: boolean) {
+    if (this._state.offlineMode === enabled)
+      return;
+    this._state.offlineMode = enabled;
+    await this._delegate.setOfflineMode(enabled);
+  }
+
   async authenticate(credentials: types.Credentials | null) {
     this._state.credentials = credentials;
     await this._delegate.authenticate(credentials);
@@ -489,6 +523,22 @@ export class Page extends platform.EventEmitter {
       this.emit(Events.Page.WorkerDestroyed, worker);
       this._workers.delete(workerId);
     }
+  }
+
+  on(event: string | symbol, listener: platform.Listener): this {
+    if (event === Events.Page.FileChooser) {
+      if (!this.listenerCount(event))
+        this._delegate.setFileChooserIntercepted(true);
+    }
+    super.on(event, listener);
+    return this;
+  }
+
+  removeListener(event: string | symbol, listener: platform.Listener): this {
+    super.removeListener(event, listener);
+    if (event === Events.Page.FileChooser && !this.listenerCount(event))
+      this._delegate.setFileChooserIntercepted(false);
+    return this;
   }
 }
 

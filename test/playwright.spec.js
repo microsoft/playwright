@@ -171,6 +171,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       testRunner.loadTests(require('./interception.spec.js'), testOptions);
       testRunner.loadTests(require('./geolocation.spec.js'), testOptions);
       testRunner.loadTests(require('./workers.spec.js'), testOptions);
+      testRunner.loadTests(require('./capabilities.spec.js'), testOptions);
 
       if (CHROMIUM) {
         testRunner.loadTests(require('./chromium/chromium.spec.js'), testOptions);
@@ -197,6 +198,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   testRunner.loadTests(require('./defaultbrowsercontext.spec.js'), testOptions);
   testRunner.loadTests(require('./fixtures.spec.js'), testOptions);
   testRunner.loadTests(require('./launcher.spec.js'), testOptions);
+  testRunner.loadTests(require('./headful.spec.js'), testOptions);
 
   if (CHROMIUM) {
     testRunner.loadTests(require('./chromium/launcher.spec.js'), testOptions);

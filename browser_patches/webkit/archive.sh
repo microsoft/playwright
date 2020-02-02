@@ -82,6 +82,7 @@ createZipForLinux() {
 
   # tar resulting directory and cleanup TMP.
   cd $tmpdir
+  strip --strip-unneeded * || true
   zip --symlinks -r $ZIP_PATH ./
   cd -
   rm -rf $tmpdir

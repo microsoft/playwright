@@ -186,6 +186,26 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
   });
 
+  describe('Page.opener', function() {
+    it('should provide access to the opener page', async({page}) => {
+      const [popup] = await Promise.all([
+        new Promise(x => page.once('popup', x)),
+        page.evaluate(() => window.open('about:blank')),
+      ]);
+      const opener = await popup.opener();
+      expect(opener).toBe(page);
+    });
+    it('should return null if parent page has been closed', async({page}) => {
+      const [popup] = await Promise.all([
+        new Promise(x => page.once('popup', x)),
+        page.evaluate(() => window.open('about:blank')),
+      ]);
+      await page.close();
+      const opener = await popup.opener();
+      expect(opener).toBe(null);
+    });
+  });
+
   describe('Page.Events.Console', function() {
     it('should work', async({page, server}) => {
       let message = null;
@@ -779,8 +799,8 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe('Context.setCacheEnabled', function() {
-    it('should enable or disable the cache based on the state passed', async({context, page, server}) => {
+  describe('Page.setCacheEnabled', function() {
+    it('should enable or disable the cache based on the state passed', async({page, server}) => {
       await page.goto(server.PREFIX + '/cached/one-style.html');
       // WebKit does r.setCachePolicy(ResourceRequestCachePolicy::ReloadIgnoringCacheData);
       // when navigating to the same url, load empty.html to avoid that.
@@ -792,7 +812,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       // Rely on "if-modified-since" caching in our test server.
       expect(cachedRequest.headers['if-modified-since']).not.toBe(undefined);
 
-      await context.setCacheEnabled(false);
+      await page.setCacheEnabled(false);
       await page.goto(server.EMPTY_PAGE);
       const [nonCachedRequest] = await Promise.all([
         server.waitForRequest('/cached/one-style.html'),

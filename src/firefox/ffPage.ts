@@ -41,12 +41,14 @@ export class FFPage implements PageDelegate {
   readonly _session: FFSession;
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
+  private readonly _openerResolver: () => Promise<Page | null>;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
 
-  constructor(session: FFSession, browserContext: BrowserContext) {
+  constructor(session: FFSession, browserContext: BrowserContext, openerResolver: () => Promise<Page | null>) {
     this._session = session;
+    this._openerResolver = openerResolver;
     this.rawKeyboard = new RawKeyboardImpl(session);
     this.rawMouse = new RawMouseImpl(session);
     this._contextIdToContext = new Map();
@@ -79,7 +81,6 @@ export class FFPage implements PageDelegate {
       this._session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._session.send('Network.enable'),
       this._session.send('Page.enable'),
-      this._session.send('Page.setInterceptFileChooserDialog', { enabled: true })
     ];
     const options = this._page.browserContext()._options;
     if (options.viewport)
@@ -90,10 +91,6 @@ export class FFPage implements PageDelegate {
       promises.push(this._session.send('Page.setJavascriptEnabled', { enabled: false }));
     if (options.userAgent)
       promises.push(this._session.send('Page.setUserAgent', { userAgent: options.userAgent }));
-    if (options.cacheEnabled === false)
-      promises.push(this.setCacheEnabled(false));
-    if (options.interceptNetwork)
-      promises.push(this.setRequestInterception(true));
     await Promise.all(promises);
   }
 
@@ -304,6 +301,14 @@ export class FFPage implements PageDelegate {
 
   async authenticate(credentials: types.Credentials | null): Promise<void> {
     await this._session.send('Network.setAuthCredentials', credentials || { username: null, password: null });
+  }
+
+  async setFileChooserIntercepted(enabled: boolean) {
+    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+  }
+
+  async opener() : Promise<Page | null> {
+    return await this._openerResolver();
   }
 
   async reload(): Promise<void> {

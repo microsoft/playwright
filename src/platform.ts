@@ -51,13 +51,13 @@ export function promisify(nodeFunction: Function): Function {
   return promisified;
 }
 
-type Listener = (...args: any[]) => void;
+export type Listener = (...args: any[]) => void;
 export const EventEmitter: typeof nodeEvents.EventEmitter = isNode ? nodeEvents.EventEmitter : (
   class EventEmitterImpl {
     private _deliveryQueue?: {listener: Listener, args: any[]}[];
     private _listeners = new Map<string | symbol, Set<Listener>>();
 
-    addListener(event: string | symbol, listener: Listener): this {
+    on(event: string | symbol, listener: Listener): this {
       let set = this._listeners.get(event);
       if (!set) {
         set = new Set();
@@ -67,8 +67,8 @@ export const EventEmitter: typeof nodeEvents.EventEmitter = isNode ? nodeEvents.
       return this;
     }
 
-    on(event: string | symbol, listener: Listener): this {
-      return this.addListener(event, listener);
+    addListener(event: string | symbol, listener: Listener): this {
+      return this.on(event, listener);
     }
 
     once(event: string | symbol, listener: Listener): this {
@@ -76,7 +76,7 @@ export const EventEmitter: typeof nodeEvents.EventEmitter = isNode ? nodeEvents.
         this.removeListener(event, wrapped);
         listener(...args);
       };
-      return this.on(event, wrapped);
+      return this.addListener(event, wrapped);
     }
 
     removeListener(event: string | symbol, listener: Listener): this {

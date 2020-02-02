@@ -25,15 +25,14 @@ export const EVALUATION_SCRIPT_URL = '__playwright_evaluation_script__';
 const SOURCE_URL_REGEX = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
-  private _globalObjectId?: Promise<string>;
-  _session: WKSession;
-  _contextId: number | undefined;
+  private _globalObjectIdPromise?: Promise<Protocol.Runtime.RemoteObjectId>;
+  private readonly _session: WKSession;
+  readonly _contextId: number | undefined;
   private _contextDestroyedCallback: () => void = () => {};
-  private _executionContextDestroyedPromise: Promise<unknown>;
-  _jsonStringifyObjectId: Protocol.Runtime.RemoteObjectId | undefined;
+  private readonly _executionContextDestroyedPromise: Promise<unknown>;
 
-  constructor(client: WKSession, contextId: number | undefined) {
-    this._session = client;
+  constructor(session: WKSession, contextId: number | undefined) {
+    this._session = session;
     this._contextId = contextId;
     this._executionContextDestroyedPromise = new Promise((resolve, reject) => {
       this._contextDestroyedCallback = resolve;
@@ -45,37 +44,65 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async evaluate(context: js.ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
+    try {
+      let response = await this._evaluateRemoteObject(pageFunction, args);
+      if (response.result.type === 'object' && response.result.className === 'Promise') {
+        response = await Promise.race([
+          this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
+          this._session.send('Runtime.awaitPromise', {
+            promiseObjectId: response.result.objectId,
+            returnByValue: false
+          })
+        ]);
+      }
+      if (response.wasThrown)
+        throw new Error('Evaluation failed: ' + response.result.description);
+      if (!returnByValue)
+        return context._createHandle(response.result);
+      if (response.result.objectId)
+        return await this._returnObjectByValue(response.result.objectId);
+      return valueFromRemoteObject(response.result);
+    } catch (error) {
+      if (isSwappedOutError(error) || error.message.includes('Missing injected script for given'))
+        throw new Error('Execution context was destroyed, most likely because of a navigation.');
+      throw error;
+    }
+  }
+
+  private async _evaluateRemoteObject(pageFunction: Function | string, args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
       const expression: string = pageFunction as string;
       const expressionWithSourceUrl = SOURCE_URL_REGEX.test(expression) ? expression : expression + '\n' + suffix;
-      return this._session.send('Runtime.evaluate', {
+      return await this._session.send('Runtime.evaluate', {
         expression: expressionWithSourceUrl,
         contextId,
         returnByValue: false,
         emulateUserGesture: true
-      }).then(response => {
-        if (response.result.type === 'object' && response.result.className === 'Promise') {
-          return Promise.race([
-            this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
-            this._awaitPromise(response.result.objectId!),
-          ]);
-        }
-        return response;
-      }).then(response => {
-        if (response.wasThrown)
-          throw new Error('Evaluation failed: ' + response.result.description);
-        if (!returnByValue)
-          return context._createHandle(response.result);
-        if (response.result.objectId)
-          return this._returnObjectByValue(response.result.objectId);
-        return valueFromRemoteObject(response.result);
-      }).catch(rewriteError);
+      });
     }
 
     if (typeof pageFunction !== 'function')
       throw new Error(`Expected to get |string| or |function| as the first argument, but got "${pageFunction}" instead.`);
 
+    try {
+      const callParams = this._serializeFunctionAndArguments(pageFunction, args);
+      const thisObjectId = await this._contextGlobalObjectId();
+      return await this._session.send('Runtime.callFunctionOn', {
+        functionDeclaration: callParams.functionText + '\n' + suffix + '\n',
+        objectId: thisObjectId,
+        arguments: callParams.callArguments,
+        returnByValue: false,
+        emulateUserGesture: true
+      });
+    } catch (err) {
+      if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
+        err.message += ' Are you passing a nested JSHandle?';
+      throw err;
+    }
+  }
+
+  private _serializeFunctionAndArguments(pageFunction: Function, args: any[]): { functionText: string, callArguments: Protocol.Runtime.CallArgument[] } {
     let functionText = pageFunction.toString();
     try {
       new Function('(' + functionText + ')');
@@ -110,47 +137,8 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     } else {
       serializableArgs = args;
     }
-
-    let thisObjectId;
-    try {
-      thisObjectId = await this._contextGlobalObjectId();
-    } catch (error) {
-      if (error.message.includes('Missing injected script for given'))
-        throw new Error('Execution context was destroyed, most likely because of a navigation.');
-      throw error;
-    }
-
-    let callFunctionOnPromise;
-    try {
-      callFunctionOnPromise = this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: functionText + '\n' + suffix + '\n',
-        objectId: thisObjectId,
-        arguments: serializableArgs.map((arg: any) => this._convertArgument(arg)),
-        returnByValue: false,
-        emulateUserGesture: true
-      });
-    } catch (err) {
-      if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
-        err.message += ' Are you passing a nested JSHandle?';
-      throw err;
-    }
-    return callFunctionOnPromise.then(response => {
-      if (response.result.type === 'object' && response.result.className === 'Promise') {
-        return Promise.race([
-          this._executionContextDestroyedPromise.then(() => contextDestroyedResult),
-          this._awaitPromise(response.result.objectId!),
-        ]);
-      }
-      return response;
-    }).then(response => {
-      if (response.wasThrown)
-        throw new Error('Evaluation failed: ' + response.result.description);
-      if (!returnByValue)
-        return context._createHandle(response.result);
-      if (response.result.objectId)
-        return this._returnObjectByValue(response.result.objectId).catch(() => undefined);
-      return valueFromRemoteObject(response.result);
-    }).catch(rewriteError);
+    const serialized = serializableArgs.map((arg: any) => this._convertArgument(arg));
+    return { functionText, callArguments: serialized };
 
     function unserializableToString(arg: any) {
       if (Object.is(arg, -0))
@@ -187,56 +175,36 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       }
       return false;
     }
-
-    function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
-      if (error.message.includes('Missing injected script for given'))
-        throw new Error('Execution context was destroyed, most likely because of a navigation.');
-      throw error;
-    }
   }
 
-  private _contextGlobalObjectId() {
-    if (!this._globalObjectId) {
-      this._globalObjectId = this._session.send('Runtime.evaluate', {
+  private _contextGlobalObjectId() : Promise<Protocol.Runtime.RemoteObjectId> {
+    if (!this._globalObjectIdPromise) {
+      this._globalObjectIdPromise = this._session.send('Runtime.evaluate', {
         expression: 'this',
         contextId: this._contextId
-      }).catch(e => {
-        if (isSwappedOutError(e))
-          throw new Error('Execution context was destroyed, most likely because of a navigation.');
-        throw e;
       }).then(response => {
         return response.result.objectId!;
       });
     }
-    return this._globalObjectId;
+    return this._globalObjectIdPromise;
   }
 
-  private _awaitPromise(objectId: Protocol.Runtime.RemoteObjectId) {
-    return this._session.send('Runtime.awaitPromise', {
-      promiseObjectId: objectId,
-      returnByValue: false
-    }).catch(e => {
-      if (isSwappedOutError(e))
-        return contextDestroyedResult;
-      throw e;
-    });
-  }
-
-  private _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) {
-    return this._session.send('Runtime.callFunctionOn', {
-      // Serialize object using standard JSON implementation to correctly pass 'undefined'.
-      functionDeclaration: 'function(){return this}\n' + suffix + '\n',
-      objectId: objectId,
-      returnByValue: true
-    }).catch(e => {
-      if (isSwappedOutError(e))
-        return contextDestroyedResult;
-      throw e;
-    }).then(serializeResponse => {
+  private async _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) : Promise<any> {
+    try {
+      const serializeResponse = await this._session.send('Runtime.callFunctionOn', {
+        // Serialize object using standard JSON implementation to correctly pass 'undefined'.
+        functionDeclaration: 'function(){return this}\n' + suffix + '\n',
+        objectId: objectId,
+        returnByValue: true
+      });
       if (serializeResponse.wasThrown)
-        throw new Error('Serialization failed: ' + serializeResponse.result.description);
+        return undefined;
       return serializeResponse.result.value;
-    });
+    } catch (e) {
+      if (isSwappedOutError(e))
+        return contextDestroyedResult;
+      return undefined;
+    }
   }
 
   async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {

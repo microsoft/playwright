@@ -81,6 +81,7 @@ libnss3
 lsb-release
 xdg-utils
 wget
+libgbm1
 ```
 </details>
 

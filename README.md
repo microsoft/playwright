@@ -1,20 +1,19 @@
 # Playwright
-[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![Chromium version](https://img.shields.io/badge/chromium-81.0.4032-blue.svg)](https://www.chromium.org/Home) [![Firefox version](https://img.shields.io/badge/firefox-73.0b3-blue.svg)](https://www.mozilla.org/en-US/firefox/new/) [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg)](https://webkit.org/) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
+[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![Chromium version](https://img.shields.io/badge/chromium-81.0.4044-blue.svg)](https://www.chromium.org/Home) [![Firefox version](https://img.shields.io/badge/firefox-73.0b3-blue.svg)](https://www.mozilla.org/en-US/firefox/new/) [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg)](https://webkit.org/) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
 
 ###### [API](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
-Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers with **a single API**. This includes support for the new Microsoft Edge browser, which is based on Chromium.
-
-Playwright is focused on enabling **cross-browser** web automation platform that is **ever-green**, **capable**, **reliable** and **fast**. Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
-
+Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers with a single API. It enables **cross-browser** web automation that is **ever-green**, **capable**, **reliable** and **fast**.
 
 |          | Version | Linux | macOS | Windows |
 |   ---:   | :---: | :---: | :---:  | :---: |
-| Chromium| 81.0.4032 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Chromium| 81.0.4044 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | WebKit | 13.0.4 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Firefox |73.0b3 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-Headless is supported for all browsers on all platforms.
+Headless is supported for all the browsers on all platforms.
+
+Our primary goal with Playwright is to improve automated UI testing by eliminating flakiness, improving the speed of execution and offering insights into the browser operation.
 
 ### Installation
 
@@ -25,8 +24,6 @@ npm i playwright
 This installs Playwright along with its dependencies and the browser binaries. Browser binaries are about 50-100MB each, so expect the installation network traffic to be substantial.
 
 ### Usage
-
-TODO: does not cover how to use
 
 Playwright can be used to create a browser instance, open pages, and then manipulate them. See [API docs](https://github.com/microsoft/playwright/blob/master/docs/api.md) for a comprehensive list.
 
@@ -168,6 +165,10 @@ We recognize WebDriver as a universal standard for the web automation and testin
 - **Firefox**: Playwright makes a number of modifications to Firefox as well. Those are adding support for content script debugging, workers, CSP, emulation, network interception, etc. etc.
 
   Similar to WebKit, we'd like to offer all of those for review upstream, for now they can be found in the `browser_patches/firefox` folder.
+
+### Q: Does Playwright support new Microsoft Edge?
+
+The new Microsoft Edge browser is based on Chromium, so Playwright supports it.
 
 ### Q: Is Playwright ready?
 
