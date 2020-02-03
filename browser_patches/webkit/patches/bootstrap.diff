@@ -378,7 +378,7 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..7709bcc2ec69aab0589ca1b954db1fb2
      FrontendChannel::ConnectionType connectionType() const;
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..efd406f0a6b7aa0e1e484665cbe863f1233524dd
+index 0000000000000000000000000000000000000000..0f9b1c8950b8f5631ddfd8180a851d1ecea4c475
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
 @@ -0,0 +1,210 @@
@@ -560,10 +560,10 @@ index 0000000000000000000000000000000000000000..efd406f0a6b7aa0e1e484665cbe863f1
 +            "description": "Clears permission overrides."
 +        },
 +        {
-+            "name": "setLanguage",
++            "name": "setLanguages",
 +            "description": "Allows to set locale language for context.",
 +            "parameters": [
-+                { "name": "language", "type": "string" },
++                { "name": "languages", "type": "array", "items": { "type": "string" } },
 +                { "name": "browserContextId", "$ref": "ContextID", "optional": true, "description": "Browser context id." }
 +            ]
 +        }
@@ -7398,10 +7398,10 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..46b9901263286eab6de0bc4f899349d5
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3a945691c06155bdcfe8d6928447c3dcb047f686
+index 0000000000000000000000000000000000000000..78daef3868dc0036bdd612c8c3cc6ba8fb033af2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,505 @@
+@@ -0,0 +1,516 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7839,12 +7839,23 @@ index 0000000000000000000000000000000000000000..3a945691c06155bdcfe8d6928447c3dc
 +    }
 +}
 +
-+void InspectorBrowserAgent::setLanguage(Inspector::ErrorString& errorString, const String& language, const String* browserContextID)
++void InspectorBrowserAgent::setLanguages(Inspector::ErrorString& errorString, const JSON::Array& languages, const String* browserContextID)
 +{
 +    BrowserContext browserContext = lookupBrowserContext(errorString, browserContextID);
 +    if (!errorString.isEmpty())
 +        return;
-+    browserContext.processPool->setLanguageForAutomation(language);
++
++    Vector<String> items;
++    for (const auto& value : languages) {
++        String language;
++        if (!value->asString(language)) {
++            errorString = "Language must be a string"_s;
++            return;
++        }
++        items.append(language);
++    }
++
++    browserContext.processPool->setLanguagesForAutomation(WTFMove(items));
 +}
 +
 +void InspectorBrowserAgent::setGeolocationOverride(Inspector::ErrorString& errorString, const String* browserContextID, const JSON::Object* geolocation)
@@ -7909,7 +7920,7 @@ index 0000000000000000000000000000000000000000..3a945691c06155bdcfe8d6928447c3dc
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..87951616c1ad9afbaf645a7ef164df4c93c53f27
+index 0000000000000000000000000000000000000000..ad8f3d99f45fa6284738c62fe813330b2c208c92
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 @@ -0,0 +1,114 @@
@@ -8005,7 +8016,7 @@ index 0000000000000000000000000000000000000000..87951616c1ad9afbaf645a7ef164df4c
 +    void grantPermissions(Inspector::ErrorString&, const String* browserContextID, const String& origin, const JSON::Array& permissions) override;
 +    void resetPermissions(Inspector::ErrorString&, const String* browserContextID) override;
 +    void setGeolocationOverride(Inspector::ErrorString&, const String* browserContextID, const JSON::Object* geolocation) override;
-+    void setLanguage(Inspector::ErrorString&, const String& language, const String* browserContextID) override;
++    void setLanguages(Inspector::ErrorString&, const JSON::Array& languages, const String* browserContextID) override;
 +
 +    static String toBrowserContextIDProtocolString(const PAL::SessionID&);
 +    static String toPageProxyIDProtocolString(const WebPageProxy&);
@@ -9411,24 +9422,45 @@ index a6d4c6173b0fd75a5f507e44f60f7dfd14f433b4..d2721d8356841fd5b3b16c808c35522d
  #if ENABLE(NETSCAPE_PLUGIN_API)
      UnavailablePluginButtonClicked(uint32_t pluginUnavailabilityReason, String mimeType, String pluginURLString, String pluginspageAttributeURLString, String frameURLString, String pageURLString)
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
-index e1ce3a17d5c6d38a12e54cc1f45f951c16b290d6..de49f636874949990ffba16fc8c8bc8e8b9e7efb 100644
+index e1ce3a17d5c6d38a12e54cc1f45f951c16b290d6..2faf68cb1d50c101c65ea7e6486684d37d80228b 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
 +++ b/Source/WebKit/UIProcess/WebProcessPool.cpp
-@@ -987,7 +987,11 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
+@@ -423,12 +423,19 @@ void WebProcessPool::languageChanged(void* context)
+     static_cast<WebProcessPool*>(context)->languageChanged();
+ }
+ 
++void WebProcessPool::setLanguagesForAutomation(Vector<String>&& languages)
++{
++    m_languagesForAutomation = WTFMove(languages);
++    languageChanged();
++}
++
+ void WebProcessPool::languageChanged()
+ {
+-    sendToAllProcesses(Messages::WebProcess::UserPreferredLanguagesChanged(userPreferredLanguages()));
++    const Vector<String>& languages = m_languagesForAutomation.size() ? m_languagesForAutomation : userPreferredLanguages();
++    sendToAllProcesses(Messages::WebProcess::UserPreferredLanguagesChanged(languages));
+ #if USE(SOUP)
+     if (m_networkProcess)
+-        m_networkProcess->send(Messages::NetworkProcess::UserPreferredLanguagesChanged(userPreferredLanguages()), 0);
++        m_networkProcess->send(Messages::NetworkProcess::UserPreferredLanguagesChanged(languages), 0);
+ #endif
+ }
+ 
+@@ -987,7 +994,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
  #endif
  
      parameters.cacheModel = LegacyGlobalSettings::singleton().cacheModel();
 -    parameters.languages = configuration().overrideLanguages().isEmpty() ? userPreferredLanguages() : configuration().overrideLanguages();
-+    if (m_languageForAutomation.isNull()) {
++    if (m_languagesForAutomation.size())
++        parameters.languages = m_languagesForAutomation;
++    else
 +        parameters.languages = configuration().overrideLanguages().isEmpty() ? userPreferredLanguages() : configuration().overrideLanguages();
-+    } else {
-+        parameters.languages.append(m_languageForAutomation);
-+    }
  
      parameters.urlSchemesRegisteredAsEmptyDocument = copyToVector(m_schemesToRegisterAsEmptyDocument);
      parameters.urlSchemesRegisteredAsSecure = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsSecure());
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.h b/Source/WebKit/UIProcess/WebProcessPool.h
-index 64b1dbce4c907536999b1c2a5eb314670f423e1e..b9297305dab1d5001ee184747d58bd8b4999ac84 100644
+index 64b1dbce4c907536999b1c2a5eb314670f423e1e..2f4e5bb10d71f5dd876f168cf9a2736aa46655e5 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.h
 +++ b/Source/WebKit/UIProcess/WebProcessPool.h
 @@ -416,7 +416,7 @@ public:
@@ -9444,7 +9476,7 @@ index 64b1dbce4c907536999b1c2a5eb314670f423e1e..b9297305dab1d5001ee184747d58bd8b
      
      PlugInAutoStartProvider& plugInAutoStartProvider() { return m_plugInAutoStartProvider; }
  
-+    void setLanguageForAutomation(const String& language) { m_languageForAutomation = language; }
++    void setLanguagesForAutomation(Vector<String>&&);
 +
      void setUseSeparateServiceWorkerProcess(bool);
      bool useSeparateServiceWorkerProcess() const { return m_useSeparateServiceWorkerProcess; }
@@ -9453,7 +9485,7 @@ index 64b1dbce4c907536999b1c2a5eb314670f423e1e..b9297305dab1d5001ee184747d58bd8b
      std::unique_ptr<API::CustomProtocolManagerClient> m_customProtocolManagerClient;
  
      RefPtr<WebAutomationSession> m_automationSession;
-+    String m_languageForAutomation;
++    Vector<String> m_languagesForAutomation;
  
  #if ENABLE(NETSCAPE_PLUGIN_API)
      PluginInfoStore m_pluginInfoStore;
