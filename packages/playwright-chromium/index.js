@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 module.exports = {
-  chromiuM: require('playwright-core').chromium;
+  chromium: require('playwright-core').chromium;
 };
