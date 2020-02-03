@@ -13,4 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('playwright-core').chromium;
+module.exports = {
+  chromiuM: require('playwright-core').chromium;
+};
