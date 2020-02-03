@@ -219,19 +219,20 @@ export function getMimeType(file: string): string | null {
 }
 
 export function urlMatches(urlString: string, match: types.URLMatch | undefined): boolean {
-  if (match === undefined)
+  if (match === undefined || match === '')
     return true;
-  if (typeof match === 'string')
-    return match === urlString;
+  if (helper.isString(match))
+    match = helper.globToRegex(match);
   if (match instanceof RegExp)
     return match.test(urlString);
-  assert(typeof match === 'function', 'url parameter should be string, RegExp or function');
+  if (typeof match === 'string' && match === urlString)
+    return true;
+  const url = new URL(urlString);
+  if (typeof match === 'string')
+    return url.pathname === match;
 
-  try {
-    return match(new URL(urlString));
-  } catch (e) {
-  }
-  return false;
+  assert(typeof match === 'function', 'url parameter should be string, RegExp or function');
+  return match(url);
 }
 
 export function pngToJpeg(buffer: Buffer): Buffer {

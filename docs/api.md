@@ -470,6 +470,7 @@ page.removeListener('request', logRequest);
 - [page.opener()](#pageopener)
 - [page.pdf([options])](#pagepdfoptions)
 - [page.reload([options])](#pagereloadoptions)
+- [page.route(url, handler)](#pagerouteurl-handler)
 - [page.screenshot([options])](#pagescreenshotoptions)
 - [page.select(selector, value, options)](#pageselectselector-value-options)
 - [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
@@ -478,7 +479,6 @@ page.removeListener('request', logRequest);
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
 - [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
-- [page.setRequestInterception(enabled)](#pagesetrequestinterceptionenabled)
 - [page.setViewport(viewport)](#pagesetviewportviewport)
 - [page.title()](#pagetitle)
 - [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
@@ -585,7 +585,7 @@ const [popup] = await Promise.all([
 - <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only.
-In order to intercept and mutate requests, see `page.setRequestInterception(true)`.
+In order to intercept and mutate requests, see `page.route()`.
 
 #### event: 'requestfailed'
 - <[Request]>
@@ -1181,6 +1181,36 @@ The `format` options are:
     - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
 - returns: <[Promise]<[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
+#### page.route(url, handler)
+- `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `handler` <[Function]> handler function to router the request.
+- returns: <[Promise]<[void]>>.
+
+Routing activates the request interception and enables `request.abort`, `request.continue` and
+`request.respond` methods on the request.  This provides the capability to modify network requests that are made by a page.
+
+Once request interception is enabled, every request matching the url pattern will stall unless it's continued, responded or aborted.
+An example of a naïve request interceptor that aborts all image requests:
+
+```js
+const page = await browser.newPage();
+await page.route('**/*.{png,jpg,jpeg}', request => request.abort());
+// await page.route(/\.(png|jpeg|jpg)$/, request => request.abort()); // <-- same thing
+await page.goto('https://example.com');
+await browser.close();
+```
+
+or the same snippet using a regex pattern instead:
+
+```js
+const page = await browser.newPage();
+await page.route(/(\.png$)|(\.jpg$)/, request => request.abort());
+await page.goto('https://example.com');
+await browser.close();
+```
+
+> **NOTE** Enabling request interception disables page caching.
+
 #### page.screenshot([options])
 - `options` <[Object]> Options object which might have the following properties:
   - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the image won't be saved to the disk.
@@ -1287,31 +1317,6 @@ The extra HTTP headers will be sent with every request the page initiates.
 #### page.setOfflineMode(enabled)
 - `enabled` <[boolean]> When `true`, enables offline mode for the page.
 - returns: <[Promise]>
-
-#### page.setRequestInterception(enabled)
-- `enabled` <[boolean]> Whether to enable request interception.
-- returns: <[Promise]>
-
-Activating request interception enables `request.abort`, `request.continue` and
-`request.respond` methods.  This provides the capability to modify network requests that are made by a page.
-
-Once request interception is enabled, every request will stall unless it's continued, responded or aborted.
-An example of a naïve request interceptor that aborts all image requests:
-
-```js
-const page = await browser.newPage();
-await page.setRequestInterception(true);
-page.on('request', interceptedRequest => {
-  if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg'))
-    interceptedRequest.abort();
-  else
-    interceptedRequest.continue();
-});
-await page.goto('https://example.com');
-await browser.close();
-```
-
-> **NOTE** Enabling request interception disables page caching.
 
 #### page.setViewport(viewport)
 - `viewport` <[Object]>
@@ -1501,7 +1506,7 @@ Shortcut for [page.mainFrame().waitForLoadState([options])](#framewaitforloadsta
 #### page.waitForNavigation([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
   - `timeout` <[number]> Maximum navigation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-  - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle0"|"networkidle2"|[Array]<"load"|"domcontentloaded"|"networkidle0"|"networkidle2">>  When to consider navigation succeeded, defaults to `load`. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
@@ -2849,7 +2854,7 @@ If request gets a 'redirect' response, the request is successfully finished with
   - `failed` - A generic failure occurred.
 - returns: <[Promise]>
 
-Aborts request. To use this, request interception should be enabled with `page.setRequestInterception`.
+Aborts request. To use this, request interception should be enabled with `page.route`.
 Exception is immediately thrown if the request interception is not enabled.
 
 #### request.continue([overrides])
@@ -2859,12 +2864,11 @@ Exception is immediately thrown if the request interception is not enabled.
   - `headers` <[Object]> If set changes the request HTTP headers. Header values will be converted to a string.
 - returns: <[Promise]>
 
-Continues request with optional request overrides. To use this, request interception should be enabled with `page.setRequestInterception`.
+Continues request with optional request overrides. To use this, request interception should be enabled with `page.route`.
 Exception is immediately thrown if the request interception is not enabled.
 
 ```js
-await page.setRequestInterception(true);
-page.on('request', request => {
+await page.route('**/*', request => {
   // Override headers
   const headers = Object.assign({}, request.headers(), {
     foo: 'bar', // set "foo" header
@@ -2901,14 +2905,13 @@ page.on('requestfailed', request => {
 - returns: <[Promise]>
 
 Fulfills request with given response. To use this, request interception should
-be enabled with `page.setRequestInterception`. Exception is thrown if
+be enabled with `page.route`. Exception is thrown if
 request interception is not enabled.
 
 An example of fulfilling all requests with 404 responses:
 
 ```js
-await page.setRequestInterception(true);
-page.on('request', request => {
+await page.route('**/*', request => {
   request.respond({
     status: 404,
     contentType: 'text/plain',

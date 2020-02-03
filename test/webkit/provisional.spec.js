@@ -35,27 +35,5 @@ module.exports.describe = function ({ testRunner, expect }) {
       expect(htmlReq.headers['foo']).toBe(undefined);
       expect(cssReq.headers['foo']).toBe('bar');
     });
-    it('should continue load when interception gets disabled during provisional load', async({page, server}) => {
-      await page.goto(server.EMPTY_PAGE);
-      await page.setRequestInterception(true);
-      expect(await page.evaluate(() => navigator.onLine)).toBe(true);
-      let intercepted = null;
-      const order = [];
-      page.on('request', request => {
-        intercepted = page.setRequestInterception(false).then(() => order.push('setRequestInterception'));
-      });
-      const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html').then(response => {
-        order.push('goto');
-        return response;
-      });
-      // Should intercept a request.
-      expect(intercepted).not.toBe(null);
-      await intercepted;
-      // Should continue on disabling and load successfully.
-      expect(response.status()).toBe(200);
-      // Should resolve setRequestInterception before goto.
-      expect(order[0]).toBe('setRequestInterception');
-      expect(order[1]).toBe('goto');
-    });
   });
 };
