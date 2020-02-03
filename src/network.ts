@@ -216,6 +216,10 @@ export class Request {
     assert(!this._interceptionHandled, 'Request is already handled!');
     await this._delegate!.continue(overrides);
   }
+
+  _isIntercepted(): boolean {
+    return !!this._delegate;
+  }
 }
 
 type GetResponseBodyCallback = () => Promise<platform.BufferType>;

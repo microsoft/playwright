@@ -111,6 +111,7 @@ export class Page extends platform.EventEmitter {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
   readonly coverage: Coverage | undefined;
+  readonly _requestHandlers: { url: types.URLMatch, handler: (request: network.Request) => void }[] = [];
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -416,11 +417,25 @@ export class Page extends platform.EventEmitter {
     await this._delegate.setCacheEnabled(enabled);
   }
 
-  async setRequestInterception(enabled: boolean) {
-    if (this._state.interceptNetwork === enabled)
+  async route(url: types.URLMatch, handler: (request: network.Request)  => void) {
+    if (!this._state.interceptNetwork) {
+      this._state.interceptNetwork = true;
+      await this._delegate.setRequestInterception(true);
+    }
+    this._requestHandlers.push({ url, handler });
+  }
+
+  _requestStarted(request: network.Request) {
+    this.emit(Events.Page.Request, request);
+    if (!request._isIntercepted())
       return;
-    this._state.interceptNetwork = enabled;
-    await this._delegate.setRequestInterception(enabled);
+    for (const { url, handler } of this._requestHandlers) {
+      if (platform.urlMatches(request.url(), url)) {
+        handler(request);
+        return;
+      }
+    }
+    request.continue();
   }
 
   async setOfflineMode(enabled: boolean) {

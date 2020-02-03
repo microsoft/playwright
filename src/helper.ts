@@ -155,11 +155,69 @@ class Helper {
         clearTimeout(timeoutTimer);
     }
   }
+
+  static globToRegex(glob: string): RegExp {
+    const tokens = ['^'];
+    let inGroup;
+    for (let i = 0; i < glob.length; ++i) {
+      const c = glob[i];
+      if (escapeGlobChars.has(c)) {
+        tokens.push('\\' + c);
+        continue;
+      }
+      if (c === '*') {
+        const beforeDeep = glob[i - 1];
+        let starCount = 1;
+        while (glob[i + 1] === '*') {
+          starCount++;
+          i++;
+        }
+        const afterDeep = glob[i + 1];
+        const isDeep = starCount > 1 &&
+            (beforeDeep === '/' || beforeDeep === undefined) &&
+            (afterDeep === '/' || afterDeep === undefined);
+        if (isDeep) {
+          tokens.push('((?:[^/]*(?:\/|$))*)');
+          i++;
+        } else {
+          tokens.push('([^/]*)');
+        }
+        continue;
+      }
+
+      switch (c) {
+        case '?':
+          tokens.push('.');
+          break;
+        case '{':
+          inGroup = true;
+          tokens.push('(');
+          break;
+        case '}':
+          inGroup = false;
+          tokens.push(')');
+          break;
+        case ',':
+          if (inGroup) {
+            tokens.push('|');
+            break;
+          }
+          tokens.push('\\' + c);
+          break;
+        default:
+          tokens.push(c);
+      }
+    }
+    tokens.push('$');
+    return new RegExp(tokens.join(''));
+  }
 }
 
 export function assert(value: any, message?: string) {
   if (!value)
     throw new Error(message);
 }
+
+const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
 
 export const helper = Helper;

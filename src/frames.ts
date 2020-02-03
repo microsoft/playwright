@@ -199,7 +199,7 @@ export class FrameManager {
         watcher._onNavigationRequest(frame, request);
     }
     if (!request._isFavicon)
-      this._page.emit(Events.Page.Request, request);
+      this._page._requestStarted(request);
   }
 
   requestReceivedResponse(response: network.Response) {
