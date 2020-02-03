@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 module.exports = {
-  webkit: require('playwright-core').webkit,
-};
+  ...require('playwright-core'),
+  // Keep exporting webkit and nullify other browsers.
+  chromium: undefined,
+  firefox: undefined,
+}
