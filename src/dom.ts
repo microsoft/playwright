@@ -511,7 +511,9 @@ function normalizeSelector(selector: string): string {
   const eqIndex = selector.indexOf('=');
   if (eqIndex !== -1 && selector.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-]+$/))
     return selector;
-  if (selector.startsWith('//'))
+  // If selector starts with '//' or '//' prefixed with multiple opening
+  // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
+  if (/^\(*\/\//.test(selector))
     return 'xpath=' + selector;
   if (selector.startsWith('"'))
     return 'text=' + selector;
