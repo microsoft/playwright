@@ -177,6 +177,11 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const element = await page.$('//html/body/section');
       expect(element).toBeTruthy();
     });
+    it('should auto-detect xpath selector with starting parenthesis', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const element = await page.$('(//section)[1]');
+      expect(element).toBeTruthy();
+    });
     it('should auto-detect text selector', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const element = await page.$('"test"');
