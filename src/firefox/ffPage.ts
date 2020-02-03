@@ -417,6 +417,14 @@ export class FFPage implements PageDelegate {
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }
 
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void> {
+    await this._session.send('Page.scrollIntoViewIfNeeded', {
+      frameId: handle._context.frame._id,
+      objectId: toRemoteObject(handle).objectId!,
+      rect,
+    });
+  }
+
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     const result = await this._session.send('Page.getContentQuads', {
       frameId: handle._context.frame._id,

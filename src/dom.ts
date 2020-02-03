@@ -160,58 +160,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getContentFrame(this);
   }
 
-  async scrollIntoViewIfNeeded() {
-    const error = await this._evaluateInUtility(async (node: Node, pageJavascriptEnabled: boolean) => {
-      if (!node.isConnected)
-        return 'Node is detached from document';
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'Node is not of type HTMLElement';
-      const element = node as Element;
-      // force-scroll if page's javascript is disabled.
-      if (!pageJavascriptEnabled) {
-        // @ts-ignore because only Chromium still supports 'instant'
-        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
-        return false;
-      }
-      const visibleRatio = await new Promise(resolve => {
-        const observer = new IntersectionObserver(entries => {
-          resolve(entries[0].intersectionRatio);
-          observer.disconnect();
-        });
-        observer.observe(element);
-        // Firefox doesn't call IntersectionObserver callback unless
-        // there are rafs.
-        requestAnimationFrame(() => {});
-      });
-      if (visibleRatio !== 1.0) {
-        // @ts-ignore because only Chromium still supports 'instant'
-        element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
-      }
-      return false;
-    }, !!this._page.context()._options.javaScriptEnabled);
-    if (error)
-      throw new Error(error);
+  async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<void> {
+    await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
   }
 
-  private async _ensurePointerActionPoint(relativePoint?: types.Point): Promise<types.Point> {
-    await this.scrollIntoViewIfNeeded();
-    if (!relativePoint)
-      return this._clickablePoint();
-    let r = await this._viewportPointAndScroll(relativePoint);
-    if (r.scrollX || r.scrollY) {
-      const error = await this._evaluateInUtility((element, scrollX, scrollY) => {
-        if (!element.ownerDocument || !element.ownerDocument.defaultView)
-          return 'Node does not have a containing window';
-        element.ownerDocument.defaultView.scrollBy(scrollX, scrollY);
-        return false;
-      }, r.scrollX, r.scrollY);
-      if (error)
-        throw new Error(error);
-      r = await this._viewportPointAndScroll(relativePoint);
-      if (r.scrollX || r.scrollY)
-        throw new Error('Failed to scroll relative point into viewport');
-    }
-    return r.point;
+  async scrollIntoViewIfNeeded() {
+    await this._scrollRectIntoViewIfNeeded();
   }
 
   private async _clickablePoint(): Promise<types.Point> {
@@ -253,7 +207,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  private async _viewportPointAndScroll(relativePoint: types.Point): Promise<{point: types.Point, scrollX: number, scrollY: number}> {
+  private async _relativePoint(relativePoint: types.Point): Promise<types.Point> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
       this._evaluateInUtility((node: Node) => {
@@ -273,23 +227,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       point.x += border.x;
       point.y += border.y;
     }
-    const metrics = await this._page._delegate.layoutViewport();
-    // Give 20 extra pixels to avoid any issues on viewport edge.
-    let scrollX = 0;
-    if (point.x < 20)
-      scrollX = point.x - 20;
-    if (point.x > metrics.width - 20)
-      scrollX = point.x - metrics.width + 20;
-    let scrollY = 0;
-    if (point.y < 20)
-      scrollY = point.y - 20;
-    if (point.y > metrics.height - 20)
-      scrollY = point.y - metrics.height + 20;
-    return { point, scrollX, scrollY };
+    return point;
   }
 
   async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
-    const point = await this._ensurePointerActionPoint(options ? options.relativePoint : undefined);
+    const relativePoint = options ? options.relativePoint : undefined;
+    await this._scrollRectIntoViewIfNeeded(relativePoint ? { x: relativePoint.x, y: relativePoint.y, width: 0, height: 0 } : undefined);
+    const point = relativePoint ? await this._relativePoint(relativePoint) : await this._clickablePoint();
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
       restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
