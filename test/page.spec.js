@@ -1002,9 +1002,9 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.fill('input', 'some value');
       expect(await page.evaluate(() => result)).toBe('some value');
     });
-    it('should throw on non-text inputs', async({page, server}) => {
+    it('should throw on unsupported inputs', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      for (const type of ['color', 'number', 'date']) {
+      for (const type of ['color', 'date']) {
         await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
         let error = null;
         await page.fill('input', '').catch(e => error = e);
@@ -1109,6 +1109,28 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.focus('iframe');
       await page.fill('div', 'some value');
       expect(await page.$eval('div', d => d.textContent)).toBe('some value');
+    });
+    it('should be able to fill the input[type=number]', async({page}) => {
+      await page.setContent(`<input id="input" type="number"></input>`);
+      await page.fill('input', '42');
+      expect(await page.evaluate(() => input.value)).toBe('42');
+    });
+    it('should be able to fill exponent into the input[type=number]', async({page}) => {
+      await page.setContent(`<input id="input" type="number"></input>`);
+      await page.fill('input', '-10e5');
+      expect(await page.evaluate(() => input.value)).toBe('-10e5');
+    });
+    it('should not be able to fill input[type=number] with empty string', async({page}) => {
+      await page.setContent(`<input id="input" type="number"></input>`);
+      let error = null;
+      await page.fill('input', '').catch(e => error = e);
+      expect(error.message).toContain('Cannot type text into input[type=number].');
+    });
+    it('should not be able to fill text into the input[type=number]', async({page}) => {
+      await page.setContent(`<input id="input" type="number"></input>`);
+      let error = null;
+      await page.fill('input', '').catch(e => error = e);
+      expect(error.message).toContain('Cannot type text into input[type=number].');
     });
   });
 
