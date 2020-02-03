@@ -78,7 +78,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     if (!this._injectedPromise) {
       const source = `
         new (${injectedSource.source})([
-          ${selectors._sources.join(',\n')},
+          ${selectors._sources.join(',\n')}
         ])
       `;
       this._injectedPromise = this.evaluateHandle(source);

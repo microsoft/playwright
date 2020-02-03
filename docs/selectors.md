@@ -36,8 +36,8 @@ const handle = await page.$('css=div');
 // queries '//html/body/div' xpath selector
 const handle = await page.$('xpath=//html/body/div');
 
-// queries '"foo"' zs selector
-const handle = await page.$('zs="foo"');
+// queries '"foo"' text selector
+const handle = await page.$('text="foo"');
 
 // queries 'span' css selector inside the result of '//html/body/div' xpath selector
 const handle = await page.$('xpath=//html/body/div >> css=span');
@@ -81,12 +81,6 @@ Text engine finds an element that contains a text node with passed text. Example
 ### id, data-testid, data-test-id, data-test
 
 Id engines are selecting based on the corresponding atrribute value. For example: `data-test-id=foo` is equivalent to `querySelector('*[data-test-id=foo]')`.
-
-### zs
-
-ZSelector is an experimental engine that tries to make selectors survive future refactorings. Example: `zs=div ~ "Login"`.
-
-TODO: write more.
 
 ## Custom selector engines
 
