@@ -358,7 +358,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async fill(value: string): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this._evaluateInUtility((node: Node) => {
+    const error = await this._evaluateInUtility((node: Node, value: string) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'Node is not of type HTMLElement';
       const element = node as HTMLElement;
@@ -375,9 +375,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (element.nodeName.toLowerCase() === 'input') {
         const input = element as HTMLInputElement;
         const type = input.getAttribute('type') || '';
-        const kTextInputTypes = new Set(['', 'email', 'password', 'search', 'tel', 'text', 'url']);
+        const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
         if (!kTextInputTypes.has(type.toLowerCase()))
           return 'Cannot fill input of type "' + type + '".';
+        if (type.toLowerCase() === 'number') {
+          value = value.trim();
+          if (!value || isNaN(Number(value)))
+            return 'Cannot type text into input[type=number].';
+        }
         if (input.disabled)
           return 'Cannot fill a disabled input.';
         if (input.readOnly)
@@ -406,7 +411,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return 'Element is not an <input>, <textarea> or [contenteditable] element.';
       }
       return false;
-    });
+    }, value);
     if (error)
       throw new Error(error);
     await this._page.keyboard.sendCharacters(value);
