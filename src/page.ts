@@ -504,6 +504,14 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().type(selector, text, options);
   }
 
+  async check(selector: string, options?: frames.WaitForOptions) {
+    return this.mainFrame().check(selector, options);
+  }
+
+  async uncheck(selector: string, options?: frames.WaitForOptions) {
+    return this.mainFrame().uncheck(selector, options);
+  }
+
   async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & { visibility?: types.Visibility }, ...args: any[]): Promise<js.JSHandle | null> {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }

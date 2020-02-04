@@ -749,6 +749,18 @@ export class Frame {
     await handle.dispose();
   }
 
+  async check(selector: string, options?: WaitForOptions) {
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
+    await handle.check();
+    await handle.dispose();
+  }
+
+  async uncheck(selector: string, options?: WaitForOptions) {
+    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
+    await handle.uncheck();
+    await handle.dispose();
+  }
+
   async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & { visibility?: types.Visibility } = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
       return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
