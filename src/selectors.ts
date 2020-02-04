@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as zsSelectorEngineSource from './generated/zsSelectorEngineSource';
 import * as dom from './dom';
 import Injected from './injected/injected';
 import { helper } from './helper';
@@ -32,7 +31,7 @@ export class Selectors {
   }
 
   constructor() {
-    this._sources = [zsSelectorEngineSource.source];
+    this._sources = [];
   }
 
   async register(engineFunction: string | Function, ...args: any[]) {

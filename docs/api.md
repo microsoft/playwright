@@ -3776,8 +3776,8 @@ const handle = await page.$('css=div');
 // queries '//html/body/div' xpath selector
 const handle = await page.$('xpath=//html/body/div');
 
-// queries '"foo"' zs selector
-const handle = await page.$('zs="foo"');
+// queries '"foo"' text selector
+const handle = await page.$('text="foo"');
 
 // queries 'span' css selector inside the result of '//html/body/div' xpath selector
 const handle = await page.$('xpath=//html/body/div >> css=span');

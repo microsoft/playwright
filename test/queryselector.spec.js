@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+const zsSelectorEngineSource = require('../lib/generated/zsSelectorEngineSource');
+
 module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
@@ -46,9 +48,9 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const idAttribute = await page.$eval('data-test-id=foo', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
-    it('should work with zs selector', async({page, server}) => {
+    it('should work with text selector', async({page, server}) => {
       await page.setContent('<section id="testAttribute">43543</section>');
-      const idAttribute = await page.$eval('zs="43543"', e => e.id);
+      const idAttribute = await page.$eval('text="43543"', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
     it('should work with xpath selector', async({page, server}) => {
@@ -94,7 +96,7 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
     });
     it('should support >> syntax with different engines', async({page, server}) => {
       await page.setContent('<section><div><span>hello</span></div></section>');
-      const text = await page.$eval('xpath=/html/body/section >> css=div >> zs="hello"', (e, suffix) => e.textContent + suffix, ' world!');
+      const text = await page.$eval('xpath=/html/body/section >> css=div >> text="hello"', (e, suffix) => e.textContent + suffix, ' world!');
       expect(text).toBe('hello world!');
     });
     it('should support spaces with >> syntax', async({page, server}) => {
@@ -114,8 +116,6 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       expect(text3).toBe('Hello from root1');
       const text4 = await page.$eval('xpath=/html/body/section/div >> css=div >> css=span', e => e.textContent);
       expect(text4).toBe('Hello from root2');
-      const text5 = await page.$eval('zs=section div >> css=div >> css=span', e => e.textContent);
-      expect(text5).toBe('Hello from root2');
     });
   });
 
@@ -125,10 +125,10 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const divsCount = await page.$$eval('css=div', divs => divs.length);
       expect(divsCount).toBe(3);
     });
-    it('should work with zs selector', async({page, server}) => {
-      await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
-      const divsCount = await page.$$eval('zs=div', divs => divs.length);
-      expect(divsCount).toBe(3);
+    it('should work with text selector', async({page, server}) => {
+      await page.setContent('<div>hello</div><div>beautiful</div><div>beautiful</div><div>world!</div>');
+      const divsCount = await page.$$eval('text="beautiful"', divs => divs.length);
+      expect(divsCount).toBe(2);
     });
     it('should work with xpath selector', async({page, server}) => {
       await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
@@ -158,9 +158,9 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const element = await page.$('css=section');
       expect(element).toBeTruthy();
     });
-    it('should query existing element with zs selector', async({page, server}) => {
+    it('should query existing element with text selector', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const element = await page.$('zs="test"');
+      const element = await page.$('text="test"');
       expect(element).toBeTruthy();
     });
     it('should query existing element with xpath selector', async({page, server}) => {
@@ -250,16 +250,6 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const html = await page.$('html');
       const second = await html.$('.second');
       const inner = await second.$('.inner');
-      const content = await page.evaluate(e => e.textContent, inner);
-      expect(content).toBe('A');
-    });
-
-    it('should query existing element with zs selector', async({page, server}) => {
-      await page.goto(server.PREFIX + '/playground.html');
-      await page.setContent('<html><body><div class="second"><div class="inner">A</div></div></body></html>');
-      const html = await page.$('zs=html');
-      const second = await html.$('zs=.second');
-      const inner = await second.$('zs=.inner');
       const content = await page.evaluate(e => e.textContent, inner);
       expect(content).toBe('A');
     });
@@ -360,6 +350,10 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
   });
 
   describe('zselector', () => {
+    beforeAll(async () => {
+      await selectors.register(zsSelectorEngineSource.source);
+    });
+
     it('query', async ({page}) => {
       await page.setContent(`<div>yo</div><div>ya</div><div>ye</div>`);
       expect(await page.$eval(`zs="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -474,6 +468,16 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       expect(await page.$eval(`zs="ya"~"hey"~"hello"`, e => e.outerHTML)).toBe('<div id="target">hello</div>');
       expect(await page.$eval(`zs="ya"~"hey"~"unique"`, e => e.outerHTML).catch(e => e.message)).toBe('Error: failed to find element matching selector "zs="ya"~"hey"~"unique""');
       expect(await page.$$eval(`zs="ya" ~ "hey" ~ "hello"`, es => es.map(e => e.outerHTML).join('\n'))).toBe('<div id="target">hello</div>\n<div id="target2">hello</div>');
+    });
+
+    it('should query existing element with zs selector', async({page, server}) => {
+      await page.goto(server.PREFIX + '/playground.html');
+      await page.setContent('<html><body><div class="second"><div class="inner">A</div></div></body></html>');
+      const html = await page.$('zs=html');
+      const second = await html.$('zs=.second');
+      const inner = await second.$('zs=.inner');
+      const content = await page.evaluate(e => e.textContent, inner);
+      expect(content).toBe('A');
     });
   });
 
