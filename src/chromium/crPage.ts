@@ -98,6 +98,7 @@ export class CRPage implements PageDelegate {
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._networkManager.initialize(),
+      this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
     ];
     const options = this._page.browserContext()._options;
     if (options.bypassCSP)
@@ -215,10 +216,14 @@ export class CRPage implements PageDelegate {
   }
 
   _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
-    if (event.targetInfo.type !== 'worker')
-      return;
-    const url = event.targetInfo.url;
     const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
+    if (event.targetInfo.type !== 'worker') {
+      // Ideally, detaching should resume any target, but there is bug in the backend.
+      session.send('Runtime.runIfWaitingForDebugger').catch(debugError);
+      this._client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
+      return;
+    }
+    const url = event.targetInfo.url;
     const worker = new Worker(url);
     this._page._addWorker(event.sessionId, worker);
     session.once('Runtime.executionContextCreated', async event => {
@@ -227,6 +232,7 @@ export class CRPage implements PageDelegate {
     Promise.all([
       session.send('Runtime.enable'),
       session.send('Network.enable'),
+      session.send('Runtime.runIfWaitingForDebugger'),
     ]).catch(debugError);  // This might fail if the target is closed before we initialize.
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!._createHandle(o));
