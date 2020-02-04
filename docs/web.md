@@ -12,7 +12,7 @@ API consists of a single `connect` function, similar to [browserType.connect(opt
 async function usePlaywright() {
   const browser = await window.playwrightweb.chromium.connect(options); // or 'firefox', 'webkit'
   // ... drive automation ...
-  await browser.disconnect();
+  await browser.close();
 }
 </script>
 ```

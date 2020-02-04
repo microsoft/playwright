@@ -141,7 +141,7 @@ export class WebKit implements BrowserType {
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
-    const transport = await platform.createWebSocketTransport(options.wsEndpoint);
+    const transport = new platform.WebSocketTransport(options.wsEndpoint);
     return WKBrowser.connect(transport, options.slowMo);
   }
 
@@ -236,36 +236,160 @@ function getMacVersion(): string {
   return cachedMacVersion;
 }
 
+class SequenceNumberMixer<V> {
+  static _lastSequenceNumber = 1;
+  private _values = new Map<number, V>();
+
+  generate(value: V): number {
+    const sequenceNumber = ++SequenceNumberMixer._lastSequenceNumber;
+    this._values.set(sequenceNumber, value);
+    return sequenceNumber;
+  }
+
+  take(sequenceNumber: number): V | undefined {
+    const value = this._values.get(sequenceNumber);
+    this._values.delete(sequenceNumber);
+    return value;
+  }
+}
+
 function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
   const server = new ws.Server({ port });
-  let socket: ws | undefined;
   const guid = uuidv4();
+  const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
+  const pendingBrowserContextCreations = new Set<number>();
+  const pendingBrowserContextDeletions = new Map<number, string>();
+  const browserContextIds = new Map<string, ws>();
+  const pageProxyIds = new Map<string, ws>();
+  const sockets = new Set<ws>();
 
-  server.on('connection', (s, req) => {
+  transport.onmessage = message => {
+    const parsedMessage = JSON.parse(message);
+    if ('id' in parsedMessage) {
+      if (parsedMessage.id === -9999)
+        return;
+      // Process command response.
+      const value = idMixer.take(parsedMessage.id);
+      if (!value)
+        return;
+      const { id, socket } = value;
+
+      if (!socket || socket.readyState === ws.CLOSING) {
+        if (pendingBrowserContextCreations.has(id)) {
+          transport.send(JSON.stringify({
+            id: ++SequenceNumberMixer._lastSequenceNumber,
+            method: 'Browser.deleteContext',
+            params: { browserContextId: parsedMessage.result.browserContextId }
+          }));
+        }
+        return;
+      }
+
+      if (pendingBrowserContextCreations.has(parsedMessage.id)) {
+        // Browser.createContext response -> establish context attribution.
+        browserContextIds.set(parsedMessage.result.browserContextId, socket);
+        pendingBrowserContextCreations.delete(parsedMessage.id);
+      }
+
+      const deletedContextId = pendingBrowserContextDeletions.get(parsedMessage.id);
+      if (deletedContextId) {
+        // Browser.deleteContext response -> remove context attribution.
+        browserContextIds.delete(deletedContextId);
+        pendingBrowserContextDeletions.delete(parsedMessage.id);
+      }
+
+      parsedMessage.id = id;
+      socket.send(JSON.stringify(parsedMessage));
+      return;
+    }
+
+    // Process notification response.
+    const { method, params, pageProxyId } = parsedMessage;
+    if (pageProxyId) {
+      const socket = pageProxyIds.get(pageProxyId);
+      if (!socket || socket.readyState === ws.CLOSING) {
+        // Drop unattributed messages on the floor.
+        return;
+      }
+      socket.send(message);
+      return;
+    }
+    if (method === 'Browser.pageProxyCreated') {
+      const socket = browserContextIds.get(params.pageProxyInfo.browserContextId);
+      if (!socket || socket.readyState === ws.CLOSING) {
+        // Drop unattributed messages on the floor.
+        return;
+      }
+      pageProxyIds.set(params.pageProxyInfo.pageProxyId, socket);
+      socket.send(message);
+      return;
+    }
+    if (method === 'Browser.pageProxyDestroyed') {
+      const socket = pageProxyIds.get(params.pageProxyId);
+      pageProxyIds.delete(params.pageProxyId);
+      if (socket && socket.readyState !== ws.CLOSING)
+        socket.send(message);
+      return;
+    }
+    if (method === 'Browser.provisionalLoadFailed') {
+      const socket = pageProxyIds.get(params.pageProxyId);
+      if (socket && socket.readyState !== ws.CLOSING)
+        socket!.send(message);
+      return;
+    }
+  };
+
+  server.on('connection', (socket: ws, req) => {
     if (req.url !== '/' + guid) {
-      s.close();
+      socket.close();
       return;
     }
-    if (socket) {
-      s.close(undefined, 'Multiple connections are not supported');
-      return;
-    }
-    socket = s;
-    s.on('message', message => transport.send(Buffer.from(message).toString()));
-    transport.onmessage = message => {
-      // We are not notified when socket starts closing, and sending messages to a closing
-      // socket throws an error.
-      if (s.readyState !== ws.CLOSING)
-        s.send(message);
-    };
-    s.on('close', () => {
-      socket = undefined;
-      transport.onmessage = undefined;
+    sockets.add(socket);
+    // Following two messages are reporting the default browser context and the default page.
+    socket.send(JSON.stringify({
+      method: 'Browser.pageProxyCreated',
+      params: { pageProxyInfo: { pageProxyId: '5', browserContextId: '0000000000000002' } }
+    }));
+    socket.send(JSON.stringify({
+      method: 'Target.targetCreated',
+      params: {
+        targetInfo: { targetId: 'page-6', type: 'page', isPaused: false }
+      },
+      pageProxyId: '5'
+    }));
+
+    socket.on('message', (message: string) => {
+      const parsedMessage = JSON.parse(Buffer.from(message).toString());
+      const { id, method, params } = parsedMessage;
+      const seqNum = idMixer.generate({ id, socket });
+      transport.send(JSON.stringify({ ...parsedMessage, id: seqNum }));
+      if (method === 'Browser.createContext')
+        pendingBrowserContextCreations.add(seqNum);
+      if (method === 'Browser.deleteContext')
+        pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
+    });
+
+    socket.on('close', () => {
+      for (const [pageProxyId, s] of pageProxyIds) {
+        if (s === socket)
+          pageProxyIds.delete(pageProxyId);
+      }
+      for (const [browserContextId, s] of browserContextIds) {
+        if (s === socket) {
+          transport.send(JSON.stringify({
+            id: ++SequenceNumberMixer._lastSequenceNumber,
+            method: 'Browser.deleteContext',
+            params: { browserContextId }
+          }));
+          browserContextIds.delete(browserContextId);
+        }
+      }
+      sockets.delete(socket);
     });
   });
 
   transport.onclose = () => {
-    if (socket)
+    for (const socket of sockets)
       socket.close(undefined, 'Browser disconnected');
     server.close();
     transport.onmessage = undefined;

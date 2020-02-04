@@ -122,9 +122,9 @@ export class Chromium implements BrowserType {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const t = transport || await platform.createWebSocketTransport(browserWSEndpoint!);
+        const t = transport || new platform.WebSocketTransport(browserWSEndpoint!);
         const message = { method: 'Browser.close', id: kBrowserCloseMessageId };
-        t.send(JSON.stringify(message));
+        await t.send(JSON.stringify(message));
       },
       onkill: (exitCode, signal) => {
         if (browserServer)
@@ -147,7 +147,7 @@ export class Chromium implements BrowserType {
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
-    const transport = await platform.createWebSocketTransport(options.wsEndpoint);
+    const transport = new platform.WebSocketTransport(options.wsEndpoint);
     return CRBrowser.connect(transport, options.slowMo);
   }
 

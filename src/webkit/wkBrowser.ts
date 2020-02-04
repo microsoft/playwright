@@ -157,12 +157,6 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     pageProxy.handleProvisionalLoadFailed(event);
   }
 
-  async disconnect() {
-    const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
-    this._connection.close();
-    await disconnected;
-  }
-
   isConnected(): boolean {
     return !this._connection.isClosed();
   }
@@ -170,7 +164,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   async close() {
     helper.removeEventListeners(this._eventListeners);
     const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
-    await this._browserSession.send('Browser.close');
+    await Promise.all(this.browserContexts().map(context => context.close()));
+    this._connection.close();
     await disconnected;
   }
 

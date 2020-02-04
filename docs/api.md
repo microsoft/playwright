@@ -147,7 +147,6 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage(url, [options])](#browsernewpageurl-options)
@@ -168,12 +167,11 @@ a single instance of [BrowserContext].
 #### browser.close()
 - returns: <[Promise]>
 
-Closes browser and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
+In case this browser is obtained using [browserType.launch](#browsertypelaunchoptions), closes the browser and all of its pages (if any were opened).
 
-#### browser.disconnect()
-- returns: <[Promise]>
+In case this browser is obtained using [browserType.connect](#browsertypeconnectoptions), clears all created contexts belonging to this browser and disconnects from the browser server.
 
-Disconnects Browser from the browser application, but leaves the application process running. After calling `disconnect`, the [Browser] object is considered disposed and cannot be used anymore.
+The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
 #### browser.isConnected()
 
@@ -3452,12 +3450,11 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 <!-- GEN:toc -->
 - [browserType.connect(options)](#browsertypeconnectoptions)
-- [browserType.defaultArgs([options])](#browsertypedefaultargsoptions)
 - [browserType.devices](#browsertypedevices)
 - [browserType.errors](#browsertypeerrors)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
-- [browserType.launchPersistent([options])](#browsertypelaunchpersistentoptions)
+- [browserType.launchPersistent(userDataDir, [options])](#browsertypelaunchpersistentuserdatadir-options)
 - [browserType.launchServer([options])](#browsertypelaunchserveroptions)
 - [browserType.name()](#browsertypename)
 <!-- GEN:stop -->
@@ -3632,7 +3629,6 @@ await browser.stopTracing();
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage(url, [options])](#browsernewpageurl-options)
@@ -3800,7 +3796,6 @@ Firefox browser instance does not expose Firefox-specific features.
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage(url, [options])](#browsernewpageurl-options)
@@ -3817,7 +3812,6 @@ WebKit browser instance does not expose WebKit-specific features.
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage(url, [options])](#browsernewpageurl-options)

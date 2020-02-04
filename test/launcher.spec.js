@@ -114,7 +114,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const browserServer = await playwright.launchServer({...defaultBrowserOptions });
       const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
       expect(remote.isConnected()).toBe(true);
-      await remote.disconnect();
+      await remote.close();
       expect(remote.isConnected()).toBe(false);
       await browserServer.close();
     });
@@ -140,7 +140,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const page = await remote.newPage();
       const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
       await server.waitForRequest('/one-style.css');
-      await remote.disconnect();
+      await remote.close();
       const error = await navigationPromise;
       expect(error.message).toBe('Navigation failed because browser has disconnected!');
       await browserServer.close();
@@ -155,7 +155,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       // Make sure the previous waitForSelector has time to make it to the browser before we disconnect.
       await page.waitForSelector('body');
 
-      await remote.disconnect();
+      await remote.close();
       const error = await watchdog;
       expect(error.message).toContain('Protocol error');
       await browserServer.close();
@@ -164,7 +164,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const browserServer = await playwright.launchServer({...defaultBrowserOptions });
       const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
-      await remote.disconnect();
+      await remote.close();
       const error = await page.evaluate('1 + 1').catch(e => e);
       expect(error.message).toContain('has been closed');
       await browserServer.close();
@@ -186,14 +186,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(message).toContain('Target closed');
         expect(message).not.toContain('Timeout');
       }
-    });
-    it('should be able to close remote browser', async({server}) => {
-      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
-      await Promise.all([
-        new Promise(f => browserServer.once('close', f)),
-        remote.close(),
-      ]);
     });
   });
 
@@ -219,25 +211,22 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('Playwright.connect', function() {
-    it.skip(WEBKIT)('should be able to reconnect to a browser', async({server}) => {
+    it('should be able to reconnect to a browser', async({server}) => {
       const browserServer = await playwright.launchServer(defaultBrowserOptions);
-      const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
-      const browserContext = await browser.newContext();
-      const page = await browserContext.newPage();
-      await page.goto(server.PREFIX + '/frames/nested-frames.html');
-      await browser.disconnect();
-
-      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
-      const pages = await remote.pages();
-      const restoredPage = pages.find(page => page.url() === server.PREFIX + '/frames/nested-frames.html');
-      expect(utils.dumpFrames(restoredPage.mainFrame())).toEqual([
-        'http://localhost:<PORT>/frames/nested-frames.html',
-        '    http://localhost:<PORT>/frames/frame.html (aframe)',
-        '    http://localhost:<PORT>/frames/two-frames.html (2frames)',
-        '        http://localhost:<PORT>/frames/frame.html (dos)',
-        '        http://localhost:<PORT>/frames/frame.html (uno)',
-      ]);
-      expect(await restoredPage.evaluate(() => 7 * 8)).toBe(56);
+      {
+        const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+        const browserContext = await browser.newContext();
+        const page = await browserContext.newPage();
+        await page.goto(server.EMPTY_PAGE);
+        await browser.close();
+      }
+      {
+        const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+        const browserContext = await browser.newContext();
+        const page = await browserContext.newPage();
+        await page.goto(server.EMPTY_PAGE);
+        await browser.close();
+      }
       await browserServer.close();
     });
   });

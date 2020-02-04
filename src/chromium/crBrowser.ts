@@ -44,28 +44,23 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   static async connect(transport: ConnectionTransport, slowMo?: number): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
-    const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
-    const browser = new CRBrowser(connection, browserContextIds);
+    const browser = new CRBrowser(connection);
     await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
     await browser.waitForTarget(t => t.type() === 'page');
     return browser;
   }
 
-  constructor(connection: CRConnection, contextIds: string[]) {
+  constructor(connection: CRConnection) {
     super();
     this._connection = connection;
     this._client = connection.rootSession;
 
     this._defaultContext = this._createBrowserContext(null, {});
-    for (const contextId of contextIds)
-      this._contexts.set(contextId, this._createBrowserContext(contextId, {}));
-
     this._connection.on(ConnectionEvents.Disconnected, () => this.emit(CommonEvents.Browser.Disconnected));
     this._client.on('Target.targetCreated', this._targetCreated.bind(this));
     this._client.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
     this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
   }
-
   _createBrowserContext(contextId: string | null, options: BrowserContextOptions): BrowserContext {
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
@@ -245,7 +240,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   async close() {
     const disconnected = new Promise(f => this._connection.once(ConnectionEvents.Disconnected, f));
-    await this._connection.rootSession.send('Browser.close');
+    await Promise.all(this.browserContexts().map(context => context.close()));
+    this._connection.close();
     await disconnected;
   }
 
@@ -303,12 +299,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   pageTarget(page: Page): CRTarget {
     return CRTarget.fromPage(page);
-  }
-
-  async disconnect() {
-    const disconnected = new Promise(f => this.once(CommonEvents.Browser.Disconnected, f));
-    this._connection.close();
-    await disconnected;
   }
 
   isConnected(): boolean {
