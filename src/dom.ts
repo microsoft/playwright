@@ -459,6 +459,46 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this.focus();
     await this._page.keyboard.press(key, options);
   }
+  async check() {
+    await this._setChecked(true);
+  }
+
+  async uncheck() {
+    await this._setChecked(false);
+  }
+
+  private async _setChecked(state: boolean) {
+    const isCheckboxChecked = async (): Promise<boolean> => {
+      return this._evaluateInUtility((node: Node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE)
+          throw new Error('Not a checkbox or radio button');
+
+        let element: Element | undefined = node as Element;
+        if (element.getAttribute('role') === 'checkbox')
+          return element.getAttribute('aria-checked') === 'true';
+
+        if (element.nodeName === 'LABEL') {
+          const forId = element.getAttribute('for');
+          if (forId && element.ownerDocument)
+            element = element.ownerDocument.querySelector(`input[id="${forId}"]`) || undefined;
+          else
+            element = element.querySelector('input[type=checkbox],input[type=radio]') || undefined;
+        }
+        if (element && element.nodeName === 'INPUT') {
+          const type = element.getAttribute('type');
+          if (type && (type.toLowerCase() === 'checkbox' || type.toLowerCase() === 'radio'))
+            return (element as HTMLInputElement).checked;
+        }
+        throw new Error('Not a checkbox');
+      });
+    };
+
+    if (await isCheckboxChecked() === state)
+      return;
+    await this.click();
+    if (await isCheckboxChecked() !== state)
+      throw new Error('Unable to click checkbox');
+  }
 
   async boundingBox(): Promise<types.Rect | null> {
     return this._page._delegate.getBoundingBox(this);
