@@ -381,7 +381,7 @@ export class Frame {
       referer = options.referer;
     }
     const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
-
+    url = helper.completeUserURL(url);
     let navigateResult: GotoResult;
     const navigate = async () => {
       try {
