@@ -200,8 +200,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().$(selector);
   }
 
-  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().waitForSelector(selector, options);
+  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+    return this.mainFrame().$wait(selector, options);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
@@ -504,16 +504,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().type(selector, text, options);
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & { visibility?: types.Visibility }, ...args: any[]): Promise<js.JSHandle | null> {
-    return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
-  }
-
   async waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
-  }
-
-  $wait: types.$Wait = async (selector, pageFunction, options, ...args) => {
-    return this.mainFrame().$wait(selector, pageFunction, options, ...args as any);
   }
 
   workers(): Worker[] {

@@ -25,7 +25,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
   describe('Page.waitFor', function() {
     it('should wait for selector', async({page, server}) => {
       let found = false;
-      const waitFor = page.waitFor('div').then(() => found = true);
+      const waitFor = page.$wait('div').then(() => found = true);
       await page.goto(server.EMPTY_PAGE);
       expect(found).toBe(false);
       await page.goto(server.PREFIX + '/grid.html');
@@ -34,7 +34,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     });
     it('should wait for an xpath', async({page, server}) => {
       let found = false;
-      const waitFor = page.waitFor('//div').then(() => found = true);
+      const waitFor = page.$wait('//div').then(() => found = true);
       await page.goto(server.EMPTY_PAGE);
       expect(found).toBe(false);
       await page.goto(server.PREFIX + '/grid.html');
@@ -44,14 +44,8 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('should not allow you to select an element with single slash xpath', async({page, server}) => {
       await page.setContent(`<div>some text</div>`);
       let error = null;
-      await page.waitFor('/html/body/div').catch(e => error = e);
+      await page.$wait('/html/body/div').catch(e => error = e);
       expect(error).toBeTruthy();
-    });
-    it('should timeout', async({page, server}) => {
-      const startTime = Date.now();
-      const timeout = 42;
-      await page.waitFor(timeout);
-      expect(Date.now() - startTime).not.toBeLessThan(timeout / 2);
     });
     it('should work with multiline body', async({page, server}) => {
       const result = await page.waitForFunction(`
@@ -61,17 +55,12 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     });
     it('should wait for predicate', async({page, server}) => {
       await Promise.all([
-        page.waitFor(() => window.innerWidth < 130), // Windows doesn't like windows below 120px wide
+        page.waitForFunction(() => window.innerWidth < 130), // Windows doesn't like windows below 120px wide
         page.setViewport({width: 10, height: 10}),
       ]);
     });
-    it('should throw when unknown type', async({page, server}) => {
-      let error = null;
-      await page.waitFor({foo: 'bar'}).catch(e => error = e);
-      expect(error.message).toContain('Unsupported target type');
-    });
     it('should wait for predicate with arguments', async({page, server}) => {
-      await page.waitFor((arg1, arg2) => arg1 !== arg2, {}, 1, 2);
+      await page.waitForFunction((arg1, arg2) => arg1 !== arg2, {}, 1, 2);
     });
   });
 
@@ -206,50 +195,20 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
   });
 
   describe('Frame.$wait', function() {
-    it('should accept arguments', async({page, server}) => {
-      await page.setContent('<div></div>');
-      const result = await page.$wait('div', (e, foo, bar) => e.nodeName + foo + bar, {}, 'foo1', 'bar2');
-      expect(await result.jsonValue()).toBe('DIVfoo1bar2');
-    });
-    it('should query selector constantly', async({page, server}) => {
-      await page.setContent('<div></div>');
-      let done = null;
-      const resultPromise = page.$wait('span', e => e).then(r => done = r);
-      expect(done).toBe(null);
-      await page.setContent('<section></section>');
-      expect(done).toBe(null);
-      await page.setContent('<span>text</span>');
-      await resultPromise;
-      expect(done).not.toBe(null);
-      expect(await done.evaluate(e => e.textContent)).toBe('text');
-    });
-    it('should be able to wait for removal', async({page}) => {
-      await page.setContent('<div></div>');
-      let done = null;
-      const resultPromise = page.$wait('div', e => !e).then(r => done = r);
-      expect(done).toBe(null);
-      await page.setContent('<section></section>');
-      await resultPromise;
-      expect(done).not.toBe(null);
-      expect(await done.jsonValue()).toBe(true);
-    });
-  });
-
-  describe('Frame.waitForSelector', function() {
     const addElement = tag => document.body.appendChild(document.createElement(tag));
 
     it('should immediately resolve promise if node exists', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const frame = page.mainFrame();
-      await frame.waitForSelector('*');
+      await frame.$wait('*');
       await frame.evaluate(addElement, 'div');
-      await frame.waitForSelector('div');
+      await frame.$wait('div');
     });
 
     it('should work with removed MutationObserver', async({page, server}) => {
       await page.evaluate(() => delete window.MutationObserver);
       const [handle] = await Promise.all([
-        page.waitForSelector('.zombo'),
+        page.$wait('.zombo'),
         page.setContent(`<div class='zombo'>anything</div>`),
       ]);
       expect(await page.evaluate(x => x.textContent, handle)).toBe('anything');
@@ -258,7 +217,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('should resolve promise when node is added', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const frame = page.mainFrame();
-      const watchdog = frame.waitForSelector('div');
+      const watchdog = frame.$wait('div');
       await frame.evaluate(addElement, 'br');
       await frame.evaluate(addElement, 'div');
       const eHandle = await watchdog;
@@ -268,7 +227,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
 
     it('should work when node is added through innerHTML', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      const watchdog = page.waitForSelector('h3 div');
+      const watchdog = page.$wait('h3 div');
       await page.evaluate(addElement, 'span');
       await page.evaluate(() => document.querySelector('span').innerHTML = '<h3><div></div></h3>');
       await watchdog;
@@ -278,7 +237,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.goto(server.EMPTY_PAGE);
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       const otherFrame = page.frames()[1];
-      const watchdog = page.waitForSelector('div');
+      const watchdog = page.$wait('div');
       await otherFrame.evaluate(addElement, 'div');
       await page.evaluate(addElement, 'div');
       const eHandle = await watchdog;
@@ -290,10 +249,10 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
       const frame1 = page.frames()[1];
       const frame2 = page.frames()[2];
-      const waitForSelectorPromise = frame2.waitForSelector('div');
+      const $waitPromise = frame2.$wait('div');
       await frame1.evaluate(addElement, 'div');
       await frame2.evaluate(addElement, 'div');
-      const eHandle = await waitForSelectorPromise;
+      const eHandle = await $waitPromise;
       expect(await eHandle.ownerFrame()).toBe(frame2);
     });
 
@@ -301,7 +260,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       const frame = page.frames()[1];
       let waitError = null;
-      const waitPromise = frame.waitForSelector('.box').catch(e => waitError = e);
+      const waitPromise = frame.$wait('.box').catch(e => waitError = e);
       await utils.detachFrame(page, 'frame1');
       await waitPromise;
       expect(waitError).toBeTruthy();
@@ -309,128 +268,128 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     });
     it('should survive cross-process navigation', async({page, server}) => {
       let boxFound = false;
-      const waitForSelector = page.waitForSelector('.box').then(() => boxFound = true);
+      const $wait = page.$wait('.box').then(() => boxFound = true);
       await page.goto(server.EMPTY_PAGE);
       expect(boxFound).toBe(false);
       await page.reload();
       expect(boxFound).toBe(false);
       await page.goto(server.CROSS_PROCESS_PREFIX + '/grid.html');
-      await waitForSelector;
+      await $wait;
       expect(boxFound).toBe(true);
     });
     it('should wait for visible', async({page, server}) => {
       let divFound = false;
-      const waitForSelector = page.waitForSelector('div').then(() => divFound = true);
+      const $wait = page.$wait('div').then(() => divFound = true);
       await page.setContent(`<div style='display: none; visibility: hidden;'>1</div>`);
       expect(divFound).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
       expect(divFound).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.removeProperty('visibility'));
-      expect(await waitForSelector).toBe(true);
+      expect(await $wait).toBe(true);
       expect(divFound).toBe(true);
     });
     it('should wait for visible recursively', async({page, server}) => {
       let divVisible = false;
-      const waitForSelector = page.waitForSelector('div#inner', { visibility: 'visible' }).then(() => divVisible = true);
+      const $wait = page.$wait('div#inner', { visibility: 'visible' }).then(() => divVisible = true);
       await page.setContent(`<div style='display: none; visibility: hidden;'><div id="inner">hi</div></div>`);
       expect(divVisible).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
       expect(divVisible).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.removeProperty('visibility'));
-      expect(await waitForSelector).toBe(true);
+      expect(await $wait).toBe(true);
       expect(divVisible).toBe(true);
     });
     it('hidden should wait for visibility: hidden', async({page, server}) => {
       let divHidden = false;
       await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divHidden = true);
-      await page.waitForSelector('div'); // do a round trip
+      const $wait = page.$wait('div', { visibility: 'hidden' }).then(() => divHidden = true);
+      await page.$wait('div'); // do a round trip
       expect(divHidden).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.setProperty('visibility', 'hidden'));
-      expect(await waitForSelector).toBe(true);
+      expect(await $wait).toBe(true);
       expect(divHidden).toBe(true);
     });
     it('hidden should wait for display: none', async({page, server}) => {
       let divHidden = false;
       await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divHidden = true);
-      await page.waitForSelector('div'); // do a round trip
+      const $wait = page.$wait('div', { visibility: 'hidden' }).then(() => divHidden = true);
+      await page.$wait('div'); // do a round trip
       expect(divHidden).toBe(false);
       await page.evaluate(() => document.querySelector('div').style.setProperty('display', 'none'));
-      expect(await waitForSelector).toBe(true);
+      expect(await $wait).toBe(true);
       expect(divHidden).toBe(true);
     });
     it('hidden should wait for removal', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let divRemoved = false;
-      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divRemoved = true);
-      await page.waitForSelector('div'); // do a round trip
+      const $wait = page.$wait('div', { visibility: 'hidden' }).then(() => divRemoved = true);
+      await page.$wait('div'); // do a round trip
       expect(divRemoved).toBe(false);
       await page.evaluate(() => document.querySelector('div').remove());
-      expect(await waitForSelector).toBe(true);
+      expect(await $wait).toBe(true);
       expect(divRemoved).toBe(true);
     });
     it('should return null if waiting to hide non-existing element', async({page, server}) => {
-      const handle = await page.waitForSelector('non-existing', { visibility: 'hidden' });
+      const handle = await page.$wait('non-existing', { visibility: 'hidden' });
       expect(handle).toBe(null);
     });
     it('should respect timeout', async({page, server}) => {
       let error = null;
-      await page.waitForSelector('div', { timeout: 10 }).catch(e => error = e);
+      await page.$wait('div', { timeout: 10 }).catch(e => error = e);
       expect(error).toBeTruthy();
-      expect(error.message).toContain('waiting for selector "div" failed: timeout');
+      expect(error.message).toContain('timeout 10ms exceeded');
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should have an error message specifically for awaiting an element to be hidden', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let error = null;
-      await page.waitForSelector('div', { visibility: 'hidden', timeout: 10 }).catch(e => error = e);
+      await page.$wait('div', { visibility: 'hidden', timeout: 10 }).catch(e => error = e);
       expect(error).toBeTruthy();
       expect(error.message).toContain('waiting for selector "[hidden] div" failed: timeout');
     });
 
     it('should respond to node attribute mutation', async({page, server}) => {
       let divFound = false;
-      const waitForSelector = page.waitForSelector('.zombo').then(() => divFound = true);
+      const $wait = page.$wait('.zombo').then(() => divFound = true);
       await page.setContent(`<div class='notZombo'></div>`);
       expect(divFound).toBe(false);
       await page.evaluate(() => document.querySelector('div').className = 'zombo');
-      expect(await waitForSelector).toBe(true);
+      expect(await $wait).toBe(true);
     });
     it('should return the element handle', async({page, server}) => {
-      const waitForSelector = page.waitForSelector('.zombo');
+      const $wait = page.$wait('.zombo');
       await page.setContent(`<div class='zombo'>anything</div>`);
-      expect(await page.evaluate(x => x.textContent, await waitForSelector)).toBe('anything');
+      expect(await page.evaluate(x => x.textContent, await $wait)).toBe('anything');
     });
     it('should have correct stack trace for timeout', async({page, server}) => {
       let error;
-      await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
+      await page.$wait('.zombo', { timeout: 10 }).catch(e => error = e);
       expect(error.stack).toContain('waittask.spec.js');
     });
     it('should throw for unknown waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { visibility: 'foo' }).catch(e => e);
+      const error = await page.$wait('section', { visibility: 'foo' }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should throw for numeric waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { visibility: 123 }).catch(e => e);
+      const error = await page.$wait('section', { visibility: 123 }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should throw for true waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { visibility: true }).catch(e => e);
+      const error = await page.$wait('section', { visibility: true }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should throw for false waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { visibility: false }).catch(e => e);
+      const error = await page.$wait('section', { visibility: false }).catch(e => e);
       expect(error.message).toContain('Unsupported waitFor option');
     });
     it('should support >> selector syntax', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const frame = page.mainFrame();
-      const watchdog = frame.waitForSelector('css=div >> css=span');
+      const watchdog = frame.$wait('css=div >> css=span');
       await frame.evaluate(addElement, 'br');
       await frame.evaluate(addElement, 'div');
       await frame.evaluate(() => document.querySelector('div').appendChild(document.createElement('span')));
@@ -440,19 +399,19 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     });
   });
 
-  describe('Frame.waitForSelector xpath', function() {
+  describe('Frame.$wait xpath', function() {
     const addElement = tag => document.body.appendChild(document.createElement(tag));
 
     it('should support some fancy xpath', async({page, server}) => {
       await page.setContent(`<p>red herring</p><p>hello  world  </p>`);
-      const waitForXPath = page.waitForSelector('//p[normalize-space(.)="hello world"]');
+      const waitForXPath = page.$wait('//p[normalize-space(.)="hello world"]');
       expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('hello  world  ');
     });
     it('should respect timeout', async({page}) => {
       let error = null;
-      await page.waitForSelector('//div', { timeout: 10 }).catch(e => error = e);
+      await page.$wait('//div', { timeout: 10 }).catch(e => error = e);
       expect(error).toBeTruthy();
-      expect(error.message).toContain('waiting for selector "//div" failed: timeout');
+      expect(error.message).toContain('timeout 10ms exceeded');
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should run in specified frame', async({page, server}) => {
@@ -460,7 +419,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
       const frame1 = page.frames()[1];
       const frame2 = page.frames()[2];
-      const waitForXPathPromise = frame2.waitForSelector('//div');
+      const waitForXPathPromise = frame2.$wait('//div');
       await frame1.evaluate(addElement, 'div');
       await frame2.evaluate(addElement, 'div');
       const eHandle = await waitForXPathPromise;
@@ -470,20 +429,20 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       const frame = page.frames()[1];
       let waitError = null;
-      const waitPromise = frame.waitForSelector('//*[@class="box"]').catch(e => waitError = e);
+      const waitPromise = frame.$wait('//*[@class="box"]').catch(e => waitError = e);
       await utils.detachFrame(page, 'frame1');
       await waitPromise;
       expect(waitError).toBeTruthy();
       expect(waitError.message).toContain('waitForFunction failed: frame got detached.');
     });
     it('should return the element handle', async({page, server}) => {
-      const waitForXPath = page.waitForSelector('//*[@class="zombo"]');
+      const waitForXPath = page.$wait('//*[@class="zombo"]');
       await page.setContent(`<div class='zombo'>anything</div>`);
       expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('anything');
     });
     it('should allow you to select an element with single slash', async({page, server}) => {
       await page.setContent(`<div>some text</div>`);
-      const waitForXPath = page.waitForSelector('//html/body/div');
+      const waitForXPath = page.$wait('//html/body/div');
       expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('some text');
     });
   });

@@ -171,10 +171,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions, webSocket: true});
       const remote = await playwright.connect(browserApp.connectOptions());
       const page = await remote.defaultContext().newPage();
-      const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
+      const watchdog = page.$wait('div', { timeout: 60000 }).catch(e => e);
       
       // Make sure the previous waitForSelector has time to make it to the browser before we disconnect.
-      await page.waitForSelector('body');
+      await page.$wait('body');
 
       await remote.disconnect();
       const error = await watchdog;

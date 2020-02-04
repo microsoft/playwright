@@ -473,8 +473,8 @@ export class Frame {
     return handle;
   }
 
-  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    const { timeout = this._page._timeoutSettings.timeout(), visibility = 'any' } = (options || {});
+  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+    const { timeout = this._page._timeoutSettings.timeout(), visibility = 'visible' } = (options || {});
     const handle = await this._waitForSelectorInUtilityContext(selector, visibility, timeout);
     const mainContext = await this._mainContext();
     if (handle && handle._context !== mainContext) {
@@ -749,16 +749,6 @@ export class Frame {
     await handle.dispose();
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & { visibility?: types.Visibility } = {}, ...args: any[]): Promise<js.JSHandle | null> {
-    if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
-    if (helper.isNumber(selectorOrFunctionOrTimeout))
-      return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout as number));
-    if (typeof selectorOrFunctionOrTimeout === 'function')
-      return this.waitForFunction(selectorOrFunctionOrTimeout, options, ...args);
-    return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
-  }
-
   private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: WaitForOptions | undefined): Promise<dom.ElementHandle<Element>> {
     const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'visible' } = (options || {});
     let handle: dom.ElementHandle<Element>;
@@ -795,12 +785,6 @@ export class Frame {
     options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
     const task = dom.waitForFunctionTask(undefined, pageFunction, options, ...args);
     return this._scheduleRerunnableTask(task, 'main', options.timeout);
-  }
-
-  $wait: types.$Wait = async (selector, pageFunction, options, ...args) => {
-    options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
-    const task = dom.waitForFunctionTask(selector, pageFunction, options, ...args);
-    return this._scheduleRerunnableTask(task, 'main', options.timeout) as any;
   }
 
   async title(): Promise<string> {
