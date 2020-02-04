@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserFetcher, BrowserFetcherOptions } from './browserFetcher';
+import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
@@ -50,6 +50,15 @@ export class WebKit implements BrowserType {
 
   name() {
     return 'webkit';
+  }
+
+  async downloadBrowserIfNeeded(onProgress?: OnProgressCallback) {
+    const fetcher = this._createBrowserFetcher();
+    const revisionInfo = fetcher.revisionInfo();
+    // Do nothing if the revision is already downloaded.
+    if (revisionInfo.local)
+      return;
+    await fetcher.download(revisionInfo.revision, onProgress);
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
