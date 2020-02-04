@@ -352,9 +352,10 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(await mainFrame.evaluate(() => window.location.href)).toContain('127');
     });
-    xit('should allow cross-frame js handles', async({page, server}) => {
-      // TODO: this should be possible because frames script each other, but
-      // protocol implementations do not support this.
+    it('should not allow cross-frame js handles', async({page, server}) => {
+      // TODO: this should actually be possible because frames script each other,
+      // but protocol implementations do not support this. For now, assume current
+      // behavior.
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const handle = await page.evaluateHandle(() => {
         const iframe = document.querySelector('iframe');
@@ -365,8 +366,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const childFrame = page.mainFrame().childFrames()[0];
       const childResult = await childFrame.evaluate(() => window.__foo);
       expect(childResult).toEqual({ bar: 'baz' });
-      const result = await childFrame.evaluate(foo => foo.bar, handle);
-      expect(result).toBe('baz');
+      const error = await childFrame.evaluate(foo => foo.bar, handle).catch(e => e);
+      expect(error.message).toBe('JSHandles can be evaluated only in the context they were created!');
     });
     it('should allow cross-frame element handles', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
