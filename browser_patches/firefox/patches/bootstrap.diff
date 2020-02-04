@@ -2169,10 +2169,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..9e10bd1eb3c1c3dd800e244a2372205a2818e6c5
+index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a8aa1b032
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,846 @@
+@@ -0,0 +1,895 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2750,16 +2750,54 @@ index 0000000000000000000000000000000000000000..9e10bd1eb3c1c3dd800e244a2372205a
 +    };
 +  }
 +
-+  async getBoundingBox({frameId, objectId}) {
++  async scrollIntoViewIfNeeded({objectId, frameId, rect}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
 +    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
++    if (!unsafeObject.isConnected)
++      throw new Error('Node is detached from document');
++    await this._scrollNodeIntoViewIfNeeded(unsafeObject);
++    const box = this._getBoundingBox(unsafeObject);
++    if (rect) {
++      box.x += rect.x;
++      box.y += rect.y;
++      box.width = rect.width;
++      box.height = rect.height;
++    }
++    this._scrollRectIntoViewIfNeeded(unsafeObject, box);
++  }
++
++  async _scrollNodeIntoViewIfNeeded(node) {
++    if (node.nodeType !== 1)
++      node = node.parentElement;
++    if (!node.ownerDocument || !node.ownerDocument.defaultView)
++      return;
++    const global = node.ownerDocument.defaultView;
++    const visibleRatio = await new Promise(resolve => {
++      const observer = new global.IntersectionObserver(entries => {
++        resolve(entries[0].intersectionRatio);
++        observer.disconnect();
++      });
++      observer.observe(node);
++      // Firefox doesn't call IntersectionObserver callback unless
++      // there are rafs.
++      global.requestAnimationFrame(() => {});
++    });
++    if (visibleRatio !== 1.0)
++      node.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
++  }
++
++  _scrollRectIntoViewIfNeeded(node, rect) {
++    // TODO: implement.
++  }
++
++  _getBoundingBox(unsafeObject) {
 +    if (!unsafeObject.getBoxQuads)
 +      throw new Error('RemoteObject is not a node');
 +    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document});
 +    if (!quads.length)
-+      return {boundingBox: null};
++      return;
 +    let x1 = Infinity;
 +    let y1 = Infinity;
 +    let x2 = -Infinity;
@@ -2771,7 +2809,18 @@ index 0000000000000000000000000000000000000000..9e10bd1eb3c1c3dd800e244a2372205a
 +      x2 = Math.max(boundingBox.x + boundingBox.width, x2);
 +      y2 = Math.max(boundingBox.y + boundingBox.height, y2);
 +    }
-+    return {boundingBox: {x: x1 + frame.domWindow().scrollX, y: y1 + frame.domWindow().scrollY, width: x2 - x1, height: y2 - y1}};
++    return {x: x1, y: y1, width: x2 - x1, height: y2 - y1};
++  }
++
++  async getBoundingBox({frameId, objectId}) {
++    const frame = this._frameTree.frame(frameId);
++    if (!frame)
++      throw new Error('Failed to find frame with id = ' + frameId);
++    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
++    const box = this._getBoundingBox(unsafeObject);
++    if (!box)
++      return {boundingBox: null};
++    return {boundingBox: {x: box.x + frame.domWindow().scrollX, y: box.y + frame.domWindow().scrollY, width: box.width, height: box.height}};
 +  }
 +
 +  async screenshot({mimeType, fullPage, clip}) {
@@ -4441,10 +4490,10 @@ index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9c
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..23a32be2200e90e2e05d31aec85874a829cb1bbe
+index 0000000000000000000000000000000000000000..5413f55e8a9d70c8d3a87f4a8b7c894c85f9f495
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,285 @@
+@@ -0,0 +1,289 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4624,6 +4673,10 @@ index 0000000000000000000000000000000000000000..23a32be2200e90e2e05d31aec85874a8
 +
 +  async describeNode(options) {
 +    return await this._contentSession.send('Page.describeNode', options);
++  }
++
++  async scrollIntoViewIfNeeded(options) {
++    return await this._contentSession.send('Page.scrollIntoViewIfNeeded', options);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument(options) {
@@ -4881,10 +4934,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..d0d27b9bd8132190841a7a4785d31a20738e3b18
+index 0000000000000000000000000000000000000000..db7516be616a7f9b907d49acea837b7a5b00001d
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,749 @@
+@@ -0,0 +1,756 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -4931,7 +4984,7 @@ index 0000000000000000000000000000000000000000..d0d27b9bd8132190841a7a4785d31a20
 +  y: t.Number,
 +};
 +
-+pageTypes.BoundingBox = {
++pageTypes.Rect = {
 +  x: t.Number,
 +  y: t.Number,
 +  width: t.Number,
@@ -5464,6 +5517,13 @@ index 0000000000000000000000000000000000000000..d0d27b9bd8132190841a7a4785d31a20
 +        ownerFrameId: t.Optional(t.String),
 +      },
 +    },
++    'scrollIntoViewIfNeeded': {
++      params: {
++        frameId: t.String,
++        objectId: t.String,
++        rect: t.Optional(pageTypes.Rect),
++      },
++    },
 +    'addScriptToEvaluateOnNewDocument': {
 +      params: {
 +        script: t.String,
@@ -5522,7 +5582,7 @@ index 0000000000000000000000000000000000000000..d0d27b9bd8132190841a7a4785d31a20
 +        objectId: t.String,
 +      },
 +      returns: {
-+        boundingBox: t.Nullable(pageTypes.BoundingBox),
++        boundingBox: t.Nullable(pageTypes.Rect),
 +      },
 +    },
 +    'adoptNode': {
