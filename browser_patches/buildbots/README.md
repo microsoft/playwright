@@ -101,9 +101,9 @@ The `core.longpaths` is needed for webkit since it has some very long layout pat
 
 > **NOTE:** If git config fails, run shell as administrator!
 
-### 6. Checkout PlayWright to /c/
+### 6. Checkout Playwright to /c/
 
-Run `c:\mozilla-build\start-shell.bat` and checkout PlayWright repo to `/c/playwright`.
+Run `c:\mozilla-build\start-shell.bat` and checkout Playwright repo to `/c/playwright`.
 
 ### 7. Create a c:\WEBKIT_WIN64_LIBS\ directory with win64 dlls
 

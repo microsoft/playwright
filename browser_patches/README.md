@@ -52,9 +52,9 @@ This script will:
 
 If you omit the path to your checkout, the script will assume one is located at `./browser_patches/firefox/checkout`
 
-Send a PR to the PlayWright repo to be reviewed. 
+Send a PR to the Playwright repo to be reviewed. 
 
-## 4. Rolling PlayWright to the new browser build
+## 4. Rolling Playwright to the new browser build
 
 Once the patch has been committed, the build bots will kick in, compile and upload a new browser version to all the platforms.
 

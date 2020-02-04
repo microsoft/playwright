@@ -8,8 +8,8 @@ assignees: ''
 ---
 
 **Context:**
-- GOOD PlayWright Version: [what PlayWright version worked nicely?]
-- BAD PlayWright Version: [what PlayWright version doesn't work any more?]
+- GOOD Playwright Version: [what Playwright version worked nicely?]
+- BAD Playwright Version: [what Playwright version doesn't work any more?]
 - Operating System: [e.g. Windows, Linux or Mac]
 - Extra: [any specific details about your environment]
 

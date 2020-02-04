@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Context:**
-- PlayWright Version: [what PlayWright version do you use?]
+- Playwright Version: [what Playwright version do you use?]
 - Operating System: [e.g. Windows, Linux or Mac]
 - Extra: [any specific details about your environment]
 
