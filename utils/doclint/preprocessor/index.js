@@ -18,8 +18,8 @@ const Message = require('../Message');
 
 module.exports.ensureReleasedAPILinks = function(sources, version) {
   // Release version is everything that doesn't include "-".
-  const apiLinkRegex = /https:\/\/github.com\/Microsoft\/playwright\/blob\/v[^/]*\/docs\/api.md/ig;
-  const lastReleasedAPI = `https://github.com/Microsoft/playwright/blob/v${version.split('-')[0]}/docs/api.md`;
+  const apiLinkRegex = /https:\/\/github.com\/microsoft\/playwright\/blob\/v[^/]*\/docs\/api.md/ig;
+  const lastReleasedAPI = `https://github.com/microsoft/playwright/blob/v${version.split('-')[0]}/docs/api.md`;
 
   const messages = [];
   for (const source of sources) {

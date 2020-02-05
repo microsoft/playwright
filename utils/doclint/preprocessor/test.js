@@ -28,36 +28,36 @@ const {expect} = new Matchers();
 describe('ensureReleasedAPILinks', function() {
   it('should work with non-release version', function() {
     const source = new Source('doc.md', `
-      [API](https://github.com/Microsoft/playwright/blob/v1.1.0/docs/api.md#class-page)
+      [API](https://github.com/microsoft/playwright/blob/v1.1.0/docs/api.md#class-page)
     `);
     const messages = ensureReleasedAPILinks([source], '1.3.0-post');
     expect(messages.length).toBe(1);
     expect(messages[0].type).toBe('warning');
     expect(messages[0].text).toContain('doc.md');
     expect(source.text()).toBe(`
-      [API](https://github.com/Microsoft/playwright/blob/v1.3.0/docs/api.md#class-page)
+      [API](https://github.com/microsoft/playwright/blob/v1.3.0/docs/api.md#class-page)
     `);
   });
   it('should work with release version', function() {
     const source = new Source('doc.md', `
-      [API](https://github.com/Microsoft/playwright/blob/v1.1.0/docs/api.md#class-page)
+      [API](https://github.com/microsoft/playwright/blob/v1.1.0/docs/api.md#class-page)
     `);
     const messages = ensureReleasedAPILinks([source], '1.3.0');
     expect(messages.length).toBe(1);
     expect(messages[0].type).toBe('warning');
     expect(messages[0].text).toContain('doc.md');
     expect(source.text()).toBe(`
-      [API](https://github.com/Microsoft/playwright/blob/v1.3.0/docs/api.md#class-page)
+      [API](https://github.com/microsoft/playwright/blob/v1.3.0/docs/api.md#class-page)
     `);
   });
   it('should keep master links intact', function() {
     const source = new Source('doc.md', `
-      [API](https://github.com/Microsoft/playwright/blob/master/docs/api.md#class-page)
+      [API](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-page)
     `);
     const messages = ensureReleasedAPILinks([source], '1.3.0');
     expect(messages.length).toBe(0);
     expect(source.text()).toBe(`
-      [API](https://github.com/Microsoft/playwright/blob/master/docs/api.md#class-page)
+      [API](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-page)
     `);
   });
 });

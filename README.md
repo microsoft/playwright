@@ -1,7 +1,7 @@
 # Playwright
 [![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![Chromium version](https://img.shields.io/badge/chromium-81.0.4044-blue.svg)](https://www.chromium.org/Home) [![Firefox version](https://img.shields.io/badge/firefox-73.0b3-blue.svg)](https://www.mozilla.org/en-US/firefox/new/) [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg)](https://webkit.org/) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
 
-###### [API v0.10.0](https://github.com/microsoft/playwright/blob/master/docs/api-0.10.0.md) | [API latest](https://github.com/microsoft/playwright/blob/master/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
+###### [API](https://github.com/microsoft/playwright/blob/v0.10.0/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
 
 Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers with a single API. It enables **cross-browser** web automation that is **ever-green**, **capable**, **reliable** and **fast**.
