@@ -30,7 +30,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('CrPlaywright', function() {
+  describe('Playwright.launch', function() {
     describe('Playwright.launch webSocket option', function() {
       it('should support the remote-debugging-port argument', async() => {
         const options = Object.assign({}, defaultBrowserOptions);
