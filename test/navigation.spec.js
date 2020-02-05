@@ -28,7 +28,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);
     });
-    fit('should use http for no protocol', async({page, server}) => {
+    it('should use http for no protocol', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE.substring('http://'.length));
       expect(page.url()).toBe(server.EMPTY_PAGE);
     });
