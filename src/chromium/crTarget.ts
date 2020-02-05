@@ -84,14 +84,7 @@ export class CRTarget {
         const page = this._crPage.page();
         (page as any)[targetSymbol] = this;
         client.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
-        client.on('Target.attachedToTarget', event => {
-          if (event.targetInfo.type !== 'worker') {
-            // If we don't detach from service workers, they will never die.
-            client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
-          }
-        });
         await this._crPage.initialize();
-        await client.send('Target.setAutoAttach', {autoAttach: true, waitForDebuggerOnStart: false, flatten: true});
         return page;
       });
     }

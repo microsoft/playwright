@@ -113,7 +113,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(response.request()).toBe(request);
       expect(response.ok()).toBe(true);
     });
-    it.skip(CHROMIUM)('should report network activity on worker creation', async function({page, server}) {
+    it('should report network activity on worker creation', async function({page, server}) {
       // Chromium needs waitForDebugger enabled for this one.
       await page.goto(server.EMPTY_PAGE);
       const url = server.PREFIX + '/one-style.css';
