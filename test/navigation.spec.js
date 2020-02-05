@@ -897,6 +897,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.reload();
       expect(await page.evaluate(() => window._foo)).toBe(undefined);
     });
+    it.skip(WEBKIT)('should not crash the browser', async({page, server}) => {
+      let error = null;
+      page.on('error', e => error = e);
+      await page.reload();
+      await new Promise(x => setTimeout(x, 500));
+      expect(error).toBe(null);
+    })
   });
 
   function expectSSLError(errorMessage) {
