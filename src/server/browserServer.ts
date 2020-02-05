@@ -17,7 +17,7 @@
 import { ChildProcess, execSync } from 'child_process';
 import * as platform from '../platform';
 
-export class BrowserApp extends platform.EventEmitter {
+export class BrowserServer extends platform.EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: () => Promise<void>;
   private _browserWSEndpoint: string | null = null;

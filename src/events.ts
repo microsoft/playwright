@@ -20,7 +20,7 @@ export const Events = {
     Disconnected: 'disconnected'
   },
 
-  BrowserApp: {
+  BrowserServer: {
     Close: 'close',
   },
 

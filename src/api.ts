@@ -37,4 +37,4 @@ export { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
 export { WKBrowser as WebKitBrowser } from './webkit/wkBrowser';
 
 export { BrowserType } from './server/browserType';
-export { BrowserApp } from './server/browserApp';
+export { BrowserServer } from './server/browserServer';

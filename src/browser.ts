@@ -16,12 +16,13 @@
 
 import { BrowserContext, BrowserContextOptions } from './browserContext';
 import * as platform from './platform';
+import { Page } from './page';
 
 export interface Browser extends platform.EventEmitterType {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
   browserContexts(): BrowserContext[];
-  defaultContext(): BrowserContext;
-
+  pages(): Promise<Page[]>;
+  newPage(url?: string, options?: BrowserContextOptions): Promise<Page>;
   disconnect(): Promise<void>;
   isConnected(): boolean;
   close(): Promise<void>;
@@ -31,3 +32,15 @@ export type ConnectOptions = {
   slowMo?: number,
   wsEndpoint: string
 };
+
+export async function collectPages(browser: Browser): Promise<Page[]> {
+  const result: Promise<Page[]>[] = [];
+  for (const browserContext of browser.browserContexts())
+    result.push(browserContext.pages());
+  const pages: Page[] = [];
+  for (const group of await Promise.all(result))
+    pages.push(...group);
+  return pages;
+}
+
+export type LaunchType = 'local' | 'server' | 'persistent';

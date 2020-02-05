@@ -47,7 +47,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
   describe('ChromiumHeadful', function() {
     it('background_page target type should be available', async() => {
       const browserWithExtension = await playwright.launch(extensionOptions);
-      const page = await browserWithExtension.defaultContext().newPage();
+      const page = await browserWithExtension.newPage();
       const backgroundPageTarget = await browserWithExtension.waitForTarget(target => target.type() === 'background_page');
       await page.close();
       await browserWithExtension.close();
@@ -65,7 +65,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     xit('OOPIF: should report google.com frame', async({server}) => {
       // https://google.com is isolated by default in Chromium embedder.
       const browser = await playwright.launch(headfulOptions);
-      const page = await browser.defaultContext().newPage();
+      const page = await browser.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.interception.enable();
       page.on('request', r => page.interception.fulfill(r, {body: 'YO, GOOGLE.COM'}));

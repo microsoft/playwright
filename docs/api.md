@@ -24,7 +24,7 @@
 - [class: Accessibility](#class-accessibility)
 - [class: Coverage](#class-coverage)
 - [class: Worker](#class-worker)
-- [class: BrowserApp](#class-browserapp)
+- [class: BrowserServer](#class-browserserver)
 - [class: BrowserType](#class-browsertype)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
 - [class: ChromiumSession](#class-chromiumsession)
@@ -44,8 +44,7 @@ const { chromium, firefox, webkit } = require('playwright');
 
 (async () => {
   const browser = await chromium.launch();  // Or 'firefox' or 'webkit'.
-  const context = await browser.newContext();
-  const page = await context.newPage('http://example.com');
+  const page = await browser.newPage('http://example.com');
   // other actions...
   await browser.close();
 })();
@@ -70,8 +69,7 @@ This object can be used to launch or connect to Chromium, returning instances of
 #### playwright.devices
 - returns: <[Object]>
 
-Returns a list of devices to be used with [`browser.newContext(options)`](#browsernewcontextoptions). Actual list of
-devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+Returns a list of devices to be used with [`browser.newContext(options)`](#browsernewcontextoptions) or [`browser.newPage(options)`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
 
 ```js
 const { webkit, devices } = require('playwright');
@@ -138,23 +136,8 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage('https://example.com');
+  const page = await browser.newPage('https://example.com');
   await browser.close();
-})();
-```
-
-An example of launching a browser executable and connecting to a [Browser] later:
-```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-
-(async () => {
-  const browserApp = await webkit.launchBrowserApp();
-  const wsEndpoint = browserApp.wsEndpoint();
-  // Use web socket endpoint later to establish a connection.
-  const browser = await webkit.connect({ wsEndpoint });
-  // Close browser instance.
-  await browserApp.close();
 })();
 ```
 
@@ -164,10 +147,11 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.defaultContext()](#browserdefaultcontext)
 - [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 #### event: 'disconnected'
@@ -185,11 +169,6 @@ a single instance of [BrowserContext].
 - returns: <[Promise]>
 
 Closes browser and all of its pages (if any were opened). The [Browser] object itself is considered to be disposed and cannot be used anymore.
-
-#### browser.defaultContext()
-- returns: <[BrowserContext]>
-
-Returns the default browser context. The default browser context can not be closed.
 
 #### browser.disconnect()
 - returns: <[Promise]>
@@ -232,6 +211,33 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   const page = await context.newPage('https://example.com');
 })();
 ```
+
+#### browser.newPage(url, [options])
+- `url` <?[string]> Optional url to navigate the page to.
+- `options` <[Object]>
+  - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+  - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
+  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 800x600 viewport. `null` disables the default viewport.
+    - `width` <[number]> page width in pixels.
+    - `height` <[number]> page height in pixels.
+    - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+  - `userAgent` <?[string]> Specific user agent to use in this context.
+  - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
+  - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `geolocation` <[Object]>
+    - `latitude` <[number]> Latitude between -90 and 90.
+    - `longitude` <[number]> Longitude between -180 and 180.
+    - `accuracy` <[number]> Optional non-negative accuracy value.
+  - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
+- returns: <[Promise]<[Page]>>
+
+Creates a new page in a new browser context and optionally navigates it to the specified URL.
+
+#### browser.pages()
+- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages.
+
+An array of all the pages inside all the browser contexts.
 
 ### class: BrowserContext
 
@@ -277,7 +283,7 @@ Clears context bookies.
 Clears all permission overrides for the browser context.
 
 ```js
-const context = browser.defaultContext();
+const context = await browser.newContext();
 context.setPermissions('https://example.com', ['clipboard-read']);
 // do stuff ..
 context.clearPermissions();
@@ -376,7 +382,7 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 
 
 ```js
-const context = browser.defaultContext();
+const context = await browser.newContext();
 await context.setPermissions('https://html5demos.com', ['geolocation']);
 ```
 
@@ -951,8 +957,7 @@ const crypto = require('crypto');
 
 (async () => {
   const browser = await firefox.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await browser.newPage();
   page.on('console', msg => console.log(msg.text()));
   await page.exposeFunction('md5', text =>
     crypto.createHash('md5').update(text).digest('hex')
@@ -975,8 +980,7 @@ const fs = require('fs');
 
 (async () => {
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await browser.newPage();
   page.on('console', msg => console.log(msg.text()));
   await page.exposeFunction('readfile', async filePath => {
     return new Promise((resolve, reject) => {
@@ -1491,8 +1495,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await webkit.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await browser.newPage();
   const watchDog = page.waitForFunction('window.innerWidth < 100');
   await page.setViewport({width: 50, height: 50});
   await watchDog;
@@ -1599,8 +1602,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await browser.newPage();
   let currentURL;
   page
     .waitForSelector('img')
@@ -1636,8 +1638,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage('https://www.google.com/chrome/browser/canary.html');
+  const page = await browser.newPage('https://www.google.com/chrome/browser/canary.html');
   dumpFrameTree(page.mainFrame(), '');
   await browser.close();
 
@@ -2117,8 +2118,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await browser.newPage();
   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
   page.setViewport({width: 50, height: 50});
   await watchDog;
@@ -2192,8 +2192,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await webkit.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await browser.newPage();
   let currentURL;
   page.mainFrame()
     .waitForSelector('img')
@@ -2216,8 +2215,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage('https://example.com');
+  const page = await browser.newPage('https://example.com');
   const hrefElement = await page.$('a');
   await hrefElement.click();
   // ...
@@ -2633,8 +2631,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await browser.newPage();
   page.on('dialog', async dialog => {
     console.log(dialog.message());
     await dialog.dismiss();
@@ -3137,8 +3134,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   await selectors.register(createTagNameEngine);
 
   const browser = await firefox.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage('http://example.com');
+  const page = await browser.newPage('http://example.com');
 
   // Use the selector prefixed with its name.
   const button = await page.$('tag=button');
@@ -3408,33 +3404,33 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 - returns: <[string]>
 
 
-### class: BrowserApp
+### class: BrowserServer
 
 <!-- GEN:toc -->
 - [event: 'close'](#event-close-2)
-- [browserApp.close()](#browserappclose)
-- [browserApp.kill()](#browserappkill)
-- [browserApp.process()](#browserappprocess)
-- [browserApp.wsEndpoint()](#browserappwsendpoint)
+- [browserServer.close()](#browserserverclose)
+- [browserServer.kill()](#browserserverkill)
+- [browserServer.process()](#browserserverprocess)
+- [browserServer.wsEndpoint()](#browserserverwsendpoint)
 <!-- GEN:stop -->
 
 #### event: 'close'
 
 Emitted when the browser app closes.
 
-#### browserApp.close()
+#### browserServer.close()
 - returns: <[Promise]>
 
 Closes the browser gracefully and makes sure the process is terminated.
 
-#### browserApp.kill()
+#### browserServer.kill()
 
 Kills the browser process.
 
-#### browserApp.process()
+#### browserServer.process()
 - returns: <?[ChildProcess]> Spawned browser application process.
 
-#### browserApp.wsEndpoint()
+#### browserServer.wsEndpoint()
 - returns: <[string]> Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to [browserType.connect(options)](#browsertypeconnectoptions) to establish connection to the browser.
@@ -3448,8 +3444,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage('http://example.com');
+  const page = await browser.newPage('http://example.com');
   // other actions...
   await browser.close();
 })();
@@ -3462,7 +3457,8 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - [browserType.errors](#browsertypeerrors)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
-- [browserType.launchBrowserApp([options])](#browsertypelaunchbrowserappoptions)
+- [browserType.launchPersistent([options])](#browsertypelaunchpersistentoptions)
+- [browserType.launchServer([options])](#browsertypelaunchserveroptions)
 - [browserType.name()](#browsertypename)
 <!-- GEN:stop -->
 
@@ -3478,7 +3474,6 @@ This methods attaches Playwright to an existing browser instance.
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
-  - `userDataDir` <[string]> Path to a [User Data Directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Array]<[string]>>
 
@@ -3487,8 +3482,7 @@ The default flags that browser will be launched with.
 #### browserType.devices
 - returns: <[Object]>
 
-Returns a list of devices to be used with [`browser.newContext(options)`](#browsernewcontextoptions). Actual list of
-devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+Returns a list of devices to be used with [`browser.newContext(options)`](#browsernewcontextoptions) and [`browser.newPage(options)`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
 
 ```js
 const { webkit } = require('playwright');
@@ -3542,9 +3536,9 @@ try {
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
 - returns: <[Promise]<[Browser]>> Promise which resolves to browser instance.
 
 
@@ -3563,11 +3557,11 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
 
-#### browserType.launchBrowserApp([options])
+#### browserType.launchPersistent([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -3575,10 +3569,43 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
-  - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-- returns: <[Promise]<[BrowserApp]>> Promise which resolves to the browser app instance.
+- returns: <[Promise]<[BrowserServer]>> Promise which resolves to the browser app instance.
+
+Launches browser instance that uses persistent storage located at `userDataDir`. If `userDataDir` is not specified, temporary folder is created for the persistent storage. That folder is deleted when browser closes.
+
+#### browserType.launchServer([options])
+- `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
+  - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
+  - `port` <[number]> Port to use for the web socket. Defaults to 0 that picks any available port.
+  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
+  - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
+  - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+  - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
+  - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
+  - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
+  - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+  - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
+- returns: <[Promise]<[BrowserServer]>> Promise which resolves to the browser app instance.
+
+Launches browser server that client can connect to. An example of launching a browser executable and connecting to it later:
+
+```js
+const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
+
+(async () => {
+  const browserServer = await chromium.launchServer();
+  const wsEndpoint = browserServer.wsEndpoint();
+  // Use web socket endpoint later to establish a connection.
+  const browser = await chromium.connect({ wsEndpoint });
+  // Close browser instance.
+  await browserServer.close();
+})();
+```
+
 
 #### browserType.name()
 - returns: <[string]>
@@ -3614,10 +3641,11 @@ await browser.stopTracing();
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.defaultContext()](#browserdefaultcontext)
 - [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 #### event: 'targetchanged'
@@ -3781,10 +3809,11 @@ Firefox browser instance does not expose Firefox-specific features.
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.defaultContext()](#browserdefaultcontext)
 - [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 ### class: WebKitBrowser
@@ -3797,10 +3826,11 @@ WebKit browser instance does not expose WebKit-specific features.
 - [event: 'disconnected'](#event-disconnected)
 - [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
-- [browser.defaultContext()](#browserdefaultcontext)
 - [browser.disconnect()](#browserdisconnect)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 ### Working with selectors
@@ -3874,7 +3904,7 @@ const { chromium } = require('playwright');
 [Accessibility]: #class-accessibility "Accessibility"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Body]: #class-body  "Body"
-[BrowserApp]: #class-browserapp  "BrowserApp"
+[BrowserServer]: #class-browserapp  "BrowserServer"
 [BrowserContext]: #class-browsercontext  "BrowserContext"
 [BrowserType]: #class-browsertype "BrowserType"
 [Browser]: #class-browser  "Browser"

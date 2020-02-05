@@ -17,12 +17,12 @@
 import * as types from '../types';
 import { TimeoutError } from '../errors';
 import { Browser, ConnectOptions } from '../browser';
-import { BrowserApp } from './browserApp';
+import { BrowserContext } from '../browserContext';
+import { BrowserServer } from './browserServer';
 
 export type BrowserArgOptions = {
   headless?: boolean,
   args?: string[],
-  userDataDir?: string,
   devtools?: boolean,
 };
 
@@ -40,8 +40,9 @@ export type LaunchOptions = BrowserArgOptions & {
 export interface BrowserType {
   executablePath(): string;
   name(): string;
-  launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp>;
   launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;
+  launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer>;
+  launchPersistent(options?: LaunchOptions & { userDataDir: string }): Promise<BrowserContext>;
   defaultArgs(options?: BrowserArgOptions): string[];
   connect(options: ConnectOptions): Promise<Browser>;
   devices: types.Devices;

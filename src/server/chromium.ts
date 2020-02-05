@@ -30,10 +30,11 @@ import { launchProcess, waitForLine } from '../server/processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
-import { ConnectOptions } from '../browser';
-import { BrowserApp } from './browserApp';
+import { ConnectOptions, LaunchType } from '../browser';
+import { BrowserServer } from './browserServer';
 import { Events } from '../events';
 import { ConnectionTransport } from '../transport';
+import { BrowserContext } from '../browserContext';
 
 export class Chromium implements BrowserType {
   private _projectRoot: string;
@@ -49,19 +50,28 @@ export class Chromium implements BrowserType {
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<CRBrowser> {
-    const { browserApp, transport } = await this._launchBrowserApp(options, false);
+    const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await CRBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => browserApp.close();
-    (browser as any)['__app__'] = browserApp;
+    browser.close = () => browserServer.close();
+    (browser as any)['__server__'] = browserServer;
     return browser;
   }
 
-  async launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp> {
-    return (await this._launchBrowserApp(options, true)).browserApp;
+  async launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer> {
+    return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
   }
 
-  async _launchBrowserApp(options: LaunchOptions = {}, isServer: boolean): Promise<{ browserApp: BrowserApp, transport?: ConnectionTransport }> {
+  async launchPersistent(options?: LaunchOptions & { userDataDir?: string }): Promise<BrowserContext> {
+    const { browserServer, transport } = await this._launchServer(options, 'persistent', options && options.userDataDir);
+    const browser = await CRBrowser.connect(transport!);
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    const browserContext = browser._defaultContext;
+    browserContext.close = () => browserServer.close();
+    return browserContext;
+  }
+
+  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -82,14 +92,19 @@ export class Chromium implements BrowserType {
     else
       chromeArguments.push(...args);
 
-    let temporaryUserDataDir: string | null = null;
+    const userDataDirArg = chromeArguments.find(arg => arg.startsWith('--user-data-dir='));
+    if (userDataDirArg)
+      throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
+    if (chromeArguments.find(arg => arg.startsWith('--remote-debugging-')))
+      throw new Error('Can\' use --remote-debugging-* args. Playwright manages remote debugging connection itself');
 
-    if (!chromeArguments.some(argument => argument.startsWith('--remote-debugging-')))
-      chromeArguments.push(isServer ? '--remote-debugging-port=0' : '--remote-debugging-pipe');
-    if (!chromeArguments.some(arg => arg.startsWith('--user-data-dir'))) {
+    let temporaryUserDataDir: string | null = null;
+    if (!userDataDir) {
+      userDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
       temporaryUserDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
-      chromeArguments.push(`--user-data-dir=${temporaryUserDataDir}`);
     }
+    chromeArguments.push(`--user-data-dir=${userDataDir}`);
+    chromeArguments.push(launchType === 'server' ? `--remote-debugging-port=${port || 0}` : '--remote-debugging-pipe');
 
     let chromeExecutable = executablePath;
     if (!executablePath) {
@@ -99,11 +114,7 @@ export class Chromium implements BrowserType {
       chromeExecutable = executablePath;
     }
 
-    const usePipe = chromeArguments.includes('--remote-debugging-pipe');
-    if (usePipe && isServer)
-      throw new Error(`Argument "--remote-debugging-pipe" is not compatible with the launchBrowserApp.`);
-
-    let browserApp: BrowserApp | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: chromeExecutable!,
       args: chromeArguments,
@@ -112,10 +123,10 @@ export class Chromium implements BrowserType {
       handleSIGTERM,
       handleSIGHUP,
       dumpio,
-      pipe: usePipe,
+      pipe: launchType !== 'server',
       tempDir: temporaryUserDataDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!browserApp)
+        if (!browserServer)
           return Promise.reject();
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
@@ -125,14 +136,14 @@ export class Chromium implements BrowserType {
         t.send(JSON.stringify(message));
       },
       onkill: (exitCode, signal) => {
-        if (browserApp)
-          browserApp.emit(Events.BrowserApp.Close, exitCode, signal);
+        if (browserServer)
+          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
     let transport: ConnectionTransport | undefined;
     let browserWSEndpoint: string | null;
-    if (isServer) {
+    if (launchType === 'server') {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
       const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
       browserWSEndpoint = match[1];
@@ -140,8 +151,8 @@ export class Chromium implements BrowserType {
       transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
       browserWSEndpoint = null;
     }
-    browserApp = new BrowserApp(launchedProcess, gracefullyClose, browserWSEndpoint);
-    return { browserApp, transport };
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
+    return { browserServer, transport };
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
@@ -166,11 +177,8 @@ export class Chromium implements BrowserType {
       devtools = false,
       headless = !devtools,
       args = [],
-      userDataDir = null
     } = options;
     const chromeArguments = [...DEFAULT_ARGS];
-    if (userDataDir)
-      chromeArguments.push(`--user-data-dir=${userDataDir}`);
     if (devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (headless) {

@@ -24,7 +24,7 @@ import { Page, Worker } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
-import { Browser } from '../browser';
+import { Browser, collectPages } from '../browser';
 import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
@@ -34,7 +34,7 @@ import { ConnectionTransport, SlowMoTransport } from '../transport';
 export class CRBrowser extends platform.EventEmitter implements Browser {
   _connection: CRConnection;
   _client: CRSession;
-  private _defaultContext: BrowserContext;
+  readonly _defaultContext: BrowserContext;
   private _contexts = new Map<string, BrowserContext>();
   _targets = new Map<string, CRTarget>();
 
@@ -165,11 +165,16 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   }
 
   browserContexts(): BrowserContext[] {
-    return [this._defaultContext, ...Array.from(this._contexts.values())];
+    return Array.from(this._contexts.values());
   }
 
-  defaultContext(): BrowserContext {
-    return this._defaultContext;
+  async pages(): Promise<Page[]> {
+    return collectPages(this);
+  }
+
+  async newPage(url?: string, options?: BrowserContextOptions): Promise<Page> {
+    const browserContext = await this.newContext(options);
+    return browserContext.newPage(url);
   }
 
   async _targetCreated(event: Protocol.Target.targetCreatedPayload) {

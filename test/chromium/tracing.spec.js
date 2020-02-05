@@ -26,7 +26,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     beforeEach(async function(state) {
       state.outputFile = path.join(ASSETS_DIR, `trace-${state.parallelIndex}.json`);
       state.browser = await playwright.launch(defaultBrowserOptions);
-      state.page = await state.browser.defaultContext().newPage();
+      state.page = await state.browser.newPage();
     });
     afterEach(async function(state) {
       await state.browser.close();
@@ -52,7 +52,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     it('should throw if tracing on two pages', async({browser, page, server, outputFile}) => {
       await browser.startTracing(page, {path: outputFile});
-      const newPage = await browser.defaultContext().newPage();
+      const newPage = await browser.newPage();
       let error = null;
       await browser.startTracing(newPage, {path: outputFile}).catch(e => error = e);
       await newPage.close();

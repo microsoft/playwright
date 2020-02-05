@@ -34,9 +34,10 @@ import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectionTransport } from '../transport';
 import * as ws from 'ws';
 import * as uuidv4 from 'uuid/v4';
-import { ConnectOptions } from '../browser';
-import { BrowserApp } from './browserApp';
+import { ConnectOptions, LaunchType } from '../browser';
+import { BrowserServer } from './browserServer';
 import { Events } from '../events';
+import { BrowserContext } from '../browserContext';
 
 export class WebKit implements BrowserType {
   private _projectRoot: string;
@@ -52,19 +53,28 @@ export class WebKit implements BrowserType {
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
-    const { browserApp, transport } = await this._launchBrowserApp(options, false);
+    const { browserServer, transport } = await this._launchServer(options, 'local', null);
     const browser = await WKBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => browserApp.close();
-    (browser as any)['__app__'] = browserApp;
+    browser.close = () => browserServer.close();
+    (browser as any)['__server__'] = browserServer;
     return browser;
   }
 
-  async launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp> {
-    return (await this._launchBrowserApp(options, true)).browserApp;
+  async launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer> {
+    return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
   }
 
-  private async _launchBrowserApp(options: LaunchOptions = {}, isServer: boolean): Promise<{ browserApp: BrowserApp, transport?: ConnectionTransport }> {
+  async launchPersistent(options?: LaunchOptions & { userDataDir?: string }): Promise<BrowserContext> {
+    const { browserServer, transport } = await this._launchServer(options, 'persistent', options && options.userDataDir);
+    const browser = await WKBrowser.connect(transport!);
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    const browserContext = browser._defaultContext;
+    browserContext.close = () => browserServer.close();
+    return browserContext;
+  }
+
+  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -84,16 +94,16 @@ export class WebKit implements BrowserType {
     else
       webkitArguments.push(...args);
 
-    let userDataDir: string;
-    let temporaryUserDataDir: string | null = null;
     const userDataDirArg = webkitArguments.find(arg => arg.startsWith('--user-data-dir='));
-    if (userDataDirArg) {
-      userDataDir = userDataDirArg.substr('--user-data-dir='.length).trim();
-    } else {
+    if (userDataDirArg)
+      throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
+
+    let temporaryUserDataDir: string | null = null;
+    if (!userDataDir) {
       userDataDir = await mkdtempAsync(WEBKIT_PROFILE_PATH);
-      temporaryUserDataDir = userDataDir;
-      webkitArguments.push(`--user-data-dir=${temporaryUserDataDir}`);
+      temporaryUserDataDir = userDataDir!;
     }
+    webkitArguments.push(`--user-data-dir=${userDataDir}`);
 
     let webkitExecutable = executablePath;
     if (!executablePath) {
@@ -104,11 +114,11 @@ export class WebKit implements BrowserType {
     }
 
     let transport: PipeTransport | undefined = undefined;
-    let browserApp: BrowserApp | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: webkitExecutable!,
       args: webkitArguments,
-      env: { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') },
+      env: { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir!, 'cookiejar.db') },
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
@@ -125,14 +135,14 @@ export class WebKit implements BrowserType {
         transport.send(message);
       },
       onkill: (exitCode, signal) => {
-        if (browserApp)
-          browserApp.emit(Events.BrowserApp.Close, exitCode, signal);
+        if (browserServer)
+          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-    browserApp = new BrowserApp(launchedProcess, gracefullyClose, isServer ? wrapTransportWithWebSocket(transport) : null);
-    return { browserApp, transport };
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
+    return { browserServer, transport };
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
@@ -157,13 +167,10 @@ export class WebKit implements BrowserType {
       devtools = false,
       headless = !devtools,
       args = [],
-      userDataDir = null
     } = options;
     if (devtools)
       throw new Error('Option "devtools" is not supported by WebKit');
     const webkitArguments = ['--inspector-pipe'];
-    if (userDataDir)
-      webkitArguments.push(`--user-data-dir=${userDataDir}`);
     if (headless)
       webkitArguments.push('--headless');
     webkitArguments.push(...args);
@@ -230,8 +237,8 @@ function getMacVersion(): string {
   return cachedMacVersion;
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport) {
-  const server = new ws.Server({ port: 0 });
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
+  const server = new ws.Server({ port });
   let socket: ws | undefined;
   const guid = uuidv4();
 
