@@ -29,9 +29,10 @@ import * as util from 'util';
 import { TimeoutError } from '../errors';
 import { assert } from '../helper';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
-import { createTransport, ConnectOptions } from '../browser';
+import { ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
 import { Events } from '../events';
+import { ConnectionTransport } from '../transport';
 
 export class Firefox implements BrowserType {
   private _projectRoot: string;
@@ -46,15 +47,20 @@ export class Firefox implements BrowserType {
     return 'firefox';
   }
 
-  async launch(options?: LaunchOptions): Promise<FFBrowser> {
-    const app = await this.launchBrowserApp(options);
-    const browser = await FFBrowser.connect(app.connectOptions());
+  async launch(options?: LaunchOptions & { slowMo?: number }): Promise<FFBrowser> {
+    const { browserApp, transport } = await this._launchBrowserApp(options, false);
+    const browser = await FFBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => app.close();
+    browser.close = () => browserApp.close();
+    (browser as any)['__app__'] = browserApp;
     return browser;
   }
 
-  async launchBrowserApp(options: LaunchOptions = {}): Promise<BrowserApp> {
+  async launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp> {
+    return (await this._launchBrowserApp(options, true)).browserApp;
+  }
+
+  private async _launchBrowserApp(options: LaunchOptions = {}, isServer: boolean): Promise<{ browserApp: BrowserApp, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -64,9 +70,7 @@ export class Firefox implements BrowserType {
       handleSIGHUP = true,
       handleSIGINT = true,
       handleSIGTERM = true,
-      slowMo = 0,
       timeout = 30000,
-      webSocket = false,
     } = options;
 
     const firefoxArguments = [];
@@ -115,7 +119,7 @@ export class Firefox implements BrowserType {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const transport = await createTransport(browserApp.connectOptions());
+        const transport = await platform.createWebSocketTransport(browserWSEndpoint);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         transport.send(JSON.stringify(message));
       },
@@ -128,23 +132,13 @@ export class Firefox implements BrowserType {
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const browserWSEndpoint = match[1];
-    let connectOptions: ConnectOptions;
-    if (webSocket) {
-      connectOptions = { browserWSEndpoint, slowMo };
-    } else {
-      const transport = await platform.createWebSocketTransport(browserWSEndpoint);
-      connectOptions = { transport, slowMo };
-    }
-    browserApp = new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
-    return browserApp;
+    browserApp = new BrowserApp(launchedProcess, gracefullyClose, isServer ? browserWSEndpoint : null);
+    return { browserApp, transport: isServer ? undefined : await platform.createWebSocketTransport(browserWSEndpoint) };
   }
 
-  async connect(options: ConnectOptions & { browserURL?: string }): Promise<FFBrowser> {
-    if (options.browserURL)
-      throw new Error('Option "browserURL" is not supported by Firefox');
-    if (options.transport && options.transport.onmessage)
-      throw new Error('Transport is already in use');
-    return FFBrowser.connect(options);
+  async connect(options: ConnectOptions): Promise<FFBrowser> {
+    const transport = await platform.createWebSocketTransport(options.wsEndpoint);
+    return FFBrowser.connect(transport, options.slowMo);
   }
 
   executablePath(): string {

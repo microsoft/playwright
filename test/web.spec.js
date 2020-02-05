@@ -21,15 +21,13 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   (CHROMIUM || FFOX) && describe('Web SDK', function() {
     beforeAll(async state => {
-      state.controlledBrowserApp = await playwright.launchBrowserApp({ ...defaultBrowserOptions, webSocket: true });
-      state.hostBrowserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
-      state.hostBrowser = await playwright.connect(state.hostBrowserApp.connectOptions());
+      state.controlledBrowserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
+      state.hostBrowser = await playwright.launch(defaultBrowserOptions);
     });
 
     afterAll(async state => {
-      await state.hostBrowserApp.close();
+      await state.hostBrowser.close();
       state.hostBrowser = null;
-      state.hostBrowserApp = null;
 
       await state.controlledBrowserApp.close();
       state.controlledBrowserApp = null;
@@ -40,7 +38,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       state.page = await state.hostBrowser.defaultContext().newPage();
       state.page.on('console', message => console.log('TEST: ' + message.text()));
       await state.page.goto(state.sourceServer.PREFIX + '/test/assets/playwrightweb.html');
-      await state.page.evaluate((product, connectOptions) => setup(product, connectOptions), product.toLowerCase(), state.controlledBrowserApp.connectOptions());
+      await state.page.evaluate((product, wsEndpoint) => setup(product, wsEndpoint), product.toLowerCase(), state.controlledBrowserApp.wsEndpoint());
     });
 
     afterEach(async state => {

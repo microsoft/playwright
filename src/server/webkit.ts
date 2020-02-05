@@ -51,15 +51,20 @@ export class WebKit implements BrowserType {
     return 'webkit';
   }
 
-  async launch(options?: LaunchOptions): Promise<WKBrowser> {
-    const app = await this.launchBrowserApp(options);
-    const browser = await WKBrowser.connect(app.connectOptions());
+  async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
+    const { browserApp, transport } = await this._launchBrowserApp(options, false);
+    const browser = await WKBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => app.close();
+    browser.close = () => browserApp.close();
+    (browser as any)['__app__'] = browserApp;
     return browser;
   }
 
-  async launchBrowserApp(options: LaunchOptions = {}): Promise<BrowserApp> {
+  async launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp> {
+    return (await this._launchBrowserApp(options, true)).browserApp;
+  }
+
+  private async _launchBrowserApp(options: LaunchOptions = {}, isServer: boolean): Promise<{ browserApp: BrowserApp, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -69,8 +74,6 @@ export class WebKit implements BrowserType {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      slowMo = 0,
-      webSocket = false,
     } = options;
 
     const webkitArguments = [];
@@ -128,24 +131,13 @@ export class WebKit implements BrowserType {
     });
 
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-
-    let connectOptions: ConnectOptions;
-    if (webSocket) {
-      const browserWSEndpoint = wrapTransportWithWebSocket(transport);
-      connectOptions = { browserWSEndpoint, slowMo };
-    } else {
-      connectOptions = { transport, slowMo };
-    }
-    browserApp = new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
-    return browserApp;
+    browserApp = new BrowserApp(launchedProcess, gracefullyClose, isServer ? wrapTransportWithWebSocket(transport) : null);
+    return { browserApp, transport };
   }
 
-  async connect(options: ConnectOptions & { browserURL?: string }): Promise<WKBrowser> {
-    if (options.browserURL)
-      throw new Error('Option "browserURL" is not supported by Firefox');
-    if (options.transport && options.transport.onmessage)
-      throw new Error('Transport is already in use');
-    return WKBrowser.connect(options);
+  async connect(options: ConnectOptions): Promise<WKBrowser> {
+    const transport = await platform.createWebSocketTransport(options.wsEndpoint);
+    return WKBrowser.connect(transport, options.slowMo);
   }
 
   executablePath(): string {

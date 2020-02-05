@@ -34,18 +34,16 @@ export type LaunchOptions = BrowserArgOptions & {
   handleSIGHUP?: boolean,
   timeout?: number,
   dumpio?: boolean,
-  env?: {[key: string]: string} | undefined,
-  webSocket?: boolean,
-  slowMo?: number,  // TODO: we probably don't want this in launchBrowserApp.
+  env?: {[key: string]: string} | undefined
 };
 
 export interface BrowserType {
   executablePath(): string;
   name(): string;
   launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp>;
-  launch(options?: LaunchOptions): Promise<Browser>;
+  launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;
   defaultArgs(options?: BrowserArgOptions): string[];
-  connect(options: ConnectOptions & { browserURL?: string }): Promise<Browser>;
+  connect(options: ConnectOptions): Promise<Browser>;
   devices: types.Devices;
   errors: { TimeoutError: typeof TimeoutError };
 }

@@ -92,8 +92,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
   describe('Browser', function() {
     beforeAll(async state => {
-      state.browserApp = await playwright.launchBrowserApp(defaultBrowserOptions);
-      state.browser = await playwright.connect(state.browserApp.connectOptions());
+      state.browser = await playwright.launch();
+      state.browserApp = state.browser.__app__;
     });
 
     afterAll(async state => {

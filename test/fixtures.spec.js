@@ -27,7 +27,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, pla
     const options = Object.assign({}, defaultBrowserOptions, {
       // Disable DUMPIO to cleanly read stdout.
       dumpio: false,
-      webSocket: true,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
@@ -56,7 +55,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, pla
         browserPid = +match[1];
     });
     res.on('error', (...args) => console.log("ERROR", ...args));
-    const browser = await playwright.connect({ browserWSEndpoint: await wsEndPointPromise });
+    const browser = await playwright.connect({ wsEndpoint: await wsEndPointPromise });
     const promises = [
       new Promise(resolve => browser.once('disconnected', resolve)),
       new Promise(resolve => res.on('exit', resolve)),
