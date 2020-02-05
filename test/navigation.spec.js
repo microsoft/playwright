@@ -28,6 +28,10 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);
     });
+    it('should use http for no protocol', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE.substring('http://'.length));
+      expect(page.url()).toBe(server.EMPTY_PAGE);
+    });
     it('should work cross-process', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       expect(page.url()).toBe(server.EMPTY_PAGE);

@@ -211,6 +211,12 @@ class Helper {
     tokens.push('$');
     return new RegExp(tokens.join(''));
   }
+
+  static completeUserURL(urlString: string): string {
+    if (urlString.startsWith('localhost') || urlString.startsWith('127.0.0.1'))
+      urlString = 'http://' + urlString;
+    return urlString;
+  }
 }
 
 export function assert(value: any, message?: string) {
