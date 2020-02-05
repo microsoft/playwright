@@ -152,7 +152,8 @@ export class Page extends platform.EventEmitter {
 
   _didCrash() {
     const error = new Error('Page crashed!');
-    error.stack = '';
+    // Do not report node.js stack.
+    error.stack = 'Error: ' + error.message; // Stack is supposed to contain error message as the first line.
     this.emit('error', error);
   }
 

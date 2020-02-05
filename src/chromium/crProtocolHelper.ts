@@ -101,6 +101,7 @@ export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace
 export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDetails): Error {
   const message = getExceptionMessage(exceptionDetails);
   const err = new Error(message);
-  err.stack = ''; // Don't report clientside error with a node stack attached
+  // Don't report clientside error with a node stack attached
+  err.stack = 'Error: ' + err.message; // Stack is supposed to contain error message as the first line.
   return err;
 }

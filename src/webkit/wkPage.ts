@@ -322,7 +322,7 @@ export class WKPage implements PageDelegate {
     }
     if (level === 'error' && source === 'javascript') {
       const error = new Error(text);
-      error.stack = '';
+      error.stack = 'Error: ' + error.message; // Nullify stack. Stack is supposed to contain error message as the first line.
       this._page.emit(Events.Page.PageError, error);
       return;
     }
