@@ -593,10 +593,27 @@ index 0000000000000000000000000000000000000000..0f9b1c8950b8f5631ddfd8180a851d1e
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/DOM.json b/Source/JavaScriptCore/inspector/protocol/DOM.json
-index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..3baff411b0a97b27146d130d4b1c77910372bd60 100644
+index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..e3d044934f5a0dc2331534439daa53116019548f 100644
 --- a/Source/JavaScriptCore/inspector/protocol/DOM.json
 +++ b/Source/JavaScriptCore/inspector/protocol/DOM.json
-@@ -167,6 +167,16 @@
+@@ -79,6 +79,16 @@
+                 { "name": "value", "type": "string", "description": "The value that is resolved to with this data binding relationship." }
+             ]
+         },
++        {
++          "id": "Rect",
++          "type": "object",
++          "properties": [
++            { "name": "x", "type": "integer", "description": "X coordinate" },
++            { "name": "y", "type": "integer", "description": "Y coordinate" },
++            { "name": "width", "type": "integer", "description": "Rectangle width" },
++            { "name": "height", "type": "integer", "description": "Rectangle height" }
++      ]
++        },
+         {
+             "id": "EventListener",
+             "type": "object",
+@@ -167,6 +177,16 @@
                  { "name": "borderColor", "$ref": "RGBAColor", "optional": true, "description": "The border highlight fill color (default: transparent)." },
                  { "name": "marginColor", "$ref": "RGBAColor", "optional": true, "description": "The margin highlight fill color (default: transparent)." }
              ]
@@ -613,7 +630,7 @@ index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..3baff411b0a97b27146d130d4b1c7791
          }
      ],
      "commands": [
-@@ -481,7 +491,9 @@
+@@ -481,7 +501,9 @@
              "name": "resolveNode",
              "description": "Resolves JavaScript node object for given node id.",
              "parameters": [
@@ -624,7 +641,7 @@ index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..3baff411b0a97b27146d130d4b1c7791
                  { "name": "objectGroup", "type": "string", "optional": true, "description": "Symbolic group name that can be used to release multiple objects." }
              ],
              "returns": [
-@@ -542,6 +554,37 @@
+@@ -542,6 +564,45 @@
              "parameters": [
                  { "name": "allow", "type": "boolean" }
              ]
@@ -639,6 +656,14 @@ index 38cb48bedf2b168149ff79423b7fafc1e63ce8b3..3baff411b0a97b27146d130d4b1c7791
 +                { "name": "contentFrameId", "$ref": "Network.FrameId", "optional": true, "description": "Frame ID for frame owner elements." },
 +                { "name": "ownerFrameId", "$ref": "Network.FrameId", "optional": true, "description": "ID of the owning frame element." }
 +            ]
++        },
++        {
++          "name": "scrollIntoViewIfNeeded",
++          "description": "Scrolls the given rect into view if not already in the viewport.",
++          "parameters": [
++              { "name": "objectId", "$ref": "Runtime.RemoteObjectId", "description": "JavaScript object id of the node wrapper." },
++              { "name": "rect", "$ref": "Rect", "optional": true, "description": "Rect relative to the node's border box, in CSS pixels." }
++          ]
 +        },
 +        {
 +            "name": "getContentQuads",
@@ -1786,7 +1811,7 @@ index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..c468bc0981d1fb13272b28095f9f7584
  {
      FAST_RETURN_IF_NO_FRONTENDS(false);
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c1270e4ba7c 100644
+index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7bafbdcb5888d8834c67934194ed9e3acf40dfd7 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -1806,10 +1831,11 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  #include "HTMLMediaElement.h"
  #include "HTMLNames.h"
  #include "HTMLParserIdioms.h"
-@@ -93,11 +97,13 @@
+@@ -93,11 +97,14 @@
  #include "Page.h"
  #include "Pasteboard.h"
  #include "PseudoElement.h"
++#include "RenderLayer.h"
 +#include "RenderObject.h"
  #include "RenderStyle.h"
  #include "RenderStyleConstants.h"
@@ -1820,7 +1846,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  #include "StaticNodeList.h"
  #include "StyleProperties.h"
  #include "StyleResolver.h"
-@@ -128,7 +134,8 @@ using namespace HTMLNames;
+@@ -128,7 +135,8 @@ using namespace HTMLNames;
  static const size_t maxTextSize = 10000;
  static const UChar ellipsisUChar[] = { 0x2026, 0 };
  
@@ -1830,7 +1856,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  {
      if (!colorObject)
          return Color::transparent;
-@@ -157,7 +164,7 @@ static Color parseConfigColor(const String& fieldName, const JSON::Object* confi
+@@ -157,7 +165,7 @@ static Color parseConfigColor(const String& fieldName, const JSON::Object* confi
      RefPtr<JSON::Object> colorObject;
      configObject->getObject(fieldName, colorObject);
  
@@ -1839,7 +1865,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  }
  
  static bool parseQuad(const JSON::Array& quadArray, FloatQuad* quad)
-@@ -438,6 +445,20 @@ Node* InspectorDOMAgent::assertNode(ErrorString& errorString, int nodeId)
+@@ -438,6 +446,20 @@ Node* InspectorDOMAgent::assertNode(ErrorString& errorString, int nodeId)
      return node;
  }
  
@@ -1860,7 +1886,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  Document* InspectorDOMAgent::assertDocument(ErrorString& errorString, int nodeId)
  {
      Node* node = assertNode(errorString, nodeId);
-@@ -1318,16 +1339,7 @@ void InspectorDOMAgent::highlightSelector(ErrorString& errorString, const JSON::
+@@ -1318,16 +1340,7 @@ void InspectorDOMAgent::highlightSelector(ErrorString& errorString, const JSON::
  
  void InspectorDOMAgent::highlightNode(ErrorString& errorString, const JSON::Object& highlightInspectorObject, const int* nodeId, const String* objectId)
  {
@@ -1878,7 +1904,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
      if (!node)
          return;
  
-@@ -1475,18 +1487,103 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -1475,18 +1488,142 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
@@ -1946,6 +1972,45 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
 +    }
 +}
 +
++void InspectorDOMAgent::scrollIntoViewIfNeeded(ErrorString& errorString, const String& objectId, const JSON::Object* rect)
++{
++    Node* node = nodeForObjectId(objectId);
++    if (!node) {
++        errorString = "Node not found"_s;
++        return;
++    }
++    node->document().updateLayoutIgnorePendingStylesheets();
++    if (!node->isConnected()) {
++        errorString = "Node is detached from document"_s;
++        return;
++    }
++    RenderObject* renderer = node->renderer();
++    if (!renderer) {
++        errorString = "Node does not have a layout object"_s;
++        return;
++    }
++    bool insideFixed;
++    LayoutRect absoluteBounds = renderer->absoluteBoundingBoxRect(true, &insideFixed);
++    if (rect) {
++        double x = 0.0;
++        double y = 0.0;
++        double width = 0.0;
++        double height = 0.0;
++        if (!rect->getDouble("x", x) || !rect->getDouble("y", y) || !rect->getDouble("width", width) || !rect->getDouble("height", height)) {
++            errorString = "Malformed rect"_s;
++            return;
++        }
++        absoluteBounds.setX(absoluteBounds.x() + LayoutUnit(x));
++        absoluteBounds.setY(absoluteBounds.y() + LayoutUnit(y));
++        absoluteBounds.setWidth(LayoutUnit(std::max(width, 1.0)));
++        absoluteBounds.setHeight(LayoutUnit(std::max(height, 1.0)));
++    }
++    // Note: we should use ScrollAlignment::alignCenterIfNotVisible, but
++    // RenderLayer insists on no horizontal scroll if enough of the rect is visible.
++    ScrollAlignment alignment = ScrollAlignment::alignCenterAlways;
++    renderer->scrollRectToVisible(absoluteBounds, insideFixed, { SelectionRevealMode::Reveal, alignment, alignment, ShouldAllowCrossOriginScrolling::Yes });
++}
++
 +void InspectorDOMAgent::getContentQuads(ErrorString& errorString, const String& objectId, RefPtr<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>& contentQuads)
 +{
 +    Node* node = nodeForObjectId(objectId);
@@ -1988,7 +2053,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  }
  
  void InspectorDOMAgent::getAttributes(ErrorString& errorString, int nodeId, RefPtr<JSON::ArrayOf<String>>& result)
-@@ -2651,7 +2748,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
+@@ -2651,7 +2788,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
          errorString = "Missing node for given path"_s;
  }
  
@@ -1997,7 +2062,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2660,12 +2757,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
+@@ -2660,12 +2797,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
      if (!frame)
          return nullptr;
  
@@ -2017,7 +2082,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2686,4 +2787,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+@@ -2686,4 +2827,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
@@ -2065,7 +2130,7 @@ index aecc79bc0ca56fb65fe0330f08e4ee688bf81e89..7b78b5a90004786aee21161bee739c12
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..b71b5d196f61406152478180d487c179143397e0 100644
+index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..787bcbb0a1119ce990eb2002b03311233fba3c35 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 @@ -54,6 +54,7 @@ namespace WebCore {
@@ -2093,17 +2158,18 @@ index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..b71b5d196f61406152478180d487c179
      void getAttributes(ErrorString&, int nodeId, RefPtr<JSON::ArrayOf<String>>& result) override;
      void setInspectModeEnabled(ErrorString&, bool enabled, const JSON::Object* highlightConfig, const bool* showRulers) override;
      void requestNode(ErrorString&, const String& objectId, int* nodeId) override;
-@@ -148,6 +150,9 @@ public:
+@@ -148,6 +150,10 @@ public:
      void focus(ErrorString&, int nodeId) override;
      void setInspectedNode(ErrorString&, int nodeId) override;
      void setAllowEditingUserAgentShadowTrees(ErrorString&, bool allow) final;
 +    void describeNode(ErrorString&, const String& objectId, Optional<String>& contentFrameId, Optional<String>& ownerFrameId) override;
++    void scrollIntoViewIfNeeded(ErrorString&, const String& objectId, const JSON::Object* rect) override;
 +    void getContentQuads(ErrorString&, const String& objectId, RefPtr<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>&) override;
 +    void setInputFiles(ErrorString&, const String& objectId, const JSON::Array& files) override;
  
      // InspectorInstrumentation
      int identifierForNode(Node&);
-@@ -183,7 +188,7 @@ public:
+@@ -183,7 +189,7 @@ public:
      Node* nodeForId(int nodeId);
      int boundNodeId(const Node*);
  
@@ -2112,7 +2178,7 @@ index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..b71b5d196f61406152478180d487c179
      bool handleMousePress();
      void mouseDidMoveOverElement(const HitTestResult&, unsigned modifierFlags);
      void inspect(Node*);
-@@ -194,12 +199,15 @@ public:
+@@ -194,12 +200,15 @@ public:
      void reset();
  
      Node* assertNode(ErrorString&, int nodeId);
@@ -2128,9 +2194,12 @@ index 51639abeb84f4d95ded3f4fb6409ad8f62a2894e..b71b5d196f61406152478180d487c179
  private:
  #if ENABLE(VIDEO)
      void mediaMetricsTimerFired();
-@@ -229,7 +237,6 @@ private:
+@@ -227,9 +236,8 @@ private:
+     Ref<Inspector::Protocol::DOM::EventListener> buildObjectForEventListener(const RegisteredEventListener&, int identifier, EventTarget&, const AtomString& eventType, bool disabled, bool hasBreakpoint);
+     RefPtr<Inspector::Protocol::DOM::AccessibilityProperties> buildObjectForAccessibilityProperties(Node*);
      void processAccessibilityChildren(AXCoreObject&, JSON::ArrayOf<int>&);
-     
+-    
++
      Node* nodeForPath(const String& path);
 -    Node* nodeForObjectId(const String& objectId);
  
