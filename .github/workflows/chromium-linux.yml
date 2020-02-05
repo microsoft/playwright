@@ -25,7 +25,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: install required packages
       run: |
-        sudo apt-get install libgbm1
+        sudo apt-get update
+        sudo apt-get install libgbm-dev
         sudo apt-get install xvfb
 
     - name: npm install, build, and test
