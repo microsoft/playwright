@@ -29,10 +29,11 @@ import * as util from 'util';
 import { TimeoutError } from '../errors';
 import { assert } from '../helper';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
-import { ConnectOptions } from '../browser';
-import { BrowserApp } from './browserApp';
+import { ConnectOptions, LaunchType } from '../browser';
+import { BrowserServer } from './browserServer';
 import { Events } from '../events';
 import { ConnectionTransport } from '../transport';
+import { BrowserContext } from '../browserContext';
 
 export class Firefox implements BrowserType {
   private _projectRoot: string;
@@ -48,19 +49,28 @@ export class Firefox implements BrowserType {
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<FFBrowser> {
-    const { browserApp, transport } = await this._launchBrowserApp(options, false);
+    const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await FFBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => browserApp.close();
-    (browser as any)['__app__'] = browserApp;
+    browser.close = () => browserServer.close();
+    (browser as any)['__server__'] = browserServer;
     return browser;
   }
 
-  async launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp> {
-    return (await this._launchBrowserApp(options, true)).browserApp;
+  async launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer> {
+    return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
   }
 
-  private async _launchBrowserApp(options: LaunchOptions = {}, isServer: boolean): Promise<{ browserApp: BrowserApp, transport?: ConnectionTransport }> {
+  async launchPersistent(options?: LaunchOptions & { userDataDir?: string }): Promise<BrowserContext> {
+    const { browserServer, transport } = await this._launchServer(options, 'persistent', options && options.userDataDir);
+    const browser = await FFBrowser.connect(transport!);
+    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
+    const browserContext = browser._defaultContext;
+    browserContext.close = () => browserServer.close();
+    return browserContext;
+  }
+
+  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -81,14 +91,20 @@ export class Firefox implements BrowserType {
     else
       firefoxArguments.push(...args);
 
-    if (!firefoxArguments.includes('-juggler'))
-      firefoxArguments.unshift('-juggler', '0');
+    const userDataDirArg = firefoxArguments.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
+    if (userDataDirArg)
+      throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
 
     let temporaryProfileDir = null;
-    if (!firefoxArguments.includes('-profile') && !firefoxArguments.includes('--profile')) {
-      temporaryProfileDir = await createProfile();
-      firefoxArguments.unshift(`-profile`, temporaryProfileDir);
+    if (!userDataDir) {
+      userDataDir = await createProfile();
+      temporaryProfileDir = userDataDirArg;
     }
+    firefoxArguments.unshift(`-profile`, userDataDir);
+
+    if (firefoxArguments.find(arg => arg.startsWith('-juggler')))
+      throw new Error('Use the port parameter instead of -juggler argument');
+    firefoxArguments.unshift('-juggler', String(port || 0));
 
     let firefoxExecutable = executablePath;
     if (!firefoxExecutable) {
@@ -98,7 +114,7 @@ export class Firefox implements BrowserType {
       firefoxExecutable = executablePath;
     }
 
-    let browserApp: BrowserApp | undefined = undefined;
+    let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: firefoxExecutable,
       args: firefoxArguments,
@@ -114,7 +130,7 @@ export class Firefox implements BrowserType {
       pipe: false,
       tempDir: temporaryProfileDir || undefined,
       attemptToGracefullyClose: async () => {
-        if (!browserApp)
+        if (!browserServer)
           return Promise.reject();
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
@@ -124,16 +140,16 @@ export class Firefox implements BrowserType {
         transport.send(JSON.stringify(message));
       },
       onkill: (exitCode, signal) => {
-        if (browserApp)
-          browserApp.emit(Events.BrowserApp.Close, exitCode, signal);
+        if (browserServer)
+          browserServer.emit(Events.BrowserServer.Close, exitCode, signal);
       },
     });
 
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const browserWSEndpoint = match[1];
-    browserApp = new BrowserApp(launchedProcess, gracefullyClose, isServer ? browserWSEndpoint : null);
-    return { browserApp, transport: isServer ? undefined : await platform.createWebSocketTransport(browserWSEndpoint) };
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? browserWSEndpoint : null);
+    return { browserServer, transport: launchType === 'server' ? undefined : await platform.createWebSocketTransport(browserWSEndpoint) };
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
@@ -158,13 +174,10 @@ export class Firefox implements BrowserType {
       devtools = false,
       headless = !devtools,
       args = [],
-      userDataDir = null,
     } = options;
     if (devtools)
       throw new Error('Option "devtools" is not supported by Firefox');
     const firefoxArguments = [...DEFAULT_ARGS];
-    if (userDataDir)
-      firefoxArguments.push('-profile', userDataDir);
     if (headless)
       firefoxArguments.push('-headless');
     else

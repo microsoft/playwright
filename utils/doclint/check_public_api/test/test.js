@@ -30,12 +30,12 @@ const {describe, xdescribe, fdescribe} = runner;
 const {it, fit, xit} = runner;
 const {beforeAll, beforeEach, afterAll, afterEach} = runner;
 
-let browser;
+let browserContext;
 let page;
 
 beforeAll(async function() {
   browser = await playwright.launch();
-  page = await browser.defaultContext().newPage();
+  page = await browser.newPage();
 });
 
 afterAll(async function() {

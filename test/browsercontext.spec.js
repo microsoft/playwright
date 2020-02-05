@@ -23,21 +23,13 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('BrowserContext', function() {
-    it('should have default context', async function({browser, server}) {
-      expect(browser.browserContexts().length).toBe(1);
-      const defaultContext = browser.browserContexts()[0];
-      let error = null;
-      await defaultContext.close().catch(e => error = e);
-      expect(browser.defaultContext()).toBe(defaultContext);
-      expect(error.message).toContain('cannot be closed');
-    });
-    it('should create new incognito context', async function({browser, newContext}) {
-      expect(browser.browserContexts().length).toBe(1);
+    it('should create new context', async function({browser, newContext}) {
+      expect(browser.browserContexts().length).toBe(0);
       const context = await newContext();
-      expect(browser.browserContexts().length).toBe(2);
+      expect(browser.browserContexts().length).toBe(1);
       expect(browser.browserContexts().indexOf(context) !== -1).toBe(true);
       await context.close();
-      expect(browser.browserContexts().length).toBe(1);
+      expect(browser.browserContexts().length).toBe(0);
     });
     it('window.open should use parent tab context', async function({newContext, server}) {
       const context = await newContext();
@@ -91,7 +83,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         context1.close(),
         context2.close()
       ]);
-      expect(browser.browserContexts().length).toBe(1);
+      expect(browser.browserContexts().length).toBe(0);
     });
     it('should propagate default viewport to the page', async({ newPage }) => {
       const page = await newPage({ viewport: { width: 456, height: 789 } });

@@ -1,9 +1,9 @@
 (async() => {
   const [, , playwrightRoot, product, options] = process.argv;
-  const browserApp = await require(playwrightRoot)[product.toLowerCase()].launchBrowserApp(JSON.parse(options));
-  browserApp.on('close', (exitCode, signal) => {
+  const browserServer = await require(playwrightRoot)[product.toLowerCase()].launchServer(JSON.parse(options));
+  browserServer.on('close', (exitCode, signal) => {
     console.log(`browserClose:${exitCode}:${signal}:browserClose`);
   });
-  console.log(`browserPid:${browserApp.process().pid}:browserPid`);
-  console.log(`browserWS:${browserApp.wsEndpoint()}:browserWS`);
+  console.log(`browserPid:${browserServer.process().pid}:browserPid`);
+  console.log(`browserWS:${browserServer.wsEndpoint()}:browserWS`);
 })();

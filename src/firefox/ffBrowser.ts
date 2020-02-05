@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser } from '../browser';
+import { Browser, collectPages } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
@@ -31,7 +31,7 @@ import { ConnectionTransport, SlowMoTransport } from '../transport';
 export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
   _targets: Map<string, Target>;
-  private _defaultContext: BrowserContext;
+  readonly _defaultContext: BrowserContext;
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
 
@@ -84,12 +84,17 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     return context;
   }
 
-  browserContexts(): Array<BrowserContext> {
-    return [this._defaultContext, ...Array.from(this._contexts.values())];
+  browserContexts(): BrowserContext[] {
+    return Array.from(this._contexts.values());
   }
 
-  defaultContext() {
-    return this._defaultContext;
+  async pages(): Promise<Page[]> {
+    return collectPages(this);
+  }
+
+  async newPage(url?: string, options?: BrowserContextOptions): Promise<Page> {
+    const browserContext = await this.newContext(options);
+    return browserContext.newPage(url);
   }
 
   async _waitForTarget(predicate: (target: Target) => boolean, options: { timeout?: number; } = {}): Promise<Target> {

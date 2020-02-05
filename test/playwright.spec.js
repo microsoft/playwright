@@ -92,14 +92,14 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
   describe('Browser', function() {
     beforeAll(async state => {
-      state.browser = await playwright.launch();
-      state.browserApp = state.browser.__app__;
+      state.browser = await playwright.launch(defaultBrowserOptions);
+      state.browserServer = state.browser.__server__;
     });
 
     afterAll(async state => {
-      await state.browserApp.close();
+      await state.browserServer.close();
       state.browser = null;
-      state.browserApp = null;
+      state.browserServer = null;
     });
 
     beforeEach(async(state, test) => {
@@ -107,8 +107,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       const onLine = (line) => test.output += line + '\n';
 
       let rl;
-      if (state.browserApp.process().stderr) {
-        rl = require('readline').createInterface({ input: state.browserApp.process().stderr });
+      if (state.browserServer.process().stderr) {
+        rl = require('readline').createInterface({ input: state.browserServer.process().stderr });
         test.output = '';
         rl.on('line', onLine);
       }
@@ -190,6 +190,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     });
 
     // Browser-level tests that are given a browser.
+    testRunner.loadTests(require('./browser.spec.js'), testOptions);
     testRunner.loadTests(require('./browsercontext.spec.js'), testOptions);
     testRunner.loadTests(require('./ignorehttpserrors.spec.js'), testOptions);
   });

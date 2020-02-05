@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser } from '../browser';
+import { Browser, collectPages } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
@@ -33,7 +33,7 @@ const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) Appl
 export class WKBrowser extends platform.EventEmitter implements Browser {
   private readonly _connection: WKConnection;
   private readonly _browserSession: WKSession;
-  private readonly _defaultContext: BrowserContext;
+  readonly _defaultContext: BrowserContext;
   private readonly _contexts = new Map<string, BrowserContext>();
   private readonly _pageProxies = new Map<string, WKPageProxy>();
   private readonly _eventListeners: RegisteredListener[];
@@ -84,11 +84,16 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 
   browserContexts(): BrowserContext[] {
-    return [this._defaultContext, ...Array.from(this._contexts.values())];
+    return Array.from(this._contexts.values());
   }
 
-  defaultContext(): BrowserContext {
-    return this._defaultContext;
+  async pages(): Promise<Page[]> {
+    return collectPages(this);
+  }
+
+  async newPage(url?: string, options?: BrowserContextOptions): Promise<Page> {
+    const browserContext = await this.newContext(options);
+    return browserContext.newPage(url);
   }
 
   async _waitForFirstPageTarget(timeout: number): Promise<void> {

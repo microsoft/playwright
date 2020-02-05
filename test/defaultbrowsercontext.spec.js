@@ -20,14 +20,14 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('defaultContext()', function() {
+  describe('launchPersistent()', function() {
     beforeEach(async state => {
-      state.browser = await playwright.launch(defaultBrowserOptions);
-      state.page = await state.browser.defaultContext().newPage();
+      state.browserContext = await playwright.launchPersistent(defaultBrowserOptions);
+      state.page = await state.browserContext.newPage();
     });
     afterEach(async state => {
-      await state.browser.close();
-      delete state.browser;
+      await state.browserContext.close();
+      delete state.browserContext;
       delete state.page;
     });
     it('context.cookies() should work', async({page, server}) => {

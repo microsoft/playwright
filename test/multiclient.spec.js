@@ -24,23 +24,23 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('BrowserContext', function() {
     it('should work across sessions', async () => {
-      const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions });
-      const browser = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-      expect(browser.browserContexts().length).toBe(1);
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      expect(browser.browserContexts().length).toBe(0);
       await browser.newContext();
-      expect(browser.browserContexts().length).toBe(2);
-      const remoteBrowser = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
+      expect(browser.browserContexts().length).toBe(1);
+      const remoteBrowser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const contexts = remoteBrowser.browserContexts();
-      expect(contexts.length).toBe(2);
-      await browserApp.close();
+      expect(contexts.length).toBe(1);
+      await browserServer.close();
     });
   });
 
   describe('Browser.Events.disconnected', function() {
     it('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async () => {
-      const browserApp = await playwright.launchBrowserApp({ ...defaultBrowserOptions });
-      const originalBrowser = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-      const wsEndpoint = browserApp.wsEndpoint();
+      const browserServer = await playwright.launchServer(defaultBrowserOptions);
+      const originalBrowser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const wsEndpoint = browserServer.wsEndpoint();
       const remoteBrowser1 = await playwright.connect({ wsEndpoint });
       const remoteBrowser2 = await playwright.connect({ wsEndpoint });
 
@@ -63,7 +63,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await Promise.all([
         utils.waitEvent(remoteBrowser1, 'disconnected'),
         utils.waitEvent(originalBrowser, 'disconnected'),
-        browserApp.close(),
+        browserServer.close(),
       ]);
 
       expect(disconnectedOriginal).toBe(1);
@@ -74,21 +74,21 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Playwright.connect', function() {
     it('should be able to connect multiple times to the same browser', async({server}) => {
-      const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions });
-      const local = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-      const remote = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-      const page = await remote.defaultContext().newPage();
+      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
+      const local = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const page = await remote.newPage();
       expect(await page.evaluate(() => 7 * 8)).toBe(56);
       remote.disconnect();
 
-      const secondPage = await local.defaultContext().newPage();
+      const secondPage = await local.newPage();
       expect(await secondPage.evaluate(() => 7 * 6)).toBe(42, 'original browser should still work');
-      await browserApp.close();
+      await browserServer.close();
     });
     it('should be able to close remote browser', async({server}) => {
-      const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions });
-      const local = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-      const remote = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
+      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
+      const local = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
       await Promise.all([
         utils.waitEvent(local, 'disconnected'),
         remote.close(),
@@ -96,15 +96,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/4197#issuecomment-481793410
     it('should be able to connect to the same page simultaneously', async({server}) => {
-      const browserApp = await playwright.launchBrowserApp({...defaultBrowserOptions });
-      const browser1 = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-      const page1 = await browser1.defaultContext().newPage();
+      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
+      const browser1 = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const page1 = await browser1.newPage();
       await page1.goto(server.EMPTY_PAGE);
-      const browser2 = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-      const page2 = (await browser2.defaultContext().pages()).find(page => page.url() === server.EMPTY_PAGE);
+      const browser2 = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const page2 = (await browser2.pages()).find(page => page.url() === server.EMPTY_PAGE);
       expect(await page1.evaluate(() => 7 * 8)).toBe(56);
       expect(await page2.evaluate(() => 7 * 6)).toBe(42);
-      await browserApp.close();
+      await browserServer.close();
     });
   });
 };

@@ -41,12 +41,6 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const browserTarget = targets.find(target => target.type() === 'browser');
       expect(browserTarget).toBe(browser.browserTarget());
     });
-    it('should be able to use the default page in the browser', async({page, server, browser}) => {
-      // The pages will be the testing page and the original newtab page
-      const originalPage = (await browser.defaultContext().pages())[0];
-      expect(await originalPage.evaluate(() => ['Hello', 'world'].join(' '))).toBe('Hello world');
-      expect(await originalPage.$('body')).toBeTruthy();
-    });
     it('should report when a new page is created and closed', async({browser, page, server, context}) => {
       const [otherPage] = await Promise.all([
         browser.waitForTarget(target => target.url() === server.CROSS_PROCESS_PREFIX + '/empty.html').then(target => target.page()),
@@ -182,29 +176,20 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const target = await targetPromise;
       expect(await target.page()).toBe(page);
     });
-    it('should timeout waiting for a non-existent target', async function({browser, server, newContext}) {
-      const context = await newContext();
+    it('should timeout waiting for a non-existent target', async function({browser, context, server}) {
       const error = await browser.waitForTarget(target => target.browserContext() === context && target.url() === server.EMPTY_PAGE, {timeout: 1}).catch(e => e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
-      await context.close();
     });
     it('should wait for a target', async function({browser, server}) {
       let resolved = false;
       const targetPromise = browser.waitForTarget(target => target.url() === server.EMPTY_PAGE);
       targetPromise.then(() => resolved = true);
-      const page = await browser.defaultContext().newPage();
+      const page = await browser.newPage();
       expect(resolved).toBe(false);
       await page.goto(server.EMPTY_PAGE);
       const target = await targetPromise;
       expect(await target.page()).toBe(page);
       await page.close();
-    });
-    it('should timeout waiting for a non-existent target', async function({browser, server}) {
-      let error = null;
-      await browser.waitForTarget(target => target.url() === server.EMPTY_PAGE, {
-        timeout: 1
-      }).catch(e => error = e);
-      expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should fire target events', async function({browser, newContext, server}) {
       const context = await newContext();

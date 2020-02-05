@@ -34,20 +34,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     describe('Playwright.launch webSocket option', function() {
       it('should support the remote-debugging-port argument', async() => {
         const options = Object.assign({}, defaultBrowserOptions);
-        options.args = ['--remote-debugging-port=0'].concat(options.args || []);
-        const browserApp = await playwright.launchBrowserApp(options);
-        const browser = await playwright.connect({ wsEndpoint: browserApp.wsEndpoint() });
-        expect(browserApp.wsEndpoint()).not.toBe(null);
-        const page = await browser.defaultContext().newPage();
+        const browserServer = await playwright.launchServer({ ...options, port: 0 });
+        const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+        expect(browserServer.wsEndpoint()).not.toBe(null);
+        const page = await browser.newPage();
         expect(await page.evaluate('11 * 11')).toBe(121);
         await page.close();
-        await browserApp.close();
+        await browserServer.close();
       });
       it('should throw with remote-debugging-pipe argument and webSocket', async() => {
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = ['--remote-debugging-pipe'].concat(options.args || []);
-        const error = await playwright.launchBrowserApp(options).catch(e => e);
-        expect(error.message).toBe('Argument "--remote-debugging-pipe" is not compatible with the launchBrowserApp.');
+        const error = await playwright.launchServer(options).catch(e => e);
+        expect(error.message).toContain('Playwright manages remote debugging connection itself');
       });
     });
   });
@@ -59,7 +58,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       browser.on('targetcreated', () => events.push('CREATED'));
       browser.on('targetchanged', () => events.push('CHANGED'));
       browser.on('targetdestroyed', () => events.push('DESTROYED'));
-      const page = await browser.defaultContext().newPage();
+      const page = await browser.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.close();
       expect(events).toEqual(['CREATED', 'CHANGED', 'DESTROYED']);

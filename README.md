@@ -40,9 +40,7 @@ const playwright = require('playwright');
 (async () => {
   for (const browserType of ['chromium', 'firefox', 'webkit']) {
     const browser = await playwright[browserType].launch();
-    const context = await browser.newContext();
-    const page = await context.newPage('http://whatsmyuseragent.org/');
-
+    const page = await browser.newPage('http://whatsmyuseragent.org/');
     await page.screenshot({ path: `example-${browserType}.png` });
     await browser.close();
   }
@@ -59,14 +57,13 @@ const iPhone11 = devices['iPhone 11 Pro'];
 
 (async () => {
   const browser = await webkit.launch();
-  const context = await browser.newContext({
+  const page = await browser.newPage('https://maps.google.com', {
     viewport: iPhone11.viewport,
     userAgent: iPhone11.userAgent,
     geolocation: { longitude: 12.492507, latitude: 41.889938 },
     permissions: { 'https://www.google.com': ['geolocation'] }
   });
 
-  const page = await context.newPage('https://maps.google.com');
   await page.click('text="Your location"');
   await page.waitForRequest(/.*preview\/pwa/);
   await page.screenshot({ path: 'colosseum-iphone.png' });
@@ -82,14 +79,12 @@ const pixel2 = devices['Pixel 2'];
 
 (async () => {
   const browser = await chromium.launch();
-  const context = await browser.newContext({
+  const page = await browser.newPage('https://maps.google.com', {
     viewport: pixel2.viewport,
     userAgent: pixel2.userAgent,
     geolocation: { longitude: 12.492507, latitude: 41.889938 },
     permissions: { 'https://www.google.com': ['geolocation'] }
   });
-
-  const page = await context.newPage('https://maps.google.com');
   await page.click('text="Your location"');
   await page.waitForRequest(/.*pwa\/net.js.*/);
   await page.screenshot({ path: 'colosseum-android.png' });
@@ -106,10 +101,7 @@ const { firefox } = require('playwright');
 
 (async () => {
   const browser = await firefox.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  await page.goto('https://www.example.com/');
+  const page = await browser.newPage('https://www.example.com/');
   const dimensions = await page.evaluate(() => {
     return {
       width: document.documentElement.clientWidth,
