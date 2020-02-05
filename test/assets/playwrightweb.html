@@ -1,7 +1,7 @@
 <script src='../../web.js'></script>
 <script>
-async function setup(product, connectOptions) {
-  window.browser = await window.playwrightweb[product].connect(connectOptions);
+async function setup(product, wsEndpoint) {
+  window.browser = await window.playwrightweb[product].connect(wsEndpoint);
   window.context = await window.browser.newContext();
   window.page = await window.context.newPage();
 }

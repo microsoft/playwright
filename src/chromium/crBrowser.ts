@@ -24,11 +24,12 @@ import { Page, Worker } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
-import { Browser, createTransport, ConnectOptions } from '../browser';
+import { Browser } from '../browser';
 import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
 import { readProtocolStream } from './crProtocolHelper';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 
 export class CRBrowser extends platform.EventEmitter implements Browser {
   _connection: CRConnection;
@@ -41,9 +42,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
-  static async connect(options: ConnectOptions): Promise<CRBrowser> {
-    const transport = await createTransport(options);
-    const connection = new CRConnection(transport);
+  static async connect(transport: ConnectionTransport, slowMo?: number): Promise<CRBrowser> {
+    const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
     const { browserContextIds } = await connection.rootSession.send('Target.getBrowserContexts');
     const browser = new CRBrowser(connection, browserContextIds);
     await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });

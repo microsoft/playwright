@@ -15,19 +15,18 @@
  */
 
 import { ChildProcess, execSync } from 'child_process';
-import { ConnectOptions } from '../browser';
 import * as platform from '../platform';
 
 export class BrowserApp extends platform.EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: () => Promise<void>;
-  private _connectOptions: ConnectOptions;
+  private _browserWSEndpoint: string | null = null;
 
-  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, connectOptions: ConnectOptions) {
+  constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, wsEndpoint: string | null) {
     super();
     this._process = process;
     this._gracefullyClose = gracefullyClose;
-    this._connectOptions = connectOptions;
+    this._browserWSEndpoint = wsEndpoint;
   }
 
   process(): ChildProcess {
@@ -35,11 +34,7 @@ export class BrowserApp extends platform.EventEmitter {
   }
 
   wsEndpoint(): string | null {
-    return this._connectOptions.browserWSEndpoint || null;
-  }
-
-  connectOptions(): ConnectOptions {
-    return this._connectOptions;
+    return this._browserWSEndpoint;
   }
 
   kill() {

@@ -30,9 +30,10 @@ import { launchProcess, waitForLine } from '../server/processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { PipeTransport } from './pipeTransport';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
-import { createTransport, ConnectOptions } from '../browser';
+import { ConnectOptions } from '../browser';
 import { BrowserApp } from './browserApp';
 import { Events } from '../events';
+import { ConnectionTransport } from '../transport';
 
 export class Chromium implements BrowserType {
   private _projectRoot: string;
@@ -47,26 +48,29 @@ export class Chromium implements BrowserType {
     return 'chromium';
   }
 
-  async launch(options?: LaunchOptions): Promise<CRBrowser> {
-    const app = await this.launchBrowserApp(options);
-    const browser = await CRBrowser.connect(app.connectOptions());
+  async launch(options?: LaunchOptions & { slowMo?: number }): Promise<CRBrowser> {
+    const { browserApp, transport } = await this._launchBrowserApp(options, false);
+    const browser = await CRBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => app.close();
+    browser.close = () => browserApp.close();
+    (browser as any)['__app__'] = browserApp;
     return browser;
   }
 
-  async launchBrowserApp(options: LaunchOptions = {}): Promise<BrowserApp> {
+  async launchBrowserApp(options?: LaunchOptions): Promise<BrowserApp> {
+    return (await this._launchBrowserApp(options, true)).browserApp;
+  }
+
+  async _launchBrowserApp(options: LaunchOptions = {}, isServer: boolean): Promise<{ browserApp: BrowserApp, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
       dumpio = false,
       executablePath = null,
-      webSocket = false,
       env = process.env,
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      slowMo = 0,
       timeout = 30000
     } = options;
 
@@ -81,7 +85,7 @@ export class Chromium implements BrowserType {
     let temporaryUserDataDir: string | null = null;
 
     if (!chromeArguments.some(argument => argument.startsWith('--remote-debugging-')))
-      chromeArguments.push(webSocket ? '--remote-debugging-port=0' : '--remote-debugging-pipe');
+      chromeArguments.push(isServer ? '--remote-debugging-port=0' : '--remote-debugging-pipe');
     if (!chromeArguments.some(arg => arg.startsWith('--user-data-dir'))) {
       temporaryUserDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
       chromeArguments.push(`--user-data-dir=${temporaryUserDataDir}`);
@@ -96,8 +100,8 @@ export class Chromium implements BrowserType {
     }
 
     const usePipe = chromeArguments.includes('--remote-debugging-pipe');
-    if (usePipe && webSocket)
-      throw new Error(`Argument "--remote-debugging-pipe" is not compatible with "webSocket" launch option.`);
+    if (usePipe && isServer)
+      throw new Error(`Argument "--remote-debugging-pipe" is not compatible with the launchBrowserApp.`);
 
     let browserApp: BrowserApp | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
@@ -116,9 +120,9 @@ export class Chromium implements BrowserType {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const transport = await createTransport(browserApp.connectOptions());
+        const t = transport || await platform.createWebSocketTransport(browserWSEndpoint!);
         const message = { method: 'Browser.close', id: kBrowserCloseMessageId };
-        transport.send(JSON.stringify(message));
+        t.send(JSON.stringify(message));
       },
       onkill: (exitCode, signal) => {
         if (browserApp)
@@ -126,37 +130,23 @@ export class Chromium implements BrowserType {
       },
     });
 
-    let connectOptions: ConnectOptions;
-    if (!usePipe) {
+    let transport: ConnectionTransport | undefined;
+    let browserWSEndpoint: string | null;
+    if (isServer) {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
       const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
-      const browserWSEndpoint = match[1];
-      connectOptions = { browserWSEndpoint, slowMo };
+      browserWSEndpoint = match[1];
     } else {
-      const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-      connectOptions = { slowMo, transport };
+      transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+      browserWSEndpoint = null;
     }
-    browserApp = new BrowserApp(launchedProcess, gracefullyClose, connectOptions);
-    return browserApp;
+    browserApp = new BrowserApp(launchedProcess, gracefullyClose, browserWSEndpoint);
+    return { browserApp, transport };
   }
 
-  async connect(options: ConnectOptions & { browserURL?: string }): Promise<CRBrowser> {
-    if (options.transport && options.transport.onmessage)
-      throw new Error('Transport is already in use');
-    if (options.browserURL) {
-      assert(!options.browserWSEndpoint && !options.transport, 'Exactly one of browserWSEndpoint, browserURL or transport must be passed to connect');
-      let connectionURL: string;
-      try {
-        const data = await platform.fetchUrl(new URL('/json/version', options.browserURL).href);
-        connectionURL = JSON.parse(data).webSocketDebuggerUrl;
-      } catch (e) {
-        e.message = `Failed to fetch browser webSocket url from ${options.browserURL}: ` + e.message;
-        throw e;
-      }
-      const transport = await platform.createWebSocketTransport(connectionURL);
-      options = { ...options, transport };
-    }
-    return CRBrowser.connect(options);
+  async connect(options: ConnectOptions): Promise<CRBrowser> {
+    const transport = await platform.createWebSocketTransport(options.wsEndpoint);
+    return CRBrowser.connect(transport, options.slowMo);
   }
 
   executablePath(): string {

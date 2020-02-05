@@ -149,10 +149,10 @@ An example of launching a browser executable and connecting to a [Browser] later
 const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 (async () => {
-  const browserApp = await webkit.launchBrowserApp({ webSocket: true });
-  const connectOptions = browserApp.connectOptions();
-  // Use connect options later to establish a connection.
-  const browser = await webkit.connect(connectOptions);
+  const browserApp = await webkit.launchBrowserApp();
+  const wsEndpoint = browserApp.wsEndpoint();
+  // Use web socket endpoint later to establish a connection.
+  const browser = await webkit.connect({ wsEndpoint });
   // Close browser instance.
   await browserApp.close();
 })();
@@ -3413,7 +3413,6 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 <!-- GEN:toc -->
 - [event: 'close'](#event-close-2)
 - [browserApp.close()](#browserappclose)
-- [browserApp.connectOptions()](#browserappconnectoptions)
 - [browserApp.kill()](#browserappkill)
 - [browserApp.process()](#browserappprocess)
 - [browserApp.wsEndpoint()](#browserappwsendpoint)
@@ -3428,14 +3427,6 @@ Emitted when the browser app closes.
 
 Closes the browser gracefully and makes sure the process is terminated.
 
-#### browserApp.connectOptions()
-- returns: <[Object]>
-  - `browserWSEndpoint` <?[string]> a browser websocket endpoint to connect to.
-  - `slowMo` <[number]>
-  - `transport` <[ConnectionTransport]> **Experimental** A custom transport object which should be used to connect.
-
-This options object can be passed to [browserType.connect(options)](#browsertypeconnectoptions) to establish connection to the browser.
-
 #### browserApp.kill()
 
 Kills the browser process.
@@ -3444,10 +3435,9 @@ Kills the browser process.
 - returns: <?[ChildProcess]> Spawned browser application process.
 
 #### browserApp.wsEndpoint()
-- returns: <?[string]> Browser websocket url.
+- returns: <[string]> Browser websocket url.
 
-Browser websocket endpoint which can be used as an argument to [browserType.connect(options)] to establish connection to the browser. Requires browser app to be launched with `browserType.launchBrowserApp({ webSocket: true, ... })`.
-
+Browser websocket endpoint which can be used as an argument to [browserType.connect(options)](#browsertypeconnectoptions) to establish connection to the browser.
 
 ### class: BrowserType
 
@@ -3478,10 +3468,8 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 #### browserType.connect(options)
 - `options` <[Object]>
-  - `browserWSEndpoint` <?[string]> A browser websocket endpoint to connect to.
+  - `wsEndpoint` <?[string]> A browser websocket endpoint to connect to.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-  - `browserURL` <?[string]> **Chromium-only** A browser url to connect to, in format `http://${host}:${port}`. Use interchangeably with `browserWSEndpoint` to let Playwright fetch it from [metadata endpoint](https://chromedevtools.github.io/devtools-protocol/#how-do-i-access-the-browser-target).
-  - `transport` <[ConnectionTransport]> **Experimental** Specify a custom transport object for Playwright to use.
 - returns: <[Promise]<[Browser]>>
 
 This methods attaches Playwright to an existing browser instance.
@@ -3547,7 +3535,6 @@ try {
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only [guaranteed to work](https://github.com/Microsoft/playwright/#q-why-doesnt-playwright-vxxx-work-with-chromium-vyyy) with the bundled Chromium, Firefox or WebKit, use at your own risk.
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use [`browserType.defaultArgs()`](#browsertypedefaultargsoptions). If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -3557,7 +3544,6 @@ try {
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Promise]<[Browser]>> Promise which resolves to browser instance.
 
@@ -3591,7 +3577,6 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-  - `webSocket` <[boolean]> Connects to the browser over a WebSocket instead of a pipe. Defaults to `false`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Promise]<[BrowserApp]>> Promise which resolves to the browser app instance.
 
@@ -3898,7 +3883,6 @@ const { chromium } = require('playwright');
 [ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
 [ChromiumSession]: #class-chromiumsession  "ChromiumSession"
 [ChromiumTarget]: #class-chromiumtarget "ChromiumTarget"
-[ConnectionTransport]: ../lib/WebSocketTransport.js "ConnectionTransport"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
 [Coverage]: #class-coverage "Coverage"
 [Dialog]: #class-dialog "Dialog"

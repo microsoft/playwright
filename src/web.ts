@@ -17,10 +17,26 @@
 import { CRBrowser as ChromiumBrowser } from './chromium/crBrowser';
 import { FFBrowser as FirefoxBrowser } from './firefox/ffBrowser';
 import { WKBrowser as WebKitBrowser } from './webkit/wkBrowser';
+import * as platform from './platform';
 
 const connect = {
-  chromium: { connect: ChromiumBrowser.connect },
-  firefox: { connect: FirefoxBrowser.connect },
-  webkit: { connect: WebKitBrowser.connect },
+  chromium: {
+    connect: async (url: string) => {
+      const transport = await platform.createWebSocketTransport(url);
+      return ChromiumBrowser.connect(transport);
+    }
+  },
+  webkit: {
+    connect: async (url: string) => {
+      const transport = await platform.createWebSocketTransport(url);
+      return WebKitBrowser.connect(transport);
+    }
+  },
+  firefox: {
+    connect: async (url: string) => {
+      const transport = await platform.createWebSocketTransport(url);
+      return FirefoxBrowser.connect(transport);
+    }
+  }
 };
 export = connect;

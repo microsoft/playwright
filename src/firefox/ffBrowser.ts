@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser, createTransport, ConnectOptions } from '../browser';
+import { Browser } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
@@ -26,6 +26,7 @@ import { ConnectionEvents, FFConnection, FFSessionEvents } from './ffConnection'
 import { FFPage } from './ffPage';
 import * as platform from '../platform';
 import { Protocol } from './protocol';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 
 export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
@@ -34,10 +35,9 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   private _contexts: Map<string, BrowserContext>;
   private _eventListeners: RegisteredListener[];
 
-  static async connect(options: ConnectOptions): Promise<FFBrowser> {
-    const transport = await createTransport(options);
-    const connection = new FFConnection(transport);
-    const {browserContextIds} = await connection.send('Target.getBrowserContexts');
+  static async connect(transport: ConnectionTransport, slowMo?: number): Promise<FFBrowser> {
+    const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo));
+    const { browserContextIds } = await connection.send('Target.getBrowserContexts');
     const browser = new FFBrowser(connection, browserContextIds);
     await connection.send('Target.enable');
     await browser._waitForTarget(t => t.type() === 'page');

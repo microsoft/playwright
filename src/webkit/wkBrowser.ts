@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { Browser, createTransport, ConnectOptions } from '../browser';
+import { Browser } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page } from '../page';
-import { ConnectionTransport } from '../transport';
+import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { Events } from '../events';
 import { Protocol } from './protocol';
@@ -41,9 +41,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   private _firstPageProxyCallback?: () => void;
   private readonly _firstPageProxyPromise: Promise<void>;
 
-  static async connect(options: ConnectOptions): Promise<WKBrowser> {
-    const transport = await createTransport(options);
-    const browser = new WKBrowser(transport);
+  static async connect(transport: ConnectionTransport, slowMo: number = 0): Promise<WKBrowser> {
+    const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo));
     // TODO: figure out the timeout.
     await browser._waitForFirstPageTarget(30000);
     return browser;
