@@ -218,9 +218,10 @@ export class CRPage implements PageDelegate {
   _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
     const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
     if (event.targetInfo.type !== 'worker') {
-      // Ideally, detaching should resume any target, but there is bug in the backend.
-      session.send('Runtime.runIfWaitingForDebugger').catch(debugError);
-      this._client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
+      // Ideally, detaching should resume any target, but there is a bug in the backend.
+      session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
+        this._client.send('Target.detachFromTarget', { sessionId: event.sessionId }).catch(debugError);
+      });
       return;
     }
     const url = event.targetInfo.url;
