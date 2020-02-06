@@ -1132,6 +1132,13 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.fill('input', '').catch(e => error = e);
       expect(error.message).toContain('Cannot type text into input[type=number].');
     });
+    it('should be able to clear', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.fill('input', 'some value');
+      expect(await page.evaluate(() => result)).toBe('some value');
+      await page.fill('input', '');
+      expect(await page.evaluate(() => result)).toBe('');
+    });
   });
 
   describe('Page.Events.Close', function() {
