@@ -16,7 +16,7 @@ async function generateChromiunProtocol(revision) {
   const page = await browser.newPage();
   await page.goto(`http://${origin}/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
-  await browserServer.kill();
+  await browserServer.close();
   fs.writeFileSync(outputPath, jsonToTS(json));
   console.log(`Wrote protocol.ts to ${path.relative(process.cwd(), outputPath)}`);
 }
