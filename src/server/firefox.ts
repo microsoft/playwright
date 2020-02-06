@@ -61,8 +61,8 @@ export class Firefox implements BrowserType {
     return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
   }
 
-  async launchPersistent(options?: LaunchOptions & { userDataDir?: string }): Promise<BrowserContext> {
-    const { browserServer, transport } = await this._launchServer(options, 'persistent', options && options.userDataDir);
+  async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+    const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await FFBrowser.connect(transport!);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
@@ -84,27 +84,20 @@ export class Firefox implements BrowserType {
     } = options;
 
     const firefoxArguments = [];
-    if (!ignoreDefaultArgs)
-      firefoxArguments.push(...this.defaultArgs(options));
-    else if (Array.isArray(ignoreDefaultArgs))
-      firefoxArguments.push(...this.defaultArgs(options).filter(arg => !ignoreDefaultArgs.includes(arg)));
-    else
-      firefoxArguments.push(...args);
-
-    const userDataDirArg = firefoxArguments.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
-    if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
 
     let temporaryProfileDir = null;
     if (!userDataDir) {
-      userDataDir = await createProfile();
-      temporaryProfileDir = userDataDirArg;
+      userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_firefox_profile-'));
+      temporaryProfileDir = userDataDir;
     }
-    firefoxArguments.unshift(`-profile`, userDataDir);
+    populateProfile(userDataDir!);
 
-    if (firefoxArguments.find(arg => arg.startsWith('-juggler')))
-      throw new Error('Use the port parameter instead of -juggler argument');
-    firefoxArguments.unshift('-juggler', String(port || 0));
+    if (!ignoreDefaultArgs)
+      firefoxArguments.push(...this._defaultArgs(options, userDataDir!, port || 0));
+    else if (Array.isArray(ignoreDefaultArgs))
+      firefoxArguments.push(...this._defaultArgs(options, userDataDir!, port || 0).filter(arg => !ignoreDefaultArgs.includes(arg)));
+    else
+      firefoxArguments.push(...args);
 
     let firefoxExecutable = executablePath;
     if (!firefoxExecutable) {
@@ -169,7 +162,7 @@ export class Firefox implements BrowserType {
     return { TimeoutError };
   }
 
-  defaultArgs(options: BrowserArgOptions = {}): string[] {
+  private _defaultArgs(options: BrowserArgOptions = {}, userDataDir: string, port: number): string[] {
     const {
       devtools = false,
       headless = !devtools,
@@ -177,12 +170,22 @@ export class Firefox implements BrowserType {
     } = options;
     if (devtools)
       throw new Error('Option "devtools" is not supported by Firefox');
-    const firefoxArguments = [...DEFAULT_ARGS];
+    const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
+    if (userDataDirArg)
+      throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
+    if (args.find(arg => arg.startsWith('-juggler')))
+      throw new Error('Use the port parameter instead of -juggler argument');
+
+    const firefoxArguments = ['-no-remote'];
     if (headless)
       firefoxArguments.push('-headless');
     else
       firefoxArguments.push('-wait-for-browser');
+
+    firefoxArguments.push(`-profile`, userDataDir);
+    firefoxArguments.push('-juggler', String(port));
     firefoxArguments.push(...args);
+
     if (args.every(arg => arg.startsWith('-')))
       firefoxArguments.push('about:blank');
     return firefoxArguments;
@@ -241,10 +244,6 @@ export class Firefox implements BrowserType {
 
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 const writeFileAsync = platform.promisify(fs.writeFile);
-
-const DEFAULT_ARGS = [
-  '-no-remote',
-];
 
 const DUMMY_UMA_SERVER = 'dummy.test';
 const DEFAULT_PREFERENCES = {
@@ -451,16 +450,13 @@ const DEFAULT_PREFERENCES = {
   'toolkit.startup.max_resumed_crashes': -1,
 };
 
-async function createProfile(extraPrefs?: object): Promise<string> {
-  const profilePath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_firefox_profile-'));
+async function populateProfile(profilePath: string) {
   const prefsJS: string[] = [];
   const userJS: string[] = [];
 
-  const prefs = { ...DEFAULT_PREFERENCES, ...extraPrefs };
-  for (const [key, value] of Object.entries(prefs))
+  for (const [key, value] of Object.entries(DEFAULT_PREFERENCES))
     userJS.push(`user_pref(${JSON.stringify(key)}, ${JSON.stringify(value)});`);
 
   await writeFileAsync(path.join(profilePath, 'user.js'), userJS.join('\n'));
   await writeFileAsync(path.join(profilePath, 'prefs.js'), prefsJS.join('\n'));
-  return profilePath;
 }

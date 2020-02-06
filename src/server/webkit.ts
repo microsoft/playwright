@@ -53,7 +53,7 @@ export class WebKit implements BrowserType {
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
-    const { browserServer, transport } = await this._launchServer(options, 'local', null);
+    const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await WKBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     browser.close = () => browserServer.close();
@@ -65,8 +65,8 @@ export class WebKit implements BrowserType {
     return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
   }
 
-  async launchPersistent(options?: LaunchOptions & { userDataDir?: string }): Promise<BrowserContext> {
-    const { browserServer, transport } = await this._launchServer(options, 'persistent', options && options.userDataDir);
+  async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+    const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WKBrowser.connect(transport!);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
@@ -86,24 +86,19 @@ export class WebKit implements BrowserType {
       handleSIGHUP = true,
     } = options;
 
-    const webkitArguments = [];
-    if (!ignoreDefaultArgs)
-      webkitArguments.push(...this.defaultArgs(options));
-    else if (Array.isArray(ignoreDefaultArgs))
-      webkitArguments.push(...this.defaultArgs(options).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
-    else
-      webkitArguments.push(...args);
-
-    const userDataDirArg = webkitArguments.find(arg => arg.startsWith('--user-data-dir='));
-    if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
-
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(WEBKIT_PROFILE_PATH);
       temporaryUserDataDir = userDataDir!;
     }
-    webkitArguments.push(`--user-data-dir=${userDataDir}`);
+
+    const webkitArguments = [];
+    if (!ignoreDefaultArgs)
+      webkitArguments.push(...this._defaultArgs(options, userDataDir!, port || 0));
+    else if (Array.isArray(ignoreDefaultArgs))
+      webkitArguments.push(...this._defaultArgs(options, userDataDir!, port || 0).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+    else
+      webkitArguments.push(...args);
 
     let webkitExecutable = executablePath;
     if (!executablePath) {
@@ -162,7 +157,7 @@ export class WebKit implements BrowserType {
     return { TimeoutError };
   }
 
-  defaultArgs(options: BrowserArgOptions = {}): string[] {
+  _defaultArgs(options: BrowserArgOptions = {}, userDataDir: string, port: number): string[] {
     const {
       devtools = false,
       headless = !devtools,
@@ -170,9 +165,13 @@ export class WebKit implements BrowserType {
     } = options;
     if (devtools)
       throw new Error('Option "devtools" is not supported by WebKit');
+    const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));
+    if (userDataDirArg)
+      throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
     const webkitArguments = ['--inspector-pipe'];
     if (headless)
       webkitArguments.push('--headless');
+    webkitArguments.push(`--user-data-dir=${userDataDir}`);
     webkitArguments.push(...args);
     return webkitArguments;
   }

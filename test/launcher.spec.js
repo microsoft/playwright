@@ -14,16 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const fs = require('fs');
-const os = require('os');
+
 const path = require('path');
-const util = require('util');
-
+const fs = require('fs');
 const utils = require('./utils');
-const rmAsync = util.promisify(require('rimraf'));
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-
-const TMP_FOLDER = path.join(os.tmpdir(), 'pw_tmp_folder-');
+const { makeUserDataDir, removeUserDataDir } = require('./utils');
 
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, product, CHROMIUM, FFOX, WEBKIT, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
@@ -47,16 +42,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
-      it('should have default URL when launching browser', async function() {
-        const browserContext = await playwright.launchPersistent(defaultBrowserOptions);
+      if('should have default URL when launching browser', async function() {
+        const userDataDir = await makeUserDataDir();
+        const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
         const pages = (await browserContext.pages()).map(page => page.url());
         expect(pages).toEqual(['about:blank']);
         await browserContext.close();
+        await removeUserDataDir(userDataDir);
       });
       it('should have custom URL when launching browser', async function({server}) {
+        const userDataDir = await makeUserDataDir();
         const options = Object.assign({}, defaultBrowserOptions);
         options.args = [server.EMPTY_PAGE].concat(options.args || []);
-        const browserContext = await playwright.launchPersistent(options);
+        const browserContext = await playwright.launchPersistent(userDataDir, options);
         const pages = await browserContext.pages();
         expect(pages.length).toBe(1);
         const page = pages[0];
@@ -65,11 +63,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         }
         expect(page.url()).toBe(server.EMPTY_PAGE);
         await browserContext.close();
+        await removeUserDataDir(userDataDir);
       });
       it('should return child_process instance', async () => {
-        const browserServer = await playwright.launchServer(defaultBrowserOptions);
+        const userDataDir = await makeUserDataDir();
+        const browserServer = await playwright.launchServer(userDataDir, defaultBrowserOptions);
         expect(browserServer.process().pid).toBeGreaterThan(0);
         await browserServer.close();
+        await removeUserDataDir(userDataDir);
       });
     });
 
@@ -91,27 +92,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
           expect(playwright.name()).toBe('chromium');
         else
           throw new Error('Unknown browser');
-      });
-    });
-
-    describe('Playwright.defaultArguments', () => {
-      it('should return the default arguments', async() => {
-        if (CHROMIUM)
-          expect(playwright.defaultArgs()).toContain('--no-first-run');
-        expect(playwright.defaultArgs()).toContain(FFOX ? '-headless' : '--headless');
-        expect(playwright.defaultArgs({headless: false})).not.toContain(FFOX ? '-headless' : '--headless');
-      });
-      it('should filter out ignored default arguments', async() => {
-        const defaultArgsWithoutUserDataDir = playwright.defaultArgs(defaultBrowserOptions);
-        const defaultArgsWithUserDataDir = playwright.defaultArgs({...defaultBrowserOptions, userDataDir: 'fake-profile'});
-        const browserServer = await playwright.launchServer(Object.assign({}, defaultBrowserOptions, {
-          userDataDir: 'fake-profile',
-          // Filter out any of the args added by the fake profile
-          ignoreDefaultArgs: defaultArgsWithUserDataDir.filter(x => !defaultArgsWithoutUserDataDir.includes(x))
-        }));
-        const spawnargs = browserServer.process().spawnargs;
-        expect(spawnargs.some(x => x.includes('fake-profile'))).toBe(false);
-        await browserServer.close();
       });
     });
   });
@@ -264,65 +244,67 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Playwright.launchPersistent', function() {
     it('userDataDir option', async({server}) => {
-      const userDataDir = await mkdtempAsync(TMP_FOLDER);
-      const options = Object.assign({userDataDir}, defaultBrowserOptions);
-      const browserContext = await playwright.launchPersistent(options);
+      const userDataDir = await makeUserDataDir();
+      const options = Object.assign(defaultBrowserOptions);
+      const browserContext = await playwright.launchPersistent(userDataDir, options);
       // Open a page to make sure its functional.
       await browserContext.newPage();
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
       await browserContext.close();
       expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-      await rmAsync(userDataDir).catch(e => {});
+      await removeUserDataDir(userDataDir);
     });
     it.skip(FFOX)('userDataDir option should restore state', async({server}) => {
-      const userDataDir = await mkdtempAsync(TMP_FOLDER);
-      const options = Object.assign({userDataDir}, defaultBrowserOptions);
-      const browserContext = await playwright.launchPersistent(options);
+      const userDataDir = await makeUserDataDir();
+      const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => localStorage.hey = 'hello');
       await browserContext.close();
 
-      const browserContext2 = await playwright.launchPersistent(options);
+      const browserContext2 = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
       const page2 = await browserContext2.newPage();
       await page2.goto(server.EMPTY_PAGE);
       expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
       await browserContext2.close();
 
-      const browserContext3 = await playwright.launchPersistent(defaultBrowserOptions);
+      const userDataDir2 = await makeUserDataDir();
+      const browserContext3 = await playwright.launchPersistent(userDataDir2, defaultBrowserOptions);
       const page3 = await browserContext3.newPage();
       await page3.goto(server.EMPTY_PAGE);
       expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
       await browserContext3.close();
 
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-      await rmAsync(userDataDir).catch(e => {});
+      await removeUserDataDir(userDataDir);
+      await removeUserDataDir(userDataDir2);
     });
     // See https://github.com/microsoft/playwright/issues/717
     it.skip(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
-      const userDataDir = await mkdtempAsync(TMP_FOLDER);
-      const options = Object.assign({userDataDir}, defaultBrowserOptions);
-      const browserContext = await playwright.launchPersistent(options);
+      const userDataDir = await makeUserDataDir();
+      const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
       await browserContext.close();
 
-      const browserContext2 = await playwright.launchPersistent(options);
+      const browserContext2 = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
       const page2 = await browserContext2.newPage();
       await page2.goto(server.EMPTY_PAGE);
       expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
       await browserContext2.close();
 
-      const browserContext3 = await playwright.launchPersistent(defaultBrowserOptions);
+      const userDataDir2 = await makeUserDataDir();
+      const browserContext3 = await playwright.launchPersistent(userDataDir2, defaultBrowserOptions);
       const page3 = await browserContext3.newPage();
       await page3.goto(server.EMPTY_PAGE);
       expect(await page3.evaluate(() => localStorage.hey)).not.toBe('doSomethingOnlyOnce=true');
       await browserContext3.close();
 
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-      await rmAsync(userDataDir).catch(e => {});
+      await removeUserDataDir(userDataDir);
+      await removeUserDataDir(userDataDir2);
     });
   });
 };

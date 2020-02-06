@@ -66,17 +66,18 @@ module.exports.describe = function({testRunner, expect, product, playwright, pla
   }
 
   describe('Fixtures', function() {
-    xit('should dump browser process stderr', async({server}) => {
-      const browserServer = await playwright.launchServer({ dumpio: true });
+    it('should dump browser process stderr', async({server}) => {
       let dumpioData = '';
-      browserServer.process().stdout.on('data', data => dumpioData += data.toString('utf8'));
-      browserServer.process().stderr.on('data', data => dumpioData += data.toString('utf8'));
-      const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
-      const page = await browser.newPage();
-      await page.goto(`data:text/html,<script>console.error('message from dumpio')</script>`);
-      await new Promise(f => setTimeout(f, 1000));
-      await page.close();
-      await browserServer.close();
+      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product, 'usewebsocket']);
+      res.stderr.on('data', data => dumpioData += data.toString('utf8'));
+      await new Promise(resolve => res.on('close', resolve));
+      expect(dumpioData).toContain('message from dumpio');
+    });
+    it('should dump browser process stderr', async({server}) => {
+      let dumpioData = '';
+      const res = spawn('node', [path.join(__dirname, 'fixtures', 'dumpio.js'), playwrightPath, product]);
+      res.stderr.on('data', data => dumpioData += data.toString('utf8'));
+      await new Promise(resolve => res.on('close', resolve));
       expect(dumpioData).toContain('message from dumpio');
     });
     it('should close the browser when the node process closes', async () => {

@@ -42,8 +42,7 @@ export interface BrowserType {
   name(): string;
   launch(options?: LaunchOptions & { slowMo?: number }): Promise<Browser>;
   launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer>;
-  launchPersistent(options?: LaunchOptions & { userDataDir: string }): Promise<BrowserContext>;
-  defaultArgs(options?: BrowserArgOptions): string[];
+  launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
   devices: types.Devices;
   errors: { TimeoutError: typeof TimeoutError };

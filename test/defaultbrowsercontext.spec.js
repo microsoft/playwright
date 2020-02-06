@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+const { makeUserDataDir, removeUserDataDir } = require('./utils');
+
 module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, playwright }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
@@ -22,13 +24,15 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
 
   describe('launchPersistent()', function() {
     beforeEach(async state => {
-      state.browserContext = await playwright.launchPersistent(defaultBrowserOptions);
+      state.userDataDir = await makeUserDataDir();
+      state.browserContext = await playwright.launchPersistent(state.userDataDir, defaultBrowserOptions);
       state.page = await state.browserContext.newPage();
     });
     afterEach(async state => {
       await state.browserContext.close();
       delete state.browserContext;
       delete state.page;
+      await removeUserDataDir(state.userDataDir);
     });
     it('context.cookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
