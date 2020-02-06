@@ -144,7 +144,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     });
   });
 
-  fdescribe('BrowserContext.setCookies', function() {
+  describe('BrowserContext.setCookies', function() {
     it('should work', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.setCookies([{
