@@ -99,7 +99,7 @@ export class FFConnection extends platform.EventEmitter {
       const sessionId = object.params.sessionId;
       const session = new FFSession(this, object.params.targetInfo.type, sessionId, message => this._rawSend({...message, sessionId}));
       this._sessions.set(sessionId, session);
-    } else if (object.method === 'Browser.detachedFromTarget') {
+    } else if (object.method === 'Target.detachedFromTarget') {
       const session = this._sessions.get(object.params.sessionId);
       if (session) {
         session._onClosed();
