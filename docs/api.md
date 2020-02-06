@@ -798,7 +798,7 @@ Gets the full HTML contents of the page, including the doctype.
 
 - returns: <[Coverage]>
 
-> **NOTE** Code coverage is currently only supported in Chromium headless.
+> **NOTE** Code coverage is currently only supported in Chromium.
 
 #### page.dblclick(selector[, options])
 - `selector` <[string]> A selector to search for element to double click. If there are multiple elements satisfying the selector, the first will be double clicked.
