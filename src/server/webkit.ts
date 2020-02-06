@@ -53,7 +53,7 @@ export class WebKit implements BrowserType {
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
-    const { browserServer, transport } = await this._launchServer(options, 'local', null);
+    const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await WKBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     browser.close = () => browserServer.close();

@@ -112,7 +112,7 @@ export class WKPage implements PageDelegate {
       // Page agent must be enabled before Runtime.
       session.send('Page.enable'),
       session.send('Page.getResourceTree'),
-    ]);
+    ] as const);
     resourceTreeHandler(frameTree);
     const promises : Promise<any>[] = [
       // Resource tree should be received before first execution context.

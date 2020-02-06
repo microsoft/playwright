@@ -72,7 +72,7 @@
     "pixelmatch": "^4.0.2",
     "text-diff": "^1.0.1",
     "ts-loader": "^6.1.2",
-    "typescript": "3.6.3",
+    "typescript": "^3.7.5",
     "webpack": "^4.41.0",
     "webpack-cli": "^3.3.9"
   },

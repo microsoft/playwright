@@ -783,7 +783,7 @@ export class Frame {
       const context = await this._context('utility');
       const maybeHandle = await context._$(selector);
       assert(maybeHandle, 'No node found for selector: ' + selector);
-      handle = maybeHandle!;
+      handle = maybeHandle;
     }
     return handle;
   }

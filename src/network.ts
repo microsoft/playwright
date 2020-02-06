@@ -201,20 +201,20 @@ export class Request {
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
-    await this._delegate!.abort(errorCode);
+    await this._delegate.abort(errorCode);
   }
 
   async fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }) {    // Mocking responses for dataURL requests is not currently supported.
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
-    await this._delegate!.fulfill(response);
+    await this._delegate.fulfill(response);
   }
 
   async continue(overrides: { method?: string; headers?: Headers; postData?: string } = {}) {
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
-    await this._delegate!.continue(overrides);
+    await this._delegate.continue(overrides);
   }
 
   _isIntercepted(): boolean {

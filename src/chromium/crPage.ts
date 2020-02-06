@@ -91,7 +91,7 @@ export class CRPage implements PageDelegate {
     const [,{frameTree}] = await Promise.all([
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree'),
-    ]);
+    ] as const);
     this._handleFrameTree(frameTree);
     const promises: Promise<any>[] = [
       this._client.send('Log.enable', {}),

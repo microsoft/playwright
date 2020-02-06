@@ -188,8 +188,8 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
 
       close: async (): Promise<void> => {
         assert(browserContextId, 'Non-incognito profiles cannot be closed!');
-        await this._connection.send('Target.removeBrowserContext', { browserContextId: browserContextId! });
-        this._contexts.delete(browserContextId!);
+        await this._connection.send('Target.removeBrowserContext', { browserContextId });
+        this._contexts.delete(browserContextId);
       },
 
       cookies: async (): Promise<network.NetworkCookie[]> => {
