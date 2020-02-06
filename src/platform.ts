@@ -276,14 +276,22 @@ export function fetchUrl(url: string): Promise<string> {
   });
 }
 
-class WebSocketTransport implements ConnectionTransport {
+export class WebSocketTransport implements ConnectionTransport {
   private _ws: WebSocket;
 
   onmessage?: (message: string) => void;
   onclose?: () => void;
+  private _connect: Promise<void>;
 
-  constructor(ws: WebSocket) {
-    this._ws = ws;
+  constructor(url: string) {
+    this._ws = (isNode ? new NodeWebSocket(url, [], {
+      perMessageDeflate: false,
+      maxPayload: 256 * 1024 * 1024, // 256Mb
+    }) : new WebSocket(url)) as WebSocket;
+    this._connect = new Promise((fulfill, reject) => {
+      this._ws.addEventListener('open', () => fulfill());
+      this._ws.addEventListener('error', event => reject(new Error(event.toString())));
+    });
     this._ws.addEventListener('message', event => {
       if (this.onmessage)
         this.onmessage.call(null, event.data);
@@ -296,22 +304,12 @@ class WebSocketTransport implements ConnectionTransport {
     this._ws.addEventListener('error', () => {});
   }
 
-  send(message: string) {
+  async send(message: string) {
+    await this._connect;
     this._ws.send(message);
   }
 
   close() {
     this._ws.close();
   }
-}
-
-export function createWebSocketTransport(url: string): Promise<ConnectionTransport> {
-  return new Promise((resolve, reject) => {
-    const ws = (isNode ? new NodeWebSocket(url, [], {
-      perMessageDeflate: false,
-      maxPayload: 256 * 1024 * 1024, // 256Mb
-    }) : new WebSocket(url)) as WebSocket;
-    ws.addEventListener('open', () => resolve(new WebSocketTransport(ws)));
-    ws.addEventListener('error', reject);
-  });
 }

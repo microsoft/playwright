@@ -7,6 +7,6 @@ async function setup(product, wsEndpoint) {
 }
 async function teardown() {
   await window.context.close();
-  await window.browser.disconnect();
+  await window.browser.close();
 }
 </script>

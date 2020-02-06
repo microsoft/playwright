@@ -37,23 +37,19 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
 
   static async connect(transport: ConnectionTransport, slowMo?: number): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo));
-    const { browserContextIds } = await connection.send('Target.getBrowserContexts');
-    const browser = new FFBrowser(connection, browserContextIds);
+    const browser = new FFBrowser(connection);
     await connection.send('Target.enable');
     await browser._waitForTarget(t => t.type() === 'page');
     return browser;
   }
 
-  constructor(connection: FFConnection, browserContextIds: Array<string>) {
+  constructor(connection: FFConnection) {
     super();
     this._connection = connection;
     this._targets = new Map();
 
     this._defaultContext = this._createBrowserContext(null, {});
     this._contexts = new Map();
-    for (const browserContextId of browserContextIds)
-      this._contexts.set(browserContextId, this._createBrowserContext(browserContextId, {}));
-
     this._connection.on(ConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
 
     this._eventListeners = [
@@ -61,12 +57,6 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._connection, 'Target.targetInfoChanged', this._onTargetInfoChanged.bind(this)),
     ];
-  }
-
-  async disconnect() {
-    const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
-    this._connection.close();
-    await disconnected;
   }
 
   isConnected(): boolean {
@@ -154,9 +144,10 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   }
 
   async close() {
+    await Promise.all(this.browserContexts().map(context => context.close()));
     helper.removeEventListeners(this._eventListeners);
-    const disconnected = new Promise(f => this._connection.once(ConnectionEvents.Disconnected, f));
-    await this._connection.send('Browser.close');
+    const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
+    this._connection.close();
     await disconnected;
   }
 

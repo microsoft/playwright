@@ -23,7 +23,6 @@ export interface Browser extends platform.EventEmitterType {
   browserContexts(): BrowserContext[];
   pages(): Promise<Page[]>;
   newPage(url?: string, options?: BrowserContextOptions): Promise<Page>;
-  disconnect(): Promise<void>;
   isConnected(): boolean;
   close(): Promise<void>;
 }

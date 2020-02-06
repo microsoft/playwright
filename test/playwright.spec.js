@@ -200,16 +200,13 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   testRunner.loadTests(require('./fixtures.spec.js'), testOptions);
   testRunner.loadTests(require('./launcher.spec.js'), testOptions);
   testRunner.loadTests(require('./headful.spec.js'), testOptions);
+  testRunner.loadTests(require('./multiclient.spec.js'), testOptions);
 
   if (CHROMIUM) {
     testRunner.loadTests(require('./chromium/launcher.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/headful.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/oopif.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/tracing.spec.js'), testOptions);
-  }
-
-  if (CHROMIUM || FFOX) {
-    testRunner.loadTests(require('./multiclient.spec.js'), testOptions);
   }
 
   testRunner.loadTests(require('./web.spec.js'), testOptions);
