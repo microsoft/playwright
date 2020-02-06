@@ -1012,6 +1012,8 @@ const fs = require('fs');
 This method focuses the element and triggers an `input` event after filling.
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
 
+> **NOTE** Pass empty string as a value to clear the input field.
+
 Shortcut for [page.mainFrame().fill()](#framefillselector-value)
 
 #### page.focus(selector, options)
