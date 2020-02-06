@@ -237,7 +237,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const [quads, metrics] = await Promise.all([
       this._page._delegate.getContentQuads(this),
       this._page._delegate.layoutViewport(),
-    ]);
+    ] as const);
     if (!quads || !quads.length)
       throw new Error('Node is either not visible or not an HTMLElement');
 

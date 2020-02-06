@@ -93,8 +93,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
       close: async (): Promise<void> => {
         assert(contextId, 'Non-incognito profiles cannot be closed!');
-        await this._client.send('Target.disposeBrowserContext', { browserContextId: contextId! });
-        this._contexts.delete(contextId!);
+        await this._client.send('Target.disposeBrowserContext', { browserContextId: contextId });
+        this._contexts.delete(contextId);
       },
 
       cookies: async (): Promise<network.NetworkCookie[]> => {
@@ -288,7 +288,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     assert(this._tracingClient, 'Tracing was not started.');
     let fulfill: (buffer: platform.BufferType) => void;
     const contentPromise = new Promise<platform.BufferType>(x => fulfill = x);
-    this._tracingClient!.once('Tracing.tracingComplete', event => {
+    this._tracingClient.once('Tracing.tracingComplete', event => {
       readProtocolStream(this._tracingClient!, event.stream!, this._tracingPath).then(fulfill);
     });
     await this._tracingClient!.send('Tracing.end');
