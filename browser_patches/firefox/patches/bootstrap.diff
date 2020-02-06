@@ -469,15 +469,17 @@ index 6dca2b78830edc1ddbd66264bd332853729dac71..fbe89c9682834e11b9d9219d9eb056ed
  
 diff --git a/testing/juggler/BrowserContextManager.js b/testing/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..9856bccec5d7977406c9e074eca9b92f2346a142
+index 0000000000000000000000000000000000000000..a0a3799b6060692fa64f41411c0c276337d8f0c0
 --- /dev/null
 +++ b/testing/juggler/BrowserContextManager.js
-@@ -0,0 +1,173 @@
+@@ -0,0 +1,174 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const helper = new Helper();
 +
 +const IDENTITY_NAME = 'JUGGLER ';
 +const HUNDRED_YEARS = 60 * 60 * 24 * 365 * 100;
@@ -501,7 +503,6 @@ index 0000000000000000000000000000000000000000..9856bccec5d7977406c9e074eca9b92f
 +  }
 +
 +  constructor() {
-+    this._id = 0;
 +    this._browserContextIdToUserContextId = new Map();
 +    this._userContextIdToBrowserContextId = new Map();
 +    this._principalsForBrowserContextId = new Map();
@@ -539,7 +540,7 @@ index 0000000000000000000000000000000000000000..9856bccec5d7977406c9e074eca9b92f
 +  }
 +
 +  createBrowserContext() {
-+    const browserContextId = (++this._id) + '';
++    const browserContextId = helper.generateId();
 +    const identity = ContextualIdentityService.create(IDENTITY_NAME + browserContextId);
 +    this._browserContextIdToUserContextId.set(browserContextId, identity.userContextId);
 +    this._userContextIdToBrowserContextId.set(identity.userContextId, browserContextId);
@@ -648,10 +649,10 @@ index 0000000000000000000000000000000000000000..9856bccec5d7977406c9e074eca9b92f
 +
 diff --git a/testing/juggler/Helper.js b/testing/juggler/Helper.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..673e93b0278a3502d94006696cea7e6e8e820deb
+index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2cd8c9cef
 --- /dev/null
 +++ b/testing/juggler/Helper.js
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,102 @@
 +const uuidGen = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +
@@ -691,7 +692,8 @@ index 0000000000000000000000000000000000000000..673e93b0278a3502d94006696cea7e6e
 +  }
 +
 +  generateId() {
-+    return uuidGen.generateUUID().toString();
++    const string = uuidGen.generateUUID().toString();
++    return string.substring(1, string.length - 1);
 +  }
 +
 +  getNetworkErrorStatusText(status) {
@@ -1442,10 +1444,10 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..da5e4ee371d03bd0c6524cef694b12b735f57350
+index 0000000000000000000000000000000000000000..69c68d0bb5dd79df4e8b6d586481c275aa9fc242
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,187 @@
+@@ -0,0 +1,185 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -1560,11 +1562,9 @@ index 0000000000000000000000000000000000000000..da5e4ee371d03bd0c6524cef694b12b7
 +  }
 +}
 +
-+let lastTabTargetId = 0;
-+
 +class PageTarget {
 +  constructor(registry, tab, browserContextId, opener) {
-+    this._targetId = 'target-page-' + (++lastTabTargetId);
++    this._targetId = helper.generateId();
 +    this._registry = registry;
 +    this._tab = tab;
 +    this._browserContextId = browserContextId;
@@ -1635,20 +1635,21 @@ index 0000000000000000000000000000000000000000..da5e4ee371d03bd0c6524cef694b12b7
 +this.TargetRegistry = TargetRegistry;
 diff --git a/testing/juggler/components/juggler.js b/testing/juggler/components/juggler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..f1f13445d04aa4b54fa05a1d33e67710976e4be4
+index 0000000000000000000000000000000000000000..055b032beff4b7d66a9f33d600dd8d2926867a34
 --- /dev/null
 +++ b/testing/juggler/components/juggler.js
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,116 @@
 +const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Dispatcher} = ChromeUtils.import("chrome://juggler/content/protocol/Dispatcher.js");
 +const {BrowserContextManager} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
 +const {NetworkObserver} = ChromeUtils.import("chrome://juggler/content/NetworkObserver.js");
 +const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const helper = new Helper();
 +
 +const Cc = Components.classes;
 +const Ci = Components.interfaces;
-+const Cu = Components.utils;
 +
 +const FRAME_SCRIPT = "chrome://juggler/content/content/main.js";
 +
@@ -1688,11 +1689,7 @@ index 0000000000000000000000000000000000000000..f1f13445d04aa4b54fa05a1d33e67710
 +    this._server = Cc["@mozilla.org/network/server-socket;1"].createInstance(Ci.nsIServerSocket);
 +    this._server.initSpecialConnection(this._port, Ci.nsIServerSocket.KeepWhenOffline | Ci.nsIServerSocket.LoopbackOnly, 4);
 +
-+    const rng = Cc["@mozilla.org/security/random-generator;1"].createInstance(
-+      Ci.nsIRandomGenerator
-+    );
-+    const bytes = rng.generateRandomBytes(16);
-+    const token = bytes.map(x => ('00' + x.toString(16)).slice(-2)).join('');
++    const token = helper.generateId();
 +
 +    this._server.asyncListen({
 +      onSocketAccepted: async(socket, transport) => {
@@ -4934,10 +4931,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..db7516be616a7f9b907d49acea837b7a5b00001d
+index 0000000000000000000000000000000000000000..099cda1dd5ad6d62e077482131c62784934c460c
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,756 @@
+@@ -0,0 +1,759 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5190,6 +5187,9 @@ index 0000000000000000000000000000000000000000..db7516be616a7f9b907d49acea837b7a
 +      }
 +    },
 +    'createBrowserContext': {
++      params: {
++        removeOnDetach: t.Optional(t.Boolean),
++      },
 +      returns: {
 +        browserContextId: t.String,
 +      },
@@ -5743,10 +5743,10 @@ index 0000000000000000000000000000000000000000..0026e8ff58ef6268f4c63783d0ff68ff
 +this.RuntimeHandler = RuntimeHandler;
 diff --git a/testing/juggler/protocol/TargetHandler.js b/testing/juggler/protocol/TargetHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..4ea36eeba75864ddb09d4a9c0814f18ccfdd7bde
+index 0000000000000000000000000000000000000000..720f82716b78a1f3ea6d5ca4ee4ec8bf832f2996
 --- /dev/null
 +++ b/testing/juggler/protocol/TargetHandler.js
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,83 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -5764,6 +5764,7 @@ index 0000000000000000000000000000000000000000..4ea36eeba75864ddb09d4a9c0814f18c
 +    this._contextManager = BrowserContextManager.instance();
 +    this._targetRegistry = TargetRegistry.instance();
 +    this._enabled = false;
++    this._browserContextsToDispose = new Set();
 +    this._eventListeners = [];
 +  }
 +
@@ -5772,11 +5773,15 @@ index 0000000000000000000000000000000000000000..4ea36eeba75864ddb09d4a9c0814f18c
 +    return {sessionId};
 +  }
 +
-+  async createBrowserContext() {
-+    return {browserContextId: this._contextManager.createBrowserContext()};
++  async createBrowserContext({removeOnDetach}) {
++    const browserContextId = this._contextManager.createBrowserContext();
++    if (removeOnDetach)
++      this._browserContextsToDispose.add(browserContextId);
++    return {browserContextId};
 +  }
 +
 +  async removeBrowserContext({browserContextId}) {
++    this._browserContextsToDispose.delete(browserContextId);
 +    this._contextManager.removeBrowserContext(browserContextId);
 +  }
 +
@@ -5800,6 +5805,9 @@ index 0000000000000000000000000000000000000000..4ea36eeba75864ddb09d4a9c0814f18c
 +
 +  dispose() {
 +    helper.removeListeners(this._eventListeners);
++    for (const browserContextId of this._browserContextsToDispose)
++      this._contextManager.removeBrowserContext(browserContextId);
++    this._browserContextsToDispose.clear();
 +  }
 +
 +  _onTargetCreated(targetInfo) {
