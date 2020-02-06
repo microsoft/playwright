@@ -437,6 +437,10 @@ export class Frame {
       throw error;
   }
 
+  async frameElement(): Promise<dom.ElementHandle> {
+    return this._page._delegate.getFrameElement(this);
+  }
+
   _context(contextType: ContextType): Promise<dom.FrameExecutionContext> {
     if (this._detached)
       throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);

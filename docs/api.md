@@ -1676,6 +1676,7 @@ An example of getting text from an iframe element:
 - [frame.evaluateHandle(pageFunction[, ...args])](#frameevaluatehandlepagefunction-args)
 - [frame.fill(selector, value, options)](#framefillselector-value-options)
 - [frame.focus(selector, options)](#framefocusselector-options)
+- [frame.frameElement()](#frameframeelement)
 - [frame.goto(url[, options])](#framegotourl-options)
 - [frame.hover(selector[, options])](#framehoverselector-options)
 - [frame.isDetached()](#frameisdetached)
@@ -1915,6 +1916,19 @@ If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matchi
 
 This method fetches an element with `selector` and focuses it.
 If there's no element matching `selector`, the method throws an error.
+
+#### frame.frameElement()
+- returns: <[Promise]<[ElementHandle]>> Promise that resolves with a `frame` or `iframe` element handle which corresponds to this frame.
+
+This is an inverse of [elementHandle.contentFrame()](#elementhandlecontentframe). Note that returned handle actually belongs to the parent frame.
+
+This method throws an error if the frame has been detached before `frameElement()` returns.
+
+```js
+const frameElement = await frame.frameElement();
+const contentFrame = await frameElement.contentFrame();
+console.log(frame === contentFrame);  // -> true
+```
 
 #### frame.goto(url[, options])
 - `url` <[string]> URL to navigate frame to. The url should include scheme, e.g. `https://`.

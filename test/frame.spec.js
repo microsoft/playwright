@@ -31,6 +31,36 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
   });
 
+  describe('Frame.frameElement', function() {
+    it('should work', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const frame2 = await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
+      const frame3 = await utils.attachFrame(page, 'frame3', server.EMPTY_PAGE);
+      const frame1handle1 = await page.$('#frame1');
+      const frame1handle2 = await frame1.frameElement();
+      const frame3handle1 = await page.$('#frame3');
+      const frame3handle2 = await frame3.frameElement();
+      expect(await frame1handle1.evaluate((a, b) => a === b, frame1handle2)).toBe(true);
+      expect(await frame3handle1.evaluate((a, b) => a === b, frame3handle2)).toBe(true);
+      expect(await frame1handle1.evaluate((a, b) => a === b, frame3handle1)).toBe(false);
+    });
+    it('should work with contentFrame', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const frame = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      const handle = await frame.frameElement();
+      const contentFrame = await handle.contentFrame();
+      expect(contentFrame).toBe(frame);
+    });
+    it('should throw when detached', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+      await page.$eval('#frame1', e => e.remove());
+      const error = await frame1.frameElement().catch(e => e);
+      expect(error.message).toBe('Frame has been detached.');
+    });
+  });
+
   describe('Frame.evaluate', function() {
     it('should throw for detached frames', async({page, server}) => {
       const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);

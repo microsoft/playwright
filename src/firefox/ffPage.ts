@@ -443,6 +443,23 @@ export class FFPage implements PageDelegate {
   coverage(): Coverage | undefined {
     return undefined;
   }
+
+  async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
+    const parent = frame.parentFrame();
+    if (!parent)
+      throw new Error('Frame has been detached.');
+    const context = await parent._utilityContext();
+    const handles = await context._$$('iframe');
+    const items = await Promise.all(handles.map(async handle => {
+      const frame = await handle.contentFrame().catch(e => null);
+      return { handle, frame };
+    }));
+    const result = items.find(item => item.frame === frame);
+    await Promise.all(items.map(item => item === result ? Promise.resolve() : item.handle.dispose()));
+    if (!result)
+      throw new Error('Frame has been detached.');
+    return result.handle;
+  }
 }
 
 export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[]): frames.LifecycleEvent[] {
