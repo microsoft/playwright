@@ -62,8 +62,8 @@ export class Chromium implements BrowserType {
     return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
   }
 
-  async launchPersistent(options?: LaunchOptions & { userDataDir?: string }): Promise<BrowserContext> {
-    const { browserServer, transport } = await this._launchServer(options, 'persistent', options && options.userDataDir);
+  async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+    const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await CRBrowser.connect(transport!);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
@@ -84,27 +84,19 @@ export class Chromium implements BrowserType {
       timeout = 30000
     } = options;
 
-    const chromeArguments = [];
-    if (!ignoreDefaultArgs)
-      chromeArguments.push(...this.defaultArgs(options));
-    else if (Array.isArray(ignoreDefaultArgs))
-      chromeArguments.push(...this.defaultArgs(options).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
-    else
-      chromeArguments.push(...args);
-
-    const userDataDirArg = chromeArguments.find(arg => arg.startsWith('--user-data-dir='));
-    if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
-    if (chromeArguments.find(arg => arg.startsWith('--remote-debugging-')))
-      throw new Error('Can\' use --remote-debugging-* args. Playwright manages remote debugging connection itself');
-
     let temporaryUserDataDir: string | null = null;
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
-      temporaryUserDataDir = await mkdtempAsync(CHROMIUM_PROFILE_PATH);
+      temporaryUserDataDir = userDataDir!;
     }
-    chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    chromeArguments.push(launchType === 'server' ? `--remote-debugging-port=${port || 0}` : '--remote-debugging-pipe');
+
+    const chromeArguments = [];
+    if (!ignoreDefaultArgs)
+      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0));
+    else if (Array.isArray(ignoreDefaultArgs))
+      chromeArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+    else
+      chromeArguments.push(...args);
 
     let chromeExecutable = executablePath;
     if (!executablePath) {
@@ -113,7 +105,6 @@ export class Chromium implements BrowserType {
         throw new Error(missingText);
       chromeExecutable = executablePath;
     }
-
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: chromeExecutable!,
@@ -172,13 +163,21 @@ export class Chromium implements BrowserType {
     return { TimeoutError };
   }
 
-  defaultArgs(options: BrowserArgOptions = {}): string[] {
+  private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
     const {
       devtools = false,
       headless = !devtools,
       args = [],
     } = options;
+    const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
+    if (userDataDirArg)
+      throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
+    if (args.find(arg => arg.startsWith('--remote-debugging-')))
+      throw new Error('Playwright manages remote debugging connection itself.');
+
     const chromeArguments = [...DEFAULT_ARGS];
+    chromeArguments.push(`--user-data-dir=${userDataDir}`);
+    chromeArguments.push(launchType === 'server' ? `--remote-debugging-port=${port || 0}` : '--remote-debugging-pipe');
     if (devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (headless) {
@@ -188,9 +187,10 @@ export class Chromium implements BrowserType {
           '--mute-audio'
       );
     }
+    chromeArguments.push(...args);
     if (args.every(arg => arg.startsWith('-')))
       chromeArguments.push('about:blank');
-    chromeArguments.push(...args);
+
     return chromeArguments;
   }
 
