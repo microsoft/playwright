@@ -277,10 +277,10 @@ index 267856626bdf2e7411b4ac975d4f64b824c826a1..03b7a44b39b5b3303c2519614dd39863
 +  attribute boolean bypassCSPEnabled;
  };
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 30fcad1287506dea12d358d0f2a4bcd5103ceb0c..7f6fd045652d701b5f2e4b080642195f621bf6c8 100644
+index 9eac6924968638025556b8e97546ed3d91bfe28d..8839c880b75f00cb475bee7f68c48112e5263a1c 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
-@@ -3249,6 +3249,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
+@@ -3267,6 +3267,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
  }
  
  void Document::ApplySettingsFromCSP(bool aSpeculative) {
@@ -290,7 +290,7 @@ index 30fcad1287506dea12d358d0f2a4bcd5103ceb0c..7f6fd045652d701b5f2e4b080642195f
    nsresult rv = NS_OK;
    if (!aSpeculative) {
      // 1) apply settings from regular CSP
-@@ -3298,6 +3301,11 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
+@@ -3316,6 +3319,11 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
      return NS_OK;
    }
  
