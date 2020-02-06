@@ -525,6 +525,18 @@ export class CRPage implements PageDelegate {
   coverage(): Coverage | undefined {
     return this._coverage;
   }
+
+  async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
+    const { backendNodeId } = await this._client.send('DOM.getFrameOwner', { frameId: frame._id }).catch(e => {
+      if (e instanceof Error && e.message.includes('Frame with the given id was not found.'))
+        e.message = 'Frame has been detached.';
+      throw e;
+    });
+    const parent = frame.parentFrame();
+    if (!parent)
+      throw new Error('Frame has been detached.');
+    return this.adoptBackendNodeId(backendNodeId, await parent._mainContext());
+  }
 }
 
 function toRemoteObject(handle: js.JSHandle): Protocol.Runtime.RemoteObject {
