@@ -17,11 +17,13 @@
 
 import { debugError, helper, RegisteredListener } from '../helper';
 import { ConnectionTransport } from '../transport';
+import { makeWaitForNextTask } from '../platform';
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeWrite: NodeJS.WritableStream | null;
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
+  private _waitForNextTask = makeWaitForNextTask();
   onmessage?: (message: string) => void;
   onclose?: () => void;
 
@@ -52,14 +54,19 @@ export class PipeTransport implements ConnectionTransport {
       return;
     }
     const message = this._pendingMessage + buffer.toString(undefined, 0, end);
-    if (this.onmessage)
-      this.onmessage.call(null, message);
+    this._waitForNextTask(() => {
+      if (this.onmessage)
+        this.onmessage.call(null, message);
+    });
 
     let start = end + 1;
     end = buffer.indexOf('\0', start);
     while (end !== -1) {
-      if (this.onmessage)
-        this.onmessage.call(null, buffer.toString(undefined, start, end));
+      const message = buffer.toString(undefined, start, end);
+      this._waitForNextTask(() => {
+        if (this.onmessage)
+          this.onmessage.call(null, message);
+      });
       start = end + 1;
       end = buffer.indexOf('\0', start);
     }
