@@ -3895,7 +3895,7 @@ const { chromium } = require('playwright');
 [Accessibility]: #class-accessibility "Accessibility"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Body]: #class-body  "Body"
-[BrowserServer]: #class-browserapp  "BrowserServer"
+[BrowserServer]: #class-browserserver  "BrowserServer"
 [BrowserContext]: #class-browsercontext  "BrowserContext"
 [BrowserType]: #class-browsertype "BrowserType"
 [Browser]: #class-browser  "Browser"
