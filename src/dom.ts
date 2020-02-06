@@ -414,7 +414,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, value);
     if (error)
       throw new Error(error);
-    await this._page.keyboard.sendCharacters(value);
+    if (value)
+      await this._page.keyboard.sendCharacters(value);
+    else
+      await this._page.keyboard.press('Backspace');
   }
 
   async setInputFiles(...files: (string | types.FilePayload)[]) {
