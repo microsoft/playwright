@@ -38,7 +38,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
-      const expression: string = pageFunction as string;
+      const expression: string = pageFunction;
       const expressionWithSourceUrl = SOURCE_URL_REGEX.test(expression) ? expression : expression + '\n' + suffix;
       const {exceptionDetails, result: remoteObject} = await this._client.send('Runtime.evaluate', {
         expression: expressionWithSourceUrl,

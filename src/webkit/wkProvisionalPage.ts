@@ -57,7 +57,7 @@ export class WKProvisionalPage {
 
   commit() {
     assert(this._mainFrameId);
-    this._wkPage._onFrameAttached(this._mainFrameId!, null);
+    this._wkPage._onFrameAttached(this._mainFrameId, null);
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {

@@ -334,7 +334,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
     if (method === 'Browser.provisionalLoadFailed') {
       const socket = pageProxyIds.get(params.pageProxyId);
       if (socket && socket.readyState !== ws.CLOSING)
-        socket!.send(message);
+        socket.send(message);
       return;
     }
   };

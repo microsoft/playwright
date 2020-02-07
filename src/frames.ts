@@ -767,9 +767,9 @@ export class Frame {
 
   async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & { visibility?: types.Visibility } = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.waitForSelector(selectorOrFunctionOrTimeout as string, options) as any;
+      return this.waitForSelector(selectorOrFunctionOrTimeout, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
-      return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout as number));
+      return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
     if (typeof selectorOrFunctionOrTimeout === 'function')
       return this.waitForFunction(selectorOrFunctionOrTimeout, options, ...args);
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));

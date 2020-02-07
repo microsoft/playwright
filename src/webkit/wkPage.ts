@@ -156,9 +156,9 @@ export class WKPage implements PageDelegate {
 
   onProvisionalLoadCommitted(session: WKSession) {
     assert(this._provisionalPage);
-    assert(this._provisionalPage!._session === session);
-    this._provisionalPage!.commit();
-    this._provisionalPage!.dispose();
+    assert(this._provisionalPage._session === session);
+    this._provisionalPage.commit();
+    this._provisionalPage.dispose();
     this._provisionalPage = null;
     this._setSession(session);
   }
@@ -260,7 +260,7 @@ export class WKPage implements PageDelegate {
   private _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     const frame = this._page._frameManager.frame(framePayload.id);
     assert(frame);
-    this._removeContextsForFrame(frame!, true);
+    this._removeContextsForFrame(frame, true);
     if (!framePayload.parentId)
       this._workers.clear();
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
@@ -306,7 +306,7 @@ export class WKPage implements PageDelegate {
     if (this._pageProxySession.isDisposed())
       throw new Error('Target closed');
     const pageProxyId = this._pageProxySession.sessionId;
-    const result = await this._pageProxySession.connection!.browserSession.send('Browser.navigate', { url, pageProxyId, frameId: frame._id, referrer });
+    const result = await this._pageProxySession.connection.browserSession.send('Browser.navigate', { url, pageProxyId, frameId: frame._id, referrer });
     return { newDocumentId: result.loaderId, isSameDocument: !result.loaderId };
   }
 

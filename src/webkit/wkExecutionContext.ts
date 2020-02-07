@@ -72,7 +72,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   private async _evaluateRemoteObject(pageFunction: Function | string, args: any[]): Promise<any> {
     if (helper.isString(pageFunction)) {
       const contextId = this._contextId;
-      const expression: string = pageFunction as string;
+      const expression: string = pageFunction;
       const expressionWithSourceUrl = SOURCE_URL_REGEX.test(expression) ? expression : expression + '\n' + suffix;
       return await this._session.send('Runtime.evaluate', {
         expression: expressionWithSourceUrl,

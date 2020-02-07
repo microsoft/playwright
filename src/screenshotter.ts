@@ -100,7 +100,7 @@ export class Screenshotter {
 
       let maybeBoundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
       assert(maybeBoundingBox, 'Node is either not visible or not an HTMLElement');
-      let boundingBox = maybeBoundingBox!;
+      let boundingBox = maybeBoundingBox;
       assert(boundingBox.width !== 0, 'Node has 0 width.');
       assert(boundingBox.height !== 0, 'Node has 0 height.');
       boundingBox = enclosingIntRect(boundingBox);
@@ -118,7 +118,7 @@ export class Screenshotter {
           });
           if (!maybeViewportSize)
             throw new Error(kScreenshotDuringNavigationError);
-          viewportSize = maybeViewportSize!;
+          viewportSize = maybeViewportSize;
         } else {
           viewportSize = viewport;
         }
@@ -132,7 +132,7 @@ export class Screenshotter {
         await handle.scrollIntoViewIfNeeded();
         maybeBoundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
         assert(maybeBoundingBox, 'Node is either not visible or not an HTMLElement');
-        boundingBox = enclosingIntRect(maybeBoundingBox!);
+        boundingBox = enclosingIntRect(maybeBoundingBox);
       }
 
       if (!overridenViewport)

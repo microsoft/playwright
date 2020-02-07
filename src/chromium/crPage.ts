@@ -282,12 +282,12 @@ export class CRPage implements PageDelegate {
 
   _onDialog(event : Protocol.Page.javascriptDialogOpeningPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
-      event.type as dialog.DialogType,
-      event.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
-      },
-      event.defaultPrompt));
+        event.type,
+        event.message,
+        async (accept: boolean, promptText?: string) => {
+          await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
+        },
+        event.defaultPrompt));
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {

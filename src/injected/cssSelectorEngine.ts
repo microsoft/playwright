@@ -64,7 +64,7 @@ export const CSSEngine: SelectorEngine = {
       // Ordinal is the weakest signal.
       if (parent) {
         const siblings = Array.from(parent.children);
-        const sameTagSiblings = siblings.filter(sibling => (sibling as Element).nodeName.toLowerCase() === nodeName);
+        const sameTagSiblings = siblings.filter(sibling => (sibling).nodeName.toLowerCase() === nodeName);
         const token = sameTagSiblings.length === 1 ? nodeName : `${nodeName}:nth-child(${1 + siblings.indexOf(element)})`;
         const selector = uniqueCSSSelector(token);
         if (selector)

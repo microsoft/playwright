@@ -119,9 +119,9 @@ export class WKPageProxy {
         return null;
       return await pageProxy.page();
     });
-    await this._wkPage.initialize(session!);
+    await this._wkPage.initialize(session);
     if (this._pagePausedOnStart) {
-      this._resumeTarget(session!.sessionId);
+      this._resumeTarget(session.sessionId);
       this._pagePausedOnStart = false;
     }
     return this._wkPage._page;
@@ -169,17 +169,17 @@ export class WKPageProxy {
     const { targetId, crashed } = event;
     const session = this._sessions.get(targetId);
     assert(session, 'Unknown target destroyed: ' + targetId);
-    session!.dispose();
+    session.dispose();
     this._sessions.delete(targetId);
     if (this._wkPage)
-      this._wkPage.onSessionDestroyed(session!, crashed);
+      this._wkPage.onSessionDestroyed(session, crashed);
   }
 
   private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
     const { targetId, message } = event;
     const session = this._sessions.get(targetId);
     assert(session, 'Unknown target: ' + targetId);
-    session!.dispatchMessage(JSON.parse(message));
+    session.dispatchMessage(JSON.parse(message));
   }
 
   private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
@@ -189,9 +189,9 @@ export class WKPageProxy {
     const oldSession = this._sessions.get(oldTargetId);
     assert(oldSession, 'Unknown old target: ' + oldTargetId);
     // TODO: make some calls like screenshot catch swapped out error and retry.
-    oldSession!.errorText = 'Target was swapped out.';
+    oldSession.errorText = 'Target was swapped out.';
     (newSession as any)[isPovisionalSymbol] = undefined;
     if (this._wkPage)
-      this._wkPage.onProvisionalLoadCommitted(newSession!);
+      this._wkPage.onProvisionalLoadCommitted(newSession);
   }
 }
