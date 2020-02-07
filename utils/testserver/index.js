@@ -222,8 +222,8 @@ class TestServer {
   }
 
   /**
-   * @{!http.IncomingMessage} request
-   * @param!http.ServerResponse} response
+   * @param {!http.IncomingMessage} request
+   * @param {!http.ServerResponse} response
    * @param {string} pathName
    */
   serveFile(request, response, pathName) {
