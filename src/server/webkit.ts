@@ -22,7 +22,7 @@ import * as types from '../types';
 import { WKBrowser } from '../webkit/wkBrowser';
 import { execSync } from 'child_process';
 import { PipeTransport } from './pipeTransport';
-import { launchProcess } from './processLauncher';
+import { launchProcess, waitForLine } from './processLauncher';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as platform from '../platform';
@@ -84,6 +84,7 @@ export class WebKit implements BrowserType {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
+      timeout = 30000
     } = options;
 
     let temporaryUserDataDir: string | null = null;
@@ -135,6 +136,8 @@ export class WebKit implements BrowserType {
       },
     });
 
+    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to WebKit!`);
+    await waitForLine(launchedProcess, launchedProcess.stdout, /^Web Inspector is reading from pipe #3$/, timeout, timeoutError);
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };
