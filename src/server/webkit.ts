@@ -136,7 +136,7 @@ export class WebKit implements BrowserType {
     });
 
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };
   }
 
@@ -253,7 +253,7 @@ class SequenceNumberMixer<V> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
+async function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
   const server = new ws.Server({ port });
   const guid = uuidv4();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
@@ -262,8 +262,11 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   const browserContextIds = new Map<string, ws>();
   const pageProxyIds = new Map<string, ws>();
   const sockets = new Set<ws>();
+  let processStartedCallback: () => void;
+  const processStarted = new Promise(f => processStartedCallback = f);
 
   transport.onmessage = message => {
+    processStartedCallback();
     const parsedMessage = JSON.parse(message);
     if ('id' in parsedMessage) {
       if (parsedMessage.id === -9999)
@@ -399,5 +402,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   const address = server.address();
   if (typeof address === 'string')
     return address + '/' + guid;
+  await processStarted;
   return 'ws://127.0.0.1:' + address.port + '/' + guid;
 }
