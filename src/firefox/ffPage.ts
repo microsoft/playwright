@@ -119,7 +119,7 @@ export class FFPage implements PageDelegate {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    context.frame._contextDestroyed(context as dom.FrameExecutionContext);
+    context.frame._contextDestroyed(context);
   }
 
   private _removeContextsForFrame(frame: frames.Frame) {
@@ -180,12 +180,12 @@ export class FFPage implements PageDelegate {
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
-      params.type as dialog.DialogType,
-      params.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(debugError);
-      },
-      params.defaultValue));
+        params.type,
+        params.message,
+        async (accept: boolean, promptText?: string) => {
+          await this._session.send('Page.handleDialog', { dialogId: params.dialogId, accept, promptText }).catch(debugError);
+        },
+        params.defaultValue));
   }
 
   _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {

@@ -287,7 +287,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     this._tracingClient.once('Tracing.tracingComplete', event => {
       readProtocolStream(this._tracingClient!, event.stream!, this._tracingPath).then(fulfill);
     });
-    await this._tracingClient!.send('Tracing.end');
+    await this._tracingClient.send('Tracing.end');
     this._tracingRecording = false;
     return contentPromise;
   }

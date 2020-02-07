@@ -48,9 +48,9 @@ function convertPrintParameterToInches(parameter: (string | number | undefined))
   let pixels: number;
   if (helper.isNumber(parameter)) {
     // Treat numbers as pixel values to be aligned with phantom's paperSize.
-    pixels = parameter as number;
+    pixels = parameter;
   } else if (helper.isString(parameter)) {
-    const text: string = parameter as string;
+    const text: string = parameter;
     let unit = text.substring(text.length - 2).toLowerCase();
     let valueText = '';
     if (unitToPixels.hasOwnProperty(unit)) {

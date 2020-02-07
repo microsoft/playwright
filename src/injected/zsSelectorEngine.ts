@@ -780,9 +780,9 @@ const ZSSelectorEngine: SelectorEngine = {
     while (e && e.namespaceURI && e.namespaceURI.endsWith('svg') && e.nodeName.toLowerCase() !== 'svg')
       e = e.parentElement!;
     try {
-      document.documentElement!.style!.outline = '1px solid red';
+      document.documentElement.style.outline = '1px solid red';
       const selector = new Engine().create(document.documentElement, e, 'default');
-      document.documentElement!.style!.outline = '1px solid green';
+      document.documentElement.style.outline = '1px solid green';
       const e2 = new Engine().query(document.documentElement, selector, false)[0];
       return e !== e2;
     } catch (e) {

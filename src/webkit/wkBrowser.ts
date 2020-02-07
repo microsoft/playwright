@@ -197,8 +197,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
       close: async (): Promise<void> => {
         assert(browserContextId, 'Non-incognito profiles cannot be closed!');
-        await this._browserSession.send('Browser.deleteContext', { browserContextId: browserContextId! });
-        this._contexts.delete(browserContextId!);
+        await this._browserSession.send('Browser.deleteContext', { browserContextId: browserContextId });
+        this._contexts.delete(browserContextId);
       },
 
       cookies: async (): Promise<network.NetworkCookie[]> => {
