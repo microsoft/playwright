@@ -49,13 +49,7 @@ let lastLaunchedId = 0;
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const id = ++lastLaunchedId;
-  let stdio: ('ignore' | 'pipe')[] = ['pipe', 'pipe', 'pipe'];
-  if (options.pipe) {
-    if (options.dumpio)
-      stdio = ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'];
-    else
-      stdio = ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'];
-  }
+  const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
   const spawnedProcess = childProcess.spawn(
       options.executablePath,
       options.args,
@@ -80,8 +74,11 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   }
 
   if (options.dumpio) {
-    spawnedProcess.stderr.pipe(process.stderr);
     spawnedProcess.stdout.pipe(process.stdout);
+    spawnedProcess.stderr.pipe(process.stderr);
+  } else {
+    spawnedProcess.stderr.on('data', () => {});
+    spawnedProcess.stdout.on('data', () => {});
   }
 
   let processClosed = false;
