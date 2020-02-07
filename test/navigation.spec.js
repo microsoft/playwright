@@ -739,24 +739,20 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     it('should pick up ongoing navigation', async({page, server}) => {
       let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
-      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
-      await server.waitForRequest('/one-style.css');
+      await Promise.all([
+        server.waitForRequest('/one-style.css'),
+        page.goto(server.PREFIX + '/one-style.html', {waitUntil: []}),
+      ]);
       const waitPromise = page.waitForLoadState();
       response.statusCode = 404;
       response.end('Not found');
       await waitPromise;
-      await navigationPromise;
     });
     it('should respect timeout', async({page, server}) => {
-      let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
-      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
-      await server.waitForRequest('/one-style.css');
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: []});
       const error = await page.waitForLoadState({ timeout: 1 }).catch(e => e);
       expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
-      response.statusCode = 404;
-      response.end('Not found');
-      await navigationPromise;
     });
     it('should resolve immediately if loaded', async({page, server}) => {
       await page.goto(server.PREFIX + '/one-style.html');
@@ -764,14 +760,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     });
     it('should resolve immediately if load state matches', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
-      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
-      await server.waitForRequest('/one-style.css');
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: []});
       await page.waitForLoadState({ waitUntil: 'domcontentloaded' });
-      response.statusCode = 404;
-      response.end('Not found');
-      await navigationPromise;
     });
     it.skip(FFOX)('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
@@ -844,6 +835,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.$eval('iframe', frame => frame.remove());
       const error = await navigationPromise;
       expect(error.message).toContain('frame was detached');
+      expect(error.stack).toContain('Frame.goto')
     });
     it('should return matching responses', async({page, server}) => {
       // Disable cache: otherwise, chromium will cache similar requests.
@@ -901,6 +893,24 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.$eval('iframe', frame => frame.remove());
       await navigationPromise;
       expect(error.message).toContain('frame was detached');
+    });
+  });
+
+  describe('Frame.waitForLodState', function() {
+    it('should work', async({page, server}) => {
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+      const frame = page.frames()[1];
+      
+      const requestPromise = new Promise(resolve => page.route(server.PREFIX + '/one-style.css',resolve));
+      await frame.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
+      const request = await requestPromise;
+      let resolved = false;
+      const loadPromise = frame.waitForLoadState().then(() => resolved = true);
+      // give the promise a chance to resolve, even though it shouldn't
+      await page.evaluate('1');
+      expect(resolved).toBe(false);
+      request.continue();
+      await loadPromise;
     });
   });
 
