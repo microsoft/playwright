@@ -48,6 +48,8 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   EXPECTED_HOST_OS="MINGW"
 elif [[ "$BUILD_FLAVOR" == "webkit-gtk" ]]; then
   BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--gtk"
+  EXTRA_ARCHIVE_ARGS="--gtk"
   EXPECTED_HOST_OS="Linux"
 elif [[ "$BUILD_FLAVOR" == "webkit-wpe" ]]; then
   BROWSER_NAME="webkit"

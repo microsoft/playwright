@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0) [output-absolute-path] [--wpe]"
+  echo "usage: $(basename $0) [output-absolute-path] [--wpe|--gtk]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
@@ -11,7 +11,7 @@ if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
 fi
 
 ZIP_PATH=$1
-USE_WPE=$2
+LINUX_FLAVOR=$2
 if [[ $ZIP_PATH != /* ]]; then
   echo "ERROR: path $ZIP_PATH is not absolute"
   exit 1
@@ -55,7 +55,7 @@ createZipForLinux() {
   # copy protocol
   node ../concat_protocol.js > $tmpdir/protocol.json
 
-  if [[ -n $USE_WPE ]]; then
+  if [[ "$LINUX_FLAVOR" == "--wpe" ]]; then
     # copy all relevant binaries
     cp -t $tmpdir ./WebKitBuild/WPE/Release/bin/MiniBrowser ./WebKitBuild/WPE/Release/bin/WPE*Process
     # copy all relevant shared objects
@@ -68,7 +68,7 @@ createZipForLinux() {
     cd $tmpdir
     ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
     cd -
-  else
+  elif [[ "$LINUX_FLAVOR" == "--gtk" ]]; then
     # copy all relevant binaries
     cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
     # copy all relevant shared objects
@@ -78,6 +78,9 @@ createZipForLinux() {
 
     # we failed to nicely build libgdk_pixbuf - expect it in the env
     rm $tmpdir/libgdk_pixbuf*
+  else
+    echo "ERROR: must specify --gtk or --wpe"
+    exit 1
   fi
 
   # tar resulting directory and cleanup TMP.
