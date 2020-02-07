@@ -222,9 +222,9 @@ function checkSources(sources, externalDependencies) {
           properties.push(...innerType.properties);
         innerTypeNames.push(innerType.name);
       }
-      if (innerTypeNames.length === 1 && innerTypeNames[0] === 'void')
-        return new Documentation.Type(type.symbol.name);
-      return new Documentation.Type(`${type.symbol.name}<${innerTypeNames.join(', ')}>`, properties);
+      if (innerTypeNames.length === 0 || (innerTypeNames.length === 1 && innerTypeNames[0] === 'void'))
+        return new Documentation.Type(expandPrefix(type.symbol.name));
+      return new Documentation.Type(`${expandPrefix(type.symbol.name)}<${innerTypeNames.join(', ')}>`, properties);
     }
     return new Documentation.Type(expandPrefix(typeName), []);
   }
