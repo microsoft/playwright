@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT, headless}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -215,6 +215,12 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(error.message).toBe('Invalid timezone ID: Foo/Bar');
       await newPage({ timezoneId: 'Baz/Qux' }).catch(e => error = e);
       expect(error.message).toBe('Invalid timezone ID: Baz/Qux');
+    });
+  });
+
+  describe('focus', function() {
+    it.skip(!headless)('should think that it is focused by default', async({page}) => {
+      expect(await page.evaluate('document.hasFocus()')).toBe(true);
     });
   });
 
