@@ -117,10 +117,10 @@ export class FrameManager {
     frame._url = url;
     frame._name = name;
     frame._lastDocumentId = documentId;
-    frame._documentWatchers.forEach(watcher => watcher(documentId));
+    for (const watcher of frame._documentWatchers)
+      watcher(documentId);
     this.clearFrameLifecycle(frame);
     this.clearWebSockets(frame);
-    // TODO should the document watchers only fire if !initial?
     if (!initial)
       this._page.emit(Events.Page.FrameNavigated, frame);
   }
@@ -342,7 +342,6 @@ export class Frame {
   _id: string;
   readonly _firedLifecycleEvents: Set<LifecycleEvent>;
   _lastDocumentId = '';
-  _expectedDocumentId = '';
   _requestWatchers = new Set<(request: network.Request) => void>();
   _documentWatchers = new Set<(documentId: string, error?: Error) => void>();
   _sameDocumentNavigationWatchers = new Set<() => void>();
@@ -415,7 +414,7 @@ export class Frame {
 
     disposer.dispose();
 
-    return request ? request!._finalRequest._waitForResponse() : null;
+    return request ? request._finalRequest._waitForResponse() : null;
 
     function throwIfError(error: Error|void): asserts error is void {
       if (!error)
@@ -437,8 +436,8 @@ export class Frame {
       disposer.add(createTimeoutPromise(timeout)),
       disposer.add(createFrameDestroyedPromise(this)),
     ]);
-    let documentId : string|null = null;
-    let error : void|Error = await Promise.race([
+    let documentId: string|null = null;
+    let error: void|Error = await Promise.race([
       failurePromise,
       disposer.add(waitForNewDocument(this, options.url)).then(result => {
         if (result.error)
@@ -989,7 +988,7 @@ class RerunnableTask {
 type Disposable<T> = {value: T, dispose: () => void};
 class Disposer {
   private _disposes: (() => void)[] = [];
-  add<T>({value, dispose} : Disposable<T>) {
+  add<T>({value, dispose}: Disposable<T>) {
     this._disposes.push(dispose);
     return value;
   }
@@ -1000,8 +999,8 @@ class Disposer {
   }
 }
 
-function createFrameDestroyedPromise(frame: Frame) : Disposable<Promise<Error>> {
-  let detachedCallback : (error: Error) => void;
+function createFrameDestroyedPromise(frame: Frame): Disposable<Promise<Error>> {
+  let detachedCallback: (error: Error) => void;
   const detachedPromise = new Promise<Error>(x => detachedCallback = x);
   const listener = (detachedFrame: Frame) => {
     if (detachedFrame !== frame)
@@ -1037,7 +1036,7 @@ function createTimeoutPromise(timeout: number): Disposable<Promise<TimeoutError>
   };
 }
 
-function waitForSpecificDocument(frame: Frame, expectedDocumentId: string) : Disposable<Promise<Error|void>> {
+function waitForSpecificDocument(frame: Frame, expectedDocumentId: string): Disposable<Promise<Error|void>> {
   let resolve: (error: Error|void) => void;
   const promise = new Promise<Error|void>(x => resolve = x);
   const watch = (documentId: string, error?: Error) => {
@@ -1050,7 +1049,7 @@ function waitForSpecificDocument(frame: Frame, expectedDocumentId: string) : Dis
   return {value: promise, dispose};
 
 }
-function waitForNewDocument(frame: Frame, url?: types.URLMatch) : Disposable<Promise<{error?: Error, documentId: string}>> {
+function waitForNewDocument(frame: Frame, url?: types.URLMatch): Disposable<Promise<{error?: Error, documentId: string}>> {
   let resolve: (error: {error?: Error, documentId: string}) => void;
   const promise = new Promise<{error?: Error, documentId: string}>(x => resolve = x);
   const watch = (documentId: string, error?: Error) => {
@@ -1063,7 +1062,7 @@ function waitForNewDocument(frame: Frame, url?: types.URLMatch) : Disposable<Pro
   return {value: promise, dispose};
 }
 
-function waitForSameDocumentNavigation(frame: Frame, url?: types.URLMatch) : Disposable<Promise<void>> {
+function waitForSameDocumentNavigation(frame: Frame, url?: types.URLMatch): Disposable<Promise<void>> {
   let resolve: () => void;
   const promise = new Promise<void>(x => resolve = x);
   const watch = () => {
@@ -1075,7 +1074,7 @@ function waitForSameDocumentNavigation(frame: Frame, url?: types.URLMatch) : Dis
   return {value: promise, dispose};
 }
 
-function waitForLifecycle(frame: Frame, waitUntil: LifecycleEvent|LifecycleEvent[] = 'load') : Disposable<Promise<void>> {
+function waitForLifecycle(frame: Frame, waitUntil: LifecycleEvent|LifecycleEvent[] = 'load'): Disposable<Promise<void>> {
   let resolve: () => void;
   const expectedLifecycle = typeof waitUntil === 'string' ? [waitUntil] : waitUntil;
   for (const event of expectedLifecycle) {
@@ -1108,7 +1107,7 @@ function waitForLifecycle(frame: Frame, waitUntil: LifecycleEvent|LifecycleEvent
   }
 }
 
-function trackDocumentRequests(frame: Frame) : Disposable<Map<string, network.Request>> {
+function trackDocumentRequests(frame: Frame): Disposable<Map<string, network.Request>> {
   const requestMap = new Map<string, network.Request>();
   const dispose = () => {
     frame._requestWatchers.delete(onRequest);

@@ -722,6 +722,17 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await waitPromise;
       expect(resolved).toBe(true);
     });
+    it('should work for cross-process navigations', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const waitPromise = page.waitForNavigation({waitUntil: []});
+      const url = server.CROSS_PROCESS_PREFIX + '/empty.html';
+      const gotoPromise = page.goto(url);
+      const response = await waitPromise;
+      expect(response.url()).toBe(url);
+      expect(page.url()).toBe(url);
+      expect(await page.evaluate('document.location.href')).toBe(url);
+      await gotoPromise;
+    });
   });
 
   describe('Page.waitForLoadState', () => {
