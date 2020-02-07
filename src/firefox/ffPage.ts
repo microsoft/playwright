@@ -89,8 +89,6 @@ export class FFPage implements PageDelegate {
       promises.push(this._session.send('Page.setBypassCSP', { enabled: true }));
     if (options.javaScriptEnabled === false)
       promises.push(this._session.send('Page.setJavascriptEnabled', { enabled: false }));
-    if (options.userAgent)
-      promises.push(this._session.send('Page.setUserAgent', { userAgent: options.userAgent }));
     await Promise.all(promises);
   }
 

@@ -56,6 +56,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
       helper.addEventListener(this._connection, 'Target.targetCreated', this._onTargetCreated.bind(this)),
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._connection, 'Target.targetInfoChanged', this._onTargetInfoChanged.bind(this)),
+      helper.addEventListener(this._connection, 'Target.attachedToTarget', this._onAttachedToTarget.bind(this)),
     ];
   }
 
@@ -64,7 +65,9 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    const {browserContextId} = await this._connection.send('Target.createBrowserContext');
+    const {browserContextId} = await this._connection.send('Target.createBrowserContext', {
+      userAgent: options.userAgent
+    });
     // TODO: move ignoreHTTPSErrors to browser context level.
     if (options.ignoreHTTPSErrors)
       await this._connection.send('Browser.setIgnoreHTTPSErrors', { enabled: true });
@@ -141,6 +144,13 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const {targetId, url} = payload;
     const target = this._targets.get(targetId)!;
     target._url = url;
+  }
+
+  _onAttachedToTarget(payload: Protocol.Target.attachedToTargetPayload) {
+    const {targetId, type} = payload.targetInfo;
+    const target = this._targets.get(targetId)!;
+    if (type === 'page')
+      target.page();
   }
 
   async close() {

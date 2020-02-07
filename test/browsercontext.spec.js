@@ -31,6 +31,19 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(browser.browserContexts().length).toBe(0);
     });
+    it.skip(CHROMIUM)('popup should inherit user agent', async function({newContext, server}) {
+      const context = await newContext({
+        userAgent: 'hey'
+      });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const evaluatePromise = page.evaluate(url => window.open(url), server.PREFIX + '/dummy.html');
+      const popupPromise = page.waitForEvent('popup');
+      const request = await server.waitForRequest('/dummy.html');
+      await evaluatePromise;
+      await popupPromise;
+      expect(request.headers['user-agent']).toBe('hey');
+    });
     it('window.open should use parent tab context', async function({newContext, server}) {
       const context = await newContext();
       const page = await context.newPage();
