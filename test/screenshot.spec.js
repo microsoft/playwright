@@ -22,13 +22,13 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
 
   describe('Page.screenshot', function() {
     it('should work', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-sanity.png');
     });
     it('should clip rect', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot({
         clip: {
@@ -41,7 +41,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-clip-rect.png');
     });
     it('should clip elements to the viewport', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot({
         clip: {
@@ -54,7 +54,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-offscreen-clip.png');
     });
     it('should throw on clip outside the viewport', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshotError = await page.screenshot({
         clip: {
@@ -67,7 +67,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshotError.message).toBe('Clipped area is either empty or outside the viewport');
     });
     it('should run in parallel', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const promises = [];
       for (let i = 0; i < 3; ++i) {
@@ -84,7 +84,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshots[1]).toBeGolden('grid-cell-1.png');
     });
     it('should take fullPage screenshots', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot({
         fullPage: true
@@ -92,12 +92,12 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-grid-fullpage.png');
     });
     it('should restore viewport after fullPage screenshot', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot({ fullPage: true });
       expect(screenshot).toBeInstanceOf(Buffer);
-      expect(page.viewport().width).toBe(500);
-      expect(page.viewport().height).toBe(500);
+      expect(page.viewportSize().width).toBe(500);
+      expect(page.viewportSize().height).toBe(500);
     });
     it('should run in parallel in multiple pages', async({page, server, context}) => {
       const N = 2;
@@ -115,7 +115,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       await Promise.all(pages.map(page => page.close()));
     });
     it.skip(FFOX)('should allow transparency', async({page, server}) => {
-      await page.setViewport({ width: 50, height: 150 });
+      await page.setViewportSize({ width: 50, height: 150 });
       await page.setContent(`
         <style>
           body { margin: 0 }
@@ -129,7 +129,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('transparent.png');
     });
     it('should render white background on jpeg file', async({page, server}) => {
-      await page.setViewport({ width: 100, height: 100 });
+      await page.setViewportSize({ width: 100, height: 100 });
       await page.goto(server.EMPTY_PAGE);
       const screenshot = await page.screenshot({omitBackground: true, type: 'jpeg'});
       expect(screenshot).toBeGolden('white.jpg');
@@ -146,44 +146,41 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-clip-odd-size.png');
     });
     it('should return base64', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot = await page.screenshot({
         encoding: 'base64'
       });
       expect(Buffer.from(screenshot, 'base64')).toBeGolden('screenshot-sanity.png');
     });
-    it.skip(FFOX)('should work with a mobile viewport', async({page, server}) => {
-      await page.setViewport({
-        width: 320,
-        height: 480,
-        isMobile: true
-      });
+    it.skip(FFOX)('should work with a mobile viewport', async({newContext, server}) => {
+      const context = await newContext({viewport: { width: 320, height: 480, isMobile: true }});
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-mobile.png');
     });
     it('should work for canvas', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/screenshots/canvas.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-canvas.png');
     });
     it('should work for translateZ', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/screenshots/translateZ.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-translateZ.png');
     });
     it.skip(FFOX || WEBKIT)('should work for webgl', async({page, server}) => {
-      await page.setViewport({width: 640, height: 480});
+      await page.setViewportSize({width: 640, height: 480});
       await page.goto(server.PREFIX + '/screenshots/webgl.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-webgl.png');
     });
     // firefox is flaky
     it.skip(FFOX)('should work while navigating', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/redirectloop1.html');
       for (let i = 0; i < 10; i++) {
         const screenshot = await page.screenshot({ fullPage: true }).catch(e => {
@@ -198,7 +195,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
 
   describe('ElementHandle.screenshot', function() {
     it('should work', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       await page.evaluate(() => window.scrollBy(50, 100));
       const elementHandle = await page.$('.box:nth-of-type(3)');
@@ -206,7 +203,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-element-bounding-box.png');
     });
     it('should take into account padding and border', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.setContent(`
         <div style="height: 14px">oooo</div>
         <style>div {
@@ -223,7 +220,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-element-padding-border.png');
     });
     it('should capture full element when larger than viewport in parallel', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
 
       await page.setContent(`
         <div style="height: 14px">oooo</div>
@@ -249,9 +246,8 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
 
       expect(await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }))).toEqual({ w: 500, h: 500 });
     });
-    // Fails on GTK due to async setViewport.
     it('should capture full element when larger than viewport', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
 
       await page.setContent(`
         <div style="height: 14px">oooo</div>
@@ -277,7 +273,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }))).toEqual({ w: 500, h: 500 });
     });
     it('should scroll element into view', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.setContent(`
         <div style="height: 14px">oooo</div>
         <style>div.above {
@@ -300,7 +296,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(screenshot).toBeGolden('screenshot-element-scrolled-into-view.png');
     });
     it('should work with a rotated element', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.setContent(`<div style="position:absolute;
                                         top: 100px;
                                         left: 100px;

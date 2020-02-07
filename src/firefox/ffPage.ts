@@ -16,7 +16,7 @@
  */
 
 import * as frames from '../frames';
-import { helper, RegisteredListener, debugError } from '../helper';
+import { helper, RegisteredListener, debugError, assert } from '../helper';
 import * as dom from '../dom';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
@@ -84,7 +84,7 @@ export class FFPage implements PageDelegate {
     ];
     const options = this._page.browserContext()._options;
     if (options.viewport)
-      promises.push(this.setViewport(options.viewport));
+      promises.push(this._updateViewport());
     if (options.bypassCSP)
       promises.push(this._session.send('Page.setBypassCSP', { enabled: true }));
     if (options.javaScriptEnabled === false)
@@ -268,15 +268,25 @@ export class FFPage implements PageDelegate {
     await this._session.send('Network.setExtraHTTPHeaders', { headers: array });
   }
 
-  async setViewport(viewport: types.Viewport): Promise<void> {
-    const {
-      width,
-      height,
-      isMobile = false,
-      deviceScaleFactor = 1,
-    } = viewport;
+  async setViewportSize(viewportSize: types.Size): Promise<void> {
+    assert(this._page._state.viewportSize === viewportSize);
+    await this._updateViewport();
+  }
+
+  async _updateViewport() {
+    let viewport = this._page.browserContext()._options.viewport || { width: 0, height: 0 };
+    const viewportSize = this._page._state.viewportSize;
+    if (viewportSize)
+      viewport = { ...viewport, ...viewportSize };
     await this._session.send('Page.setViewport', {
-      viewport: { width, height, isMobile, deviceScaleFactor, hasTouch: isMobile, isLandscape: width > height },
+      viewport: {
+        width: viewport.width,
+        height: viewport.height,
+        isMobile: !!viewport.isMobile,
+        deviceScaleFactor: viewport.deviceScaleFactor || 1,
+        hasTouch: !!viewport.isMobile,
+        isLandscape: viewport.width > viewport.height
+      },
     });
   }
 
@@ -351,7 +361,7 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<platform.BufferType> {
+  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
     const { data } = await this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
       fullPage: options.fullPage,

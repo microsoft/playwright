@@ -39,10 +39,10 @@ export class Screenshotter {
   async screenshotPage(options: types.ScreenshotOptions = {}): Promise<platform.BufferType> {
     const format = validateScreeshotOptions(options);
     return this._queue.postTask(async () => {
-      let overridenViewport: types.Viewport | undefined;
-      const viewport = this._page.viewport();
+      let overridenViewportSize: types.Size | undefined;
+      const originalViewportSize = this._page.viewportSize();
       let viewportSize: types.Size | undefined;
-      if (!viewport) {
+      if (!originalViewportSize) {
         viewportSize = await this._page.evaluate(() => {
           if (!document.body || !document.documentElement)
             return;
@@ -73,17 +73,17 @@ export class Screenshotter {
         });
         if (!fullPageRect)
           throw new Error(kScreenshotDuringNavigationError);
-        overridenViewport = viewport ? { ...viewport, ...fullPageRect } : fullPageRect;
-        await this._page.setViewport(overridenViewport);
+        overridenViewportSize = fullPageRect;
+        await this._page.setViewportSize(overridenViewportSize);
       } else if (options.clip) {
-        options.clip = trimClipToViewport(viewport, options.clip);
+        options.clip = trimClipToViewport(originalViewportSize, options.clip);
       }
 
-      const result = await this._screenshot(format, options, (overridenViewport || viewport)!);
+      const result = await this._screenshot(format, options, (overridenViewportSize || originalViewportSize)!);
 
-      if (overridenViewport) {
-        if (viewport)
-          await this._page.setViewport(viewport);
+      if (overridenViewportSize) {
+        if (originalViewportSize)
+          await this._page.setViewportSize(originalViewportSize);
         else
           await this._page._delegate.resetViewport(viewportSize!);
       }
@@ -95,7 +95,7 @@ export class Screenshotter {
     const format = validateScreeshotOptions(options);
     const rewrittenOptions: types.ScreenshotOptions = { ...options };
     return this._queue.postTask(async () => {
-      let overridenViewport: types.Viewport | undefined;
+      let overridenViewportSize: types.Size | undefined;
       let viewportSize: types.Size;
 
       let maybeBoundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
@@ -105,9 +105,9 @@ export class Screenshotter {
       assert(boundingBox.height !== 0, 'Node has 0 height.');
       boundingBox = enclosingIntRect(boundingBox);
 
-      const viewport = this._page.viewport();
+      const originalViewportSize = this._page.viewportSize();
       if (!this._page._delegate.canScreenshotOutsideViewport()) {
-        if (!viewport) {
+        if (!originalViewportSize) {
           const maybeViewportSize = await this._page.evaluate(() => {
             if (!document.body || !document.documentElement)
               return;
@@ -120,13 +120,14 @@ export class Screenshotter {
             throw new Error(kScreenshotDuringNavigationError);
           viewportSize = maybeViewportSize!;
         } else {
-          viewportSize = viewport;
+          viewportSize = originalViewportSize;
         }
         if (boundingBox.width > viewportSize.width || boundingBox.height > viewportSize.height) {
-          overridenViewport = {... (viewport || viewportSize)};
-          overridenViewport.width = Math.max(viewportSize.width, boundingBox.width);
-          overridenViewport.height = Math.max(viewportSize.height, boundingBox.height);
-          await this._page.setViewport(overridenViewport);
+          overridenViewportSize = {
+            width: Math.max(viewportSize.width, boundingBox.width),
+            height: Math.max(viewportSize.height, boundingBox.height),
+          };
+          await this._page.setViewportSize(overridenViewportSize);
         }
 
         await handle.scrollIntoViewIfNeeded();
@@ -135,14 +136,14 @@ export class Screenshotter {
         boundingBox = enclosingIntRect(maybeBoundingBox!);
       }
 
-      if (!overridenViewport)
+      if (!overridenViewportSize)
         rewrittenOptions.clip = boundingBox;
 
-      const result = await this._screenshot(format, rewrittenOptions, (overridenViewport || viewport)!);
+      const result = await this._screenshot(format, rewrittenOptions, (overridenViewportSize || originalViewportSize)!);
 
-      if (overridenViewport) {
-        if (viewport)
-          await this._page.setViewport(viewport);
+      if (overridenViewportSize) {
+        if (originalViewportSize)
+          await this._page.setViewportSize(originalViewportSize);
         else
           await this._page._delegate.resetViewport(viewportSize!);
       }
@@ -151,11 +152,11 @@ export class Screenshotter {
     }).catch(rewriteError);
   }
 
-  private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType> {
+  private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
-    const buffer = await this._page._delegate.takeScreenshot(format, options, viewport);
+    const buffer = await this._page._delegate.takeScreenshot(format, options, viewportSize);
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();
     if (options.path)
@@ -180,11 +181,11 @@ class TaskQueue {
   }
 }
 
-function trimClipToViewport(viewport: types.Viewport | null, clip: types.Rect | undefined): types.Rect | undefined {
-  if (!clip || !viewport)
+function trimClipToViewport(viewportSize: types.Size | null, clip: types.Rect | undefined): types.Rect | undefined {
+  if (!clip || !viewportSize)
     return clip;
-  const p1 = { x: Math.min(clip.x, viewport.width), y: Math.min(clip.y, viewport.height) };
-  const p2 = { x: Math.min(clip.x + clip.width, viewport.width), y: Math.min(clip.y + clip.height, viewport.height) };
+  const p1 = { x: Math.min(clip.x, viewportSize.width), y: Math.min(clip.y, viewportSize.height) };
+  const p2 = { x: Math.min(clip.x + clip.width, viewportSize.width), y: Math.min(clip.y + clip.height, viewportSize.height) };
   const result = { x: p1.x, y: p1.y, width: p2.x - p1.x, height: p2.y - p1.y };
   assert(result.width && result.height, 'Clipped area is either empty or outside the viewport');
   return result;

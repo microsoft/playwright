@@ -46,7 +46,7 @@ export interface PageDelegate {
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
   setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
-  setViewport(viewport: types.Viewport): Promise<void>;
+  setViewportSize(viewportSize: types.Size): Promise<void>;
   setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
   setRequestInterception(enabled: boolean): Promise<void>;
@@ -57,7 +57,7 @@ export interface PageDelegate {
   getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null>;
   canScreenshotOutsideViewport(): boolean;
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
-  takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType>;
+  takeScreenshot(format: string, options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType>;
   resetViewport(oldSize: types.Size): Promise<void>;
 
   isElementHandle(remoteObject: any): boolean;
@@ -76,7 +76,7 @@ export interface PageDelegate {
 }
 
 type PageState = {
-  viewport: types.Viewport | null;
+  viewportSize: types.Size | null;
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
@@ -122,8 +122,15 @@ export class Page extends platform.EventEmitter {
     this._disconnectedCallback = () => {};
     this._disconnectedPromise = new Promise(f => this._disconnectedCallback = f);
     this._browserContext = browserContext;
+    let viewportSize: types.Size | null = null;
+    if (browserContext._options.viewport) {
+      viewportSize = {
+        width: browserContext._options.viewport.width,
+        height: browserContext._options.viewport.height,
+      };
+    }
     this._state = {
-      viewport: browserContext._options.viewport || null,
+      viewportSize,
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,
@@ -390,17 +397,13 @@ export class Page extends platform.EventEmitter {
     await this._delegate.setEmulateMedia(this._state.mediaType, this._state.colorScheme);
   }
 
-  async setViewport(viewport: types.Viewport) {
-    const oldIsMobile = this._state.viewport ? !!this._state.viewport.isMobile : false;
-    const newIsMobile = !!viewport.isMobile;
-    this._state.viewport = { ...viewport };
-    await this._delegate.setViewport(viewport);
-    if (oldIsMobile !== newIsMobile)
-      await this.reload();
+  async setViewportSize(viewportSize: types.Size) {
+    this._state.viewportSize = { ...viewportSize };
+    await this._delegate.setViewportSize(this._state.viewportSize);
   }
 
-  viewport(): types.Viewport | null {
-    return this._state.viewport;
+  viewportSize(): types.Size | null {
+    return this._state.viewportSize;
   }
 
   evaluate: types.Evaluate = async (pageFunction, ...args) => {

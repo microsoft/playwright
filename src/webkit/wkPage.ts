@@ -73,8 +73,8 @@ export class WKPage implements PageDelegate {
     const contextOptions = this._page.browserContext()._options;
     if (contextOptions.javaScriptEnabled === false)
       promises.push(this._pageProxySession.send('Emulation.setJavaScriptEnabled', { enabled: false }));
-    if (this._page._state.viewport)
-      promises.push(this.setViewport(this._page._state.viewport));
+    if (this._page._state.viewportSize || contextOptions.viewport)
+      promises.push(this._updateViewport(true /* updateTouch */));
     await Promise.all(promises);
   }
 
@@ -384,16 +384,27 @@ export class WKPage implements PageDelegate {
     await this._forAllSessions(session => WKPage._setEmulateMedia(session, mediaType, colorScheme));
   }
 
-  async setViewport(viewport: types.Viewport): Promise<void> {
-    const width = viewport.width;
-    const height = viewport.height;
-    const fixedLayout = !!viewport.isMobile;
-    const deviceScaleFactor = viewport.deviceScaleFactor || 1;
-    this._page._state.hasTouch = !!viewport.isMobile;
-    await Promise.all([
-      this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {width, height, fixedLayout, deviceScaleFactor }),
-      this._updateState('Page.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }),
-    ]);
+  async setViewportSize(viewportSize: types.Size): Promise<void> {
+    assert(this._page._state.viewportSize === viewportSize);
+    await this._updateViewport(false /* updateTouch */);
+  }
+
+  async _updateViewport(updateTouch: boolean): Promise<void> {
+    let viewport = this._page.browserContext()._options.viewport || { width: 0, height: 0 };
+    const viewportSize = this._page._state.viewportSize;
+    if (viewportSize)
+      viewport = { ...viewport, ...viewportSize };
+    const promises: Promise<any>[] = [
+      this._pageProxySession.send('Emulation.setDeviceMetricsOverride', {
+        width: viewport.width,
+        height: viewport.height,
+        fixedLayout: !!viewport.isMobile,
+        deviceScaleFactor: viewport.deviceScaleFactor || 1
+      }),
+    ];
+    if (updateTouch)
+      promises.push(this._updateState('Page.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }));
+    await Promise.all(promises);
   }
 
   async setCacheEnabled(enabled: boolean): Promise<void> {
@@ -478,8 +489,8 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: string, options: types.ScreenshotOptions, viewport: types.Viewport): Promise<platform.BufferType> {
-    const rect = options.clip || { x: 0, y: 0, width: viewport.width, height: viewport.height };
+  async takeScreenshot(format: string, options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
+    const rect = options.clip || { x: 0, y: 0, width: viewportSize.width, height: viewportSize.height };
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
     const prefix = 'data:image/png;base64,';
     let buffer = platform.Buffer.from(result.dataURL.substr(prefix.length), 'base64');

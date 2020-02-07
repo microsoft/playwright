@@ -130,9 +130,10 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       ]);
     });
     // @see https://crbug.com/929806
-    it('should work with mobile viewports and cross process navigations', async({page, server}) => {
+    it('should work with mobile viewports and cross process navigations', async({newContext, server}) => {
+      const context = await newContext({ viewport: {width: 360, height: 640, isMobile: true} });
+      const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
-      await page.setViewport({width: 360, height: 640, isMobile: true});
       await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
       await page.evaluate(() => {
         document.addEventListener('click', event => {

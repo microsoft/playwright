@@ -24,14 +24,14 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
 
   describe('ElementHandle.boundingBox', function() {
     it('should work', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
       const elementHandle = await page.$('.box:nth-of-type(13)');
       const box = await elementHandle.boundingBox();
       expect(box).toEqual({ x: 100, y: 50, width: 50, height: 50 });
     });
     it('should handle nested frames', async({page, server}) => {
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/frames/nested-frames.html');
       const nestedFrame = page.frames().find(frame => frame.name() === 'dos');
       const elementHandle = await nestedFrame.$('div');
@@ -44,7 +44,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(await element.boundingBox()).toBe(null);
     });
     it('should force a layout', async({page, server}) => {
-      await page.setViewport({ width: 500, height: 500 });
+      await page.setViewportSize({ width: 500, height: 500 });
       await page.setContent('<div style="width: 100px; height: 100px">hello</div>');
       const elementHandle = await page.$('div');
       await page.evaluate(element => element.style.height = '200px', elementHandle);
