@@ -12054,7 +12054,7 @@ index fba7f670f8953563d8d0d2b8d42a636c653f9d5f..2514c7d942384af1f3114c9008af499c
      RefPtr<BrowserWindow> m_browserWindow;
  };
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index 71c43e6691395b787140ca0603550aac1c8513d5..889e8284e75d37c5d02de4103517db552b65d4da 100644
+index 71c43e6691395b787140ca0603550aac1c8513d5..1de905c3227315d6099c19fcd25880124b220610 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 @@ -39,6 +39,8 @@
@@ -12164,21 +12164,21 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..889e8284e75d37c5d02de4103517db55
  void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
  {
      auto page = WKViewGetPage(m_view.get());
-@@ -381,21 +384,99 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+@@ -381,21 +384,106 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
      return false;
  }
  
 -WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
 +// static
 +void WebKitBrowserWindow::setHeadless(bool headless)
-+{
+ {
+-    auto& newWindow = MainWindow::create().leakRef();
+-    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
 +    s_headless = headless;
 +}
 +
 +void WebKitBrowserWindow::closeWindow(WKPageRef page, const void* clientInfo)
- {
--    auto& newWindow = MainWindow::create().leakRef();
--    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
++{
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
 +}
@@ -12241,6 +12241,11 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..889e8284e75d37c5d02de4103517db55
 +
 +WKPageRef WebKitBrowserWindow::createPageCallback(WKPageConfigurationRef configuration)
 +{
++    return WebKitBrowserWindow::createViewCallback(configuration, true);
++}
++
++WKPageRef WebKitBrowserWindow::createViewCallback(WKPageConfigurationRef configuration, bool navigate)
++{
 +    auto context = WKPageConfigurationGetContext(configuration);
 +    auto dataStore = WKPageConfigurationGetWebsiteDataStore(configuration);
 +    auto& newWindow = MainWindow::create(context, dataStore).leakRef();
@@ -12255,23 +12260,25 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..889e8284e75d37c5d02de4103517db55
 +        SetMenu(newWindow.hwnd(), NULL);
 +    else
 +        ShowWindow(newWindow.hwnd(), SW_SHOW);
-+    newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
++    if (navigate)
++        newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
 +
      auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
      WKRetainPtr<WKPageRef> newPage = WKViewGetPage(newBrowserWindow.m_view.get());
      return newPage.leakRef();
  }
  
++
 +WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef, WKPageConfigurationRef configuration, WKNavigationActionRef, WKWindowFeaturesRef, const void*)
 +{
-+    return createPageCallback(configuration);
++    return createViewCallback(configuration, false);
 +}
 +
  void WebKitBrowserWindow::didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr event, const void* clientInfo)
  {
      auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..94b9353a91f40a0dc84dc3ec28a40d06d5dba9c0 100644
+index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..9131c6e8259772c8e8c066125acfac82f408ddb9 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 @@ -26,6 +26,7 @@
@@ -12282,7 +12289,7 @@ index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..94b9353a91f40a0dc84dc3ec28a40d06
  #include <WebKit/WKRetainPtr.h>
  #include <WebKit/WebKit2_C.h>
  #include <unordered_map>
-@@ -33,10 +34,13 @@
+@@ -33,10 +34,14 @@
  
  class WebKitBrowserWindow : public BrowserWindow {
  public:
@@ -12292,12 +12299,13 @@ index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..94b9353a91f40a0dc84dc3ec28a40d06
 +    static WKPageRef createPageCallback(WKPageConfigurationRef);
  
  private:
++    static WKPageRef createViewCallback(WKPageConfigurationRef, bool navigate);
      WebKitBrowserWindow(BrowserWindowClient&, WKPageConfigurationRef, HWND mainWnd);
 +    ~WebKitBrowserWindow() override;
  
      HRESULT init() override;
      HWND hwnd() override;
-@@ -49,7 +53,6 @@ private:
+@@ -49,7 +54,6 @@ private:
  
      void print() override;
      void launchInspector() override;
@@ -12305,7 +12313,7 @@ index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..94b9353a91f40a0dc84dc3ec28a40d06
  
      _bstr_t userAgent() override;
      void setUserAgent(_bstr_t&) override;
-@@ -61,8 +64,6 @@ private:
+@@ -61,8 +65,6 @@ private:
      void zoomIn() override;
      void zoomOut() override;
  
@@ -12314,7 +12322,7 @@ index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..94b9353a91f40a0dc84dc3ec28a40d06
      bool canTrustServerCertificate(WKProtectionSpaceRef);
  
      static void didChangeTitle(const void*);
-@@ -71,6 +72,12 @@ private:
+@@ -71,6 +73,12 @@ private:
      static void didChangeActiveURL(const void*);
      static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
      static WKPageRef createNewPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void *);
@@ -12327,7 +12335,7 @@ index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..94b9353a91f40a0dc84dc3ec28a40d06
      static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
  
      BrowserWindowClient& m_client;
-@@ -78,4 +85,8 @@ private:
+@@ -78,4 +86,8 @@ private:
      HWND m_hMainWnd { nullptr };
      ProxySettings m_proxy { };
      std::unordered_map<std::wstring, std::wstring> m_acceptedServerTrustCerts;
