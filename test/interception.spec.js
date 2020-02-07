@@ -349,22 +349,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should not throw when continued after navigation', async({page, server}) => {
       await page.route(server.PREFIX + '/one-style.css', () => {});
       // For some reason, Firefox issues load event with one outstanding request.
-      const failed = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
+      const firstNavigation = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
       const request = await page.waitForRequest(server.PREFIX + '/one-style.css');
       await page.goto(server.PREFIX + '/empty.html');
-      const error = await failed;
-      expect(error.message).toBe('Navigation to ' + server.PREFIX + '/one-style.html was canceled by another one');
+      await firstNavigation;
       const notAnError = await request.continue().then(() => null).catch(e => e);
       expect(notAnError).toBe(null);
     });
     it('should not throw when continued after cross-process navigation', async({page, server}) => {
       await page.route(server.PREFIX + '/one-style.css', () => {});
       // For some reason, Firefox issues load event with one outstanding request.
-      const failed = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
+      const firstNavigation = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
       const request = await page.waitForRequest(server.PREFIX + '/one-style.css');
       await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-      const error = await failed;
-      expect(error.message).toBe('Navigation to ' + server.PREFIX + '/one-style.html was canceled by another one');
+      await firstNavigation;
       const notAnError = await request.continue().then(() => null).catch(e => e);
       expect(notAnError).toBe(null);
     });

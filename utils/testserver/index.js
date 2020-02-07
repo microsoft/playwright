@@ -73,8 +73,7 @@ class TestServer {
 
     /** @type {!Set<!net.Socket>} */
     this._sockets = new Set();
-
-    /** @type {!Map<string, function(!IncomingMessage, !ServerResponse)>} */
+    /** @type {!Map<string, function(!http.IncomingMessage,http.ServerResponse)>} */
     this._routes = new Map();
     /** @type {!Map<string, !{username:string, password:string}>} */
     this._auths = new Map();
@@ -135,7 +134,7 @@ class TestServer {
 
   /**
    * @param {string} path
-   * @param {function(!IncomingMessage, !ServerResponse)} handler
+   * @param {function(!http.IncomingMessage,http.ServerResponse)} handler
    */
   setRoute(path, handler) {
     this._routes.set(path, handler);
@@ -154,7 +153,7 @@ class TestServer {
 
   /**
    * @param {string} path
-   * @return {!Promise<!IncomingMessage>}
+   * @return {!Promise<!http.IncomingMessage>}
    */
   waitForRequest(path) {
     let promise = this._requestSubscribers.get(path);
@@ -182,6 +181,10 @@ class TestServer {
     this._requestSubscribers.clear();
   }
 
+  /**
+   * @param {http.IncomingMessage} request 
+   * @param {http.ServerResponse} response 
+   */
   _onRequest(request, response) {
     request.on('error', error => {
       if (error.code === 'ECONNRESET')
@@ -219,8 +222,8 @@ class TestServer {
   }
 
   /**
-   * @param {!IncomingMessage} request
-   * @param {!ServerResponse} response
+   * @{!http.IncomingMessage} request
+   * @param!http.ServerResponse} response
    * @param {string} pathName
    */
   serveFile(request, response, pathName) {
