@@ -177,7 +177,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  private _contextGlobalObjectId() : Promise<Protocol.Runtime.RemoteObjectId> {
+  private _contextGlobalObjectId(): Promise<Protocol.Runtime.RemoteObjectId> {
     if (!this._globalObjectIdPromise) {
       this._globalObjectIdPromise = this._session.send('Runtime.evaluate', {
         expression: 'this',
@@ -189,7 +189,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     return this._globalObjectIdPromise;
   }
 
-  private async _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId) : Promise<any> {
+  private async _returnObjectByValue(objectId: Protocol.Runtime.RemoteObjectId): Promise<any> {
     try {
       const serializeResponse = await this._session.send('Runtime.callFunctionOn', {
         // Serialize object using standard JSON implementation to correctly pass 'undefined'.
@@ -253,7 +253,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     return (includeType ? 'JSHandle:' : '') + valueFromRemoteObject(object);
   }
 
-  private _convertArgument(arg: js.JSHandle | any) : Protocol.Runtime.CallArgument {
+  private _convertArgument(arg: js.JSHandle | any): Protocol.Runtime.CallArgument {
     const objectHandle = arg && (arg instanceof js.JSHandle) ? arg : null;
     if (objectHandle) {
       if (objectHandle._context._delegate !== this)

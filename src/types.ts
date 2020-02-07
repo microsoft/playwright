@@ -118,7 +118,7 @@ export type PDFOptions = {
 export type CoverageEntry = {
   url: string,
   text: string,
-  ranges : {start: number, end: number}[]
+  ranges: {start: number, end: number}[]
 };
 
 export type CSSCoverageOptions = {

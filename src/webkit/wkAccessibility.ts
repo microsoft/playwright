@@ -56,7 +56,7 @@ class WKAXNode implements accessibility.AXNode {
     private _payload: Protocol.Page.AXNode;
     private _children: WKAXNode[];
 
-    constructor(payload : Protocol.Page.AXNode) {
+    constructor(payload: Protocol.Page.AXNode) {
       this._payload = payload;
 
       this._children = [];
@@ -68,7 +68,7 @@ class WKAXNode implements accessibility.AXNode {
       return this._children;
     }
 
-    _findNeedle() : WKAXNode | null {
+    _findNeedle(): WKAXNode | null {
       if (this._payload.found)
         return this;
       for (const child of this._children) {
@@ -79,7 +79,7 @@ class WKAXNode implements accessibility.AXNode {
       return null;
     }
 
-    isControl() : boolean {
+    isControl(): boolean {
       switch (this._payload.role) {
         case 'button':
         case 'checkbox':
@@ -108,7 +108,7 @@ class WKAXNode implements accessibility.AXNode {
       }
     }
 
-    _isTextControl() : boolean {
+    _isTextControl(): boolean {
       switch (this._payload.role) {
         case 'combobox':
         case 'searchfield':
@@ -119,13 +119,13 @@ class WKAXNode implements accessibility.AXNode {
       return false;
     }
 
-    _name() : string {
+    _name(): string {
       if (this._payload.role === 'text')
         return this._payload.value || '';
       return this._payload.name || '';
     }
 
-    isInteresting(insideControl: boolean) : boolean {
+    isInteresting(insideControl: boolean): boolean {
       const {role, focusable} = this._payload;
       const name = this._name();
       if (role === 'ScrollArea')
@@ -154,7 +154,7 @@ class WKAXNode implements accessibility.AXNode {
       return child._payload.role === 'text' && this._payload.name === child._payload.value;
     }
 
-    isLeafNode() : boolean {
+    isLeafNode(): boolean {
       if (!this._children.length)
         return true;
       // WebKit on Linux ignores everything inside text controls, normalize this behavior
@@ -167,7 +167,7 @@ class WKAXNode implements accessibility.AXNode {
     }
 
     serialize(): accessibility.SerializedAXNode {
-      const node : accessibility.SerializedAXNode = {
+      const node: accessibility.SerializedAXNode = {
         role: WKRoleToARIARole.get(this._payload.role) || this._payload.role,
         name: this._name(),
       };

@@ -315,7 +315,7 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
-  async opener() : Promise<Page | null> {
+  async opener(): Promise<Page | null> {
     return await this._openerResolver();
   }
 

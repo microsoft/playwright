@@ -41,7 +41,6 @@ module.exports = {
         "brace-style": [2, "1tbs", {"allowSingleLine": true}],
         "curly": [2, "multi-or-nest", "consistent"],
         "new-parens": 2,
-        "func-call-spacing": 2,
         "arrow-parens": [2, "as-needed"],
         "prefer-const": 2,
         "quote-props": [2, "consistent"],
@@ -96,6 +95,8 @@ module.exports = {
             "after": true,
             "before": true
         }],
+        "@typescript-eslint/func-call-spacing": 2,
+        "@typescript-eslint/type-annotation-spacing": 2,
 
         // file whitespace
         "no-multiple-empty-lines": [2, {"max": 2}],

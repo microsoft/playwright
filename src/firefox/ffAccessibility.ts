@@ -20,7 +20,7 @@ import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
 import * as dom from '../dom';
 
-export async function getAccessibilityTree(session: FFSession, needle?: dom.ElementHandle) : Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
+export async function getAccessibilityTree(session: FFSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
   const objectId = needle ? needle._remoteObject.objectId : undefined;
   const { tree } = await session.send('Accessibility.getFullAXTree', { objectId });
   const axNode = new FFAXNode(tree);
