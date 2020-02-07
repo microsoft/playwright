@@ -1315,6 +1315,35 @@ index a256d2f8a42548c42ae3c955d9502cc0ad893d91..7e30dfcec151304b21b39286a841e38e
              return false;
      }
      
+diff --git a/Source/WebCore/PAL/pal/SessionID.cpp b/Source/WebCore/PAL/pal/SessionID.cpp
+index 6b30b4a06bab48ca69e4955e52cb4162bb20780f..ea94293a0bb15b4dd1aa85706f97030f4fe50de1 100644
+--- a/Source/WebCore/PAL/pal/SessionID.cpp
++++ b/Source/WebCore/PAL/pal/SessionID.cpp
+@@ -27,11 +27,11 @@
+ #include "SessionID.h"
+ 
+ #include <wtf/MainThread.h>
++#include <wtf/CryptographicallyRandomNumber.h>
+ 
+ namespace PAL {
+ 
+ static uint64_t currentPersistentID = SessionID::DefaultSessionID;
+-static uint64_t currentEphemeralID = SessionID::LegacyPrivateSessionID;
+ static bool generationProtectionEnabled;
+ 
+ SessionID SessionID::generatePersistentSessionID()
+@@ -47,7 +47,10 @@ SessionID SessionID::generateEphemeralSessionID()
+     ASSERT(isMainThread());
+     RELEASE_ASSERT(!generationProtectionEnabled);
+ 
+-    return SessionID(++currentEphemeralID);
++    uint64_t sessionId;
++    cryptographicallyRandomValues(&sessionId, sizeof(sessionId));
++    sessionId = sessionId | SessionConstants::EphemeralSessionMask;
++    return SessionID(sessionId);
+ }
+ 
+ void SessionID::enableGenerationProtection()
 diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
 index 4de75df8df0b8f90e5b258157eada4a69d3b5916..51dc93bc25fdba7a971b3fdd4f1f380f5d6b48c5 100644
 --- a/Source/WebCore/SourcesCocoa.txt
@@ -5681,7 +5710,7 @@ index 0000000000000000000000000000000000000000..b64d1a6d54ec15a99164294706543cee
 +
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..2db4356a7b26d91e50a8bb73b5b0d9d2b231c1cb
+index 0000000000000000000000000000000000000000..f31834b80328fc5c182c64de53ff51e4065c62a9
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 @@ -0,0 +1,52 @@
@@ -5716,7 +5745,7 @@ index 0000000000000000000000000000000000000000..2db4356a7b26d91e50a8bb73b5b0d9d2
 +#include "BrowserInspectorPipe.h"
 +#include "InspectorBrowserAgentClientMac.h"
 +#include "PageClientImplMac.h"
-+#include "WebsiteDataStore.h"
++#include "WebKit2Initialize.h"
 +
 +#import "WKWebView.h"
 +
@@ -5727,7 +5756,7 @@ index 0000000000000000000000000000000000000000..2db4356a7b26d91e50a8bb73b5b0d9d2
 ++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate headless:(BOOL)headless
 +{
 +#if ENABLE(REMOTE_INSPECTOR)
-+  WebsiteDataStore::defaultDataStore();
++  InitializeWebKit2();
 +  PageClientImpl::setHeadless(headless);
 +  initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientMac>(delegate));
 +#endif
