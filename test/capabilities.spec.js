@@ -17,13 +17,13 @@
 const utils = require('./utils');
 const { waitEvent } = utils;
 
-module.exports.describe = function({testRunner, expect}) {
+module.exports.describe = function({testRunner, expect, WIN, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Capabilities', function() {
-    it('Web Assembly should work', async function({page, server}) {
+    it.skip(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
       await page.goto(server.PREFIX + '/wasm/table2.html');
       expect(await page.evaluate(() => loadTable())).toBe('42, 83');
     });

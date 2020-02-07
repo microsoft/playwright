@@ -18,7 +18,7 @@
 const utils = require('./utils');
 const { performance } = require('perf_hooks');
 
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -176,7 +176,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
       if (CHROMIUM)
         expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
-      else if (WEBKIT && process.platform === 'win32')
+      else if (WEBKIT && WIN)
         expect(error.message).toContain(`Couldn\'t connect to server`);
       else if (WEBKIT)
         expect(error.message).toContain('Could not connect');
@@ -907,9 +907,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     if (CHROMIUM) {
       expect(errorMessage).toContain('net::ERR_CERT_AUTHORITY_INVALID');
     } else if (WEBKIT) {
-      if (process.platform === 'darwin')
+      if (MAC)
         expect(errorMessage).toContain('The certificate for this server is invalid');
-      else if (process.platform === 'win32')
+      else if (WIN)
         expect(errorMessage).toContain('SSL peer certificate or SSH remote key was not OK');
       else
         expect(errorMessage).toContain('Unacceptable TLS certificate');

@@ -82,7 +82,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, pla
     });
     it('should close the browser when the node process closes', async () => {
       const result = await testSignal(child => {
-        if (process.platform === 'win32')
+        if (WIN)
           execSync(`taskkill /pid ${child.pid} /T /F`);
         else
           process.kill(child.pid);
