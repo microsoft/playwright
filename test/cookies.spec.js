@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, defaultBrowserOptions, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -239,25 +239,17 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         expect(cookie).toBe('');
       }
     });
-    it('should isolate cookies between runs', async({server, context, newContext}) => {
-      let cookie = [];
-      server.setRoute('/empty.html', (req, res) => {
-        cookie = req.headers.cookie || '';
-        res.end();
-      });
-      await context.setCookies([{url: server.EMPTY_PAGE, name: 'runcookie', value: 'value'}]);
-      {
-        const page = await context.newPage();
-        await page.goto(server.EMPTY_PAGE);
-        expect(cookie).toBe('runcookie=value');
-      }
-      {
-        const browser = await playwright.launch();
-        const page = await browser.newPage();
-        await page.goto(server.EMPTY_PAGE);
-        expect(cookie).toBe('');
-        await browser.close();
-      }
+    it('should isolate cookies between launches', async({server}) => {
+      const browser1 = await playwright.launch(defaultBrowserOptions);
+      const context1 = await browser1.newContext();
+      await context1.setCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() + 1000000000 }]);
+      await browser1.close();
+
+      const browser2 = await playwright.launch(defaultBrowserOptions);
+      const context2 = await browser2.newContext();
+      const cookies = await context2.cookies();
+      expect(cookies.length).toBe(0);
+      await browser2.close();
     });
     it('should set multiple cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
