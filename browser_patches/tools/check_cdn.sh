@@ -3,9 +3,10 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox|webkit] [--full-history]"
+  echo "usage: $(basename $0) [firefox|webkit] [--full-history] [--has-all-builds]"
   echo
   echo "List CDN status for browser"
+  echo
   exit 0
 fi
 
@@ -73,6 +74,16 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
 else
   echo ERROR: unknown browser - "$1"
   exit 1
+fi
+
+if [[ $* == *--has-all-builds ]]; then
+  for i in "${ARCHIVES[@]}"; do
+    URL=$(printf $i $REVISION)
+    if ! [[ $(curl -s -L -I $URL | head -1 | cut -f2 -d' ') == 200 ]]; then
+      exit 1
+    fi
+  done;
+  exit 0
 fi
 
 STOP_REVISION=$((REVISION - 3))

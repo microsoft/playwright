@@ -121,10 +121,9 @@ fi
 cd -
 
 source ./buildbots/send_telegram_message.sh
-LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
-BUILD_ALIAS="<b>[[$BUILD_FLAVOR r$BUILD_NUMBER]]</b> $LAST_COMMIT_MESSAGE"
+BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
 
-send_telegram_message "$BUILD_ALIAS -- started ⏳"
+send_telegram_message "$BUILD_ALIAS -- started"
 
 if [[ "$BUILD_FLAVOR" == "webkit-gtk-wpe" ]]; then
   echo "-- combining binaries together"
@@ -164,4 +163,12 @@ if ! ./upload.sh $BUILD_FLAVOR $ZIP_PATH; then
   exit 1
 fi
 UPLOAD_SIZE=$(du -h "$ZIP_PATH" | awk '{print $1}')
-send_telegram_message "$BUILD_ALIAS -- $UPLOAD_SIZE uploaded ✅"
+send_telegram_message "$BUILD_ALIAS -- $UPLOAD_SIZE uploaded"
+
+if ./tools/check_cdn.sh $BROWSER_NAME --has-all-builds; then
+  LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- ./$BROWSER_NAME/BUILD_NUMBER)
+  send_telegram_message "<b>$BROWSER_NAME r${BUILD_NUMBER} COMPLETE! ✅</b> $LAST_COMMIT_MESSAGE"
+fi
+
+
+
