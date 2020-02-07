@@ -118,7 +118,7 @@ export const CRSessionEvents = {
 
 export class CRSession extends platform.EventEmitter {
   _connection: CRConnection | null;
-  private _callbacks = new Map<number, {resolve:(o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
+  private _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
   private _targetType: string;
   private _sessionId: string;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;

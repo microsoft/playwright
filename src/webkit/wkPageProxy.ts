@@ -69,7 +69,7 @@ export class WKPageProxy {
     this._pageProxySession.dispatchMessage(message);
   }
 
-  private _isProvisionalCrossProcessLoadInProgress() : boolean {
+  private _isProvisionalCrossProcessLoadInProgress(): boolean {
     for (const anySession of this._sessions.values()) {
       if ((anySession as any)[isPovisionalSymbol])
         return true;

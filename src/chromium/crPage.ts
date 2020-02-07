@@ -280,7 +280,7 @@ export class CRPage implements PageDelegate {
     this._page._onBindingCalled(event.payload, context);
   }
 
-  _onDialog(event : Protocol.Page.javascriptDialogOpeningPayload) {
+  _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
       event.type as dialog.DialogType,
       event.message,
@@ -357,7 +357,7 @@ export class CRPage implements PageDelegate {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
-  async opener() : Promise<Page | null> {
+  async opener(): Promise<Page | null> {
     const openerTarget = CRTarget.fromPage(this._page).opener();
     if (!openerTarget)
       return null;

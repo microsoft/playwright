@@ -66,7 +66,7 @@ export class WKPage implements PageDelegate {
   }
 
   private async _initializePageProxySession() {
-    const promises : Promise<any>[] = [
+    const promises: Promise<any>[] = [
       this._pageProxySession.send('Dialog.enable'),
       this.authenticate(this._page._state.credentials)
     ];
@@ -114,7 +114,7 @@ export class WKPage implements PageDelegate {
       session.send('Page.getResourceTree'),
     ] as const);
     resourceTreeHandler(frameTree);
-    const promises : Promise<any>[] = [
+    const promises: Promise<any>[] = [
       // Resource tree should be received before first execution context.
       session.send('Runtime.enable'),
       session.send('Page.createUserWorld', { name: UTILITY_WORLD_NAME }).catch(_ => {}),  // Worlds are per-process
@@ -148,7 +148,7 @@ export class WKPage implements PageDelegate {
     await Promise.all(promises);
   }
 
-  initializeProvisionalPage(provisionalSession: WKSession) : Promise<void> {
+  initializeProvisionalPage(provisionalSession: WKSession): Promise<void> {
     assert(!this._provisionalPage);
     this._provisionalPage = new WKProvisionalPage(provisionalSession, this);
     return this._provisionalPage.initializationPromise;
@@ -285,7 +285,7 @@ export class WKPage implements PageDelegate {
     }
   }
 
-  private _onExecutionContextCreated(contextPayload : Protocol.Runtime.ExecutionContextDescription) {
+  private _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     if (this._contextIdToContext.has(contextPayload.id))
       return;
     const frame = this._page._frameManager.frame(contextPayload.frameId);
@@ -567,7 +567,7 @@ export class WKPage implements PageDelegate {
     return to._createHandle(result.object) as dom.ElementHandle<T>;
   }
 
-  async getAccessibilityTree(needle?: dom.ElementHandle) : Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
+  async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
     return getAccessibilityTree(this._session, needle);
   }
 

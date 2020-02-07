@@ -11,6 +11,6 @@ module.exports = {
      */
     "rules": {
         "no-console": [2, { "allow": ["warn", "error", "assert", "timeStamp", "time", "timeEnd"] }],
-        "no-debugger": 0,
+        "no-debugger": 0
     }
 };

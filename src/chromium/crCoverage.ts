@@ -26,7 +26,7 @@ import * as types from '../types';
 type CoverageEntry = {
   url: string,
   text: string,
-  ranges : {start: number, end: number}[]
+  ranges: {start: number, end: number}[]
 };
 
 export class CRCoverage implements Coverage {

@@ -332,7 +332,7 @@ export class WebSocketTransport implements ConnectionTransport {
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
     // are dispatched into separate tasks, so there's no need
     // to do anything extra.
-    const messageWrap: (cb :() => void) => void = isNode ? makeWaitForNextTask() : cb => cb();
+    const messageWrap: (cb: () => void) => void = isNode ? makeWaitForNextTask() : cb => cb();
 
     this._ws.addEventListener('message', event => {
       messageWrap(() => {
