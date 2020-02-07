@@ -1444,10 +1444,10 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..69c68d0bb5dd79df4e8b6d586481c275aa9fc242
+index 0000000000000000000000000000000000000000..6231668027bb83bef2b3f839d44bcf043c5bb292
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,196 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -1580,7 +1580,17 @@ index 0000000000000000000000000000000000000000..69c68d0bb5dd79df4e8b6d586481c275
 +    };
 +    this._eventListeners = [
 +      helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
++      helper.addMessageListener(tab.linkedBrowser.messageManager, 'juggler:content-ready', {
++        receiveMessage: () => this._onContentReady()
++      }),
 +    ];
++  }
++
++  _onContentReady() {
++    const attachInfo = [];
++    const data = { attachInfo, targetInfo: this.info() };
++    this._registry.emit(TargetRegistry.Events.PageTargetReady, data);
++    return attachInfo;
 +  }
 +
 +  id() {
@@ -1629,6 +1639,7 @@ index 0000000000000000000000000000000000000000..69c68d0bb5dd79df4e8b6d586481c275
 +  TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
 +  TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
 +  TargetChanged: Symbol('TargetRegistry.Events.TargetChanged'),
++  PageTargetReady: Symbol('TargetRegistry.Events.PageTargetReady'),
 +};
 +
 +var EXPORTED_SYMBOLS = ['TargetRegistry'];
@@ -1781,10 +1792,10 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/testing/juggler/content/ContentSession.js b/testing/juggler/content/ContentSession.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..f68780d529e753e7456c3182b051ad790dcd0e16
+index 0000000000000000000000000000000000000000..2302be180eeee0cc686171cefb56f7ab2514648a
 --- /dev/null
 +++ b/testing/juggler/content/ContentSession.js
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,67 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {RuntimeAgent} = ChromeUtils.import('chrome://juggler/content/content/RuntimeAgent.js');
 +const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
@@ -1821,21 +1832,25 @@ index 0000000000000000000000000000000000000000..f68780d529e753e7456c3182b051ad79
 +    return this._messageManager;
 +  }
 +
-+  async _onMessage(msg) {
-+    const id = msg.data.id;
++  async handleMessage({ id, methodName, params }) {
 +    try {
-+      const [domainName, methodName] = msg.data.methodName.split('.');
-+      const agent = this._agents[domainName];
++      const [domain, method] = methodName.split('.');
++      const agent = this._agents[domain];
 +      if (!agent)
-+        throw new Error(`unknown domain: ${domainName}`);
-+      const handler = agent[methodName];
++        throw new Error(`unknown domain: ${domain}`);
++      const handler = agent[method];
 +      if (!handler)
-+        throw new Error(`unknown method: ${domainName}.${methodName}`);
-+      const result = await handler.call(agent, msg.data.params);
-+      this._messageManager.sendAsyncMessage(this._sessionId, {id, result});
++        throw new Error(`unknown method: ${domain}.${method}`);
++      const result = await handler.call(agent, params);
++      return {id, result};
 +    } catch (e) {
-+      this._messageManager.sendAsyncMessage(this._sessionId, {id, error: e.message + '\n' + e.stack});
++      return {id, error: e.message + '\n' + e.stack};
 +    }
++  }
++
++  async _onMessage(msg) {
++    const response = await this.handleMessage(msg.data);
++    this._messageManager.sendAsyncMessage(this._sessionId, response);
 +  }
 +
 +  dispose() {
@@ -3854,10 +3869,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..8585092e04e7e763a0c115c28363e505e8eb91bd
+index 0000000000000000000000000000000000000000..6a9f908676fc025b74ea585a0e4e9194f704d13f
 --- /dev/null
 +++ b/testing/juggler/content/main.js
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,56 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {ContentSession} = ChromeUtils.import('chrome://juggler/content/content/ContentSession.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -3870,23 +3885,34 @@ index 0000000000000000000000000000000000000000..8585092e04e7e763a0c115c28363e505
 +const scrollbarManager = new ScrollbarManager(docShell);
 +
 +const helper = new Helper();
++const messageManager = this;
++
++function createContentSession(sessionId) {
++  const session = new ContentSession(sessionId, messageManager, frameTree, scrollbarManager, networkMonitor);
++  sessions.set(sessionId, session);
++  return session;
++}
++
++function disposeContentSession(sessionId) {
++  const session = sessions.get(sessionId);
++  if (!session)
++    return;
++  sessions.delete(sessionId);
++  session.dispose();
++}
 +
 +const gListeners = [
-+  helper.addMessageListener(this, 'juggler:create-content-session', msg => {
++  helper.addMessageListener(messageManager, 'juggler:create-content-session', msg => {
 +    const sessionId = msg.data;
-+    sessions.set(sessionId, new ContentSession(sessionId, this, frameTree, scrollbarManager, networkMonitor));
++    createContentSession(sessionId);
 +  }),
 +
-+  helper.addMessageListener(this, 'juggler:dispose-content-session', msg => {
++  helper.addMessageListener(messageManager, 'juggler:dispose-content-session', msg => {
 +    const sessionId = msg.data;
-+    const session = sessions.get(sessionId);
-+    if (!session)
-+      return;
-+    sessions.delete(sessionId);
-+    session.dispose();
++    disposeContentSession(sessionId);
 +  }),
 +
-+  helper.addEventListener(this, 'unload', msg => {
++  helper.addEventListener(messageManager, 'unload', msg => {
 +    helper.removeListeners(gListeners);
 +    for (const session of sessions.values())
 +      session.dispose();
@@ -3897,6 +3923,12 @@ index 0000000000000000000000000000000000000000..8585092e04e7e763a0c115c28363e505
 +  }),
 +];
 +
++const [attachInfo] = sendSyncMessage('juggler:content-ready', {});
++for (const { sessionId, messages } of attachInfo || []) {
++  const session = createContentSession(sessionId);
++  for (const message of messages)
++    session.handleMessage(message);
++}
 diff --git a/testing/juggler/jar.mn b/testing/juggler/jar.mn
 new file mode 100644
 index 0000000000000000000000000000000000000000..76377927a8c9af3cac3b028ff754491966d03ba3
@@ -4055,7 +4087,7 @@ index 0000000000000000000000000000000000000000..9bf14b3c4842d15508f67daa10f35047
 +this.BrowserHandler = BrowserHandler;
 diff --git a/testing/juggler/protocol/Dispatcher.js b/testing/juggler/protocol/Dispatcher.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..956988738079272be8d3998dcbbaa91abc415fcc
+index 0000000000000000000000000000000000000000..835aa8b7d1c5a8e643691c4b89da77cd1c8b18c9
 --- /dev/null
 +++ b/testing/juggler/protocol/Dispatcher.js
 @@ -0,0 +1,254 @@
@@ -4091,7 +4123,7 @@ index 0000000000000000000000000000000000000000..956988738079272be8d3998dcbbaa91a
 +    ];
 +  }
 +
-+  async createSession(targetId) {
++  createSession(targetId) {
 +    const targetInfo = TargetRegistry.instance().targetInfo(targetId);
 +    if (!targetInfo)
 +      throw new Error(`Target "${targetId}" is not found`);
@@ -4487,10 +4519,10 @@ index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9c
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5413f55e8a9d70c8d3a87f4a8b7c894c85f9f495
+index 0000000000000000000000000000000000000000..e9c5d94cf65b44d57bdb21ec892c3e325220a879
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,289 @@
+@@ -0,0 +1,285 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4594,10 +4626,6 @@ index 0000000000000000000000000000000000000000..5413f55e8a9d70c8d3a87f4a8b7c894c
 +        defaultValue: dialog.defaultValue(),
 +      });
 +    }
-+  }
-+
-+  async setUserAgent(options) {
-+    return await this._contentSession.send('Page.setUserAgent', options);
 +  }
 +
 +  async setFileInputFiles(options) {
@@ -4931,10 +4959,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..099cda1dd5ad6d62e077482131c62784934c460c
+index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497a16559ea
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,759 @@
+@@ -0,0 +1,755 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5189,6 +5217,7 @@ index 0000000000000000000000000000000000000000..099cda1dd5ad6d62e077482131c62784
 +    'createBrowserContext': {
 +      params: {
 +        removeOnDetach: t.Optional(t.Boolean),
++        userAgent: t.Optional(t.String),
 +      },
 +      returns: {
 +        browserContextId: t.String,
@@ -5481,11 +5510,6 @@ index 0000000000000000000000000000000000000000..099cda1dd5ad6d62e077482131c62784
 +        viewport: t.Nullable(pageTypes.Viewport),
 +      },
 +    },
-+    'setUserAgent': {
-+      params: {
-+        userAgent: t.Nullable(t.String),
-+      },
-+    },
 +    'setEmulatedMedia': {
 +      params: {
 +        type: t.Optional(t.Enum(['screen', 'print', ''])),
@@ -5743,10 +5767,10 @@ index 0000000000000000000000000000000000000000..0026e8ff58ef6268f4c63783d0ff68ff
 +this.RuntimeHandler = RuntimeHandler;
 diff --git a/testing/juggler/protocol/TargetHandler.js b/testing/juggler/protocol/TargetHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..720f82716b78a1f3ea6d5ca4ee4ec8bf832f2996
+index 0000000000000000000000000000000000000000..454fa4ebb9bda29bb957fa64a08ca92c33212f75
 --- /dev/null
 +++ b/testing/juggler/protocol/TargetHandler.js
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,104 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -5764,24 +5788,30 @@ index 0000000000000000000000000000000000000000..720f82716b78a1f3ea6d5ca4ee4ec8bf
 +    this._contextManager = BrowserContextManager.instance();
 +    this._targetRegistry = TargetRegistry.instance();
 +    this._enabled = false;
-+    this._browserContextsToDispose = new Set();
 +    this._eventListeners = [];
++    this._createdBrowserContextOptions = new Map();
 +  }
 +
 +  async attachToTarget({targetId}) {
-+    const sessionId = await this._session.dispatcher().createSession(targetId);
++    if (!this._enabled)
++      throw new Error('Target domain is not enabled');
++    const sessionId = this._session.dispatcher().createSession(targetId);
 +    return {sessionId};
 +  }
 +
-+  async createBrowserContext({removeOnDetach}) {
++  async createBrowserContext(options) {
++    if (!this._enabled)
++      throw new Error('Target domain is not enabled');
 +    const browserContextId = this._contextManager.createBrowserContext();
-+    if (removeOnDetach)
-+      this._browserContextsToDispose.add(browserContextId);
++    // TODO: introduce BrowserContext class, with options?
++    this._createdBrowserContextOptions.set(browserContextId, options);
 +    return {browserContextId};
 +  }
 +
 +  async removeBrowserContext({browserContextId}) {
-+    this._browserContextsToDispose.delete(browserContextId);
++    if (!this._enabled)
++      throw new Error('Target domain is not enabled');
++    this._createdBrowserContextOptions.delete(browserContextId);
 +    this._contextManager.removeBrowserContext(browserContextId);
 +  }
 +
@@ -5800,14 +5830,17 @@ index 0000000000000000000000000000000000000000..720f82716b78a1f3ea6d5ca4ee4ec8bf
 +      helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
 +      helper.on(this._targetRegistry, TargetRegistry.Events.TargetChanged, this._onTargetChanged.bind(this)),
 +      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
++      helper.on(this._targetRegistry, TargetRegistry.Events.PageTargetReady, this._onPageTargetReady.bind(this)),
 +    ];
 +  }
 +
 +  dispose() {
 +    helper.removeListeners(this._eventListeners);
-+    for (const browserContextId of this._browserContextsToDispose)
-+      this._contextManager.removeBrowserContext(browserContextId);
-+    this._browserContextsToDispose.clear();
++    for (const [browserContextId, options] of this._createdBrowserContextOptions) {
++      if (options.removeOnDetach)
++        this._contextManager.removeBrowserContext(browserContextId);
++    }
++    this._createdBrowserContextOptions.clear();
 +  }
 +
 +  _onTargetCreated(targetInfo) {
@@ -5820,6 +5853,18 @@ index 0000000000000000000000000000000000000000..720f82716b78a1f3ea6d5ca4ee4ec8bf
 +
 +  _onTargetDestroyed(targetInfo) {
 +    this._session.emitEvent('Target.targetDestroyed', targetInfo);
++  }
++
++  _onPageTargetReady({attachInfo, targetInfo}) {
++    const options = this._createdBrowserContextOptions.get(targetInfo.browserContextId);
++    if (!options)
++      return;
++    const sessionId = this._session.dispatcher().createSession(targetInfo.targetId);
++    const messages = [];
++    // TODO: perhaps, we should just have a single message 'initBrowserContextOptions'.
++    if (options.userAgent !== undefined)
++      messages.push({ id: 0, methodName: 'Page.setUserAgent', params: { userAgent: options.userAgent } });
++    attachInfo.push({ sessionId, messages });
 +  }
 +
 +  async newPage({browserContextId}) {
