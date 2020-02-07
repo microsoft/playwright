@@ -68,7 +68,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
     it('should take screenshot', async({page, server}) => {
       const { base64, bufferClassName } = await page.evaluate(async url => {
-        await page.setViewport({width: 500, height: 500});
+        await page.setViewportSize({width: 500, height: 500});
         await page.goto(url);
         const screenshot = await page.screenshot();
         return { base64: screenshot.toString('base64'), bufferClassName: screenshot.constructor.name };

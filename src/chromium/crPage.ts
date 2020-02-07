@@ -18,7 +18,7 @@
 import * as dom from '../dom';
 import * as js from '../javascript';
 import * as frames from '../frames';
-import { debugError, helper, RegisteredListener } from '../helper';
+import { debugError, helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { CRSession, CRConnection } from './crConnection';
 import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
@@ -106,7 +106,7 @@ export class CRPage implements PageDelegate {
     if (options.ignoreHTTPSErrors)
       promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
     if (options.viewport)
-      promises.push(this.setViewport(options.viewport));
+      promises.push(this._updateViewport(true /* updateTouch */));
     if (options.javaScriptEnabled === false)
       promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
     if (options.userAgent)
@@ -317,19 +317,29 @@ export class CRPage implements PageDelegate {
     await this._client.send('Network.setExtraHTTPHeaders', { headers });
   }
 
-  async setViewport(viewport: types.Viewport): Promise<void> {
-    const {
-      width,
-      height,
-      isMobile = false,
-      deviceScaleFactor = 1,
-    } = viewport;
-    const isLandscape = width > height;
-    const screenOrientation: Protocol.Emulation.ScreenOrientation = isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' };
-    await Promise.all([
-      this._client.send('Emulation.setDeviceMetricsOverride', { mobile: isMobile, width, height, deviceScaleFactor, screenOrientation }),
-      this._client.send('Emulation.setTouchEmulationEnabled', { enabled: isMobile })
-    ]);
+  async setViewportSize(viewportSize: types.Size): Promise<void> {
+    assert(this._page._state.viewportSize === viewportSize);
+    await this._updateViewport(false /* updateTouch */);
+  }
+
+  async _updateViewport(updateTouch: boolean): Promise<void> {
+    let viewport = this._page.browserContext()._options.viewport || { width: 0, height: 0 };
+    const viewportSize = this._page._state.viewportSize;
+    if (viewportSize)
+      viewport = { ...viewport, ...viewportSize };
+    const isLandscape = viewport.width > viewport.height;
+    const promises = [
+      this._client.send('Emulation.setDeviceMetricsOverride', {
+        mobile: !!viewport.isMobile,
+        width: viewport.width,
+        height: viewport.height,
+        deviceScaleFactor: viewport.deviceScaleFactor || 1,
+        screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
+      }),
+    ];
+    if (updateTouch)
+      promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }));
+    await Promise.all(promises);
   }
 
   async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {
@@ -414,7 +424,7 @@ export class CRPage implements PageDelegate {
     await this._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions): Promise<platform.BufferType> {
+  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
     await this._client.send('Page.bringToFront', {});
     const clip = options.clip ? { ...options.clip, scale: 1 } : undefined;
     const result = await this._client.send('Page.captureScreenshot', { format, quality: options.quality, clip });

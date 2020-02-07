@@ -484,13 +484,13 @@ page.removeListener('request', logRequest);
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
 - [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
-- [page.setViewport(viewport)](#pagesetviewportviewport)
+- [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
 - [page.title()](#pagetitle)
 - [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
 - [page.uncheck(selector, [options])](#pageuncheckselector-options)
 - [page.url()](#pageurl)
-- [page.viewport()](#pageviewport)
+- [page.viewportSize()](#pageviewportsize)
 - [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
 - [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
 - [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
@@ -1338,26 +1338,21 @@ The extra HTTP headers will be sent with every request the page initiates.
 - `enabled` <[boolean]> When `true`, enables offline mode for the page.
 - returns: <[Promise]>
 
-#### page.setViewport(viewport)
-- `viewport` <[Object]>
+#### page.setViewportSize(viewportSize)
+- `viewportSize` <[Object]>
   - `width` <[number]> page width in pixels. **required**
   - `height` <[number]> page height in pixels. **required**
-  - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
 - returns: <[Promise]>
 
-> **NOTE** in certain cases, setting viewport will reload the page in order to set the `isMobile` property.
+In the case of multiple pages in a single browser, each page can have its own viewport size. However, [browser.newContext(options)](#browsernewcontextoptions) allows to set viewport size (and more) for all pages in the context at once.
 
-In the case of multiple pages in a single browser, each page can have its own viewport size.
-
-`page.setViewport` will resize the page. A lot of websites don't expect phones to change size, so you should set the viewport before navigating to the page.
+`page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the viewport size before navigating to the page.
 
 ```js
 const page = await browser.newPage();
-await page.setViewport({
+await page.setViewportSize({
   width: 640,
   height: 480,
-  deviceScaleFactor: 1,
 });
 await page.goto('https://example.com');
 ```
@@ -1426,12 +1421,10 @@ Shortcut for [page.mainFrame().uncheck(selector[, options])](#frameuncheckselect
 
 This is a shortcut for [page.mainFrame().url()](#frameurl)
 
-#### page.viewport()
+#### page.viewportSize()
 - returns: <?[Object]>
   - `width` <[number]> page width in pixels.
   - `height` <[number]> page height in pixels.
-  - `deviceScaleFactor` <[number]> Specify device scale factor (can be though of as dpr). Defaults to `1`.
-  - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
 
 #### page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])
 - `selectorOrFunctionOrTimeout` <[string]|[number]|[function]> A [selector], predicate or timeout to wait for
@@ -1499,7 +1492,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
   const browser = await webkit.launch();
   const page = await browser.newPage();
   const watchDog = page.waitForFunction('window.innerWidth < 100');
-  await page.setViewport({width: 50, height: 50});
+  await page.setViewportSize({width: 50, height: 50});
   await watchDog;
   await browser.close();
 })();
@@ -2136,7 +2129,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
   const browser = await firefox.launch();
   const page = await browser.newPage();
   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-  page.setViewport({width: 50, height: 50});
+  page.setViewportSize({width: 50, height: 50});
   await watchDog;
   await browser.close();
 })();

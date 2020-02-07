@@ -219,8 +219,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(error.message).toBe('No node found for selector: button.does-not-exist');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/161
-    it('should not hang with touch-enabled viewports', async({page, server}) => {
-      await page.setViewport(playwright.devices['iPhone 6'].viewport);
+    it('should not hang with touch-enabled viewports', async({server, newContext}) => {
+      const context = await newContext({ viewport: playwright.devices['iPhone 6'].viewport });
+      const page = await context.newPage();
       await page.mouse.down();
       await page.mouse.move(100, 10);
       await page.mouse.up();
@@ -284,7 +285,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     // @see https://github.com/GoogleChrome/puppeteer/issues/4110
     xit('should click the button with fixed position inside an iframe', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      await page.setViewport({width: 500, height: 500});
+      await page.setViewportSize({width: 500, height: 500});
       await page.setContent('<div style="width:100px;height:2000px">spacer</div>');
       await utils.attachFrame(page, 'button-test', server.CROSS_PROCESS_PREFIX + '/input/button.html');
       const frame = page.frames()[1];
@@ -292,8 +293,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await frame.click('button');
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
-    it('should click the button with deviceScaleFactor set', async({page, server}) => {
-      await page.setViewport({width: 400, height: 400, deviceScaleFactor: 5});
+    it('should click the button with deviceScaleFactor set', async({newContext, server}) => {
+      const context = await newContext({ viewport: {width: 400, height: 400, deviceScaleFactor: 5} });
+      const page = await context.newPage();
       expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
       await page.setContent('<div style="width:100px;height:100px">spacer</div>');
       await utils.attachFrame(page, 'button-test', server.PREFIX + '/input/button.html');

@@ -100,8 +100,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
     });
     it('should propagate default viewport to the page', async({ newPage }) => {
       const page = await newPage({ viewport: { width: 456, height: 789 } });
-      expect(page.viewport().width).toBe(456);
-      expect(page.viewport().height).toBe(789);
+      expect(page.viewportSize().width).toBe(456);
+      expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
     });
@@ -120,14 +120,14 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
     });
     it('should restore default viewport after fullPage screenshot', async({ newPage }) => {
       const page = await newPage({ viewport: { width: 456, height: 789 } });
-      expect(page.viewport().width).toBe(456);
-      expect(page.viewport().height).toBe(789);
+      expect(page.viewportSize().width).toBe(456);
+      expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
       const screenshot = await page.screenshot({ fullPage: true });
       expect(screenshot).toBeInstanceOf(Buffer);
-      expect(page.viewport().width).toBe(456);
-      expect(page.viewport().height).toBe(789);
+      expect(page.viewportSize().width).toBe(456);
+      expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
     });
@@ -136,8 +136,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const context = await newContext({ viewport });
       viewport.width = 567;
       const page = await context.newPage();
-      expect(page.viewport().width).toBe(456);
-      expect(page.viewport().height).toBe(789);
+      expect(page.viewportSize().width).toBe(456);
+      expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
     });

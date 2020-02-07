@@ -62,7 +62,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('should wait for predicate', async({page, server}) => {
       await Promise.all([
         page.waitFor(() => window.innerWidth < 130), // Windows doesn't like windows below 120px wide
-        page.setViewport({width: 10, height: 10}),
+        page.setViewportSize({width: 10, height: 10}),
       ]);
     });
     it('should throw when unknown type', async({page, server}) => {

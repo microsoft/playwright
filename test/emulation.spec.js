@@ -24,26 +24,30 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
 
   describe('Page.viewport', function() {
     it('should get the proper viewport size', async({page, server}) => {
-      expect(page.viewport()).toEqual({width: 800, height: 600});
-      await page.setViewport({width: 123, height: 456});
-      expect(page.viewport()).toEqual({width: 123, height: 456});
+      expect(page.viewportSize()).toEqual({width: 800, height: 600});
+      await page.setViewportSize({width: 123, height: 456});
+      expect(page.viewportSize()).toEqual({width: 123, height: 456});
     });
-    it('should support mobile emulation', async({page, server}) => {
+    it('should support mobile emulation', async({newContext, server}) => {
+      const context = await newContext({ viewport: iPhone.viewport });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
-      expect(await page.evaluate(() => window.innerWidth)).toBe(800);
-      await page.setViewport(iPhone.viewport);
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
-      await page.setViewport({width: 400, height: 300});
+      await page.setViewportSize({width: 400, height: 300});
       expect(await page.evaluate(() => window.innerWidth)).toBe(400);
     });
-    it('should support touch emulation', async({page, server}) => {
+    it('should not have touch by default', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
-      await page.setViewport(iPhone.viewport);
+      await page.goto(server.PREFIX + '/detect-touch.html');
+      expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
+    });
+    it('should support touch emulation', async({newContext, server}) => {
+      const context = await newContext({ viewport: iPhone.viewport });
+      const page = await context.newPage();
+      await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
       expect(await page.evaluate(dispatchTouch)).toBe('Received touch');
-      await page.setViewport({width: 100, height: 100});
-      expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
 
       function dispatchTouch() {
         let fulfill;
@@ -58,48 +62,54 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         return promise;
       }
     });
-    it('should be detectable by Modernizr', async({page, server}) => {
-      await page.goto(server.PREFIX + '/detect-touch.html');
-      expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
-      await page.setViewport(iPhone.viewport);
+    it('should be detectable by Modernizr', async({newContext, server}) => {
+      const context = await newContext({ viewport: iPhone.viewport });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/detect-touch.html');
       expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
     });
-    it('should detect touch when applying viewport with touches', async({page, server}) => {
-      await page.setViewport({ width: 800, height: 600, isMobile: true });
+    it('should detect touch when applying viewport with touches', async({newContext, server}) => {
+      const context = await newContext({ viewport: { width: 800, height: 600, isMobile: true } });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
       await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
       expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
     });
-    it.skip(FFOX)('should support landscape emulation', async({page, server}) => {
-      await page.goto(server.PREFIX + '/mobile.html');
-      await page.setViewport(iPhone.viewport);
-      expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
-      await page.setViewport(iPhoneLandscape.viewport);
-      expect(await page.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true)
+    it.skip(FFOX)('should support landscape emulation', async({newContext, server}) => {
+      const context1 = await newContext({ viewport: iPhone.viewport });
+      const page1 = await context1.newPage();
+      await page1.goto(server.PREFIX + '/mobile.html');
+      expect(await page1.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
+      const context2 = await newContext({ viewport: iPhoneLandscape.viewport });
+      const page2 = await context2.newPage();
+      expect(await page2.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true);
     });
-    it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({page, server}) => {
+    it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({newContext, server}) => {
+      const context = await newContext({ viewport: { width: 300, height: 400, isMobile: true } });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
-      await page.setViewport(iPhone.viewport);
       await page.evaluate(() => {
         window.counter = 0;
         window.addEventListener('orientationchange', () => console.log(++window.counter));
       });
 
       const event1 = page.waitForEvent('console');
-      await page.setViewport(iPhoneLandscape.viewport);
+      await page.setViewportSize({width: 400, height: 300});
       expect((await event1).text()).toBe('1');
 
       const event2 = page.waitForEvent('console');
-      await page.setViewport(iPhone.viewport);
+      await page.setViewportSize({width: 300, height: 400});
       expect((await event2).text()).toBe('2');
     });
-    it.skip(FFOX)('default mobile viewports to 980 width', async({page, server}) => {
-      await page.setViewport({width: 320, height: 480, isMobile: true});
+    it.skip(FFOX)('default mobile viewports to 980 width', async({newContext, server}) => {
+      const context = await newContext({ viewport: {width: 320, height: 480, isMobile: true} });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/empty.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(980);
     });
-    it.skip(FFOX)('respect meta viewport tag', async({page, server}) => {
-      await page.setViewport({width: 320, height: 480, isMobile: true});
+    it.skip(FFOX)('respect meta viewport tag', async({newContext, server}) => {
+      const context = await newContext({ viewport: {width: 320, height: 480, isMobile: true} });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(320);
     });
