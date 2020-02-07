@@ -8398,10 +8398,10 @@ index 8a871bf2916d5eab86becf5fde0faed79283d88c..a19a429c4d53edf81c3028c7053265e6
  
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..0b4ec2de5671723f4045e98b3e398fc11180b3b8
+index 0000000000000000000000000000000000000000..6d19c534e58e35ec2012a36238e25a78706f2786
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
-@@ -0,0 +1,219 @@
+@@ -0,0 +1,222 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8584,6 +8584,9 @@ index 0000000000000000000000000000000000000000..0b4ec2de5671723f4045e98b3e398fc1
 +
 +void RemoteInspectorPipe::workerRun()
 +{
++    fprintf(stdout, "\nWeb Inspector is reading from pipe #3\n\n");
++    fflush(stdout);
++
 +    const size_t bufSize = 256 * 1024;
 +    auto buffer = makeUniqueArray<char>(bufSize);
 +    Vector<char> line;
