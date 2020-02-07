@@ -1202,9 +1202,9 @@ The `format` options are:
 - returns: <[Promise]<[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 #### page.route(url, handler)
-- `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-- `handler` <[Function]> handler function to router the request.
-- returns: <[Promise]<[void]>>.
+- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `handler` <[function]\([Request]\)> handler function to router the request.
+- returns: <[Promise]>.
 
 Routing activates the request interception and enables `request.abort`, `request.continue` and
 `request.respond` methods on the request.  This provides the capability to modify network requests that are made by a page.
