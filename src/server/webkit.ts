@@ -22,7 +22,7 @@ import * as types from '../types';
 import { WKBrowser } from '../webkit/wkBrowser';
 import { execSync } from 'child_process';
 import { PipeTransport } from './pipeTransport';
-import { launchProcess, waitForLine } from './processLauncher';
+import { launchProcess } from './processLauncher';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as platform from '../platform';
@@ -137,9 +137,8 @@ export class WebKit implements BrowserType {
     });
 
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to WebKit!`);
-    await waitForLine(launchedProcess, launchedProcess.stdout, /^Web Inspector is reading from pipe #3$/, timeout, timeoutError);
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? wrapTransportWithWebSocket(transport, port || 0) : null);
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };
   }
 
@@ -256,7 +255,7 @@ class SequenceNumberMixer<V> {
   }
 }
 
-function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
+async function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
   const server = new ws.Server({ port });
   const guid = uuidv4();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();
@@ -265,8 +264,11 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   const browserContextIds = new Map<string, ws>();
   const pageProxyIds = new Map<string, ws>();
   const sockets = new Set<ws>();
+  let transportReadyCallback: () => void;
+  const transportReady = new Promise(f => transportReadyCallback = f);
 
   transport.onmessage = message => {
+    transportReadyCallback();
     const parsedMessage = JSON.parse(message);
     if ('id' in parsedMessage) {
       if (parsedMessage.id === -9999)
@@ -402,5 +404,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   const address = server.address();
   if (typeof address === 'string')
     return address + '/' + guid;
+  await transportReady;
   return 'ws://127.0.0.1:' + address.port + '/' + guid;
 }

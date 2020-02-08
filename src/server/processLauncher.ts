@@ -84,7 +84,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   let processClosed = false;
   const waitForProcessToClose = new Promise((fulfill, reject) => {
     spawnedProcess.once('exit', (exitCode, signal) => {
-      debugLauncher(`[${id}] <process did exit>`);
+      debugLauncher(`[${id}] <process did exit ${exitCode}, ${signal}>`);
       processClosed = true;
       helper.removeEventListeners(listeners);
       options.onkill(exitCode, signal);
