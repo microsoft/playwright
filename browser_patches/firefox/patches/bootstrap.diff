@@ -2181,10 +2181,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a8aa1b032
+index 0000000000000000000000000000000000000000..b8262a3408c85e2873ec03e6447f294885cb74ca
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,895 @@
+@@ -0,0 +1,900 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2471,6 +2471,13 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +        this._onNavigationCommitted(frame);
 +      if (frame.pendingNavigationId())
 +        this._onNavigationStarted(frame);
++      const {readyState} = frame.domWindow().document;
++      if (readyState === 'complete') {
++        this._emitEventForFrame(frame, 'DOMContentLoaded');
++        this._emitEventForFrame(frame, 'load');
++      } else if (readyState === 'interactive') {
++        this._emitEventForFrame(frame, 'DOMContentLoaded');
++      }
 +    }
 +
 +    this._eventListeners = [
@@ -2546,10 +2553,7 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emitEvent('Page.eventFired', {
-+      frameId: frame.id(),
-+      name: 'DOMContentLoaded',
-+    });
++    this._emitEventForFrame(frame, 'DOMContentLoaded');
 +  }
 +
 +  _onError(errorEvent) {
@@ -2569,10 +2573,7 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emitEvent('Page.eventFired', {
-+      frameId: frame.id(),
-+      name: 'load'
-+    });
++    this._emitEventForFrame(frame, 'load');
 +  }
 +
 +  _onLoad(event) {
@@ -2580,9 +2581,13 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
++    this._emitEventForFrame(frame, 'load');
++  }
++
++  _emitEventForFrame(frame, eventName) {
 +    this._session.emitEvent('Page.eventFired', {
 +      frameId: frame.id(),
-+      name: 'load'
++      name: eventName,
 +    });
 +  }
 +
