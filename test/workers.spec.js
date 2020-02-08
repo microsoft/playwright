@@ -25,11 +25,15 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
 
   describe('Workers', function() {
     it('Page.workers', async function({page, server}) {
+      const consoleMessagePromise = new Promise(x => page.once('console', x));
       await Promise.all([
         page.waitForEvent('workercreated'),
         page.goto(server.PREFIX + '/worker/worker.html')]);
       const worker = page.workers()[0];
       expect(worker.url()).toContain('worker.js');
+
+      // We might otherwise evaluate before the worker has had time to run its initial script.
+      await consoleMessagePromise;
 
       expect(await worker.evaluate(() => self['workerFunction']())).toBe('worker function result');
 
