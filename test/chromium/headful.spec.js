@@ -88,7 +88,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       const context = await browser.newContext();
       await Promise.all([
         context.newPage(),
-        browser.waitForTarget(target => target.browserContext() === context && target.url().includes('devtools://')),
+        browser.waitForTarget(target => target.context() === context && target.url().includes('devtools://')),
       ]);
       await browser.close();
     });

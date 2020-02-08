@@ -82,7 +82,7 @@ export class FFPage implements PageDelegate {
       this._session.send('Network.enable'),
       this._session.send('Page.enable'),
     ];
-    const options = this._page.browserContext()._options;
+    const options = this._page.context()._options;
     if (options.viewport)
       promises.push(this._updateViewport());
     if (options.bypassCSP)
@@ -272,7 +272,7 @@ export class FFPage implements PageDelegate {
   }
 
   async _updateViewport() {
-    let viewport = this._page.browserContext()._options.viewport || { width: 0, height: 0 };
+    let viewport = this._page.context()._options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
       viewport = { ...viewport, ...viewportSize };

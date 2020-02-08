@@ -43,7 +43,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
     afterEach(async state => {
       await state.page.evaluate(() => teardown());
-      await state.page.browserContext().close();
+      await state.page.context().close();
       state.page = null;
     });
 

@@ -70,7 +70,7 @@ export class WKPage implements PageDelegate {
       this._pageProxySession.send('Dialog.enable'),
       this.authenticate(this._page._state.credentials)
     ];
-    const contextOptions = this._page.browserContext()._options;
+    const contextOptions = this._page.context()._options;
     if (contextOptions.javaScriptEnabled === false)
       promises.push(this._pageProxySession.send('Emulation.setJavaScriptEnabled', { enabled: false }));
     if (this._page._state.viewportSize || contextOptions.viewport)
@@ -130,7 +130,7 @@ export class WKPage implements PageDelegate {
     if (this._page._state.cacheEnabled === false)
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
 
-    const contextOptions = this._page.browserContext()._options;
+    const contextOptions = this._page.context()._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
@@ -390,7 +390,7 @@ export class WKPage implements PageDelegate {
   }
 
   async _updateViewport(updateTouch: boolean): Promise<void> {
-    let viewport = this._page.browserContext()._options.viewport || { width: 0, height: 0 };
+    let viewport = this._page.context()._options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
       viewport = { ...viewport, ...viewportSize };

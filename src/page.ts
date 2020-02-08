@@ -181,7 +181,7 @@ export class Page extends platform.EventEmitter {
     this.emit(Events.Page.FileChooser, fileChooser);
   }
 
-  browserContext(): BrowserContext {
+  context(): BrowserContext {
     return this._browserContext;
   }
 

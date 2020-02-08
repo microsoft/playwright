@@ -44,7 +44,8 @@ const { chromium, firefox, webkit } = require('playwright');
 
 (async () => {
   const browser = await chromium.launch();  // Or 'firefox' or 'webkit'.
-  const page = await browser.newPage('http://example.com');
+  const page = await browser.newPage();
+  await page.goto('http://example.com');
   // other actions...
   await browser.close();
 })();
@@ -81,7 +82,8 @@ const iPhone = devices['iPhone 6'];
     viewport: iPhone.viewport,
     userAgent: iPhone.userAgent
   });
-  const page = await context.newPage('http://example.com');
+  const page = await context.newPage();
+  await page.goto('http://example.com');
   // other actions...
   await browser.close();
 })();
@@ -136,7 +138,8 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();
-  const page = await browser.newPage('https://example.com');
+  const page = await browser.newPage();
+  await page.goto('https://example.com');
   await browser.close();
 })();
 ```
@@ -145,11 +148,11 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 
 <!-- GEN:toc -->
 - [event: 'disconnected'](#event-disconnected)
-- [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
+- [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
-- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.newPage([options])](#browsernewpageoptions)
 - [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
@@ -157,12 +160,6 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
 - Browser application is closed or crashed.
 - The [`browser.disconnect`](#browserdisconnect) method was called.
-
-#### browser.browserContexts()
-- returns: <[Array]<[BrowserContext]>>
-
-Returns an array of all open browser contexts. In a newly created browser, this will return
-a single instance of [BrowserContext].
 
 #### browser.close()
 - returns: <[Promise]>
@@ -172,6 +169,12 @@ In case this browser is obtained using [browserType.launch](#browsertypelaunchop
 In case this browser is obtained using [browserType.connect](#browsertypeconnectoptions), clears all created contexts belonging to this browser and disconnects from the browser server.
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
+
+#### browser.contexts()
+- returns: <[Array]<[BrowserContext]>>
+
+Returns an array of all open browser contexts. In a newly created browser, this will return
+a single instance of [BrowserContext].
 
 #### browser.isConnected()
 
@@ -206,12 +209,12 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   // Create a new incognito browser context.
   const context = await browser.newContext();
   // Create a new page in a pristine context.
-  const page = await context.newPage('https://example.com');
+  const page = await context.newPage();
+  await page.goto('https://example.com');
 })();
 ```
 
-#### browser.newPage(url, [options])
-- `url` <?[string]> Optional url to navigate the page to.
+#### browser.newPage([options])
 - `options` <[Object]>
   - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
@@ -230,7 +233,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
 - returns: <[Promise]<[Page]>>
 
-Creates a new page in a new browser context and optionally navigates it to the specified URL.
+Creates a new page in a new browser context.
 
 #### browser.pages()
 - returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages.
@@ -253,7 +256,8 @@ Playwright allows creation of "incognito" browser contexts with `browser.newCont
 // Create a new incognito browser context
 const context = await browser.newContext();
 // Create a new page inside context.
-const page = await context.newPage('https://example.com');
+const page = await context.newPage();
+await page.goto('https://example.com');
 // Dispose context once it's no longer needed.
 await context.close();
 ```
@@ -263,7 +267,7 @@ await context.close();
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([...urls])](#browsercontextcookiesurls)
-- [browserContext.newPage(url)](#browsercontextnewpageurl)
+- [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
@@ -314,11 +318,10 @@ If URLs are specified, only cookies that affect those URLs are returned.
 
 > **NOTE** the default browser context cannot be closed.
 
-#### browserContext.newPage(url)
-- `url` <?[string]> Optional url to navigate the page to.
+#### browserContext.newPage()
 - returns: <[Promise]<[Page]>>
 
-Creates a new page in the browser context and optionally navigates it to the specified URL.
+Creates a new page in the browser context.
 
 #### browserContext.pages()
 - returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
@@ -397,7 +400,8 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 (async () => {
   const browser = await webkit.launch();
   const context = await browser.newContext();
-  const page = await context.newPage('https://example.com');
+  const page = await context.newPage();
+  await page.goto('https://example.com');
   await page.screenshot({path: 'screenshot.png'});
   await browser.close();
 })();
@@ -449,11 +453,11 @@ page.removeListener('request', logRequest);
 - [page.addScriptTag(options)](#pageaddscripttagoptions)
 - [page.addStyleTag(options)](#pageaddstyletagoptions)
 - [page.authenticate(credentials)](#pageauthenticatecredentials)
-- [page.browserContext()](#pagebrowsercontext)
 - [page.check(selector, [options])](#pagecheckselector-options)
 - [page.click(selector[, options])](#pageclickselector-options)
 - [page.close([options])](#pagecloseoptions)
 - [page.content()](#pagecontent)
+- [page.context()](#pagecontext)
 - [page.coverage](#pagecoverage)
 - [page.dblclick(selector[, options])](#pagedblclickselector-options)
 - [page.emulateMedia(options)](#pageemulatemediaoptions)
@@ -729,12 +733,6 @@ Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-U
 
 To disable authentication, pass `null`.
 
-#### page.browserContext()
-
-- returns: <[BrowserContext]>
-
-Get the browser context that the page belongs to.
-
 #### page.check(selector, [options])
 - `selector` <[string]> A selector to search for checkbox or radio button to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
@@ -791,6 +789,12 @@ By default, `page.close()` **does not** run beforeunload handlers.
 - returns: <[Promise]<[string]>>
 
 Gets the full HTML contents of the page, including the doctype.
+
+#### page.context()
+
+- returns: <[BrowserContext]>
+
+Get the browser context that the page belongs to.
 
 #### page.coverage
 
@@ -1633,7 +1637,8 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();
-  const page = await browser.newPage('https://www.google.com/chrome/browser/canary.html');
+  const page = await browser.newPage();
+  await page.goto('https://www.google.com/chrome/browser/canary.html');
   dumpFrameTree(page.mainFrame(), '');
   await browser.close();
 
@@ -2224,7 +2229,8 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage('https://example.com');
+  const page = await browser.newPage();
+  await page.goto('https://example.com');
   const hrefElement = await page.$('a');
   await hrefElement.click();
   // ...
@@ -3143,7 +3149,8 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   await selectors.register(createTagNameEngine);
 
   const browser = await firefox.launch();
-  const page = await browser.newPage('http://example.com');
+  const page = await browser.newPage();
+  await page.goto('https://example.com');
 
   // Use the selector prefixed with its name.
   const button = await page.$('tag=button');
@@ -3453,7 +3460,8 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage('http://example.com');
+  const page = await browser.newPage();
+  await page.goto('https://example.com');
   // other actions...
   await browser.close();
 })();
@@ -3493,7 +3501,8 @@ const iPhone = webkit.devices['iPhone 6'];
     viewport: iPhone.viewport,
     userAgent: iPhone.userAgent
   });
-  const page = await context.newPage('http://example.com');
+  const page = await context.newPage();
+  await page.goto('https://example.com');
   // other actions...
   await browser.close();
 })();
@@ -3638,11 +3647,11 @@ await browser.stopTracing();
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-Browser -->
 - [event: 'disconnected'](#event-disconnected)
-- [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
+- [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
-- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.newPage([options])](#browsernewpageoptions)
 - [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
@@ -3760,7 +3769,7 @@ to send messages.
 
 
 <!-- GEN:toc -->
-- [chromiumTarget.browserContext()](#chromiumtargetbrowsercontext)
+- [chromiumTarget.context()](#chromiumtargetcontext)
 - [chromiumTarget.createCDPSession()](#chromiumtargetcreatecdpsession)
 - [chromiumTarget.opener()](#chromiumtargetopener)
 - [chromiumTarget.page()](#chromiumtargetpage)
@@ -3768,7 +3777,7 @@ to send messages.
 - [chromiumTarget.url()](#chromiumtargeturl)
 <!-- GEN:stop -->
 
-#### chromiumTarget.browserContext()
+#### chromiumTarget.context()
 
 - returns: <[BrowserContext]>
 
@@ -3805,11 +3814,11 @@ Firefox browser instance does not expose Firefox-specific features.
 
 <!-- GEN:toc-extends-Browser -->
 - [event: 'disconnected'](#event-disconnected)
-- [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
+- [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
-- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.newPage([options])](#browsernewpageoptions)
 - [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
@@ -3821,11 +3830,11 @@ WebKit browser instance does not expose WebKit-specific features.
 
 <!-- GEN:toc-extends-Browser -->
 - [event: 'disconnected'](#event-disconnected)
-- [browser.browserContexts()](#browserbrowsercontexts)
 - [browser.close()](#browserclose)
+- [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
-- [browser.newPage(url, [options])](#browsernewpageurl-options)
+- [browser.newPage([options])](#browsernewpageoptions)
 - [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 

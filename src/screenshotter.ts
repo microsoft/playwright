@@ -28,7 +28,7 @@ export class Screenshotter {
   constructor(page: Page) {
     this._page = page;
 
-    const browserContext = page.browserContext();
+    const browserContext = page.context();
     this._queue = (browserContext as any)[taskQueueSymbol];
     if (!this._queue) {
       this._queue = new TaskQueue();

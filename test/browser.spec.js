@@ -22,25 +22,23 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Browser', function() {
-    it('should create new page', async function({browser, newPage}) {
+    it('should create new page', async function({browser}) {
       expect((await browser.pages()).length).toBe(0);
-      const page1 = await newPage();
+      const page1 = await browser.newPage();
       expect((await browser.pages()).length).toBe(1);
-      expect(browser.browserContexts().length).toBe(1);
+      expect(browser.contexts().length).toBe(1);
 
-      const page2 = await newPage();
+      const page2 = await browser.newPage();
       expect((await browser.pages()).length).toBe(2);
-      expect(browser.browserContexts().length).toBe(2);
+      expect(browser.contexts().length).toBe(2);
 
-      await page1.close();
+      await page1.context().close();
       expect((await browser.pages()).length).toBe(1);
-      expect(browser.browserContexts().length).toBe(2);
+      expect(browser.contexts().length).toBe(1);
 
-      await page2.browserContext().close();
+      await page2.context().close();
       expect((await browser.pages()).length).toBe(0);
-      expect(browser.browserContexts().length).toBe(1);
-      await page1.browserContext().close();
-      expect(browser.browserContexts().length).toBe(0);
+      expect(browser.contexts().length).toBe(0);
     });
   });
 };

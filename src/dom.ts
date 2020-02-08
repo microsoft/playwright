@@ -144,7 +144,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const frameId = await this._page._delegate.getOwnerFrame(this);
     if (!frameId)
       return null;
-    const pages = this._page.browserContext()._existingPages();
+    const pages = this._page.context()._existingPages();
     for (const page of pages) {
       const frame = page._frameManager.frame(frameId);
       if (frame)
@@ -188,7 +188,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         element.scrollIntoView({block: 'center', inline: 'center', behavior: 'instant'});
       }
       return false;
-    }, !!this._page.browserContext()._options.javaScriptEnabled);
+    }, !!this._page.context()._options.javaScriptEnabled);
     if (error)
       throw new Error(error);
   }
