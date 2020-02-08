@@ -11951,60 +11951,133 @@ index d996feb64e02d7399f2ed0b34d3d0dd03133f824..4ab1fa69437ed5a11a5357a331cb7e1c
      CommandLineOptions()
  #if ENABLE(WEBKIT)
 diff --git a/Tools/MiniBrowser/win/MainWindow.cpp b/Tools/MiniBrowser/win/MainWindow.cpp
-index 82d28bbd4282c2b6b3d1441e822b4fa41e699e78..9fef117e2bc39ade8df4d0bba3b1f10483b37e51 100644
+index 82d28bbd4282c2b6b3d1441e822b4fa41e699e78..180c0d7f9eaed1e48951c660cb3c6a184f7a6ef3 100644
 --- a/Tools/MiniBrowser/win/MainWindow.cpp
 +++ b/Tools/MiniBrowser/win/MainWindow.cpp
-@@ -91,7 +91,9 @@ void MainWindow::registerClass(HINSTANCE hInstance)
+@@ -91,7 +91,10 @@ void MainWindow::registerClass(HINSTANCE hInstance)
      RegisterClassEx(&wcex);
  }
  
 -MainWindow::MainWindow()
-+MainWindow::MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore)
++MainWindow::MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless)
 +    : m_context(context)
 +    , m_dataStore(dataStore)
++    , m_headless(headless)
  {
      s_numInstances++;
  }
-@@ -101,9 +103,9 @@ MainWindow::~MainWindow()
+@@ -101,9 +104,9 @@ MainWindow::~MainWindow()
      s_numInstances--;
  }
  
 -Ref<MainWindow> MainWindow::create()
-+Ref<MainWindow> MainWindow::create(WKContextRef context, WKWebsiteDataStoreRef dataStore)
++Ref<MainWindow> MainWindow::create(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless)
  {
 -    return adoptRef(*new MainWindow());
-+    return adoptRef(*new MainWindow(context, dataStore));
++    return adoptRef(*new MainWindow(context, dataStore, headless));
  }
  
  bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool usesLayeredWebView)
-@@ -134,7 +136,7 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
-     DefEditProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC));
-     SetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditProc));
+@@ -112,29 +115,31 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
+ 
+     auto title = loadString(IDS_APP_TITLE);
+ 
+-    m_hMainWnd = CreateWindow(s_windowClass.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW,
+-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, hInstance, this);
++    m_hMainWnd = CreateWindowExW(m_headless ? WS_EX_NOACTIVATE : 0, s_windowClass.c_str(), title.c_str(),
++        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, hInstance, this);
+ 
+     if (!m_hMainWnd)
+         return false;
+ 
++    if (!m_headless) {
+ #if !ENABLE(WEBKIT)
+-    EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKIT_WINDOW, MF_GRAYED);
++        EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKIT_WINDOW, MF_GRAYED);
+ #endif
+ #if !ENABLE(WEBKIT_LEGACY)
+-    EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKITLEGACY_WINDOW, MF_GRAYED);
++        EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKITLEGACY_WINDOW, MF_GRAYED);
+ #endif
+ 
+-    m_hBackButtonWnd = CreateWindow(L"BUTTON", L"<", WS_CHILD | WS_VISIBLE  | BS_TEXT, 0, 0, 0, 0, m_hMainWnd, reinterpret_cast<HMENU>(IDM_HISTORY_BACKWARD), hInstance, 0);
+-    m_hForwardButtonWnd = CreateWindow(L"BUTTON", L">", WS_CHILD | WS_VISIBLE | BS_TEXT, 0, 0, 0, 0, m_hMainWnd, reinterpret_cast<HMENU>(IDM_HISTORY_FORWARD), hInstance, 0);
+-    m_hReloadButtonWnd = CreateWindow(L"BUTTON", L"↺", WS_CHILD | WS_VISIBLE | BS_TEXT, 0, 0, 0, 0, m_hMainWnd, reinterpret_cast<HMENU>(IDM_RELOAD), hInstance, 0);
+-    m_hURLBarWnd = CreateWindow(L"EDIT", 0, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOVSCROLL, 0, 0, 0, 0, m_hMainWnd, 0, hInstance, 0);
+-    m_hProgressIndicator = CreateWindow(L"STATIC", 0, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER | SS_CENTERIMAGE, 0, 0, 0, 0, m_hMainWnd, 0, hInstance, 0);
++        m_hBackButtonWnd = CreateWindow(L"BUTTON", L"<", WS_CHILD | WS_VISIBLE  | BS_TEXT, 0, 0, 0, 0, m_hMainWnd, reinterpret_cast<HMENU>(IDM_HISTORY_BACKWARD), hInstance, 0);
++        m_hForwardButtonWnd = CreateWindow(L"BUTTON", L">", WS_CHILD | WS_VISIBLE | BS_TEXT, 0, 0, 0, 0, m_hMainWnd, reinterpret_cast<HMENU>(IDM_HISTORY_FORWARD), hInstance, 0);
++        m_hReloadButtonWnd = CreateWindow(L"BUTTON", L"↺", WS_CHILD | WS_VISIBLE | BS_TEXT, 0, 0, 0, 0, m_hMainWnd, reinterpret_cast<HMENU>(IDM_RELOAD), hInstance, 0);
++        m_hURLBarWnd = CreateWindow(L"EDIT", 0, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOVSCROLL, 0, 0, 0, 0, m_hMainWnd, 0, hInstance, 0);
++        m_hProgressIndicator = CreateWindow(L"STATIC", 0, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER | SS_CENTERIMAGE, 0, 0, 0, 0, m_hMainWnd, 0, hInstance, 0);
+ 
+-    DefEditProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC));
+-    SetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditProc));
++        DefEditProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC));
++        SetWindowLongPtr(m_hURLBarWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditProc));
++    }
  
 -    m_browserWindow = factory(*this, m_hMainWnd, usesLayeredWebView);
 +    m_browserWindow = factory(*this, m_hMainWnd, m_context.get(), m_dataStore.get(), usesLayeredWebView);
      if (!m_browserWindow)
          return false;
      HRESULT hr = m_browserWindow->init();
-@@ -196,7 +198,7 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+@@ -143,7 +148,13 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
+ 
+     updateDeviceScaleFactor();
+     resizeSubViews();
+-    SetFocus(m_hURLBarWnd);
++
++    if (m_headless) {
++        SetMenu(m_hMainWnd, NULL);
++    } else {
++        SetFocus(m_hURLBarWnd);
++        ShowWindow(m_hMainWnd, SW_SHOW);
++    }
+     return true;
+ }
+ 
+@@ -157,12 +168,13 @@ void MainWindow::resizeSubViews()
+     int height = scaleFactor * urlBarHeight;
+     int width = scaleFactor * controlButtonWidth;
+ 
+-    MoveWindow(m_hBackButtonWnd, 0, 0, width, height, TRUE);
+-    MoveWindow(m_hForwardButtonWnd, width, 0, width, height, TRUE);
+-    MoveWindow(m_hReloadButtonWnd, width * 2, 0, width, height, TRUE);
+-    MoveWindow(m_hURLBarWnd, width * 3, 0, rcClient.right - width * 5, height, TRUE);
+-    MoveWindow(m_hProgressIndicator, rcClient.right - width * 2, 0, width * 2, height, TRUE);
+-
++    if (!m_headless) {
++        MoveWindow(m_hBackButtonWnd, 0, 0, width, height, TRUE);
++        MoveWindow(m_hForwardButtonWnd, width, 0, width, height, TRUE);
++        MoveWindow(m_hReloadButtonWnd, width * 2, 0, width, height, TRUE);
++        MoveWindow(m_hURLBarWnd, width * 3, 0, rcClient.right - width * 5, height, TRUE);
++        MoveWindow(m_hProgressIndicator, rcClient.right - width * 2, 0, width * 2, height, TRUE);
++    }
+     if (m_browserWindow->usesLayeredWebView() || !m_browserWindow->hwnd())
+         return;
+     MoveWindow(m_browserWindow->hwnd(), 0, height, rcClient.right, rcClient.bottom - height, TRUE);
+@@ -196,17 +208,15 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
              break;
  #if ENABLE(WEBKIT)
          case IDM_NEW_WEBKIT_WINDOW: {
 -            auto& newWindow = MainWindow::create().leakRef();
-+            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
++            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get(), false).leakRef();
              newWindow.init(WebKitBrowserWindow::create, hInst);
-             ShowWindow(newWindow.hwnd(), SW_SHOW);
+-            ShowWindow(newWindow.hwnd(), SW_SHOW);
              break;
-@@ -204,7 +206,7 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+         }
  #endif
  #if ENABLE(WEBKIT_LEGACY)
          case IDM_NEW_WEBKITLEGACY_WINDOW: {
 -            auto& newWindow = MainWindow::create().leakRef();
-+            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
++            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get(), false).leakRef();
              newWindow.init(WebKitLegacyBrowserWindow::create, hInst);
-             ShowWindow(newWindow.hwnd(), SW_SHOW);
+-            ShowWindow(newWindow.hwnd(), SW_SHOW);
              break;
-@@ -225,9 +227,6 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+         }
+ #endif
+@@ -225,9 +235,6 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
          case IDM_WEB_INSPECTOR:
              thisWindow->browserWindow()->launchInspector();
              break;
@@ -12014,8 +12087,92 @@ index 82d28bbd4282c2b6b3d1441e822b4fa41e699e78..9fef117e2bc39ade8df4d0bba3b1f104
          case IDM_CACHES:
              if (!::IsWindow(thisWindow->m_hCacheWnd)) {
                  thisWindow->m_hCacheWnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_CACHES), hWnd, cachesDialogProc, reinterpret_cast<LPARAM>(thisWindow.get()));
+@@ -314,6 +321,9 @@ static void turnOffOtherUserAgents(HMENU menu)
+ 
+ bool MainWindow::toggleMenuItem(UINT menuID)
+ {
++    if (m_headless)
++        return (INT_PTR)FALSE;
++
+     HMENU menu = ::GetMenu(hwnd());
+ 
+     switch (menuID) {
+@@ -390,6 +400,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+ INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+ {
+     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
++    if (thisWindow.m_headless)
++        return (INT_PTR)FALSE;
+     switch (message) {
+     case WM_INITDIALOG:
+         SetWindowLongPtr(hDlg, DWLP_USER, lParam);
+@@ -420,6 +432,8 @@ INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wP
+ INT_PTR CALLBACK MainWindow::customUserAgentDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+ {
+     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
++    if (thisWindow.m_headless)
++        return (INT_PTR)FALSE;
+     switch (message) {
+     case WM_INITDIALOG: {
+         MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(lParam);
+@@ -465,17 +479,20 @@ void MainWindow::loadURL(std::wstring url)
+         if (SUCCEEDED(::UrlCreateFromPath(url.c_str(), fileURL, &fileURLLength, 0)))
+             url = fileURL;
+     }
+-    if (url.find(L"://") == url.npos)
++    if (url.find(L"://") == url.npos && url.find(L"about:blank") == url.npos)
+         url = L"http://" + url;
+ 
+     if (FAILED(m_browserWindow->loadURL(_bstr_t(url.c_str()))))
+         return;
+ 
+-    SetFocus(m_browserWindow->hwnd());
++    if (!m_headless)
++        SetFocus(m_browserWindow->hwnd());
+ }
+ 
+ void MainWindow::onURLBarEnter()
+ {
++    if (m_headless)
++        return;
+     wchar_t strPtr[INTERNET_MAX_URL_LENGTH];
+     GetWindowText(m_hURLBarWnd, strPtr, INTERNET_MAX_URL_LENGTH);
+     strPtr[INTERNET_MAX_URL_LENGTH - 1] = 0;
+@@ -484,6 +501,8 @@ void MainWindow::onURLBarEnter()
+ 
+ void MainWindow::updateDeviceScaleFactor()
+ {
++    if (m_headless)
++        return;
+     if (m_hURLBarFont)
+         ::DeleteObject(m_hURLBarFont);
+     auto scaleFactor = WebCore::deviceScaleFactorForWindow(m_hMainWnd);
+@@ -495,6 +514,8 @@ void MainWindow::updateDeviceScaleFactor()
+ 
+ void MainWindow::progressChanged(double progress)
+ {
++    if (m_headless)
++        return;
+     std::wostringstream text;
+     text << static_cast<int>(progress * 100) << L'%';
+     SetWindowText(m_hProgressIndicator, text.str().c_str());
+@@ -502,10 +523,14 @@ void MainWindow::progressChanged(double progress)
+ 
+ void MainWindow::progressFinished()
+ {
++    if (m_headless)
++        return;
+     SetWindowText(m_hProgressIndicator, L"");
+ }
+ 
+ void MainWindow::activeURLChanged(std::wstring url)
+ {
++    if (m_headless)
++        return;
+     SetWindowText(m_hURLBarWnd, url.c_str());
+ }
 diff --git a/Tools/MiniBrowser/win/MainWindow.h b/Tools/MiniBrowser/win/MainWindow.h
-index fba7f670f8953563d8d0d2b8d42a636c653f9d5f..2514c7d942384af1f3114c9008af499c78051298 100644
+index fba7f670f8953563d8d0d2b8d42a636c653f9d5f..660c34408eb181ddbdb8e52395b56b3d7f9ae7e5 100644
 --- a/Tools/MiniBrowser/win/MainWindow.h
 +++ b/Tools/MiniBrowser/win/MainWindow.h
 @@ -26,6 +26,8 @@
@@ -12035,7 +12192,7 @@ index fba7f670f8953563d8d0d2b8d42a636c653f9d5f..2514c7d942384af1f3114c9008af499c
 +    using BrowserWindowFactory = std::function<Ref<BrowserWindow>(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool usesLayeredWebView)>;
  
 -    static Ref<MainWindow> create();
-+    static Ref<MainWindow> create(WKContextRef context, WKWebsiteDataStoreRef dataStore);
++    static Ref<MainWindow> create(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless);
  
      ~MainWindow();
      bool init(BrowserWindowFactory, HINSTANCE hInstance, bool usesLayeredWebView = false);
@@ -12044,20 +12201,21 @@ index fba7f670f8953563d8d0d2b8d42a636c653f9d5f..2514c7d942384af1f3114c9008af499c
      static size_t s_numInstances;
  
 -    MainWindow();
-+    MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore);
++    MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless);
      bool toggleMenuItem(UINT menuID);
      void onURLBarEnter();
      void updateDeviceScaleFactor();
-@@ -72,5 +74,7 @@ private:
+@@ -72,5 +74,8 @@ private:
      HWND m_hProgressIndicator { nullptr };
      HWND m_hCacheWnd { nullptr };
      HGDIOBJ m_hURLBarFont { nullptr };
 +    WKRetainPtr<WKContextRef> m_context; 
 +    WKRetainPtr<WKWebsiteDataStoreRef> m_dataStore;
      RefPtr<BrowserWindow> m_browserWindow;
++    bool m_headless;
  };
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index 71c43e6691395b787140ca0603550aac1c8513d5..1de905c3227315d6099c19fcd25880124b220610 100644
+index 71c43e6691395b787140ca0603550aac1c8513d5..289795e88d893e4b85fb663bf924e68383579d85 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 @@ -39,6 +39,8 @@
@@ -12167,16 +12325,14 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..1de905c3227315d6099c19fcd2588012
  void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
  {
      auto page = WKViewGetPage(m_view.get());
-@@ -381,21 +384,106 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+@@ -381,21 +384,102 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
      return false;
  }
  
 -WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
 +// static
 +void WebKitBrowserWindow::setHeadless(bool headless)
- {
--    auto& newWindow = MainWindow::create().leakRef();
--    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
++{
 +    s_headless = headless;
 +}
 +
@@ -12248,10 +12404,12 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..1de905c3227315d6099c19fcd2588012
 +}
 +
 +WKPageRef WebKitBrowserWindow::createViewCallback(WKPageConfigurationRef configuration, bool navigate)
-+{
+ {
+-    auto& newWindow = MainWindow::create().leakRef();
+-    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
 +    auto context = WKPageConfigurationGetContext(configuration);
 +    auto dataStore = WKPageConfigurationGetWebsiteDataStore(configuration);
-+    auto& newWindow = MainWindow::create(context, dataStore).leakRef();
++    auto& newWindow = MainWindow::create(context, dataStore, s_headless).leakRef();
 +    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool) -> auto {
          return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
      };
@@ -12259,10 +12417,6 @@ index 71c43e6691395b787140ca0603550aac1c8513d5..1de905c3227315d6099c19fcd2588012
 -    if (!ok)
 -        return nullptr;
 -    ShowWindow(newWindow.hwnd(), SW_SHOW);
-+    if (s_headless)
-+        SetMenu(newWindow.hwnd(), NULL);
-+    else
-+        ShowWindow(newWindow.hwnd(), SW_SHOW);
 +    if (navigate)
 +        newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
 +
@@ -12375,7 +12529,7 @@ index f84e5cde0baaa08dab1fc77771e4a62a08a5df78..dac73d3d9db04c5d502432cea8adfa89
      void navigateToHistory(UINT menuID);
      bool seedInitialDefaultPreferences();
 diff --git a/Tools/MiniBrowser/win/WinMain.cpp b/Tools/MiniBrowser/win/WinMain.cpp
-index b1d17e88de61a6f196830f62604e4174564506bd..6a939ce02295ab6fa24c620f2c5b4f1f5165f666 100644
+index b1d17e88de61a6f196830f62604e4174564506bd..0cc40ce5a5f0a3331275fcdaf7ea95cd0dc5031f 100644
 --- a/Tools/MiniBrowser/win/WinMain.cpp
 +++ b/Tools/MiniBrowser/win/WinMain.cpp
 @@ -32,6 +32,9 @@
@@ -12433,7 +12587,7 @@ index b1d17e88de61a6f196830f62604e4174564506bd..6a939ce02295ab6fa24c620f2c5b4f1f
  
      if (options.useFullDesktop)
          computeFullDesktopFrame();
-@@ -86,19 +115,40 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+@@ -86,19 +115,35 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
  #else
      auto factory = options.windowType == BrowserWindowType::WebKit ? WebKitBrowserWindow::create : WebKitLegacyBrowserWindow::create;
  #endif
@@ -12456,17 +12610,13 @@ index b1d17e88de61a6f196830f62604e4174564506bd..6a939ce02295ab6fa24c620f2c5b4f1f
 +    auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
 +    WKContextSetPrimaryDataStore(context.get(), dataStore.get());
 +
-+    auto& mainWindow = MainWindow::create(context.get(), dataStore.get()).leakRef();
++    auto& mainWindow = MainWindow::create(context.get(), dataStore.get(), options.headless).leakRef();
      HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
      if (FAILED(hr))
          goto exit;
  
 -    ShowWindow(mainWindow.hwnd(), nCmdShow);
-+    if (options.headless)
-+        SetMenu(mainWindow.hwnd(), NULL);
-+    else
-+        ShowWindow(mainWindow.hwnd(), nCmdShow);
- 
+-
      hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_MINIBROWSER));
  
      if (options.requestedURL.length())
