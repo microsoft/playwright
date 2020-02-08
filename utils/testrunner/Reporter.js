@@ -16,6 +16,7 @@
 
 const RED_COLOR = '\x1b[31m';
 const GREEN_COLOR = '\x1b[32m';
+const GRAY_COLOR = '\x1b[90m';
 const YELLOW_COLOR = '\x1b[33m';
 const MAGENTA_COLOR = '\x1b[35m';
 const RESET_COLOR = '\x1b[0m';
@@ -202,16 +203,19 @@ class Reporter {
     this._workersState.set(workerId, {test, isRunning: false});
     if (this._verbose) {
       ++this._testCounter;
+      let prefix = `${this._testCounter})`;
+      if (this._runner.parallel() > 1)
+        prefix += ` ${GRAY_COLOR}[worker = ${workerId}]${RESET_COLOR}`;
       if (test.result === 'ok') {
-        console.log(`${this._testCounter}) ${GREEN_COLOR}[ OK ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
+        console.log(`${prefix} ${GREEN_COLOR}[ OK ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
       } else if (test.result === 'terminated') {
-        console.log(`${this._testCounter}) ${MAGENTA_COLOR}[ TERMINATED ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
+        console.log(`${prefix} ${MAGENTA_COLOR}[ TERMINATED ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
       } else if (test.result === 'crashed') {
-        console.log(`${this._testCounter}) ${RED_COLOR}[ CRASHED ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
+        console.log(`${prefix} ${RED_COLOR}[ CRASHED ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
       } else if (test.result === 'skipped') {
-        console.log(`${this._testCounter}) ${YELLOW_COLOR}[SKIP]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
+        console.log(`${prefix} ${YELLOW_COLOR}[SKIP]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
       } else if (test.result === 'failed') {
-        console.log(`${this._testCounter}) ${RED_COLOR}[FAIL]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
+        console.log(`${prefix} ${RED_COLOR}[FAIL]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
         console.log('  Message:');
         console.log(`    ${RED_COLOR}${test.error.message || test.error}${RESET_COLOR}`);
         console.log('  Stack:');
@@ -222,7 +226,7 @@ class Reporter {
           console.log(test.output.split('\n').map(line => '    ' + line).join('\n'));
         }
       } else if (test.result === 'timedout') {
-        console.log(`${this._testCounter}) ${RED_COLOR}[TIME]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
+        console.log(`${prefix} ${RED_COLOR}[TIME]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
         console.log('  Message:');
         console.log(`    ${RED_COLOR}Timeout Exceeded ${this._runner.timeout()}ms${RESET_COLOR}`);
       }
