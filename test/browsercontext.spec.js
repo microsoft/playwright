@@ -105,32 +105,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
     });
-    it('should take fullPage screenshots when default viewport is null', async({server, newPage}) => {
-      const page = await newPage({ viewport: null });
-      await page.goto(server.PREFIX + '/grid.html');
-      const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
-      const screenshot = await page.screenshot({
-        fullPage: true
-      });
-      expect(screenshot).toBeInstanceOf(Buffer);
-
-      const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
-      expect(sizeBefore.width).toBe(sizeAfter.width);
-      expect(sizeBefore.height).toBe(sizeAfter.height);
-    });
-    it('should restore default viewport after fullPage screenshot', async({ newPage }) => {
-      const page = await newPage({ viewport: { width: 456, height: 789 } });
-      expect(page.viewportSize().width).toBe(456);
-      expect(page.viewportSize().height).toBe(789);
-      expect(await page.evaluate('window.innerWidth')).toBe(456);
-      expect(await page.evaluate('window.innerHeight')).toBe(789);
-      const screenshot = await page.screenshot({ fullPage: true });
-      expect(screenshot).toBeInstanceOf(Buffer);
-      expect(page.viewportSize().width).toBe(456);
-      expect(page.viewportSize().height).toBe(789);
-      expect(await page.evaluate('window.innerWidth')).toBe(456);
-      expect(await page.evaluate('window.innerHeight')).toBe(789);
-    });
     it('should make a copy of default viewport', async({ newContext }) => {
       const viewport = { width: 456, height: 789 };
       const context = await newContext({ viewport });
@@ -140,33 +114,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
-    });
-    it('should take element screenshot when default viewport is null and restore back', async({server, newPage}) => {
-      const page = await newPage({ viewport: null });
-      await page.setContent(`
-        <div style="height: 14px">oooo</div>
-        <style>
-        div.to-screenshot {
-          border: 1px solid blue;
-          width: 600px;
-          height: 600px;
-          margin-left: 50px;
-        }
-        ::-webkit-scrollbar{
-          display: none;
-        }
-        </style>
-        <div class="to-screenshot"></div>
-        <div class="to-screenshot"></div>
-        <div class="to-screenshot"></div>
-      `);
-      const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
-      const elementHandle = await page.$('div.to-screenshot');
-      const screenshot = await elementHandle.screenshot();
-      expect(screenshot).toBeInstanceOf(Buffer);
-      const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
-      expect(sizeBefore.width).toBe(sizeAfter.width);
-      expect(sizeBefore.height).toBe(sizeAfter.height);
     });
   });
 

@@ -36,24 +36,30 @@ export class Screenshotter {
     }
   }
 
+  private async _originalViewportSize(): Promise<{ viewportSize: types.Size, originalViewportSize: types.Size | null }> {
+    const originalViewportSize = this._page.viewportSize();
+    let viewportSize = originalViewportSize;
+    if (!viewportSize) {
+      const maybeViewportSize = await this._page.evaluate(() => {
+        if (!document.body || !document.documentElement)
+          return;
+        return {
+          width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
+          height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
+        };
+      });
+      if (!maybeViewportSize)
+        throw new Error(kScreenshotDuringNavigationError);
+      viewportSize = maybeViewportSize;
+    }
+    return { viewportSize, originalViewportSize };
+  }
+
   async screenshotPage(options: types.ScreenshotOptions = {}): Promise<platform.BufferType> {
     const format = validateScreeshotOptions(options);
     return this._queue.postTask(async () => {
-      let overridenViewportSize: types.Size | undefined;
-      const originalViewportSize = this._page.viewportSize();
-      let viewportSize: types.Size | undefined;
-      if (!originalViewportSize) {
-        viewportSize = await this._page.evaluate(() => {
-          if (!document.body || !document.documentElement)
-            return;
-          return {
-            width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
-            height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
-          };
-        });
-        if (!viewportSize)
-          throw new Error(kScreenshotDuringNavigationError);
-      }
+      const { viewportSize, originalViewportSize } = await this._originalViewportSize();
+      let overridenViewportSize: types.Size | null = null;
       if (options.fullPage && !this._page._delegate.canScreenshotOutsideViewport()) {
         const fullPageRect = await this._page.evaluate(() => {
           if (!document.body || !document.documentElement)
@@ -76,18 +82,10 @@ export class Screenshotter {
         overridenViewportSize = fullPageRect;
         await this._page.setViewportSize(overridenViewportSize);
       } else if (options.clip) {
-        options.clip = trimClipToViewport(originalViewportSize, options.clip);
+        options.clip = trimClipToViewport(viewportSize, options.clip);
       }
 
-      const result = await this._screenshot(format, options, (overridenViewportSize || originalViewportSize)!);
-
-      if (overridenViewportSize) {
-        if (originalViewportSize)
-          await this._page.setViewportSize(originalViewportSize);
-        else
-          await this._page._delegate.resetViewport(viewportSize!);
-      }
-      return result;
+      return await this._screenshot(format, options, viewportSize, overridenViewportSize, originalViewportSize);
     }).catch(rewriteError);
   }
 
@@ -95,9 +93,6 @@ export class Screenshotter {
     const format = validateScreeshotOptions(options);
     const rewrittenOptions: types.ScreenshotOptions = { ...options };
     return this._queue.postTask(async () => {
-      let overridenViewportSize: types.Size | undefined;
-      let viewportSize: types.Size;
-
       let maybeBoundingBox = await this._page._delegate.getBoundingBoxForScreenshot(handle);
       assert(maybeBoundingBox, 'Node is either not visible or not an HTMLElement');
       let boundingBox = maybeBoundingBox;
@@ -105,23 +100,10 @@ export class Screenshotter {
       assert(boundingBox.height !== 0, 'Node has 0 height.');
       boundingBox = enclosingIntRect(boundingBox);
 
-      const originalViewportSize = this._page.viewportSize();
+      const { viewportSize, originalViewportSize } = await this._originalViewportSize();
+
+      let overridenViewportSize: types.Size | null = null;
       if (!this._page._delegate.canScreenshotOutsideViewport()) {
-        if (!originalViewportSize) {
-          const maybeViewportSize = await this._page.evaluate(() => {
-            if (!document.body || !document.documentElement)
-              return;
-            return {
-              width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
-              height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
-            };
-          });
-          if (!maybeViewportSize)
-            throw new Error(kScreenshotDuringNavigationError);
-          viewportSize = maybeViewportSize;
-        } else {
-          viewportSize = originalViewportSize;
-        }
         if (boundingBox.width > viewportSize.width || boundingBox.height > viewportSize.height) {
           overridenViewportSize = {
             width: Math.max(viewportSize.width, boundingBox.width),
@@ -139,28 +121,27 @@ export class Screenshotter {
       if (!overridenViewportSize)
         rewrittenOptions.clip = boundingBox;
 
-      const result = await this._screenshot(format, rewrittenOptions, (overridenViewportSize || originalViewportSize)!);
-
-      if (overridenViewportSize) {
-        if (originalViewportSize)
-          await this._page.setViewportSize(originalViewportSize);
-        else
-          await this._page._delegate.resetViewport(viewportSize!);
-      }
-
-      return result;
+      return await this._screenshot(format, rewrittenOptions, viewportSize, overridenViewportSize, originalViewportSize);
     }).catch(rewriteError);
   }
 
-  private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
+  private async _screenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewportSize: types.Size, overridenViewportSize: types.Size | null, originalViewportSize: types.Size | null): Promise<platform.BufferType> {
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
-    const buffer = await this._page._delegate.takeScreenshot(format, options, viewportSize);
+    const buffer = await this._page._delegate.takeScreenshot(format, options, overridenViewportSize || viewportSize);
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();
     if (options.path)
       await platform.writeFileAsync(options.path, buffer);
+
+    if (overridenViewportSize) {
+      if (originalViewportSize)
+        await this._page.setViewportSize(originalViewportSize);
+      else
+        await this._page._delegate.resetViewport(viewportSize);
+    }
+
     return buffer;
   }
 }
@@ -181,8 +162,8 @@ class TaskQueue {
   }
 }
 
-function trimClipToViewport(viewportSize: types.Size | null, clip: types.Rect | undefined): types.Rect | undefined {
-  if (!clip || !viewportSize)
+function trimClipToViewport(viewportSize: types.Size, clip: types.Rect | undefined): types.Rect | undefined {
+  if (!clip)
     return clip;
   const p1 = { x: Math.min(clip.x, viewportSize.width), y: Math.min(clip.y, viewportSize.height) };
   const p2 = { x: Math.min(clip.x + clip.width, viewportSize.width), y: Math.min(clip.y + clip.height, viewportSize.height) };
