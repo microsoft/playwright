@@ -29,7 +29,7 @@ require('events').defaultMaxListeners *= parallel;
 
 let timeout = process.env.CI ? 30 * 1000 : 10 * 1000;
 if (!isNaN(process.env.TIMEOUT))
-  timeout = parseInt(process.env.TIMEOUT, 10);
+  timeout = parseInt(process.env.TIMEOUT * 1000, 10);
 const testRunner = new TestRunner({
   timeout,
   parallel,

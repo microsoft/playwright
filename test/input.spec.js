@@ -16,6 +16,8 @@
  */
 
 const path = require('path');
+const fs = require('fs');
+const formidable = require('formidable');
 
 const FILE_TO_UPLOAD = path.join(__dirname, '/assets/file-to-upload.txt');
 
@@ -113,6 +115,41 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await element.setInputFiles(FILE_TO_UPLOAD);
       expect(await page.$eval('input', input => input.files.length)).toBe(1);
       expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
+    });
+    it('should detect mime type', async({page, server}) => {
+      let callback;
+      const result = new Promise(f => callback = f);
+      server.setRoute('/upload', async (req, res) => {
+        const form = new formidable.IncomingForm();
+        form.parse(req, function(err, fields, { file1, file2 }) {
+          expect(file1.name).toBe('file-to-upload.txt');
+          expect(file1.type).toBe('text/plain');
+          expect(
+              fs.readFileSync(file1.path).toString()
+            ).toBe(
+              fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.txt')).toString()
+            );
+          expect(file2.name).toBe('file-to-upload.png');
+          expect(file2.type).toBe('image/png');
+          expect(
+            fs.readFileSync(file2.path).toString()
+          ).toBe(
+            fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.png')).toString()
+          );
+        callback();
+        });
+      });
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent(`
+        <form action="/upload" method="post" enctype="multipart/form-data" >
+          <input type="file" name="file1">
+          <input type="file" name="file2">
+          <input type="submit" value="Submit">
+        </form>`)
+      await (await page.$('input[name=file1]')).setInputFiles(path.join(__dirname, '/assets/file-to-upload.txt'));
+      await (await page.$('input[name=file2]')).setInputFiles(path.join(__dirname, '/assets/file-to-upload.png'));
+      page.click('input[type=submit]');
+      await result;
     });
     it('should be able to read selected file', async({page, server}) => {
       await page.setContent(`<input type=file>`);

@@ -432,7 +432,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (typeof item === 'string') {
         const file: types.FilePayload = {
           name: platform.basename(item),
-          type: 'application/octet-stream',
+          type: platform.getMimeType(item),
           data: await platform.readFileAsync(item, 'base64')
         };
         return file;
@@ -620,7 +620,7 @@ export function waitForSelectorTask(selector: string, visibility: types.Visibili
 export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {
   const files = await Promise.all(payloads.map(async (file: types.FilePayload) => {
     const result = await fetch(`data:${file.type};base64,${file.data}`);
-    return new File([await result.blob()], file.name);
+    return new File([await result.blob()], file.name, {type: file.type});
   }));
   const dt = new DataTransfer();
   for (const file of files)
