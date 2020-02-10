@@ -18,6 +18,9 @@
 const path = require('path');
 const {spawn, execSync} = require('child_process');
 
+/**
+ * @type {TestSuite}
+ */
 module.exports.describe = function({testRunner, expect, product, playwright, playwrightPath, defaultBrowserOptions, WIN, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

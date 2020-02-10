@@ -16,6 +16,9 @@
 
 const { waitEvent } = require('../utils');
 
+/**
+ * @type {ChromiumTestSuite}
+ */
 module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

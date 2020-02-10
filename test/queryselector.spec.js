@@ -17,6 +17,9 @@
 
 const zsSelectorEngineSource = require('../lib/generated/zsSelectorEngineSource');
 
+/**
+ * @type {PageTestSuite}
+ */
 module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
@@ -236,7 +239,7 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const element = await page.$$('//html/body/non-existing-element');
       expect(element).toEqual([]);
     });
-    it('should return multiple elements', async({page, sever}) => {
+    it('should return multiple elements', async({page, server}) => {
       await page.setContent('<div></div><div></div>');
       const elements = await page.$$('xpath=/html/body/div');
       expect(elements.length).toBe(2);
