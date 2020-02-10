@@ -149,13 +149,15 @@ We recognize WebDriver as a universal standard for the web automation and testin
 
 ### Q: What browser versions does Playwright use?
 
+Playwright **does not patch the rendering engines**. It either uses stock versions of the browsers (Chromium) or extends remote debugging protocols of the respective browsers (WebKit, Firefox) for better automation. There are no changes to the actual rendering engines, network stacks, etc. Our browsers are as pure as they can be.
+
 - *Chromium*: Playwright uses upstream versions of Chromium. When we need changes in the browser, they go into the browser directly and then we roll our dependency to that version of Chromium. As of today, we update Chromium as needed or at least once a month. We plan to synchronize our npm release cycle with the Chromium stable channel cadence.
 
-- *WebKit*: Playwright makes a number of modifications to `WebCore` and `WebKit2` in order to extend WebKit's remote debugging capabilities and support the full set of Playwright APIs. It also modifies the `Minibrowser` embedders to allow headless operation and headful debugging on all platforms. We use WebKit2 in a modern process isolation mode, enable mobile viewport, touch and geolocation on non-iOS platforms, etc. etc.
+- *WebKit*: Playwright extends `WebKit`'s remote debugging protocol to expose additional capabilities to the driver. There are no other changes to the rendering engine, it is pure `WebCore` in `WebKit2` engine. We strip debugging features from the WebKit's `Minibrowser` embedder and make it work headlessly. We use `WebKit2` in a modern process isolation mode, enable mobile viewport, touch and geolocation on non-iOS platforms to be as close to WebKit on non-iOS as one can be.
 
-  We'd like to switch to the upstream-first mode of operation, so we will be offering all of the WebKit patches for review upstream. Until then, they can be found in the `browser_patches/webkit` folder.
+  We continuously upload our patches to WebKit for upstream review and would like to switch to the upstream-first mode of operation once we land most critical changes. Before new extensions to the remote debugging hit upstream they can be found in the `browser_patches/webkit` folder.
 
-- *Firefox*: Playwright makes a number of modifications to Firefox as well. Those are adding support for content script debugging, workers, CSP, emulation, network interception, etc. etc.
+- *Firefox*: Playwright makes a number of modifications to Firefox's debugging channel as well. Same as above, no changes to the rendering engine itself. Those are adding support for content script debugging, workers, CSP, emulation, network interception, etc. etc.
 
   Similarly to WebKit, we'd like to offer all of those for review upstream, for now they can be found in the `browser_patches/firefox` folder.
 
