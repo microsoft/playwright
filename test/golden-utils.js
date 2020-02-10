@@ -17,12 +17,18 @@
 const path = require('path');
 const fs = require('fs');
 const Diff = require('text-diff');
-const mime = require('mime');
 const PNG = require('pngjs').PNG;
 const jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
 
 module.exports = {compare};
+
+const extensionToMimeType = {
+  'png': 'image/png',
+  'txt': 'text/plain',
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+};
 
 const GoldenComparators = {
   'image/png': compareImages,
@@ -98,7 +104,8 @@ function compare(goldenPath, outputPath, actual, goldenName) {
     };
   }
   const expected = fs.readFileSync(expectedPath);
-  const mimeType = mime.getType(goldenName);
+  const extension = goldenName.substring(goldenName.lastIndexOf('.') + 1);
+  const mimeType = extensionToMimeType[extension];
   const comparator = GoldenComparators[mimeType];
   if (!comparator) {
     return {

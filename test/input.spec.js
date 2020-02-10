@@ -129,12 +129,12 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
             ).toBe(
               fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.txt')).toString()
             );
-          expect(file2.name).toBe('file-to-upload.png');
+          expect(file2.name).toBe('pptr.png');
           expect(file2.type).toBe('image/png');
           expect(
             fs.readFileSync(file2.path).toString()
           ).toBe(
-            fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.png')).toString()
+            fs.readFileSync(path.join(__dirname, '/assets/pptr.png')).toString()
           );
         callback();
         });
@@ -147,7 +147,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
           <input type="submit" value="Submit">
         </form>`)
       await (await page.$('input[name=file1]')).setInputFiles(path.join(__dirname, '/assets/file-to-upload.txt'));
-      await (await page.$('input[name=file2]')).setInputFiles(path.join(__dirname, '/assets/file-to-upload.png'));
+      await (await page.$('input[name=file2]')).setInputFiles(path.join(__dirname, '/assets/pptr.png'));
       page.click('input[type=submit]');
       await result;
     });
