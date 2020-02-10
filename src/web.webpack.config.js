@@ -46,7 +46,6 @@ module.exports = {
     'path': 'dummy',
     'debug': 'dummy',
     'buffer': 'dummy',
-    'mime': 'dummy',
     'jpeg-js': 'dummy',
     'pngjs': 'dummy',
     'http': 'dummy',
