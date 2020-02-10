@@ -18,6 +18,9 @@
 const utils = require('./utils');
 const os = require('os');
 
+/**
+ * @type {PageTestSuite}
+ */
 module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, MAC}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

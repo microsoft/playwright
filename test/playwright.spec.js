@@ -24,6 +24,9 @@ const {Matchers} = require('../utils/testrunner/');
 const YELLOW_COLOR = '\x1b[33m';
 const RESET_COLOR = '\x1b[0m';
 
+/**
+ * @type {TestSuite}
+ */
 module.exports.describe = ({testRunner, product, playwrightPath}) => {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

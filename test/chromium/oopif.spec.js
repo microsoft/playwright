@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+/**
+ * @type {ChromiumTestSuite}
+ */
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

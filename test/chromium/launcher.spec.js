@@ -25,6 +25,9 @@ const statAsync = util.promisify(fs.stat);
 
 const TMP_FOLDER = path.join(os.tmpdir(), 'pw_tmp_folder-');
 
+/**
+ * @type {TestSuite}
+ */
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

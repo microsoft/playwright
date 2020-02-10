@@ -16,6 +16,9 @@
 
 const { makeUserDataDir, removeUserDataDir } = require('./utils');
 
+/**
+ * @type {TestSuite}
+ */
 module.exports.describe = function({testRunner, expect, playwright, defaultBrowserOptions, FFOX, CHROMIUM, WEBKIT, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

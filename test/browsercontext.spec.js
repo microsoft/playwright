@@ -17,6 +17,9 @@
 
 const utils = require('./utils');
 
+/**
+ * @type {BrowserTestSuite}
+ */
 module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

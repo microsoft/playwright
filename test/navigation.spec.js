@@ -18,6 +18,9 @@
 const utils = require('./utils');
 const { performance } = require('perf_hooks');
 
+/**
+ * @type {PageTestSuite}
+ */
 module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

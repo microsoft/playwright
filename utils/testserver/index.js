@@ -29,7 +29,7 @@ class TestServer {
   /**
    * @param {string} dirPath
    * @param {number} port
-   * @return {!TestServer}
+   * @return {!Promise<TestServer>}
    */
   static async create(dirPath, port) {
     const server = new TestServer(dirPath, port);
@@ -40,7 +40,7 @@ class TestServer {
   /**
    * @param {string} dirPath
    * @param {number} port
-   * @return {!TestServer}
+   * @return {!Promise<TestServer>}
    */
   static async createHTTPS(dirPath, port) {
     const server = new TestServer(dirPath, port, {
@@ -71,7 +71,7 @@ class TestServer {
     this._startTime = new Date();
     this._cachedPathPrefix = null;
 
-    /** @type {!Set<!net.Socket>} */
+    /** @type {!Set<!NodeJS.Socket>} */
     this._sockets = new Set();
 
     /** @type {!Map<string, function(!IncomingMessage, !ServerResponse)>} */

@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+/**
+ * @type {PageTestSuite}
+ */
 module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;

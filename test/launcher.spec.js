@@ -20,6 +20,9 @@ const fs = require('fs');
 const utils = require('./utils');
 const { makeUserDataDir, removeUserDataDir } = require('./utils');
 
+/**
+ * @type {TestSuite}
+ */
 module.exports.describe = function({testRunner, expect, defaultBrowserOptions, playwright, playwrightPath, product, CHROMIUM, FFOX, WEBKIT, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
@@ -42,7 +45,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
-      if('should have default URL when launching browser', async function() {
+      it('should have default URL when launching browser', async function() {
         const userDataDir = await makeUserDataDir();
         const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
         const pages = (await browserContext.pages()).map(page => page.url());
@@ -172,7 +175,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('Browser.close', function() {
-    it('should terminate network waiters', async({context, server}) => {
+    it('should terminate network waiters', async({server}) => {
       const browserServer = await playwright.launchServer({...defaultBrowserOptions });
       const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const newPage = await remote.newPage();
