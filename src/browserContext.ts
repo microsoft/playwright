@@ -78,11 +78,8 @@ export class BrowserContext {
     return this._delegate.pages();
   }
 
-  async newPage(url?: string): Promise<Page> {
-    const page = await this._delegate.newPage();
-    if (url)
-      await page.goto(url);
-    return page;
+  async newPage(): Promise<Page> {
+    return this._delegate.newPage();
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {

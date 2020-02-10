@@ -20,11 +20,12 @@ import { Page } from './page';
 
 export interface Browser extends platform.EventEmitterType {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
-  browserContexts(): BrowserContext[];
+  contexts(): BrowserContext[];
   pages(): Promise<Page[]>;
-  newPage(url?: string, options?: BrowserContextOptions): Promise<Page>;
+  newPage(options?: BrowserContextOptions): Promise<Page>;
   isConnected(): boolean;
   close(): Promise<void>;
+  _defaultContext: BrowserContext | undefined;
 }
 
 export type ConnectOptions = {
@@ -34,7 +35,7 @@ export type ConnectOptions = {
 
 export async function collectPages(browser: Browser): Promise<Page[]> {
   const result: Promise<Page[]>[] = [];
-  for (const browserContext of browser.browserContexts())
+  for (const browserContext of browser.contexts())
     result.push(browserContext.pages());
   const pages: Page[] = [];
   for (const group of await Promise.all(result))

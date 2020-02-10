@@ -297,7 +297,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
         frame.remove();
       });
       // 4. Connect to the popup and make sure it doesn't throw.
-      await page.browserContext().pages();
+      await page.context().pages();
     });
   });
 
@@ -1160,7 +1160,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
 
   describe('Page.browserContext', function() {
     it('should return the correct browser instance', async function({page, context}) {
-      expect(page.browserContext()).toBe(context);
+      expect(page.context()).toBe(context);
     });
   });
 };

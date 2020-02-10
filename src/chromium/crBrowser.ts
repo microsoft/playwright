@@ -61,10 +61,11 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     this._client.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
     this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
   }
+
   _createBrowserContext(contextId: string | null, options: BrowserContextOptions): BrowserContext {
     const context = new BrowserContext({
       pages: async (): Promise<Page[]> => {
-        const targets = this._allTargets().filter(target => target.browserContext() === context && target.type() === 'page');
+        const targets = this._allTargets().filter(target => target.context() === context && target.type() === 'page');
         const pages = await Promise.all(targets.map(target => target.page()));
         return pages.filter(page => !!page) as Page[];
       },
@@ -72,7 +73,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
       existingPages: (): Page[] => {
         const pages: Page[] = [];
         for (const target of this._allTargets()) {
-          if (target.browserContext() === context && target._crPage)
+          if (target.context() === context && target._crPage)
             pages.push(target._crPage.page());
         }
         return pages;
@@ -159,7 +160,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return context;
   }
 
-  browserContexts(): BrowserContext[] {
+  contexts(): BrowserContext[] {
     return Array.from(this._contexts.values());
   }
 
@@ -167,9 +168,9 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return collectPages(this);
   }
 
-  async newPage(url?: string, options?: BrowserContextOptions): Promise<Page> {
-    const browserContext = await this.newContext(options);
-    return browserContext.newPage(url);
+  async newPage(options?: BrowserContextOptions): Promise<Page> {
+    const context = await this.newContext(options);
+    return context.newPage();
   }
 
   async _targetCreated(event: Protocol.Target.targetCreatedPayload) {
@@ -240,7 +241,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   async close() {
     const disconnected = new Promise(f => this._connection.once(ConnectionEvents.Disconnected, f));
-    await Promise.all(this.browserContexts().map(context => context.close()));
+    await Promise.all(this.contexts().map(context => context.close()));
     this._connection.close();
     await disconnected;
   }
@@ -294,7 +295,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   targets(context?: BrowserContext): CRTarget[] {
     const targets = this._allTargets();
-    return context ? targets.filter(t => t.browserContext() === context) : targets;
+    return context ? targets.filter(t => t.context() === context) : targets;
   }
 
   pageTarget(page: Page): CRTarget {

@@ -24,12 +24,12 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
 
   describe('BrowserContext', function() {
     it('should create new context', async function({browser, newContext}) {
-      expect(browser.browserContexts().length).toBe(0);
+      expect(browser.contexts().length).toBe(0);
       const context = await newContext();
-      expect(browser.browserContexts().length).toBe(1);
-      expect(browser.browserContexts().indexOf(context) !== -1).toBe(true);
+      expect(browser.contexts().length).toBe(1);
+      expect(browser.contexts().indexOf(context) !== -1).toBe(true);
       await context.close();
-      expect(browser.browserContexts().length).toBe(0);
+      expect(browser.contexts().length).toBe(0);
     });
     it.skip(CHROMIUM)('popup should inherit user agent', async function({newContext, server}) {
       const context = await newContext({
@@ -52,7 +52,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         utils.waitEvent(page, 'popup'),
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
-      expect(popupTarget.browserContext()).toBe(context);
+      expect(popupTarget.context()).toBe(context);
     });
     it('should isolate localStorage and cookies', async function({browser, newContext, server}) {
       // Create two incognito contexts.
@@ -96,7 +96,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         context1.close(),
         context2.close()
       ]);
-      expect(browser.browserContexts().length).toBe(0);
+      expect(browser.contexts().length).toBe(0);
     });
     it('should propagate default viewport to the page', async({ newPage }) => {
       const page = await newPage({ viewport: { width: 456, height: 789 } });

@@ -55,7 +55,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const newPage = await browser.newPage();
       let error = null;
       await browser.startTracing(newPage, {path: outputFile}).catch(e => error = e);
-      await newPage.browserContext().close();
+      await newPage.context().close();
       expect(error).toBeTruthy();
       await browser.stopTracing();
     });

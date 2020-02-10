@@ -83,7 +83,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     return context;
   }
 
-  browserContexts(): BrowserContext[] {
+  contexts(): BrowserContext[] {
     return Array.from(this._contexts.values());
   }
 
@@ -91,9 +91,9 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     return collectPages(this);
   }
 
-  async newPage(url?: string, options?: BrowserContextOptions): Promise<Page> {
-    const browserContext = await this.newContext(options);
-    return browserContext.newPage(url);
+  async newPage(options?: BrowserContextOptions): Promise<Page> {
+    const context = await this.newContext(options);
+    return context.newPage();
   }
 
   async _waitForFirstPageTarget(timeout: number): Promise<void> {
@@ -164,7 +164,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   async close() {
     helper.removeEventListeners(this._eventListeners);
     const disconnected = new Promise(f => this.once(Events.Browser.Disconnected, f));
-    await Promise.all(this.browserContexts().map(context => context.close()));
+    await Promise.all(this.contexts().map(context => context.close()));
     this._connection.close();
     await disconnected;
   }

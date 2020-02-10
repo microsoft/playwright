@@ -120,7 +120,7 @@ export class CRTarget {
     return 'other';
   }
 
-  browserContext(): BrowserContext {
+  context(): BrowserContext {
     return this._browserContext;
   }
 
