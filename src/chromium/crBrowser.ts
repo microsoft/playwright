@@ -56,7 +56,11 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     this._client = connection.rootSession;
 
     this._defaultContext = this._createBrowserContext(null, {});
-    this._connection.on(ConnectionEvents.Disconnected, () => this.emit(CommonEvents.Browser.Disconnected));
+    this._connection.on(ConnectionEvents.Disconnected, () => {
+      for (const context of this.contexts())
+        context._browserClosed();
+      this.emit(CommonEvents.Browser.Disconnected);
+    });
     this._client.on('Target.targetCreated', this._targetCreated.bind(this));
     this._client.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
     this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));

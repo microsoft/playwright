@@ -25,7 +25,6 @@ export interface Browser extends platform.EventEmitterType {
   newPage(options?: BrowserContextOptions): Promise<Page>;
   isConnected(): boolean;
   close(): Promise<void>;
-  _defaultContext: BrowserContext | undefined;
 }
 
 export type ConnectOptions = {

@@ -50,8 +50,11 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
 
     this._defaultContext = this._createBrowserContext(null, {});
     this._contexts = new Map();
-    this._connection.on(ConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
-
+    this._connection.on(ConnectionEvents.Disconnected, () => {
+      for (const context of this.contexts())
+        context._browserClosed();
+      this.emit(Events.Browser.Disconnected);
+    });
     this._eventListeners = [
       helper.addEventListener(this._connection, 'Target.targetCreated', this._onTargetCreated.bind(this)),
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),

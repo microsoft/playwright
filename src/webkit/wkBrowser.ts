@@ -66,6 +66,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 
   _onDisconnect() {
+    for (const context of this.contexts())
+      context._browserClosed();
     for (const pageProxy of this._pageProxies.values())
       pageProxy.dispose();
     this._pageProxies.clear();
