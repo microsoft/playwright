@@ -286,6 +286,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/4110
+    // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
+    // @see https://chromium-review.googlesource.com/c/chromium/src/+/1742784
     xit('should click the button with fixed position inside an iframe', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setViewportSize({width: 500, height: 500});
@@ -326,7 +328,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 12 * 2 + 20 : 20);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 12 * 2 + 10 : 10);
     });
-    it('should click a very large button with relative point', async({page, server}) => {
+    it.skip(FFOX)('should click a very large button with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '8px');
       await page.$eval('button', button => button.style.height = button.style.width = '2000px');
@@ -336,7 +338,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
-    xit('should click a button in scrolling container with relative point', async({page, server}) => {
+    it.skip(FFOX)('should click a button in scrolling container with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => {
         const container = document.createElement('div');
@@ -347,11 +349,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         container.appendChild(button);
         button.style.height = '2000px';
         button.style.width = '2000px';
+        button.style.borderWidth = '8px';
       });
       await page.click('button', { relativePoint: { x: 1900, y: 1910 } });
       expect(await page.evaluate(() => window.result)).toBe('Clicked');
-      expect(await page.evaluate(() => offsetX)).toBe(1900);
-      expect(await page.evaluate(() => offsetY)).toBe(1910);
+      // Safari reports border-relative offsetX/offsetY.
+      expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
+      expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
 
     it('should update modifiers correctly', async({page, server}) => {
@@ -370,7 +374,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate(() => shiftKey)).toBe(false);
     });
-    it.skip(CHROMIUM)('should click an offscreen element when scroll-behavior is smooth', async({page}) => {
+    it('should click an offscreen element when scroll-behavior is smooth', async({page}) => {
       await page.setContent(`
         <div style="border: 1px solid black; height: 500px; overflow: auto; width: 500px; scroll-behavior: smooth">
         <button style="margin-top: 2000px" onClick="window.clicked = true">hi</button>
@@ -379,7 +383,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate('window.clicked')).toBe(true);
     });
-    it.skip(true)('should click on an animated button', async({page}) => {
+    xit('should click on an animated button', async({page}) => {
       const buttonSize = 50;
       const containerWidth = 500;
       const transition = 500;

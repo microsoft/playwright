@@ -201,9 +201,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     it('should work for TextNodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       const buttonTextNode = await page.evaluateHandle(() => document.querySelector('button').firstChild);
-      let error = null;
-      await buttonTextNode.click().catch(err => error = err);
-      expect(error.message).toBe('Node is not of type HTMLElement');
+      await buttonTextNode.click();
+      expect(await page.evaluate(() => result)).toBe('Clicked');
     });
     it('should throw for detached nodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -211,7 +210,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.evaluate(button => button.remove(), button);
       let error = null;
       await button.click().catch(err => error = err);
-      expect(error.message).toBe('Node is detached from document');
+      expect(error.message).toContain('Node is detached from document');
     });
     it('should throw for hidden nodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
