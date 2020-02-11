@@ -127,6 +127,8 @@ export class BrowserContext extends platform.EventEmitter {
 
   _browserClosed() {
     this._closed = true;
+    for (const page of this._delegate.existingPages())
+      page._didClose();
     this.emit(Events.BrowserContext.Close);
   }
 }
