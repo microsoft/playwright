@@ -77,26 +77,13 @@ export class FFPage implements PageDelegate {
   }
 
   async _initialize() {
-    const promises: Promise<any>[] = [
-      this._session.send('Runtime.enable').then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
-      this._session.send('Network.enable'),
-      this._session.send('Page.enable'),
-    ];
-    const options = this._page.context()._options;
-    if (options.viewport)
-      promises.push(this._updateViewport());
-    if (options.bypassCSP)
-      promises.push(this._session.send('Page.setBypassCSP', { enabled: true }));
-    if (options.javaScriptEnabled === false)
-      promises.push(this._session.send('Page.setJavascriptEnabled', { enabled: false }));
-    await Promise.all(promises);
-  }
-
-  async _ensureIsolatedWorld(name: string) {
-    await this._session.send('Page.addScriptToEvaluateOnNewDocument', {
-      script: '',
-      worldName: name,
-    });
+    await Promise.all([
+      this._session.send('Page.addScriptToEvaluateOnNewDocument', {
+        script: '',
+        worldName: UTILITY_WORLD_NAME,
+      }),
+      new Promise(f => this._session.once('Page.ready', f)),
+    ]);
   }
 
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
@@ -268,22 +255,10 @@ export class FFPage implements PageDelegate {
 
   async setViewportSize(viewportSize: types.Size): Promise<void> {
     assert(this._page._state.viewportSize === viewportSize);
-    await this._updateViewport();
-  }
-
-  async _updateViewport() {
-    let viewport = this._page.context()._options.viewport || { width: 0, height: 0 };
-    const viewportSize = this._page._state.viewportSize;
-    if (viewportSize)
-      viewport = { ...viewport, ...viewportSize };
-    await this._session.send('Page.setViewport', {
-      viewport: {
-        width: viewport.width,
-        height: viewport.height,
-        isMobile: !!viewport.isMobile,
-        deviceScaleFactor: viewport.deviceScaleFactor || 1,
-        hasTouch: !!viewport.isMobile,
-        isLandscape: viewport.width > viewport.height
+    await this._session.send('Page.setViewportSize', {
+      viewportSize: {
+        width: viewportSize.width,
+        height: viewportSize.height,
       },
     });
   }
@@ -373,7 +348,7 @@ export class FFPage implements PageDelegate {
   }
 
   async resetViewport(): Promise<void> {
-    await this._session.send('Page.setViewport', { viewport: null });
+    await this._session.send('Page.setViewportSize', { viewportSize: null });
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
