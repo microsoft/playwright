@@ -114,6 +114,7 @@ export class Page extends platform.EventEmitter {
   readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
   readonly coverage: Coverage | undefined;
   readonly _requestHandlers: { url: types.URLMatch, handler: (request: network.Request) => void }[] = [];
+  _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -472,6 +473,8 @@ export class Page extends platform.EventEmitter {
     await this._delegate.closePage(runBeforeUnload);
     if (!runBeforeUnload)
       await this._closedPromise;
+    if (this._ownedContext)
+      await this._ownedContext.close();
   }
 
   isClosed(): boolean {

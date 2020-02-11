@@ -82,6 +82,11 @@ export class BrowserContext extends platform.EventEmitter {
   }
 
   async newPage(): Promise<Page> {
+    const pages = this._delegate.existingPages();
+    for (const page of pages) {
+      if (page._ownedContext)
+        throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
+    }
     return this._delegate.newPage();
   }
 

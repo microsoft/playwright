@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser, collectPages } from '../browser';
+import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
@@ -84,13 +84,8 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     return Array.from(this._contexts.values());
   }
 
-  async pages(): Promise<Page[]> {
-    return collectPages(this);
-  }
-
   async newPage(options?: BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    return context.newPage();
+    return createPageInNewContext(this, options);
   }
 
   async _waitForTarget(predicate: (target: Target) => boolean, options: { timeout?: number; } = {}): Promise<Target> {

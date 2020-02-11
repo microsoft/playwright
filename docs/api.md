@@ -153,7 +153,6 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 #### event: 'disconnected'
@@ -233,12 +232,9 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
 - returns: <[Promise]<[Page]>>
 
-Creates a new page in a new browser context.
+Creates a new page in a new browser context. Closing this page will close the context as well.
 
-#### browser.pages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages.
-
-An array of all the pages inside all the browser contexts.
+This is a convenience API that should only be used for the single-page scenarios and short snippets. Production code and testing frameworks should explicitly create [browser.newContext](#browsernewcontextoptions) followed by the [browserContext.newPage](#browsercontextnewpage) to control their exact life times.
 
 ### class: BrowserContext
 
@@ -3667,7 +3663,6 @@ await browser.stopTracing();
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 #### event: 'targetchanged'
@@ -3834,7 +3829,6 @@ Firefox browser instance does not expose Firefox-specific features.
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 ### class: WebKitBrowser
@@ -3850,7 +3844,6 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 ### Working with selectors
