@@ -19,6 +19,8 @@ import { Page } from './page';
 import * as network from './network';
 import * as types from './types';
 import { helper } from './helper';
+import * as platform from './platform';
+import { Events } from './events';
 
 export interface BrowserContextDelegate {
   pages(): Promise<Page[]>;
@@ -47,12 +49,13 @@ export type BrowserContextOptions = {
   permissions?: { [key: string]: string[] };
 };
 
-export class BrowserContext {
+export class BrowserContext extends platform.EventEmitter {
   private readonly _delegate: BrowserContextDelegate;
   readonly _options: BrowserContextOptions;
   private _closed = false;
 
   constructor(delegate: BrowserContextDelegate, options: BrowserContextOptions) {
+    super();
     this._delegate = delegate;
     this._options = { ...options };
     if (!this._options.viewport && this._options.viewport !== null)
@@ -114,11 +117,17 @@ export class BrowserContext {
       return;
     await this._delegate.close();
     this._closed = true;
+    this.emit(Events.BrowserContext.Close);
   }
 
   static validateOptions(options: BrowserContextOptions) {
     if (options.geolocation)
       verifyGeolocation(options.geolocation);
+  }
+
+  _browserClosed() {
+    this._closed = true;
+    this.emit(Events.BrowserContext.Close);
   }
 }
 

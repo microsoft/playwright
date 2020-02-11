@@ -172,6 +172,19 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(error.message).toContain('has been closed');
       await browserServer.close();
     });
+    it('should emit close events on pages and contexts', async({server}) => {
+      const browserServer = await playwright.launchServer({...defaultBrowserOptions });
+      const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
+      const context = await remote.newContext();
+      const page = await context.newPage();
+      let contextClosed = false;
+      let pageClosed = false;
+      context.on('close', e => contextClosed = true);
+      page.on('close', e => pageClosed = true);
+      await browserServer.close();
+      expect(contextClosed).toBeTruthy();
+      expect(pageClosed).toBeTruthy();
+    });
   });
 
   describe('Browser.close', function() {

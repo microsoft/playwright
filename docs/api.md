@@ -159,7 +159,7 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 #### event: 'disconnected'
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
 - Browser application is closed or crashed.
-- The [`browser.disconnect`](#browserdisconnect) method was called.
+- The [`browser.close`](#browserclose) method was called.
 
 #### browser.close()
 - returns: <[Promise]>
@@ -263,6 +263,7 @@ await context.close();
 ```
 
 <!-- GEN:toc -->
+- [event: 'close'](#event-close)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
@@ -273,6 +274,13 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
+
+#### event: 'close'
+
+Emitted when Browser context gets closed. This might happen because of one of the following:
+- Browser context is closed.
+- Browser application is closed or crashed.
+- The [`browser.close`](#browserclose) method was called.
 
 #### browserContext.clearCookies()
 - returns: <[Promise]>
@@ -426,7 +434,7 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close)
+- [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
 - [event: 'dialog'](#event-dialog)
 - [event: 'domcontentloaded'](#event-domcontentloaded)
@@ -3168,7 +3176,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 The [WebSocket] class represents websocket connections in the page.
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-1)
+- [event: 'close'](#event-close-2)
 - [event: 'error'](#event-error)
 - [event: 'messageReceived'](#event-messagereceived)
 - [event: 'messageSent'](#event-messagesent)
@@ -3423,7 +3431,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 ### class: BrowserServer
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-2)
+- [event: 'close'](#event-close-3)
 - [browserServer.close()](#browserserverclose)
 - [browserServer.kill()](#browserserverkill)
 - [browserServer.process()](#browserserverprocess)

@@ -84,7 +84,6 @@ export class WebKit implements BrowserType {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      timeout = 30000
     } = options;
 
     let temporaryUserDataDir: string | null = null;
@@ -136,7 +135,6 @@ export class WebKit implements BrowserType {
       },
     });
 
-    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to WebKit!`);
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };

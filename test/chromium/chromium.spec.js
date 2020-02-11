@@ -192,7 +192,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto(server.EMPTY_PAGE);
       const target = await targetPromise;
       expect(await target.page()).toBe(page);
-      await page.close();
+      await page.context().close();
     });
     it('should fire target events', async function({browser, newContext, server}) {
       const context = await newContext();
