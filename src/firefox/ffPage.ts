@@ -134,8 +134,8 @@ export class FFPage implements PageDelegate {
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
     const frame = this._page._frameManager.frame(params.frameId)!;
-    for (const watcher of this._page._frameManager._lifecycleWatchers)
-      watcher._onAbortedNewDocumentNavigation(frame, params.navigationId, params.errorText);
+    for (const watcher of frame._documentWatchers)
+      watcher(params.navigationId, new Error(params.errorText));
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
@@ -256,7 +256,7 @@ export class FFPage implements PageDelegate {
 
   async navigateFrame(frame: frames.Frame, url: string, referer: string | undefined): Promise<frames.GotoResult> {
     const response = await this._session.send('Page.navigate', { url, referer, frameId: frame._id });
-    return { newDocumentId: response.navigationId || undefined, isSameDocument: !response.navigationId };
+    return { newDocumentId: response.navigationId || undefined };
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {

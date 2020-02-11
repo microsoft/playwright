@@ -145,7 +145,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await server.waitForRequest('/one-style.css');
       await remote.close();
       const error = await navigationPromise;
-      expect(error.message).toBe('Navigation failed because browser has disconnected!');
+      expect(error.message).toContain('Navigation failed because browser has disconnected!');
       await browserServer.close();
     });
     it('should reject waitForSelector when browser closes', async({server}) => {

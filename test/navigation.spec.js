@@ -355,14 +355,13 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(request2.headers['referer']).toBe(undefined);
       expect(page.url()).toBe(server.PREFIX + '/grid.html');
     });
-    it.skip(FFOX)('should fail when canceled by another navigation', async({page, server}) => {
-      server.setRoute('/one-style.css', (req, res) => {});
-      // For some reason, Firefox issues load event with one outstanding request.
-      const failed = page.goto(server.PREFIX + '/one-style.html', { waitUntil: FFOX ? 'networkidle0' : 'load' }).catch(e => e);
-      await server.waitForRequest('/one-style.css');
+    it('should fail when canceled by another navigation', async({page, server}) => {
+      server.setRoute('/one-style.html', (req, res) => {});
+      const failed = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
+      await server.waitForRequest('/one-style.html');
       await page.goto(server.PREFIX + '/empty.html');
       const error = await failed;
-      expect(error.message).toBe('Navigation to ' + server.PREFIX + '/one-style.html was canceled by another one');
+      expect(error.message).toBeTruthy();
     });
 
     describe('network idle', function() {
@@ -502,7 +501,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       });
       it.skip(FFOX)('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
         // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
-        // therefore we don't clear inglight requests at the right time.
+        // therefore we don't clear inflight requests at the right time.
         await page.goto(server.EMPTY_PAGE);
         server.setRoute('/foo.js', () => {});
         await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -512,7 +511,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       });
       it.skip(FFOX)('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
         // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
-        // therefore we don't clear inglight requests at the right time.
+        // therefore we don't clear inflight requests at the right time.
         await page.goto(server.EMPTY_PAGE);
         server.setRoute('/foo.js', () => {});
         await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -660,7 +659,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(forwardResponse).toBe(null);
       expect(page.url()).toBe(server.PREFIX + '/second.html');
     });
-    it.skip(FFOX)('should work when subframe issues window.stop()', async({page, server}) => {
+    it('should work when subframe issues window.stop()', async({page, server}) => {
       server.setRoute('/frames/style.css', (req, res) => {});
       const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = await new Promise(f => page.once('frameattached', f));
@@ -726,30 +725,37 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await waitPromise;
       expect(resolved).toBe(true);
     });
+    it('should work for cross-process navigations', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const waitPromise = page.waitForNavigation({waitUntil: []});
+      const url = server.CROSS_PROCESS_PREFIX + '/empty.html';
+      const gotoPromise = page.goto(url);
+      const response = await waitPromise;
+      expect(response.url()).toBe(url);
+      expect(page.url()).toBe(url);
+      expect(await page.evaluate('document.location.href')).toBe(url);
+      await gotoPromise;
+    });
   });
 
   describe('Page.waitForLoadState', () => {
     it('should pick up ongoing navigation', async({page, server}) => {
       let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
-      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
-      await server.waitForRequest('/one-style.css');
+      await Promise.all([
+        server.waitForRequest('/one-style.css'),
+        page.goto(server.PREFIX + '/one-style.html', {waitUntil: []}),
+      ]);
       const waitPromise = page.waitForLoadState();
       response.statusCode = 404;
       response.end('Not found');
       await waitPromise;
-      await navigationPromise;
     });
     it('should respect timeout', async({page, server}) => {
-      let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
-      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
-      await server.waitForRequest('/one-style.css');
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: []});
       const error = await page.waitForLoadState({ timeout: 1 }).catch(e => e);
       expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
-      response.statusCode = 404;
-      response.end('Not found');
-      await navigationPromise;
     });
     it('should resolve immediately if loaded', async({page, server}) => {
       await page.goto(server.PREFIX + '/one-style.html');
@@ -757,14 +763,9 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
     it('should resolve immediately if load state matches', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
-      const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
-      await server.waitForRequest('/one-style.css');
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: []});
       await page.waitForLoadState({ waitUntil: 'domcontentloaded' });
-      response.statusCode = 404;
-      response.end('Not found');
-      await navigationPromise;
     });
     it.skip(FFOX)('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
@@ -837,6 +838,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await page.$eval('iframe', frame => frame.remove());
       const error = await navigationPromise;
       expect(error.message).toContain('frame was detached');
+      expect(error.stack).toContain('Frame.goto')
     });
     it('should return matching responses', async({page, server}) => {
       // Disable cache: otherwise, chromium will cache similar requests.
@@ -894,6 +896,24 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await page.$eval('iframe', frame => frame.remove());
       await navigationPromise;
       expect(error.message).toContain('frame was detached');
+    });
+  });
+
+  describe('Frame.waitForLodState', function() {
+    it('should work', async({page, server}) => {
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+      const frame = page.frames()[1];
+      
+      const requestPromise = new Promise(resolve => page.route(server.PREFIX + '/one-style.css',resolve));
+      await frame.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
+      const request = await requestPromise;
+      let resolved = false;
+      const loadPromise = frame.waitForLoadState().then(() => resolved = true);
+      // give the promise a chance to resolve, even though it shouldn't
+      await page.evaluate('1');
+      expect(resolved).toBe(false);
+      request.continue();
+      await loadPromise;
     });
   });
 

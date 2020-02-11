@@ -307,7 +307,7 @@ export class WKPage implements PageDelegate {
       throw new Error('Target closed');
     const pageProxyId = this._pageProxySession.sessionId;
     const result = await this._pageProxySession.connection.browserSession.send('Browser.navigate', { url, pageProxyId, frameId: frame._id, referrer });
-    return { newDocumentId: result.loaderId, isSameDocument: !result.loaderId };
+    return { newDocumentId: result.loaderId };
   }
 
   private _onConsoleMessage(event: Protocol.Console.messageAddedPayload) {

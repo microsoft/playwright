@@ -85,7 +85,7 @@ export class WKPageProxy {
     let errorText = event.error;
     if (errorText.includes('cancelled'))
       errorText += '; maybe frame was detached?';
-    this._wkPage._page._frameManager.provisionalLoadFailed(event.loaderId, errorText);
+    this._wkPage._page._frameManager.provisionalLoadFailed(this._wkPage._page.mainFrame(), event.loaderId, errorText);
   }
 
   async page(): Promise<Page> {

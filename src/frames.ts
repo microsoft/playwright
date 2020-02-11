@@ -47,7 +47,6 @@ export type GotoOptions = NavigateOptions & {
 };
 export type GotoResult = {
   newDocumentId?: string,
-  isSameDocument?: boolean,
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
@@ -61,7 +60,7 @@ export class FrameManager {
   private _frames = new Map<string, Frame>();
   private _webSockets = new Map<string, network.WebSocket>();
   private _mainFrame: Frame;
-  readonly _lifecycleWatchers = new Set<LifecycleWatcher>();
+  readonly _lifecycleWatchers = new Set<() => void>();
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
 
   constructor(page: Page) {
@@ -118,13 +117,12 @@ export class FrameManager {
     frame._url = url;
     frame._name = name;
     frame._lastDocumentId = documentId;
+    for (const watcher of frame._documentWatchers)
+      watcher(documentId);
     this.clearFrameLifecycle(frame);
     this.clearWebSockets(frame);
-    if (!initial) {
-      for (const watcher of this._lifecycleWatchers)
-        watcher._onCommittedNewDocumentNavigation(frame);
+    if (!initial)
       this._page.emit(Events.Page.FrameNavigated, frame);
-    }
   }
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {
@@ -132,8 +130,8 @@ export class FrameManager {
     if (!frame)
       return;
     frame._url = url;
-    for (const watcher of this._lifecycleWatchers)
-      watcher._onNavigatedWithinDocument(frame);
+    for (const watcher of frame._sameDocumentNavigationWatchers)
+      watcher();
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -152,7 +150,7 @@ export class FrameManager {
     frame._firedLifecycleEvents.add('domcontentloaded');
     frame._firedLifecycleEvents.add('load');
     for (const watcher of this._lifecycleWatchers)
-      watcher._onLifecycleEvent(frame);
+      watcher();
     if (frame === this.mainFrame() && !hasDOMContentLoaded)
       this._page.emit(Events.Page.DOMContentLoaded);
     if (frame === this.mainFrame() && !hasLoad)
@@ -165,7 +163,7 @@ export class FrameManager {
       return;
     frame._firedLifecycleEvents.add(event);
     for (const watcher of this._lifecycleWatchers)
-      watcher._onLifecycleEvent(frame);
+      watcher();
     if (frame === this._mainFrame && event === 'load')
       this._page.emit(Events.Page.Load);
     if (frame === this._mainFrame && event === 'domcontentloaded')
@@ -194,9 +192,9 @@ export class FrameManager {
   requestStarted(request: network.Request) {
     this._inflightRequestStarted(request);
     const frame = request.frame();
-    if (request._documentId && frame && !request.redirectChain().length) {
-      for (const watcher of this._lifecycleWatchers)
-        watcher._onNavigationRequest(frame, request);
+    if (frame) {
+      for (const watcher of frame._requestWatchers)
+        watcher(request);
     }
     if (!request._isFavicon)
       this._page._requestStarted(request);
@@ -222,8 +220,8 @@ export class FrameManager {
         let errorText = request.failure()!.errorText;
         if (canceled)
           errorText += '; maybe frame was detached?';
-        for (const watcher of this._lifecycleWatchers)
-          watcher._onAbortedNewDocumentNavigation(frame, request._documentId, errorText);
+        for (const watcher of frame._documentWatchers)
+          watcher(request._documentId, new Error(errorText));
       }
     }
     if (!request._isFavicon)
@@ -274,9 +272,9 @@ export class FrameManager {
       ws._error(errorMessage);
   }
 
-  provisionalLoadFailed(documentId: string, error: string) {
-    for (const watcher of this._lifecycleWatchers)
-      watcher._onProvisionalLoadFailed(documentId, error);
+  provisionalLoadFailed(frame: Frame, documentId: string, error: string) {
+    for (const watcher of frame._documentWatchers)
+      watcher(documentId, new Error(error));
   }
 
   private _removeFramesRecursively(frame: Frame) {
@@ -284,8 +282,6 @@ export class FrameManager {
       this._removeFramesRecursively(child);
     frame._onDetached();
     this._frames.delete(frame._id);
-    for (const watcher of this._lifecycleWatchers)
-      watcher._onFrameDetached(frame);
     this._page.emit(Events.Page.FrameDetached, frame);
   }
 
@@ -345,7 +341,10 @@ export class FrameManager {
 export class Frame {
   _id: string;
   readonly _firedLifecycleEvents: Set<LifecycleEvent>;
-  _lastDocumentId: string;
+  _lastDocumentId = '';
+  _requestWatchers = new Set<(request: network.Request) => void>();
+  _documentWatchers = new Set<(documentId: string, error?: Error) => void>();
+  _sameDocumentNavigationWatchers = new Set<() => void>();
   readonly _page: Page;
   private _parentFrame: Frame | null;
   _url = '';
@@ -356,13 +355,16 @@ export class Frame {
   _inflightRequests = new Set<network.Request>();
   readonly _networkIdleTimers = new Map<LifecycleEvent, NodeJS.Timer>();
   private _setContentCounter = 0;
+  private _detachedPromise: Promise<void>;
+  private _detachedCallback = () => {};
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     this._id = id;
     this._firedLifecycleEvents = new Set();
-    this._lastDocumentId = '';
     this._page = page;
     this._parentFrame = parentFrame;
+
+    this._detachedPromise = new Promise<void>(x => this._detachedCallback = x);
 
     this._contextData.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
     this._contextData.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
@@ -373,15 +375,21 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
-  async goto(url: string, options?: GotoOptions): Promise<network.Response | null> {
+  async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
     let referer = (this._page._state.extraHTTPHeaders || {})['referer'];
-    if (options && options.referer !== undefined) {
+    if (options.referer !== undefined) {
       if (referer !== undefined && referer !== options.referer)
         throw new Error('"referer" is already specified as extra HTTP header');
       referer = options.referer;
     }
-    const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
     url = helper.completeUserURL(url);
+    const { timeout = this._page._timeoutSettings.navigationTimeout() } = options;
+    const disposer = new Disposer();
+
+    const timeoutPromise = disposer.add(createTimeoutPromise(timeout));
+    const frameDestroyedPromise = this._createFrameDestroyedPromise();
+    const sameDocumentPromise = disposer.add(this._waitForSameDocumentNavigation());
+    const requestWatcher = disposer.add(this._trackDocumentRequests());
     let navigateResult: GotoResult;
     const navigate = async () => {
       try {
@@ -391,50 +399,173 @@ export class Frame {
       }
     };
 
-    let error = await Promise.race([
+    throwIfError(await Promise.race([
       navigate(),
-      watcher.timeoutOrTerminationPromise,
-    ]);
-    if (!error) {
-      const promises = [watcher.timeoutOrTerminationPromise];
-      if (navigateResult!.newDocumentId) {
-        watcher.setExpectedDocumentId(navigateResult!.newDocumentId, url);
-        promises.push(watcher.newDocumentNavigationPromise);
-      } else if (navigateResult!.isSameDocument) {
-        promises.push(watcher.sameDocumentNavigationPromise);
-      } else {
-        promises.push(watcher.sameDocumentNavigationPromise, watcher.newDocumentNavigationPromise);
-      }
-      error = await Promise.race(promises);
+      timeoutPromise,
+      frameDestroyedPromise,
+    ]));
+
+    const promises: Promise<Error|void>[] = [timeoutPromise, frameDestroyedPromise];
+    if (navigateResult!.newDocumentId)
+      promises.push(disposer.add(this._waitForSpecificDocument(navigateResult!.newDocumentId)));
+    else
+      promises.push(sameDocumentPromise);
+    throwIfError(await Promise.race(promises));
+
+    const request = (navigateResult! && navigateResult!.newDocumentId) ? requestWatcher.get(navigateResult!.newDocumentId) : null;
+    const waitForLifecyclePromise = disposer.add(this._waitForLifecycle(options.waitUntil));
+    throwIfError(await Promise.race([timeoutPromise, frameDestroyedPromise, waitForLifecyclePromise]));
+
+    disposer.dispose();
+
+    return request ? request._finalRequest._waitForResponse() : null;
+
+    function throwIfError(error: Error|void): asserts error is void {
+      if (!error)
+        return;
+      disposer.dispose();
+      const message = `While navigating to ${url}: ${error.message}`;
+      if (error instanceof TimeoutError)
+        throw new TimeoutError(message);
+      throw new Error(message);
     }
-    watcher.dispose();
-    if (error)
-      throw error;
-    return watcher.navigationResponse();
   }
 
-  async waitForNavigation(options?: WaitForNavigationOptions): Promise<network.Response | null> {
-    const watcher = new LifecycleWatcher(this, options, true /* supportUrlMatch */);
-    const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.sameDocumentNavigationPromise,
-      watcher.newDocumentNavigationPromise,
+  async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
+    const disposer = new Disposer();
+    const requestWatcher = disposer.add(this._trackDocumentRequests());
+    const {timeout = this._page._timeoutSettings.navigationTimeout()} = options;
+
+    const failurePromise = Promise.race([
+      this._createFrameDestroyedPromise(),
+      disposer.add(createTimeoutPromise(timeout)),
     ]);
-    watcher.dispose();
+    let documentId: string|null = null;
+    let error: void|Error = await Promise.race([
+      failurePromise,
+      disposer.add(this._waitForNewDocument(options.url)).then(result => {
+        if (result.error)
+          return result.error;
+        documentId = result.documentId;
+      }),
+      disposer.add(this._waitForSameDocumentNavigation(options.url)),
+    ]);
+    const request = requestWatcher.get(documentId!);
+    if (!error) {
+      error = await Promise.race([
+        failurePromise,
+        disposer.add(this._waitForLifecycle(options.waitUntil)),
+      ]);
+    }
+    disposer.dispose();
     if (error)
       throw error;
-    return watcher.navigationResponse();
+    return request ? request._finalRequest._waitForResponse() : null;
   }
 
-  async waitForLoadState(options?: NavigateOptions): Promise<void> {
-    const watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
+  async waitForLoadState(options: NavigateOptions = {}): Promise<void> {
+    const {timeout = this._page._timeoutSettings.navigationTimeout()} = options;
+    const disposer = new Disposer();
     const error = await Promise.race([
-      watcher.timeoutOrTerminationPromise,
-      watcher.lifecyclePromise
+      this._createFrameDestroyedPromise(),
+      disposer.add(createTimeoutPromise(timeout)),
+      disposer.add(this._waitForLifecycle(options.waitUntil)),
     ]);
-    watcher.dispose();
+    disposer.dispose();
     if (error)
       throw error;
+  }
+
+  _waitForSpecificDocument(expectedDocumentId: string): Disposable<Promise<Error|void>> {
+    let resolve: (error: Error|void) => void;
+    const promise = new Promise<Error|void>(x => resolve = x);
+    const watch = (documentId: string, error?: Error) => {
+      if (documentId !== expectedDocumentId)
+        return resolve(new Error('Navigation interrupted by another one'));
+      resolve(error);
+    };
+    const dispose = () => this._documentWatchers.delete(watch);
+    this._documentWatchers.add(watch);
+    return {value: promise, dispose};
+  }
+
+  _waitForNewDocument(url?: types.URLMatch): Disposable<Promise<{error?: Error, documentId: string}>> {
+    let resolve: (error: {error?: Error, documentId: string}) => void;
+    const promise = new Promise<{error?: Error, documentId: string}>(x => resolve = x);
+    const watch = (documentId: string, error?: Error) => {
+      if (!error && !platform.urlMatches(this.url(), url))
+        return;
+      resolve({error, documentId});
+    };
+    const dispose = () => this._documentWatchers.delete(watch);
+    this._documentWatchers.add(watch);
+    return {value: promise, dispose};
+  }
+
+  _waitForSameDocumentNavigation(url?: types.URLMatch): Disposable<Promise<void>> {
+    let resolve: () => void;
+    const promise = new Promise<void>(x => resolve = x);
+    const watch = () => {
+      if (platform.urlMatches(this.url(), url))
+        resolve();
+    };
+    const dispose = () => this._sameDocumentNavigationWatchers.delete(watch);
+    this._sameDocumentNavigationWatchers.add(watch);
+    return {value: promise, dispose};
+  }
+
+  _waitForLifecycle(waitUntil: LifecycleEvent|LifecycleEvent[] = 'load'): Disposable<Promise<void>> {
+    let resolve: () => void;
+    const expectedLifecycle = typeof waitUntil === 'string' ? [waitUntil] : waitUntil;
+    for (const event of expectedLifecycle) {
+      if (!kLifecycleEvents.has(event))
+        throw new Error(`Unsupported waitUntil option ${String(event)}`);
+    }
+
+    const checkLifecycleComplete = () => {
+      if (!checkLifecycleRecursively(this))
+        return;
+      resolve();
+    };
+
+    const promise = new Promise<void>(x => resolve = x);
+    const dispose = () => this._page._frameManager._lifecycleWatchers.delete(checkLifecycleComplete);
+    this._page._frameManager._lifecycleWatchers.add(checkLifecycleComplete);
+    checkLifecycleComplete();
+    return {value: promise, dispose};
+
+    function checkLifecycleRecursively(frame: Frame): boolean {
+      for (const event of expectedLifecycle) {
+        if (!frame._firedLifecycleEvents.has(event))
+          return false;
+      }
+      for (const child of frame.childFrames()) {
+        if (!checkLifecycleRecursively(child))
+          return false;
+      }
+      return true;
+    }
+  }
+
+  _trackDocumentRequests(): Disposable<Map<string, network.Request>> {
+    const requestMap = new Map<string, network.Request>();
+    const dispose = () => {
+      this._requestWatchers.delete(onRequest);
+    };
+    const onRequest = (request: network.Request) => {
+      if (!request._documentId || request.redirectChain().length)
+        return;
+      requestMap.set(request._documentId, request);
+    };
+    this._requestWatchers.add(onRequest);
+    return {dispose, value: requestMap};
+  }
+
+  _createFrameDestroyedPromise(): Promise<Error> {
+    return Promise.race([
+      this._page._disconnectedPromise.then(() => new Error('Navigation failed because browser has disconnected!')),
+      this._detachedPromise.then(() => new Error('Navigating frame was detached!')),
+    ]);
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
@@ -527,27 +658,21 @@ export class Frame {
   async setContent(html: string, options?: NavigateOptions): Promise<void> {
     const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
     const context = await this._utilityContext();
-    let watcher: LifecycleWatcher;
-    this._page._frameManager._consoleMessageTags.set(tag, () => {
-      // Clear lifecycle right after document.open() - see 'tag' below.
-      this._page._frameManager.clearFrameLifecycle(this);
-      watcher = new LifecycleWatcher(this, options, false /* supportUrlMatch */);
+    const lifecyclePromise = new Promise(resolve => {
+      this._page._frameManager._consoleMessageTags.set(tag, () => {
+        // Clear lifecycle right after document.open() - see 'tag' below.
+        this._page._frameManager.clearFrameLifecycle(this);
+        resolve(this.waitForLoadState(options));
+      });
     });
-    await context.evaluate((html, tag) => {
+    const contentPromise = context.evaluate((html, tag) => {
       window.stop();
       document.open();
       console.debug(tag);  // eslint-disable-line no-console
       document.write(html);
       document.close();
     }, html, tag);
-    assert(watcher!, 'Was not able to clear lifecycle in setContent');
-    const error = await Promise.race([
-      watcher!.timeoutOrTerminationPromise,
-      watcher!.lifecyclePromise,
-    ]);
-    watcher!.dispose();
-    if (error)
-      throw error;
+    await Promise.all([contentPromise, lifecyclePromise]);
   }
 
   name(): string {
@@ -826,6 +951,7 @@ export class Frame {
 
   _onDetached() {
     this._detached = true;
+    this._detachedCallback();
     for (const data of this._contextData.values()) {
       for (const rerunnableTask of data.rerunnableTasks)
         rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
@@ -957,160 +1083,35 @@ class RerunnableTask {
   }
 }
 
-class LifecycleWatcher {
-  readonly sameDocumentNavigationPromise: Promise<Error | null>;
-  readonly lifecyclePromise: Promise<void>;
-  readonly newDocumentNavigationPromise: Promise<Error | null>;
-  readonly timeoutOrTerminationPromise: Promise<Error | null>;
-  private _expectedLifecycle: LifecycleEvent[];
-  private _frame: Frame;
-  private _navigationRequest: network.Request | null = null;
-  private _sameDocumentNavigationCompleteCallback: () => void = () => {};
-  private _lifecycleCallback: () => void = () => {};
-  private _newDocumentNavigationCompleteCallback: () => void = () => {};
-  private _frameDetachedCallback: (err: Error) => void = () => {};
-  private _navigationAbortedCallback: (err: Error) => void = () => {};
-  private _maximumTimer?: NodeJS.Timer;
-  private _hasSameDocumentNavigation = false;
-  private _targetUrl: string | undefined;
-  private _expectedDocumentId: string | undefined;
-  private _urlMatch: types.URLMatch | undefined;
-
-  constructor(frame: Frame, options: WaitForNavigationOptions | undefined, supportUrlMatch: boolean) {
-    options = options || {};
-    let { waitUntil = 'load' as LifecycleEvent } = options;
-    const { timeout = frame._page._timeoutSettings.navigationTimeout() } = options;
-    if (!Array.isArray(waitUntil))
-      waitUntil = [waitUntil];
-    for (const event of waitUntil) {
-      if (!kLifecycleEvents.has(event))
-        throw new Error(`Unsupported waitUntil option ${String(event)}`);
-    }
-    if (supportUrlMatch)
-      this._urlMatch = options.url;
-    this._expectedLifecycle = waitUntil.slice();
-    this._frame = frame;
-    this.sameDocumentNavigationPromise = new Promise(f => this._sameDocumentNavigationCompleteCallback = f);
-    this.lifecyclePromise = new Promise(f => this._lifecycleCallback = f);
-    this.newDocumentNavigationPromise = new Promise(f => this._newDocumentNavigationCompleteCallback = f);
-    this.timeoutOrTerminationPromise = Promise.race([
-      this._createTimeoutPromise(timeout),
-      new Promise<Error>(f => this._frameDetachedCallback = f),
-      new Promise<Error>(f => this._navigationAbortedCallback = f),
-      this._frame._page._disconnectedPromise.then(() => new Error('Navigation failed because browser has disconnected!')),
-    ]);
-    frame._page._frameManager._lifecycleWatchers.add(this);
-    this._checkLifecycleComplete();
+type Disposable<T> = {value: T, dispose: () => void};
+class Disposer {
+  private _disposes: (() => void)[] = [];
+  add<T>({value, dispose}: Disposable<T>) {
+    this._disposes.push(dispose);
+    return value;
   }
-
-  _urlMatches(urlString: string): boolean {
-    return !this._urlMatch || platform.urlMatches(urlString, this._urlMatch);
-  }
-
-  setExpectedDocumentId(documentId: string, url: string) {
-    assert(!this._urlMatch, 'Should not have url match when expecting a particular navigation');
-    this._expectedDocumentId = documentId;
-    this._targetUrl = url;
-    if (this._navigationRequest && this._navigationRequest._documentId !== documentId)
-      this._navigationRequest = null;
-  }
-
-  _onFrameDetached(frame: Frame) {
-    if (this._frame === frame) {
-      this._frameDetachedCallback.call(null, new Error('Navigating frame was detached'));
-      return;
-    }
-    this._checkLifecycleComplete();
-  }
-
-  _onNavigatedWithinDocument(frame: Frame) {
-    if (frame !== this._frame)
-      return;
-    this._hasSameDocumentNavigation = true;
-    this._checkLifecycleComplete();
-  }
-
-  _onNavigationRequest(frame: Frame, request: network.Request) {
-    assert(request._documentId);
-    if (frame !== this._frame || !this._urlMatches(request.url()))
-      return;
-    if (this._expectedDocumentId === undefined || this._expectedDocumentId === request._documentId) {
-      this._navigationRequest = request;
-      this._expectedDocumentId = request._documentId;
-      this._targetUrl = request.url();
-    }
-  }
-
-  _onCommittedNewDocumentNavigation(frame: Frame) {
-    if (frame === this._frame && this._expectedDocumentId !== undefined && this._navigationRequest &&
-        frame._lastDocumentId !== this._expectedDocumentId) {
-      this._navigationAbortedCallback(new Error('Navigation to ' + this._targetUrl + ' was canceled by another one'));
-      return;
-    }
-    if (frame === this._frame && this._expectedDocumentId === undefined && this._urlMatches(frame.url())) {
-      this._expectedDocumentId = frame._lastDocumentId;
-      this._targetUrl = frame.url();
-    }
-  }
-
-  _onAbortedNewDocumentNavigation(frame: Frame, documentId: string, errorText: string) {
-    if (frame === this._frame && documentId === this._expectedDocumentId) {
-      if (this._targetUrl)
-        this._navigationAbortedCallback(new Error('Navigation to ' + this._targetUrl + ' failed: ' + errorText));
-      else
-        this._navigationAbortedCallback(new Error('Navigation failed: ' + errorText));
-    }
-  }
-
-  _onProvisionalLoadFailed(documentId: string, error: string) {
-    this._onAbortedNewDocumentNavigation(this._frame, documentId, error);
-  }
-
-  _onLifecycleEvent(frame: Frame) {
-    this._checkLifecycleComplete();
-  }
-
-  async navigationResponse(): Promise<network.Response | null> {
-    return this._navigationRequest ? this._navigationRequest._finalRequest._waitForFinished() : null;
-  }
-
-  private _createTimeoutPromise(timeout: number): Promise<Error | null> {
-    if (!timeout)
-      return new Promise(() => {});
-    const errorMessage = 'Navigation timeout of ' + timeout + ' ms exceeded';
-    return new Promise(fulfill => this._maximumTimer = setTimeout(fulfill, timeout))
-        .then(() => new TimeoutError(errorMessage));
-  }
-
-  private _checkLifecycleRecursively(frame: Frame, expectedLifecycle: LifecycleEvent[]): boolean {
-    for (const event of expectedLifecycle) {
-      if (!frame._firedLifecycleEvents.has(event))
-        return false;
-    }
-    for (const child of frame.childFrames()) {
-      if (!this._checkLifecycleRecursively(child, expectedLifecycle))
-        return false;
-    }
-    return true;
-  }
-
-  private _checkLifecycleComplete() {
-    if (!this._checkLifecycleRecursively(this._frame, this._expectedLifecycle))
-      return;
-    if (this._urlMatches(this._frame.url())) {
-      this._lifecycleCallback();
-      if (this._hasSameDocumentNavigation)
-        this._sameDocumentNavigationCompleteCallback();
-    }
-    if (this._frame._lastDocumentId === this._expectedDocumentId)
-      this._newDocumentNavigationCompleteCallback();
-  }
-
   dispose() {
-    this._frame._page._frameManager._lifecycleWatchers.delete(this);
-    if (this._maximumTimer)
-      clearTimeout(this._maximumTimer);
+    for (const dispose of this._disposes)
+      dispose();
+    this._disposes = [];
   }
+}
+
+function createTimeoutPromise(timeout: number): Disposable<Promise<TimeoutError>> {
+  if (!timeout)
+    return { value: new Promise(() => {}), dispose: () => void 0 };
+
+  let timer: NodeJS.Timer;
+  const errorMessage = 'Navigation timeout of ' + timeout + ' ms exceeded';
+  const promise = new Promise(fulfill => timer = setTimeout(fulfill, timeout))
+      .then(() => new TimeoutError(errorMessage));
+  const dispose = () => {
+    clearTimeout(timer);
+  };
+  return {
+    value: promise,
+    dispose
+  };
 }
 
 function selectorToString(selector: string, visibility: types.Visibility): string {

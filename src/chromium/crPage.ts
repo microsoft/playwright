@@ -128,7 +128,7 @@ export class CRPage implements PageDelegate {
     const response = await this._client.send('Page.navigate', { url, referrer, frameId: frame._id });
     if (response.errorText)
       throw new Error(`${response.errorText} at ${url}`);
-    return { newDocumentId: response.loaderId, isSameDocument: !response.loaderId };
+    return { newDocumentId: response.loaderId };
   }
 
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
