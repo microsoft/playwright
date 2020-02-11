@@ -42,6 +42,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const page = await browser.newPage();
       let error;
       await page.context().newPage().catch(e => error = e);
+      await page.close();
       expect(error.message).toContain('Please use browser.newContext()');
     });
   });
