@@ -24,7 +24,7 @@ import { Page, Worker } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
-import { Browser, collectPages } from '../browser';
+import { Browser, createPageInNewContext } from '../browser';
 import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
@@ -168,13 +168,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return Array.from(this._contexts.values());
   }
 
-  async pages(): Promise<Page[]> {
-    return collectPages(this);
-  }
-
   async newPage(options?: BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    return context.newPage();
+    return createPageInNewContext(this, options);
   }
 
   async _targetCreated(event: Protocol.Target.targetCreatedPayload) {
