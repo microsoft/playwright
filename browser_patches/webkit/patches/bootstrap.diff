@@ -14277,10 +14277,10 @@ index 0000000000000000000000000000000000000000..4dbf13c8fb31a745ae8e1965a457d4fb
 +@end
 diff --git a/Tools/Playwright/mac/BrowserWindowController.m b/Tools/Playwright/mac/BrowserWindowController.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..033c4fcda83002cda5d069205d4f605d02f1e1f5
+index 0000000000000000000000000000000000000000..72edf5c432f58659765d16dabdb536b44942b1f2
 --- /dev/null
 +++ b/Tools/Playwright/mac/BrowserWindowController.m
-@@ -0,0 +1,826 @@
+@@ -0,0 +1,828 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -14842,9 +14842,11 @@ index 0000000000000000000000000000000000000000..033c4fcda83002cda5d069205d4f605d
 +    [alert addButtonWithTitle:@"Leave Page"];
 +    [alert addButtonWithTitle:@"Stay On Page"];
 +
++    _alert = alert;
 +    [alert beginSheetModalForWindow:self.window completionHandler:^void (NSModalResponse response) {
 +        completionHandler(response == NSAlertFirstButtonReturn);
 +        [alert release];
++        _alert = nil;
 +    }];
 +}
 +
