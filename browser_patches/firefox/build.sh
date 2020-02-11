@@ -37,3 +37,6 @@ else
 fi
 
 ./mach build
+OBJ_FOLDER=$(ls -1 | grep obj-)
+node ../install-preferences.js $PWD/$OBJ_FOLDER/dist/bin
+
