@@ -177,12 +177,12 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const context = await remote.newContext();
       const page = await context.newPage();
-      let contextClosed = false;
       let pageClosed = false;
-      context.on('close', e => contextClosed = true);
       page.on('close', e => pageClosed = true);
-      await browserServer.close();
-      expect(contextClosed).toBeTruthy();
+      await Promise.all([
+        new Promise(f => context.on('close', f)),
+        browserServer.close()
+      ]);
       expect(pageClosed).toBeTruthy();
     });
   });
