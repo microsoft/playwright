@@ -620,6 +620,10 @@ export class Frame {
     return handle;
   }
 
+  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+    return this.waitForSelector(selector, options);
+  }
+
   $eval: types.$Eval = async (selector, pageFunction, ...args) => {
     const context = await this._mainContext();
     const elementHandle = await context._$(selector);
@@ -936,12 +940,6 @@ export class Frame {
     options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
     const task = dom.waitForFunctionTask(undefined, pageFunction, options, ...args);
     return this._scheduleRerunnableTask(task, 'main', options.timeout);
-  }
-
-  $wait: types.$Wait = async (selector, pageFunction, options, ...args) => {
-    options = { timeout: this._page._timeoutSettings.timeout(), ...(options || {}) };
-    const task = dom.waitForFunctionTask(selector, pageFunction, options, ...args);
-    return this._scheduleRerunnableTask(task, 'main', options.timeout) as any;
   }
 
   async title(): Promise<string> {
