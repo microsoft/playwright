@@ -177,10 +177,12 @@ export class Firefox implements BrowserType {
       throw new Error('Use the port parameter instead of -juggler argument');
 
     const firefoxArguments = ['-no-remote'];
-    if (headless)
+    if (headless) {
       firefoxArguments.push('-headless');
-    else
+    } else {
       firefoxArguments.push('-wait-for-browser');
+      firefoxArguments.push('-foreground');
+    }
 
     firefoxArguments.push(`-profile`, userDataDir);
     firefoxArguments.push('-juggler', String(port));
