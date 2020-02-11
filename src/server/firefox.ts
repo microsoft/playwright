@@ -16,7 +16,7 @@
  */
 
 import { FFBrowser } from '../firefox/ffBrowser';
-import { BrowserFetcher, BrowserFetcherOptions } from './browserFetcher';
+import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { launchProcess, waitForLine } from './processLauncher';
 import * as types from '../types';
@@ -42,6 +42,15 @@ export class Firefox implements BrowserType {
   constructor(projectRoot: string, preferredRevision: string) {
     this._projectRoot = projectRoot;
     this._revision = preferredRevision;
+  }
+
+  async downloadBrowserIfNeeded(onProgress?: OnProgressCallback) {
+    const fetcher = this._createBrowserFetcher();
+    const revisionInfo = fetcher.revisionInfo();
+    // Do nothing if the revision is already downloaded.
+    if (revisionInfo.local)
+      return;
+    await fetcher.download(revisionInfo.revision, onProgress);
   }
 
   name() {

@@ -19,6 +19,7 @@ import { TimeoutError } from '../errors';
 import { Browser, ConnectOptions } from '../browser';
 import { BrowserContext } from '../browserContext';
 import { BrowserServer } from './browserServer';
+import { OnProgressCallback } from './browserFetcher';
 
 export type BrowserArgOptions = {
   headless?: boolean,
@@ -44,6 +45,7 @@ export interface BrowserType {
   launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer>;
   launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext>;
   connect(options: ConnectOptions): Promise<Browser>;
+  downloadBrowserIfNeeded(progress?: OnProgressCallback): Promise<void>;
   devices: types.Devices;
   errors: { TimeoutError: typeof TimeoutError };
 }

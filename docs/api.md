@@ -3478,6 +3478,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 <!-- GEN:toc -->
 - [browserType.connect(options)](#browsertypeconnectoptions)
 - [browserType.devices](#browsertypedevices)
+- [browserType.downloadBrowserIfNeeded([progress])](#browsertypedownloadbrowserifneededprogress)
 - [browserType.errors](#browsertypeerrors)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
@@ -3515,6 +3516,12 @@ const iPhone = webkit.devices['iPhone 6'];
   await browser.close();
 })();
 ```
+
+#### browserType.downloadBrowserIfNeeded([progress])
+- `progress` <[function]> If download is initiated, this function is called with two parameters: `downloadedBytes` and `totalBytes`.
+- returns: <[Promise]> promise that resolves when browser is successfully downloaded.
+
+Download browser binary if it is missing.
 
 #### browserType.errors
 - returns: <[Object]>
