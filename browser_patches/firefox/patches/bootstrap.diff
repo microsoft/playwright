@@ -469,10 +469,10 @@ index 6dca2b78830edc1ddbd66264bd332853729dac71..fbe89c9682834e11b9d9219d9eb056ed
  
 diff --git a/testing/juggler/BrowserContextManager.js b/testing/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a0a3799b6060692fa64f41411c0c276337d8f0c0
+index 0000000000000000000000000000000000000000..8f031b3f9afbb357a6bebc9938fca50a04d0421c
 --- /dev/null
 +++ b/testing/juggler/BrowserContextManager.js
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,180 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -503,9 +503,8 @@ index 0000000000000000000000000000000000000000..a0a3799b6060692fa64f41411c0c2763
 +  }
 +
 +  constructor() {
-+    this._browserContextIdToUserContextId = new Map();
-+    this._userContextIdToBrowserContextId = new Map();
-+    this._principalsForBrowserContextId = new Map();
++    this._browserContextIdToBrowserContext = new Map();
++    this._userContextIdToBrowserContext = new Map();
 +
 +    // Cleanup containers from previous runs (if any)
 +    for (const identity of ContextualIdentityService.getPublicIdentities()) {
@@ -514,66 +513,75 @@ index 0000000000000000000000000000000000000000..a0a3799b6060692fa64f41411c0c2763
 +        ContextualIdentityService.closeContainerTabs(identity.userContextId);
 +      }
 +    }
++
++    this._defaultContext = new BrowserContext(this, undefined, undefined);
 +  }
 +
-+  grantPermissions(browserContextId, origin, permissions) {
-+    const attrs = browserContextId ? {userContextId: this.userContextId(browserContextId)} : {};
++  createBrowserContext(options) {
++    return new BrowserContext(this, helper.generateId(), options);
++  }
++
++  browserContextForId(browserContextId) {
++    return this._browserContextIdToBrowserContext.get(browserContextId);
++  }
++
++  browserContextForUserContextId(userContextId) {
++    return this._userContextIdToBrowserContext.get(userContextId);
++  }
++
++  getBrowserContexts() {
++    return Array.from(this._browserContextIdToBrowserContext.values());
++  }
++}
++
++class BrowserContext {
++  constructor(manager, browserContextId, options) {
++    this._manager = manager;
++    this.browserContextId = browserContextId;
++    this.userContextId = undefined;
++    if (browserContextId !== undefined) {
++      const identity = ContextualIdentityService.create(IDENTITY_NAME + browserContextId);
++      this.userContextId = identity.userContextId;
++    }
++    this._principals = [];
++    this._manager._browserContextIdToBrowserContext.set(this.browserContextId, this);
++    this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
++    this.options = options || {};
++  }
++
++  destroy() {
++    if (this.userContextId !== undefined) {
++      ContextualIdentityService.remove(this.userContextId);
++      ContextualIdentityService.closeContainerTabs(this.userContextId);
++    }
++    this._manager._browserContextIdToBrowserContext.delete(this.browserContextId);
++    this._manager._userContextIdToBrowserContext.delete(this.userContextId);
++  }
++
++  grantPermissions(origin, permissions) {
++    const attrs = {userContextId: this.userContextId};
 +    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(origin), attrs);
-+    if (!this._principalsForBrowserContextId.has(browserContextId))
-+      this._principalsForBrowserContextId.set(browserContextId, []);
-+    this._principalsForBrowserContextId.get(browserContextId).push(principal);
++    this._principals.push(principal);
 +    for (const permission of ALL_PERMISSIONS) {
 +      const action = permissions.includes(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
 +      Services.perms.addFromPrincipal(principal, permission, action);
 +    }
 +  }
 +
-+  resetPermissions(browserContextId) {
-+    if (!this._principalsForBrowserContextId.has(browserContextId))
-+      return;
-+    const principals = this._principalsForBrowserContextId.get(browserContextId);
-+    for (const principal of principals) {
++  resetPermissions() {
++    for (const principal of this._principals) {
 +      for (const permission of ALL_PERMISSIONS)
 +        Services.perms.removeFromPrincipal(principal, permission);
 +    }
-+    this._principalsForBrowserContextId.delete(browserContextId);
++    this._principals = [];
 +  }
 +
-+  createBrowserContext() {
-+    const browserContextId = helper.generateId();
-+    const identity = ContextualIdentityService.create(IDENTITY_NAME + browserContextId);
-+    this._browserContextIdToUserContextId.set(browserContextId, identity.userContextId);
-+    this._userContextIdToBrowserContextId.set(identity.userContextId, browserContextId);
-+    return browserContextId;
-+  }
-+
-+  browserContextId(userContextId) {
-+    return this._userContextIdToBrowserContextId.get(userContextId);
-+  }
-+
-+  userContextId(browserContextId) {
-+    return this._browserContextIdToUserContextId.get(browserContextId);
-+  }
-+
-+  removeBrowserContext(browserContextId) {
-+    const userContextId = this._browserContextIdToUserContextId.get(browserContextId);
-+    ContextualIdentityService.remove(userContextId);
-+    ContextualIdentityService.closeContainerTabs(userContextId);
-+    this._browserContextIdToUserContextId.delete(browserContextId);
-+    this._userContextIdToBrowserContextId.delete(userContextId);
-+  }
-+
-+  getBrowserContexts() {
-+    return Array.from(this._browserContextIdToUserContextId.keys());
-+  }
-+
-+  setCookies(browserContextId, cookies) {
++  setCookies(cookies) {
 +    const protocolToSameSite = {
 +      [undefined]: Ci.nsICookie.SAMESITE_NONE,
 +      'Lax': Ci.nsICookie.SAMESITE_LAX,
 +      'Strict': Ci.nsICookie.SAMESITE_STRICT,
 +    };
-+    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : undefined;
 +    for (const cookie of cookies) {
 +      const uri = cookie.url ? NetUtil.newURI(cookie.url) : null;
 +      let domain = cookie.domain;
@@ -599,19 +607,17 @@ index 0000000000000000000000000000000000000000..a0a3799b6060692fa64f41411c0c2763
 +        cookie.httpOnly || false,
 +        cookie.expires === undefined || cookie.expires === -1 /* isSession */,
 +        cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires,
-+        { userContextId } /* originAttributes */,
++        { userContextId: this.userContextId } /* originAttributes */,
 +        protocolToSameSite[cookie.sameSite],
 +      );
 +    }
 +  }
 +
-+  clearCookies(browserContextId) {
-+    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : undefined;
-+    Services.cookies.removeCookiesWithOriginAttributes(JSON.stringify({ userContextId }));
++  clearCookies() {
++    Services.cookies.removeCookiesWithOriginAttributes(JSON.stringify({ userContextId: this.userContextId }));
 +  }
 +
-+  getCookies(browserContextId) {
-+    const userContextId = browserContextId ? this._browserContextIdToUserContextId.get(browserContextId) : 0;
++  getCookies() {
 +    const result = [];
 +    const sameSiteToProtocol = {
 +      [Ci.nsICookie.SAMESITE_NONE]: 'None',
@@ -619,7 +625,7 @@ index 0000000000000000000000000000000000000000..a0a3799b6060692fa64f41411c0c2763
 +      [Ci.nsICookie.SAMESITE_STRICT]: 'Strict',
 +    };
 +    for (let cookie of Services.cookies.cookies) {
-+      if (cookie.originAttributes.userContextId !== userContextId)
++      if (cookie.originAttributes.userContextId !== (this.userContextId || 0))
 +        continue;
 +      if (cookie.host === 'addons.mozilla.org')
 +        continue;
@@ -1444,10 +1450,10 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6231668027bb83bef2b3f839d44bcf043c5bb292
+index 0000000000000000000000000000000000000000..d660fc4747cadfb85a55184d59b28f96a6bd2af4
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,208 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -1481,9 +1487,9 @@ index 0000000000000000000000000000000000000000..6231668027bb83bef2b3f839d44bcf04
 +    this._tabToTarget = new Map();
 +
 +    for (const tab of this._mainWindow.gBrowser.tabs)
-+      this._ensureTargetForTab(tab);
++      this._createTargetForTab(tab);
 +    this._mainWindow.gBrowser.tabContainer.addEventListener('TabOpen', event => {
-+      this._ensureTargetForTab(event.target);
++      this._createTargetForTab(event.target);
 +    });
 +    this._mainWindow.gBrowser.tabContainer.addEventListener('TabClose', event => {
 +      const tab = event.target;
@@ -1498,26 +1504,14 @@ index 0000000000000000000000000000000000000000..6231668027bb83bef2b3f839d44bcf04
 +  }
 +
 +  async newPage({browserContextId}) {
++    const browserContext = this._contextManager.browserContextForId(browserContextId);
 +    const tab = this._mainWindow.gBrowser.addTab('about:blank', {
-+      userContextId: this._contextManager.userContextId(browserContextId),
++      userContextId: browserContext.userContextId,
 +      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
 +    });
 +    this._mainWindow.gBrowser.selectedTab = tab;
-+    // Await navigation to about:blank
-+    await new Promise(resolve => {
-+      const wpl = {
-+        onLocationChange: function(aWebProgress, aRequest, aLocation) {
-+          tab.linkedBrowser.removeProgressListener(wpl);
-+          resolve();
-+        },
-+        QueryInterface: ChromeUtils.generateQI([
-+          Ci.nsIWebProgressListener,
-+          Ci.nsISupportsWeakReference,
-+        ]),
-+      };
-+      tab.linkedBrowser.addProgressListener(wpl);
-+    });
-+    const target = this._ensureTargetForTab(tab);
++    const target = this._tabToTarget.get(tab);
++    await target._contentReadyPromise;
 +    return target.id();
 +  }
 +
@@ -1550,29 +1544,30 @@ index 0000000000000000000000000000000000000000..6231668027bb83bef2b3f839d44bcf04
 +    return target._tab;
 +  }
 +
-+  _ensureTargetForTab(tab) {
-+    if (this._tabToTarget.has(tab))
-+      return this._tabToTarget.get(tab);
-+    const openerTarget = tab.openerTab ? this._ensureTargetForTab(tab.openerTab) : null;
-+    const target = new PageTarget(this, tab, this._contextManager.browserContextId(tab.userContextId), openerTarget);
++  targetForId(targetId) {
++    return this._targets.get(targetId);
++  }
 +
++  _createTargetForTab(tab) {
++    if (this._tabToTarget.has(tab))
++      throw new Error(`Internal error: two targets per tab`);
++    const openerTarget = tab.openerTab ? this._tabToTarget.get(tab.openerTab) : null;
++    const target = new PageTarget(this, tab, this._contextManager.browserContextForUserContextId(tab.userContextId), openerTarget);
 +    this._targets.set(target.id(), target);
 +    this._tabToTarget.set(tab, target);
 +    this.emit(TargetRegistry.Events.TargetCreated, target.info());
++    return target;
 +  }
 +}
 +
 +class PageTarget {
-+  constructor(registry, tab, browserContextId, opener) {
++  constructor(registry, tab, browserContext, opener) {
 +    this._targetId = helper.generateId();
 +    this._registry = registry;
 +    this._tab = tab;
-+    this._browserContextId = browserContextId;
++    this._browserContext = browserContext;
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._url = tab.linkedBrowser.currentURI.spec;
-+
-+    // First navigation always happens to about:blank - do not report it.
-+    this._skipNextNavigation = true;
 +
 +    const navigationListener = {
 +      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
@@ -1584,13 +1579,40 @@ index 0000000000000000000000000000000000000000..6231668027bb83bef2b3f839d44bcf04
 +        receiveMessage: () => this._onContentReady()
 +      }),
 +    ];
++
++    this._contentReadyPromise = new Promise(f => this._contentReadyCallback = f);
++
++    if (browserContext && browserContext.options.viewport)
++      this.setViewportSize(browserContext.options.viewport.viewportSize);
++  }
++
++  setViewportSize(viewportSize) {
++    if (viewportSize) {
++      const {width, height} = viewportSize;
++      this._tab.linkedBrowser.style.setProperty('min-width', width + 'px');
++      this._tab.linkedBrowser.style.setProperty('min-height', height + 'px');
++      this._tab.linkedBrowser.style.setProperty('max-width', width + 'px');
++      this._tab.linkedBrowser.style.setProperty('max-height', height + 'px');
++    } else {
++      this._tab.linkedBrowser.style.removeProperty('min-width');
++      this._tab.linkedBrowser.style.removeProperty('min-height');
++      this._tab.linkedBrowser.style.removeProperty('max-width');
++      this._tab.linkedBrowser.style.removeProperty('max-height');
++    }
++    const rect = this._tab.linkedBrowser.getBoundingClientRect();
++    return { width: rect.width, height: rect.height };
 +  }
 +
 +  _onContentReady() {
-+    const attachInfo = [];
-+    const data = { attachInfo, targetInfo: this.info() };
++    const sessionIds = [];
++    const data = { sessionIds, targetInfo: this.info() };
 +    this._registry.emit(TargetRegistry.Events.PageTargetReady, data);
-+    return attachInfo;
++    this._contentReadyCallback();
++    return {
++      browserContextOptions: this._browserContext ? this._browserContext.options : {},
++      waitForInitialNavigation: !this._tab.linkedBrowser.hasContentOpener,
++      sessionIds
++    };
 +  }
 +
 +  id() {
@@ -1602,16 +1624,12 @@ index 0000000000000000000000000000000000000000..6231668027bb83bef2b3f839d44bcf04
 +      targetId: this.id(),
 +      type: 'page',
 +      url: this._url,
-+      browserContextId: this._browserContextId,
++      browserContextId: this._browserContext ? this._browserContext.browserContextId : undefined,
 +      openerId: this._openerId,
 +    };
 +  }
 +
 +  _onNavigated(aLocation) {
-+    if (this._skipNextNavigation) {
-+      this._skipNextNavigation = false;
-+      return;
-+    }
 +    this._url = aLocation.spec;
 +    this._registry.emit(TargetRegistry.Events.TargetChanged, this.info());
 +  }
@@ -1792,10 +1810,10 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/testing/juggler/content/ContentSession.js b/testing/juggler/content/ContentSession.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2302be180eeee0cc686171cefb56f7ab2514648a
+index 0000000000000000000000000000000000000000..3891da101e6906ae2a3888e256aefd03f724ab4b
 --- /dev/null
 +++ b/testing/juggler/content/ContentSession.js
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,68 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {RuntimeAgent} = ChromeUtils.import('chrome://juggler/content/content/RuntimeAgent.js');
 +const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
@@ -1807,14 +1825,13 @@ index 0000000000000000000000000000000000000000..2302be180eeee0cc686171cefb56f7ab
 +   * @param {string} sessionId
 +   * @param {!ContentFrameMessageManager} messageManager
 +   * @param {!FrameTree} frameTree
-+   * @param {!ScrollbarManager} scrollbarManager
 +   * @param {!NetworkMonitor} networkMonitor
 +   */
-+  constructor(sessionId, messageManager, frameTree, scrollbarManager, networkMonitor) {
++  constructor(sessionId, messageManager, frameTree, networkMonitor) {
 +    this._sessionId = sessionId;
 +    this._messageManager = messageManager;
 +    const runtimeAgent = new RuntimeAgent(this);
-+    const pageAgent = new PageAgent(this, runtimeAgent, frameTree, scrollbarManager, networkMonitor);
++    const pageAgent = new PageAgent(this, runtimeAgent, frameTree, networkMonitor);
 +    this._agents = {
 +      Page: pageAgent,
 +      Runtime: runtimeAgent,
@@ -1822,6 +1839,8 @@ index 0000000000000000000000000000000000000000..2302be180eeee0cc686171cefb56f7ab
 +    this._eventListeners = [
 +      helper.addMessageListener(messageManager, this._sessionId, this._onMessage.bind(this)),
 +    ];
++    runtimeAgent.enable();
++    pageAgent.enable();
 +  }
 +
 +  emitEvent(eventName, params) {
@@ -1865,10 +1884,10 @@ index 0000000000000000000000000000000000000000..2302be180eeee0cc686171cefb56f7ab
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..f239981ae0d87581d9a1c25ca1ebe1730d20bfa0
+index 0000000000000000000000000000000000000000..dcebb7bbf6d0c9bb7a350443dfa2574bee5915ea
 --- /dev/null
 +++ b/testing/juggler/content/FrameTree.js
-@@ -0,0 +1,242 @@
+@@ -0,0 +1,252 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -1880,10 +1899,11 @@ index 0000000000000000000000000000000000000000..f239981ae0d87581d9a1c25ca1ebe173
 +const helper = new Helper();
 +
 +class FrameTree {
-+  constructor(rootDocShell) {
++  constructor(rootDocShell, waitForInitialNavigation) {
 +    EventEmitter.decorate(this);
 +    this._docShellToFrame = new Map();
 +    this._frameIdToFrame = new Map();
++    this._pageReady = !waitForInitialNavigation;
 +    this._mainFrame = this._createFrame(rootDocShell);
 +    const webProgress = rootDocShell.QueryInterface(Ci.nsIInterfaceRequestor)
 +                                .getInterface(Ci.nsIWebProgress);
@@ -1900,6 +1920,10 @@ index 0000000000000000000000000000000000000000..f239981ae0d87581d9a1c25ca1ebe173
 +      helper.addObserver(subject => this._onDocShellDestroyed(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-destroy'),
 +      helper.addProgressListener(webProgress, this, flags),
 +    ];
++  }
++
++  isPageReady() {
++    return this._pageReady;
 +  }
 +
 +  frameForDocShell(docShell) {
@@ -1960,6 +1984,10 @@ index 0000000000000000000000000000000000000000..f239981ae0d87581d9a1c25ca1ebe173
 +      frame._lastCommittedNavigationId = navigationId;
 +      frame._url = channel.URI.spec;
 +      this.emit(FrameTree.Events.NavigationCommitted, frame);
++      if (frame === this._mainFrame && !this._pageReady) {
++        this._pageReady = true;
++        this.emit(FrameTree.Events.PageReady);
++      }
 +    } else if (isStop && frame._pendingNavigationId && status) {
 +      // Navigation is aborted.
 +      const navigationId = frame._pendingNavigationId;
@@ -2035,6 +2063,7 @@ index 0000000000000000000000000000000000000000..f239981ae0d87581d9a1c25ca1ebe173
 +  NavigationCommitted: 'navigationcommitted',
 +  NavigationAborted: 'navigationaborted',
 +  SameDocumentNavigation: 'samedocumentnavigation',
++  PageReady: 'pageready',
 +};
 +
 +class Frame {
@@ -2181,10 +2210,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a8aa1b032
+index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631f0bd1780
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,895 @@
+@@ -0,0 +1,875 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2343,12 +2372,11 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +}
 +
 +class PageAgent {
-+  constructor(session, runtimeAgent, frameTree, scrollbarManager, networkMonitor) {
++  constructor(session, runtimeAgent, frameTree, networkMonitor) {
 +    this._session = session;
 +    this._runtime = runtimeAgent;
 +    this._frameTree = frameTree;
 +    this._networkMonitor = networkMonitor;
-+    this._scrollbarManager = scrollbarManager;
 +
 +    this._frameData = new Map();
 +    this._scriptsToEvaluateOnNewDocument = new Map();
@@ -2399,14 +2427,6 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +    return this._networkMonitor.requestDetails(channelId);
 +  }
 +
-+  async setViewport({deviceScaleFactor, isMobile, hasTouch}) {
-+    const docShell = this._frameTree.mainFrame().docShell();
-+    docShell.contentViewer.overrideDPPX = deviceScaleFactor || this._initialDPPX;
-+    docShell.deviceSizeIsPageSize = isMobile;
-+    docShell.touchEventsOverride = hasTouch ? Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED : Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_NONE;
-+    this._scrollbarManager.setFloatingScrollbars(isMobile);
-+  }
-+
 +  async setEmulatedMedia({type, colorScheme}) {
 +    const docShell = this._frameTree.mainFrame().docShell();
 +    const cv = docShell.contentViewer;
@@ -2419,16 +2439,6 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +      case 'dark': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_DARK); break;
 +      case 'no-preference': cv.emulatePrefersColorScheme(cv.PREFERS_COLOR_SCHEME_NO_PREFERENCE); break;
 +    }
-+  }
-+
-+  async setUserAgent({userAgent}) {
-+    const docShell = this._frameTree.mainFrame().docShell();
-+    docShell.customUserAgent = userAgent;
-+  }
-+
-+  async setBypassCSP({enabled}) {
-+    const docShell = this._frameTree.mainFrame().docShell();
-+    docShell.bypassCSPEnabled = enabled;
 +  }
 +
 +  addScriptToEvaluateOnNewDocument({script, worldName}) {
@@ -2452,11 +2462,6 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +
 +    const docShell = this._frameTree.mainFrame().docShell();
 +    docShell.defaultLoadFlags = cacheDisabled ? disable : enable;
-+  }
-+
-+  setJavascriptEnabled({enabled}) {
-+    const docShell = this._frameTree.mainFrame().docShell();
-+    docShell.allowJavascript = enabled;
 +  }
 +
 +  enable() {
@@ -2486,11 +2491,15 @@ index 0000000000000000000000000000000000000000..d592ad9355e7e74a1685acd9338b387a
 +      helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
 +      helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
 +      helper.on(this._frameTree, 'samedocumentnavigation', this._onSameDocumentNavigation.bind(this)),
++      helper.on(this._frameTree, 'pageready', () => this._session.emitEvent('Page.ready', {})),
 +    ];
 +
 +    this._wdm.addListener(this._wdmListener);
 +    for (const workerDebugger of this._wdm.getWorkerDebuggerEnumerator())
 +      this._onWorkerCreated(workerDebugger);
++
++    if (this._frameTree.isPageReady())
++      this._session.emitEvent('Page.ready', {});
 +  }
 +
 +  setInterceptFileChooserDialog({enabled}) {
@@ -3869,10 +3878,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6a9f908676fc025b74ea585a0e4e9194f704d13f
+index 0000000000000000000000000000000000000000..556f48d627401b8507b8bbec6dbf7ca797644baf
 --- /dev/null
 +++ b/testing/juggler/content/main.js
-@@ -0,0 +1,56 @@
+@@ -0,0 +1,76 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {ContentSession} = ChromeUtils.import('chrome://juggler/content/content/ContentSession.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -3880,17 +3889,15 @@ index 0000000000000000000000000000000000000000..6a9f908676fc025b74ea585a0e4e9194
 +const {ScrollbarManager} = ChromeUtils.import('chrome://juggler/content/content/ScrollbarManager.js');
 +
 +const sessions = new Map();
-+const frameTree = new FrameTree(docShell);
-+const networkMonitor = new NetworkMonitor(docShell, frameTree);
 +const scrollbarManager = new ScrollbarManager(docShell);
-+
++let frameTree;
++let networkMonitor;
 +const helper = new Helper();
 +const messageManager = this;
++let gListeners;
 +
 +function createContentSession(sessionId) {
-+  const session = new ContentSession(sessionId, messageManager, frameTree, scrollbarManager, networkMonitor);
-+  sessions.set(sessionId, session);
-+  return session;
++  sessions.set(sessionId, new ContentSession(sessionId, messageManager, frameTree, networkMonitor));
 +}
 +
 +function disposeContentSession(sessionId) {
@@ -3901,34 +3908,56 @@ index 0000000000000000000000000000000000000000..6a9f908676fc025b74ea585a0e4e9194
 +  session.dispose();
 +}
 +
-+const gListeners = [
-+  helper.addMessageListener(messageManager, 'juggler:create-content-session', msg => {
-+    const sessionId = msg.data;
++function initialize() {
++  let response = sendSyncMessage('juggler:content-ready', {})[0];
++  if (!response)
++    response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
++
++  const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
++  const { userAgent, bypassCSP, javaScriptDisabled, viewport} = browserContextOptions;
++
++  if (userAgent !== undefined)
++    docShell.customUserAgent = userAgent;
++  if (bypassCSP !== undefined)
++    docShell.bypassCSPEnabled = bypassCSP;
++  if (javaScriptDisabled !== undefined)
++    docShell.allowJavascript = !javaScriptDisabled;
++  if (viewport !== undefined) {
++    docShell.contentViewer.overrideDPPX = viewport.deviceScaleFactor || this._initialDPPX;
++    docShell.deviceSizeIsPageSize = viewport.isMobile;
++    docShell.touchEventsOverride = viewport.hasTouch ? Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED : Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_NONE;
++    scrollbarManager.setFloatingScrollbars(viewport.isMobile);
++  }
++
++  frameTree = new FrameTree(docShell, waitForInitialNavigation);
++  networkMonitor = new NetworkMonitor(docShell, frameTree);
++  for (const sessionId of sessionIds)
 +    createContentSession(sessionId);
-+  }),
 +
-+  helper.addMessageListener(messageManager, 'juggler:dispose-content-session', msg => {
-+    const sessionId = msg.data;
-+    disposeContentSession(sessionId);
-+  }),
++  gListeners = [
++    helper.addMessageListener(messageManager, 'juggler:create-content-session', msg => {
++      const sessionId = msg.data;
++      createContentSession(sessionId);
++    }),
 +
-+  helper.addEventListener(messageManager, 'unload', msg => {
-+    helper.removeListeners(gListeners);
-+    for (const session of sessions.values())
-+      session.dispose();
-+    sessions.clear();
-+    scrollbarManager.dispose();
-+    networkMonitor.dispose();
-+    frameTree.dispose();
-+  }),
-+];
++    helper.addMessageListener(messageManager, 'juggler:dispose-content-session', msg => {
++      const sessionId = msg.data;
++      disposeContentSession(sessionId);
++    }),
 +
-+const [attachInfo] = sendSyncMessage('juggler:content-ready', {});
-+for (const { sessionId, messages } of attachInfo || []) {
-+  const session = createContentSession(sessionId);
-+  for (const message of messages)
-+    session.handleMessage(message);
++    helper.addEventListener(messageManager, 'unload', msg => {
++      helper.removeListeners(gListeners);
++      for (const session of sessions.values())
++        session.dispose();
++      sessions.clear();
++      scrollbarManager.dispose();
++      networkMonitor.dispose();
++      frameTree.dispose();
++    }),
++  ];
 +}
++
++initialize();
 diff --git a/testing/juggler/jar.mn b/testing/juggler/jar.mn
 new file mode 100644
 index 0000000000000000000000000000000000000000..76377927a8c9af3cac3b028ff754491966d03ba3
@@ -4009,10 +4038,10 @@ index 0000000000000000000000000000000000000000..a2d3b79469566ca2edb7d864621f7085
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..9bf14b3c4842d15508f67daa10f350475551a73e
+index 0000000000000000000000000000000000000000..6b42032e8f6d39025f455300d376084826a781cc
 --- /dev/null
 +++ b/testing/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,73 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4042,7 +4071,7 @@ index 0000000000000000000000000000000000000000..9bf14b3c4842d15508f67daa10f35047
 +
 +  async setIgnoreHTTPSErrors({enabled}) {
 +    if (!enabled) {
-+      allowAllCerts.disable() 
++      allowAllCerts.disable()
 +      Services.prefs.setBoolPref('security.mixed_content.block_active_content', true);
 +    } else {
 +      allowAllCerts.enable()
@@ -4051,23 +4080,24 @@ index 0000000000000000000000000000000000000000..9bf14b3c4842d15508f67daa10f35047
 +  }
 +
 +  grantPermissions({browserContextId, origin, permissions}) {
-+    this._contextManager.grantPermissions(browserContextId, origin, permissions);
++    this._contextManager.browserContextForId(browserContextId).grantPermissions(origin, permissions);
 +  }
 +
 +  resetPermissions({browserContextId}) {
-+    this._contextManager.resetPermissions(browserContextId);
++    this._contextManager.browserContextForId(browserContextId).resetPermissions();
 +  }
 +
 +  setCookies({browserContextId, cookies}) {
-+    this._contextManager.setCookies(browserContextId, cookies);
++    this._contextManager.browserContextForId(browserContextId).setCookies(cookies);
 +  }
 +
 +  clearCookies({browserContextId}) {
-+    this._contextManager.clearCookies(browserContextId);
++    this._contextManager.browserContextForId(browserContextId).clearCookies();
 +  }
 +
 +  getCookies({browserContextId}) {
-+    return {cookies: this._contextManager.getCookies(browserContextId)};
++    const cookies = this._contextManager.browserContextForId(browserContextId).getCookies();
++    return {cookies};
 +  }
 +
 +  async getInfo() {
@@ -4087,10 +4117,10 @@ index 0000000000000000000000000000000000000000..9bf14b3c4842d15508f67daa10f35047
 +this.BrowserHandler = BrowserHandler;
 diff --git a/testing/juggler/protocol/Dispatcher.js b/testing/juggler/protocol/Dispatcher.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..835aa8b7d1c5a8e643691c4b89da77cd1c8b18c9
+index 0000000000000000000000000000000000000000..5c5a73b35cd178b51899ab3dd681d46b6c3e4770
 --- /dev/null
 +++ b/testing/juggler/protocol/Dispatcher.js
-@@ -0,0 +1,254 @@
+@@ -0,0 +1,265 @@
 +const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 +const {protocol, checkScheme} = ChromeUtils.import("chrome://juggler/content/protocol/Protocol.js");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4123,7 +4153,7 @@ index 0000000000000000000000000000000000000000..835aa8b7d1c5a8e643691c4b89da77cd
 +    ];
 +  }
 +
-+  createSession(targetId) {
++  createSession(targetId, shouldConnect) {
 +    const targetInfo = TargetRegistry.instance().targetInfo(targetId);
 +    if (!targetInfo)
 +      throw new Error(`Target "${targetId}" is not found`);
@@ -4135,6 +4165,8 @@ index 0000000000000000000000000000000000000000..835aa8b7d1c5a8e643691c4b89da77cd
 +
 +    const sessionId = helper.generateId();
 +    const contentSession = targetInfo.type === 'page' ? new ContentSession(this, sessionId, targetInfo) : null;
++    if (shouldConnect && contentSession)
++      contentSession.connect();
 +    const chromeSession = new ChromeSession(this, sessionId, contentSession, targetInfo);
 +    targetSessions.set(sessionId, chromeSession);
 +    this._sessions.set(sessionId, chromeSession);
@@ -4234,6 +4266,12 @@ index 0000000000000000000000000000000000000000..835aa8b7d1c5a8e643691c4b89da77cd
 +      if (protocol.domains[domainName].targets.includes(targetInfo.type))
 +        this._handlers[domainName] = new handlerFactory(this, contentSession);
 +    }
++    const pageHandler = this._handlers['Page'];
++    if (pageHandler)
++      pageHandler.enable();
++    const networkHandler = this._handlers['Network'];
++    if (networkHandler)
++      networkHandler.enable();
 +  }
 +
 +  dispatcher() {
@@ -4284,13 +4322,16 @@ index 0000000000000000000000000000000000000000..835aa8b7d1c5a8e643691c4b89da77cd
 +    this._messageId = 0;
 +    this._pendingMessages = new Map();
 +    this._sessionId = sessionId;
-+    this._browser.messageManager.sendAsyncMessage('juggler:create-content-session', this._sessionId);
 +    this._disposed = false;
 +    this._eventListeners = [
 +      helper.addMessageListener(this._browser.messageManager, this._sessionId, {
 +        receiveMessage: message => this._onMessage(message)
 +      }),
 +    ];
++  }
++
++  connect() {
++    this._browser.messageManager.sendAsyncMessage('juggler:create-content-session', this._sessionId);
 +  }
 +
 +  isDisposed() {
@@ -4519,10 +4560,10 @@ index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9c
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e9c5d94cf65b44d57bdb21ec892c3e325220a879
+index 0000000000000000000000000000000000000000..efb0fc1f3f7af37e101976cf8a682e09c223e59f
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,285 @@
+@@ -0,0 +1,266 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4540,6 +4581,7 @@ index 0000000000000000000000000000000000000000..e9c5d94cf65b44d57bdb21ec892c3e32
 +  constructor(chromeSession, contentSession) {
 +    this._chromeSession = chromeSession;
 +    this._contentSession = contentSession;
++    this._pageTarget = TargetRegistry.instance().targetForId(chromeSession.targetId());
 +    this._browser = TargetRegistry.instance().tabForTarget(chromeSession.targetId()).linkedBrowser;
 +    this._dialogs = new Map();
 +
@@ -4568,38 +4610,18 @@ index 0000000000000000000000000000000000000000..e9c5d94cf65b44d57bdb21ec892c3e32
 +      }),
 +      helper.addEventListener(this._browser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
 +    ];
-+    await this._contentSession.send('Page.enable');
 +  }
 +
 +  dispose() {
 +    helper.removeListeners(this._eventListeners);
 +  }
 +
-+  async setViewport({viewport}) {
-+    if (viewport) {
-+      const {width, height} = viewport;
-+      this._browser.style.setProperty('min-width', width + 'px');
-+      this._browser.style.setProperty('min-height', height + 'px');
-+      this._browser.style.setProperty('max-width', width + 'px');
-+      this._browser.style.setProperty('max-height', height + 'px');
-+    } else {
-+      this._browser.style.removeProperty('min-width');
-+      this._browser.style.removeProperty('min-height');
-+      this._browser.style.removeProperty('max-width');
-+      this._browser.style.removeProperty('max-height');
-+    }
-+    const dimensions = this._browser.getBoundingClientRect();
-+    await Promise.all([
-+      this._contentSession.send('Page.setViewport', {
-+        deviceScaleFactor: viewport ? viewport.deviceScaleFactor : 0,
-+        isMobile: viewport && viewport.isMobile,
-+        hasTouch: viewport && viewport.hasTouch,
-+      }),
-+      this._contentSession.send('Page.awaitViewportDimensions', {
-+        width: dimensions.width,
-+        height: dimensions.height
-+      }),
-+    ]);
++  async setViewportSize({viewportSize}) {
++    const size = this._pageTarget.setViewportSize(viewportSize);
++    await this._contentSession.send('Page.awaitViewportDimensions', {
++      width: size.width,
++      height: size.height
++    });
 +  }
 +
 +  _updateModalDialogs() {
@@ -4959,10 +4981,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497a16559ea
+index 0000000000000000000000000000000000000000..a0a96a87ff4a422deccae1045962690fa7941f25
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,755 @@
+@@ -0,0 +1,746 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5016,13 +5038,16 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +  height: t.Number,
 +};
 +
-+pageTypes.Viewport = {
++pageTypes.Size = {
 +  width: t.Number,
 +  height: t.Number,
++};
++
++pageTypes.Viewport = {
++  viewportSize: pageTypes.Size,
 +  deviceScaleFactor: t.Number,
 +  isMobile: t.Boolean,
 +  hasTouch: t.Boolean,
-+  isLandscape: t.Boolean,
 +};
 +
 +pageTypes.DOMQuad = {
@@ -5218,6 +5243,9 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +      params: {
 +        removeOnDetach: t.Optional(t.Boolean),
 +        userAgent: t.Optional(t.String),
++        bypassCSP: t.Optional(t.Boolean),
++        javaScriptDisabled: t.Optional(t.Boolean),
++        viewport: t.Optional(pageTypes.Viewport),
 +      },
 +      returns: {
 +        browserContextId: t.String,
@@ -5288,7 +5316,6 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +    },
 +  },
 +  methods: {
-+    'enable': {},
 +    'setRequestInterception': {
 +      params: {
 +        enabled: t.Boolean,
@@ -5359,9 +5386,6 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +    },
 +  },
 +  methods: {
-+    'enable': {
-+      params: {},
-+    },
 +    'evaluate': {
 +      params: {
 +        // Pass frameId here.
@@ -5414,6 +5438,8 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +
 +  types: pageTypes,
 +  events: {
++    'ready': {
++    },
 +    'eventFired': {
 +      frameId: t.String,
 +      name: t.Enum(['load', 'DOMContentLoaded']),
@@ -5485,9 +5511,6 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +  },
 +
 +  methods: {
-+    'enable': {
-+      params: {},
-+    },
 +    'close': {
 +      params: {
 +        runBeforeUnload: t.Optional(t.Boolean),
@@ -5505,9 +5528,9 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +        name: t.String,
 +      },
 +    },
-+    'setViewport': {
++    'setViewportSize': {
 +      params: {
-+        viewport: t.Nullable(pageTypes.Viewport),
++        viewportSize: t.Nullable(pageTypes.Size),
 +      },
 +    },
 +    'setEmulatedMedia': {
@@ -5516,19 +5539,9 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +        colorScheme: t.Optional(t.Enum(['dark', 'light', 'no-preference'])),
 +      },
 +    },
-+    'setBypassCSP': {
-+      params: {
-+        enabled: t.Boolean
-+      }
-+    },
 +    'setCacheDisabled': {
 +      params: {
 +        cacheDisabled: t.Boolean,
-+      },
-+    },
-+    'setJavascriptEnabled': {
-+      params: {
-+        enabled: t.Boolean,
 +      },
 +    },
 +    'describeNode': {
@@ -5720,10 +5733,10 @@ index 0000000000000000000000000000000000000000..a59a7c218fdc3d2b3282bc5419eb4497
 +this.EXPORTED_SYMBOLS = ['protocol', 'checkScheme'];
 diff --git a/testing/juggler/protocol/RuntimeHandler.js b/testing/juggler/protocol/RuntimeHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..0026e8ff58ef6268f4c63783d0ff68ff355b1e72
+index 0000000000000000000000000000000000000000..089e66c617f114fcb32b3cea20abc6fb80e26a1e
 --- /dev/null
 +++ b/testing/juggler/protocol/RuntimeHandler.js
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,37 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -5738,10 +5751,6 @@ index 0000000000000000000000000000000000000000..0026e8ff58ef6268f4c63783d0ff68ff
 +  constructor(chromeSession, contentSession) {
 +    this._chromeSession = chromeSession;
 +    this._contentSession = contentSession;
-+  }
-+
-+  async enable(options) {
-+    return await this._contentSession.send('Runtime.enable', options);
 +  }
 +
 +  async evaluate(options) {
@@ -5767,10 +5776,10 @@ index 0000000000000000000000000000000000000000..0026e8ff58ef6268f4c63783d0ff68ff
 +this.RuntimeHandler = RuntimeHandler;
 diff --git a/testing/juggler/protocol/TargetHandler.js b/testing/juggler/protocol/TargetHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..454fa4ebb9bda29bb957fa64a08ca92c33212f75
+index 0000000000000000000000000000000000000000..4795a4ddecdd016d6efbcde35aa7321af17cd7dc
 --- /dev/null
 +++ b/testing/juggler/protocol/TargetHandler.js
-@@ -0,0 +1,104 @@
+@@ -0,0 +1,100 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -5789,34 +5798,34 @@ index 0000000000000000000000000000000000000000..454fa4ebb9bda29bb957fa64a08ca92c
 +    this._targetRegistry = TargetRegistry.instance();
 +    this._enabled = false;
 +    this._eventListeners = [];
-+    this._createdBrowserContextOptions = new Map();
++    this._createdBrowserContextIds = new Set();
 +  }
 +
 +  async attachToTarget({targetId}) {
 +    if (!this._enabled)
 +      throw new Error('Target domain is not enabled');
-+    const sessionId = this._session.dispatcher().createSession(targetId);
++    const sessionId = this._session.dispatcher().createSession(targetId, true /* shouldConnect */);
 +    return {sessionId};
 +  }
 +
 +  async createBrowserContext(options) {
 +    if (!this._enabled)
 +      throw new Error('Target domain is not enabled');
-+    const browserContextId = this._contextManager.createBrowserContext();
-+    // TODO: introduce BrowserContext class, with options?
-+    this._createdBrowserContextOptions.set(browserContextId, options);
-+    return {browserContextId};
++    const browserContext = this._contextManager.createBrowserContext(options);
++    this._createdBrowserContextIds.add(browserContext.browserContextId);
++    return {browserContextId: browserContext.browserContextId};
 +  }
 +
 +  async removeBrowserContext({browserContextId}) {
 +    if (!this._enabled)
 +      throw new Error('Target domain is not enabled');
-+    this._createdBrowserContextOptions.delete(browserContextId);
-+    this._contextManager.removeBrowserContext(browserContextId);
++    this._createdBrowserContextIds.delete(browserContextId);
++    this._contextManager.browserContextForId(browserContextId).destroy();
 +  }
 +
 +  async getBrowserContexts() {
-+    return {browserContextIds: this._contextManager.getBrowserContexts()};
++    const browserContexts = this._contextManager.getBrowserContexts();
++    return {browserContextIds: browserContexts.map(bc => bc.browserContextId)};
 +  }
 +
 +  async enable() {
@@ -5836,9 +5845,10 @@ index 0000000000000000000000000000000000000000..454fa4ebb9bda29bb957fa64a08ca92c
 +
 +  dispose() {
 +    helper.removeListeners(this._eventListeners);
-+    for (const [browserContextId, options] of this._createdBrowserContextOptions) {
-+      if (options.removeOnDetach)
-+        this._contextManager.removeBrowserContext(browserContextId);
++    for (const browserContextId of this._createdBrowserContextIds) {
++      const browserContext = this._contextManager.browserContextForId(browserContextId);
++      if (browserContext.options.removeOnDetach)
++        browserContext.destroy();
 +    }
 +    this._createdBrowserContextOptions.clear();
 +  }
@@ -5855,16 +5865,11 @@ index 0000000000000000000000000000000000000000..454fa4ebb9bda29bb957fa64a08ca92c
 +    this._session.emitEvent('Target.targetDestroyed', targetInfo);
 +  }
 +
-+  _onPageTargetReady({attachInfo, targetInfo}) {
-+    const options = this._createdBrowserContextOptions.get(targetInfo.browserContextId);
-+    if (!options)
++  _onPageTargetReady({sessionIds, targetInfo}) {
++    if (!this._createdBrowserContextIds.has(targetInfo.browserContextId))
 +      return;
-+    const sessionId = this._session.dispatcher().createSession(targetInfo.targetId);
-+    const messages = [];
-+    // TODO: perhaps, we should just have a single message 'initBrowserContextOptions'.
-+    if (options.userAgent !== undefined)
-+      messages.push({ id: 0, methodName: 'Page.setUserAgent', params: { userAgent: options.userAgent } });
-+    attachInfo.push({ sessionId, messages });
++    const sessionId = this._session.dispatcher().createSession(targetInfo.targetId, false /* shouldConnect */);
++    sessionIds.push(sessionId);
 +  }
 +
 +  async newPage({browserContextId}) {
