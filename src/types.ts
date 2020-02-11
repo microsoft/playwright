@@ -27,7 +27,6 @@ export type Evaluate = <Args extends any[], R>(pageFunction: PageFunction<Args, 
 export type EvaluateHandle = <Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>) => Promise<Handle<R>>;
 export type $Eval = <Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>) => Promise<R>;
 export type $$Eval = <Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>) => Promise<R>;
-export type $Wait = <Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element | undefined, Args, R>, options?: WaitForFunctionOptions, ...args: Boxed<Args>) => Promise<Handle<R>>;
 export type EvaluateOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<R>;
 export type EvaluateHandleOn<T> = <Args extends any[], R>(pageFunction: PageFunctionOn<T, Args, R>, ...args: Boxed<Args>) => Promise<Handle<R>>;
 
