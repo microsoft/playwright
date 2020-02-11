@@ -25,6 +25,8 @@ import { Page } from './page';
 import * as platform from './platform';
 import { Selectors } from './selectors';
 
+export type WaitForInteractableOptions = types.TimeoutOptions & { waitForInteractable?: boolean };
+
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
 
@@ -230,10 +232,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions): Promise<void> {
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions & WaitForInteractableOptions): Promise<void> {
+    const { waitForInteractable = true } = (options || {});
+    if (waitForInteractable)
+      await this._waitForStablePosition(options);
     const relativePoint = options ? options.relativePoint : undefined;
     await this._scrollRectIntoViewIfNeeded(relativePoint ? { x: relativePoint.x, y: relativePoint.y, width: 0, height: 0 } : undefined);
     const point = relativePoint ? await this._relativePoint(relativePoint) : await this._clickablePoint();
+    if (waitForInteractable)
+      await this._waitForHitTargetAt(point, options);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
       restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
@@ -242,19 +249,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page.keyboard._ensureModifiers(restoreModifiers);
   }
 
-  hover(options?: input.PointerActionOptions): Promise<void> {
+  hover(options?: input.PointerActionOptions & WaitForInteractableOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: input.ClickOptions): Promise<void> {
+  click(options?: input.ClickOptions & WaitForInteractableOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: input.MultiClickOptions): Promise<void> {
+  dblclick(options?: input.MultiClickOptions & WaitForInteractableOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: input.MultiClickOptions): Promise<void> {
+  tripleclick(options?: input.MultiClickOptions & WaitForInteractableOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
@@ -402,19 +409,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this._page.keyboard.type(text, options);
   }
 
-  async press(key: string, options: { delay?: number; text?: string; } | undefined) {
+  async press(key: string, options?: { delay?: number, text?: string }) {
     await this.focus();
     await this._page.keyboard.press(key, options);
   }
-  async check() {
-    await this._setChecked(true);
+
+  async check(options?: WaitForInteractableOptions) {
+    await this._setChecked(true, options);
   }
 
-  async uncheck() {
-    await this._setChecked(false);
+  async uncheck(options?: WaitForInteractableOptions) {
+    await this._setChecked(false, options);
   }
 
-  private async _setChecked(state: boolean) {
+  private async _setChecked(state: boolean, options: WaitForInteractableOptions = {}) {
     const isCheckboxChecked = async (): Promise<boolean> => {
       return this._evaluateInUtility((node: Node) => {
         if (node.nodeType !== Node.ELEMENT_NODE)
@@ -442,7 +450,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     if (await isCheckboxChecked() === state)
       return;
-    await this.click();
+    await this.click(options);
     if (await isCheckboxChecked() !== state)
       throw new Error('Unable to click checkbox');
   }
@@ -497,6 +505,52 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return visibleRatio;
     });
   }
+
+  async _waitForStablePosition(options: types.TimeoutOptions = {}): Promise<void> {
+    const context = await this._context.frame._utilityContext();
+    const stablePromise = context.evaluate((injected: Injected, node: Node, timeout: number) => {
+      if (!node.isConnected)
+        throw new Error('Element is not attached to the DOM');
+      const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+      if (!element)
+        throw new Error('Element is not attached to the DOM');
+
+      let lastRect: types.Rect | undefined;
+      return injected.poll('raf', undefined, timeout, () => {
+        const clientRect = element.getBoundingClientRect();
+        const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+        const isStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+        lastRect = rect;
+        return isStable;
+      });
+    }, await context._injected(), this, options.timeout || 0);
+    await helper.waitWithTimeout(stablePromise, 'element to stop moving', options.timeout || 0);
+  }
+
+  async _waitForHitTargetAt(point: types.Point, options: types.TimeoutOptions = {}): Promise<void> {
+    const frame = await this.ownerFrame();
+    if (frame && frame.parentFrame()) {
+      const element = await frame.frameElement();
+      const box = await element.boundingBox();
+      if (!box)
+        throw new Error('Element is not attached to the DOM');
+      // Translate from viewport coordinates to frame coordinates.
+      point = { x: point.x - box.x, y: point.y - box.y };
+    }
+    const context = await this._context.frame._utilityContext();
+    const hitTargetPromise = context.evaluate((injected: Injected, node: Node, timeout: number, point: types.Point) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+      if (!element)
+        throw new Error('Element is not attached to the DOM');
+      return injected.poll('raf', undefined, timeout, () => {
+        let hitElement = injected.utils.deepElementFromPoint(document, point.x, point.y);
+        while (hitElement && hitElement !== element)
+          hitElement = injected.utils.parentElementOrShadowHost(hitElement);
+        return hitElement === element;
+      });
+    }, await context._injected(), this, options.timeout || 0, point);
+    await helper.waitWithTimeout(hitTargetPromise, 'element to receive mouse events', options.timeout || 0);
+  }
 }
 
 function normalizeSelector(selector: string): string {
@@ -514,51 +568,44 @@ function normalizeSelector(selector: string): string {
 
 export type Task = (context: FrameExecutionContext) => Promise<js.JSHandle>;
 
-export function waitForFunctionTask(selector: string | undefined, pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]) {
-  const { polling = 'raf' } = options;
+function assertPolling(polling: types.Polling) {
   if (helper.isString(polling))
     assert(polling === 'raf' || polling === 'mutation', 'Unknown polling option: ' + polling);
   else if (helper.isNumber(polling))
     assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
   else
     throw new Error('Unknown polling options: ' + polling);
+}
+
+export function waitForFunctionTask(selector: string | undefined, pageFunction: Function | string, options: types.WaitForFunctionOptions, ...args: any[]): Task {
+  const { polling = 'raf' } = options;
+  assertPolling(polling);
   const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(...args)';
   if (selector !== undefined)
     selector = normalizeSelector(selector);
 
   return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string | undefined, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
     const innerPredicate = new Function('...args', predicateBody);
-    if (polling === 'raf')
-      return injected.pollRaf(selector, predicate, timeout);
-    if (polling === 'mutation')
-      return injected.pollMutation(selector, predicate, timeout);
-    return injected.pollInterval(selector, polling, predicate, timeout);
-
-    function predicate(element: Element | undefined): any {
+    return injected.poll(polling, selector, timeout, (element: Element | undefined): any => {
       if (selector === undefined)
         return innerPredicate(...args);
       return innerPredicate(element, ...args);
-    }
+    });
   }, await context._injected(), selector, predicateBody, polling, options.timeout || 0, ...args);
 }
 
 export function waitForSelectorTask(selector: string, visibility: types.Visibility, timeout: number): Task {
-  return async (context: FrameExecutionContext) => {
-    selector = normalizeSelector(selector);
-    return context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number) => {
-      if (visibility !== 'any')
-        return injected.pollRaf(selector, predicate, timeout);
-      return injected.pollMutation(selector, predicate, timeout);
-
-      function predicate(element: Element | undefined): Element | boolean {
-        if (!element)
-          return visibility === 'hidden';
-        if (visibility === 'any')
-          return element;
-        return injected.isVisible(element) === (visibility === 'visible') ? element : false;
-      }
-    }, await context._injected(), selector, visibility, timeout);
-  };
+  selector = normalizeSelector(selector);
+  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number) => {
+    const polling = visibility === 'any' ? 'mutation' : 'raf';
+    return injected.poll(polling, selector, timeout, (element: Element | undefined): Element | boolean => {
+      if (!element)
+        return visibility === 'hidden';
+      if (visibility === 'any')
+        return element;
+      return injected.isVisible(element) === (visibility === 'visible') ? element : false;
+    });
+  }, await context._injected(), selector, visibility, timeout);
 }
 
 export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {
