@@ -143,9 +143,8 @@ export class FFConnection extends platform.EventEmitter {
       this._transport.close();
   }
 
-  async createSession(targetId: string): Promise<FFSession> {
-    const {sessionId} = await this.send('Target.attachToTarget', {targetId});
-    return this._sessions.get(sessionId)!;
+  getSession(sessionId: string): FFSession | null {
+    return this._sessions.get(sessionId) || null;
   }
 }
 
