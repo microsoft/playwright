@@ -80,18 +80,22 @@ beforeEach(async({server, httpsServer}) => {
 const products = ['WebKit', 'Firefox', 'Chromium'];
 let product;
 let events;
+let missingCoverage;
 if (process.env.BROWSER === 'firefox') {
   product = 'Firefox';
   events = {
     ...require('../lib/events').Events,
     ...require('../lib/chromium/events').Events,
   };
+  missingCoverage = ['browserContext.setGeolocation', 'elementHandle.scrollIntoViewIfNeeded', 'page.setOfflineMode'];
 } else if (process.env.BROWSER === 'webkit') {
   product = 'WebKit';
   events = require('../lib/events').Events;
+  missingCoverage = ['browserContext.clearPermissions'];
 } else {
   product = 'Chromium';
   events = require('../lib/events').Events;
+  missingCoverage = [];
 }
 
 describe(product, () => {
@@ -108,7 +112,7 @@ describe(product, () => {
         return;
       filteredApi[name] = api[name];
     });
-    utils.recordAPICoverage(testRunner, filteredApi, events);
+    utils.recordAPICoverage(testRunner, filteredApi, events, missingCoverage);
   }
 });
 

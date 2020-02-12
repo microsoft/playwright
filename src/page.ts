@@ -216,7 +216,7 @@ export class Page extends platform.EventEmitter {
   }
 
   async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    return this.waitForSelector(selector, options);
+    return this.mainFrame().$wait(selector, options);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {

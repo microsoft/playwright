@@ -79,18 +79,24 @@ const utils = module.exports = {
     return promisified;
   },
 
-  recordAPICoverage: function(testRunner, api, events) {
+  recordAPICoverage: function(testRunner, api, events, ignoredMethodsArray = []) {
     const coverage = new Map();
+    const ignoredMethods = new Set(ignoredMethodsArray);
     for (const [className, classType] of Object.entries(api))
       traceAPICoverage(coverage, events, className, classType);
     const focus = testRunner.hasFocusedTestsOrSuites();
     (focus ? testRunner.fdescribe : testRunner.describe)(COVERAGE_TESTSUITE_NAME, () => {
       (focus ? testRunner.fit : testRunner.it)('should call all API methods', () => {
         const missingMethods = [];
+        const extraIgnoredMethods = [];
         for (const method of coverage.keys()) {
-          if (!coverage.get(method))
+          if (!coverage.get(method) && !ignoredMethods.has(method))
             missingMethods.push(method);
+          else if (coverage.get(method) && ignoredMethods.has(method))
+            extraIgnoredMethods.push(method);
         }
+        if (extraIgnoredMethods.length)
+          throw new Error('Certain API Methods are called and should not be ignored: ' + extraIgnoredMethods.join(', '));
         if (missingMethods.length)
           throw new Error('Certain API Methods are not called: ' + missingMethods.join(', '));
       });

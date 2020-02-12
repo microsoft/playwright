@@ -45,6 +45,9 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('Failed to launch');
       });
+    });
+
+    describe('Playwright.launchPersistent', function() {
       it('should have default URL when launching browser', async function() {
         const userDataDir = await makeUserDataDir();
         const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
@@ -68,12 +71,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await browserContext.close();
         await removeUserDataDir(userDataDir);
       });
+    });
+
+    describe('Playwright.launchServer', function() {
       it('should return child_process instance', async () => {
-        const userDataDir = await makeUserDataDir();
-        const browserServer = await playwright.launchServer(userDataDir, defaultBrowserOptions);
+        const browserServer = await playwright.launchServer(defaultBrowserOptions);
         expect(browserServer.process().pid).toBeGreaterThan(0);
         await browserServer.close();
-        await removeUserDataDir(userDataDir);
+      });
+      it('should fire close event', async () => {
+        const browserServer = await playwright.launchServer(defaultBrowserOptions);
+        await Promise.all([
+          utils.waitEvent(browserServer, 'close'),
+          browserServer.close(),
+        ]);
       });
     });
 
