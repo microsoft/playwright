@@ -12529,7 +12529,7 @@ index f84e5cde0baaa08dab1fc77771e4a62a08a5df78..dac73d3d9db04c5d502432cea8adfa89
      void navigateToHistory(UINT menuID);
      bool seedInitialDefaultPreferences();
 diff --git a/Tools/MiniBrowser/win/WinMain.cpp b/Tools/MiniBrowser/win/WinMain.cpp
-index b1d17e88de61a6f196830f62604e4174564506bd..0cc40ce5a5f0a3331275fcdaf7ea95cd0dc5031f 100644
+index b1d17e88de61a6f196830f62604e4174564506bd..2035067fef157cb23dc3a93f1a086719a32d7d38 100644
 --- a/Tools/MiniBrowser/win/WinMain.cpp
 +++ b/Tools/MiniBrowser/win/WinMain.cpp
 @@ -32,6 +32,9 @@
@@ -12587,7 +12587,18 @@ index b1d17e88de61a6f196830f62604e4174564506bd..0cc40ce5a5f0a3331275fcdaf7ea95cd
  
      if (options.useFullDesktop)
          computeFullDesktopFrame();
-@@ -86,19 +115,35 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+@@ -75,9 +104,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+     OleInitialize(nullptr);
+ 
+     if (SetProcessDpiAwarenessContextPtr())
+-        SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+-    else
+-        ::SetProcessDPIAware();
++        SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
+ 
+ #if !ENABLE(WEBKIT_LEGACY)
+     auto factory = WebKitBrowserWindow::create;
+@@ -86,19 +113,35 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
  #else
      auto factory = options.windowType == BrowserWindowType::WebKit ? WebKitBrowserWindow::create : WebKitLegacyBrowserWindow::create;
  #endif
