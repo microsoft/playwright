@@ -58,7 +58,6 @@ type ConsoleTagHandler = () => void;
 export class FrameManager {
   private _page: Page;
   private _frames = new Map<string, Frame>();
-  private _webSockets = new Map<string, network.WebSocket>();
   private _mainFrame: Frame;
   readonly _lifecycleWatchers = new Set<() => void>();
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
@@ -120,7 +119,6 @@ export class FrameManager {
     for (const watcher of frame._documentWatchers)
       watcher(documentId);
     this.clearFrameLifecycle(frame);
-    this.clearWebSockets(frame);
     if (!initial)
       this._page.emit(Events.Page.FrameNavigated, frame);
   }
@@ -182,13 +180,6 @@ export class FrameManager {
       this._startNetworkIdleTimer(frame, 'networkidle2');
   }
 
-  clearWebSockets(frame: Frame) {
-    // TODO: attributet sockets to frames.
-    if (frame.parentFrame())
-      return;
-    this._webSockets.clear();
-  }
-
   requestStarted(request: network.Request) {
     this._inflightRequestStarted(request);
     const frame = request.frame();
@@ -226,50 +217,6 @@ export class FrameManager {
     }
     if (!request._isFavicon)
       this._page.emit(Events.Page.RequestFailed, request);
-  }
-
-  onWebSocketCreated(requestId: string, url: string) {
-    const ws = new network.WebSocket(url);
-    this._webSockets.set(requestId, ws);
-  }
-
-  onWebSocketRequest(requestId: string, headers: network.Headers) {
-    const ws = this._webSockets.get(requestId);
-    if (ws) {
-      ws._requestSent(headers);
-      this._page.emit(Events.Page.WebSocket, ws);
-    }
-  }
-
-  onWebSocketResponse(requestId: string, status: number, statusText: string, headers: network.Headers) {
-    const ws = this._webSockets.get(requestId);
-    if (ws)
-      ws._responseReceived(status, statusText, headers);
-  }
-
-  onWebSocketFrameSent(requestId: string, opcode: number, data: string) {
-    const ws = this._webSockets.get(requestId);
-    if (ws)
-      ws._frameSent(opcode, data);
-  }
-
-  webSocketFrameReceived(requestId: string, opcode: number, data: string) {
-    const ws = this._webSockets.get(requestId);
-    if (ws)
-      ws._frameReceived(opcode, data);
-  }
-
-  webSocketClosed(requestId: string) {
-    const ws = this._webSockets.get(requestId);
-    if (ws)
-      ws._closed();
-    this._webSockets.delete(requestId);
-  }
-
-  webSocketError(requestId: string, errorMessage: string): void {
-    const ws = this._webSockets.get(requestId);
-    if (ws)
-      ws._error(errorMessage);
   }
 
   provisionalLoadFailed(frame: Frame, documentId: string, error: string) {

@@ -19,7 +19,6 @@
 - [class: Request](#class-request)
 - [class: Response](#class-response)
 - [class: Selectors](#class-selectors)
-- [class: WebSocket](#class-websocket)
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
 - [class: Coverage](#class-coverage)
@@ -445,7 +444,6 @@ page.removeListener('request', logRequest);
 - [event: 'requestfailed'](#event-requestfailed)
 - [event: 'requestfinished'](#event-requestfinished)
 - [event: 'response'](#event-response)
-- [event: 'websocket'](#event-websocket)
 - [event: 'workercreated'](#event-workercreated)
 - [event: 'workerdestroyed'](#event-workerdestroyed)
 - [page.$(selector)](#pageselector)
@@ -617,11 +615,6 @@ Emitted when a request finishes successfully.
 - <[Response]>
 
 Emitted when a [response] is received.
-
-#### event: 'websocket'
-- <[WebSocket]> websocket
-
-Emitted when a <[WebSocket]> is opened.
 
 #### event: 'workercreated'
 - <[Worker]>
@@ -3171,67 +3164,6 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 })();
 ```
 
-### class: WebSocket
-
-The [WebSocket] class represents websocket connections in the page.
-
-<!-- GEN:toc -->
-- [event: 'close'](#event-close-2)
-- [event: 'error'](#event-error)
-- [event: 'messagereceived'](#event-messagereceived)
-- [event: 'messagesent'](#event-messagesent)
-- [event: 'open'](#event-open)
-- [webSocket.requestHeaders()](#websocketrequestheaders)
-- [webSocket.responseHeaders()](#websocketresponseheaders)
-- [webSocket.status()](#websocketstatus)
-- [webSocket.statusText()](#websocketstatustext)
-- [webSocket.url()](#websocketurl)
-<!-- GEN:stop -->
-
-#### event: 'close'
-
-Fired when the websocket closes.
-
-#### event: 'error'
-- <[String]> the error message
-
-Fired when the websocket has an error.
-
-#### event: 'messagereceived'
-- <[Buffer]|[String]> data recieved
-
-Fired when the websocket recieves a message.
-
-#### event: 'messagesent'
-- <[Buffer]|[String]> data recieved
-
-Fired when the websocket sends a message.
-
-#### event: 'open'
-
-Fired when the websocket opens.
-
-#### webSocket.requestHeaders()
-- returns: <[Promise]<[Object]>>
-
-#### webSocket.responseHeaders()
-- returns: <[Promise]<[Object]>>
-
-#### webSocket.status()
-- returns: <[number]>
-
-Contains the status code of the WebSocket (e.g., 200 for a success).
-
-#### webSocket.statusText()
-- returns: <[string]>
-
-Contains the status text of the WebSocket (e.g. usually an "OK" for a success).
-
-#### webSocket.url()
-- returns: <[string]>
-
-Contains the URL of the WebSocket.
-
 ### class: TimeoutError
 
 * extends: [Error]
@@ -3431,7 +3363,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 ### class: BrowserServer
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-3)
+- [event: 'close'](#event-close-2)
 - [browserServer.close()](#browserserverclose)
 - [browserServer.kill()](#browserserverkill)
 - [browserServer.process()](#browserserverprocess)

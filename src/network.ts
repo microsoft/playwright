@@ -17,7 +17,6 @@
 import * as frames from './frames';
 import { assert } from './helper';
 import * as platform from './platform';
-import { Events } from './events';
 
 export type NetworkCookie = {
   name: string,
@@ -306,70 +305,6 @@ export interface RequestDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }): Promise<void>;
   continue(overrides: { method?: string; headers?: Headers; postData?: string; }): Promise<void>;
-}
-
-export class WebSocket extends platform.EventEmitter {
-  private _url: string;
-  _status: number | null = null;
-  _statusText: string | null = null;
-  _requestHeaders: Headers | null = null;
-  _responseHeaders: Headers | null = null;
-
-  constructor(url: string) {
-    super();
-    this._url = url;
-  }
-
-  url(): string {
-    return this._url;
-  }
-
-  status(): number | null {
-    return this._status;
-  }
-
-  statusText(): string  | null {
-    return this._statusText;
-  }
-
-  requestHeaders(): Headers | null {
-    return this._requestHeaders;
-  }
-
-  responseHeaders(): Headers | null {
-    return this._responseHeaders;
-  }
-
-  _requestSent(headers: Headers) {
-    this._requestHeaders = {};
-    for (const [name, value] of Object.entries(headers))
-      this._requestHeaders[name.toLowerCase()] = value;
-  }
-
-  _responseReceived(status: number, statusText: string, headers: Headers) {
-    this._status = status;
-    this._statusText = statusText;
-    this._responseHeaders = {};
-    for (const [name, value] of Object.entries(headers))
-      this._responseHeaders[name.toLowerCase()] = value;
-    this.emit(Events.WebSocket.Open);
-  }
-
-  _frameSent(opcode: number, data: string) {
-    this.emit(Events.WebSocket.MessageSent, opcode === 2 ? Buffer.from(data, 'base64') : data);
-  }
-
-  _frameReceived(opcode: number, data: string) {
-    this.emit(Events.WebSocket.MessageReceived, opcode === 2 ? Buffer.from(data, 'base64') : data);
-  }
-
-  _error(errorMessage: string) {
-    this.emit(Events.WebSocket.Error, errorMessage);
-  }
-
-  _closed() {
-    this.emit(Events.WebSocket.Close);
-  }
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.
