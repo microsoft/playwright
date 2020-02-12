@@ -68,6 +68,7 @@ export class WKPage implements PageDelegate {
   private async _initializePageProxySession() {
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Dialog.enable'),
+      this._pageProxySession.send('Emulation.setActiveAndFocused', { active: true }),
       this.authenticate(this._page._state.credentials)
     ];
     const contextOptions = this._page.context()._options;

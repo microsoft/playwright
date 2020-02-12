@@ -18,7 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, headless, FFOX, CHROMIUM, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -221,4 +221,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     });
   });
 
+  describe('focus', function() {
+    it.skip(!headless)('should think that it is focused by default', async({page}) => {
+      expect(await page.evaluate('document.hasFocus()')).toBe(true);
+    });
+  });
 };
