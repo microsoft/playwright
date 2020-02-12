@@ -1450,10 +1450,10 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..d660fc4747cadfb85a55184d59b28f96a6bd2af4
+index 0000000000000000000000000000000000000000..2b1a1bd0f931d82824a86ecbb46f86483177a4e0
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,208 @@
+@@ -0,0 +1,214 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -1489,7 +1489,12 @@ index 0000000000000000000000000000000000000000..d660fc4747cadfb85a55184d59b28f96
 +    for (const tab of this._mainWindow.gBrowser.tabs)
 +      this._createTargetForTab(tab);
 +    this._mainWindow.gBrowser.tabContainer.addEventListener('TabOpen', event => {
-+      this._createTargetForTab(event.target);
++      const target = this._createTargetForTab(event.target);
++      // If we come here, content will have juggler script from the start,
++      // and we should wait for initial navigation, unless the tab was window.open'ed.
++      target._waitForInitialNavigation = !event.target.linkedBrowser.hasContentOpener;
++      // For pages created before we attach to them, we don't wait for initial
++      // navigation (target._waitForInitialNavigation is false by default).
 +    });
 +    this._mainWindow.gBrowser.tabContainer.addEventListener('TabClose', event => {
 +      const tab = event.target;
@@ -1581,6 +1586,7 @@ index 0000000000000000000000000000000000000000..d660fc4747cadfb85a55184d59b28f96
 +    ];
 +
 +    this._contentReadyPromise = new Promise(f => this._contentReadyCallback = f);
++    this._waitForInitialNavigation = false;
 +
 +    if (browserContext && browserContext.options.viewport)
 +      this.setViewportSize(browserContext.options.viewport.viewportSize);
@@ -1610,7 +1616,7 @@ index 0000000000000000000000000000000000000000..d660fc4747cadfb85a55184d59b28f96
 +    this._contentReadyCallback();
 +    return {
 +      browserContextOptions: this._browserContext ? this._browserContext.options : {},
-+      waitForInitialNavigation: !this._tab.linkedBrowser.hasContentOpener,
++      waitForInitialNavigation: this._waitForInitialNavigation,
 +      sessionIds
 +    };
 +  }
