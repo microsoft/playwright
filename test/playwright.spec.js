@@ -197,6 +197,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     testRunner.loadTests(require('./browser.spec.js'), testOptions);
     testRunner.loadTests(require('./browsercontext.spec.js'), testOptions);
     testRunner.loadTests(require('./ignorehttpserrors.spec.js'), testOptions);
+    testRunner.loadTests(require('./popup.spec.js'), testOptions);
   });
 
   // Top-level tests that launch Browser themselves.

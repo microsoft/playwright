@@ -18,11 +18,11 @@
 import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
 import * as types from '../types';
 import { Page } from '../page';
-import { ConnectionEvents, FFConnection, FFSessionEvents } from './ffConnection';
+import { ConnectionEvents, FFConnection, FFSessionEvents, FFSession } from './ffConnection';
 import { FFPage } from './ffPage';
 import * as platform from '../platform';
 import { Protocol } from './protocol';
@@ -68,8 +68,17 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
+    const viewport = options.viewport ? {
+      viewportSize: { width: options.viewport.width, height: options.viewport.height },
+      isMobile: !!options.viewport.isMobile,
+      deviceScaleFactor: options.viewport.deviceScaleFactor || 1,
+      hasTouch: !!options.viewport.isMobile,
+    } : undefined;
     const {browserContextId} = await this._connection.send('Target.createBrowserContext', {
-      userAgent: options.userAgent
+      userAgent: options.userAgent,
+      bypassCSP: options.bypassCSP,
+      javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,
+      viewport,
     });
     // TODO: move ignoreHTTPSErrors to browser context level.
     if (options.ignoreHTTPSErrors)
@@ -121,14 +130,6 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext;
     const target = new Target(this._connection, this, context, targetId, type, url, openerId);
     this._targets.set(targetId, target);
-    const opener = target.opener();
-    if (opener && opener._pagePromise) {
-      const openerPage = await opener._pagePromise;
-      if (openerPage.listenerCount(Events.Page.Popup)) {
-        const popupPage = await target.page();
-        openerPage.emit(Events.Page.Popup, popupPage);
-      }
-    }
   }
 
   _onTargetDestroyed(payload: Protocol.Target.targetDestroyedPayload) {
@@ -144,11 +145,18 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     target._url = url;
   }
 
-  _onAttachedToTarget(payload: Protocol.Target.attachedToTargetPayload) {
-    const {targetId, type} = payload.targetInfo;
+  async _onAttachedToTarget(payload: Protocol.Target.attachedToTargetPayload) {
+    const {targetId} = payload.targetInfo;
     const target = this._targets.get(targetId)!;
-    if (type === 'page')
-      target.page();
+    target._initPagePromise(this._connection.getSession(payload.sessionId)!);
+    const opener = target.opener();
+    if (opener && opener._pagePromise) {
+      const openerPage = await opener._pagePromise;
+      if (openerPage.listenerCount(Events.Page.Popup)) {
+        const popupPage = await target.page();
+        openerPage.emit(Events.Page.Popup, popupPage);
+      }
+    }
   }
 
   async close() {
@@ -278,25 +286,27 @@ class Target {
     return this._context;
   }
 
-  page(): Promise<Page> {
+  async page(): Promise<Page> {
     if (this._type !== 'page')
       throw new Error(`Cannot create page for "${this._type}" target`);
-    if (!this._pagePromise) {
-      this._pagePromise = new Promise(async f => {
-        const session = await this._connection.createSession(this._targetId);
-        this._ffPage = new FFPage(session, this._context, async () => {
-          const openerTarget = this.opener();
-          if (!openerTarget)
-            return null;
-          return await openerTarget.page();
-        });
-        const page = this._ffPage._page;
-        session.once(FFSessionEvents.Disconnected, () => page._didDisconnect());
-        await this._ffPage._initialize();
-        f(page);
+    if (!this._pagePromise)
+      await this._connection.send('Target.attachToTarget', {targetId: this._targetId});
+    return this._pagePromise!;
+  }
+
+  _initPagePromise(session: FFSession) {
+    this._pagePromise = new Promise(async f => {
+      this._ffPage = new FFPage(session, this._context, async () => {
+        const openerTarget = this.opener();
+        if (!openerTarget)
+          return null;
+        return await openerTarget.page();
       });
-    }
-    return this._pagePromise;
+      const page = this._ffPage._page;
+      session.once(FFSessionEvents.Disconnected, () => page._didDisconnect());
+      await this._ffPage._initialize().catch(debugError);
+      f(page);
+    });
   }
 
   browser() {
