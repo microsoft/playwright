@@ -767,7 +767,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await page.goto(server.PREFIX + '/one-style.html', {waitUntil: []});
       await page.waitForLoadState({ waitUntil: 'domcontentloaded' });
     });
-    it.skip(FFOX)('should work with pages that have loaded before being connected to', async({page, context, server}) => {
+    it('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(async () => {
         const child = window.open(document.location.href);
@@ -903,7 +903,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = page.frames()[1];
-      
+
       const requestPromise = new Promise(resolve => page.route(server.PREFIX + '/one-style.css',resolve));
       await frame.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
       const request = await requestPromise;

@@ -96,7 +96,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
-    it.skip(FFOX)('should work with clicking target=_blank', async({newContext, server}) => {
+    it('should work with clicking target=_blank', async({newContext, server}) => {
       const context = await newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -109,7 +109,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
-    it.skip(FFOX)('should work with fake-clicking target=_blank and rel=noopener', async({newContext, server}) => {
+    it('should work with fake-clicking target=_blank and rel=noopener', async({newContext, server}) => {
       const context = await newContext();
       const page = await context.newPage();
       // TODO: FFOX sends events for "one-style.html" request to both pages.
@@ -125,7 +125,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
-    it.skip(FFOX)('should work with clicking target=_blank and rel=noopener', async({newContext, server}) => {
+    it('should work with clicking target=_blank and rel=noopener', async({newContext, server}) => {
       const context = await newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
@@ -138,7 +138,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
-    it.skip(FFOX)('should not treat navigations as new popups', async({newContext, server}) => {
+    it('should not treat navigations as new popups', async({newContext, server}) => {
       const context = await newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);

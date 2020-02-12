@@ -183,8 +183,10 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await page.emulateMedia({ colorScheme: 'light' });
       const navigated = page.goto(server.EMPTY_PAGE);
       for (let i = 0; i < 9; i++) {
-        page.emulateMedia({ colorScheme: ['dark', 'light'][i & 1] });
-        await new Promise(f => setTimeout(f, 1));
+        await Promise.all([
+          page.emulateMedia({ colorScheme: ['dark', 'light'][i & 1] }),
+          new Promise(f => setTimeout(f, 1)),
+        ]);
       }
       await navigated;
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);

@@ -76,7 +76,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await newPage.close();
       expect(newPage.isClosed()).toBe(true);
     });
-    it.skip(FFOX)('should terminate network waiters', async({context, server}) => {
+    it('should terminate network waiters', async({context, server}) => {
       const newPage = await context.newPage();
       const results = await Promise.all([
         newPage.waitForRequest(server.EMPTY_PAGE).catch(e => e),
@@ -220,18 +220,18 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       });
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/3865
-    it.skip(FFOX)('should not throw when there are console messages in detached iframes', async({page, server}) => {
+    it('should not throw when there are console messages in detached iframes', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(async() => {
         // 1. Create a popup that Playwright is not connected to.
         const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=200,top=0,left=0');
-        while (window.document.readyState !== 'complete')
-          await new Promise(f => setTimeout(f, 100));
+        if (window.document.readyState !== 'complete')
+          await new Promise(f => window.addEventListener('load', f));
         // 2. In this popup, create an iframe that console.logs a message.
         win.document.body.innerHTML = `<iframe src='/consolelog.html'></iframe>`;
         const frame = win.document.querySelector('iframe');
-        while (frame.contentDocument.readyState !== 'complete')
-          await new Promise(f => setTimeout(f, 100));
+        if (!frame.contentDocument || frame.contentDocument.readyState !== 'complete')
+          await new Promise(f => frame.addEventListener('load', f));
         // 3. After that, remove the iframe.
         frame.remove();
       });
