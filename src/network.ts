@@ -17,7 +17,6 @@
 import * as frames from './frames';
 import { assert } from './helper';
 import * as platform from './platform';
-import { Events } from './events';
 
 export type NetworkCookie = {
   name: string,
