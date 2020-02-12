@@ -25,8 +25,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install libgbm-dev xvfb
     - run: npm install
-    - name: run tests
-      run: xvfb-run --auto-servernum npm run ctest
+    - run: xvfb-run --auto-servernum npm run ctest
 
   tests_linux_firefox:
     name: "Linux + FF"
@@ -40,10 +39,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install xvfb
-    - name: npm install
-      run: npm install
-    - name: run tests
-      run: xvfb-run --auto-servernum npm run ftest
+    - run: npm install
+    - run: xvfb-run --auto-servernum npm run ftest
 
   tests_linux_webkit:
     name: "Linux + WK"
@@ -59,9 +56,7 @@ jobs:
         sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1
         sudo apt-get install xvfb
     - run: npm install
-    - name: run tests
-      run: xvfb-run --auto-servernum npm run wtest
-
+    - run: xvfb-run --auto-servernum npm run wtest
 
   tests_win_chromium:
     name: "Win + CR"
