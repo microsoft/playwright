@@ -53,6 +53,7 @@ export class BrowserContext extends platform.EventEmitter {
   private readonly _delegate: BrowserContextDelegate;
   readonly _options: BrowserContextOptions;
   private _closed = false;
+  _captureProtocol = false;
 
   constructor(delegate: BrowserContextDelegate, options: BrowserContextOptions) {
     super();

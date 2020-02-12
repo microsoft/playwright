@@ -304,4 +304,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   isConnected(): boolean {
     return !this._connection._closed;
   }
+
+  _setDebugFunction(debugFunction: (message: string) => void) {
+    this._connection._debugProtocol = debugFunction;
+  }
 }

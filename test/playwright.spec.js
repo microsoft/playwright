@@ -44,6 +44,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
   const headless = (process.env.HEADLESS || 'true').trim().toLowerCase() === 'true';
   const slowMo = parseInt((process.env.SLOW_MO || '0').trim(), 10);
+  let dumpProtocolOnFailure = process.env.CI || ((process.env.DEBUGP || 'false').trim().toLowerCase() === 'true');
 
   const executablePath = {
     'Chromium': process.env.CRPATH,
@@ -108,6 +109,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
     beforeEach(async(state, test) => {
       const contexts = [];
       const onLine = (line) => test.output += line + '\n';
+      if (dumpProtocolOnFailure)
+        state.browser._setDebugFunction(onLine);
 
       let rl;
       if (state.browserServer.process().stderr) {
@@ -123,6 +126,8 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
           rl.removeListener('line', onLine);
           rl.close();
         }
+        if (dumpProtocolOnFailure)
+          state.browser._setDebugFunction(() => void 0);
       };
 
       state.newContext = async (options) => {

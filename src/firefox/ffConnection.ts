@@ -20,8 +20,6 @@ import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
-const debugProtocol = platform.debug('pw:protocol');
-
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
 };
@@ -35,6 +33,7 @@ export class FFConnection extends platform.EventEmitter {
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
   private _sessions: Map<string, FFSession>;
+  _debugProtocol: (message: string) => void = platform.debug('pw:protocol');
   _closed: boolean;
 
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -86,12 +85,12 @@ export class FFConnection extends platform.EventEmitter {
 
   _rawSend(message: any) {
     message = JSON.stringify(message);
-    debugProtocol('SEND ► ' + message);
+    this._debugProtocol('SEND ► ' + message);
     this._transport.send(message);
   }
 
   async _onMessage(message: string) {
-    debugProtocol('◀ RECV ' + message);
+    this._debugProtocol('◀ RECV ' + message);
     const object = JSON.parse(message);
     if (object.id === kBrowserCloseMessageId)
       return;
