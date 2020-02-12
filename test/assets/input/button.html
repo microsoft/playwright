@@ -10,11 +10,15 @@
       window.result = 'Was not clicked';
       window.offsetX = undefined;
       window.offsetY = undefined;
+      window.pageX = undefined;
+      window.pageY = undefined;
       window.shiftKey = undefined;
       document.querySelector('button').addEventListener('click', e => {
         result = 'Clicked';
         offsetX = e.offsetX;
         offsetY = e.offsetY;
+        pageX = e.pageX;
+        pageY = e.pageY;
         shiftKey = e.shiftKey;
       }, false);
     </script>
