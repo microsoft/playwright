@@ -1,4 +1,4 @@
-name: Chromium Mac Tests
+name: "tests: Mac + CR"
 
 on:
   push:
