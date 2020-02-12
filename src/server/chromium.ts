@@ -22,7 +22,7 @@ import * as util from 'util';
 import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from '../server/browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as types from '../types';
-import { assert } from '../helper';
+import { assert, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as platform from '../platform';
 import { TimeoutError } from '../errors';
@@ -63,8 +63,10 @@ export class Chromium implements BrowserType {
   }
 
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+    const { timeout = 30000 } = options || {};
     const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await CRBrowser.connect(transport!);
+    await helper.waitWithTimeout(browser.waitForTarget(t => t.type() === 'page'), 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
     browserContext.close = () => browserServer.close();

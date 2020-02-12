@@ -57,11 +57,12 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('Browser target events', function() {
     it('should work', async({server}) => {
       const browser = await playwright.launch(defaultBrowserOptions);
+      const context = await browser.newContext();
       const events = [];
-      browser.on('targetcreated', () => events.push('CREATED'));
-      browser.on('targetchanged', () => events.push('CHANGED'));
-      browser.on('targetdestroyed', () => events.push('DESTROYED'));
-      const page = await browser.newPage();
+      browser.on('targetcreated', target => target.context() === context && events.push('CREATED'));
+      browser.on('targetchanged', target => target.context() === context && events.push('CHANGED'));
+      browser.on('targetdestroyed', target => target.context() === context && events.push('DESTROYED'));
+      const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.close();
       expect(events).toEqual(['CREATED', 'CHANGED', 'DESTROYED']);
