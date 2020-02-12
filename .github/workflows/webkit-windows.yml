@@ -1,4 +1,4 @@
-name: WebKit Windows Tests
+name: "tests: Win + WK"
 
 on:
   push:

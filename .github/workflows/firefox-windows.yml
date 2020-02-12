@@ -1,4 +1,4 @@
-name: Firefox Windows Tests
+name: "tests: Win + FF"
 
 on:
   push:
