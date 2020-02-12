@@ -11375,7 +11375,7 @@ index be642204775e2555ccba5fde9f8e4ae8355eddd5..c819e8f9f8ba8507730e6b933fe48d37
  				BCBD3914125BB1A800D2C29F /* WebPageProxyMessageReceiver.cpp in Sources */,
  				7CE9CE101FA0767A000177DE /* WebPageUpdatePreferences.cpp in Sources */,
 diff --git a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
-index c47b876533428bcd10c05059f183c7755fddf64d..1dce9b1891e1b211185acc4c6b620845317ed83e 100644
+index c47b876533428bcd10c05059f183c7755fddf64d..3a372868db7e75845b1f15050afa1f6ea74f5329 100644
 --- a/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 +++ b/Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp
 @@ -58,6 +58,7 @@
@@ -11386,7 +11386,7 @@ index c47b876533428bcd10c05059f183c7755fddf64d..1dce9b1891e1b211185acc4c6b620845
  #include <WebCore/NetscapePlugInStreamLoader.h>
  #include <WebCore/NetworkLoadInformation.h>
  #include <WebCore/PlatformStrategies.h>
-@@ -228,8 +229,22 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
+@@ -228,8 +229,24 @@ void WebLoaderStrategy::scheduleLoad(ResourceLoader& resourceLoader, CachedResou
      }
  #endif
  
@@ -11399,17 +11399,19 @@ index c47b876533428bcd10c05059f183c7755fddf64d..1dce9b1891e1b211185acc4c6b620845
          WEBLOADERSTRATEGY_RELEASE_LOG_IF_ALLOWED("scheduleLoad: URL will be scheduled with the NetworkProcess");
 +
 +        RefPtr<ResourceLoader> coreLoader = &resourceLoader;
-+        if (InspectorInstrumentationWebKit::interceptRequest(resourceLoader, [this, coreLoader, trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, resource](bool handled) mutable {
-+                if (!handled)
-+                    scheduleLoadFromNetworkProcess(*coreLoader, coreLoader->request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
-+                })) {
-+            return;
++        if (!resourceLoader.options().serviceWorkerRegistrationIdentifier) {
++            if (InspectorInstrumentationWebKit::interceptRequest(resourceLoader, [this, coreLoader, trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, resource](bool handled) mutable {
++                    if (!handled)
++                        scheduleLoadFromNetworkProcess(*coreLoader, coreLoader->request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
++                    })) {
++                return;
++            }
 +        }
 +
          scheduleLoadFromNetworkProcess(resourceLoader, resourceLoader.request(), trackingParameters, shouldClearReferrerOnHTTPSToHTTPRedirect, maximumBufferingTime(resource));
          return;
      }
-@@ -748,7 +763,7 @@ void WebLoaderStrategy::didFinishPreconnection(uint64_t preconnectionIdentifier,
+@@ -748,7 +765,7 @@ void WebLoaderStrategy::didFinishPreconnection(uint64_t preconnectionIdentifier,
  
  bool WebLoaderStrategy::isOnLine() const
  {
@@ -11418,7 +11420,7 @@ index c47b876533428bcd10c05059f183c7755fddf64d..1dce9b1891e1b211185acc4c6b620845
  }
  
  void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& listener)
-@@ -759,6 +774,11 @@ void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& list
+@@ -759,6 +776,11 @@ void WebLoaderStrategy::addOnlineStateChangeListener(Function<void(bool)>&& list
  
  void WebLoaderStrategy::setOnLineState(bool isOnLine)
  {
@@ -11430,7 +11432,7 @@ index c47b876533428bcd10c05059f183c7755fddf64d..1dce9b1891e1b211185acc4c6b620845
      if (m_isOnLine == isOnLine)
          return;
  
-@@ -767,6 +787,12 @@ void WebLoaderStrategy::setOnLineState(bool isOnLine)
+@@ -767,6 +789,12 @@ void WebLoaderStrategy::setOnLineState(bool isOnLine)
          listener(isOnLine);
  }
  
