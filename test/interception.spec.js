@@ -567,6 +567,36 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
+  describe('service worker', function() {
+    it('should intercept after a service worker', async({browser, page, server, context}) => {
+      await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+      await page.evaluate(() => window.registrationPromise);
+      await page.reload();
+
+      // Sanity check.
+      const swResponse = await page.evaluate(() => fetchDummy('foo'));
+      expect(swResponse).toBe('responseFromServiceWorker:foo');
+
+      await page.route('**/foo', request => {
+        const slash = request.url().lastIndexOf('/');
+        const name = request.url().substring(slash + 1);
+        request.fulfill({
+          status: 200,
+          contentType: 'text/css',
+          body: 'responseFromInterception:' + name
+        });
+      });
+
+      // Page route is applied after service worker fetch event.
+      const swResponse2 = await page.evaluate(() => fetchDummy('foo'));
+      expect(swResponse2).toBe('responseFromServiceWorker:foo');
+
+      // Page route is not applied to service worker initiated fetch.
+      const nonInterceptedResponse = await page.evaluate(() => fetchDummy('passthrough'));
+      expect(nonInterceptedResponse).toBe('FAILURE: Not Found');
+    });
+  });
+
   describe('glob', function() {
     it('should work with glob', async({newPage, httpsServer}) => {
       expect(helper.globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
@@ -582,7 +612,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpg')).toBeTruthy();
       expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpeg')).toBeTruthy();
       expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.png')).toBeTruthy();
-      expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();      
+      expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
     });
   });
 };
