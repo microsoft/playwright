@@ -1859,7 +1859,7 @@ index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..c468bc0981d1fb13272b28095f9f7584
  {
      FAST_RETURN_IF_NO_FRONTENDS(false);
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 0f46a3033aef4007f6eb837a6105f05a0c59067f..df568ef302ae730f5ef359cf855a2e717ab6d709 100644
+index 0f46a3033aef4007f6eb837a6105f05a0c59067f..bfcafe332af75e0def0d9487eceef7c9384dc3d1 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -1952,7 +1952,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..df568ef302ae730f5ef359cf855a2e71
      if (!node)
          return;
  
-@@ -1486,18 +1499,142 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -1486,18 +1499,143 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
@@ -1964,12 +1964,13 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..df568ef302ae730f5ef359cf855a2e71
 +    return containingView.convertToRootView(point - toFloatSize(containingView.documentScrollPositionRelativeToViewOrigin()));
 +}
 +
-+static void frameQuadToViewport(FrameView& containingView, FloatQuad& quad)
++static void frameQuadToViewport(FrameView& containingView, FloatQuad& quad, float pageScaleFactor)
 +{
-+    quad.setP1(contentsToRootView(containingView, quad.p1()));
-+    quad.setP2(contentsToRootView(containingView, quad.p2()));
-+    quad.setP3(contentsToRootView(containingView, quad.p3()));
-+    quad.setP4(contentsToRootView(containingView, quad.p4()));
++    // Return css (not dip) coordinates by scaling back.
++    quad.setP1(contentsToRootView(containingView, quad.p1()).scaled(1 / pageScaleFactor));
++    quad.setP2(contentsToRootView(containingView, quad.p2()).scaled(1 / pageScaleFactor));
++    quad.setP3(contentsToRootView(containingView, quad.p3()).scaled(1 / pageScaleFactor));
++    quad.setP4(contentsToRootView(containingView, quad.p4()).scaled(1 / pageScaleFactor));
 +}
 +
 +static RefPtr<Inspector::Protocol::DOM::Quad> buildObjectForQuad(const FloatQuad& quad)
@@ -2080,7 +2081,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..df568ef302ae730f5ef359cf855a2e71
 +    Vector<FloatQuad> quads;
 +    renderer->absoluteQuads(quads);
 +    for (auto& quad : quads)
-+        frameQuadToViewport(*containingView, quad);
++        frameQuadToViewport(*containingView, quad, m_inspectedPage.pageScaleFactor());
 +    contentQuads = buildArrayOfQuads(quads);
 +}
 +
@@ -2101,7 +2102,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..df568ef302ae730f5ef359cf855a2e71
  }
  
  void InspectorDOMAgent::getAttributes(ErrorString& errorString, int nodeId, RefPtr<JSON::ArrayOf<String>>& result)
-@@ -2662,7 +2799,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
+@@ -2662,7 +2800,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
          errorString = "Missing node for given path"_s;
  }
  
@@ -2110,7 +2111,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..df568ef302ae730f5ef359cf855a2e71
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2671,12 +2808,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
+@@ -2671,12 +2809,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
      if (!frame)
          return nullptr;
  
@@ -2130,7 +2131,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..df568ef302ae730f5ef359cf855a2e71
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2697,4 +2838,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+@@ -2697,4 +2839,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
@@ -8924,10 +8925,10 @@ index 0000000000000000000000000000000000000000..43d827233df725fa8c85fc9ff4b20a1f
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..7b1125da9a39107a73e9f282480e81d3fd3d7d6a
+index 0000000000000000000000000000000000000000..5043224bbd6378175c9ca7dce63fc5a233649878
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,253 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8959,6 +8960,7 @@ index 0000000000000000000000000000000000000000..7b1125da9a39107a73e9f282480e81d3
 +#include "NativeWebKeyboardEvent.h"
 +#include "NativeWebMouseEvent.h"
 +#include "WebPageProxy.h"
++#include <wtf/MathExtras.h>
 +
 +namespace WebKit {
 +
@@ -9151,6 +9153,14 @@ index 0000000000000000000000000000000000000000..7b1125da9a39107a73e9f282480e81d3
 +    if (deltaY)
 +        eventDeltaY = *deltaY;
 +    m_mouseCallbacks->append(WTFMove(callback));
++
++    // Convert css coordinates to view coordinates (dip).
++    double totalScale = m_page.pageScaleFactor() * m_page.viewScaleFactor();
++    x = clampToInteger(roundf(x * totalScale));
++    y = clampToInteger(roundf(y * totalScale));
++    eventDeltaX = clampToInteger(roundf(eventDeltaX * totalScale));
++    eventDeltaY = clampToInteger(roundf(eventDeltaY * totalScale));
++
 +#if PLATFORM(MAC)
 +    platformDispatchMouseEvent(type, x, y, modifiers, button, clickCount);
 +#elif PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(WIN)
@@ -9263,7 +9273,7 @@ index 0000000000000000000000000000000000000000..76290475097e756e3d932d22be4d8c79
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a9ab72281 100644
+index 059e904a16c6c4b91d6271e25d239b975191facd..3e34d7518ceb3208700101f320bd17e125b9d5c2 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -905,6 +905,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -9380,7 +9390,19 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
      if (!hasRunningProcess()) {
          sender->send(PolicyAction::Ignore, 0, DownloadID(), WTF::nullopt);
          return;
-@@ -4228,6 +4289,7 @@ void WebPageProxy::didDestroyNavigation(uint64_t navigationID)
+@@ -3819,6 +3880,11 @@ void WebPageProxy::pageScaleFactorDidChange(double scaleFactor)
+     m_pageScaleFactor = scaleFactor;
+ }
+ 
++void WebPageProxy::viewScaleFactorDidChange(double scaleFactor)
++{
++    m_viewScaleFactor = scaleFactor;
++}
++
+ void WebPageProxy::pluginScaleFactorDidChange(double pluginScaleFactor)
+ {
+     m_pluginScaleFactor = pluginScaleFactor;
+@@ -4228,6 +4294,7 @@ void WebPageProxy::didDestroyNavigation(uint64_t navigationID)
  
      // FIXME: Message check the navigationID.
      m_navigationState->didDestroyNavigation(navigationID);
@@ -9388,7 +9410,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
  }
  
  void WebPageProxy::didStartProvisionalLoadForFrame(FrameIdentifier frameID, uint64_t navigationID, URL&& url, URL&& unreachableURL, const UserData& userData)
-@@ -4449,6 +4511,8 @@ void WebPageProxy::didFailProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& p
+@@ -4449,6 +4516,8 @@ void WebPageProxy::didFailProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& p
  
      m_failingProvisionalLoadURL = { };
  
@@ -9397,7 +9419,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
      // If the provisional page's load fails then we destroy the provisional page.
      if (m_provisionalPage && m_provisionalPage->mainFrame() == frame && willContinueLoading == WillContinueLoading::No)
          m_provisionalPage = nullptr;
-@@ -4886,8 +4950,16 @@ void WebPageProxy::decidePolicyForNavigationActionAsync(FrameIdentifier frameID,
+@@ -4886,8 +4955,16 @@ void WebPageProxy::decidePolicyForNavigationActionAsync(FrameIdentifier frameID,
      NavigationActionData&& navigationActionData, FrameInfoData&& frameInfoData, Optional<WebPageProxyIdentifier> originatingPageID, const WebCore::ResourceRequest& originalRequest, WebCore::ResourceRequest&& request,
      IPC::FormDataReference&& requestBody, WebCore::ResourceResponse&& redirectResponse, const UserData& userData, uint64_t listenerID)
  {
@@ -9416,7 +9438,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
  }
  
  void WebPageProxy::decidePolicyForNavigationActionAsyncShared(Ref<WebProcessProxy>&& process, PageIdentifier webPageID, FrameIdentifier frameID, WebCore::SecurityOriginData&& frameSecurityOrigin,
-@@ -5459,6 +5531,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
+@@ -5459,6 +5536,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, SecurityOriginDat
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -9425,7 +9447,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
      m_uiClient->runJavaScriptAlert(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
  
-@@ -5478,6 +5552,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
+@@ -5478,6 +5557,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, SecurityOriginD
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -9434,7 +9456,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
  
      m_uiClient->runJavaScriptConfirm(*this, message, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5497,6 +5573,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
+@@ -5497,6 +5578,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, SecurityOriginDa
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -9443,7 +9465,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
  
      m_uiClient->runJavaScriptPrompt(*this, message, defaultValue, frame, WTFMove(securityOrigin), WTFMove(reply));
  }
-@@ -5656,6 +5734,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
+@@ -5656,6 +5739,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, Security
              return;
          }
      }
@@ -9452,7 +9474,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer and the tryClose timer.
      m_process->stopResponsivenessTimer();
-@@ -6715,6 +6795,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6715,6 +6800,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              didFinishProcessingAllPendingMouseEvents();
@@ -9460,7 +9482,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
          }
  
          break;
-@@ -6741,7 +6822,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6741,7 +6827,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -9468,7 +9490,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          NativeWebKeyboardEvent event = m_keyEventQueue.takeFirst();
  
-@@ -6761,7 +6841,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6761,7 +6846,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -9476,7 +9498,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -6770,6 +6849,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -6770,6 +6854,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -9484,7 +9506,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
          }
          break;
      }
-@@ -7238,8 +7318,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
+@@ -7238,8 +7323,10 @@ static bool shouldReloadAfterProcessTermination(ProcessTerminationReason reason)
  void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
  {
      RELEASE_LOG_IF_ALLOWED(Loading, "dispatchProcessDidTerminate: reason = %d", reason);
@@ -9496,7 +9518,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -7712,6 +7794,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
+@@ -7712,6 +7799,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, bool
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge, NegotiatedLegacyTLS negotiatedLegacyTLS)
  {
@@ -9511,7 +9533,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
      if (negotiatedLegacyTLS == NegotiatedLegacyTLS::Yes) {
          m_navigationClient->shouldAllowLegacyTLS(*this, authenticationChallenge.get(), [this, protectedThis = makeRef(*this), authenticationChallenge = authenticationChallenge.copyRef()] (bool shouldAllowLegacyTLS) {
              if (shouldAllowLegacyTLS)
-@@ -7794,7 +7884,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7794,7 +7889,8 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
      MESSAGE_CHECK(m_process, securityOriginData);
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
@@ -9521,7 +9543,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -7802,6 +7893,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
+@@ -7802,6 +7898,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
          else
              request->deny();
      };
@@ -9534,7 +9556,7 @@ index 059e904a16c6c4b91d6271e25d239b975191facd..df51560a3abc953030e7cb7602275c0a
      // FIXME: Once iOS migrates to the new WKUIDelegate SPI, clean this up
      // and make it one UIClient call that calls the completionHandler with false
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index b3856a4f9e7859bf3e0b9957c95040a784e9b317..2d154febc73de4877463e5099ffdc3002f6dfd2b 100644
+index b3856a4f9e7859bf3e0b9957c95040a784e9b317..530d3217bb619404fde47e2408dec816ec6a3435 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -35,6 +35,7 @@
@@ -9574,7 +9596,15 @@ index b3856a4f9e7859bf3e0b9957c95040a784e9b317..2d154febc73de4877463e5099ffdc300
      RefPtr<API::Navigation> loadRequest(WebCore::ResourceRequest&&, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldAllowExternalSchemes, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadFile(const String& fileURL, const String& resourceDirectoryURL, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadData(const IPC::DataReference&, const String& MIMEType, const String& encoding, const String& baseURL, API::Object* userData = nullptr, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldNotAllow);
-@@ -2293,6 +2302,7 @@ private:
+@@ -1054,6 +1063,7 @@ public:
+ #endif
+ 
+     void pageScaleFactorDidChange(double);
++    void viewScaleFactorDidChange(double);
+     void pluginScaleFactorDidChange(double);
+     void pluginZoomFactorDidChange(double);
+ 
+@@ -2293,6 +2303,7 @@ private:
      String m_overrideContentSecurityPolicy;
  
      RefPtr<WebInspectorProxy> m_inspector;
@@ -9582,7 +9612,7 @@ index b3856a4f9e7859bf3e0b9957c95040a784e9b317..2d154febc73de4877463e5099ffdc300
  
  #if ENABLE(FULLSCREEN_API)
      std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
-@@ -2707,6 +2717,9 @@ private:
+@@ -2707,6 +2718,9 @@ private:
      bool m_isLayerTreeFrozenDueToSwipeAnimation { false };
      
      String m_overriddenMediaType;
@@ -9593,7 +9623,7 @@ index b3856a4f9e7859bf3e0b9957c95040a784e9b317..2d154febc73de4877463e5099ffdc300
  #if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
      std::unique_ptr<WebDeviceOrientationUpdateProviderProxy> m_webDeviceOrientationUpdateProviderProxy;
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.messages.in b/Source/WebKit/UIProcess/WebPageProxy.messages.in
-index 14bed1b33994d29a48ab06ed7bc5c7d5c9c53c8e..38077aef90ddccb36b2f94e36768b82218d738a1 100644
+index 14bed1b33994d29a48ab06ed7bc5c7d5c9c53c8e..338da321fbe8640e4d70a8d4b09637d9d31d2d36 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.messages.in
 +++ b/Source/WebKit/UIProcess/WebPageProxy.messages.in
 @@ -29,6 +29,7 @@ messages -> WebPageProxy {
@@ -9604,6 +9634,14 @@ index 14bed1b33994d29a48ab06ed7bc5c7d5c9c53c8e..38077aef90ddccb36b2f94e36768b822
  
  #if ENABLE(NETSCAPE_PLUGIN_API)
      UnavailablePluginButtonClicked(uint32_t pluginUnavailabilityReason, String mimeType, String pluginURLString, String pluginspageAttributeURLString, String frameURLString, String pageURLString)
+@@ -210,6 +211,7 @@ messages -> WebPageProxy {
+     FindStringCallback(bool found, WebKit::CallbackID callbackID)
+ 
+     PageScaleFactorDidChange(double scaleFactor)
++    ViewScaleFactorDidChange(double scaleFactor)
+     PluginScaleFactorDidChange(double zoomFactor)
+     PluginZoomFactorDidChange(double zoomFactor)
+ 
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
 index aac332e9b46767a2703849f2e8431954cd206ab9..1f58e77e855b5f458627df49e6ba08921371efc1 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
@@ -11550,7 +11588,7 @@ index f127d64d005ab7b93875591b94a5899205e91579..df0de26e4dc449a0fbf93e7037444df4
      uint64_t m_navigationID;
  };
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
-index 5f2a5020cb6d543626b866dff6ffcece16c8f713..f8237e53ecb02256452ef5aa8c676f5405f286cf 100644
+index 5f2a5020cb6d543626b866dff6ffcece16c8f713..430f579eee666e33be606b8e2ed04b8fa866ffc6 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 @@ -1568,6 +1568,22 @@ void WebPage::platformDidReceiveLoadParameters(const LoadParameters& loadParamet
@@ -11633,7 +11671,15 @@ index 5f2a5020cb6d543626b866dff6ffcece16c8f713..f8237e53ecb02256452ef5aa8c676f54
  
  void WebPage::scrollMainFrameIfNotAtMaxScrollPosition(const IntSize& scrollOffset)
  {
-@@ -2191,17 +2194,13 @@ void WebPage::viewportPropertiesDidChange(const ViewportArguments& viewportArgum
+@@ -2087,6 +2090,7 @@ void WebPage::scaleView(double scale)
+     }
+ 
+     m_page->setViewScaleFactor(scale);
++    send(Messages::WebPageProxy::ViewScaleFactorDidChange(scale));
+     scalePage(pageScale, scrollPositionAtNewScale);
+ }
+ 
+@@ -2191,17 +2195,13 @@ void WebPage::viewportPropertiesDidChange(const ViewportArguments& viewportArgum
          viewportConfigurationChanged();
  #endif
  
@@ -11652,7 +11698,7 @@ index 5f2a5020cb6d543626b866dff6ffcece16c8f713..f8237e53ecb02256452ef5aa8c676f54
  }
  
  void WebPage::listenForLayoutMilestones(OptionSet<WebCore::LayoutMilestone> milestones)
-@@ -6303,6 +6302,9 @@ Ref<DocumentLoader> WebPage::createDocumentLoader(Frame& frame, const ResourceRe
+@@ -6303,6 +6303,9 @@ Ref<DocumentLoader> WebPage::createDocumentLoader(Frame& frame, const ResourceRe
              WebsitePoliciesData::applyToDocumentLoader(WTFMove(*m_pendingWebsitePolicies), documentLoader);
              m_pendingWebsitePolicies = WTF::nullopt;
          }
