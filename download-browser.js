@@ -38,7 +38,7 @@ async function downloadBrowser(browser) {
   // Do nothing if the revision is already downloaded.
   if (revisionInfo.local)
     return revisionInfo;
-  await fetcher.download(revisionInfo.revision, onProgress);
+  await browserType.downloadBrowserIfNeeded(onProgress);
   logPolitely(`${browser} downloaded to ${revisionInfo.folderPath}`);
   return revisionInfo;
 }

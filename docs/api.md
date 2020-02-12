@@ -153,13 +153,12 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 #### event: 'disconnected'
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
 - Browser application is closed or crashed.
-- The [`browser.disconnect`](#browserdisconnect) method was called.
+- The [`browser.close`](#browserclose) method was called.
 
 #### browser.close()
 - returns: <[Promise]>
@@ -233,12 +232,9 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
 - returns: <[Promise]<[Page]>>
 
-Creates a new page in a new browser context.
+Creates a new page in a new browser context. Closing this page will close the context as well.
 
-#### browser.pages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages.
-
-An array of all the pages inside all the browser contexts.
+This is a convenience API that should only be used for the single-page scenarios and short snippets. Production code and testing frameworks should explicitly create [browser.newContext](#browsernewcontextoptions) followed by the [browserContext.newPage](#browsercontextnewpage) to control their exact life times.
 
 ### class: BrowserContext
 
@@ -263,6 +259,7 @@ await context.close();
 ```
 
 <!-- GEN:toc -->
+- [event: 'close'](#event-close)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
@@ -273,6 +270,13 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
+
+#### event: 'close'
+
+Emitted when Browser context gets closed. This might happen because of one of the following:
+- Browser context is closed.
+- Browser application is closed or crashed.
+- The [`browser.close`](#browserclose) method was called.
 
 #### browserContext.clearCookies()
 - returns: <[Promise]>
@@ -426,7 +430,7 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close)
+- [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
 - [event: 'dialog'](#event-dialog)
 - [event: 'domcontentloaded'](#event-domcontentloaded)
@@ -448,7 +452,7 @@ page.removeListener('request', logRequest);
 - [page.$$(selector)](#pageselector-1)
 - [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
 - [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
-- [page.$wait(selector, pageFunction[, options[, ...args]])](#pagewaitselector-pagefunction-options-args)
+- [page.$wait(selector[, options])](#pagewaitselector-options)
 - [page.accessibility](#pageaccessibility)
 - [page.addScriptTag(options)](#pageaddscripttagoptions)
 - [page.addStyleTag(options)](#pageaddstyletagoptions)
@@ -679,23 +683,24 @@ const html = await page.$eval('.main-container', e => e.outerHTML);
 
 Shortcut for [page.mainFrame().$eval(selector, pageFunction)](#frameevalselector-pagefunction-args).
 
-#### page.$wait(selector, pageFunction[, options[, ...args]])
-- `selector` <[string]> A selector to query page for
-- `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
-- `options` <[Object]> Optional waiting parameters
-  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
+#### page.$wait(selector[, options])
+- `selector` <[string]> A selector of an element to wait for
+- `options` <[Object]>
+  - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
-This method runs `document.querySelector` within the page and passes it as the first argument to `pageFunction`. If there's no element matching `selector`, the method throws an error.
+Wait for the `selector` to appear in page. If at the moment of calling
+the method the `selector` already exists, the method will return
+immediately. If the selector doesn't appear after the `timeout` milliseconds of waiting, the function will throw.
 
-If `pageFunction` returns a [Promise], then `page.$wait` would wait for the promise to resolve and return its value. The function
-is being called on the element periodically until either timeout expires or the function returns the truthy value.
+This method works across navigations:
+```js
+const handle = await page.$wait(selector);
+await handle.click();
+```
 
-Shortcut for [page.mainFrame().$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args).
+This is a shortcut to [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options).
 
 #### page.accessibility
 - returns: <[Accessibility]>
@@ -1664,7 +1669,7 @@ An example of getting text from an iframe element:
 - [frame.$$(selector)](#frameselector-1)
 - [frame.$$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args)
 - [frame.$eval(selector, pageFunction[, ...args])](#frameevalselector-pagefunction-args-1)
-- [frame.$wait(selector, pageFunction[, options[, ...args]])](#framewaitselector-pagefunction-options-args)
+- [frame.$wait(selector[, options])](#framewaitselector-options)
 - [frame.addScriptTag(options)](#frameaddscripttagoptions)
 - [frame.addStyleTag(options)](#frameaddstyletagoptions)
 - [frame.check(selector, [options])](#framecheckselector-options)
@@ -1740,21 +1745,24 @@ const preloadHref = await frame.$eval('link[rel=preload]', el => el.href);
 const html = await frame.$eval('.main-container', e => e.outerHTML);
 ```
 
-#### frame.$wait(selector, pageFunction[, options[, ...args]])
-- `selector` <[string]> A selector to query page for
-- `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
-- `options` <[Object]> Optional waiting parameters
-  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-- `...args` <...[Serializable]|[JSHandle]> Arguments to pass to  `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
+#### frame.$wait(selector[, options])
+- `selector` <[string]> A selector of an element to wait for
+- `options` <[Object]>
+  - `visibility` <"visible"|"hidden"|"any"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`). Defaults to `any`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector string is added to DOM. Resolves to `null` if waiting for `hidden: true` and selector is not found in DOM.
 
-This method runs `document.querySelector` within the frame and passes it as the first argument to `pageFunction`. If there's no element matching `selector`, the method throws an error.
+Wait for the `selector` to appear in page. If at the moment of calling
+the method the `selector` already exists, the method will return
+immediately. If the selector doesn't appear after the `timeout` milliseconds of waiting, the function will throw.
 
-If `pageFunction` returns a [Promise], then `page.$wait` would wait for the promise to resolve and return its value. The function
-is being called on the element periodically until either timeout expires or the function returns the truthy value.
+This method works across navigations:
+```js
+const handle = await page.$wait(selector);
+await handle.click();
+```
+
+This is a shortcut to [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options).
 
 #### frame.addScriptTag(options)
 - `options` <[Object]>
@@ -3168,7 +3176,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 The [WebSocket] class represents websocket connections in the page.
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-1)
+- [event: 'close'](#event-close-2)
 - [event: 'error'](#event-error)
 - [event: 'messageReceived'](#event-messagereceived)
 - [event: 'messageSent'](#event-messagesent)
@@ -3423,7 +3431,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 ### class: BrowserServer
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-2)
+- [event: 'close'](#event-close-3)
 - [browserServer.close()](#browserserverclose)
 - [browserServer.kill()](#browserserverkill)
 - [browserServer.process()](#browserserverprocess)
@@ -3470,6 +3478,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 <!-- GEN:toc -->
 - [browserType.connect(options)](#browsertypeconnectoptions)
 - [browserType.devices](#browsertypedevices)
+- [browserType.downloadBrowserIfNeeded([progress])](#browsertypedownloadbrowserifneededprogress)
 - [browserType.errors](#browsertypeerrors)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
@@ -3507,6 +3516,12 @@ const iPhone = webkit.devices['iPhone 6'];
   await browser.close();
 })();
 ```
+
+#### browserType.downloadBrowserIfNeeded([progress])
+- `progress` <[function]> If download is initiated, this function is called with two parameters: `downloadedBytes` and `totalBytes`.
+- returns: <[Promise]> promise that resolves when browser is successfully downloaded.
+
+Download browser binary if it is missing.
 
 #### browserType.errors
 - returns: <[Object]>
@@ -3652,7 +3667,6 @@ await browser.stopTracing();
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 #### event: 'targetchanged'
@@ -3819,7 +3833,6 @@ Firefox browser instance does not expose Firefox-specific features.
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 ### class: WebKitBrowser
@@ -3835,7 +3848,6 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.isConnected()](#browserisconnected)
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
-- [browser.pages()](#browserpages)
 <!-- GEN:stop -->
 
 ### Working with selectors

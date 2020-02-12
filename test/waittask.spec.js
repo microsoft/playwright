@@ -208,39 +208,8 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     });
   });
 
-  describe('Frame.$wait', function() {
-    it('should accept arguments', async({page, server}) => {
-      await page.setContent('<div></div>');
-      const result = await page.$wait('div', (e, foo, bar) => e.nodeName + foo + bar, {}, 'foo1', 'bar2');
-      expect(await result.jsonValue()).toBe('DIVfoo1bar2');
-    });
-    it('should query selector constantly', async({page, server}) => {
-      await page.setContent('<div></div>');
-      let done = null;
-      const resultPromise = page.$wait('span', e => e).then(r => done = r);
-      expect(done).toBe(null);
-      await page.setContent('<section></section>');
-      expect(done).toBe(null);
-      await page.setContent('<span>text</span>');
-      await resultPromise;
-      expect(done).not.toBe(null);
-      expect(await done.evaluate(e => e.textContent)).toBe('text');
-    });
-    it('should be able to wait for removal', async({page}) => {
-      await page.setContent('<div></div>');
-      let done = null;
-      const resultPromise = page.$wait('div', e => !e).then(r => done = r);
-      expect(done).toBe(null);
-      await page.setContent('<section></section>');
-      await resultPromise;
-      expect(done).not.toBe(null);
-      expect(await done.jsonValue()).toBe(true);
-    });
-  });
-
   describe('Frame.waitForSelector', function() {
     const addElement = tag => document.body.appendChild(document.createElement(tag));
-
     it('should immediately resolve promise if node exists', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const frame = page.mainFrame();
@@ -248,7 +217,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await frame.evaluate(addElement, 'div');
       await frame.waitForSelector('div');
     });
-
     it('should work with removed MutationObserver', async({page, server}) => {
       await page.evaluate(() => delete window.MutationObserver);
       const [handle] = await Promise.all([
@@ -257,7 +225,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       ]);
       expect(await page.evaluate(x => x.textContent, handle)).toBe('anything');
     });
-
     it('should resolve promise when node is added', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const frame = page.mainFrame();
@@ -268,7 +235,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       const tagName = await eHandle.getProperty('tagName').then(e => e.jsonValue());
       expect(tagName).toBe('DIV');
     });
-
     it('should work when node is added through innerHTML', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const watchdog = page.waitForSelector('h3 div');
@@ -276,7 +242,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.evaluate(() => document.querySelector('span').innerHTML = '<h3><div></div></h3>');
       await watchdog;
     });
-
     it('Page.$ waitFor is shortcut for main frame', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
@@ -287,7 +252,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       const eHandle = await watchdog;
       expect(await eHandle.ownerFrame()).toBe(page.mainFrame());
     });
-
     it('should run in specified frame', async({page, server}) => {
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
@@ -299,7 +263,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       const eHandle = await waitForSelectorPromise;
       expect(await eHandle.ownerFrame()).toBe(frame2);
     });
-
     it('should throw when frame is detached', async({page, server}) => {
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       const frame = page.frames()[1];
@@ -391,7 +354,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       expect(error).toBeTruthy();
       expect(error.message).toContain('waiting for selector "[hidden] div" failed: timeout');
     });
-
     it('should respond to node attribute mutation', async({page, server}) => {
       let divFound = false;
       const waitForSelector = page.waitForSelector('.zombo').then(() => divFound = true);
@@ -440,6 +402,11 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       const eHandle = await watchdog;
       const tagName = await eHandle.getProperty('tagName').then(e => e.jsonValue());
       expect(tagName).toBe('SPAN');
+    });
+    it('$wait alias should work', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const handle = await page.$wait('section');
+      expect(await handle.evaluate(e => e.textContent)).toBe('test');
     });
   });
 

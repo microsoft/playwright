@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser, collectPages } from '../browser';
+import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
@@ -50,8 +50,11 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
 
     this._defaultContext = this._createBrowserContext(null, {});
     this._contexts = new Map();
-    this._connection.on(ConnectionEvents.Disconnected, () => this.emit(Events.Browser.Disconnected));
-
+    this._connection.on(ConnectionEvents.Disconnected, () => {
+      for (const context of this.contexts())
+        context._browserClosed();
+      this.emit(Events.Browser.Disconnected);
+    });
     this._eventListeners = [
       helper.addEventListener(this._connection, 'Target.targetCreated', this._onTargetCreated.bind(this)),
       helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
@@ -90,13 +93,8 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     return Array.from(this._contexts.values());
   }
 
-  async pages(): Promise<Page[]> {
-    return collectPages(this);
-  }
-
   async newPage(options?: BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    return context.newPage();
+    return createPageInNewContext(this, options);
   }
 
   async _waitForTarget(predicate: (target: Target) => boolean, options: { timeout?: number; } = {}): Promise<Target> {

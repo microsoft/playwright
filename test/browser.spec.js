@@ -24,24 +24,26 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('Browser', function() {
+  describe('Browser.newPage', function() {
     it('should create new page', async function({browser}) {
-      expect((await browser.pages()).length).toBe(0);
       const page1 = await browser.newPage();
-      expect((await browser.pages()).length).toBe(1);
       expect(browser.contexts().length).toBe(1);
 
       const page2 = await browser.newPage();
-      expect((await browser.pages()).length).toBe(2);
       expect(browser.contexts().length).toBe(2);
 
-      await page1.context().close();
-      expect((await browser.pages()).length).toBe(1);
+      await page1.close();
       expect(browser.contexts().length).toBe(1);
 
-      await page2.context().close();
-      expect((await browser.pages()).length).toBe(0);
+      await page2.close();
       expect(browser.contexts().length).toBe(0);
+    });
+    it('should throw upon second create new page', async function({browser}) {
+      const page = await browser.newPage();
+      let error;
+      await page.context().newPage().catch(e => error = e);
+      await page.close();
+      expect(error.message).toContain('Please use browser.newContext()');
     });
   });
 };

@@ -68,6 +68,24 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       }, element);
       expect(pwBoundingBox).toEqual(webBoundingBox);
     });
+    it.skip(WEBKIT)('should work with page scale', async({newPage, server}) => {
+      const page = await newPage({ viewport: { width: 400, height: 400, isMobile: true} });
+      await page.goto(server.PREFIX + '/input/button.html');
+      const button = await page.$('button');
+      await button.evaluate(button => {
+        document.body.style.margin = '0';
+        button.style.borderWidth = '0';
+        button.style.width = '200px';
+        button.style.height = '20px';
+        button.style.marginLeft = '17px';
+        button.style.marginTop = '23px';
+      });
+      const box = await button.boundingBox();
+      expect(Math.round(box.x * 100)).toBe(17 * 100);
+      expect(Math.round(box.y * 100)).toBe(23 * 100);
+      expect(Math.round(box.width * 100)).toBe(200 * 100);
+      expect(Math.round(box.height * 100)).toBe(20 * 100);
+    });
   });
 
   describe('ElementHandle.contentFrame', function() {
@@ -201,9 +219,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     it('should work for TextNodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       const buttonTextNode = await page.evaluateHandle(() => document.querySelector('button').firstChild);
-      let error = null;
-      await buttonTextNode.click().catch(err => error = err);
-      expect(error.message).toBe('Node is not of type HTMLElement');
+      await buttonTextNode.click();
+      expect(await page.evaluate(() => result)).toBe('Clicked');
     });
     it('should throw for detached nodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -211,7 +228,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.evaluate(button => button.remove(), button);
       let error = null;
       await button.click().catch(err => error = err);
-      expect(error.message).toBe('Node is detached from document');
+      expect(error.message).toContain('Node is detached from document');
     });
     it('should throw for hidden nodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');

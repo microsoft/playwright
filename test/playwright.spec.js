@@ -118,6 +118,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
       state.tearDown = async () => {
         await Promise.all(contexts.map(c => c.close()));
+        expect((await state.browser.contexts()).length).toBe(0, `"${test.fullName}" leaked a context`);
         if (rl) {
           rl.removeListener('line', onLine);
           rl.close();

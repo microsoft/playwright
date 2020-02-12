@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserFetcher, BrowserFetcherOptions } from '../server/browserFetcher';
+import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from '../server/browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import * as types from '../types';
 import { assert } from '../helper';
@@ -192,6 +192,15 @@ export class Chromium implements BrowserType {
       chromeArguments.push('about:blank');
 
     return chromeArguments;
+  }
+
+  async downloadBrowserIfNeeded(onProgress?: OnProgressCallback) {
+    const fetcher = this._createBrowserFetcher();
+    const revisionInfo = fetcher.revisionInfo();
+    // Do nothing if the revision is already downloaded.
+    if (revisionInfo.local)
+      return;
+    await fetcher.download(revisionInfo.revision, onProgress);
   }
 
   _createBrowserFetcher(options: BrowserFetcherOptions = {}): BrowserFetcher {

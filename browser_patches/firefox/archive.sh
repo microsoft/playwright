@@ -39,6 +39,7 @@ if [[ $OBJ_FOLDER == "" ]]; then
 fi
 
 ./mach package
+node ../install-preferences.js $PWD/$OBJ_FOLDER/dist/firefox
 
 if ! [[ -d $OBJ_FOLDER/dist/firefox ]]; then
   echo "ERROR: cannot find $OBJ_FOLDER/dist/firefox folder in the checkout/. Did you build?"

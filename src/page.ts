@@ -69,6 +69,7 @@ export interface PageDelegate {
   setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
+  scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<void>;
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<platform.BufferType>;
@@ -113,6 +114,7 @@ export class Page extends platform.EventEmitter {
   readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
   readonly coverage: Coverage | undefined;
   readonly _requestHandlers: { url: types.URLMatch, handler: (request: network.Request) => void }[] = [];
+  _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -211,6 +213,10 @@ export class Page extends platform.EventEmitter {
 
   async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
     return this.mainFrame().waitForSelector(selector, options);
+  }
+
+  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+    return this.waitForSelector(selector, options);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
@@ -471,6 +477,8 @@ export class Page extends platform.EventEmitter {
     await this._delegate.closePage(runBeforeUnload);
     if (!runBeforeUnload)
       await this._closedPromise;
+    if (this._ownedContext)
+      await this._ownedContext.close();
   }
 
   isClosed(): boolean {
@@ -523,10 +531,6 @@ export class Page extends platform.EventEmitter {
 
   async waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
     return this.mainFrame().waitForFunction(pageFunction, options, ...args);
-  }
-
-  $wait: types.$Wait = async (selector, pageFunction, options, ...args) => {
-    return this.mainFrame().$wait(selector, pageFunction, options, ...args as any);
   }
 
   workers(): Worker[] {

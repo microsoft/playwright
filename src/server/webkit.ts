@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserFetcher, BrowserFetcherOptions } from './browserFetcher';
+import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from './browserFetcher';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { TimeoutError } from '../errors';
 import * as types from '../types';
@@ -52,6 +52,15 @@ export class WebKit implements BrowserType {
     return 'webkit';
   }
 
+  async downloadBrowserIfNeeded(onProgress?: OnProgressCallback) {
+    const fetcher = this._createBrowserFetcher();
+    const revisionInfo = fetcher.revisionInfo();
+    // Do nothing if the revision is already downloaded.
+    if (revisionInfo.local)
+      return;
+    await fetcher.download(revisionInfo.revision, onProgress);
+  }
+
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<WKBrowser> {
     const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await WKBrowser.connect(transport!, options && options.slowMo);
@@ -84,7 +93,6 @@ export class WebKit implements BrowserType {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      timeout = 30000
     } = options;
 
     let temporaryUserDataDir: string | null = null;
@@ -136,7 +144,6 @@ export class WebKit implements BrowserType {
       },
     });
 
-    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to WebKit!`);
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };

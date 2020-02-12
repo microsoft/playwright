@@ -37,3 +37,11 @@ else
 fi
 
 ./mach build
+
+OBJ_FOLDER=$(ls -1 | grep obj-)
+if [[ "$(uname)" == "Darwin" ]]; then
+  node ../install-preferences.js $PWD/$OBJ_FOLDER/dist
+else
+  node ../install-preferences.js $PWD/$OBJ_FOLDER/dist/bin
+fi
+

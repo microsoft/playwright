@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Browser, collectPages } from '../browser';
+import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
@@ -66,6 +66,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 
   _onDisconnect() {
+    for (const context of this.contexts())
+      context._browserClosed();
     for (const pageProxy of this._pageProxies.values())
       pageProxy.dispose();
     this._pageProxies.clear();
@@ -87,13 +89,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     return Array.from(this._contexts.values());
   }
 
-  async pages(): Promise<Page[]> {
-    return collectPages(this);
-  }
-
   async newPage(options?: BrowserContextOptions): Promise<Page> {
-    const context = await this.newContext(options);
-    return context.newPage();
+    return createPageInNewContext(this, options);
   }
 
   async _waitForFirstPageTarget(timeout: number): Promise<void> {
