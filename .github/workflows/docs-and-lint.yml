@@ -1,17 +1,17 @@
-name: tests: Win + FF
+name: docs & lint
 
 on:
   push:
-    branches: 
+    branches:
       - master
   pull_request:
-    branches: 
+    branches:
       - master
 
 jobs:
   build:
 
-    runs-on: windows-latest
+    runs-on: ubuntu-18.04
 
     strategy:
       matrix:
@@ -23,10 +23,15 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - name: install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgbm-dev
+        sudo apt-get install xvfb
 
-    - name: npm install, and test
+    - name: npm install, build, and test
       run: |
         npm install
-        npm run ftest
+        npm run lint
       env:
         CI: true
