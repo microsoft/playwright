@@ -246,6 +246,18 @@ index d408d364f1986983161f9d44efbc8bc6f6898676..1375ce9990f0c63d7e6f33ee62930051
          return;
      }
  
+diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.cpp b/Source/JavaScriptCore/inspector/InspectorTarget.cpp
+index 0cc2127c9c12c2d82dea9550bad73f4ffb99ba24..490238b408da6b6ce7fbcccf138849977862c897 100644
+--- a/Source/JavaScriptCore/inspector/InspectorTarget.cpp
++++ b/Source/JavaScriptCore/inspector/InspectorTarget.cpp
+@@ -52,7 +52,6 @@ void InspectorTarget::resume()
+ 
+ void InspectorTarget::setResumeCallback(WTF::Function<void()>&& callback)
+ {
+-    ASSERT(!m_resumeCallback);
+     m_resumeCallback = WTFMove(callback);
+ }
+ 
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
 index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..db2fde501b30c8e4fafcac3b2b403713c768c34f 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
