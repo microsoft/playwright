@@ -1,4 +1,4 @@
-name: tests: Linux + FF
+name: Firefox Linux Tests
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: tests: Linux + WK
+name: WebKit Linux Tests
 
 on:
   push:

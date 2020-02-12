@@ -1,4 +1,4 @@
-name: tests: Linux + CR
+name: Chromium Linux Tests
 
 on:
   push:
@@ -32,6 +32,7 @@ jobs:
     - name: npm install, build, and test
       run: |
         npm install
+        npm run build
         xvfb-run --auto-servernum npm run ctest
       env:
         CI: true
