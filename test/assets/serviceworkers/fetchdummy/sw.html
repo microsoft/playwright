@@ -1,0 +1,11 @@
+<script>
+  window.registrationPromise = navigator.serviceWorker.register('sw.js');
+
+  async function fetchDummy(name) {
+    const response = await fetch(name);
+    if (!response.ok)
+      return 'FAILURE: ' + response.statusText;
+    const text = await response.text();
+    return text;
+  }
+</script>
