@@ -68,6 +68,24 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       }, element);
       expect(pwBoundingBox).toEqual(webBoundingBox);
     });
+    it.skip(WEBKIT)('should work with page scale', async({newPage, server}) => {
+      const page = await newPage({ viewport: { width: 400, height: 400, isMobile: true} });
+      await page.goto(server.PREFIX + '/input/button.html');
+      const button = await page.$('button');
+      await button.evaluate(button => {
+        document.body.style.margin = '0';
+        button.style.borderWidth = '0';
+        button.style.width = '200px';
+        button.style.height = '20px';
+        button.style.marginLeft = '17px';
+        button.style.marginTop = '23px';
+      });
+      const box = await button.boundingBox();
+      expect(Math.round(box.x * 100)).toBe(17 * 100);
+      expect(Math.round(box.y * 100)).toBe(23 * 100);
+      expect(Math.round(box.width * 100)).toBe(200 * 100);
+      expect(Math.round(box.height * 100)).toBe(20 * 100);
+    });
   });
 
   describe('ElementHandle.contentFrame', function() {
