@@ -1,4 +1,4 @@
-name: WebKit Mac Tests
+name: "tests: Mac + WK"
 
 on:
   push:
