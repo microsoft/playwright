@@ -1,4 +1,4 @@
-name: Firefox Mac Tests
+name: "tests: Mac + FF"
 
 on:
   push:
