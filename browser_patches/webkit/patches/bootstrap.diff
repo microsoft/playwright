@@ -1030,7 +1030,7 @@ index 658f14f8af68073b99a01dd7332628223b67fcd7..cd28887b9a01826c2d374bdada487c81
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index a8fc5332ac92424b00a3dec62152fd3c5f28544e..a22ffffa8c8853daf04df6358abb26ebc79e3e49 100644
+index a8fc5332ac92424b00a3dec62152fd3c5f28544e..2fba82d5f991bcfc1315628728771ff167154b7c 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -110,6 +110,41 @@
@@ -1098,10 +1098,17 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..a22ffffa8c8853daf04df6358abb26eb
              ]
          },
          {
-@@ -246,6 +291,13 @@
+@@ -246,6 +291,20 @@
                  { "name": "appearance", "$ref": "Appearance", "description": "Appearance name to force. Empty string disables the override." }
              ]
          },
++        {
++            "name": "setTimeZone",
++            "description": "Enables time zone emulation.",
++            "parameters": [
++                { "name": "timeZone", "type": "string", "optional": true }
++            ]
++        },
 +        {
 +            "name": "setTouchEmulationEnabled",
 +            "description": "Enables touch events on platforms that lack them.",
@@ -1112,7 +1119,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..a22ffffa8c8853daf04df6358abb26eb
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -276,19 +328,70 @@
+@@ -276,19 +335,70 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -1185,7 +1192,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..a22ffffa8c8853daf04df6358abb26eb
              ]
          },
          {
-@@ -298,6 +401,14 @@
+@@ -298,6 +408,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1200,7 +1207,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..a22ffffa8c8853daf04df6358abb26eb
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -334,12 +445,36 @@
+@@ -334,12 +452,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1306,6 +1313,180 @@ index 9e2bee913d37c79fedbb918176a43022b84fa45b..ad8926d773144114dad3842fa0fe2391
              ]
          },
          {
+diff --git a/Source/JavaScriptCore/runtime/DateConversion.cpp b/Source/JavaScriptCore/runtime/DateConversion.cpp
+index 955756ba405f400970610f9a68c7ed42a67cb015..6e281fc075425a324fd30a4608e9e97d547044f2 100644
+--- a/Source/JavaScriptCore/runtime/DateConversion.cpp
++++ b/Source/JavaScriptCore/runtime/DateConversion.cpp
+@@ -100,17 +100,23 @@ String formatDateTime(const GregorianDateTime& t, DateTimeFormat format, bool as
+             appendNumber<2>(builder, offset / 60);
+             appendNumber<2>(builder, offset % 60);
+ 
+-#if OS(WINDOWS)
+-            TIME_ZONE_INFORMATION timeZoneInformation;
+-            GetTimeZoneInformation(&timeZoneInformation);
+-            const WCHAR* winTimeZoneName = t.isDST() ? timeZoneInformation.DaylightName : timeZoneInformation.StandardName;
+-            String timeZoneName(winTimeZoneName);
++            String timeZoneName;
++            if (!WTF::timeZoneForAutomation().isEmpty()) {
++                timeZoneName = WTF::timeZoneForAutomation();
++            } else {
++ #if OS(WINDOWS)
++                TIME_ZONE_INFORMATION timeZoneInformation;
++                GetTimeZoneInformation(&timeZoneInformation);
++                const WCHAR* winTimeZoneName = t.isDST() ? timeZoneInformation.DaylightName : timeZoneInformation.StandardName;
++                timeZoneName = String(winTimeZoneName);
+ #else
+-            struct tm gtm = t;
+-            char timeZoneName[70];
+-            strftime(timeZoneName, sizeof(timeZoneName), "%Z", &gtm);
++                struct tm gtm = t;
++                char tzName[70];
++                strftime(tzName, sizeof(tzName), "%Z", &gtm);
++                timeZoneName = String(tzName);
+ #endif
+-            if (timeZoneName[0]) {
++            }
++            if (!timeZoneName.isEmpty()) {
+                 builder.appendLiteral(" (");
+                 builder.append(timeZoneName);
+                 builder.append(')');
+diff --git a/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp b/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
+index 9817a45ea2f3a22844ed3e56816cff94eb051423..67f7459a556ed22740fbfcd2b1b7b530d34d5bb5 100644
+--- a/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
++++ b/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
+@@ -39,6 +39,7 @@
+ #include <unicode/ucal.h>
+ #include <unicode/udatpg.h>
+ #include <unicode/uenum.h>
++#include <wtf/DateMath.h>
+ #include <wtf/text/StringBuilder.h>
+ 
+ #if JSC_ICU_HAS_UFIELDPOSITER
+@@ -113,6 +114,10 @@ void IntlDateTimeFormat::setBoundFormat(VM& vm, JSBoundFunction* format)
+ 
+ static String defaultTimeZone()
+ {
++    String tz = WTF::timeZoneForAutomation();
++    if (!tz.isEmpty())
++        return tz;
++
+     // 6.4.3 DefaultTimeZone () (ECMA-402 2.0)
+     // The DefaultTimeZone abstract operation returns a String value representing the valid (6.4.1) and canonicalized (6.4.2) time zone name for the host environment’s current time zone.
+ 
+diff --git a/Source/WTF/wtf/DateMath.cpp b/Source/WTF/wtf/DateMath.cpp
+index 1999737341553001d5246b8190e9ea11d615a158..1b09b2a2a6b78a80aaf8a45dad984e7628fc5188 100644
+--- a/Source/WTF/wtf/DateMath.cpp
++++ b/Source/WTF/wtf/DateMath.cpp
+@@ -77,11 +77,15 @@
+ #include <limits>
+ #include <stdint.h>
+ #include <time.h>
++#include <unicode/ucal.h>
+ #include <wtf/Assertions.h>
+ #include <wtf/ASCIICType.h>
+ #include <wtf/MathExtras.h>
++#include <wtf/NeverDestroyed.h>
+ #include <wtf/StdLibExtras.h>
++#include <wtf/ThreadSpecific.h>
+ #include <wtf/text/StringBuilder.h>
++#include <wtf/unicode/UTF8Conversion.h>
+ 
+ #if OS(WINDOWS)
+ #include <windows.h>
+@@ -107,6 +111,17 @@ template<unsigned length> inline bool startsWithLettersIgnoringASCIICase(const c
+     return equalLettersIgnoringASCIICase(string, lowercaseLetters, length - 1);
+ }
+ 
++struct TimeZoneForAutomation {
++    UCalendar* cal;
++    String name;
++};
++
++static TimeZoneForAutomation& innerTimeZoneForAutomation()
++{
++    static NeverDestroyed<WTF::ThreadSpecific<TimeZoneForAutomation>> timeZoneForAutomation;
++    return *timeZoneForAutomation.get();
++}
++
+ /* Constants */
+ 
+ const char* const weekdayName[7] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+@@ -333,6 +348,14 @@ static double calculateDSTOffset(time_t localTime, double utcOffset)
+ // Returns combined offset in millisecond (UTC + DST).
+ LocalTimeOffset calculateLocalTimeOffset(double ms, TimeType inputTimeType)
+ {
++    TimeZoneForAutomation& tz = innerTimeZoneForAutomation();
++    if (tz.cal) {
++        UErrorCode status = U_ZERO_ERROR;
++        ucal_setMillis(tz.cal, ms, &status);
++        int32_t offset = ucal_get(tz.cal, UCAL_ZONE_OFFSET, &status);
++        int32_t dstOffset = ucal_get(tz.cal, UCAL_DST_OFFSET, &status);
++        return LocalTimeOffset(dstOffset, offset + dstOffset);
++    }
+ #if HAVE(TM_GMTOFF)
+     double localToUTCTimeOffset = inputTimeType == LocalTime ? calculateUTCOffset() : 0;
+ #else
+@@ -1034,4 +1057,46 @@ String makeRFC2822DateString(unsigned dayOfWeek, unsigned day, unsigned month, u
+     return stringBuilder.toString();
+ }
+ 
++bool setTimeZoneForAutomation(const String& timeZone)
++{
++    if (innerTimeZoneForAutomation().cal) {
++        ucal_close(innerTimeZoneForAutomation().cal);
++        innerTimeZoneForAutomation().cal = nullptr;
++    }
++    if (timeZone.isEmpty()) {
++        innerTimeZoneForAutomation().name = String();
++        return true;
++    }
++
++    // Timezone is ascii.
++    Vector<UChar> buffer(timeZone.length());
++    UChar* bufferStart = buffer.data();
++    CString ctz = timeZone.utf8();
++    if (!Unicode::convertUTF8ToUTF16(ctz.data(), ctz.data() + ctz.length(), &bufferStart, bufferStart + timeZone.length()))
++        return false;
++
++    Vector<UChar, 32> canonicalBuffer(32);
++    UErrorCode status = U_ZERO_ERROR;
++    auto canonicalLength = ucal_getCanonicalTimeZoneID(buffer.data(), buffer.size(), canonicalBuffer.data(), canonicalBuffer.size(), nullptr, &status);
++    if (status == U_BUFFER_OVERFLOW_ERROR) {
++        status = U_ZERO_ERROR;
++        canonicalBuffer.grow(canonicalLength);
++        ucal_getCanonicalTimeZoneID(buffer.data(), buffer.size(), canonicalBuffer.data(), canonicalLength, nullptr, &status);
++    }
++    if (!U_SUCCESS(status))
++        return false;
++
++    innerTimeZoneForAutomation().cal = ucal_open(canonicalBuffer.data(), canonicalLength, nullptr, UCAL_TRADITIONAL, &status);
++    if (!U_SUCCESS(status))
++        return false;
++
++    innerTimeZoneForAutomation().name = String(canonicalBuffer.data(), canonicalLength);
++    return true;
++}
++
++String timeZoneForAutomation()
++{
++    return innerTimeZoneForAutomation().name;
++}
++
+ } // namespace WTF
+diff --git a/Source/WTF/wtf/DateMath.h b/Source/WTF/wtf/DateMath.h
+index 602f89a49d454cc5e5acd030024227d49d98c61f..66da6661c0c7e2c13808b90ecce19884157487a7 100644
+--- a/Source/WTF/wtf/DateMath.h
++++ b/Source/WTF/wtf/DateMath.h
+@@ -389,6 +389,9 @@ inline int dayInMonthFromDayInYear(int dayInYear, bool leapYear)
+     return d - step;
+ }
+ 
++WTF_EXPORT_PRIVATE bool setTimeZoneForAutomation(const String& timeZone);
++WTF_EXPORT_PRIVATE String timeZoneForAutomation();
++
+ // Returns combined offset in millisecond (UTC + DST).
+ WTF_EXPORT_PRIVATE LocalTimeOffset calculateLocalTimeOffset(double utcInMilliseconds, TimeType = UTCTime);
+ 
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
 index 175b6f5ea8edc7ad1fd2c1f2e7f88f0ee7b26f68..b57c25d70a73e2c7330618b1701f630292439a00 100644
 --- a/Source/WTF/wtf/PlatformHave.h
@@ -2652,7 +2833,7 @@ index a68f84520736977c8b9216616c5a178fbf5275d6..8d6ed7188bca75fb46d1a5963983f088
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f290dc6db 100644
+index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..d18dd4c915e239c956cbda56d00c87909d93ae08 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2680,7 +2861,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  #include "HTMLNames.h"
  #include "ImageBuffer.h"
  #include "InspectorClient.h"
-@@ -56,19 +61,28 @@
+@@ -56,19 +61,29 @@
  #include "MIMETypeRegistry.h"
  #include "MemoryCache.h"
  #include "Page.h"
@@ -2702,6 +2883,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
 +#include <JavaScriptCore/InjectedScriptManager.h>
  #include <JavaScriptCore/RegularExpression.h>
 +#include <platform/ProcessIdentifier.h>
++#include <wtf/DateMath.h>
  #include <wtf/ListHashSet.h>
 +#include <wtf/NeverDestroyed.h>
 +#include <wtf/Ref.h>
@@ -2709,7 +2891,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  #include <wtf/Stopwatch.h>
  #include <wtf/text/Base64.h>
  #include <wtf/text/StringBuilder.h>
-@@ -81,7 +95,6 @@
+@@ -81,7 +96,6 @@
  #include "LegacyWebArchive.h"
  #endif
  
@@ -2717,7 +2899,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  namespace WebCore {
  
  using namespace Inspector;
-@@ -100,6 +113,11 @@ using namespace Inspector;
+@@ -100,6 +114,11 @@ using namespace Inspector;
      macro(WebRTCEncryptionEnabled) \
      macro(WebSecurityEnabled)
  
@@ -2729,7 +2911,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  static bool decodeBuffer(const char* buffer, unsigned size, const String& textEncodingName, String* result)
  {
      if (buffer) {
-@@ -340,6 +358,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
+@@ -340,6 +359,7 @@ InspectorPageAgent::InspectorPageAgent(PageAgentContext& context, InspectorClien
      , m_frontendDispatcher(makeUnique<Inspector::PageFrontendDispatcher>(context.frontendRouter))
      , m_backendDispatcher(Inspector::PageBackendDispatcher::create(context.backendDispatcher, this))
      , m_inspectedPage(context.inspectedPage)
@@ -2737,7 +2919,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
      , m_client(client)
      , m_overlay(overlay)
  {
-@@ -373,11 +392,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
+@@ -373,11 +393,20 @@ void InspectorPageAgent::enable(ErrorString& errorString)
  #if HAVE(OS_DARK_MODE_SUPPORT)
      defaultAppearanceDidChange(m_inspectedPage.defaultUseDarkAppearance());
  #endif
@@ -2758,7 +2940,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -415,14 +443,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -415,14 +444,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -2784,15 +2966,15 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
 +        return;
 +
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
- 
--    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
--    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
--    frame.loader().changeLocation(WTFMove(frameLoadRequest));
++
 +    if (!resourceRequest.url().isValid()) {
 +        errorString = "Cannot navigate to invalid URL"_s;
 +        return;
 +    }
-+
+ 
+-    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
+-    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
+-    frame.loader().changeLocation(WTFMove(frameLoadRequest));
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
@@ -2800,7 +2982,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -683,15 +733,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -683,15 +734,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -2822,7 +3004,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -699,13 +750,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -699,13 +751,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -2844,7 +3026,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  }
  
  Frame* InspectorPageAgent::frameForId(const String& frameId)
-@@ -717,20 +773,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -717,20 +774,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -2871,7 +3053,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  }
  
  Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
-@@ -741,11 +795,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+@@ -741,11 +796,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
      return frame;
  }
  
@@ -2883,7 +3065,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -766,6 +815,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -766,6 +816,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -2896,7 +3078,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -823,6 +878,38 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -823,6 +879,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -2935,10 +3117,21 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -966,6 +1053,18 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -966,6 +1054,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
++void InspectorPageAgent::setTimeZone(ErrorString& errorString, const String* timeZone)
++{
++    if (!timeZone) {
++        WTF::setTimeZoneForAutomation(String());
++        return;
++    }
++    bool success = WTF::setTimeZoneForAutomation(*timeZone);
++    if (!success)
++        errorString = "Invalid time zone " + *timeZone;
++}
++
 +void InspectorPageAgent::setTouchEmulationEnabled(ErrorString& errorString, bool enabled)
 +{
 +#if ENABLE(TOUCH_EVENTS)
@@ -2954,7 +3147,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -983,4 +1082,520 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -983,4 +1094,520 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3476,7 +3669,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..5503a7fe10a83be678214d13ad98279f
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..cba0b43011a390c305aef7c01cc95e5350766283 100644
+index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..52b89efdac4e2c0b7c1f6cbe69ad0a6e8d4bca7e 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,11 +40,16 @@
@@ -3507,10 +3700,11 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..cba0b43011a390c305aef7c01cc95e53
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -111,20 +118,28 @@ public:
+@@ -111,20 +118,29 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
++    void setTimeZone(ErrorString&, const String*) override;
 +    void setTouchEmulationEnabled(ErrorString&, bool) override;
      void snapshotNode(ErrorString&, int nodeId, String* outDataURL) override;
 -    void snapshotRect(ErrorString&, int x, int y, int width, int height, const String& coordinateSystem, String* outDataURL) override;
@@ -3540,7 +3734,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..cba0b43011a390c305aef7c01cc95e53
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -133,6 +148,9 @@ public:
+@@ -133,6 +149,9 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -3550,7 +3744,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..cba0b43011a390c305aef7c01cc95e53
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -141,6 +159,7 @@ public:
+@@ -141,6 +160,7 @@ public:
  
  private:
      double timestamp();
@@ -3558,7 +3752,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..cba0b43011a390c305aef7c01cc95e53
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -152,18 +171,19 @@ private:
+@@ -152,18 +172,19 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
