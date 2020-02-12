@@ -1,11 +1,11 @@
-name: "tests: Linux + CR"
+name: "docs & lint"
 
 on:
   push:
-    branches: 
+    branches:
       - master
   pull_request:
-    branches: 
+    branches:
       - master
 
 jobs:
@@ -32,6 +32,6 @@ jobs:
     - name: npm install, build, and test
       run: |
         npm install
-        xvfb-run --auto-servernum npm run ctest
+        npm run lint
       env:
         CI: true

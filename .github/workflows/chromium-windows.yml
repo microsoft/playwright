@@ -1,4 +1,4 @@
-name: Chromium Windows Tests
+name: "tests: Win + CR"
 
 on:
   push:
