@@ -1,20 +1,23 @@
+name: "infra"
+
 on:
   push:
-    branches: 
+    branches:
       - master
   pull_request:
-    branches: 
+    branches:
       - master
 
-jobs:
-  tests_linux_chromium:
-    name: "tests: Linux + CR"
-    runs-on: ubuntu-18.04
+env:
+  CI: true
 
+jobs:
+  doc-and-lint:
+    name: "docs & lint"
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
-    - name: Install Node.js 10.15
-      uses: actions/setup-node@v1
+    - uses: actions/setup-node@v1
       with:
         node-version: 10.15
     - name: install required packages
@@ -22,13 +25,5 @@ jobs:
         sudo apt-get update
         sudo apt-get install libgbm-dev
         sudo apt-get install xvfb
-
-    - name: npm install
-      run: |
-        npm install
-    - name: run tests
-      run: |
-        xvfb-run --auto-servernum npm run ctest
-      env:
-        CI: true
-
+    - run: npm install
+    - run: npm run lint
