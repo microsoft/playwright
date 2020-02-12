@@ -46,16 +46,7 @@ export const Events = {
     FrameNavigated: 'framenavigated',
     Load: 'load',
     Popup: 'popup',
-    WebSocket: 'websocket',
     WorkerCreated: 'workercreated',
     WorkerDestroyed: 'workerdestroyed',
   },
-
-  WebSocket: {
-    Close: 'close',
-    Error: 'error',
-    MessageReceived: 'messagereceived',
-    MessageSent: 'messagesent',
-    Open: 'open',
-  }
 };
