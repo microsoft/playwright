@@ -6,9 +6,6 @@ on:
     branches: 
       - master
 
-env:
-  NODE_VERSION: 10.15
-
 jobs:
   tests_linux_chromium:
     name: "tests: Linux + CR"
@@ -16,10 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Install Node.js ${{NODE_VERSION}}
+    - name: Install Node.js 10.15
       uses: actions/setup-node@v1
       with:
-        node-version: ${{NODE_VERSION}}
+        node-version: 10.15
     - name: install required packages
       run: |
         sudo apt-get update
