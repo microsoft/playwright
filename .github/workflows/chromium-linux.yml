@@ -1,5 +1,3 @@
-name: "tests: Linux + CR"
-
 on:
   push:
     branches: 
@@ -8,30 +6,32 @@ on:
     branches: 
       - master
 
+env:
+  NODE_VERSION: 10.15
+
 jobs:
-  build:
-
+  tests_linux_chromium:
+    name: "tests: Linux + CR"
     runs-on: ubuntu-18.04
-
-    strategy:
-      matrix:
-        node-version: [12.x]
 
     steps:
     - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Install Node.js ${{NODE_VERSION}}
       uses: actions/setup-node@v1
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: ${{NODE_VERSION}}
     - name: install required packages
       run: |
         sudo apt-get update
         sudo apt-get install libgbm-dev
         sudo apt-get install xvfb
 
-    - name: npm install, build, and test
+    - name: npm install
       run: |
         npm install
+    - name: run tests
+      run: |
         xvfb-run --auto-servernum npm run ctest
       env:
         CI: true
+
