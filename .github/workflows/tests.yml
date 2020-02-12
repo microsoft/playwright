@@ -1,0 +1,125 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  CI: true
+
+jobs:
+  tests_linux_chromium:
+    name: "Linux + CR"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - name: install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgbm-dev xvfb
+    - run: npm install
+    - run: xvfb-run --auto-servernum npm run ctest
+
+  tests_linux_firefox:
+    name: "Linux + FF"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - name: install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install xvfb
+    - run: npm install
+    - run: xvfb-run --auto-servernum npm run ftest
+
+  tests_linux_webkit:
+    name: "Linux + WK"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - name: install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1
+        sudo apt-get install xvfb
+    - run: npm install
+    - run: xvfb-run --auto-servernum npm run wtest
+
+  tests_win_chromium:
+    name: "Win + CR"
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm run ctest
+
+  tests_win_firefox:
+    name: "Win + FF"
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm run ftest
+
+  tests_win_webkit:
+    name: "Win + WK"
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm run wtest
+
+  tests_mac_chromium:
+    name: "Mac + CR"
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm run ctest
+
+  tests_mac_firefox:
+    name: "Mac + FF"
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm run ftest
+
+  tests_mac_webkit:
+    name: "Mac + WK"
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm run wtest

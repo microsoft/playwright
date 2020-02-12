@@ -1,0 +1,29 @@
+name: "infra"
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  CI: true
+
+jobs:
+  doc-and-lint:
+    name: "docs & lint"
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - name: install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgbm-dev
+        sudo apt-get install xvfb
+    - run: npm install
+    - run: npm run lint
