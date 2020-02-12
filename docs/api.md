@@ -3178,8 +3178,8 @@ The [WebSocket] class represents websocket connections in the page.
 <!-- GEN:toc -->
 - [event: 'close'](#event-close-2)
 - [event: 'error'](#event-error)
-- [event: 'messageReceived'](#event-messagereceived)
-- [event: 'messageSent'](#event-messagesent)
+- [event: 'messagereceived'](#event-messagereceived)
+- [event: 'messagesent'](#event-messagesent)
 - [event: 'open'](#event-open)
 - [webSocket.requestHeaders()](#websocketrequestheaders)
 - [webSocket.responseHeaders()](#websocketresponseheaders)
@@ -3197,13 +3197,13 @@ Fired when the websocket closes.
 
 Fired when the websocket has an error.
 
-#### event: 'messageReceived'
--<[Buffer]|[String]> data recieved
+#### event: 'messagereceived'
+- <[Buffer]|[String]> data recieved
 
 Fired when the websocket recieves a message.
 
-#### event: 'messageSent'
--<[Buffer]|[String]> data recieved
+#### event: 'messagesent'
+- <[Buffer]|[String]> data recieved
 
 Fired when the websocket sends a message.
 

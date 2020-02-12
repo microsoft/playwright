@@ -54,8 +54,8 @@ export const Events = {
   WebSocket: {
     Close: 'close',
     Error: 'error',
-    MessageReceived: 'messageReceived',
-    MessageSent: 'messageSent',
+    MessageReceived: 'messagereceived',
+    MessageSent: 'messagesent',
     Open: 'open',
   }
 };
