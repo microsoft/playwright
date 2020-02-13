@@ -99,6 +99,7 @@ export class CRPage implements PageDelegate {
       this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
       this._networkManager.initialize(),
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
+      this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }),
     ];
     const options = this._page.context()._options;
     if (options.bypassCSP)
