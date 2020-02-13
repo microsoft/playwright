@@ -46,7 +46,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   const slowMo = valueFromEnv('SLOW_MO', 0);
   const CI = valueFromEnv('CI', false);
   const dumpProtocolOnFailure = CI || valueFromEnv('DEBUGP', true);
-  let dumpProtocolOnFailure = process.env.CI || ((process.env.DEBUGP || 'false').trim().toLowerCase() === 'true');
 
   function valueFromEnv(name, defaultValue) {
     if (!(name in process.env))
