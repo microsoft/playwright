@@ -238,7 +238,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
     it('should format number', async({newPage, server}) => {
       {
-        const page = await newPage();
+        const page = await newPage({ locale: 'en-US' });
         await page.goto(server.EMPTY_PAGE);
         expect(await page.evaluate(() => (1000000.50).toLocaleString())).toBe('1,000,000.5');
       }
@@ -251,13 +251,13 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
     it('should format date', async({newPage, server}) => {
       {
-        const page = await newPage();
+        const page = await newPage({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
         await page.goto(server.EMPTY_PAGE);
-        const formatted = WIN ? 'Sat Nov 19 2016 10:12:34 GMT-0800 (Pacific Standard Time)' : 'Sat Nov 19 2016 10:12:34 GMT-0800 (PST)';
+        const formatted = 'Sat Nov 19 2016 10:12:34 GMT-0800 (Pacific Standard Time)';
         expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(formatted);
       }
       {
-        const page = await newPage({ locale: 'de-de', timezoneId: 'Europe/Berlin' });
+        const page = await newPage({ locale: 'de-DE', timezoneId: 'Europe/Berlin' });
         await page.goto(server.EMPTY_PAGE);
         expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(
             'Sat Nov 19 2016 19:12:34 GMT+0100 (Mitteleuropäische Normalzeit)');
