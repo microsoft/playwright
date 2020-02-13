@@ -323,7 +323,7 @@ export class WebSocketTransport implements ConnectionTransport {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb
     }) : new WebSocket(url)) as WebSocket;
-    this._connectPromise = new Promise((fulfill => {
+    this._connectPromise = new Promise(fulfill => {
       this._ws.addEventListener('open', () => fulfill(null));
       this._ws.addEventListener('error', event => fulfill(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
     });
