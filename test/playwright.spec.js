@@ -173,6 +173,7 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       testRunner.loadTests(require('./emulation.spec.js'), testOptions);
       testRunner.loadTests(require('./evaluation.spec.js'), testOptions);
       testRunner.loadTests(require('./frame.spec.js'), testOptions);
+      testRunner.loadTests(require('./focus.spec.js'), testOptions);
       testRunner.loadTests(require('./input.spec.js'), testOptions);
       testRunner.loadTests(require('./jshandle.spec.js'), testOptions);
       testRunner.loadTests(require('./keyboard.spec.js'), testOptions);
