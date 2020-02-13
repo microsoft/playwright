@@ -3372,7 +3372,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 
 #### event: 'close'
 
-Emitted when the browser app closes.
+Emitted when the browser server closes.
 
 #### browserServer.close()
 - returns: <[Promise]>
