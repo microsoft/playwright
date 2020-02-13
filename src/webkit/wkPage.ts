@@ -24,7 +24,7 @@ import { Events } from '../events';
 import { WKExecutionContext } from './wkExecutionContext';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKWorkers } from './wkWorkers';
-import { Page, PageDelegate, Coverage } from '../page';
+import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
 import { BrowserContext } from '../browserContext';
@@ -597,10 +597,6 @@ export class WKPage implements PageDelegate {
 
   async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
     return getAccessibilityTree(this._session, needle);
-  }
-
-  coverage(): Coverage | undefined {
-    return undefined;
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {

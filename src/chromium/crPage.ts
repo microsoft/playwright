@@ -23,7 +23,7 @@ import * as network from '../network';
 import { CRSession, CRConnection } from './crConnection';
 import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
-import { Page, Coverage, Worker } from '../page';
+import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
 import { Events } from '../events';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
@@ -544,7 +544,7 @@ export class CRPage implements PageDelegate {
     return this._pdf.generate(options);
   }
 
-  coverage(): Coverage | undefined {
+  coverage(): CRCoverage {
     return this._coverage;
   }
 
