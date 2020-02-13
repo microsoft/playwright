@@ -316,16 +316,16 @@ export class WebSocketTransport implements ConnectionTransport {
 
   onmessage?: (message: string) => void;
   onclose?: () => void;
-  private _connect: Promise<void>;
+  private _connectPromise: Promise<(Error|null)>;
 
   constructor(url: string) {
     this._ws = (isNode ? new NodeWebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb
     }) : new WebSocket(url)) as WebSocket;
-    this._connect = new Promise((fulfill, reject) => {
-      this._ws.addEventListener('open', () => fulfill());
-      this._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
+    this._connectPromise = new Promise(fulfill => {
+      this._ws.addEventListener('open', () => fulfill(null));
+      this._ws.addEventListener('error', event => fulfill(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
     });
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
@@ -349,7 +349,9 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   async send(message: string) {
-    await this._connect;
+    const error = await this._connectPromise;
+    if (error)
+      throw error;
     this._ws.send(message);
   }
 
