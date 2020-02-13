@@ -1314,7 +1314,7 @@ index 9e2bee913d37c79fedbb918176a43022b84fa45b..ad8926d773144114dad3842fa0fe2391
          },
          {
 diff --git a/Source/JavaScriptCore/runtime/DateConversion.cpp b/Source/JavaScriptCore/runtime/DateConversion.cpp
-index 955756ba405f400970610f9a68c7ed42a67cb015..6e281fc075425a324fd30a4608e9e97d547044f2 100644
+index 955756ba405f400970610f9a68c7ed42a67cb015..1520c0a1475a90de2795e4ccd8919c1bb1384066 100644
 --- a/Source/JavaScriptCore/runtime/DateConversion.cpp
 +++ b/Source/JavaScriptCore/runtime/DateConversion.cpp
 @@ -100,17 +100,23 @@ String formatDateTime(const GregorianDateTime& t, DateTimeFormat format, bool as
@@ -1327,8 +1327,8 @@ index 955756ba405f400970610f9a68c7ed42a67cb015..6e281fc075425a324fd30a4608e9e97d
 -            const WCHAR* winTimeZoneName = t.isDST() ? timeZoneInformation.DaylightName : timeZoneInformation.StandardName;
 -            String timeZoneName(winTimeZoneName);
 +            String timeZoneName;
-+            if (!WTF::timeZoneForAutomation().isEmpty()) {
-+                timeZoneName = WTF::timeZoneForAutomation();
++            if (!WTF::timeZoneDisplayNameForAutomation().isEmpty()) {
++                timeZoneName = WTF::timeZoneDisplayNameForAutomation();
 +            } else {
 + #if OS(WINDOWS)
 +                TIME_ZONE_INFORMATION timeZoneInformation;
@@ -1374,16 +1374,17 @@ index 9817a45ea2f3a22844ed3e56816cff94eb051423..67f7459a556ed22740fbfcd2b1b7b530
      // The DefaultTimeZone abstract operation returns a String value representing the valid (6.4.1) and canonicalized (6.4.2) time zone name for the host environment’s current time zone.
  
 diff --git a/Source/WTF/wtf/DateMath.cpp b/Source/WTF/wtf/DateMath.cpp
-index 1999737341553001d5246b8190e9ea11d615a158..1b09b2a2a6b78a80aaf8a45dad984e7628fc5188 100644
+index 1999737341553001d5246b8190e9ea11d615a158..540ed892bca8110f8013477da7bd9b459a17e60d 100644
 --- a/Source/WTF/wtf/DateMath.cpp
 +++ b/Source/WTF/wtf/DateMath.cpp
-@@ -77,11 +77,15 @@
+@@ -77,11 +77,16 @@
  #include <limits>
  #include <stdint.h>
  #include <time.h>
 +#include <unicode/ucal.h>
  #include <wtf/Assertions.h>
  #include <wtf/ASCIICType.h>
++#include <wtf/Language.h>
  #include <wtf/MathExtras.h>
 +#include <wtf/NeverDestroyed.h>
  #include <wtf/StdLibExtras.h>
@@ -1393,13 +1394,14 @@ index 1999737341553001d5246b8190e9ea11d615a158..1b09b2a2a6b78a80aaf8a45dad984e76
  
  #if OS(WINDOWS)
  #include <windows.h>
-@@ -107,6 +111,17 @@ template<unsigned length> inline bool startsWithLettersIgnoringASCIICase(const c
+@@ -107,6 +112,18 @@ template<unsigned length> inline bool startsWithLettersIgnoringASCIICase(const c
      return equalLettersIgnoringASCIICase(string, lowercaseLetters, length - 1);
  }
  
 +struct TimeZoneForAutomation {
 +    UCalendar* cal;
-+    String name;
++    String id;
++    String displayName;
 +};
 +
 +static TimeZoneForAutomation& innerTimeZoneForAutomation()
@@ -1411,7 +1413,7 @@ index 1999737341553001d5246b8190e9ea11d615a158..1b09b2a2a6b78a80aaf8a45dad984e76
  /* Constants */
  
  const char* const weekdayName[7] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-@@ -333,6 +348,14 @@ static double calculateDSTOffset(time_t localTime, double utcOffset)
+@@ -333,6 +350,14 @@ static double calculateDSTOffset(time_t localTime, double utcOffset)
  // Returns combined offset in millisecond (UTC + DST).
  LocalTimeOffset calculateLocalTimeOffset(double ms, TimeType inputTimeType)
  {
@@ -1426,18 +1428,19 @@ index 1999737341553001d5246b8190e9ea11d615a158..1b09b2a2a6b78a80aaf8a45dad984e76
  #if HAVE(TM_GMTOFF)
      double localToUTCTimeOffset = inputTimeType == LocalTime ? calculateUTCOffset() : 0;
  #else
-@@ -1034,4 +1057,46 @@ String makeRFC2822DateString(unsigned dayOfWeek, unsigned day, unsigned month, u
+@@ -1034,4 +1059,65 @@ String makeRFC2822DateString(unsigned dayOfWeek, unsigned day, unsigned month, u
      return stringBuilder.toString();
  }
  
 +bool setTimeZoneForAutomation(const String& timeZone)
 +{
++    innerTimeZoneForAutomation().displayName = String();
 +    if (innerTimeZoneForAutomation().cal) {
 +        ucal_close(innerTimeZoneForAutomation().cal);
 +        innerTimeZoneForAutomation().cal = nullptr;
 +    }
 +    if (timeZone.isEmpty()) {
-+        innerTimeZoneForAutomation().name = String();
++        innerTimeZoneForAutomation().id = String();
 +        return true;
 +    }
 +
@@ -1459,30 +1462,49 @@ index 1999737341553001d5246b8190e9ea11d615a158..1b09b2a2a6b78a80aaf8a45dad984e76
 +    if (!U_SUCCESS(status))
 +        return false;
 +
-+    innerTimeZoneForAutomation().cal = ucal_open(canonicalBuffer.data(), canonicalLength, nullptr, UCAL_TRADITIONAL, &status);
++    UCalendar* cal = ucal_open(canonicalBuffer.data(), canonicalLength, nullptr, UCAL_TRADITIONAL, &status);
 +    if (!U_SUCCESS(status))
 +        return false;
 +
-+    innerTimeZoneForAutomation().name = String(canonicalBuffer.data(), canonicalLength);
++    Vector<UChar, 32> displayNameBuffer(32);
++    auto displayNameLength = ucal_getTimeZoneDisplayName(cal, UCAL_STANDARD, defaultLanguage().utf8().data(), displayNameBuffer.data(), displayNameBuffer.size(), &status);
++    if (status == U_BUFFER_OVERFLOW_ERROR) {
++        status = U_ZERO_ERROR;
++        displayNameBuffer.grow(displayNameLength);
++        ucal_getTimeZoneDisplayName(cal, UCAL_STANDARD, defaultLanguage().utf8().data(), displayNameBuffer.data(), displayNameLength, &status);
++    }
++    if (!U_SUCCESS(status))
++        return false;
++
++    TimeZoneForAutomation& tzfa = innerTimeZoneForAutomation();
++    tzfa.cal = cal;
++    tzfa.id = String(canonicalBuffer.data(), canonicalLength);
++    tzfa.displayName = String(displayNameBuffer.data(), displayNameLength);
 +    return true;
 +}
 +
 +String timeZoneForAutomation()
 +{
-+    return innerTimeZoneForAutomation().name;
++    return innerTimeZoneForAutomation().id;
++}
++
++String timeZoneDisplayNameForAutomation()
++{
++    return innerTimeZoneForAutomation().displayName;
 +}
 +
  } // namespace WTF
 diff --git a/Source/WTF/wtf/DateMath.h b/Source/WTF/wtf/DateMath.h
-index 602f89a49d454cc5e5acd030024227d49d98c61f..66da6661c0c7e2c13808b90ecce19884157487a7 100644
+index 602f89a49d454cc5e5acd030024227d49d98c61f..41811e65bd0f15b443fb90d37ee4d0a21780a518 100644
 --- a/Source/WTF/wtf/DateMath.h
 +++ b/Source/WTF/wtf/DateMath.h
-@@ -389,6 +389,9 @@ inline int dayInMonthFromDayInYear(int dayInYear, bool leapYear)
+@@ -389,6 +389,10 @@ inline int dayInMonthFromDayInYear(int dayInYear, bool leapYear)
      return d - step;
  }
  
 +WTF_EXPORT_PRIVATE bool setTimeZoneForAutomation(const String& timeZone);
 +WTF_EXPORT_PRIVATE String timeZoneForAutomation();
++WTF_EXPORT_PRIVATE String timeZoneDisplayNameForAutomation();
 +
  // Returns combined offset in millisecond (UTC + DST).
  WTF_EXPORT_PRIVATE LocalTimeOffset calculateLocalTimeOffset(double utcInMilliseconds, TimeType = UTCTime);
