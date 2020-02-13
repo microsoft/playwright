@@ -115,13 +115,6 @@ else
   echo "Force-rebuilding the build."
 fi
 
-cd ./$BROWSER_NAME/checkout
-if ! [[ $(git rev-parse --abbrev-ref HEAD) == "playwright-build" ]]; then
-  echo "ERROR: Default branch is not playwright-build!"
-  exit 1
-fi
-cd -
-
 source ./buildbots/send_telegram_message.sh
 BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
 
