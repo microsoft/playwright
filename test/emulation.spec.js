@@ -18,7 +18,7 @@
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, headless, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, headless, FFOX, CHROMIUM, WEBKIT, MAC, WIN}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -230,7 +230,10 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         server.waitForRequest('/empty.html'),
         page.goto(server.EMPTY_PAGE),
       ]);
-      expect(request.headers['accept-language']).toBe('fr-CH');
+      expect(request.headers['accept-language'].substr(0, 5)).toBe('fr-CH');
+    });
+    it('should affect navigator.language', async({newPage, server}) => {
+      const page = await newPage({ locale: 'fr-CH' });
       expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
     });
     it('should format number', async({newPage, server}) => {
@@ -242,15 +245,16 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       {
         const page = await newPage({ locale: 'fr-CH' });
         await page.goto(server.EMPTY_PAGE);
-        expect(await page.evaluate(() => (1000000.50).toLocaleString())).toBe('1 000 000,5');
+        const formatted = MAC ? '1\u00A0000\u00A0000,5' : '1\u202F000\u202F000,5';
+        expect(await page.evaluate(() => (1000000.50).toLocaleString())).toBe(formatted);
       }
     });
     it('should format date', async({newPage, server}) => {
       {
         const page = await newPage();
         await page.goto(server.EMPTY_PAGE);
-        expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(
-            'Sat Nov 19 2016 10:12:34 GMT-0800 (PST)');
+        const formatted = WIN ? 'Sat Nov 19 2016 10:12:34 GMT-0800 (Pacific Standard Time)' : 'Sat Nov 19 2016 10:12:34 GMT-0800 (PST)';
+        expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(formatted);
       }
       {
         const page = await newPage({ locale: 'de-de', timezoneId: 'Europe/Berlin' });
