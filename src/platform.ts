@@ -325,7 +325,7 @@ export class WebSocketTransport implements ConnectionTransport {
     }) : new WebSocket(url)) as WebSocket;
     this._connect = new Promise((fulfill, reject) => {
       this._ws.addEventListener('open', () => fulfill());
-      this._ws.addEventListener('error', event => reject(new Error(event.toString())));
+      this._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
     });
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
