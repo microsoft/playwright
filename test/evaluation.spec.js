@@ -378,7 +378,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const result = await page.evaluate(body => body.innerHTML, bodyHandle);
       expect(result.trim()).toBe('<div>Hi, I\'m frame</div>');
     });
-    it.skip(FFOX)('should not allow cross-frame element handles when frames do not script each other', async({page, server}) => {
+    it('should not allow cross-frame element handles when frames do not script each other', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       const frame = await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
       const bodyHandle = await frame.$('body');
