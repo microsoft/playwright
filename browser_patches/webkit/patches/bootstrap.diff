@@ -2062,7 +2062,7 @@ index b67e89b80b4e7a8586cac81ade5d58a1bcb0d431..c468bc0981d1fb13272b28095f9f7584
  {
      FAST_RETURN_IF_NO_FRONTENDS(false);
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 0f46a3033aef4007f6eb837a6105f05a0c59067f..bfcafe332af75e0def0d9487eceef7c9384dc3d1 100644
+index 0f46a3033aef4007f6eb837a6105f05a0c59067f..38140e53555b86af72b3c9707d4c6bd48350a1e7 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -2155,7 +2155,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..bfcafe332af75e0def0d9487eceef7c9
      if (!node)
          return;
  
-@@ -1486,18 +1499,143 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
+@@ -1486,18 +1499,147 @@ void InspectorDOMAgent::setInspectedNode(ErrorString& errorString, int nodeId)
      m_suppressEventListenerChangedEvent = false;
  }
  
@@ -2275,6 +2275,10 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..bfcafe332af75e0def0d9487eceef7c9
 +        errorString = "Node doesn't have renderer"_s;
 +        return;
 +    }
++
++    // Ensure quads are up to date.
++    renderer->document().updateLayoutIgnorePendingStylesheets();
++
 +    Frame* containingFrame = renderer->document().frame();
 +    FrameView* containingView = containingFrame ? containingFrame->view() : nullptr;
 +    if (!containingView) {
@@ -2305,7 +2309,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..bfcafe332af75e0def0d9487eceef7c9
  }
  
  void InspectorDOMAgent::getAttributes(ErrorString& errorString, int nodeId, RefPtr<JSON::ArrayOf<String>>& result)
-@@ -2662,7 +2800,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
+@@ -2662,7 +2804,7 @@ void InspectorDOMAgent::pushNodeByPathToFrontend(ErrorString& errorString, const
          errorString = "Missing node for given path"_s;
  }
  
@@ -2314,7 +2318,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..bfcafe332af75e0def0d9487eceef7c9
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2671,12 +2809,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
+@@ -2671,12 +2813,16 @@ RefPtr<Inspector::Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNod
      if (!frame)
          return nullptr;
  
@@ -2334,7 +2338,7 @@ index 0f46a3033aef4007f6eb837a6105f05a0c59067f..bfcafe332af75e0def0d9487eceef7c9
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2697,4 +2839,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
+@@ -2697,4 +2843,46 @@ void InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(ErrorString&, bool a
      m_allowEditingUserAgentShadowTrees = allow;
  }
  
