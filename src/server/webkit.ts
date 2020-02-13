@@ -28,7 +28,7 @@ import * as path from 'path';
 import * as platform from '../platform';
 import * as util from 'util';
 import * as os from 'os';
-import { assert } from '../helper';
+import { assert, helper } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectionTransport } from '../transport';
@@ -77,8 +77,10 @@ export class WebKit implements BrowserType {
   }
 
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+    const { timeout = 30000 } = options || {};
     const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WKBrowser.connect(transport!);
+    await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
     browserContext.close = () => browserServer.close();

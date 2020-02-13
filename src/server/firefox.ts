@@ -27,7 +27,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
 import { TimeoutError } from '../errors';
-import { assert } from '../helper';
+import { assert, helper } from '../helper';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectOptions, LaunchType } from '../browser';
 import { BrowserServer } from './browserServer';
@@ -75,8 +75,10 @@ export class Firefox implements BrowserType {
   }
 
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
+    const { timeout = 30000 } = options || {};
     const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await FFBrowser.connect(transport!);
+    await helper.waitWithTimeout(browser._waitForTarget(t => t.type() === 'page'), 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
     browserContext.close = () => browserServer.close();
