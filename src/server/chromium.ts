@@ -50,7 +50,7 @@ export class Chromium implements BrowserType {
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<CRBrowser> {
-    if (options && options.userDataDir)
+    if (options && (options as any).userDataDir)
       throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await CRBrowser.connect(transport!, options && options.slowMo);
