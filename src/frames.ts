@@ -323,7 +323,8 @@ export class Frame {
   }
 
   async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
-    let referer = (this._page._state.extraHTTPHeaders || {})['referer'];
+    const headers = (this._page._state.extraHTTPHeaders || {});
+    let referer = headers['referer'] || headers['Referer'];
     if (options.referer !== undefined) {
       if (referer !== undefined && referer !== options.referer)
         throw new Error('"referer" is already specified as extra HTTP header');

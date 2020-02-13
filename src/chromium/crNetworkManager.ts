@@ -79,10 +79,6 @@ export class CRNetworkManager {
     });
   }
 
-  async setUserAgent(userAgent: string) {
-    await this._client.send('Network.setUserAgentOverride', { userAgent });
-  }
-
   async setCacheEnabled(enabled: boolean) {
     this._userCacheDisabled = !enabled;
     await this._updateProtocolCacheDisabled();
