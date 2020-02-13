@@ -28,6 +28,8 @@ export class FFNetworkManager {
   private _requests: Map<string, InterceptableRequest>;
   private _page: Page;
   private _eventListeners: RegisteredListener[];
+  private _userInterceptionEnabled = false;
+  private _offlineModeEnabled = false;
 
   constructor(session: FFSession, page: Page) {
     this._session = session;
@@ -48,6 +50,17 @@ export class FFNetworkManager {
   }
 
   async setRequestInterception(enabled: boolean) {
+    this._userInterceptionEnabled = enabled;
+    await this._updateProtocolInterception();
+  }
+
+  async setOfflineMode(enabled: boolean) {
+    this._offlineModeEnabled = enabled;
+    await this._updateProtocolInterception();
+  }
+
+  async _updateProtocolInterception() {
+    const enabled = this._userInterceptionEnabled || this._offlineModeEnabled;
     await this._session.send('Network.setRequestInterception', {enabled});
   }
 
@@ -62,9 +75,15 @@ export class FFNetworkManager {
       redirectChain.push(redirected.request);
       this._requests.delete(redirected._id);
     }
-    const request = new InterceptableRequest(this._session, frame, redirectChain, event);
+    const request = new InterceptableRequest(this._session, frame, redirectChain, event, event.isIntercepted && this._userInterceptionEnabled);
     this._requests.set(request._id, request);
     this._page._frameManager.requestStarted(request.request);
+    if (event.isIntercepted && !this._userInterceptionEnabled) {
+      if (this._offlineModeEnabled)
+        request.abort('internetdisconnected');
+      else
+        request.continue({});
+    }
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -146,7 +165,7 @@ class InterceptableRequest implements network.RequestDelegate {
   _id: string;
   private _session: FFSession;
 
-  constructor(session: FFSession, frame: frames.Frame, redirectChain: network.Request[], payload: Protocol.Network.requestWillBeSentPayload) {
+  constructor(session: FFSession, frame: frames.Frame, redirectChain: network.Request[], payload: Protocol.Network.requestWillBeSentPayload, isIntercepted: boolean) {
     this._id = payload.requestId;
     this._session = session;
 
@@ -154,7 +173,7 @@ class InterceptableRequest implements network.RequestDelegate {
     for (const {name, value} of payload.headers)
       headers[name.toLowerCase()] = value;
 
-    this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectChain, payload.navigationId,
+    this.request = new network.Request(isIntercepted ? this : null, frame, redirectChain, payload.navigationId,
         payload.url, causeToResourceType[payload.cause] || 'other', payload.method, payload.postData, headers);
   }
 

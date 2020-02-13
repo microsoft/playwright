@@ -521,7 +521,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.skip(FFOX)('Interception.setOfflineMode', function() {
+  describe('Interception.setOfflineMode', function() {
     it('should work', async({page, server}) => {
       await page.setOfflineMode(true);
       let error = null;
@@ -531,7 +531,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.status()).toBe(200);
     });
-    it('should emulate navigator.onLine', async({page, server}) => {
+    it.skip(FFOX)('should emulate navigator.onLine', async({page, server}) => {
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
       await page.setOfflineMode(true);
       expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
