@@ -149,7 +149,7 @@ export class WebKit implements BrowserType {
       },
     });
 
-    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
+    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to WebKit! The only WebKit revision guaranteed to work is r${this._revision}`);
     await waitForLine(launchedProcess, launchedProcess.stdout, /^Web Inspector is reading from pipe #3$/, timeout, timeoutError);
     transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
