@@ -42,10 +42,17 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
   const playwrightModule = require(playwrightPath);
   const playwright = playwrightModule[product.toLowerCase()];
 
-  const headless = (process.env.HEADLESS || 'true').trim().toLowerCase() === 'true';
-  const slowMo = parseInt((process.env.SLOW_MO || '0').trim(), 10);
+  const headless = !!valueFromEnv('HEADLESS', true);
+  const slowMo = valueFromEnv('SLOW_MO', 0);
+  const CI = valueFromEnv('CI', false);
+  const dumpProtocolOnFailure = CI || valueFromEnv('DEBUGP', true);
   let dumpProtocolOnFailure = process.env.CI || ((process.env.DEBUGP || 'false').trim().toLowerCase() === 'true');
 
+  function valueFromEnv(name, defaultValue) {
+    if (!(name in process.env))
+      return defaultValue;
+    return JSON.parse(process.env[name]);
+  }
   const executablePath = {
     'Chromium': process.env.CRPATH,
     'Firefox': process.env.FFPATH,
