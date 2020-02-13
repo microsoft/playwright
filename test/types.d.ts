@@ -24,7 +24,7 @@ interface Expect<T> {
 
 type DescribeFunction = ((name: string, inner: () => void) => void) & {skip(condition: boolean): DescribeFunction};
 
-type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {skip(condition: boolean): ItFunction<STATE>};
+type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {skip(condition: boolean): ItFunction<STATE>; repeat(n: number): ItFunction<STATE>};
 
 type TestRunner<STATE> = {
     describe: DescribeFunction;
@@ -94,10 +94,10 @@ interface TestServer {
     waitForRequest(path: string): Promise<IncomingMessage>;
     reset();
     serveFile(request: IncomingMessage, response: ServerResponse, pathName: string);
-    
+
     PORT: number;
     PREFIX: string;
     CROSS_PROCESS_PREFIX: string;
     EMPTY_PAGE: string;
-  
+
 }
