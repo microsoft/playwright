@@ -146,6 +146,10 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders }));
     if (this._page._state.hasTouch)
       promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
+    if (contextOptions.timezoneId) {
+      promises.push(session.send('Page.setTimeZone', { timeZone: contextOptions.timezoneId }).
+          catch(e => { throw new Error(`Invalid timezone ID: ${contextOptions.timezoneId}`); }));
+    }
     await Promise.all(promises);
   }
 

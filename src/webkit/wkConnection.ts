@@ -166,7 +166,7 @@ export class WKSession extends platform.EventEmitter {
 export function createProtocolError(error: Error, method: string, object: { error: { message: string; data: any; }; }): Error {
   let message = `Protocol error (${method}): ${object.error.message}`;
   if ('data' in object.error)
-    message += ` ${object.error.data}`;
+    message += ` ${JSON.stringify(object.error.data)}`;
   return rewriteError(error, message);
 }
 
