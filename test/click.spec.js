@@ -357,6 +357,26 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
+    it('should click the button with relative point with page scale', async({newPage, server}) => {
+      const page = await newPage({ viewport: { width: 400, height: 400, isMobile: true} });
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', button => {
+        button.style.borderWidth = '8px';
+        document.body.style.margin = '0';
+      });
+      await page.click('button', { relativePoint: { x: 20, y: 10 } });
+      expect(await page.evaluate(() => result)).toBe('Clicked');
+      let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
+      if (WEBKIT) {
+        // WebKit rounds up during css -> dip -> css conversion.
+        expected = { x: 29, y: 19 };
+      } else if (CHROMIUM) {
+        // Chromium rounds down during css -> dip -> css conversion.
+        expected = { x: 27, y: 18 };
+      }
+      expect(await page.evaluate(() => pageX)).toBe(expected.x);
+      expect(await page.evaluate(() => pageY)).toBe(expected.y);
+    });
 
     it('should update modifiers correctly', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
