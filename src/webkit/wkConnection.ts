@@ -20,8 +20,6 @@ import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
 import { Protocol } from './protocol';
 
-const debugProtocol = platform.debug('pw:protocol');
-
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
 export const kBrowserCloseMessageId = -9999;
@@ -36,6 +34,7 @@ export class WKConnection {
   private readonly _transport: ConnectionTransport;
   private _closed = false;
   private _onDisconnect: () => void;
+  _debugFunction: (message: string) => void = platform.debug('pw:protocol');
 
   readonly browserSession: WKSession;
 
@@ -55,12 +54,12 @@ export class WKConnection {
 
   rawSend(message: any) {
     message = JSON.stringify(message);
-    debugProtocol('SEND ► ' + message);
+    this._debugFunction('SEND ► ' + message);
     this._transport.send(message);
   }
 
   private _dispatchMessage(message: string) {
-    debugProtocol('◀ RECV ' + message);
+    this._debugFunction('◀ RECV ' + message);
     const object = JSON.parse(message);
     if (object.id === kBrowserCloseMessageId)
       return;
