@@ -20,18 +20,20 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('window.open', function() {
-    it.skip(CHROMIUM)('should inherit user agent from browser context', async function({newContext, server}) {
+    it.skip(CHROMIUM || WEBKIT)('should inherit user agent from browser context', async function({newContext, server}) {
       const context = await newContext({
         userAgent: 'hey'
       });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
-      const evaluatePromise = page.evaluate(url => window.open(url), server.PREFIX + '/dummy.html');
-      const popupPromise = page.waitForEvent('popup');
-      const request = await server.waitForRequest('/dummy.html');
-      await evaluatePromise;
-      await popupPromise;
+      const requestPromise = server.waitForRequest('/dummy.html');
+      const userAgent = await page.evaluate(url => {
+        const win = window.open(url);
+        return win.navigator.userAgent;
+      }, server.PREFIX + '/dummy.html');
+      const request = await requestPromise;
       await context.close();
+      expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
     it.skip(CHROMIUM)('should inherit touch support from browser context', async function({newContext, server}) {
