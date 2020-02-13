@@ -142,10 +142,10 @@ export class WKPage implements PageDelegate {
     }
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
-    if (this._page._state.extraHTTPHeaders || contextOptions.language) {
+    if (this._page._state.extraHTTPHeaders || contextOptions.locale) {
       const headers = this._page._state.extraHTTPHeaders || {};
-      if (contextOptions.language)
-        headers['Accept-Language'] = contextOptions.language;
+      if (contextOptions.locale)
+        headers['Accept-Language'] = contextOptions.locale;
       promises.push(session.send('Network.setExtraHTTPHeaders', { headers }));
     }
     if (this._page._state.hasTouch)
@@ -380,9 +380,9 @@ export class WKPage implements PageDelegate {
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
     const copy = { ...headers };
-    const language = this._page.context()._options.language;
-    if (language)
-      copy['Accept-Language'] = language;
+    const locale = this._page.context()._options.locale;
+    if (locale)
+      copy['Accept-Language'] = locale;
     await this._updateState('Network.setExtraHTTPHeaders', { headers: copy });
   }
 
