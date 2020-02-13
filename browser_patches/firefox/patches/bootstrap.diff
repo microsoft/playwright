@@ -1450,10 +1450,10 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2b1a1bd0f931d82824a86ecbb46f86483177a4e0
+index 0000000000000000000000000000000000000000..6a128959f9128a87cd3d46a5d906028ff500f9e0
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,214 @@
+@@ -0,0 +1,232 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -1506,6 +1506,7 @@ index 0000000000000000000000000000000000000000..2b1a1bd0f931d82824a86ecbb46f8648
 +      target.dispose();
 +      this.emit(TargetRegistry.Events.TargetDestroyed, target.info());
 +    });
++    Services.obs.addObserver(this, 'oop-frameloader-crashed');
 +  }
 +
 +  async newPage({browserContextId}) {
@@ -1562,6 +1563,22 @@ index 0000000000000000000000000000000000000000..2b1a1bd0f931d82824a86ecbb46f8648
 +    this._tabToTarget.set(tab, target);
 +    this.emit(TargetRegistry.Events.TargetCreated, target.info());
 +    return target;
++  }
++
++  observe(subject, topic, data) {
++    if (topic === 'oop-frameloader-crashed') {
++      const browser = subject.ownerElement;
++      if (!browser)
++        return;
++      const tab = this._mainWindow.gBrowser.getTabForBrowser(browser);
++      if (!tab)
++        return;
++      const target = this._tabToTarget.get(tab);
++      if (!target)
++        return;
++      this.emit(TargetRegistry.Events.TargetCrashed, target.id());
++      return;
++    }
 +  }
 +}
 +
@@ -1663,6 +1680,7 @@ index 0000000000000000000000000000000000000000..2b1a1bd0f931d82824a86ecbb46f8648
 +  TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
 +  TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
 +  TargetChanged: Symbol('TargetRegistry.Events.TargetChanged'),
++  TargetCrashed: Symbol('TargetRegistry.Events.TargetCrashed'),
 +  PageTargetReady: Symbol('TargetRegistry.Events.PageTargetReady'),
 +};
 +
@@ -1890,10 +1908,10 @@ index 0000000000000000000000000000000000000000..3891da101e6906ae2a3888e256aefd03
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..dcebb7bbf6d0c9bb7a350443dfa2574bee5915ea
+index 0000000000000000000000000000000000000000..6735dd39c6cfb6f945d5d094cfb7902f4eb9cefd
 --- /dev/null
 +++ b/testing/juggler/content/FrameTree.js
-@@ -0,0 +1,252 @@
+@@ -0,0 +1,266 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -1907,6 +1925,12 @@ index 0000000000000000000000000000000000000000..dcebb7bbf6d0c9bb7a350443dfa2574b
 +class FrameTree {
 +  constructor(rootDocShell, waitForInitialNavigation) {
 +    EventEmitter.decorate(this);
++
++    this._browsingContextGroup = rootDocShell.browsingContext.group;
++    if (!this._browsingContextGroup.__jugglerFrameTrees)
++      this._browsingContextGroup.__jugglerFrameTrees = new Set();
++    this._browsingContextGroup.__jugglerFrameTrees.add(this);
++
 +    this._docShellToFrame = new Map();
 +    this._frameIdToFrame = new Map();
 +    this._pageReady = !waitForInitialNavigation;
@@ -1926,6 +1950,13 @@ index 0000000000000000000000000000000000000000..dcebb7bbf6d0c9bb7a350443dfa2574b
 +      helper.addObserver(subject => this._onDocShellDestroyed(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-destroy'),
 +      helper.addProgressListener(webProgress, this, flags),
 +    ];
++  }
++
++  allFramesInBrowsingContextGroup(group) {
++    const frames = [];
++    for (const frameTree of (group.__jugglerFrameTrees || []))
++      frames.push(...frameTree.frames());
++    return frames;
 +  }
 +
 +  isPageReady() {
@@ -1957,6 +1988,7 @@ index 0000000000000000000000000000000000000000..dcebb7bbf6d0c9bb7a350443dfa2574b
 +  }
 +
 +  dispose() {
++    this._browsingContextGroup.__jugglerFrameTrees.delete(this);
 +    helper.removeListeners(this._eventListeners);
 +  }
 +
@@ -2148,7 +2180,7 @@ index 0000000000000000000000000000000000000000..dcebb7bbf6d0c9bb7a350443dfa2574b
 +
 diff --git a/testing/juggler/content/NetworkMonitor.js b/testing/juggler/content/NetworkMonitor.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ecebd26e7d
+index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c32e8c11be
 --- /dev/null
 +++ b/testing/juggler/content/NetworkMonitor.js
 @@ -0,0 +1,62 @@
@@ -2179,7 +2211,7 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +    if (!loadContext)
 +      return;
 +    const window = loadContext.associatedWindow;
-+    const frame = this._frameTree.frameForDocShell(window.docShell)
++    const frame = this._frameTree.frameForDocShell(window.docShell);
 +    if (!frame)
 +      return;
 +    this._requestDetails.set(httpChannel.channelId, {
@@ -2216,10 +2248,10 @@ index 0000000000000000000000000000000000000000..2508cce41565023b7fee9c7b85afe8ec
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631f0bd1780
+index 0000000000000000000000000000000000000000..994b683a78c43f8fb072cc185f2e5f8d2badec3c
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,875 @@
+@@ -0,0 +1,912 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2734,6 +2766,11 @@ index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631
 +      throw new Error('Failed to find frame with id = ' + frameId);
 +    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
 +    const context = this._runtime.findExecutionContext(executionContextId);
++    const fromPrincipal = unsafeObject.nodePrincipal;
++    const toFrame = this._frameTree.frame(context.auxData().frameId);
++    const toPrincipal = toFrame.domWindow().document.nodePrincipal;
++    if (!toPrincipal.subsumes(fromPrincipal))
++      return { remoteObject: null };
 +    return { remoteObject: context.rawValueToRemoteObject(unsafeObject) };
 +  }
 +
@@ -2771,9 +2808,20 @@ index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
 +    const unsafeObject = this._frameData.get(frame).unsafeObject(objectId);
++    const browsingContextGroup = frame.docShell().browsingContext.group;
++    const frames = this._frameTree.allFramesInBrowsingContextGroup(browsingContextGroup);
++    let contentFrame;
++    let ownerFrame;
++    for (const frame of frames) {
++      if (unsafeObject.contentWindow && frame.docShell() === unsafeObject.contentWindow.docShell)
++        contentFrame = frame;
++      const document = frame.domWindow().document;
++      if (unsafeObject === document || unsafeObject.ownerDocument === document)
++        ownerFrame = frame;
++    }
 +    return {
-+      contentFrameId: unsafeObject.contentWindow ? this._frameTree.frameForDocShell(unsafeObject.contentWindow.docShell).id() : undefined,
-+      ownerFrameId: this._findFrameForNode(unsafeObject)._frame.id(),
++      contentFrameId: contentFrame ? contentFrame.id() : undefined,
++      ownerFrameId: ownerFrame ? ownerFrame.id() : undefined,
 +    };
 +  }
 +
@@ -2867,7 +2915,7 @@ index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631
 +    return {data};
 +  }
 +
-+  async dispatchKeyEvent({type, keyCode, code, key, repeat, location}) {
++  async dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
 +    const frame = this._frameTree.mainFrame();
 +    const tip = frame.textInputProcessor();
 +    if (key === 'Meta' && Services.appinfo.OS !== 'Darwin')
@@ -2881,13 +2929,21 @@ index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631
 +      repeat,
 +      keyCode
 +    });
-+    const flags = 0;
-+    if (type === 'keydown')
-+      tip.keydown(keyEvent, flags);
-+    else if (type === 'keyup')
++    if (type === 'keydown') {
++      if (text && text !== key) {
++        tip.commitCompositionWith(text, keyEvent);
++      } else {
++        const flags = 0;
++        tip.keydown(keyEvent, flags);
++      }
++    } else if (type === 'keyup') {
++      if (text)
++        throw new Error(`keyup does not support text option`);
++      const flags = 0;
 +      tip.keyup(keyEvent, flags);
-+    else
++    } else {
 +      throw new Error(`Unknown type ${type}`);
++    }
 +  }
 +
 +  async dispatchTouchEvent({type, touchPoints, modifiers}) {
@@ -2941,6 +2997,19 @@ index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631
 +  async insertText({text}) {
 +    const frame = this._frameTree.mainFrame();
 +    frame.textInputProcessor().commitCompositionWith(text);
++  }
++
++  async crash() {
++    dump(`Crashing intentionally\n`);
++    // This is to intentionally crash the frame.
++    // We crash by using js-ctypes and dereferencing
++    // a bad pointer. The crash should happen immediately
++    // upon loading this frame script.
++    const { ctypes } = ChromeUtils.import('resource://gre/modules/ctypes.jsm');
++    ChromeUtils.privateNoteIntentionalCrash();
++    const zero = new ctypes.intptr_t(8);
++    const badptr = ctypes.cast(zero, ctypes.PointerType(ctypes.int32_t));
++    badptr.contents;
 +  }
 +
 +  async getFullAXTree({objectId}) {
@@ -3097,10 +3166,10 @@ index 0000000000000000000000000000000000000000..e505911e81ef014f19a3a732f3c5f631
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5765d5c3b1de7b9383a80435b37b034d6951d981
+index 0000000000000000000000000000000000000000..c6568d0e98cb3405877f711a3242ab31b55ce7c1
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
-@@ -0,0 +1,545 @@
+@@ -0,0 +1,549 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
 +// Avoid Components.*, ChromeUtils and global const variables.
@@ -3443,6 +3512,10 @@ index 0000000000000000000000000000000000000000..5765d5c3b1de7b9383a80435b37b034d
 +
 +  id() {
 +    return this._id;
++  }
++
++  auxData() {
++    return this._auxData;
 +  }
 +
 +  async evaluateScript(script, exceptionDetails = {}) {
@@ -4566,7 +4639,7 @@ index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9c
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..efb0fc1f3f7af37e101976cf8a682e09c223e59f
+index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699be43b3d4
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
 @@ -0,0 +1,266 @@
@@ -4615,6 +4688,10 @@ index 0000000000000000000000000000000000000000..efb0fc1f3f7af37e101976cf8a682e09
 +        this._updateModalDialogs();
 +      }),
 +      helper.addEventListener(this._browser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
++      helper.on(TargetRegistry.instance(), TargetRegistry.Events.TargetCrashed, targetId => {
++        if (targetId === this._chromeSession.targetId())
++          this._chromeSession.emitEvent('Page.crashed', {});
++      }),
 +    ];
 +  }
 +
@@ -4660,16 +4737,8 @@ index 0000000000000000000000000000000000000000..efb0fc1f3f7af37e101976cf8a682e09
 +    return await this._contentSession.send('Page.setFileInputFiles', options);
 +  }
 +
-+  async setBypassCSP(options) {
-+    return await this._contentSession.send('Page.setBypassCSP', options);
-+  }
-+
 +  async setEmulatedMedia(options) {
 +    return await this._contentSession.send('Page.setEmulatedMedia', options);
-+  }
-+
-+  async setJavascriptEnabled(options) {
-+    return await this._contentSession.send('Page.setJavascriptEnabled', options);
 +  }
 +
 +  async setCacheDisabled(options) {
@@ -4754,6 +4823,10 @@ index 0000000000000000000000000000000000000000..efb0fc1f3f7af37e101976cf8a682e09
 +
 +  async insertText(options) {
 +    return await this._contentSession.send('Page.insertText', options);
++  }
++
++  async crash(options) {
++    return await this._contentSession.send('Page.crash', options);
 +  }
 +
 +  async handleDialog({dialogId, accept, promptText}) {
@@ -4987,10 +5060,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a0a96a87ff4a422deccae1045962690fa7941f25
+index 0000000000000000000000000000000000000000..6751bfaa84655952f4a51e3dd4353eb84f517fcb
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,746 @@
+@@ -0,0 +1,752 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5446,6 +5519,8 @@ index 0000000000000000000000000000000000000000..a0a96a87ff4a422deccae1045962690f
 +  events: {
 +    'ready': {
 +    },
++    'crashed': {
++    },
 +    'eventFired': {
 +      frameId: t.String,
 +      name: t.Enum(['load', 'DOMContentLoaded']),
@@ -5635,7 +5710,7 @@ index 0000000000000000000000000000000000000000..a0a96a87ff4a422deccae1045962690f
 +        executionContextId: t.String,
 +      },
 +      returns: {
-+        remoteObject: runtimeTypes.RemoteObject,
++        remoteObject: t.Nullable(runtimeTypes.RemoteObject),
 +      },
 +    },
 +    'screenshot': {
@@ -5665,6 +5740,7 @@ index 0000000000000000000000000000000000000000..a0a96a87ff4a422deccae1045962690f
 +        location: t.Number,
 +        code: t.String,
 +        repeat: t.Boolean,
++        text: t.Optional(t.String),
 +      }
 +    },
 +    'dispatchTouchEvent': {
@@ -5692,6 +5768,9 @@ index 0000000000000000000000000000000000000000..a0a96a87ff4a422deccae1045962690f
 +      params: {
 +        text: t.String,
 +      }
++    },
++    'crash': {
++      params: {}
 +    },
 +    'handleDialog': {
 +      params: {
