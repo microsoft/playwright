@@ -198,31 +198,19 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       const func = () => new Date(1479579154987).toString();
       {
         const page = await newPage({ timezoneId: 'America/Jamaica' });
-        if (WEBKIT)
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (America/Jamaica)');
-        else
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
       }
       {
         const page = await newPage({ timezoneId: 'Pacific/Honolulu' });
-        if (WEBKIT)
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Pacific/Honolulu)');
-        else
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
       }
       {
         const page = await newPage({ timezoneId: 'America/Buenos_Aires' });
-        if (WEBKIT)
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (America/Buenos_Aires)');
-        else
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
       }
       {
         const page = await newPage({ timezoneId: 'Europe/Berlin' });
-        if (WEBKIT)
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Europe/Berlin)');
-        else
-          expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
+        expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
       }
     });
 
