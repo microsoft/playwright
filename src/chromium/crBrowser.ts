@@ -46,6 +46,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
     const browser = new CRBrowser(connection);
     await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
+    await browser.waitForTarget(t => t.type() === 'page');
     return browser;
   }
 

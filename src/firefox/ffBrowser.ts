@@ -39,6 +39,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo));
     const browser = new FFBrowser(connection);
     await connection.send('Target.enable');
+    await browser._waitForTarget(t => t.type() === 'page');
     return browser;
   }
 

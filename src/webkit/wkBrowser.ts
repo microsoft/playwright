@@ -43,6 +43,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   static async connect(transport: ConnectionTransport, slowMo: number = 0): Promise<WKBrowser> {
     const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo));
+    // TODO: figure out the timeout.
+    await browser._waitForFirstPageTarget(30000);
     return browser;
   }
 
@@ -93,9 +95,9 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     return createPageInNewContext(this, options);
   }
 
-  async _waitForFirstPageTarget(): Promise<void> {
+  async _waitForFirstPageTarget(timeout: number): Promise<void> {
     assert(!this._pageProxies.size);
-    return this._firstPageProxyPromise;
+    await helper.waitWithTimeout(this._firstPageProxyPromise, 'firstPageProxy', timeout);
   }
 
   _onPageProxyCreated(event: Protocol.Browser.pageProxyCreatedPayload) {
