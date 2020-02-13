@@ -9,3 +9,7 @@ self.addEventListener('fetch', event => {
   const response = new Response(blob, { "status" : 200 , "statusText" : "OK" });
   event.respondWith(response);
 });
+
+self.addEventListener('activate', event => {
+  event.waitUntil(clients.claim());
+});

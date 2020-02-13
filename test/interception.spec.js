@@ -570,8 +570,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   describe('service worker', function() {
     it('should intercept after a service worker', async({browser, page, server, context}) => {
       await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
-      await page.evaluate(() => window.registrationPromise);
-      await page.reload();
+      await page.evaluate(() => window.activationPromise);
 
       // Sanity check.
       const swResponse = await page.evaluate(() => fetchDummy('foo'));
