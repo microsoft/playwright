@@ -18,8 +18,13 @@
 const DEFAULT_TIMEOUT = 30000;
 
 export class TimeoutSettings {
+  private _parent: TimeoutSettings | undefined;
   private _defaultTimeout: number | null = null;
   private _defaultNavigationTimeout: number | null = null;
+
+  constructor(parent?: TimeoutSettings) {
+    this._parent = parent;
+  }
 
   setDefaultTimeout(timeout: number) {
     this._defaultTimeout = timeout;
@@ -34,12 +39,16 @@ export class TimeoutSettings {
       return this._defaultNavigationTimeout;
     if (this._defaultTimeout !== null)
       return this._defaultTimeout;
+    if (this._parent)
+      return this._parent.navigationTimeout();
     return DEFAULT_TIMEOUT;
   }
 
-  timeout() {
+  timeout(): number {
     if (this._defaultTimeout !== null)
       return this._defaultTimeout;
+    if (this._parent)
+      return this._parent.timeout();
     return DEFAULT_TIMEOUT;
   }
 }

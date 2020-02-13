@@ -145,7 +145,7 @@ export class Page extends platform.EventEmitter {
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
     this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
-    this._timeoutSettings = new TimeoutSettings();
+    this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
     this._screenshotter = new Screenshotter(this);
     this._frameManager = new frames.FrameManager(this);
     if (delegate.pdf)

@@ -199,9 +199,20 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       // Hang for request to the empty.html
       server.setRoute('/empty.html', (req, res) => { });
       let error = null;
+      page.context().setDefaultNavigationTimeout(2);
       page.setDefaultNavigationTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
       const message = 'Navigation timeout of 1 ms exceeded';
+      expect(error.message).toContain(message);
+      expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    });
+    it('should fail when exceeding browser context navigation timeout', async({page, server}) => {
+      // Hang for request to the empty.html
+      server.setRoute('/empty.html', (req, res) => { });
+      let error = null;
+      page.context().setDefaultNavigationTimeout(2);
+      await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
+      const message = 'Navigation timeout of 2 ms exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
@@ -209,9 +220,20 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       // Hang for request to the empty.html
       server.setRoute('/empty.html', (req, res) => { });
       let error = null;
+      page.context().setDefaultTimeout(2);
       page.setDefaultTimeout(1);
       await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
       const message = 'Navigation timeout of 1 ms exceeded';
+      expect(error.message).toContain(message);
+      expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+    });
+    it('should fail when exceeding browser context timeout', async({page, server}) => {
+      // Hang for request to the empty.html
+      server.setRoute('/empty.html', (req, res) => { });
+      let error = null;
+      page.context().setDefaultTimeout(2);
+      await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
+      const message = 'Navigation timeout of 2 ms exceeded';
       expect(error.message).toContain(message);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });

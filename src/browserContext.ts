@@ -21,6 +21,7 @@ import * as types from './types';
 import { helper } from './helper';
 import * as platform from './platform';
 import { Events } from './events';
+import { TimeoutSettings } from './timeoutSettings';
 
 export interface BrowserContextDelegate {
   pages(): Promise<Page[]>;
@@ -53,11 +54,13 @@ export type BrowserContextOptions = {
 export class BrowserContext extends platform.EventEmitter {
   private readonly _delegate: BrowserContextDelegate;
   readonly _options: BrowserContextOptions;
+  readonly _timeoutSettings: TimeoutSettings;
   private _closed = false;
 
   constructor(delegate: BrowserContextDelegate, options: BrowserContextOptions) {
     super();
     this._delegate = delegate;
+    this._timeoutSettings = new TimeoutSettings();
     this._options = { ...options };
     if (!this._options.viewport && this._options.viewport !== null)
       this._options.viewport = { width: 800, height: 600 };
@@ -76,6 +79,14 @@ export class BrowserContext extends platform.EventEmitter {
 
   _existingPages(): Page[] {
     return this._delegate.existingPages();
+  }
+
+  setDefaultNavigationTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
   async pages(): Promise<Page[]> {
