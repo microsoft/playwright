@@ -60,6 +60,8 @@ export class Firefox implements BrowserType {
   }
 
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<FFBrowser> {
+    if (options && options.userDataDir)
+      throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await FFBrowser.connect(transport!, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
