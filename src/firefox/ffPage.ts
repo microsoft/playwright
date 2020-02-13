@@ -73,6 +73,7 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.workerCreated', this._onWorkerCreated.bind(this)),
       helper.addEventListener(this._session, 'Page.workerDestroyed', this._onWorkerDestroyed.bind(this)),
       helper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
+      helper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
     ];
   }
 
@@ -227,6 +228,10 @@ export class FFPage implements PageDelegate {
     if (!worker)
       return;
     worker.session.dispatchMessage(JSON.parse(event.message));
+  }
+
+  async _onCrashed(event: Protocol.Page.crashedPayload) {
+    this._page._didCrash();
   }
 
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {
@@ -424,6 +429,8 @@ export class FFPage implements PageDelegate {
       objectId: toRemoteObject(handle).objectId!,
       executionContextId: (to._delegate as FFExecutionContext)._executionContextId
     });
+    if (!result.remoteObject)
+      throw new Error('Unable to adopt element handle from a different document');
     return to._createHandle(result.remoteObject) as dom.ElementHandle<T>;
   }
 

@@ -112,13 +112,16 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe.skip(FFOX)('Page.Events.error', function() {
+  describe('Page.Events.error', function() {
     it('should throw when page crashes', async({page}) => {
+      await page.setContent(`<div>This page should crash</div>`);
       let error = null;
       page.on('error', err => error = err);
       if (CHROMIUM)
         page.goto('chrome://crash').catch(e => {});
       else if (WEBKIT)
+        page._delegate._session.send('Page.crash', {}).catch(e => {});
+      else if (FFOX)
         page._delegate._session.send('Page.crash', {}).catch(e => {});
       await waitEvent(page, 'error');
       expect(error.message).toBe('Page crashed!');

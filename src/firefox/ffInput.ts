@@ -70,7 +70,8 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       code,
       key,
       repeat: autoRepeat,
-      location
+      location,
+      text,
     });
   }
 
