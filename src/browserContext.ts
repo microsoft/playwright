@@ -44,7 +44,7 @@ export type BrowserContextOptions = {
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
-  language?: string,
+  locale?: string,
   timezoneId?: string,
   geolocation?: types.Geolocation,
   permissions?: { [key: string]: string[] };

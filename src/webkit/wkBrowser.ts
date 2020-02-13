@@ -78,8 +78,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     const context = this._createBrowserContext(browserContextId, options);
     if (options.ignoreHTTPSErrors)
       await this._browserSession.send('Browser.setIgnoreCertificateErrors', { browserContextId, ignore: true });
-    if (options.language)
-      await this._browserSession.send('Browser.setLanguages', { browserContextId, languages: [options.language] });
+    if (options.locale)
+      await this._browserSession.send('Browser.setLanguages', { browserContextId, languages: [options.locale] });
     await context._initialize();
     this._contexts.set(browserContextId, context);
     return context;

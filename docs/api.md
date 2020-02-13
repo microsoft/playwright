@@ -196,6 +196,7 @@ Indicates that the browser is connected.
     - `latitude` <[number]> Latitude between -90 and 90.
     - `longitude` <[number]> Longitude between -180 and 180.
     - `accuracy` <[number]> Optional non-negative accuracy value.
+  - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
 - returns: <[Promise]<[BrowserContext]>>
 
@@ -228,6 +229,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `latitude` <[number]> Latitude between -90 and 90.
     - `longitude` <[number]> Longitude between -180 and 180.
     - `accuracy` <[number]> Optional non-negative accuracy value.
+  - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
 - returns: <[Promise]<[Page]>>
 

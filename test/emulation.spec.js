@@ -225,7 +225,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
 
   describe.skip(CHROMIUM || FFOX)('BrowserContext({language})', function() {
     it('should affect accept-language header', async({newPage, server}) => {
-      const page = await newPage({ language: 'fr-CH' });
+      const page = await newPage({ locale: 'fr-CH' });
       const [request] = await Promise.all([
         server.waitForRequest('/empty.html'),
         page.goto(server.EMPTY_PAGE),
@@ -240,7 +240,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         expect(await page.evaluate(() => (1000000.50).toLocaleString())).toBe('1,000,000.5');
       }
       {
-        const page = await newPage({ language: 'fr-CH' });
+        const page = await newPage({ locale: 'fr-CH' });
         await page.goto(server.EMPTY_PAGE);
         expect(await page.evaluate(() => (1000000.50).toLocaleString())).toBe('1 000 000,5');
       }
@@ -253,7 +253,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
             'Sat Nov 19 2016 10:12:34 GMT-0800 (PST)');
       }
       {
-        const page = await newPage({ language: 'de-de', timezoneId: 'Europe/Berlin' });
+        const page = await newPage({ locale: 'de-de', timezoneId: 'Europe/Berlin' });
         await page.goto(server.EMPTY_PAGE);
         expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(
             'Sat Nov 19 2016 19:12:34 GMT+0100 (Mitteleuropäische Normalzeit)');

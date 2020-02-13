@@ -110,8 +110,8 @@ export class CRPage implements PageDelegate {
       promises.push(this._updateViewport(true /* updateTouch */));
     if (options.javaScriptEnabled === false)
       promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
-    if (options.userAgent || options.language)
-      promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.language }));
+    if (options.userAgent || options.locale)
+      promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.locale }));
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
     if (options.geolocation)
