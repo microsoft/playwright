@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-const playwright = require('../../index.js').chromium;
+const playwright = require('../../index.js');
 const path = require('path');
 const Source = require('./Source');
+
+const {spawnSync} = require('child_process');
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -43,10 +45,15 @@ async function run() {
     const mdSources = [readme, api, troubleshooting];
 
     const preprocessor = require('./preprocessor');
-    messages.push(...await preprocessor.runCommands(mdSources, VERSION));
+    const browserVersions = getBrowserVersions();
+    messages.push(...(await preprocessor.runCommands(mdSources, {
+      libversion: VERSION,
+      chromiumVersion: browserVersions.chromium,
+      firefoxVersion: browserVersions.firefox,
+    })));
     messages.push(...await preprocessor.ensureReleasedAPILinks([readme], VERSION));
 
-    const browser = await playwright.launch();
+    const browser = await playwright.chromium.launch();
     const page = await browser.newPage();
     const checkPublicAPI = require('./check_public_api');
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
@@ -60,7 +67,7 @@ async function run() {
       await source.save();
       changedFiles = true;
     }
-    
+
     await readme.saveAs(path.join(PROJECT_DIR, 'packages', 'playwright', 'README.md'));
   }
 
@@ -93,4 +100,13 @@ async function run() {
   const runningTime = Date.now() - startTime;
   console.log(`DocLint Finished in ${runningTime / 1000} seconds`);
   process.exit(clearExit ? 0 : 1);
+}
+
+function getBrowserVersions() {
+  const chromiumVersion = spawnSync(playwright.chromium.executablePath(), ['--version']).stdout.toString();
+  const firefoxVersion = spawnSync(playwright.firefox.executablePath(), ['--version']).stdout.toString();
+  return {
+    chromium: chromiumVersion.trim().split(' ').pop(),
+    firefox: firefoxVersion.trim().split(' ').pop(),
+  };
 }
