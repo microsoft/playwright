@@ -145,7 +145,7 @@ class Injected {
     return !!(rect.top || rect.bottom || rect.width || rect.height);
   }
 
-  private _pollMutation(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
+  pollMutation(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
@@ -178,7 +178,7 @@ class Injected {
     return result;
   }
 
-  private _pollRaf(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
+  pollRaf(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
@@ -203,7 +203,7 @@ class Injected {
     return result;
   }
 
-  private _pollInterval(selector: string | undefined, pollInterval: number, predicate: Predicate, timeout: number): Promise<any> {
+  pollInterval(selector: string | undefined, pollInterval: number, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)
       setTimeout(() => timedOut = true, timeout);
@@ -225,14 +225,6 @@ class Injected {
 
     onTimeout();
     return result;
-  }
-
-  poll(polling: 'raf' | 'mutation' | number, selector: string | undefined, timeout: number, predicate: Predicate): Promise<any> {
-    if (polling === 'raf')
-      return this._pollRaf(selector, predicate, timeout);
-    if (polling === 'mutation')
-      return this._pollMutation(selector, predicate, timeout);
-    return this._pollInterval(selector, polling, predicate, timeout);
   }
 }
 

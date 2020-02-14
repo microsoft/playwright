@@ -228,7 +228,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.evaluate(button => button.remove(), button);
       let error = null;
       await button.click().catch(err => error = err);
-      expect(error.message).toContain('Element is not attached to the DOM');
+      expect(error.message).toContain('Node is detached from document');
     });
     it('should throw for hidden nodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
