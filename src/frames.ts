@@ -780,19 +780,19 @@ export class Frame {
     return result!;
   }
 
-  async click(selector: string, options?: WaitForOptions & ClickOptions & dom.WaitForInteractableOptions) {
+  async click(selector: string, options?: WaitForOptions & ClickOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.click(options);
     await handle.dispose();
   }
 
-  async dblclick(selector: string, options?: WaitForOptions & MultiClickOptions & dom.WaitForInteractableOptions) {
+  async dblclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.dblclick(options);
     await handle.dispose();
   }
 
-  async tripleclick(selector: string, options?: WaitForOptions & MultiClickOptions & dom.WaitForInteractableOptions) {
+  async tripleclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.tripleclick(options);
     await handle.dispose();
@@ -810,7 +810,7 @@ export class Frame {
     await handle.dispose();
   }
 
-  async hover(selector: string, options?: WaitForOptions & PointerActionOptions & dom.WaitForInteractableOptions) {
+  async hover(selector: string, options?: WaitForOptions & PointerActionOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.hover(options);
     await handle.dispose();
@@ -830,15 +830,15 @@ export class Frame {
     await handle.dispose();
   }
 
-  async check(selector: string, options?: WaitForOptions & dom.WaitForInteractableOptions) {
+  async check(selector: string, options?: WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    await handle.check(options);
+    await handle.check();
     await handle.dispose();
   }
 
-  async uncheck(selector: string, options?: WaitForOptions & dom.WaitForInteractableOptions) {
+  async uncheck(selector: string, options?: WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    await handle.uncheck(options);
+    await handle.uncheck();
     await handle.dispose();
   }
 
