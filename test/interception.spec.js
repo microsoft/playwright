@@ -274,7 +274,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(text).toBe('<div>yo</div>');
       expect(requests.length).toBe(0);
     });
-    it.skip(FFOX)('should navigate to URL with hash and and fire requests without hash', async({page, server}) => {
+    it('should navigate to URL with hash and and fire requests without hash', async({page, server}) => {
       const requests = [];
       await page.route('**/*', request => {
         requests.push(request);
