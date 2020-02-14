@@ -83,3 +83,35 @@ export class SlowMoTransport {
     this._delegate.close();
   }
 }
+
+export class DeferWriteTransport implements ConnectionTransport {
+  private _delegate: ConnectionTransport;
+  private _readPromise: Promise<void>;
+
+  onmessage?: (message: string) => void;
+  onclose?: () => void;
+
+  constructor(transport: ConnectionTransport) {
+    this._delegate = transport;
+    let callback: () => void;
+    this._readPromise = new Promise(f => callback = f);
+    this._delegate.onmessage = s => {
+      callback();
+      if (this.onmessage)
+        this.onmessage(s);
+    };
+    this._delegate.onclose = () => {
+      if (this.onclose)
+        this.onclose();
+    };
+  }
+
+  async send(s: string) {
+    await this._readPromise;
+    this._delegate.send(s);
+  }
+
+  close() {
+    this._delegate.close();
+  }
+}
