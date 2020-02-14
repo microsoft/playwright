@@ -15,11 +15,12 @@
  */
 
 const Message = require('../Message');
+const {firefox, webkit, chromium} = require('../../../');
 
-module.exports.ensureReleasedAPILinks = function(sources, version) {
+module.exports.ensureReleasedAPILinks = function(sources, libversion) {
   // Release version is everything that doesn't include "-".
   const apiLinkRegex = /https:\/\/github.com\/microsoft\/playwright\/blob\/v[^/]*\/docs\/api.md/ig;
-  const lastReleasedAPI = `https://github.com/microsoft/playwright/blob/v${version.split('-')[0]}/docs/api.md`;
+  const lastReleasedAPI = `https://github.com/microsoft/playwright/blob/v${libversion.split('-')[0]}/docs/api.md`;
 
   const messages = [];
   for (const source of sources) {
@@ -31,9 +32,9 @@ module.exports.ensureReleasedAPILinks = function(sources, version) {
   return messages;
 };
 
-module.exports.runCommands = function(sources, version) {
+module.exports.runCommands = function(sources, {libversion, chromiumVersion, firefoxVersion}) {
   // Release version is everything that doesn't include "-".
-  const isReleaseVersion = !version.includes('-');
+  const isReleaseVersion = !libversion.includes('-');
 
   const messages = [];
   const commands = [];
@@ -65,9 +66,17 @@ module.exports.runCommands = function(sources, version) {
   for (const command of commands) {
     let newText = null;
     if (command.name === 'version')
-      newText = isReleaseVersion ? 'v' + version : 'Tip-Of-Tree';
+      newText = isReleaseVersion ? 'v' + libversion : 'Tip-Of-Tree';
     else if (command.name === 'empty-if-release')
       newText = isReleaseVersion ? '' : command.originalText;
+    else if (command.name === 'chromium-version-if-release')
+      newText = isReleaseVersion ? chromiumVersion : command.originalText;
+    else if (command.name === 'firefox-version-if-release')
+      newText = isReleaseVersion ? firefoxVersion : command.originalText;
+    else if (command.name === 'chromium-version-badge-if-release')
+      newText = isReleaseVersion ? `[![Chromium version](https://img.shields.io/badge/chromium-${chromiumVersion}-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)` : command.originalText;
+    else if (command.name === 'firefox-version-badge-if-release')
+      newText = isReleaseVersion ? `[![Firefox version](https://img.shields.io/badge/firefox-${firefoxVersion}-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)` : command.originalText;
     else if (command.name === 'toc')
       newText = generateTableOfContents(command.source.text(), command.to, false /* topLevelOnly */);
     else if (command.name === 'toc-top-level')
