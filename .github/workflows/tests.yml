@@ -12,8 +12,8 @@ env:
   CI: true
 
 jobs:
-  tests_linux_chromium:
-    name: "Linux + CR"
+  chromium_linux:
+    name: "Chromium Linux"
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
@@ -27,23 +27,30 @@ jobs:
     - run: npm install
     - run: xvfb-run --auto-servernum npm run ccoverage
 
-  tests_linux_firefox:
-    name: "Linux + FF"
-    runs-on: ubuntu-18.04
+  chromium_mac:
+    name: "Chromium Mac"
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
-    - name: install required packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install xvfb
     - run: npm install
-    - run: xvfb-run --auto-servernum npm run fcoverage
+    - run: npm run ctest
 
-  tests_linux_webkit:
-    name: "Linux + WK"
+  chromium_win:
+    name: "Chromium Win"
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm install
+    - run: npm run ctest
+
+  webkit_linux:
+    name: "WebKit Linux"
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
@@ -58,30 +65,19 @@ jobs:
     - run: npm install
     - run: xvfb-run --auto-servernum npm run wcoverage
 
-  tests_win_chromium:
-    name: "Win + CR"
-    runs-on: windows-latest
+  webkit_mac:
+    name: "WebKit Mac"
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run ctest
+    - run: npm run wtest
 
-  tests_win_firefox:
-    name: "Win + FF"
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10.15
-    - run: npm install
-    - run: npm run ftest
-
-  tests_win_webkit:
-    name: "Win + WK"
+  webkit_win:
+    name: "WebKit Win"
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
@@ -93,19 +89,23 @@ jobs:
       env:
         DEBUG: "*launch*"
 
-  tests_mac_chromium:
-    name: "Mac + CR"
-    runs-on: macos-latest
+  firefox_linux:
+    name: "Firefox Linux"
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
+    - name: install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install xvfb
     - run: npm install
-    - run: npm run ctest
+    - run: xvfb-run --auto-servernum npm run fcoverage
 
-  tests_mac_firefox:
-    name: "Mac + FF"
+  firefox_mac:
+    name: "Firefox Mac"
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v1
@@ -115,13 +115,13 @@ jobs:
     - run: npm install
     - run: npm run ftest
 
-  tests_mac_webkit:
-    name: "Mac + WK"
-    runs-on: macos-latest
+  firefox_win:
+    name: "Firefox Win"
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run wtest
+    - run: npm run ftest
