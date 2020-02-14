@@ -1,16 +1,16 @@
 # Playwright
-[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) <!-- GEN:chromium-version-badge-if-release -->[![Chromium version](https://img.shields.io/badge/chromium-81.0.4044-blue.svg?logo=google-chrome)](https://www.chromium.org/Home) <!-- GEN:stop --> <!-- GEN:firefox-version-badge-if-release --> [![Firefox version](https://img.shields.io/badge/firefox-73.0b3-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/) <!-- GEN:stop --> [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg?logo=safari)](https://webkit.org/) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
+[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) <!-- GEN:chromium-version-badge-if-release -->[![Chromium version](https://img.shields.io/badge/chromium-82.0.4057.0-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge-if-release -->[![Firefox version](https://img.shields.io/badge/firefox-73.0b13-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> [![WebKit version](https://img.shields.io/badge/webkit-13.0.4-blue.svg?logo=safari)](https://webkit.org/) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
 
-###### [API](https://github.com/microsoft/playwright/blob/v0.10.0/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
+###### [API](https://github.com/microsoft/playwright/blob/v0.11.0/docs/api.md) | [FAQ](#faq) | [Contributing](#contributing)
 
 
 Playwright is a Node library to automate the [Chromium](https://www.chromium.org/Home), [WebKit](https://webkit.org/) and [Firefox](https://www.mozilla.org/en-US/firefox/new/) browsers with a single API. It enables **cross-browser** web automation that is **ever-green**, **capable**, **reliable** and **fast**.
 
 |          | ver | Linux | macOS | Win |
 |   ---:   | :---: | :---: | :---:  | :---: |
-| Chromium| <!-- GEN:chromium-version-if-release-->81.0.4044<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Chromium| <!-- GEN:chromium-version-if-release-->82.0.4057.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | WebKit | 13.0.4 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Firefox | <!-- GEN:firefox-version-if-release -->73.0b3<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Firefox | <!-- GEN:firefox-version-if-release -->73.0b13<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 - Headless is supported for all the browsers on all platforms.
 
 
