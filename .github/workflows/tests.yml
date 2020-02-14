@@ -25,7 +25,13 @@ jobs:
         sudo apt-get update
         sudo apt-get install libgbm-dev xvfb
     - run: npm install
-    - run: xvfb-run --auto-servernum npm run ccoverage
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    - run: DEBUG=* xvfb-run -a -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: chromium-linux-testrun.log
+        path: chromium-linux-testrun.log
 
   chromium_mac:
     name: "Chromium Mac"
@@ -36,7 +42,11 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run ctest
+    - run: DEBUG=* npm run ctest 2>./chromium-mac-testrun.log
+    - uses: actions/upload-artifact@v1
+      with:
+        name: chromium-mac-testrun.log
+        path: chromium-mac-testrun.log
 
   chromium_win:
     name: "Chromium Win"
@@ -47,7 +57,11 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run ctest
+    - run: set DEBUG=* & npm run ctest 2>chromium-win-testrun.log
+    - uses: actions/upload-artifact@v1
+      with:
+        name: chromium-win-testrun.log
+        path: chromium-win-testrun.log
 
   webkit_linux:
     name: "WebKit Linux"
