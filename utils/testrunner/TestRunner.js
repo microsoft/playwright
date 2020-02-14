@@ -22,6 +22,7 @@ const EventEmitter = require('events');
 const Multimap = require('./Multimap');
 const fs = require('fs');
 const {SourceMapSupport} = require('./SourceMapSupport');
+const debug = require('debug');
 
 const INFINITE_TIMEOUT = 2147483647;
 
@@ -240,6 +241,7 @@ class TestPass {
     } else {
       // Otherwise, run the test itself if there is no scheduled termination.
       this._runningUserCallbacks.set(workerId, test._userCallback);
+      this._runner._willStartTestBody(test, workerId);
       test.error = await test._userCallback.run(state, test);
       if (test.error)
         await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(test.error);
@@ -252,6 +254,7 @@ class TestPass {
         test.result = TestResult.Terminated;
       else
         test.result = TestResult.Failed;
+      this._runner._didFinishTestBody(test, workerId);
     }
     for (let i = suitesStack.length - 1; i >= 0; i--)
       crashed = (await this._runHook(workerId, suitesStack[i], 'afterEach', state, test)) || crashed;
@@ -267,19 +270,23 @@ class TestPass {
     const hook = suite[hookName];
     if (!hook)
       return false;
+    this._runner._willStartHook(suite, hook, hookName, workerId);
     this._runningUserCallbacks.set(workerId, hook);
     const error = await hook.run(...args);
     this._runningUserCallbacks.delete(workerId, hook);
     if (error === TimeoutError) {
       const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       const message = `${location} - Timeout Exceeded ${hook.timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
+      this._runner._didFailHook(suite, hook, hookName);
       return await this._terminate(TestResult.Crashed, message, null);
     }
     if (error) {
       const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       const message = `${location} - FAILED while running "${hookName}" in suite "${suite.fullName}"`;
+      this._runner._didFailHook(suite, hook, hookName);
       return await this._terminate(TestResult.Crashed, message, error);
     }
+    this._runner._didCompleteHook(suite, hook, hookName);
     return false;
   }
 
@@ -289,6 +296,7 @@ class TestPass {
     if (error && error.stack)
       await this._runner._sourceMapSupport.rewriteStackTraceWithSourceMaps(error);
     this._termination = {result, message, error};
+    this._runner._willTerminate(this._termination);
     for (const userCallback of this._runningUserCallbacks.valuesArray())
       userCallback.terminate();
     return true;
@@ -508,6 +516,30 @@ class TestRunner extends EventEmitter {
   _didFinishTest(test, workerId) {
     test.endTimestamp = Date.now();
     this.emit(TestRunner.Events.TestFinished, test, workerId);
+  }
+
+  _willStartTestBody(test, workerId) {
+    debug('testrunner:test')(`starting "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
+  }
+
+  _didFinishTestBody(test, workerId) {
+    debug('testrunner:test')(`${test.result.toUpperCase()} "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
+  }
+
+  _willStartHook(suite, hook, hookName, workerId) {
+    debug('testrunner:hook')(`"${hookName}" started for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+  }
+
+  _didFailHook(suite, hook, hookName, workerId) {
+    debug('testrunner:hook')(`"${hookName}" FAILED for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+  }
+
+  _didCompleteHook(suite, hook, hookName, workerId) {
+    debug('testrunner:hook')(`"${hookName}" OK for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+  }
+
+  _willTerminate(termination) {
+    debug('testrunner')(`TERMINTED result = ${termination.result}, message = ${termination.message}`);
   }
 }
 
