@@ -223,7 +223,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
   });
 
-  describe.skip(CHROMIUM || FFOX)('BrowserContext({language})', function() {
+  describe.skip(CHROMIUM || FFOX)('BrowserContext({locale})', function() {
     it('should affect accept-language header', async({newPage, server}) => {
       const page = await newPage({ locale: 'fr-CH' });
       const [request] = await Promise.all([
@@ -245,8 +245,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       {
         const page = await newPage({ locale: 'fr-CH' });
         await page.goto(server.EMPTY_PAGE);
-        const formatted = MAC ? '1\u00A0000\u00A0000,5' : '1\u202F000\u202F000,5';
-        expect(await page.evaluate(() => (1000000.50).toLocaleString())).toBe(formatted);
+        expect(await page.evaluate(() => (1000000.50).toLocaleString().replace(/\s/g, ' '))).toBe('1 000 000,5');
       }
     });
     it('should format date', async({newPage, server}) => {
