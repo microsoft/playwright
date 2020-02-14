@@ -89,7 +89,9 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run wtest
+    - run: npm run wtest -- --verbose
+      env:
+        DEBUG: "*launch*"
 
   tests_mac_chromium:
     name: "Mac + CR"
