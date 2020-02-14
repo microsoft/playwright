@@ -73,7 +73,7 @@ export interface PageDelegate {
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<platform.BufferType>;
-  coverage(): Coverage | undefined;
+  coverage?: () => any;
 }
 
 type PageState = {
@@ -112,7 +112,7 @@ export class Page extends platform.EventEmitter {
   readonly accessibility: accessibility.Accessibility;
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
-  readonly coverage: Coverage | undefined;
+  readonly coverage: any;
   readonly _requestHandlers: { url: types.URLMatch, handler: (request: network.Request) => void }[] = [];
   _ownedContext: BrowserContext | undefined;
 
@@ -150,7 +150,7 @@ export class Page extends platform.EventEmitter {
     this._frameManager = new frames.FrameManager(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
-    this.coverage = delegate.coverage();
+    this.coverage = delegate.coverage ? delegate.coverage() : null;
   }
 
   _didClose() {
@@ -602,11 +602,4 @@ export class Worker {
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
   }
-}
-
-export interface Coverage {
-  startJSCoverage(options?: types.JSCoverageOptions): Promise<void>;
-  stopJSCoverage(): Promise<types.CoverageEntry[]>;
-  startCSSCoverage(options?: types.CSSCoverageOptions): Promise<void>;
-  stopCSSCoverage(): Promise<types.CoverageEntry[]>;
 }

@@ -20,16 +20,33 @@ import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 
 import { EVALUATION_SCRIPT_URL } from './crExecutionContext';
-import { Coverage } from '../page';
 import * as types from '../types';
 
-type CoverageEntry = {
+type JSRange = {
+  startOffset: number,
+  endOffset: number,
+  count: number
+}
+
+type CSSCoverageEntry = {
   url: string,
-  text: string,
-  ranges: {start: number, end: number}[]
+  text?: string,
+  ranges: {
+    start: number,
+    end: number
+  }[]
 };
 
-export class CRCoverage implements Coverage {
+type JSCoverageEntry = {
+  url: string,
+  source?: string,
+  functions: {
+    functionName: string,
+    ranges: JSRange[]
+  }[]
+};
+
+export class CRCoverage {
   private _jsCoverage: JSCoverage;
   private _cssCoverage: CSSCoverage;
 
@@ -42,7 +59,7 @@ export class CRCoverage implements Coverage {
     return await this._jsCoverage.start(options);
   }
 
-  async stopJSCoverage(): Promise<CoverageEntry[]> {
+  async stopJSCoverage(): Promise<JSCoverageEntry[]> {
     return await this._jsCoverage.stop();
   }
 
@@ -50,7 +67,7 @@ export class CRCoverage implements Coverage {
     return await this._cssCoverage.start(options);
   }
 
-  async stopCSSCoverage(): Promise<CoverageEntry[]> {
+  async stopCSSCoverage(): Promise<CSSCoverageEntry[]> {
     return await this._cssCoverage.stop();
   }
 }
@@ -58,7 +75,7 @@ export class CRCoverage implements Coverage {
 class JSCoverage {
   _client: CRSession;
   _enabled: boolean;
-  _scriptURLs: Map<string, string>;
+  _scriptIds: Set<string>;
   _scriptSources: Map<string, string>;
   _eventListeners: RegisteredListener[];
   _resetOnNavigation: boolean;
@@ -67,7 +84,7 @@ class JSCoverage {
   constructor(client: CRSession) {
     this._client = client;
     this._enabled = false;
-    this._scriptURLs = new Map();
+    this._scriptIds = new Set();
     this._scriptSources = new Map();
     this._eventListeners = [];
     this._resetOnNavigation = false;
@@ -82,7 +99,7 @@ class JSCoverage {
     this._resetOnNavigation = resetOnNavigation;
     this._reportAnonymousScripts = reportAnonymousScripts;
     this._enabled = true;
-    this._scriptURLs.clear();
+    this._scriptIds.clear();
     this._scriptSources.clear();
     this._eventListeners = [
       helper.addEventListener(this._client, 'Debugger.scriptParsed', this._onScriptParsed.bind(this)),
@@ -91,7 +108,7 @@ class JSCoverage {
     this._client.on('Debugger.paused', () => this._client.send('Debugger.resume'));
     await Promise.all([
       this._client.send('Profiler.enable'),
-      this._client.send('Profiler.startPreciseCoverage', {callCount: false, detailed: true}),
+      this._client.send('Profiler.startPreciseCoverage', { callCount: true, detailed: true }),
       this._client.send('Debugger.enable'),
       this._client.send('Debugger.setSkipAllPauses', {skip: true})
     ]);
@@ -100,7 +117,7 @@ class JSCoverage {
   _onExecutionContextsCleared() {
     if (!this._resetOnNavigation)
       return;
-    this._scriptURLs.clear();
+    this._scriptIds.clear();
     this._scriptSources.clear();
   }
 
@@ -108,12 +125,12 @@ class JSCoverage {
     // Ignore playwright-injected scripts
     if (event.url === EVALUATION_SCRIPT_URL)
       return;
+    this._scriptIds.add(event.scriptId);
     // Ignore other anonymous scripts unless the reportAnonymousScripts option is true.
     if (!event.url && !this._reportAnonymousScripts)
       return;
     try {
       const response = await this._client.send('Debugger.getScriptSource', {scriptId: event.scriptId});
-      this._scriptURLs.set(event.scriptId, event.url);
       this._scriptSources.set(event.scriptId, response.scriptSource);
     } catch (e) {
       // This might happen if the page has already navigated away.
@@ -121,7 +138,7 @@ class JSCoverage {
     }
   }
 
-  async stop(): Promise<CoverageEntry[]> {
+  async stop(): Promise<JSCoverageEntry[]> {
     assert(this._enabled, 'JSCoverage is not enabled');
     this._enabled = false;
     const [profileResponse] = await Promise.all([
@@ -132,19 +149,17 @@ class JSCoverage {
     ] as const);
     helper.removeEventListeners(this._eventListeners);
 
-    const coverage = [];
+    const coverage: JSCoverageEntry[] = [];
     for (const entry of profileResponse.result) {
-      let url = this._scriptURLs.get(entry.scriptId);
-      if (!url && this._reportAnonymousScripts)
-        url = 'debugger://VM' + entry.scriptId;
-      const text = this._scriptSources.get(entry.scriptId);
-      if (text === undefined || url === undefined)
+      if (!this._scriptIds.has(entry.scriptId))
         continue;
-      const flattenRanges = [];
-      for (const func of entry.functions)
-        flattenRanges.push(...func.ranges);
-      const ranges = convertToDisjointRanges(flattenRanges);
-      coverage.push({url, ranges, text});
+      if (!entry.url && !this._reportAnonymousScripts)
+        continue;
+      const source = this._scriptSources.get(entry.scriptId);
+      if (source)
+        coverage.push({...entry, source});
+      else
+        coverage.push(entry);
     }
     return coverage;
   }
@@ -207,7 +222,7 @@ class CSSCoverage {
     }
   }
 
-  async stop(): Promise<CoverageEntry[]> {
+  async stop(): Promise<CSSCoverageEntry[]> {
     assert(this._enabled, 'CSSCoverage is not enabled');
     this._enabled = false;
     const ruleTrackingResponse = await this._client.send('CSS.stopRuleUsageTracking');
@@ -232,7 +247,7 @@ class CSSCoverage {
       });
     }
 
-    const coverage: CoverageEntry[] = [];
+    const coverage: CSSCoverageEntry[] = [];
     for (const styleSheetId of this._stylesheetURLs.keys()) {
       const url = this._stylesheetURLs.get(styleSheetId)!;
       const text = this._stylesheetSources.get(styleSheetId)!;

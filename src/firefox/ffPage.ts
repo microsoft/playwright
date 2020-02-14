@@ -20,7 +20,7 @@ import { helper, RegisteredListener, debugError, assert } from '../helper';
 import * as dom from '../dom';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
-import { Page, PageDelegate, Coverage, Worker } from '../page';
+import { Page, PageDelegate, Worker } from '../page';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Events } from '../events';
 import * as dialog from '../dialog';
@@ -436,10 +436,6 @@ export class FFPage implements PageDelegate {
 
   async getAccessibilityTree(needle?: dom.ElementHandle) {
     return getAccessibilityTree(this._session, needle);
-  }
-
-  coverage(): Coverage | undefined {
-    return undefined;
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {

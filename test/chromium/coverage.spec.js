@@ -29,10 +29,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const coverage = await page.coverage.stopJSCoverage();
       expect(coverage.length).toBe(1);
       expect(coverage[0].url).toContain('/jscoverage/simple.html');
-      expect(coverage[0].ranges).toEqual([
-        { start: 0, end: 17 },
-        { start: 35, end: 61 },
-      ]);
+      expect(coverage[0].functions.find(f => f.functionName === 'foo').ranges[0].count).toEqual(1);
     });
     it('should report sourceURLs', async function({page, server}) {
       await page.coverage.startJSCoverage();
@@ -70,31 +67,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       coverage.sort((a, b) => a.url.localeCompare(b.url));
       expect(coverage[0].url).toContain('/jscoverage/script1.js');
       expect(coverage[1].url).toContain('/jscoverage/script2.js');
-    });
-    it('should report right ranges', async function({page, server}) {
-      await page.coverage.startJSCoverage();
-      await page.goto(server.PREFIX + '/jscoverage/ranges.html');
-      const coverage = await page.coverage.stopJSCoverage();
-      expect(coverage.length).toBe(1);
-      const entry = coverage[0];
-      expect(entry.ranges.length).toBe(1);
-      const range = entry.ranges[0];
-      expect(entry.text.substring(range.start, range.end)).toBe(`console.log('used!');`);
-    });
-    it('should report scripts that have no coverage', async function({page, server}) {
-      await page.coverage.startJSCoverage();
-      await page.goto(server.PREFIX + '/jscoverage/unused.html');
-      const coverage = await page.coverage.stopJSCoverage();
-      expect(coverage.length).toBe(1);
-      const entry = coverage[0];
-      expect(entry.url).toContain('unused.html');
-      expect(entry.ranges.length).toBe(0);
-    });
-    it('should work with conditionals', async function({page, server}) {
-      await page.coverage.startJSCoverage();
-      await page.goto(server.PREFIX + '/jscoverage/involved.html');
-      const coverage = await page.coverage.stopJSCoverage();
-      expect(JSON.stringify(coverage, null, 2).replace(/:\d{4}\//g, ':<PORT>/')).toBeGolden('jscoverage-involved.txt');
     });
     describe('resetOnNavigation', function() {
       it('should report scripts across navigations when disabled', async function({page, server}) {
@@ -210,6 +182,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         link.href = url;
         document.head.appendChild(link);
         await new Promise(x => link.onload = x);
+        await new Promise(f => requestAnimationFrame(f));
       }, server.PREFIX + '/csscoverage/stylesheet1.css');
       const coverage = await page.coverage.stopCSSCoverage();
       expect(coverage.length).toBe(1);
