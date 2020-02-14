@@ -189,6 +189,7 @@ export async function readFileAsync(file: string, encoding: string): Promise<str
 
 export async function writeFileAsync(file: string, data: any) {
   assertFileAccess();
+  await nodeFS.mkdirSync(nodePath.dirname(file), {recursive: true});
   return await promisify(nodeFS.writeFile)(file, data);
 }
 
