@@ -485,15 +485,15 @@ export class Page extends platform.EventEmitter {
     return this._closed;
   }
 
-  async click(selector: string, options?: frames.WaitForOptions & input.ClickOptions) {
+  async click(selector: string, options?: frames.WaitForOptions & input.ClickOptions & dom.WaitForInteractableOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  async dblclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
+  async dblclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions & dom.WaitForInteractableOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  async tripleclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions) {
+  async tripleclick(selector: string, options?: frames.WaitForOptions & input.MultiClickOptions & dom.WaitForInteractableOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
@@ -505,7 +505,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().focus(selector, options);
   }
 
-  async hover(selector: string, options?: frames.WaitForOptions & input.PointerActionOptions) {
+  async hover(selector: string, options?: frames.WaitForOptions & input.PointerActionOptions & dom.WaitForInteractableOptions) {
     return this.mainFrame().hover(selector, options);
   }
 
@@ -517,11 +517,11 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().type(selector, text, options);
   }
 
-  async check(selector: string, options?: frames.WaitForOptions) {
+  async check(selector: string, options?: frames.WaitForOptions & dom.WaitForInteractableOptions) {
     return this.mainFrame().check(selector, options);
   }
 
-  async uncheck(selector: string, options?: frames.WaitForOptions) {
+  async uncheck(selector: string, options?: frames.WaitForOptions & dom.WaitForInteractableOptions) {
     return this.mainFrame().uncheck(selector, options);
   }
 
