@@ -61,7 +61,8 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run ctest 2>chromium-win-testrun.log
+    - run: npm run ctest 2>./chromium-win-testrun.log
+      shell: bash
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
