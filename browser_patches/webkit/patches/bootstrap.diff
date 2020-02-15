@@ -10957,7 +10957,7 @@ index 0000000000000000000000000000000000000000..30e6ae3bdc8c1695189885afae949071
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d33b1bb189d561754e5f44cc1fa87f2760a2f424
+index 0000000000000000000000000000000000000000..7406306e47b4f3469db150eef6a71ac30e8f2f7a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/InspectorBrowserAgentClientWin.cpp
 @@ -0,0 +1,83 @@
@@ -11015,11 +11015,11 @@ index 0000000000000000000000000000000000000000..d33b1bb189d561754e5f44cc1fa87f27
 +
 +RefPtr<WebPageProxy> InspectorBrowserAgentClientWin::createPage(WTF::String& error, const BrowserContext& context)
 +{
-+    auto conf = &API::PageConfiguration::create().leakRef();
-+    auto prefs = &WebPreferences::create(String(), "WebKit2Automation.", "WebKit2Automation.").leakRef();
++    auto conf = API::PageConfiguration::create();
++    auto prefs = WebPreferences::create(String(), "WebKit2Automation.", "WebKit2Automation.");
 +    conf->setProcessPool(context.processPool.get());
 +    conf->setWebsiteDataStore(context.dataStore.get());
-+    return toImpl(m_createPage(toAPI(conf)));
++    return toImpl(m_createPage(toAPI(&conf.get())));
 +}
 +
 +void InspectorBrowserAgentClientWin::closeBrowser()
@@ -12549,7 +12549,7 @@ index 61e75ba190ee2de5e4229cb4baae85248a9b35b3..a2a92644239b2aa4aa27d5da848ed97c
 +    bool m_headless;
  };
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index f590685184e78882f611164a284eb36bf50b5099..530518dc35048b56bf298bccbcf2ce28f249b19c 100644
+index f590685184e78882f611164a284eb36bf50b5099..43c27fdbdd1e5df25bfb3164edd43b03e6fca527 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 @@ -39,6 +39,8 @@
@@ -12659,7 +12659,7 @@ index f590685184e78882f611164a284eb36bf50b5099..530518dc35048b56bf298bccbcf2ce28
  void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
  {
      auto page = WKViewGetPage(m_view.get());
-@@ -381,21 +384,102 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+@@ -381,18 +384,100 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
      return false;
  }
  
@@ -12755,19 +12755,18 @@ index f590685184e78882f611164a284eb36bf50b5099..530518dc35048b56bf298bccbcf2ce28
 +        newWindow.browserWindow()->loadURL(_bstr_t("about:blank").GetBSTR());
 +
      auto& newBrowserWindow = *static_cast<WebKitBrowserWindow*>(newWindow.browserWindow());
-     WKRetainPtr<WKPageRef> newPage = WKViewGetPage(newBrowserWindow.m_view.get());
-     return newPage.leakRef();
- }
- 
+-    WKRetainPtr<WKPageRef> newPage = WKViewGetPage(newBrowserWindow.m_view.get());
++    return WKViewGetPage(newBrowserWindow.m_view.get());
++}
++
 +
 +WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef, WKPageConfigurationRef configuration, WKNavigationActionRef, WKWindowFeaturesRef, const void*)
 +{
-+    return createViewCallback(configuration, false);
-+}
-+
- void WebKitBrowserWindow::didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr event, const void* clientInfo)
- {
-     auto& thisWindow = toWebKitBrowserWindow(clientInfo);
++    // Retain popups as per API contract.
++    WKRetainPtr<WKPageRef> newPage = createViewCallback(configuration, false);
+     return newPage.leakRef();
+ }
+ 
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 index e8efe3c2838a9bb553a1c59ff6c1fb25d2f96500..9131c6e8259772c8e8c066125acfac82f408ddb9 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
