@@ -27,7 +27,9 @@ jobs:
     - run: npm install
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: DEBUG=* xvfb-run -a -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
+    - run: xvfb-run -a -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
+      env:
+        DEBUG: "*"
     - uses: actions/upload-artifact@v1
       with:
         name: chromium-linux-testrun.log
@@ -42,7 +44,9 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: DEBUG=* npm run ctest 2>./chromium-mac-testrun.log
+    - run: npm run ctest 2>./chromium-mac-testrun.log
+      env:
+        DEBUG: "*"
     - uses: actions/upload-artifact@v1
       with:
         name: chromium-mac-testrun.log
@@ -59,7 +63,7 @@ jobs:
     - run: npm install
     - run: npm run ctest
       env:
-        DEBUG: *
+        DEBUG: "*"
     - uses: actions/upload-artifact@v1
       with:
         name: chromium-win-testrun.log
@@ -79,7 +83,13 @@ jobs:
         sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1
         sudo apt-get install xvfb
     - run: npm install
-    - run: xvfb-run --auto-servernum npm run wcoverage
+    - run: xvfb-run --auto-servernum bash -c "npm run wcoverage 2>./webkit-linux-testrun.log"
+      env:
+        DEBUG: "*,-pw:wrapped*"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: webkit-linux-testrun.log
+        path: webkit-linux-testrun.log
 
   webkit_mac:
     name: "WebKit Mac"
