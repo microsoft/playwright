@@ -207,6 +207,16 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await textarea.press('NumpadSubtract');
       expect(await page.evaluate('keyLocation')).toBe(3);
     });
+    it.skip(FFOX)('should press Enter', async({page, server}) => {
+      await page.setContent('<input></input>');
+      await page.$eval('input', body => body.addEventListener('keydown', event => {
+        if (event.key === 'Enter')
+          window.ENTER_DOWN = true;
+      }, false));
+      await page.focus('input');
+      await page.keyboard.press('Enter');
+      expect(await page.evaluate(() => window.ENTER_DOWN)).toBe(true);
+    });
     it('should throw on unknown keys', async({page, server}) => {
       let error = await page.keyboard.press('NotARealKey').catch(e => e);
       expect(error.message).toBe('Unknown key: "NotARealKey"');
