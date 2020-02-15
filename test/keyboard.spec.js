@@ -207,7 +207,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await textarea.press('NumpadSubtract');
       expect(await page.evaluate('keyLocation')).toBe(3);
     });
-    it('should press Enter', async({page, server}) => {
+    it.skip(WEBKIT && MAC)('should press Enter', async({page, server}) => {
       await page.setContent('<textarea></textarea>');
       await page.focus('textarea');
       await page.evaluate(() => window.addEventListener('keydown', e => window.lastEvent = {key: e.key, code:e.code}));
