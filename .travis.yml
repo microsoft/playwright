@@ -18,6 +18,7 @@ addons:
       - libevent-2.1-6
       - libnotify4
       - libxslt1.1
+      - libvpx5
     # This is required to run chromium
       - libgbm1
     # this is needed for running headful tests
