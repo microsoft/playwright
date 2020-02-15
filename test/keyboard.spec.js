@@ -221,7 +221,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
         const lastEvent = await page.evaluate('lastEvent');
         expect(lastEvent.key).toBe(expectedKey, `${JSON.stringify(key)} had the wrong key: ${lastEvent.key}`);
         expect(lastEvent.code).toBe(expectedCode, `${JSON.stringify(key)} had the wrong code: ${lastEvent.code}`);
-        expect(await page.$eval('textarea', t => t.value)).toBe('\n', `${JSON.stringify(key)} failed to create a newline`);
+        const value = await page.$eval('textarea', t => t.value);
+        expect(value).toBe('\n', `${JSON.stringify(key)} failed to create a newline: ${JSON.stringify(value)}`);
         await page.$eval('textarea', t => t.value = '');
       }
     });
