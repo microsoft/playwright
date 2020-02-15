@@ -31,6 +31,7 @@ jobs:
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: chromium-linux-testrun.log
         path: chromium-linux-testrun.log
@@ -48,6 +49,7 @@ jobs:
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: chromium-mac-testrun.log
         path: chromium-mac-testrun.log
@@ -66,6 +68,7 @@ jobs:
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: chromium-win-testrun.log
         path: chromium-win-testrun.log
@@ -90,6 +93,7 @@ jobs:
       env:
         DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: webkit-linux-testrun.log
         path: webkit-linux-testrun.log
@@ -107,6 +111,7 @@ jobs:
       env:
         DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: webkit-mac-testrun.log
         path: webkit-mac-testrun.log
@@ -125,6 +130,7 @@ jobs:
       env:
         DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: webkit-win-testrun.log
         path: webkit-win-testrun.log
@@ -148,6 +154,7 @@ jobs:
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: firefox-linux-testrun.log
         path: firefox-linux-testrun.log
@@ -165,6 +172,7 @@ jobs:
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: firefox-mac-testrun.log
         path: firefox-mac-testrun.log
@@ -183,6 +191,7 @@ jobs:
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
+      if: failure()
       with:
         name: firefox-win-testrun.log
         path: firefox-win-testrun.log
