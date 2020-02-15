@@ -25,11 +25,18 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
   const iPhone = playwright.devices['iPhone 6'];
   const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 
-  describe('Page.viewport', function() {
+  describe('BrowserContext({viewport})', function() {
     it('should get the proper viewport size', async({page, server}) => {
-      expect(page.viewportSize()).toEqual({width: 800, height: 600});
+      expect(page.viewportSize()).toEqual({width: 1280, height: 720});
+      expect(await page.evaluate(() => window.innerWidth)).toBe(1280);
+      expect(await page.evaluate(() => window.innerHeight)).toBe(720);
+    });
+    it('should set the proper viewport size', async({page, server}) => {
+      expect(page.viewportSize()).toEqual({width: 1280, height: 720});
       await page.setViewportSize({width: 123, height: 456});
       expect(page.viewportSize()).toEqual({width: 123, height: 456});
+      expect(await page.evaluate(() => window.innerWidth)).toBe(123);
+      expect(await page.evaluate(() => window.innerHeight)).toBe(456);
     });
     it('should support mobile emulation', async({newContext, server}) => {
       const context = await newContext({ viewport: iPhone.viewport });
