@@ -180,4 +180,5 @@ Playwright is being actively developed as we get to the feature parity across Ch
 
 ## Resources
 
-* [API documentation](https://github.com/microsoft/playwright/blob/master/docs/api.md)
+* [API documentation](docs/api.md)
+* [Community showcase](docs/showcase.md)
