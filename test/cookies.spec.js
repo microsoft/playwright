@@ -206,7 +206,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expect(cookies[0] && cookies[0].name).toBe(undefined);
       }
     });
-    it('should isolate persistent cookies', async({context, server, newContext}) => {
+    it.skip(WEBKIT)('should isolate persistent cookies', async({context, server, newContext}) => {
       server.setRoute('/setcookie.html', (req, res) => {
         res.setHeader('Set-Cookie', 'persistent=persistent-value; max-age=3600');
         res.end();
