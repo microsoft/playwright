@@ -37,14 +37,6 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await page.keyboard.type(text);
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe(text);
     });
-    it('should press the metaKey', async({page, server}) => {
-      await page.goto(server.PREFIX + '/empty.html');
-      await page.evaluate(() => {
-        window.keyPromise = new Promise(resolve => document.addEventListener('keydown', event => resolve(event.key)));
-      });
-      await page.keyboard.press('Meta');
-      expect(await page.evaluate('keyPromise')).toBe(FFOX && !MAC ? 'OS' : 'Meta');
-    });
     it('should move with the arrow keys', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.type('textarea', 'Hello World!');
