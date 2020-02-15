@@ -27,7 +27,7 @@ jobs:
     - run: npm install
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
-    - run: xvfb-run -a -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "npm run ccoverage 2>./chromium-linux-testrun.log"
       env:
         DEBUG: "*"
     - uses: actions/upload-artifact@v1
@@ -84,7 +84,9 @@ jobs:
         sudo apt-get install libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1
         sudo apt-get install xvfb
     - run: npm install
-    - run: xvfb-run --auto-servernum bash -c "npm run wcoverage 2>./webkit-linux-testrun.log"
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    - run: xvfb-run --auto-servernum -- bash -c "npm run wcoverage 2>./webkit-linux-testrun.log"
       env:
         DEBUG: "*,-pw:wrapped*"
     - uses: actions/upload-artifact@v1
@@ -101,7 +103,13 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run wtest
+    - run: npm run wtest 2>./webkit-mac-testrun.log
+      env:
+        DEBUG: "*,-pw:wrapped*"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: webkit-mac-testrun.log
+        path: webkit-mac-testrun.log
 
   webkit_win:
     name: "WebKit Win"
@@ -112,9 +120,14 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run wtest -- --verbose
+    - run: npm run wtest -- --verbose 2>./webkit-win-testrun.log
+      shell: bash
       env:
-        DEBUG: "*launch*"
+        DEBUG: "*,-pw:wrapped*"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: webkit-win-testrun.log
+        path: webkit-win-testrun.log
 
   firefox_linux:
     name: "Firefox Linux"
@@ -129,7 +142,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install xvfb
     - run: npm install
-    - run: xvfb-run --auto-servernum npm run fcoverage
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    - run: xvfb-run --auto-servernum -- bash -c "npm run fcoverage 2>./firefox-linux-testrun.log"
+      env:
+        DEBUG: "*"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: firefox-linux-testrun.log
+        path: firefox-linux-testrun.log
 
   firefox_mac:
     name: "Firefox Mac"
@@ -140,7 +161,13 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run ftest
+    - run: npm run ftest 2>./firefox-mac-testrun.log
+      env:
+        DEBUG: "*"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: firefox-mac-testrun.log
+        path: firefox-mac-testrun.log
 
   firefox_win:
     name: "Firefox Win"
@@ -151,4 +178,11 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: npm run ftest
+    - run: npm run ftest 2>./firefox-win-testrun.log
+      shell: bash
+      env:
+        DEBUG: "*"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: firefox-win-testrun.log
+        path: firefox-win-testrun.log
