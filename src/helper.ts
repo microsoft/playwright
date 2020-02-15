@@ -51,16 +51,28 @@ class Helper {
       if (!isAsync && !log.enabled)
         continue;
       Reflect.set(classType.prototype, methodName, function(this: any, ...args: any[]) {
+        const syncStack: any = {};
+        Error.captureStackTrace(syncStack);
         if (log.enabled) {
-          if (args.length)
-            log(`${className}.${methodName} %o`, args);
-          else
-            log(`${className}.${methodName}`);
+          const frames = syncStack.stack.substring('Error\n'.length)
+              .split('\n')
+              .map((f: string) => f.replace(/\s+at\s/, '').trim());
+          const userCall = frames.length <= 1 || !frames[1].includes('playwright/lib');
+          if (userCall) {
+            const match = /([^/\\]+)(:\d+:\d+)[)]?$/.exec(frames[1]);
+            let location = '';
+            if (match) {
+              const fileName = helper.trimMiddle(match[1], 20 - match[2].length);
+              location = `\u001b[33m[${fileName}${match[2]}]\u001b[39m `;
+            }
+            if (args.length)
+              log(`${location}${className}.${methodName} %o`, args);
+            else
+              log(`${location}${className}.${methodName}`);
+          }
         }
         if (!isAsync)
           return method.call(this, ...args);
-        const syncStack: any = {};
-        Error.captureStackTrace(syncStack);
         return method.call(this, ...args).catch((e: any) => {
           const stack = syncStack.stack.substring(syncStack.stack.indexOf('\n') + 1);
           const clientStack = stack.substring(stack.indexOf('\n'));
@@ -224,6 +236,15 @@ class Helper {
     if (urlString.startsWith('localhost') || urlString.startsWith('127.0.0.1'))
       urlString = 'http://' + urlString;
     return urlString;
+  }
+
+  static trimMiddle(string: string, maxLength: number) {
+    if (string.length <= maxLength)
+      return string;
+
+    const leftHalf = maxLength >> 1;
+    const rightHalf = maxLength - leftHalf - 1;
+    return string.substr(0, leftHalf) + '\u2026' + string.substr(this.length - rightHalf, rightHalf);
   }
 }
 

@@ -25,7 +25,7 @@ const { WebKit } = require('./lib/server/webkit');
 
 for (const className in api) {
   if (typeof api[className] === 'function')
-    helper.installApiHooks(className, api[className]);
+    helper.installApiHooks(className[0].toLowerCase() + className.substring(1), api[className]);
 }
 
 module.exports = {
