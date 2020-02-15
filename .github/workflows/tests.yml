@@ -57,7 +57,7 @@ jobs:
       with:
         node-version: 10.15
     - run: npm install
-    - run: env:DEBUG='*'; npm run ctest 2>chromium-win-testrun.log
+    - run: set DEBUG=* & npm run ctest 2>chromium-win-testrun.log
     - uses: actions/upload-artifact@v1
       with:
         name: chromium-win-testrun.log
