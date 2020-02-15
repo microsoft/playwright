@@ -7,6 +7,7 @@
 * [Elastic APM JS agent](https://github.com/elastic/apm-agent-rum-js): Playwright is used to run benchmark tests across browsers
 * [Codex](https://github.com/codex-src/codex-app): Playwright is used to run functional and performance tests
 * [Instakittens React admin](https://github.com/fredericbonnet/instakittens-react-admin): Playwright is used to run end-to-end test scenarios written with Cucumber
+* [xterm.js](https://github.com/xtermjs/xterm.js): Playwright is used to run cross-browser integration tests
 
 ## Tools
 
