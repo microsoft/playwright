@@ -297,6 +297,29 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-scrolled-into-view.png');
     });
+    it.skip(CHROMIUM)('should scroll 15000px into view', async({page, server}) => {
+      await page.setViewportSize({width: 500, height: 500});
+      await page.setContent(`
+        <div style="height: 14px">oooo</div>
+        <style>div.above {
+          border: 2px solid blue;
+          background: red;
+          height: 15000px;
+        }
+        div.to-screenshot {
+          border: 2px solid blue;
+          background: green;
+          width: 50px;
+          height: 50px;
+        }
+        </style>
+        <div class="above"></div>
+        <div class="to-screenshot"></div>
+      `);
+      const elementHandle = await page.$('div.to-screenshot');
+      const screenshot = await elementHandle.screenshot();
+      expect(screenshot).toBeGolden('screenshot-element-scrolled-into-view.png');
+    });
     it('should work with a rotated element', async({page, server}) => {
       await page.setViewportSize({width: 500, height: 500});
       await page.setContent(`<div style="position:absolute;
