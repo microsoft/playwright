@@ -3469,7 +3469,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `dumpio` <[boolean]> Whether to pipe the browser process stdout and stderr into `process.stdout` and `process.stderr`. Defaults to `false`.
   - `env` <[Object]> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-- returns: <[Promise]<[BrowserServer]>> Promise which resolves to the browser app instance.
+- returns: <[Promise]<[BrowserContext]>> Promise which resolves to the browser app instance.
 
 Launches browser instance that uses persistent storage located at `userDataDir`. If `userDataDir` is not specified, temporary folder is created for the persistent storage. That folder is deleted when browser closes.
 
