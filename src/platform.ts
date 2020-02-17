@@ -222,7 +222,7 @@ export function urlMatches(urlString: string, match: types.URLMatch | undefined)
     return true;
   if (helper.isString(match))
     match = helper.globToRegex(match);
-  if (match instanceof RegExp)
+  if (match instanceof RegExp || match.constructor.name === "RegExp")
     return match.test(urlString);
   if (typeof match === 'string' && match === urlString)
     return true;
