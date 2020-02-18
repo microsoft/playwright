@@ -67,13 +67,23 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    const viewport = options.viewport ? {
-      viewportSize: { width: options.viewport.width, height: options.viewport.height },
-      isMobile: !!options.viewport.isMobile,
-      deviceScaleFactor: options.viewport.deviceScaleFactor || 1,
-      hasTouch: !!options.viewport.isMobile,
-    } : undefined;
-    const {browserContextId} = await this._connection.send('Target.createBrowserContext', {
+    let viewport;
+    if (options.viewport) {
+      viewport = {
+        viewportSize: { width: options.viewport.width, height: options.viewport.height },
+        isMobile: !!options.viewport.isMobile,
+        deviceScaleFactor: options.viewport.deviceScaleFactor || 1,
+        hasTouch: !!options.viewport.isMobile,
+      };
+    } else if (options.viewport !== null) {
+      viewport = {
+        viewportSize: { width: 1280, height: 720 },
+        isMobile: false,
+        deviceScaleFactor: 1,
+        hasTouch: false,
+      };
+    }
+    const { browserContextId } = await this._connection.send('Target.createBrowserContext', {
       userAgent: options.userAgent,
       bypassCSP: options.bypassCSP,
       javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,

@@ -63,7 +63,7 @@ export class BrowserContext extends platform.EventEmitter {
     this._timeoutSettings = new TimeoutSettings();
     this._options = { ...options };
     if (!this._options.viewport && this._options.viewport !== null)
-      this._options.viewport = { width: 800, height: 600 };
+      this._options.viewport = { width: 1280, height: 720 };
     if (this._options.viewport)
       this._options.viewport = { ...this._options.viewport };
     if (this._options.geolocation)
