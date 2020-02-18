@@ -403,7 +403,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate('window.clicked')).toBe(true);
     });
-    xit('should click on an animated button', async({page}) => {
+    xit('should fail to click a button animated via CSS animations and setInterval', async({page}) => {
       // This test has a setInterval that consistently animates a button.
       // It checks that we detect the button to be continuously animating, and never try to click it.
       // This test exposes two issues:
