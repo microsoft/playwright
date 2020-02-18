@@ -98,6 +98,10 @@ class Helper {
     return typeof obj === 'number' || obj instanceof Number;
   }
 
+  static isRegExp(obj: any): obj is RegExp {
+    return Object.prototype.toString.call(obj) === '[object RegExp]';
+  }
+
   static async waitForEvent(
     emitter: platform.EventEmitterType,
     eventName: (string | symbol),
