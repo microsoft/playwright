@@ -193,17 +193,19 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         path.relative(process.cwd(), __dirname + '/assets/pptr.png')).catch(e => error = e);
       expect(error).not.toBe(null);
     });
-    it('should emit input change event', async({page, server}) => {
+    it('should emit input and change events', async({page, server}) => {
       const events = [];
       await page.exposeFunction('eventHandled', e => events.push(e));
       await page.setContent(`
       <input id=input type=file></input>
       <script>
         input.addEventListener('input', e => eventHandled({ type: e.type }));
+        input.addEventListener('change', e => eventHandled({ type: e.type }));
       </script>`);
       await (await page.$('input')).setInputFiles(FILE_TO_UPLOAD);
-      expect(events.length).toBe(1);
+      expect(events.length).toBe(2);
       expect(events[0].type).toBe('input');
+      expect(events[1].type).toBe('change');
     });
   });
 
