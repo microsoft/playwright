@@ -1044,7 +1044,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.fill('body', 'some value');
       expect(await page.evaluate(() => document.body.textContent)).toBe('some value');
     });
-    it('should be able to fill when focus is in the wrong frame', async({page}) => {
+    fit('should be able to fill when focus is in the wrong frame', async({page}) => {
       await page.setContent(`
         <div contentEditable="true"></div>
         <iframe></iframe>

@@ -60,7 +60,7 @@ export class CRConnection extends platform.EventEmitter {
     if (sessionId)
       message.sessionId = sessionId;
     const data = JSON.stringify(message);
-    this._debugProtocol('SEND ► ' + data);
+    this._debugProtocol('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
     this._transport.send(data);
     return id;
   }
@@ -191,4 +191,11 @@ function createProtocolError(error: Error, method: string, object: { error: { me
 function rewriteError(error: Error, message: string): Error {
   error.message = message;
   return error;
+}
+
+function rewriteInjectedScriptEvaluationLog(message: any): string | undefined {
+  // Injected script is very long and clutters protocol logs.
+  // To increase development velocity, we skip replace it with short description in the log.
+  if (message.method === 'Runtime.evaluate' && message.params && message.params.expression && message.params.expression.includes('src/injected/injected.ts'))
+    return `{"id":${message.id} [evaluate injected script]}`;
 }
