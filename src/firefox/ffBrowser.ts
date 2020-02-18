@@ -82,7 +82,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
         deviceScaleFactor: 1,
         hasTouch: false,
       };
-    };
+    }
     const { browserContextId } = await this._connection.send('Target.createBrowserContext', {
       userAgent: options.userAgent,
       bypassCSP: options.bypassCSP,
