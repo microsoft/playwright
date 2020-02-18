@@ -34,6 +34,10 @@ export type LaunchOptions = BrowserArgOptions & {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
+  /**
+   * Whether to dump stdio of the browser, this is useful for example when
+   * diagnosing browser launch issues.
+   */
   dumpio?: boolean,
   env?: {[key: string]: string} | undefined
 };
