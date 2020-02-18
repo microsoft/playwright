@@ -404,6 +404,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate('window.clicked')).toBe(true);
     });
     xit('should click on an animated button', async({page}) => {
+      // This test has a setInterval that consistently animates a button.
+      // It checks that we detect the button to be continuously animating, and never try to click it.
       // This test exposes two issues:
       // - Chromium headless does not issue rafs between first and second animateLeft() calls.
       // - Chromium and WebKit keep element bounds the same when for 2 frames when changing left to a new value.
