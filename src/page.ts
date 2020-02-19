@@ -497,7 +497,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  async fill(selector: string, value: string, options?: frames.WaitForOptions) {
+  async fill(selector: string, value: string, options?: { clear?: boolean } & frames.WaitForOptions) {
     return this.mainFrame().fill(selector, value, options);
   }
 
@@ -511,10 +511,6 @@ export class Page extends platform.EventEmitter {
 
   async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | undefined, options?: frames.WaitForOptions): Promise<string[]> {
     return this.mainFrame().select(selector, value, options);
-  }
-
-  async type(selector: string, text: string, options?: frames.WaitForOptions & { delay?: number }) {
-    return this.mainFrame().type(selector, text, options);
   }
 
   async check(selector: string, options?: frames.WaitForOptions & dom.WaitForInteractableOptions) {

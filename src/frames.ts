@@ -799,9 +799,9 @@ export class Frame {
     await handle.dispose();
   }
 
-  async fill(selector: string, value: string, options?: WaitForOptions) {
+  async fill(selector: string, value: string, options?: { clear?: boolean } & WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    await handle.fill(value);
+    await handle.fill(value, options);
     await handle.dispose();
   }
 
@@ -823,12 +823,6 @@ export class Frame {
     const result = await handle.select(...values);
     await handle.dispose();
     return result;
-  }
-
-  async type(selector: string, text: string, options?: WaitForOptions & { delay?: number }) {
-    const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    await handle.type(text, options);
-    await handle.dispose();
   }
 
   async check(selector: string, options?: WaitForOptions & dom.WaitForInteractableOptions) {

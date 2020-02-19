@@ -945,6 +945,15 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.fill('input', 'some value');
       expect(await page.evaluate(() => result)).toBe('some value');
     });
+    it('should not clear when options.clear is false', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.fill('input', 'some');
+      expect(await page.evaluate(() => result)).toBe('some');
+      await page.fill('input', 'more', { clear: false });
+      expect(await page.evaluate(() => result)).toBe('somemore');
+      await page.fill('input', 'less');
+      expect(await page.evaluate(() => result)).toBe('less');
+    });
     it('should throw on unsupported inputs', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       for (const type of ['color', 'date']) {

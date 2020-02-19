@@ -307,9 +307,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, ...options);
   }
 
-  async fill(value: string): Promise<void> {
+  async fill(value: string, options?: { clear?: boolean }): Promise<void> {
+    const { clear = true } = (options || {});
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this._evaluateInUtility((node: Node, value: string) => {
+    const error = await this._evaluateInUtility((node: Node, value: string, clear: boolean) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'Node is not of type HTMLElement';
       const element = node as HTMLElement;
@@ -338,7 +339,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
           return 'Cannot fill a disabled input.';
         if (input.readOnly)
           return 'Cannot fill a readonly input.';
-        input.select();
+        if (clear)
+          input.select();
         input.focus();
       } else if (element.nodeName.toLowerCase() === 'textarea') {
         const textarea = element as HTMLTextAreaElement;
@@ -346,28 +348,32 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
           return 'Cannot fill a disabled textarea.';
         if (textarea.readOnly)
           return 'Cannot fill a readonly textarea.';
-        textarea.selectionStart = 0;
-        textarea.selectionEnd = textarea.value.length;
-        textarea.focus();
+        if (clear) {
+          textarea.selectionStart = 0;
+          textarea.selectionEnd = textarea.value.length;
+          textarea.focus();
+        }
       } else if (element.isContentEditable) {
-        const range = element.ownerDocument.createRange();
-        range.selectNodeContents(element);
-        const selection = element.ownerDocument.defaultView.getSelection();
-        if (!selection)
-          return 'Element belongs to invisible iframe.';
-        selection.removeAllRanges();
-        selection.addRange(range);
+        if (clear) {
+          const range = element.ownerDocument.createRange();
+          range.selectNodeContents(element);
+          const selection = element.ownerDocument.defaultView.getSelection();
+          if (!selection)
+            return 'Element belongs to invisible iframe.';
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
         element.focus();
       } else {
         return 'Element is not an <input>, <textarea> or [contenteditable] element.';
       }
       return false;
-    }, value);
+    }, value, clear);
     if (error)
       throw new Error(error);
     if (value)
       await this._page.keyboard.sendCharacters(value);
-    else
+    else if (clear)
       await this._page.keyboard.press('Delete');
   }
 
@@ -402,11 +408,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     });
     if (errorMessage)
       throw new Error(errorMessage);
-  }
-
-  async type(text: string, options?: { delay?: number }) {
-    await this.focus();
-    await this._page.keyboard.type(text, options);
   }
 
   async press(key: string, options?: { delay?: number, text?: string }) {

@@ -39,7 +39,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
     });
     it('should move with the arrow keys', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.type('textarea', 'Hello World!');
+      await page.fill('textarea', 'Hello World!');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello World!');
       for (let i = 0; i < 'World!'.length; i++)
         page.keyboard.press('ArrowLeft');
@@ -230,7 +230,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
     });
     it('should type emoji', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
-      await page.type('textarea', '👹 Tokyo street Japan 🇯🇵');
+      await page.fill('textarea', '👹 Tokyo street Japan 🇯🇵');
       expect(await page.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
     });
     it('should type emoji into an iframe', async({page, server}) => {
@@ -238,13 +238,13 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await utils.attachFrame(page, 'emoji-test', server.PREFIX + '/input/textarea.html');
       const frame = page.frames()[1];
       const textarea = await frame.$('textarea');
-      await textarea.type('👹 Tokyo street Japan 🇯🇵');
+      await textarea.fill('👹 Tokyo street Japan 🇯🇵');
       expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
     });
     it.skip(CHROMIUM && MAC)('should handle selectAll', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       const textarea = await page.$('textarea');
-      await textarea.type('some text');
+      await textarea.fill('some text');
       const modifier = MAC ? 'Meta' : 'Control';
       await page.keyboard.down(modifier);
       await page.keyboard.press('a');
@@ -255,7 +255,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
     it.skip(CHROMIUM && MAC)('should be able to prevent selectAll', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       const textarea = await page.$('textarea');
-      await textarea.type('some text');
+      await textarea.fill('some text');
       await page.$eval('textarea', textarea => {
         textarea.addEventListener('keydown', event => {
           if (event.key === 'a' && (event.metaKey || event.ctrlKey))

@@ -492,7 +492,7 @@ page.removeListener('request', logRequest);
 - [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
 - [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
-- [page.fill(selector, value, options)](#pagefillselector-value-options)
+- [page.fill(selector, value[, options])](#pagefillselector-value-options)
 - [page.focus(selector, options)](#pagefocusselector-options)
 - [page.frames()](#pageframes)
 - [page.goBack([options])](#pagegobackoptions)
@@ -518,7 +518,6 @@ page.removeListener('request', logRequest);
 - [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
 - [page.title()](#pagetitle)
 - [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
-- [page.type(selector, text[, options])](#pagetypeselector-text-options)
 - [page.uncheck(selector, [options])](#pageuncheckselector-options)
 - [page.url()](#pageurl)
 - [page.viewportSize()](#pageviewportsize)
@@ -1031,20 +1030,33 @@ const fs = require('fs');
 })();
 ```
 
-#### page.fill(selector, value, options)
+#### page.fill(selector, value[, options])
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
   - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `clear` <[boolean]> Whether to clear existing value before typing the new one. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
 This method focuses the element and triggers an `input` event after filling.
+
+```js
+// Fill with 'Hello'.
+await page.fill('#mytextarea', 'Hello');
+// Leave 'Hello' in the text area and add 'World', resulting in 'HelloWorld'.
+await page.fill('#mytextarea', 'World', { clear: false });
+```
+
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
 
-> **NOTE** Pass empty string as a value to clear the input field.
+> **NOTE** Pass empty string as a value to clear the input field (unless `clear` option is set to false).
 
-Shortcut for [page.mainFrame().fill()](#framefillselector-value)
+> **NOTE** To trigger `keydown`, `keypress` or `keyup` events, use [keyboard.type](#keyboardtypetext-options).
+
+> **NOTE** To press a special key, like `Control` or `ArrowDown`, use [keyboard.press](#keyboardpresskey-options).
+
+Shortcut for [page.mainFrame().fill(selector, value[, options])](#framefillselector-value-options)
 
 #### page.focus(selector, options)
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
@@ -1406,26 +1418,6 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 
 Shortcut for [page.mainFrame().tripleclick(selector[, options])](#frametripleclickselector-options).
 
-#### page.type(selector, text[, options])
-- `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
-- `text` <[string]> A text to type into a focused element.
-- `options` <[Object]>
-  - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]>
-
-Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
-
-To press a special key, like `Control` or `ArrowDown`, use [`keyboard.press`](#keyboardpresskey-options).
-
-```js
-await page.type('#mytextarea', 'Hello'); // Types instantly
-await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
-```
-
-Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselector-text-options).
-
 #### page.uncheck(selector, [options])
 - `selector` <[string]> A selector to search for uncheckbox to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
@@ -1693,7 +1685,7 @@ An example of getting text from an iframe element:
 - [frame.dblclick(selector[, options])](#framedblclickselector-options)
 - [frame.evaluate(pageFunction[, ...args])](#frameevaluatepagefunction-args)
 - [frame.evaluateHandle(pageFunction[, ...args])](#frameevaluatehandlepagefunction-args)
-- [frame.fill(selector, value, options)](#framefillselector-value-options)
+- [frame.fill(selector, value[, options])](#framefillselector-value-options)
 - [frame.focus(selector, options)](#framefocusselector-options)
 - [frame.frameElement()](#frameframeelement)
 - [frame.goto(url[, options])](#framegotourl-options)
@@ -1705,7 +1697,6 @@ An example of getting text from an iframe element:
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
 - [frame.title()](#frametitle)
 - [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
-- [frame.type(selector, text[, options])](#frametypeselector-text-options)
 - [frame.uncheck(selector, [options])](#frameuncheckselector-options)
 - [frame.url()](#frameurl)
 - [frame.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args)
@@ -1921,16 +1912,31 @@ console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
 
-#### frame.fill(selector, value, options)
+#### frame.fill(selector, value[, options])
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
   - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `clear` <[boolean]> Whether to clear existing value before typing the new one. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
 This method focuses the element and triggers an `input` event after filling.
+
+```js
+// Fill with 'Hello'.
+await frame.fill('#mytextarea', 'Hello');
+// Leave 'Hello' in the text area and add 'World', resulting in 'HelloWorld'.
+await frame.fill('#mytextarea', 'World', { clear: false });
+```
+
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
+
+> **NOTE** Pass empty string as a value to clear the input field (unless `clear` option is set to false).
+
+> **NOTE** To trigger `keydown`, `keypress` or `keyup` events, use [keyboard.type](#keyboardtypetext-options).
+
+> **NOTE** To press a special key, like `Control` or `ArrowDown`, use [keyboard.press](#keyboardpresskey-options).
 
 #### frame.focus(selector, options)
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
@@ -2075,24 +2081,6 @@ If there's no element matching `selector`, the method throws an error.
 Bear in mind that if the first or second click of the `tripleclick()` triggers a navigation event, there will be an exception.
 
 > **NOTE** `frame.tripleclick()` dispatches three `click` events and a single `dblclick` event.
-
-#### frame.type(selector, text[, options])
-- `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
-- `text` <[string]> A text to type into a focused element.
-- `options` <[Object]>
-  - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]>
-
-Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
-
-To press a special key, like `Control` or `ArrowDown`, use [`keyboard.press`](#keyboardpresskey-options).
-
-```js
-await frame.type('#mytextarea', 'Hello'); // Types instantly
-await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
-```
 
 #### frame.uncheck(selector, [options])
 - `selector` <[string]> A selector to search for uncheckbox to check. If there are multiple elements satisfying the selector, the first will be checked.
@@ -2279,7 +2267,7 @@ ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalse
 - [elementHandle.click([options])](#elementhandleclickoptions)
 - [elementHandle.contentFrame()](#elementhandlecontentframe)
 - [elementHandle.dblclick([options])](#elementhandledblclickoptions)
-- [elementHandle.fill(value)](#elementhandlefillvalue)
+- [elementHandle.fill(value[, options])](#elementhandlefillvalue-options)
 - [elementHandle.focus()](#elementhandlefocus)
 - [elementHandle.hover([options])](#elementhandlehoveroptions)
 - [elementHandle.ownerFrame()](#elementhandleownerframe)
@@ -2290,7 +2278,6 @@ ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalse
 - [elementHandle.setInputFiles(...files)](#elementhandlesetinputfilesfiles)
 - [elementHandle.toString()](#elementhandletostring)
 - [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
-- [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.uncheck([options])](#elementhandleuncheckoptions)
 - [elementHandle.visibleRatio()](#elementhandlevisibleratio)
 <!-- GEN:stop -->
@@ -2410,12 +2397,35 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 
 > **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
-#### elementHandle.fill(value)
+#### elementHandle.fill(value[, options])
 - `value` <[string]> Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
+- `options` <[Object]>
+  - `clear` <[boolean]> Whether to clear existing value before typing the new one. Defaults to `true`.
 - returns: <[Promise]> Promise which resolves when the element is successfully filled.
 
 This method focuses the element and triggers an `input` event after filling.
+
+```js
+// Fill with 'Hello'.
+await textAreaHandle.fill('Hello');
+// Leave 'Hello' in the text area and add 'World', resulting in 'HelloWorld'.
+await textAreaHandle.fill('World', { clear: false });
+```
+
+An example of filling a text field and then submitting the form:
+```js
+const elementHandle = await page.$('input');
+await elementHandle.fill('some text');
+await page.keyboard.press('Enter');
+```
+
 If element is not a text `<input>`, `<textarea>` or `[contenteditable]` element, the method throws an error.
+
+> **NOTE** Pass empty string as a value to clear the input field (unless `clear` option is set to false).
+
+> **NOTE** To trigger `keydown`, `keypress` or `keyup` events, use [keyboard.type](#keyboardtypetext-options).
+
+> **NOTE** To press a special key, like `Control` or `ArrowDown`, use [keyboard.press](#keyboardpresskey-options).
 
 #### elementHandle.focus()
 - returns: <[Promise]>
@@ -2525,28 +2535,6 @@ If the element is detached from DOM, the method throws an error.
 Bear in mind that if the first or second click of the `tripleclick()` triggers a navigation event, there will be an exception.
 
 > **NOTE** `elementHandle.tripleclick()` dispatches three `click` events and a single `dblclick` event.
-
-#### elementHandle.type(text[, options])
-- `text` <[string]> A text to type into a focused element.
-- `options` <[Object]>
-  - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-- returns: <[Promise]>
-
-Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
-
-To press a special key, like `Control` or `ArrowDown`, use [`elementHandle.press`](#elementhandlepresskey-options).
-
-```js
-await elementHandle.type('Hello'); // Types instantly
-await elementHandle.type('World', {delay: 100}); // Types slower, like a user
-```
-
-An example of typing into a text field and then submitting the form:
-```js
-const elementHandle = await page.$('input');
-await elementHandle.type('some text');
-await elementHandle.press('Enter');
-```
 
 #### elementHandle.uncheck([options])
 - `options` <[Object]>
