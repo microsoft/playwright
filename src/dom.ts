@@ -25,8 +25,6 @@ import { Page } from './page';
 import * as platform from './platform';
 import { Selectors } from './selectors';
 
-export type WaitForInteractableOptions = types.TimeoutOptions & { waitForInteractable?: boolean };
-
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
 
@@ -232,14 +230,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions & WaitForInteractableOptions): Promise<void> {
-    const { waitForInteractable = true } = (options || {});
-    if (waitForInteractable)
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions & types.WaitForOptions): Promise<void> {
+    const { waitFor = true } = (options || {});
+    if (!helper.isBoolean(waitFor))
+      throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
+    if (waitFor)
       await this._waitForStablePosition(options);
     const relativePoint = options ? options.relativePoint : undefined;
     await this._scrollRectIntoViewIfNeeded(relativePoint ? { x: relativePoint.x, y: relativePoint.y, width: 0, height: 0 } : undefined);
     const point = relativePoint ? await this._relativePoint(relativePoint) : await this._clickablePoint();
-    if (waitForInteractable)
+    if (waitFor)
       await this._waitForHitTargetAt(point, options);
     let restoreModifiers: input.Modifier[] | undefined;
     if (options && options.modifiers)
@@ -249,19 +249,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page.keyboard._ensureModifiers(restoreModifiers);
   }
 
-  hover(options?: input.PointerActionOptions & WaitForInteractableOptions): Promise<void> {
+  hover(options?: input.PointerActionOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: input.ClickOptions & WaitForInteractableOptions): Promise<void> {
+  click(options?: input.ClickOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: input.MultiClickOptions & WaitForInteractableOptions): Promise<void> {
+  dblclick(options?: input.MultiClickOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: input.MultiClickOptions & WaitForInteractableOptions): Promise<void> {
+  tripleclick(options?: input.MultiClickOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
@@ -414,15 +414,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this._page.keyboard.press(key, options);
   }
 
-  async check(options?: WaitForInteractableOptions) {
+  async check(options?: types.WaitForOptions) {
     await this._setChecked(true, options);
   }
 
-  async uncheck(options?: WaitForInteractableOptions) {
+  async uncheck(options?: types.WaitForOptions) {
     await this._setChecked(false, options);
   }
 
-  private async _setChecked(state: boolean, options: WaitForInteractableOptions = {}) {
+  private async _setChecked(state: boolean, options?: types.WaitForOptions) {
     const isCheckboxChecked = async (): Promise<boolean> => {
       return this._evaluateInUtility((node: Node) => {
         if (node.nodeType !== Node.ELEMENT_NODE)

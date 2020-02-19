@@ -142,25 +142,18 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate(() => result)).toBe('Clicked');
     });
-    it('should waitFor hidden when already hidden', async({page, server}) => {
+    it('should not wait with false waitFor', async({page, server}) => {
       let error = null;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
-      await page.click('button', { waitFor: 'hidden' }).catch(e => error = e);
+      await page.click('button', { waitFor: false }).catch(e => error = e);
       expect(error.message).toBe('Node is either not visible or not an HTMLElement');
       expect(await page.evaluate(() => result)).toBe('Was not clicked');
     });
-    it('should waitFor hidden', async({page, server}) => {
-      let error = null;
+    it('should throw for non-boolean waitFor', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
-      const clicked = page.click('button', { waitFor: 'hidden' }).catch(e => error = e);
-      for (let i = 0; i < 5; i++)
-        await page.evaluate('1'); // Do a round trip.
-      expect(error).toBe(null);
-      await page.$eval('button', b => b.style.display = 'none');
-      await clicked;
-      expect(error.message).toBe('Node is either not visible or not an HTMLElement');
-      expect(await page.evaluate(() => result)).toBe('Was not clicked');
+      const error = await page.click('button', { waitFor: 'visible' }).catch(e => e);
+      expect(error.message).toBe('waitFor option should be a boolean, got "string"');
     });
     it('should waitFor visible', async({page, server}) => {
       let done = false;
@@ -218,7 +211,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     it('should fail to click a missing button', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       let error = null;
-      await page.click('button.does-not-exist', { waitFor: 'nowait' }).catch(e => error = e);
+      await page.click('button.does-not-exist', { waitFor: false }).catch(e => error = e);
       expect(error.message).toBe('No node found for selector: button.does-not-exist');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/161
@@ -451,7 +444,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const error = await button.click({ timeout: 100 }).catch(e => e);
       expect(error.message).toContain('timeout 100ms exceeded');
     });
-    it('should fail when obscured and not waiting for interactable', async({page, server}) => {
+    it('should fail when obscured and not waiting for hit target', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
       await page.evaluate(() => {
@@ -464,7 +457,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         blocker.style.top = '0';
         document.body.appendChild(blocker);
       });
-      await button.click({ waitForInteractable: false });
+      await button.click({ waitFor: false });
       expect(await page.evaluate(() => window.result)).toBe('Was not clicked');
     });
 
