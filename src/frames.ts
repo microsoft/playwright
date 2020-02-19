@@ -428,9 +428,10 @@ export class Frame {
     let resolve: (error: Error|void) => void;
     const promise = new Promise<Error|void>(x => resolve = x);
     const watch = (documentId: string, error?: Error) => {
-      if (documentId !== expectedDocumentId)
-        return resolve(new Error('Navigation interrupted by another one'));
-      resolve(error);
+      if (documentId === expectedDocumentId)
+        resolve(error);
+      else if (!error)
+        resolve(new Error('Navigation interrupted by another one'));
     };
     const dispose = () => this._documentWatchers.delete(watch);
     this._documentWatchers.add(watch);
