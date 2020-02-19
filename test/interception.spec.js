@@ -616,10 +616,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe('regexp', function () {
-    it ('should work with regular expression passed from a different context', async({page, server}) => {
-      const ctx = vm.createContext()
-      const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx)
+  describe('regexp', function() {
+    it('should work with regular expression passed from a different context', async({page, server}) => {
+      const ctx = vm.createContext();
+      const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);
 
       await page.route(regexp, request => {
         expect(request.url()).toContain('empty.html');
@@ -635,8 +635,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
-    })
-  })
+    });
+  });
 };
 
 /**
