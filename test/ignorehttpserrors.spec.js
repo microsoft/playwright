@@ -23,24 +23,28 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
   describe('ignoreHTTPSErrors', function() {
-    it('should work', async({newPage, httpsServer}) => {
+    it('should work', async({browser, httpsServer}) => {
       let error = null;
-      const page = await newPage({ ignoreHTTPSErrors: true });
+      const context = await browser.newContext({ ignoreHTTPSErrors: true });
+      const page = await context.newPage();
       const response = await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
       expect(error).toBe(null);
       expect(response.ok()).toBe(true);
+      await context.close();
     });
-    it('should work with mixed content', async({newPage, server, httpsServer}) => {
+    it('should work with mixed content', async({browser, server, httpsServer}) => {
       httpsServer.setRoute('/mixedcontent.html', (req, res) => {
         res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
       });
-      const page = await newPage({ ignoreHTTPSErrors: true });
+      const context = await browser.newContext({ ignoreHTTPSErrors: true });
+      const page = await context.newPage();
       await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'load'});
       expect(page.frames().length).toBe(2);
       // Make sure blocked iframe has functional execution context
       // @see https://github.com/GoogleChrome/puppeteer/issues/2709
       expect(await page.frames()[0].evaluate('1 + 2')).toBe(3);
       expect(await page.frames()[1].evaluate('2 + 3')).toBe(5);
+      await context.close();
     });
   });
 };

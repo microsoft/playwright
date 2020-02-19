@@ -66,8 +66,6 @@ type TestState = {
 type BrowserState = TestState & {
     browser: import('../src/browser').Browser;
     browserServer: import('../src/server/browserServer').BrowserServer;
-    newPage: (options?: import('../src/browserContext').BrowserContextOptions) => Promise<import('../src/page').Page>;
-    newContext: (options?: import('../src/browserContext').BrowserContextOptions) => Promise<import('../src/browserContext').BrowserContext>;
 };
 
 type PageState = BrowserState & {

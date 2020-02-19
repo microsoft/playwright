@@ -26,16 +26,16 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('BrowserContext', function() {
-    it('should create new context', async function({browser, newContext}) {
+    it('should create new context', async function({browser}) {
       expect(browser.contexts().length).toBe(0);
-      const context = await newContext();
+      const context = await browser.newContext();
       expect(browser.contexts().length).toBe(1);
       expect(browser.contexts().indexOf(context) !== -1).toBe(true);
       await context.close();
       expect(browser.contexts().length).toBe(0);
     });
-    it('window.open should use parent tab context', async function({newContext, server}) {
-      const context = await newContext();
+    it('window.open should use parent tab context', async function({browser, server}) {
+      const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       const [popupTarget] = await Promise.all([
@@ -43,11 +43,12 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
       expect(popupTarget.context()).toBe(context);
+      await context.close();
     });
-    it('should isolate localStorage and cookies', async function({browser, newContext, server}) {
+    it('should isolate localStorage and cookies', async function({browser, server}) {
       // Create two incognito contexts.
-      const context1 = await newContext();
-      const context2 = await newContext();
+      const context1 = await browser.newContext();
+      const context2 = await browser.newContext();
       expect((await context1.pages()).length).toBe(0);
       expect((await context2.pages()).length).toBe(0);
 
@@ -88,69 +89,84 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       ]);
       expect(browser.contexts().length).toBe(0);
     });
-    it('should propagate default viewport to the page', async({ newPage }) => {
-      const page = await newPage({ viewport: { width: 456, height: 789 } });
+    it('should propagate default viewport to the page', async({ browser }) => {
+      const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
+      const page = await context.newPage();
       expect(page.viewportSize().width).toBe(456);
       expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
+      await context.close();
     });
-    it('should make a copy of default viewport', async({ newContext }) => {
+    it('should make a copy of default viewport', async({ browser }) => {
       const viewport = { width: 456, height: 789 };
-      const context = await newContext({ viewport });
+      const context = await browser.newContext({ viewport });
       viewport.width = 567;
       const page = await context.newPage();
       expect(page.viewportSize().width).toBe(456);
       expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
+      await context.close();
     });
   });
 
   describe('BrowserContext({userAgent})', function() {
-    it('should work', async({newPage, server}) => {
+    it('should work', async({browser, server}) => {
       {
-        const page = await newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         expect(await page.evaluate(() => navigator.userAgent)).toContain('Mozilla');
+        await context.close();
       }
       {
-        const page = await newPage({ userAgent: 'foobar' });
+        const context = await browser.newContext({ userAgent: 'foobar' });
+        const page = await context.newPage();
         const [request] = await Promise.all([
           server.waitForRequest('/empty.html'),
           page.goto(server.EMPTY_PAGE),
         ]);
         expect(request.headers['user-agent']).toBe('foobar');
+        await context.close();
       }
     });
-    it('should work for subframes', async({newPage, server}) => {
+    it('should work for subframes', async({browser, server}) => {
       {
-        const page = await newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         expect(await page.evaluate(() => navigator.userAgent)).toContain('Mozilla');
+        await context.close();
       }
       {
-        const page = await newPage({ userAgent: 'foobar' });
+        const context = await browser.newContext({ userAgent: 'foobar' });
+        const page = await context.newPage();
         const [request] = await Promise.all([
           server.waitForRequest('/empty.html'),
           utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
         ]);
         expect(request.headers['user-agent']).toBe('foobar');
+        await context.close();
       }
     });
-    it('should emulate device user-agent', async({newPage, server}) => {
+    it('should emulate device user-agent', async({browser, server}) => {
       {
-        const page = await newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         await page.goto(server.PREFIX + '/mobile.html');
         expect(await page.evaluate(() => navigator.userAgent)).not.toContain('iPhone');
+        await context.close();
       }
       {
-        const page = await newPage({ userAgent: playwright.devices['iPhone 6'].userAgent });
+        const context = await browser.newContext({ userAgent: playwright.devices['iPhone 6'].userAgent });
+        const page = await context.newPage();
         await page.goto(server.PREFIX + '/mobile.html');
         expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
+        await context.close();
       }
     });
-    it('should make a copy of default options', async({newContext, server}) => {
+    it('should make a copy of default options', async({browser, server}) => {
       const options = { userAgent: 'foobar' };
-      const context = await newContext(options);
+      const context = await browser.newContext(options);
       options.userAgent = 'wrong';
       const page = await context.newPage();
       const [request] = await Promise.all([
@@ -158,50 +174,60 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
         page.goto(server.EMPTY_PAGE),
       ]);
       expect(request.headers['user-agent']).toBe('foobar');
+      await context.close();
     });
   });
 
   describe('BrowserContext({bypassCSP})', function() {
-    it('should bypass CSP meta tag', async({newPage, server}) => {
+    it('should bypass CSP meta tag', async({browser, server}) => {
       // Make sure CSP prohibits addScriptTag.
       {
-        const page = await newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         await page.goto(server.PREFIX + '/csp.html');
         await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
         expect(await page.evaluate(() => window.__injected)).toBe(undefined);
+        await context.close();
       }
 
       // By-pass CSP and try one more time.
       {
-        const page = await newPage({ bypassCSP: true });
+        const context = await browser.newContext({ bypassCSP: true });
+        const page = await context.newPage();
         await page.goto(server.PREFIX + '/csp.html');
         await page.addScriptTag({content: 'window.__injected = 42;'});
         expect(await page.evaluate(() => window.__injected)).toBe(42);
+        await context.close();
       }
     });
 
-    it('should bypass CSP header', async({newPage, server}) => {
+    it('should bypass CSP header', async({browser, server}) => {
       // Make sure CSP prohibits addScriptTag.
       server.setCSP('/empty.html', 'default-src "self"');
 
       {
-        const page = await newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
         expect(await page.evaluate(() => window.__injected)).toBe(undefined);
+        await context.close();
       }
 
       // By-pass CSP and try one more time.
       {
-        const page = await newPage({ bypassCSP: true });
+        const context = await browser.newContext({ bypassCSP: true });
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         await page.addScriptTag({content: 'window.__injected = 42;'});
         expect(await page.evaluate(() => window.__injected)).toBe(42);
+        await context.close();
       }
     });
 
-    it('should bypass after cross-process navigation', async({newPage, server}) => {
-      const page = await newPage({ bypassCSP: true });
+    it('should bypass after cross-process navigation', async({browser, server}) => {
+      const context = await browser.newContext({ bypassCSP: true });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/csp.html');
       await page.addScriptTag({content: 'window.__injected = 42;'});
       expect(await page.evaluate(() => window.__injected)).toBe(42);
@@ -209,32 +235,38 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.CROSS_PROCESS_PREFIX + '/csp.html');
       await page.addScriptTag({content: 'window.__injected = 42;'});
       expect(await page.evaluate(() => window.__injected)).toBe(42);
+      await context.close();
     });
-    it('should bypass CSP in iframes as well', async({newPage, server}) => {
+    it('should bypass CSP in iframes as well', async({browser, server}) => {
       // Make sure CSP prohibits addScriptTag in an iframe.
       {
-        const page = await newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
         await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
         expect(await frame.evaluate(() => window.__injected)).toBe(undefined);
+        await context.close();
       }
 
       // By-pass CSP and try one more time.
       {
-        const page = await newPage({ bypassCSP: true });
+        const context = await browser.newContext({ bypassCSP: true });
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
         await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
         expect(await frame.evaluate(() => window.__injected)).toBe(42);
+        await context.close();
       }
     });
   });
 
   describe('BrowserContext({javaScriptEnabled})', function() {
-    it('should work', async({newPage}) => {
+    it('should work', async({browser}) => {
       {
-        const page = await newPage({ javaScriptEnabled: false });
+        const context = await browser.newContext({ javaScriptEnabled: false });
+        const page = await context.newPage();
         await page.goto('data:text/html, <script>var something = "forbidden"</script>');
         let error = null;
         await page.evaluate('something').catch(e => error = e);
@@ -242,17 +274,22 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
           expect(error.message).toContain('Can\'t find variable: something');
         else
           expect(error.message).toContain('something is not defined');
+        await context.close();
       }
 
       {
-        const page = await newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         await page.goto('data:text/html, <script>var something = "forbidden"</script>');
         expect(await page.evaluate('something')).toBe('forbidden');
+        await context.close();
       }
     });
-    it('should be able to navigate after disabling javascript', async({newPage, server}) => {
-      const page = await newPage({ javaScriptEnabled: false });
+    it('should be able to navigate after disabling javascript', async({browser, server}) => {
+      const context = await browser.newContext({ javaScriptEnabled: false });
+      const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
+      await context.close();
     });
   });
 };

@@ -68,8 +68,9 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       }, element);
       expect(pwBoundingBox).toEqual(webBoundingBox);
     });
-    it('should work with page scale', async({newPage, server}) => {
-      const page = await newPage({ viewport: { width: 400, height: 400, isMobile: true} });
+    it('should work with page scale', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true} });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
       await button.evaluate(button => {
@@ -85,6 +86,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(Math.round(box.y * 100)).toBe(23 * 100);
       expect(Math.round(box.width * 100)).toBe(200 * 100);
       expect(Math.round(box.height * 100)).toBe(20 * 100);
+      await context.close();
     });
     it('should work when inline box child is outside of viewport', async({page, server}) => {
       await page.setContent(`

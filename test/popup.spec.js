@@ -20,8 +20,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('window.open', function() {
-    it.skip(CHROMIUM || WEBKIT)('should inherit user agent from browser context', async function({newContext, server}) {
-      const context = await newContext({
+    it.skip(CHROMIUM || WEBKIT)('should inherit user agent from browser context', async function({browser, server}) {
+      const context = await browser.newContext({
         userAgent: 'hey'
       });
       const page = await context.newPage();
@@ -36,8 +36,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
-    it.skip(CHROMIUM)('should inherit touch support from browser context', async function({newContext, server}) {
-      const context = await newContext({
+    it.skip(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
+      const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }
       });
       const page = await context.newPage();
@@ -49,8 +49,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(hasTouch).toBe(true);
     });
-    it.skip(CHROMIUM || WEBKIT)('should inherit viewport size from browser context', async function({newContext, server}) {
-      const context = await newContext({
+    it.skip(CHROMIUM || WEBKIT)('should inherit viewport size from browser context', async function({browser, server}) {
+      const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }
       });
       const page = await context.newPage();
@@ -65,8 +65,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   });
 
   describe('Page.Events.Popup', function() {
-    it('should work', async({newContext}) => {
-      const context = await newContext();
+    it('should work', async({browser}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),
@@ -76,8 +76,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
-    it.skip(CHROMIUM)('should work with empty url', async({newContext}) => {
-      const context = await newContext();
+    it.skip(CHROMIUM)('should work with empty url', async({browser}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),
@@ -87,8 +87,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
-    it('should work with noopener', async({newContext}) => {
-      const context = await newContext();
+    it('should work with noopener', async({browser}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
         new Promise(x => page.once('popup', x)),
@@ -98,8 +98,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
-    it('should work with clicking target=_blank', async({newContext, server}) => {
-      const context = await newContext();
+    it('should work with clicking target=_blank', async({browser, server}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
@@ -111,8 +111,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
-    it('should work with fake-clicking target=_blank and rel=noopener', async({newContext, server}) => {
-      const context = await newContext();
+    it('should work with fake-clicking target=_blank and rel=noopener', async({browser, server}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       // TODO: FFOX sends events for "one-style.html" request to both pages.
       await page.goto(server.EMPTY_PAGE);
@@ -127,8 +127,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
-    it('should work with clicking target=_blank and rel=noopener', async({newContext, server}) => {
-      const context = await newContext();
+    it('should work with clicking target=_blank and rel=noopener', async({browser, server}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
@@ -140,8 +140,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(false);
       await context.close();
     });
-    it('should not treat navigations as new popups', async({newContext, server}) => {
-      const context = await newContext();
+    it('should not treat navigations as new popups', async({browser, server}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');

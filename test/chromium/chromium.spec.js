@@ -152,10 +152,10 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(createdTarget.opener()).toBe(browser.pageTarget(page));
       expect(browser.pageTarget(page).opener()).toBe(null);
     });
-    it('should close all belonging targets once closing context', async function({browser, newContext}) {
+    it('should close all belonging targets once closing context', async function({browser}) {
       const targets = async (context) => (await browser.targets()).filter(t => t.type() === 'page' && t.context() === context);
 
-      const context = await newContext();
+      const context = await browser.newContext();
       await context.newPage();
       expect((await targets(context)).length).toBe(1);
       expect((await context.pages()).length).toBe(1);
@@ -166,8 +166,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   });
 
   describe('Chromium.waitForTarget', () => {
-    it('should wait for a target', async function({browser, server, newContext}) {
-      const context = await newContext();
+    it('should wait for a target', async function({server, browser}) {
+      const context = await browser.newContext();
       let resolved = false;
       const targetPromise = browser.waitForTarget(target => target.context() === context && target.url() === server.EMPTY_PAGE);
       targetPromise.then(() => resolved = true);
@@ -176,6 +176,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto(server.EMPTY_PAGE);
       const target = await targetPromise;
       expect(await target.page()).toBe(page);
+      await context.close();
     });
     it('should timeout waiting for a non-existent target', async function({browser, context, server}) {
       const error = await browser.waitForTarget(target => target.context() === context && target.url() === server.EMPTY_PAGE, {timeout: 1}).catch(e => e);
@@ -192,8 +193,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await target.page()).toBe(page);
       await page.context().close();
     });
-    it('should fire target events', async function({browser, newContext, server}) {
-      const context = await newContext();
+    it('should fire target events', async function({browser, server}) {
+      const context = await browser.newContext();
       const events = [];
       browser.on('targetcreated', target => events.push('CREATED: ' + target.url()));
       browser.on('targetchanged', target => events.push('CHANGED: ' + target.url()));
@@ -206,6 +207,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         `CHANGED: ${server.EMPTY_PAGE}`,
         `DESTROYED: ${server.EMPTY_PAGE}`
       ]);
+      await context.close();
     });
   });
 
