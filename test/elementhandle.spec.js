@@ -86,6 +86,34 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(Math.round(box.width * 100)).toBe(200 * 100);
       expect(Math.round(box.height * 100)).toBe(20 * 100);
     });
+    it('should work when inline box child is outside of viewport', async({page, server}) => {
+      await page.setContent(`
+        <style>
+        i {
+          position: absolute;
+          top: -1000px;
+        }
+        body {
+          margin: 0;
+          font-size: 12px;
+        }
+        </style>
+        <span><i>woof</i><b>doggo</b></span>
+      `);
+      const handle = await page.$('span');
+      const box = await handle.boundingBox();
+      const webBoundingBox = await handle.evaluate(e => {
+        const rect = e.getBoundingClientRect();
+        return {x: rect.x, y: rect.y, width: rect.width, height: rect.height};
+      });
+      const round = box => ({
+        x: Math.round(box.x * 100),
+        y: Math.round(box.y * 100),
+        width: Math.round(box.width * 100),
+        height: Math.round(box.height * 100),
+      });
+      expect(round(box)).toEqual(round(webBoundingBox));
+    });
   });
 
   describe('ElementHandle.contentFrame', function() {
