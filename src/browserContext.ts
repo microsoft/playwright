@@ -93,7 +93,7 @@ export class BrowserContext extends platform.EventEmitter {
   }
 
   setDefaultDelay(delay: number) {
-    this._delaySettings.setDefaultDelay(delay === 0 ? null : delay);
+    this._delaySettings.setDefaultDelay(delay);
   }
 
   async pages(): Promise<Page[]> {

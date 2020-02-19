@@ -23,8 +23,11 @@ export class DelaySettings {
     this._parent = parent;
   }
 
-  setDefaultDelay(delay: null | number) {
-    this._defaultDelay = delay;
+  setDefaultDelay(delay: number) {
+    if (delay === 0)
+      this._defaultDelay = null;
+    else
+      this._defaultDelay = delay;
   }
 
   delay(): null | number {

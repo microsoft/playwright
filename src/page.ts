@@ -211,7 +211,7 @@ export class Page extends platform.EventEmitter {
   }
 
   setDefaultDelay(delay: number) {
-    this._delaySettings.setDefaultDelay(delay === 0 ? null : delay);
+    this._delaySettings.setDefaultDelay(delay);
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
