@@ -16,7 +16,6 @@
  */
 
 const utils = require('./utils');
-const { performance } = require('perf_hooks');
 
 /**
  * @type {PageTestSuite}
@@ -396,29 +395,39 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         expect(response.status()).toBe(200);
       });
 
+      /**
+       * @param {import('../src/frames').Frame} frame 
+       * @param {TestServer} server 
+       * @param {'networkidle0'|'networkidle2'} signal 
+       * @param {() => Promise<void>} action 
+       * @param {boolean} isSetContent 
+       */
       async function networkIdleTest(frame, server, signal, action, isSetContent) {
-        let lastResponseFinished;
         const finishResponse = response => {
-          lastResponseFinished = performance.now();
           response.statusCode = 404;
           response.end(`File not found`);
         };
-
+        const waitForRequest = suffix => {
+          return Promise.all([
+            server.waitForRequest(suffix),
+            frame._page.waitForRequest(server.PREFIX + suffix),
+          ])
+        }
         let responses = {};
         // Hold on to a bunch of requests without answering.
         server.setRoute('/fetch-request-a.js', (req, res) => responses.a = res);
         server.setRoute('/fetch-request-b.js', (req, res) => responses.b = res);
         server.setRoute('/fetch-request-c.js', (req, res) => responses.c = res);
         const initialFetchResourcesRequested = Promise.all([
-          server.waitForRequest('/fetch-request-a.js'),
-          server.waitForRequest('/fetch-request-b.js'),
-          server.waitForRequest('/fetch-request-c.js'),
+          waitForRequest('/fetch-request-a.js'),
+          waitForRequest('/fetch-request-b.js'),
+          waitForRequest('/fetch-request-c.js')
         ]);
 
         let secondFetchResourceRequested;
         if (signal === 'networkidle0') {
           server.setRoute('/fetch-request-d.js', (req, res) => responses.d = res);
-          secondFetchResourceRequested = server.waitForRequest('/fetch-request-d.js');
+          secondFetchResourceRequested = waitForRequest('/fetch-request-d.js');
         }
 
         const waitForLoadPromise = isSetContent ? Promise.resolve() : frame.waitForNavigation({ waitUntil: 'load' });
@@ -442,10 +451,11 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         expect(responses.a).toBeTruthy();
         expect(responses.b).toBeTruthy();
         expect(responses.c).toBeTruthy();
-        // Finishing first response should leave 2 requests alive and trigger networkidle2.
-        finishResponse(responses.a);
-
+        let timer;
+        let timerTriggered = false;
         if (signal === 'networkidle0') {
+          // Finishing first response should leave 2 requests alive and trigger networkidle2.
+          finishResponse(responses.a);
           // Finishing two more responses should trigger the second round.
           finishResponse(responses.b);
           finishResponse(responses.c);
@@ -454,11 +464,16 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
           await secondFetchResourceRequested;
           expect(actionFinished).toBe(false);
           // Finishing the last response should trigger networkidle0.
+          timer = setTimeout(() => timerTriggered = true, 500);
           finishResponse(responses.d);
+        } else {
+          timer = setTimeout(() => timerTriggered = true, 500);
+          // Finishing first response should leave 2 requests alive and trigger networkidle2.
+          finishResponse(responses.a);
         }
-
         const response = await actionPromise;
-        expect(performance.now() - lastResponseFinished).not.toBeLessThan(450);
+        clearTimeout(timer);
+        expect(timerTriggered).toBe(true);
         if (!isSetContent)
           expect(response.ok()).toBe(true);
 
