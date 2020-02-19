@@ -413,7 +413,6 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
             frame._page.waitForRequest(server.PREFIX + suffix),
           ])
         }
-        frame.setContent
         let responses = {};
         // Hold on to a bunch of requests without answering.
         server.setRoute('/fetch-request-a.js', (req, res) => responses.a = res);
