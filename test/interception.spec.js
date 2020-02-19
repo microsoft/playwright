@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const { helper } = require('../lib/helper');
 const utils = require('./utils');
-const vm = require('vm')
+const vm = require('vm');
 
 /**
  * @type {PageTestSuite}

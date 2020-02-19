@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
 const {waitEvent} = utils;
-const vm = require('vm')
+const vm = require('vm');
 
 /**
  * @type {PageTestSuite}
