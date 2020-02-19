@@ -378,6 +378,96 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => pageY)).toBe(expected.y);
     });
 
+    it('should wait for stable position', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', button => {
+        button.style.transition = 'margin 500ms linear 0s';
+        button.style.marginLeft = '200px';
+        button.style.borderWidth = '0';
+        button.style.width = '200px';
+        button.style.height = '20px';
+        document.body.style.margin = '0';
+      });
+      await page.click('button');
+      expect(await page.evaluate(() => window.result)).toBe('Clicked');
+      expect(await page.evaluate(() => pageX)).toBe(300);
+      expect(await page.evaluate(() => pageY)).toBe(10);
+    });
+    it('should timeout waiting for stable position', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      const button = await page.$('button');
+      await button.evaluate(button => {
+        button.style.transition = 'margin 5s linear 0s';
+        button.style.marginLeft = '200px';
+      });
+      const error = await button.click({ timeout: 100 }).catch(e => e);
+      expect(error.message).toContain('timeout 100ms exceeded');
+    });
+    it('should wait for becoming hit target', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', button => {
+        button.style.borderWidth = '0';
+        button.style.width = '200px';
+        button.style.height = '20px';
+        document.body.style.margin = '0';
+        document.body.style.position = 'relative';
+        const flyOver = document.createElement('div');
+        flyOver.className = 'flyover';
+        flyOver.style.position = 'absolute';
+        flyOver.style.width = '400px';
+        flyOver.style.height = '20px';
+        flyOver.style.left = '-200px';
+        flyOver.style.top = '0';
+        flyOver.style.background = 'red';
+        document.body.appendChild(flyOver);
+      });
+      let clicked = false;
+      const clickPromise = page.click('button').then(() => clicked = true);
+      expect(clicked).toBe(false);
+
+      await page.$eval('.flyover', flyOver => flyOver.style.left = '0');
+      await page.evaluate(() => new Promise(requestAnimationFrame));
+      await page.evaluate(() => new Promise(requestAnimationFrame));
+      expect(clicked).toBe(false);
+
+      await page.$eval('.flyover', flyOver => flyOver.style.left = '200px');
+      await clickPromise;
+      expect(clicked).toBe(true);
+      expect(await page.evaluate(() => window.result)).toBe('Clicked');
+    });
+    it('should timeout waiting for hit target', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      const button = await page.$('button');
+      await page.evaluate(() => {
+        document.body.style.position = 'relative';
+        const blocker = document.createElement('div');
+        blocker.style.position = 'absolute';
+        blocker.style.width = '400px';
+        blocker.style.height = '20px';
+        blocker.style.left = '0';
+        blocker.style.top = '0';
+        document.body.appendChild(blocker);
+      });
+      const error = await button.click({ timeout: 100 }).catch(e => e);
+      expect(error.message).toContain('timeout 100ms exceeded');
+    });
+    it('should fail when obscured and not waiting for interactable', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      const button = await page.$('button');
+      await page.evaluate(() => {
+        document.body.style.position = 'relative';
+        const blocker = document.createElement('div');
+        blocker.style.position = 'absolute';
+        blocker.style.width = '400px';
+        blocker.style.height = '20px';
+        blocker.style.left = '0';
+        blocker.style.top = '0';
+        document.body.appendChild(blocker);
+      });
+      await button.click({ waitForInteractable: false });
+      expect(await page.evaluate(() => window.result)).toBe('Was not clicked');
+    });
+
     it('should update modifiers correctly', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.click('button', { modifiers: ['Shift'] });
