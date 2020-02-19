@@ -17,6 +17,7 @@
 import { assert } from './helper';
 import * as types from './types';
 import * as keyboardLayout from './usKeyboardLayout';
+import { Page } from './page';
 
 export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 export type Button = 'left' | 'right' | 'middle';
@@ -58,11 +59,13 @@ export interface RawKeyboard {
 
 export class Keyboard {
   private _raw: RawKeyboard;
+  private _page: Page;
   private _pressedModifiers = new Set<Modifier>();
   private _pressedKeys = new Set<string>();
 
-  constructor(raw: RawKeyboard) {
+  constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
+    this._page = page
   }
 
   async down(key: string, options: { text?: string; } = { text: undefined }) {
@@ -136,8 +139,8 @@ export class Keyboard {
     await this._raw.sendText(text);
   }
 
-  async type(text: string, options?: { delay?: number }) {
-    const delay = (options && options.delay) || undefined;
+  async type(text: string, options: { delay?: number } = {}) {
+    const { delay = this._page._delaySettings.delay() } = options;
     for (const char of text) {
       if (keyboardLayout.keyDefinitions[char]) {
         await this.press(char, { delay });
@@ -150,7 +153,7 @@ export class Keyboard {
   }
 
   async press(key: string, options: { delay?: number; text?: string; } = {}) {
-    const {delay = null} = options;
+    const { delay = this._page._delaySettings.delay() } = options;
     await this.down(key, options);
     if (delay)
       await new Promise(f => setTimeout(f, options.delay));
@@ -189,14 +192,16 @@ export interface RawMouse {
 
 export class Mouse {
   private _raw: RawMouse;
+  private _page: Page;
   private _keyboard: Keyboard;
   private _x = 0;
   private _y = 0;
   private _lastButton: 'none' | Button = 'none';
   private _buttons = new Set<Button>();
 
-  constructor(raw: RawMouse, keyboard: Keyboard) {
+  constructor(raw: RawMouse, keyboard: Keyboard, page: Page) {
     this._raw = raw;
+    this._page = page;
     this._keyboard = keyboard;
   }
 
@@ -228,7 +233,7 @@ export class Mouse {
   }
 
   async click(x: number, y: number, options: ClickOptions = {}) {
-    const {delay = null} = options;
+    const { delay = this._page._delaySettings.delay() } = options;
     if (delay !== null) {
       await Promise.all([
         this.move(x, y),
@@ -246,7 +251,7 @@ export class Mouse {
   }
 
   async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
-    const { delay = null } = options;
+    const { delay = this._page._delaySettings.delay() } = options;
     if (delay !== null) {
       await this.move(x, y);
       await this.down({ ...options, clickCount: 1 });
@@ -268,7 +273,7 @@ export class Mouse {
   }
 
   async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
-    const { delay = null } = options;
+    const { delay = this._page._delaySettings.delay() } = options;
     if (delay !== null) {
       await this.move(x, y);
       await this.down({ ...options, clickCount: 1 });

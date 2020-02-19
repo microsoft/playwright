@@ -270,6 +270,7 @@ await context.close();
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
+- [browserContext.setDefaultDelay(delay)](#browsercontextsetdefaultdelaydelay)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
@@ -372,6 +373,11 @@ This setting will change the default maximum navigation time for the following m
 This setting will change the default maximum time for all the methods accepting `timeout` option.
 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout), [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) and [`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout) take priority over [`browserContext.setDefaultTimeout`](#browserContextsetdefaulttimeouttimeout).
+
+#### browserContext.setDefaultDelay(delay)
+- `delay` <[number]> Delay time in milliseconds
+
+This setting will change the default delay time for all the methods accepting `delay` option.
 
 #### browserContext.setGeolocation(geolocation)
 - `geolocation` <[Object]>
@@ -513,6 +519,7 @@ page.removeListener('request', logRequest);
 - [page.setContent(html[, options])](#pagesetcontenthtml-options)
 - [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
+- [page.setDefaultDelay(delay)](#pagesetdefaultdelaydelay)
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
 - [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
 - [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
@@ -1346,6 +1353,11 @@ This setting will change the default maximum navigation time for the following m
 This setting will change the default maximum time for all the methods accepting `timeout` option.
 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) takes priority over [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout).
+
+#### page.setDefaultDelay(delay)
+- `delay` <[number]> Delay time in milliseconds
+
+This setting will change the default delay time for all the methods accepting `delay` option.
 
 #### page.setExtraHTTPHeaders(headers)
 - `headers` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.

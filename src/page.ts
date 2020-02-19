@@ -23,6 +23,7 @@ import * as js from './javascript';
 import * as network from './network';
 import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from './timeoutSettings';
+import { DelaySettings } from './delaySettings';
 import * as types from './types';
 import { Events } from './events';
 import { BrowserContext } from './browserContext';
@@ -104,6 +105,7 @@ export class Page extends platform.EventEmitter {
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
+  readonly _delaySettings: DelaySettings;
   readonly _delegate: PageDelegate;
   readonly _state: PageState;
   private _pageBindings = new Map<string, Function>();
@@ -143,9 +145,10 @@ export class Page extends platform.EventEmitter {
       hasTouch: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
-    this.keyboard = new input.Keyboard(delegate.rawKeyboard);
-    this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
+    this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
+    this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard, this);
     this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
+    this._delaySettings = new DelaySettings(browserContext._delaySettings);
     this._screenshotter = new Screenshotter(this);
     this._frameManager = new frames.FrameManager(this);
     if (delegate.pdf)
@@ -205,6 +208,10 @@ export class Page extends platform.EventEmitter {
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
+  }
+
+  setDefaultDelay(delay: number) {
+    this._delaySettings.setDefaultDelay(delay === 0 ? null : delay);
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
