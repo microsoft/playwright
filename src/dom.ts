@@ -487,25 +487,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  visibleRatio(): Promise<number> {
-    return this._evaluateInUtility(async (node: Node) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        throw new Error('Node is not of type HTMLElement');
-      const element = node as Element;
-      const visibleRatio = await new Promise<number>(resolve => {
-        const observer = new IntersectionObserver(entries => {
-          resolve(entries[0].intersectionRatio);
-          observer.disconnect();
-        });
-        observer.observe(element);
-        // Firefox doesn't call IntersectionObserver callback unless
-        // there are rafs.
-        requestAnimationFrame(() => {});
-      });
-      return visibleRatio;
-    });
-  }
-
   async _waitForStablePosition(options: types.TimeoutOptions = {}): Promise<void> {
     const context = await this._context.frame._utilityContext();
     const stablePromise = context.evaluate((injected: Injected, node: Node, timeout: number) => {

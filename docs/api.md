@@ -2292,7 +2292,6 @@ ElementHandle instances can be used as arguments in [`page.$eval()`](#pageevalse
 - [elementHandle.tripleclick([options])](#elementhandletripleclickoptions)
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.uncheck([options])](#elementhandleuncheckoptions)
-- [elementHandle.visibleRatio()](#elementhandlevisibleratio)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-JSHandle -->
 - [jsHandle.asElement()](#jshandleaselement)
@@ -2465,7 +2464,7 @@ If the element is detached from DOM, the method throws an error.
 #### elementHandle.scrollIntoViewIfNeeded()
 - returns: <[Promise]> Resolves after the element has been scrolled into view.
 
-This method tries to scroll element into view, unless it is completely visible as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```. See also [elementHandle.visibleRatio()](#elementhandlevisibleratio).
+This method tries to scroll element into view, unless it is completely visible as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
 
 Throws when ```elementHandle``` does not point to an element [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
@@ -2555,11 +2554,6 @@ await elementHandle.press('Enter');
 - returns: <[Promise]> Promise which resolves when the element is successfully unchecked. Promise gets rejected if the operation fails.
 
 If element is not already unchecked, it scrolls it into view if needed, and then uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
-
-#### elementHandle.visibleRatio()
-- returns: <[Promise]<[number]>> Returns the visible ratio as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
-
-Positive ratio means that some part of the element is visible in the current viewport. Ratio equal to one means that element is completely visible.
 
 ### class: JSHandle
 
