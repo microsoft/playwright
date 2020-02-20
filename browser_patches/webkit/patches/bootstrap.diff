@@ -5652,6 +5652,46 @@ index 69a52e17a4a8932b5dfc5edfa72b922c18d43082..f859e07168077d10918f954cca699c4e
  WebProcess/InjectedBundle/API/glib/DOM/DOMObjectCache.cpp @no-unify
  WebProcess/InjectedBundle/API/glib/DOM/WebKitDOMDocument.cpp @no-unify
  WebProcess/InjectedBundle/API/glib/DOM/WebKitDOMElement.cpp @no-unify
+diff --git a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
+index d91e9532ec320ca84c9618f71ac0d0c421bea748..8f0ee1df58f2ec9cf2df0799d55e1e1b54d2fb67 100644
+--- a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
++++ b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
+@@ -53,6 +53,9 @@ Ref<ProcessPoolConfiguration> ProcessPoolConfiguration::copy()
+     copy->m_ignoreSynchronousMessagingTimeoutsForTesting = this->m_ignoreSynchronousMessagingTimeoutsForTesting;
+     copy->m_attrStyleEnabled = this->m_attrStyleEnabled;
+     copy->m_overrideLanguages = this->m_overrideLanguages;
++#if PLATFORM(MAC)
++    copy->m_forceOverlayScrollbars = this->m_forceOverlayScrollbars;
++#endif
+     copy->m_alwaysRunsAtBackgroundPriority = this->m_alwaysRunsAtBackgroundPriority;
+     copy->m_shouldTakeUIBackgroundAssertion = this->m_shouldTakeUIBackgroundAssertion;
+     copy->m_shouldCaptureAudioInUIProcess = this->m_shouldCaptureAudioInUIProcess;
+diff --git a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.h b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.h
+index 8cf4d51e4b43ad1206accb596df79c8e10f6fb96..57b7fb31644564df157c83d9b19ac28b596c0af5 100644
+--- a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.h
++++ b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.h
+@@ -98,6 +98,11 @@ public:
+     const Vector<WTF::String>& overrideLanguages() const { return m_overrideLanguages; }
+     void setOverrideLanguages(Vector<WTF::String>&& languages) { m_overrideLanguages = WTFMove(languages); }
+     
++#if PLATFORM(MAC)
++    bool forceOverlayScrollbars() const { return m_forceOverlayScrollbars; }
++    void setForceOverlayScrollbars(bool forceOverlayScrollbars) { m_forceOverlayScrollbars = forceOverlayScrollbars; }
++#endif
++
+     bool alwaysRunsAtBackgroundPriority() const { return m_alwaysRunsAtBackgroundPriority; }
+     void setAlwaysRunsAtBackgroundPriority(bool alwaysRunsAtBackgroundPriority) { m_alwaysRunsAtBackgroundPriority = alwaysRunsAtBackgroundPriority; }
+ 
+@@ -158,6 +163,9 @@ private:
+     bool m_ignoreSynchronousMessagingTimeoutsForTesting { false };
+     bool m_attrStyleEnabled { false };
+     Vector<WTF::String> m_overrideLanguages;
++#if PLATFORM(MAC)
++    bool m_forceOverlayScrollbars { false };
++#endif
+     bool m_alwaysRunsAtBackgroundPriority { false };
+     bool m_shouldTakeUIBackgroundAssertion { true };
+     bool m_shouldCaptureAudioInUIProcess { false };
 diff --git a/Source/WebKit/UIProcess/API/APIUIClient.h b/Source/WebKit/UIProcess/API/APIUIClient.h
 index 54513035b261bfd5e187ec945796198ed09d88b1..2d3200e4f6e90a16f248b255f75d2a7e17d895a5 100644
 --- a/Source/WebKit/UIProcess/API/APIUIClient.h
@@ -6006,6 +6046,39 @@ index 0000000000000000000000000000000000000000..f31834b80328fc5c182c64de53ff51e4
 +
 +@implementation _WKBrowserContext
 +@end
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
+index 238b6a20669190df8b15c5a8ae50400af0273839..bc09d61e28b31e1b2618f6bf8f378c00522f3fe9 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
+@@ -62,6 +62,7 @@ WK_CLASS_AVAILABLE(macos(10.10), ios(8.0))
+ #endif
+ @property (nonatomic) pid_t presentingApplicationPID WK_API_AVAILABLE(macos(10.13), ios(11.0));
+ @property (nonatomic) BOOL processSwapsOnNavigation WK_API_AVAILABLE(macos(10.14), ios(12.0));
++@property (nonatomic) BOOL forceOverlayScrollbars WK_API_AVAILABLE(macos(10.14));
+ @property (nonatomic) BOOL alwaysKeepAndReuseSwappedProcesses WK_API_AVAILABLE(macos(10.14), ios(12.0));
+ @property (nonatomic) BOOL processSwapsOnWindowOpenWithOpener WK_API_AVAILABLE(macos(10.14), ios(12.0));
+ @property (nonatomic) BOOL prewarmsProcessesAutomatically WK_API_AVAILABLE(macos(10.14.4), ios(12.2));
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
+index 6ec7c145fbbae9b6beb8fb5dc3e620f75fa20a32..6eaea7f858c2b475f7d127516ec736b46777a19f 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
+@@ -271,6 +271,16 @@
+     return _processPoolConfiguration->processSwapsOnNavigation();
+ }
+ 
++- (void)setForceOverlayScrollbars:(BOOL)force
++{
++    _processPoolConfiguration->setForceOverlayScrollbars(force);
++}
++
++- (BOOL)forceOverlayScrollbars
++{
++    return _processPoolConfiguration->forceOverlayScrollbars();
++}
++
+ - (void)setPrewarmsProcessesAutomatically:(BOOL)prewarms
+ {
+     _processPoolConfiguration->setIsAutomaticProcessWarmingEnabled(prewarms);
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm
 index 2bdb8b9e7256f22096ebaa5d51959aa52389ca0a..2141d9d17497861a6c711f99306de10992a93ce8 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm
@@ -7125,7 +7198,7 @@ index a3d0ded6df0566cb74493f98ec28bce0e8d893b3..a4d9a214407eb2c55c07a10b700abbb2
  {
      auto delegate = m_uiDelegate.m_delegate.get();
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
-index f154a4e6fdfbe1dbcb23f07d329c7ae22bebd7f6..2a6ce63aa57d7a970cf5a8160e072d0dc9c24b82 100644
+index f154a4e6fdfbe1dbcb23f07d329c7ae22bebd7f6..fb98c957658dc47449b61ea32956f931694c8157 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/WebProcessPoolCocoa.mm
 @@ -130,6 +130,13 @@ static void registerUserDefaultsIfNeeded()
@@ -7142,6 +7215,15 @@ index f154a4e6fdfbe1dbcb23f07d329c7ae22bebd7f6..2a6ce63aa57d7a970cf5a8160e072d0d
  void WebProcessPool::updateProcessSuppressionState()
  {
      if (m_networkProcess)
+@@ -311,7 +318,7 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
+ #if PLATFORM(MAC)
+     auto screenProperties = WebCore::collectScreenProperties();
+     parameters.screenProperties = WTFMove(screenProperties);
+-    parameters.useOverlayScrollbars = ([NSScroller preferredScrollerStyle] == NSScrollerStyleOverlay);
++    parameters.useOverlayScrollbars = m_configuration->forceOverlayScrollbars() || ([NSScroller preferredScrollerStyle] == NSScrollerStyleOverlay);
+ #endif
+     
+ #if PLATFORM(IOS)
 @@ -385,6 +392,8 @@ void WebProcessPool::platformInitializeNetworkProcess(NetworkProcessCreationPara
          }
      }
@@ -7151,6 +7233,17 @@ index f154a4e6fdfbe1dbcb23f07d329c7ae22bebd7f6..2a6ce63aa57d7a970cf5a8160e072d0d
      parameters.networkATSContext = adoptCF(_CFNetworkCopyATSContext());
  
      parameters.shouldSuppressMemoryPressureHandler = [defaults boolForKey:WebKitSuppressMemoryPressureHandlerDefaultsKey];
+@@ -535,8 +544,8 @@ void WebProcessPool::registerNotificationObservers()
+ 
+ #if ENABLE(WEBPROCESS_WINDOWSERVER_BLOCKING)
+     m_scrollerStyleNotificationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSPreferredScrollerStyleDidChangeNotification object:nil queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
+-        auto scrollbarStyle = [NSScroller preferredScrollerStyle];
+-        sendToAllProcesses(Messages::WebProcess::ScrollerStylePreferenceChanged(scrollbarStyle));
++        bool useOverlayScrollbars = m_configuration->forceOverlayScrollbars() || ([NSScroller preferredScrollerStyle] == NSScrollerStyleOverlay);
++        sendToAllProcesses(Messages::WebProcess::ScrollerStylePreferenceChanged(useOverlayScrollbars));
+     }];
+ #endif
+ 
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 index 6bbd1cabd27ae2847648a8c2edcf9acfcd556ff5..38d101b9a96986e40f6e9f0261fa429a3d516e2e 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
@@ -13928,10 +14021,10 @@ index 0000000000000000000000000000000000000000..41b5751cab626971cd12c5066218c6d1
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..828d172381e12ea0455045fdc098dfa7726ae040
+index 0000000000000000000000000000000000000000..7fbd8c5426eb43b96a7c8e793a7f85810819053e
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,488 @@
+@@ -0,0 +1,490 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -14120,6 +14213,7 @@ index 0000000000000000000000000000000000000000..828d172381e12ea0455045fdc098dfa7
 +        configuration.preferences._domTimersThrottlingEnabled = NO;
 +        configuration.preferences._requestAnimationFrameEnabled = YES;
 +        _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
++        processConfiguration.forceOverlayScrollbars = YES;
 +        configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration AndDataStore:configuration.websiteDataStore] autorelease];
 +    }
 +    return configuration;
@@ -14326,6 +14420,7 @@ index 0000000000000000000000000000000000000000..828d172381e12ea0455045fdc098dfa7
 +{
 +    _WKBrowserContext *browserContext = [[_WKBrowserContext alloc] init];
 +    _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
++    processConfiguration.forceOverlayScrollbars = YES;
 +    browserContext.dataStore = [WKWebsiteDataStore nonPersistentDataStore];
 +    browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
 +    [_browserContexts addObject:browserContext];
