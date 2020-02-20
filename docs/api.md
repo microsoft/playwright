@@ -331,7 +331,7 @@ If URLs are specified, only cookies that affect those URLs are returned.
 Creates a new page in the browser context.
 
 #### browserContext.pages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [target.page()](#targetpage).
+- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [chromiumTarget.page()](#chromiumtargetpage).
 
 An array of all pages inside the browser context.
 
@@ -3549,7 +3549,6 @@ await browser.stopTracing();
 - [event: 'targetdestroyed'](#event-targetdestroyed)
 - [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
 - [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
-- [chromiumBrowser.serviceWorker(target)](#chromiumbrowserserviceworkertarget)
 - [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
 - [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
 - [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
@@ -3565,7 +3564,7 @@ await browser.stopTracing();
 <!-- GEN:stop -->
 
 #### event: 'targetchanged'
-- <[Target]>
+- <[ChromiumTarget]>
 
 Emitted when the url of a target changes.
 
@@ -3573,33 +3572,27 @@ Emitted when the url of a target changes.
 
 
 #### event: 'targetcreated'
-- <[Target]>
+- <[ChromiumTarget]>
 
 Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
 
 > **NOTE** This includes target creations in incognito browser contexts.
 
 #### event: 'targetdestroyed'
-- <[Target]>
+- <[ChromiumTarget]>
 
 Emitted when a target is destroyed, for example when a page is closed.
 
 > **NOTE** This includes target destructions in incognito browser contexts.
 
 #### chromiumBrowser.browserTarget()
-- returns: <[Target]>
+- returns: <[ChromiumTarget]>
 
 Returns browser target.
 
 #### chromiumBrowser.pageTarget(page)
 - `page` <[Page]> Page to return target for.
-- returns: <[Target]> a target given page was created from.
-
-#### chromiumBrowser.serviceWorker(target)
-- `target` <[ChromiumTarget]> Target to treat as a service worker
-- returns: <[Promise]<[ChromiumWorker]>>
-
-Attaches to the service worker target.
+- returns: <[ChromiumTarget]> a target given page was created from.
 
 #### chromiumBrowser.startTracing(page, [options])
 - `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
@@ -3616,16 +3609,16 @@ Only one trace can be active at a time per browser.
 
 #### chromiumBrowser.targets(context)
 - `context` <[BrowserContext]> Optional, if specified, only targets from this context are returned.
-- returns: <[Array]<[Target]>>
+- returns: <[Array]<[ChromiumTarget]>>
 
 An array of all active targets inside the Browser. In case of multiple browser contexts,
 the method will return an array with all the targets in all browser contexts.
 
 #### chromiumBrowser.waitForTarget(predicate[, options])
-- `predicate` <[function]\([Target]\):[boolean]> A function to be run for every target
+- `predicate` <[function]\([ChromiumTarget]\):[boolean]> A function to be run for every target
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
-- returns: <[Promise]<[Target]>> Promise which resolves to the first target found that matches the `predicate` function.
+- returns: <[Promise]<[ChromiumTarget]>> Promise which resolves to the first target found that matches the `predicate` function.
 
 This searches for a target in all browser contexts.
 
@@ -3747,6 +3740,7 @@ to send messages.
 - [chromiumTarget.createCDPSession()](#chromiumtargetcreatecdpsession)
 - [chromiumTarget.opener()](#chromiumtargetopener)
 - [chromiumTarget.page()](#chromiumtargetpage)
+- [chromiumTarget.serviceWorker()](#chromiumtargetserviceworker)
 - [chromiumTarget.type()](#chromiumtargettype)
 - [chromiumTarget.url()](#chromiumtargeturl)
 <!-- GEN:stop -->
@@ -3763,7 +3757,7 @@ The browser context the target belongs to.
 Creates a Chrome Devtools Protocol session attached to the target.
 
 #### chromiumTarget.opener()
-- returns: <?[Target]>
+- returns: <?[ChromiumTarget]>
 
 Get the target that opened this target. Top-level targets return `null`.
 
@@ -3771,6 +3765,11 @@ Get the target that opened this target. Top-level targets return `null`.
 - returns: <[Promise]<?[Page]>>
 
 If the target is not of type `"page"` or `"background_page"`, returns `null`.
+
+#### chromiumTarget.serviceWorker()
+- returns: <[Promise]<?[Worker]>>
+
+Attaches to the service worker target. If the target is not of type `"service_worker"`, returns `null`.
 
 #### chromiumTarget.type()
 - returns: <"page"|"background_page"|"service_worker"|"shared_worker"|"other"|"browser">
@@ -3913,7 +3912,6 @@ const { chromium } = require('playwright');
 [Response]: #class-response  "Response"
 [Selectors]: #class-selectors  "Selectors"
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
-[Target]: #class-target "Target"
 [TimeoutError]: #class-timeouterror "TimeoutError"
 [UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
 [URL]: https://nodejs.org/api/url.html

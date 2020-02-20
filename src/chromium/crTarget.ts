@@ -91,8 +91,8 @@ export class CRTarget {
     return this._pagePromise;
   }
 
-  async _worker(): Promise<Worker | null> {
-    if (this._targetInfo.type !== 'service_worker' && this._targetInfo.type !== 'shared_worker')
+  async serviceWorker(): Promise<Worker | null> {
+    if (this._targetInfo.type !== 'service_worker')
       return null;
     if (!this._workerPromise) {
       // TODO(einbinder): Make workers send their console logs.
