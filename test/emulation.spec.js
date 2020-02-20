@@ -256,7 +256,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
   describe.skip(CHROMIUM || FFOX)('BrowserContext({locale})', function() {
     it('should affect accept-language header', async({browser, server}) => {
       const context = await browser.newContext({ locale: 'fr-CH' });
-      const page = await browser.newPage();
+      const page = await context.newPage();
       const [request] = await Promise.all([
         server.waitForRequest('/empty.html'),
         page.goto(server.EMPTY_PAGE),
