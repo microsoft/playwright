@@ -133,8 +133,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       ]);
     });
     // @see https://crbug.com/929806
-    it('should work with mobile viewports and cross process navigations', async({newContext, server}) => {
-      const context = await newContext({ viewport: {width: 360, height: 640, isMobile: true} });
+    it('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: {width: 360, height: 640, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
@@ -147,6 +147,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await page.mouse.click(30, 40);
 
       expect(await page.evaluate('result')).toEqual({x: 30, y: 40});
+      await context.close();
     });
   });
 };

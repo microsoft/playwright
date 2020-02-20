@@ -59,13 +59,14 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('span');
       expect(await page.evaluate(() => window.CLICKED)).toBe(42);
     });
-    it('should not throw UnhandledPromiseRejection when page closes', async({newContext, server}) => {
-      const context = await newContext();
+    it('should not throw UnhandledPromiseRejection when page closes', async({browser, server}) => {
+      const context = await browser.newContext();
       const page = await context.newPage();
       await Promise.all([
         page.close(),
         page.mouse.click(1, 2),
       ]).catch(e => {});
+      await context.close();
     });
     it('should click the button after navigation ', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -81,14 +82,16 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate(() => result)).toBe('Clicked');
     });
-    it('should click with disabled javascript', async({newPage, server}) => {
-      const page = await newPage({ javaScriptEnabled: false });
+    it('should click with disabled javascript', async({browser, server}) => {
+      const context = await browser.newContext({ javaScriptEnabled: false });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/wrappedlink.html');
       await Promise.all([
         page.click('a'),
         page.waitForNavigation()
       ]);
       expect(page.url()).toBe(server.PREFIX + '/wrappedlink.html#clicked');
+      await context.close();
     });
     it('should click when one of inline box children is outside of viewport', async({page, server}) => {
       await page.setContent(`
@@ -222,12 +225,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(error.message).toBe('No node found for selector: button.does-not-exist');
     });
     // @see https://github.com/GoogleChrome/puppeteer/issues/161
-    it('should not hang with touch-enabled viewports', async({server, newContext}) => {
-      const context = await newContext({ viewport: playwright.devices['iPhone 6'].viewport });
+    it('should not hang with touch-enabled viewports', async({server, browser}) => {
+      const context = await browser.newContext({ viewport: playwright.devices['iPhone 6'].viewport });
       const page = await context.newPage();
       await page.mouse.down();
       await page.mouse.move(100, 10);
       await page.mouse.up();
+      await context.close();
     });
     it('should scroll and click the button', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/scrollable.html');
@@ -298,8 +302,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await frame.click('button');
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
     });
-    it('should click the button with deviceScaleFactor set', async({newContext, server}) => {
-      const context = await newContext({ viewport: {width: 400, height: 400, deviceScaleFactor: 5} });
+    it('should click the button with deviceScaleFactor set', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: {width: 400, height: 400, deviceScaleFactor: 5} });
       const page = await context.newPage();
       expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
       await page.setContent('<div style="width:100px;height:100px">spacer</div>');
@@ -308,6 +312,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const button = await frame.$('button');
       await button.click();
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
+      await context.close();
     });
     it('should click the button with px border with relative point', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -357,8 +362,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
-    it('should click the button with relative point with page scale', async({newPage, server}) => {
-      const page = await newPage({ viewport: { width: 400, height: 400, isMobile: true} });
+    it('should click the button with relative point with page scale', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true} });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => {
         button.style.borderWidth = '8px';
@@ -376,6 +382,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       }
       expect(await page.evaluate(() => pageX)).toBe(expected.x);
       expect(await page.evaluate(() => pageY)).toBe(expected.y);
+      await context.close();
     });
 
     it('should wait for stable position', async({page, server}) => {

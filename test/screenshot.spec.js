@@ -156,12 +156,13 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       });
       expect(Buffer.from(screenshot, 'base64')).toBeGolden('screenshot-sanity.png');
     });
-    it.skip(FFOX)('should work with a mobile viewport', async({newContext, server}) => {
-      const context = await newContext({viewport: { width: 320, height: 480, isMobile: true }});
+    it.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
+      const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-mobile.png');
+      await context.close();
     });
     it('should work for canvas', async({page, server}) => {
       await page.setViewportSize({width: 500, height: 500});
@@ -358,8 +359,9 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-fractional-offset.png');
     });
-    it('should take screenshots when default viewport is null', async({server, newPage}) => {
-      const page = await newPage({ viewport: null });
+    it('should take screenshots when default viewport is null', async({server, browser}) => {
+      const context = await browser.newContext({ viewport: null });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/grid.html');
       const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
       const screenshot = await page.screenshot();
@@ -368,9 +370,11 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
       expect(sizeBefore.width).toBe(sizeAfter.width);
       expect(sizeBefore.height).toBe(sizeAfter.height);
+      await context.close();
     });
-    it('should take fullPage screenshots when default viewport is null', async({server, newPage}) => {
-      const page = await newPage({ viewport: null });
+    it('should take fullPage screenshots when default viewport is null', async({server, browser}) => {
+      const context = await browser.newContext({ viewport: null });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/grid.html');
       const sizeBefore = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
       const screenshot = await page.screenshot({
@@ -381,9 +385,11 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
       expect(sizeBefore.width).toBe(sizeAfter.width);
       expect(sizeBefore.height).toBe(sizeAfter.height);
+      await context.close();
     });
-    it('should restore default viewport after fullPage screenshot', async({ newPage }) => {
-      const page = await newPage({ viewport: { width: 456, height: 789 } });
+    it('should restore default viewport after fullPage screenshot', async({ browser }) => {
+      const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
+      const page = await context.newPage();
       expect(page.viewportSize().width).toBe(456);
       expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
@@ -394,9 +400,11 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       expect(page.viewportSize().height).toBe(789);
       expect(await page.evaluate('window.innerWidth')).toBe(456);
       expect(await page.evaluate('window.innerHeight')).toBe(789);
+      await context.close();
     });
-    it('should take element screenshot when default viewport is null and restore back', async({server, newPage}) => {
-      const page = await newPage({ viewport: null });
+    it('should take element screenshot when default viewport is null and restore back', async({server, browser}) => {
+      const context = await browser.newContext({viewport: null});
+      const page = await context.newPage({ viewport: null });
       await page.setContent(`
         <div style="height: 14px">oooo</div>
         <style>
@@ -421,8 +429,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const sizeAfter = await page.evaluate(() => ({ width: document.body.offsetWidth, height: document.body.offsetHeight }));
       expect(sizeBefore.width).toBe(sizeAfter.width);
       expect(sizeBefore.height).toBe(sizeAfter.height);
+      await context.close();
     });
   });
-
-
 };

@@ -54,27 +54,28 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       }
       expect(error.message).toContain('Invalid latitude "undefined"');
     });
-    it('should not modify passed default options object', async({newContext}) => {
+    it('should not modify passed default options object', async({browser}) => {
       const geolocation = { longitude: 10, latitude: 10 };
       const options = { geolocation };
-      const context = await newContext(options);
+      const context = await browser.newContext(options);
       await context.setGeolocation({ longitude: 20, latitude: 20 });
       expect(options.geolocation).toBe(geolocation);
+      await context.close();
     });
-    it('should throw with missing longitude in default options', async({newContext}) => {
+    it('should throw with missing longitude in default options', async({browser}) => {
       let error = null;
       try {
-        const context = await newContext({ geolocation: {latitude: 10} });
+        const context = await browser.newContext({ geolocation: {latitude: 10} });
         await context.close();
       } catch (e) {
         error = e;
       }
       expect(error.message).toContain('Invalid longitude "undefined"');
     });
-    it('should use context options', async({newContext, server}) => {
+    it('should use context options', async({browser, server}) => {
       const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: {} };
       options.permissions[server.PREFIX] = ['geolocation'];
-      const context = await newContext(options);
+      const context = await browser.newContext(options);
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
 
@@ -85,6 +86,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
         latitude: 10,
         longitude: 10
       });
+      await context.close();
     });
   });
 };
