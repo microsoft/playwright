@@ -208,8 +208,9 @@ class Reporter {
         }
         const lineNumber = test.error.location.lineNumber;
         if (lineNumber < lines.length) {
-          const snippet = lines.slice(Math.max(test.location.lineNumber - 1, lineNumber - 5), lineNumber).map((line, index) => `    ${index + lineNumber} | ${line}`).join('\n');
-          const lineNumberLength = (lineNumber + '').length;
+          const lineNumberLength = (lineNumber + 1 + '').length;
+          const FROM = Math.max(test.location.lineNumber - 1, lineNumber - 5);
+          const snippet = lines.slice(FROM, lineNumber).map((line, index) => `    ${(FROM + index + 1 + '').padStart(lineNumberLength, ' ')} | ${line}`).join('\n');
           const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(test.error.location.columnNumber - 1) + '^';
           console.log('\n' + snippet + '\n' + c.grey(pointer) + '\n');
         }
