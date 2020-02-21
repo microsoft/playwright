@@ -65,7 +65,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     it('should return a buffer', async({browser, page, server, outputFile}) => {
       await browser.startTracing(page, {screenshots: true, path: outputFile});
       await page.goto(server.PREFIX + '/grid.html');
-      const trace = await browser.stopTracing();
+      await browser.stopTracing();
+      const trace = null; //await browser.stopTracing();
       const buf = fs.readFileSync(outputFile);
       expect(trace.toString()).toEqual(buf.toString(), 'Tracing buffer mismatch');
     });

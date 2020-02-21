@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-const RED_COLOR = '\x1b[31m';
-const GREEN_COLOR = '\x1b[32m';
-const GRAY_COLOR = '\x1b[90m';
-const YELLOW_COLOR = '\x1b[33m';
-const MAGENTA_COLOR = '\x1b[35m';
-const RESET_COLOR = '\x1b[0m';
+const fs = require('fs');
+const c = require('colors');
+const {MatchError} = require('./Matchers.js');
 
 class Reporter {
   constructor(runner, options = {}) {
     const {
-      projectFolder = null,
       showSlowTests = 3,
       showSkippedTests = Infinity,
       verbose = false,
       summary = true,
     } = options;
+    this._filePathToLines = new Map();
     this._runner = runner;
-    this._projectFolder = projectFolder;
     this._showSlowTests = showSlowTests;
     this._showSkippedTests = showSkippedTests;
     this._verbose = verbose;
@@ -49,18 +45,18 @@ class Reporter {
     this._timestamp = Date.now();
     const allTests = this._runner.tests();
     if (allTests.length === runnableTests.length)
-      console.log(`Running all ${YELLOW_COLOR}${runnableTests.length}${RESET_COLOR} tests on ${YELLOW_COLOR}${this._runner.parallel()}${RESET_COLOR} worker(s):\n`);
+      console.log(`Running all ${c.yellow(runnableTests.length)} tests on ${c.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
     else
-      console.log(`Running ${YELLOW_COLOR}${runnableTests.length}${RESET_COLOR} focused tests out of total ${YELLOW_COLOR}${allTests.length}${RESET_COLOR} on ${YELLOW_COLOR}${this._runner.parallel()}${RESET_COLOR} worker(s):\n`);
+      console.log(`Running ${c.yellow(runnableTests.length)} focused tests out of total ${c.yellow(allTests.length)} on ${c.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
   }
 
   _printTermination(result, message, error) {
-    console.log(`${RED_COLOR}## ${result.toUpperCase()} ##${RESET_COLOR}`);
+    console.log(c.red(`## ${result.toUpperCase()} ##`));
     console.log('Message:');
-    console.log(`  ${RED_COLOR}${message}${RESET_COLOR}`);
+    console.log(`  ${c.red(message)}`);
     if (error && error.stack) {
       console.log('Stack:');
-      console.log(error.stack.split('\n').map(line => '  ' + line).join('\n'));
+      console.log(padLines(error.stack, 2));
     }
     console.log('WORKERS STATE');
     const workerIds = Array.from(this._workersState.keys());
@@ -69,23 +65,25 @@ class Reporter {
       const {isRunning, test} = this._workersState.get(workerId);
       let description = '';
       if (isRunning)
-        description = `${YELLOW_COLOR}RUNNING${RESET_COLOR}`;
+        description = c.yellow('RUNNING');
       else if (test.result === 'ok')
-        description = `${GREEN_COLOR}OK${RESET_COLOR}`;
+        description = c.green('OK');
       else if (test.result === 'skipped')
-        description = `${YELLOW_COLOR}SKIPPED${RESET_COLOR}`;
+        description = c.yellow('SKIPPED');
       else if (test.result === 'failed')
-        description = `${RED_COLOR}FAILED${RESET_COLOR}`;
+        description = c.red('FAILED');
       else if (test.result === 'crashed')
-        description = `${RED_COLOR}CRASHED${RESET_COLOR}`;
+        description = c.red('CRASHED');
       else if (test.result === 'timedout')
-        description = `${RED_COLOR}TIMEDOUT${RESET_COLOR}`;
+        description = c.red('TIMEDOUT');
       else if (test.result === 'terminated')
-        description = `${MAGENTA_COLOR}TERMINATED${RESET_COLOR}`;
+        description = c.magenta('TERMINATED');
       else
-        description = `${RED_COLOR}<UNKNOWN>${RESET_COLOR}`;
-      console.log(`  ${workerId}: [${description}] ${test.fullName} (${formatTestLocation(test)})`);
+        description = c.red('<UNKNOWN>');
+      console.log(`  ${workerId}: [${description}] ${test.fullName} (${formatLocation(test.location)})`);
     }
+    console.log('');
+    console.log('');
     process.exitCode = 2;
   }
 
@@ -105,24 +103,7 @@ class Reporter {
       console.log('\nFailures:');
       for (let i = 0; i < failedTests.length; ++i) {
         const test = failedTests[i];
-        console.log(`${i + 1}) ${test.fullName} (${formatTestLocation(test)})`);
-        if (test.result === 'timedout') {
-          console.log('  Message:');
-          console.log(`    ${RED_COLOR}Timeout Exceeded ${this._runner.timeout()}ms${RESET_COLOR}`);
-        } else if (test.result === 'crashed') {
-          console.log('  Message:');
-          console.log(`    ${RED_COLOR}CRASHED${RESET_COLOR}`);
-        } else {
-          console.log('  Message:');
-          console.log(`    ${RED_COLOR}${test.error.message || test.error}${RESET_COLOR}`);
-          console.log('  Stack:');
-          if (test.error.stack)
-            console.log(this._beautifyStack(test.error.stack));
-        }
-        if (test.output) {
-          console.log('  Output:');
-          console.log(test.output.split('\n').map(line => '    ' + line).join('\n'));
-        }
+        this._printVerboseTestResult(i + 1, test);
         console.log('');
       }
     }
@@ -132,12 +113,12 @@ class Reporter {
       if (skippedTests.length > 0) {
         console.log('\nSkipped:');
         skippedTests.slice(0, this._showSkippedTests).forEach((test, index) => {
-          console.log(`${index + 1}) ${test.fullName} (${formatTestLocation(test)})`);
+          console.log(`${index + 1}) ${test.fullName} (${formatLocation(test.location)})`);
         });
       }
       if (this._showSkippedTests < skippedTests.length) {
         console.log('');
-        console.log(`... and ${YELLOW_COLOR}${skippedTests.length - this._showSkippedTests}${RESET_COLOR} more skipped tests ...`);
+        console.log(`... and ${c.yellow(skippedTests.length - this._showSkippedTests)} more skipped tests ...`);
       }
     }
 
@@ -151,7 +132,7 @@ class Reporter {
       for (let i = 0; i < slowTests.length; ++i) {
         const test = slowTests[i];
         const duration = test.endTimestamp - test.startTimestamp;
-        console.log(`  (${i + 1}) ${YELLOW_COLOR}${duration / 1000}s${RESET_COLOR} - ${test.fullName} (${formatTestLocation(test)})`);
+        console.log(`  (${i + 1}) ${c.yellow((duration / 1000) + 's')} - ${test.fullName} (${formatLocation(test.location)})`);
       }
     }
 
@@ -160,39 +141,18 @@ class Reporter {
     const okTestsLength = executedTests.length - failedTests.length - skippedTests.length;
     let summaryText = '';
     if (failedTests.length || skippedTests.length) {
-      const summary = [`ok - ${GREEN_COLOR}${okTestsLength}${RESET_COLOR}`];
+      const summary = [`ok - ${c.green(okTestsLength)}`];
       if (failedTests.length)
-        summary.push(`failed - ${RED_COLOR}${failedTests.length}${RESET_COLOR}`);
+        summary.push(`failed - ${c.red(failedTests.length)}`);
       if (skippedTests.length)
-        summary.push(`skipped - ${YELLOW_COLOR}${skippedTests.length}${RESET_COLOR}`);
-      summaryText = `(${summary.join(', ')})`;
+        summary.push(`skipped - ${c.yellow(skippedTests.length)}`);
+      summaryText = ` (${summary.join(', ')})`;
     }
 
-    console.log(`\nRan ${executedTests.length} ${summaryText} of ${tests.length} test(s)`);
+    console.log(`\nRan ${executedTests.length}${summaryText} of ${tests.length} test${tests.length > 1 ? 's' : ''}`);
     const milliseconds = Date.now() - this._timestamp;
     const seconds = milliseconds / 1000;
-    console.log(`Finished in ${YELLOW_COLOR}${seconds}${RESET_COLOR} seconds`);
-  }
-
-  _beautifyStack(stack) {
-    if (!this._projectFolder)
-      return stack;
-    const lines = stack.split('\n').map(line => '    ' + line);
-    // Find last stack line that include testrunner code.
-    let index = 0;
-    while (index < lines.length && !lines[index].includes(__dirname))
-      ++index;
-    while (index < lines.length && lines[index].includes(__dirname))
-      ++index;
-    if (index >= lines.length)
-      return stack;
-    const line = lines[index];
-    const fromIndex = line.lastIndexOf(this._projectFolder) + this._projectFolder.length;
-    let toIndex = line.lastIndexOf(')');
-    if (toIndex === -1)
-      toIndex = line.length;
-    lines[index] = line.substring(0, fromIndex) + YELLOW_COLOR + line.substring(fromIndex, toIndex) + RESET_COLOR + line.substring(toIndex);
-    return lines.join('\n');
+    console.log(`Finished in ${c.yellow(seconds)} seconds`);
   }
 
   _onTestStarted(test, workerId) {
@@ -203,55 +163,91 @@ class Reporter {
     this._workersState.set(workerId, {test, isRunning: false});
     if (this._verbose) {
       ++this._testCounter;
-      let prefix = `${this._testCounter})`;
-      if (this._runner.parallel() > 1)
-        prefix += ` ${GRAY_COLOR}[worker = ${workerId}]${RESET_COLOR}`;
-      if (test.result === 'ok') {
-        console.log(`${prefix} ${GREEN_COLOR}[ OK ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
-      } else if (test.result === 'terminated') {
-        console.log(`${prefix} ${MAGENTA_COLOR}[ TERMINATED ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
-      } else if (test.result === 'crashed') {
-        console.log(`${prefix} ${RED_COLOR}[ CRASHED ]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
-      } else if (test.result === 'skipped') {
-        console.log(`${prefix} ${YELLOW_COLOR}[SKIP]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
-      } else if (test.result === 'failed') {
-        console.log(`${prefix} ${RED_COLOR}[FAIL]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
-        console.log('  Message:');
-        console.log(`    ${RED_COLOR}${test.error.message || test.error}${RESET_COLOR}`);
-        console.log('  Stack:');
-        if (test.error.stack)
-          console.log(this._beautifyStack(test.error.stack));
-        if (test.output) {
-          console.log('  Output:');
-          console.log(test.output.split('\n').map(line => '    ' + line).join('\n'));
-        }
-      } else if (test.result === 'timedout') {
-        console.log(`${prefix} ${RED_COLOR}[TIME]${RESET_COLOR} ${test.fullName} (${formatTestLocation(test)})`);
-        console.log('  Message:');
-        console.log(`    ${RED_COLOR}Timeout Exceeded ${this._runner.timeout()}ms${RESET_COLOR}`);
-      }
+      this._printVerboseTestResult(this._testCounter, test, workerId);
     } else {
       if (test.result === 'ok')
-        process.stdout.write(`${GREEN_COLOR}.${RESET_COLOR}`);
+        process.stdout.write(c.green('.'));
       else if (test.result === 'skipped')
-        process.stdout.write(`${YELLOW_COLOR}*${RESET_COLOR}`);
+        process.stdout.write(c.yellow('*'));
       else if (test.result === 'failed')
-        process.stdout.write(`${RED_COLOR}F${RESET_COLOR}`);
+        process.stdout.write(c.red('F'));
       else if (test.result === 'crashed')
-        process.stdout.write(`${RED_COLOR}C${RESET_COLOR}`);
+        process.stdout.write(c.red('C'));
       else if (test.result === 'terminated')
-        process.stdout.write(`${MAGENTA_COLOR}.${RESET_COLOR}`);
+        process.stdout.write(c.magenta('.'));
       else if (test.result === 'timedout')
-        process.stdout.write(`${RED_COLOR}T${RESET_COLOR}`);
+        process.stdout.write(c.red('T'));
+    }
+  }
+
+  _printVerboseTestResult(resultIndex, test, workerId = undefined) {
+    let prefix = `${resultIndex})`;
+    if (this._runner.parallel() > 1 && workerId !== undefined)
+      prefix += ' ' + c.gray(`[worker = ${workerId}]`);
+    if (test.result === 'ok') {
+      console.log(`${prefix} ${c.green('[OK]')} ${test.fullName} (${formatLocation(test.location)})`);
+    } else if (test.result === 'terminated') {
+      console.log(`${prefix} ${c.magenta('[TERMINATED]')} ${test.fullName} (${formatLocation(test.location)})`);
+    } else if (test.result === 'crashed') {
+      console.log(`${prefix} ${c.red('[CRASHED]')} ${test.fullName} (${formatLocation(test.location)})`);
+    } else if (test.result === 'skipped') {
+      console.log(`${prefix} ${c.yellow('[SKIP]')} ${test.fullName} (${formatLocation(test.location)})`);
+    } else if (test.result === 'timedout') {
+      console.log(`${prefix} ${c.red(`[TIMEOUT ${test.timeout}ms]`)} ${test.fullName} (${formatLocation(test.location)})`);
+    } else if (test.result === 'failed') {
+      console.log(`${prefix} ${c.red('[FAIL]')} ${test.fullName} (${formatLocation(test.location)})`);
+      if (test.error instanceof MatchError) {
+        let lines = this._filePathToLines.get(test.error.location.filePath);
+        if (!lines) {
+          try {
+            lines = fs.readFileSync(test.error.location.filePath, 'utf8').split('\n');
+          } catch (e) {
+            lines = [];
+          }
+          this._filePathToLines.set(test.error.location.filePath, lines);
+        }
+        const lineNumber = test.error.location.lineNumber;
+        if (lineNumber < lines.length) {
+          const snippet = lines.slice(Math.max(test.location.lineNumber - 1, lineNumber - 5), lineNumber).map((line, index) => `    ${index + lineNumber} | ${line}`).join('\n');
+          const lineNumberLength = (lineNumber + '').length;
+          const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(test.error.location.columnNumber - 1) + '^';
+          console.log('\n' + snippet + '\n' + c.grey(pointer) + '\n');
+        }
+        console.log(padLines(test.error.formatter(), 4));
+        console.log('');
+      } else {
+        console.log('  Message:');
+        console.log(`    ${c.red(test.error.message || test.error)}`);
+        if (test.error.stack) {
+          console.log('  Stack:');
+          let stack = test.error.stack;
+          // Highlight first test location, if any.
+          const match = stack.match(new RegExp(test.location.filePath + ':(\\d+):(\\d+)'));
+          if (match) {
+            const [, line, column] = match;
+            const fileName = `${test.location.fileName}:${line}:${column}`;
+            stack = stack.substring(0, match.index) + stack.substring(match.index).replace(fileName, c.yellow(fileName));
+          }
+          console.log(padLines(stack, 4));
+        }
+      }
+      if (test.output) {
+        console.log('  Output:');
+        console.log(padLines(test.output, 4));
+      }
     }
   }
 }
 
-function formatTestLocation(test) {
-  const location = test.location;
+function formatLocation(location) {
   if (!location)
     return '';
-  return `${YELLOW_COLOR}${location.fileName}:${location.lineNumber}:${location.columnNumber}${RESET_COLOR}`;
+  return c.yellow(`${location.fileName}:${location.lineNumber}:${location.columnNumber}`);
+}
+
+function padLines(text, spaces = 0) {
+  const indent = ' '.repeat(spaces);
+  return text.split('\n').map(line => indent + line).join('\n');
 }
 
 module.exports = Reporter;
