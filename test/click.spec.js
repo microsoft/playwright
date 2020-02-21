@@ -393,6 +393,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         button.style.borderWidth = '0';
         button.style.width = '200px';
         button.style.height = '20px';
+        // Set display to "block" - otherwise Firefox layouts with non-even
+        // values on Linux.
+        button.style.display = 'block';
         document.body.style.margin = '0';
       });
       await page.click('button');
