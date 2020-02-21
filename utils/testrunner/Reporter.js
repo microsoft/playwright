@@ -15,7 +15,7 @@
  */
 
 const fs = require('fs');
-const colors = require('colors');
+const colors = require('colors/safe');
 const {MatchError} = require('./Matchers.js');
 
 class Reporter {
