@@ -385,7 +385,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await context.close();
     });
 
-    fit('should wait for stable position', async({page, server}) => {
+    it('should wait for stable position', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => {
         button.style.transition = 'margin 500ms linear 0s';
