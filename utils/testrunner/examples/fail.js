@@ -17,7 +17,7 @@
 const {TestRunner, Reporter, Matchers} = require('..');
 
 const runner = new TestRunner();
-const reporter = new Reporter(runner, {verbose: true});
+const reporter = new Reporter(runner);
 const {expect} = new Matchers();
 
 const {describe, xdescribe, fdescribe} = runner;
