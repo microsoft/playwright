@@ -76,9 +76,9 @@ function stringFormatter(received, expected) {
   diff.cleanupSemantic(result);
   const highlighted = result.map(([type, text]) => {
     if (type === -1)
-      return c.red(text);
+      return c.bgRed(text);
     if (type === 1)
-      return c.green(text);
+      return c.bgGreen.black(text);
     return text;
   }).join('');
   const output = [
@@ -133,9 +133,9 @@ function objectFormatter(received, expected) {
   const highlighted = result.map(([type, text]) => {
     const lines = doDecodeLines(text);
     if (type === -1)
-      return lines.map(line => '-   ' + c.red(line));
+      return lines.map(line => '-   ' + c.bgRed(line));
     if (type === 1)
-      return lines.map(line => '+   ' + c.green(line));
+      return lines.map(line => '+   ' + c.bgGreen.black(line));
     return lines.map(line => '    ' + line);
   }).flat().join('\n');
   return `Received:\n${highlighted}`;
