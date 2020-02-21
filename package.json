@@ -62,6 +62,7 @@
     "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "^2.6.1",
     "@typescript-eslint/parser": "^2.6.1",
+    "colors": "^1.4.0",
     "commonmark": "^0.28.1",
     "cross-env": "^5.0.5",
     "eslint": "^6.6.0",
