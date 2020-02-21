@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const {getLocation} = require('./utils.js');
-const c = require('colors/safe');
+const {getCallerLocation} = require('./utils.js');
+const colors = require('colors/safe');
 const Diff = require('text-diff');
 
 class Matchers {
@@ -36,11 +36,11 @@ class Matchers {
 };
 
 class MatchError extends Error {
-  constructor(message, formatter = null) {
+  constructor(message, formatter) {
     super(message);
     this.name = this.constructor.name;
     this.formatter = formatter;
-    this.location = getLocation(__filename);
+    this.location = getCallerLocation(__filename);
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -67,7 +67,7 @@ class Expect {
 }
 
 function defaultFormatter(received) {
-  return `Received: ${c.red(JSON.stringify(received))}`;
+  return `Received: ${colors.red(JSON.stringify(received))}`;
 }
 
 function stringFormatter(received, expected) {
@@ -76,9 +76,9 @@ function stringFormatter(received, expected) {
   diff.cleanupSemantic(result);
   const highlighted = result.map(([type, text]) => {
     if (type === -1)
-      return c.bgRed(text);
+      return colors.bgRed(text);
     if (type === 1)
-      return c.bgGreen.black(text);
+      return colors.bgGreen.black(text);
     return text;
   }).join('');
   const output = [
@@ -89,7 +89,7 @@ function stringFormatter(received, expected) {
     if (expected[i] !== received[i]) {
       const padding = ' '.repeat('Expected: '.length);
       const firstDiffCharacter = '~'.repeat(i) + '^';
-      output.push(c.red(padding + firstDiffCharacter));
+      output.push(colors.red(padding + firstDiffCharacter));
       break;
     }
   }
@@ -133,9 +133,9 @@ function objectFormatter(received, expected) {
   const highlighted = result.map(([type, text]) => {
     const lines = doDecodeLines(text);
     if (type === -1)
-      return lines.map(line => '-   ' + c.bgRed(line));
+      return lines.map(line => '-   ' + colors.bgRed(line));
     if (type === 1)
-      return lines.map(line => '+   ' + c.bgGreen.black(line));
+      return lines.map(line => '+   ' + colors.bgGreen.black(line));
     return lines.map(line => '    ' + line);
   }).flat().join('\n');
   return `Received:\n${highlighted}`;
@@ -147,7 +147,7 @@ function toBeFormatter(received, expected) {
   }
   return [
     `Expected: ${JSON.stringify(expected)}`,
-    `Received: ${c.red(JSON.stringify(received))}`,
+    `Received: ${colors.red(JSON.stringify(received))}`,
   ].join('\n');
 }
 

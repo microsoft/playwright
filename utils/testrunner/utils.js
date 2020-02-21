@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-  getLocation: function(filename) {
+  getCallerLocation: function(filename) {
     const error = new Error();
     const stackFrames = error.stack.split('\n').slice(1);
     // Find first stackframe that doesn't point to this file.

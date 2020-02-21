@@ -15,7 +15,7 @@
  */
 
 const fs = require('fs');
-const c = require('colors');
+const colors = require('colors');
 const {MatchError} = require('./Matchers.js');
 
 class Reporter {
@@ -44,16 +44,17 @@ class Reporter {
     this._testCounter = 0;
     this._timestamp = Date.now();
     const allTests = this._runner.tests();
-    if (allTests.length === runnableTests.length)
-      console.log(`Running all ${c.yellow(runnableTests.length)} tests on ${c.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
-    else
-      console.log(`Running ${c.yellow(runnableTests.length)} focused tests out of total ${c.yellow(allTests.length)} on ${c.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
+    if (allTests.length === runnableTests.length) {
+      console.log(`Running all ${colors.yellow(runnableTests.length)} tests on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
+    } else {
+      console.log(`Running ${colors.yellow(runnableTests.length)} focused tests out of total ${colors.yellow(allTests.length)} on ${colors.yellow(this._runner.parallel())} worker${this._runner.parallel() > 1 ? 's' : ''}:\n`);
+    }
   }
 
   _printTermination(result, message, error) {
-    console.log(c.red(`## ${result.toUpperCase()} ##`));
+    console.log(colors.red(`## ${result.toUpperCase()} ##`));
     console.log('Message:');
-    console.log(`  ${c.red(message)}`);
+    console.log(`  ${colors.red(message)}`);
     if (error && error.stack) {
       console.log('Stack:');
       console.log(padLines(error.stack, 2));
@@ -65,21 +66,21 @@ class Reporter {
       const {isRunning, test} = this._workersState.get(workerId);
       let description = '';
       if (isRunning)
-        description = c.yellow('RUNNING');
+        description = colors.yellow('RUNNING');
       else if (test.result === 'ok')
-        description = c.green('OK');
+        description = colors.green('OK');
       else if (test.result === 'skipped')
-        description = c.yellow('SKIPPED');
+        description = colors.yellow('SKIPPED');
       else if (test.result === 'failed')
-        description = c.red('FAILED');
+        description = colors.red('FAILED');
       else if (test.result === 'crashed')
-        description = c.red('CRASHED');
+        description = colors.red('CRASHED');
       else if (test.result === 'timedout')
-        description = c.red('TIMEDOUT');
+        description = colors.red('TIMEDOUT');
       else if (test.result === 'terminated')
-        description = c.magenta('TERMINATED');
+        description = colors.magenta('TERMINATED');
       else
-        description = c.red('<UNKNOWN>');
+        description = colors.red('<UNKNOWN>');
       console.log(`  ${workerId}: [${description}] ${test.fullName} (${formatLocation(test.location)})`);
     }
     console.log('');
@@ -118,7 +119,7 @@ class Reporter {
       }
       if (this._showSkippedTests < skippedTests.length) {
         console.log('');
-        console.log(`... and ${c.yellow(skippedTests.length - this._showSkippedTests)} more skipped tests ...`);
+        console.log(`... and ${colors.yellow(skippedTests.length - this._showSkippedTests)} more skipped tests ...`);
       }
     }
 
@@ -132,7 +133,7 @@ class Reporter {
       for (let i = 0; i < slowTests.length; ++i) {
         const test = slowTests[i];
         const duration = test.endTimestamp - test.startTimestamp;
-        console.log(`  (${i + 1}) ${c.yellow((duration / 1000) + 's')} - ${test.fullName} (${formatLocation(test.location)})`);
+        console.log(`  (${i + 1}) ${colors.yellow((duration / 1000) + 's')} - ${test.fullName} (${formatLocation(test.location)})`);
       }
     }
 
@@ -141,18 +142,18 @@ class Reporter {
     const okTestsLength = executedTests.length - failedTests.length - skippedTests.length;
     let summaryText = '';
     if (failedTests.length || skippedTests.length) {
-      const summary = [`ok - ${c.green(okTestsLength)}`];
+      const summary = [`ok - ${colors.green(okTestsLength)}`];
       if (failedTests.length)
-        summary.push(`failed - ${c.red(failedTests.length)}`);
+        summary.push(`failed - ${colors.red(failedTests.length)}`);
       if (skippedTests.length)
-        summary.push(`skipped - ${c.yellow(skippedTests.length)}`);
+        summary.push(`skipped - ${colors.yellow(skippedTests.length)}`);
       summaryText = ` (${summary.join(', ')})`;
     }
 
     console.log(`\nRan ${executedTests.length}${summaryText} of ${tests.length} test${tests.length > 1 ? 's' : ''}`);
     const milliseconds = Date.now() - this._timestamp;
     const seconds = milliseconds / 1000;
-    console.log(`Finished in ${c.yellow(seconds)} seconds`);
+    console.log(`Finished in ${colors.yellow(seconds)} seconds`);
   }
 
   _onTestStarted(test, workerId) {
@@ -166,36 +167,36 @@ class Reporter {
       this._printVerboseTestResult(this._testCounter, test, workerId);
     } else {
       if (test.result === 'ok')
-        process.stdout.write(c.green('.'));
+        process.stdout.write(colors.green('.'));
       else if (test.result === 'skipped')
-        process.stdout.write(c.yellow('*'));
+        process.stdout.write(colors.yellow('*'));
       else if (test.result === 'failed')
-        process.stdout.write(c.red('F'));
+        process.stdout.write(colors.red('F'));
       else if (test.result === 'crashed')
-        process.stdout.write(c.red('C'));
+        process.stdout.write(colors.red('C'));
       else if (test.result === 'terminated')
-        process.stdout.write(c.magenta('.'));
+        process.stdout.write(colors.magenta('.'));
       else if (test.result === 'timedout')
-        process.stdout.write(c.red('T'));
+        process.stdout.write(colors.red('T'));
     }
   }
 
   _printVerboseTestResult(resultIndex, test, workerId = undefined) {
     let prefix = `${resultIndex})`;
     if (this._runner.parallel() > 1 && workerId !== undefined)
-      prefix += ' ' + c.gray(`[worker = ${workerId}]`);
+      prefix += ' ' + colors.gray(`[worker = ${workerId}]`);
     if (test.result === 'ok') {
-      console.log(`${prefix} ${c.green('[OK]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.green('[OK]')} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'terminated') {
-      console.log(`${prefix} ${c.magenta('[TERMINATED]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.magenta('[TERMINATED]')} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'crashed') {
-      console.log(`${prefix} ${c.red('[CRASHED]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.red('[CRASHED]')} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'skipped') {
-      console.log(`${prefix} ${c.yellow('[SKIP]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.yellow('[SKIP]')} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'timedout') {
-      console.log(`${prefix} ${c.red(`[TIMEOUT ${test.timeout}ms]`)} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout}ms]`)} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'failed') {
-      console.log(`${prefix} ${c.red('[FAIL]')} ${test.fullName} (${formatLocation(test.location)})`);
+      console.log(`${prefix} ${colors.red('[FAIL]')} ${test.fullName} (${formatLocation(test.location)})`);
       if (test.error instanceof MatchError) {
         let lines = this._filePathToLines.get(test.error.location.filePath);
         if (!lines) {
@@ -212,13 +213,13 @@ class Reporter {
           const FROM = Math.max(test.location.lineNumber - 1, lineNumber - 5);
           const snippet = lines.slice(FROM, lineNumber).map((line, index) => `    ${(FROM + index + 1 + '').padStart(lineNumberLength, ' ')} | ${line}`).join('\n');
           const pointer = `    ` + ' '.repeat(lineNumberLength) + '   ' + '~'.repeat(test.error.location.columnNumber - 1) + '^';
-          console.log('\n' + snippet + '\n' + c.grey(pointer) + '\n');
+          console.log('\n' + snippet + '\n' + colors.grey(pointer) + '\n');
         }
         console.log(padLines(test.error.formatter(), 4));
         console.log('');
       } else {
         console.log('  Message:');
-        console.log(`    ${c.red(test.error.message || test.error)}`);
+        console.log(`    ${colors.red(test.error.message || test.error)}`);
         if (test.error.stack) {
           console.log('  Stack:');
           let stack = test.error.stack;
@@ -227,7 +228,7 @@ class Reporter {
           if (match) {
             const [, line, column] = match;
             const fileName = `${test.location.fileName}:${line}:${column}`;
-            stack = stack.substring(0, match.index) + stack.substring(match.index).replace(fileName, c.yellow(fileName));
+            stack = stack.substring(0, match.index) + stack.substring(match.index).replace(fileName, colors.yellow(fileName));
           }
           console.log(padLines(stack, 4));
         }
@@ -243,7 +244,7 @@ class Reporter {
 function formatLocation(location) {
   if (!location)
     return '';
-  return c.yellow(`${location.fileName}:${location.lineNumber}:${location.columnNumber}`);
+  return colors.yellow(`${location.fileName}:${location.lineNumber}:${location.columnNumber}`);
 }
 
 function padLines(text, spaces = 0) {

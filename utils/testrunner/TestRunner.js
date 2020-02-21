@@ -23,7 +23,7 @@ const Multimap = require('./Multimap');
 const fs = require('fs');
 const {SourceMapSupport} = require('./SourceMapSupport');
 const debug = require('debug');
-const {getLocation} = require('./utils');
+const {getCallerLocation} = require('./utils');
 
 const INFINITE_TIMEOUT = 2147483647;
 
@@ -42,7 +42,7 @@ class UserCallback {
     });
 
     this.timeout = timeout;
-    this.location = getLocation(__filename);
+    this.location = getCallerLocation(__filename);
   }
 
   async run(...args) {
