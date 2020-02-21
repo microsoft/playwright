@@ -10,6 +10,8 @@ on:
 
 env:
   CI: true
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
 
 jobs:
   chromium_linux:
