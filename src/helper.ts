@@ -98,6 +98,14 @@ class Helper {
     return typeof obj === 'number' || obj instanceof Number;
   }
 
+  static isObject(obj: any): obj is NonNullable<object> {
+    return typeof obj === 'object' && obj !== null;
+  }
+
+  static isBoolean(obj: any): obj is boolean {
+    return typeof obj === 'boolean' || obj instanceof Boolean;
+  }
+
   static async waitForEvent(
     emitter: platform.EventEmitterType,
     eventName: (string | symbol),

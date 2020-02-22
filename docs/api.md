@@ -759,8 +759,7 @@ To disable authentication, pass `null`.
 #### page.check(selector, [options])
 - `selector` <[string]> A selector to search for checkbox or radio button to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully checked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -779,8 +778,7 @@ Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-o
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -836,8 +834,7 @@ Browser-specific Coverage implementation, only available for Chromium atm. See [
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -1035,7 +1032,7 @@ const fs = require('fs');
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
@@ -1049,7 +1046,7 @@ Shortcut for [page.mainFrame().fill()](#framefillselector-value)
 #### page.focus(selector, options)
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
@@ -1121,8 +1118,7 @@ Shortcut for [page.mainFrame().goto(url, options)](#framegotourl-options)
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
 
@@ -1285,7 +1281,7 @@ await browser.close();
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
@@ -1392,8 +1388,7 @@ Shortcut for [page.mainFrame().title()](#frametitle).
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully triple clicked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -1411,7 +1406,7 @@ Shortcut for [page.mainFrame().tripleclick(selector[, options])](#frametriplecli
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
@@ -1429,8 +1424,7 @@ Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselect
 #### page.uncheck(selector, [options])
 - `selector` <[string]> A selector to search for uncheckbox to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully unchecked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -1800,8 +1794,7 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 #### frame.check(selector, [options])
 - `selector` <[string]> A selector to search for checkbox to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully checked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -1821,8 +1814,7 @@ If there's no element matching `selector`, the method throws an error.
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -1852,8 +1844,7 @@ Gets the full HTML contents of the frame, including the doctype.
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -1925,7 +1916,7 @@ await resultHandle.dispose();
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully filled. The promise will be rejected if there is no element matching `selector`.
 
@@ -1935,7 +1926,7 @@ If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matchi
 #### frame.focus(selector, options)
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
 
@@ -1988,8 +1979,7 @@ console.log(frame === contentFrame);  // -> true
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
 
@@ -2020,7 +2010,7 @@ If the name is empty, returns the id attribute instead.
   - `label` <[string]> Matches by `option.label`.
   - `index` <[number]> Matches by the index.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
 
@@ -2064,8 +2054,7 @@ frame.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully triple clicked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -2081,7 +2070,7 @@ Bear in mind that if the first or second click of the `tripleclick()` triggers a
 - `text` <[string]> A text to type into a focused element.
 - `options` <[Object]>
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
@@ -2097,8 +2086,7 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
 #### frame.uncheck(selector, [options])
 - `selector` <[string]> A selector to search for uncheckbox to check. If there are multiple elements satisfying the selector, the first will be checked.
 - `options` <[Object]>
-  - `waitFor` <"visible"|"hidden"|"any"|"nowait"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`any`) or do not wait at all (`nowait`). Defaults to `visible`.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom, stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully unchecked. The Promise will be rejected if there is no element matching `selector`.
 
@@ -2365,7 +2353,7 @@ This method returns the bounding box of the element (relative to the main frame)
 
 #### elementHandle.check([options])
 - `options` <[Object]>
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully checked. Promise gets rejected if the operation fails.
 
@@ -2380,7 +2368,7 @@ If element is not already checked, it scrolls it into view if needed, and then u
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully clicked. Promise gets rejected if the element is detached from DOM.
 
@@ -2398,7 +2386,7 @@ If the element is detached from DOM, the method throws an error.
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the double click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully double clicked. Promise gets rejected if the element is detached from DOM.
 
@@ -2427,7 +2415,7 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully hovered.
 
@@ -2514,7 +2502,7 @@ This method expects `elementHandle` to point to an [input element](https://devel
     - x <[number]>
     - y <[number]>
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the triple click, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully triple clicked. Promise gets rejected if the element is detached from DOM.
 
@@ -2549,7 +2537,7 @@ await elementHandle.press('Enter');
 
 #### elementHandle.uncheck([options])
 - `options` <[Object]>
-  - `waitForInteractable` <[boolean]> Whether to wait for element to become static (not moving) and receive pointer events at the click point. Defaults to true.
+  - `waitFor` <[boolean]> Whether to wait for the element to stop moving (for example, wait until css transition finishes) and potentially receive pointer events at the click point (for example, wait until element becomes non-obscured by other elements). Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element is successfully unchecked. Promise gets rejected if the operation fails.
 

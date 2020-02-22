@@ -375,22 +375,22 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
     it('should throw for unknown waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const error = await page.waitForSelector('section', { visibility: 'foo' }).catch(e => e);
-      expect(error.message).toContain('Unsupported waitFor option');
+      expect(error.message).toContain('Unsupported visibility option');
     });
     it('should throw for numeric waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const error = await page.waitForSelector('section', { visibility: 123 }).catch(e => e);
-      expect(error.message).toContain('Unsupported waitFor option');
+      expect(error.message).toContain('Unsupported visibility option');
     });
     it('should throw for true waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const error = await page.waitForSelector('section', { visibility: true }).catch(e => e);
-      expect(error.message).toContain('Unsupported waitFor option');
+      expect(error.message).toContain('Unsupported visibility option');
     });
     it('should throw for false waitFor option', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const error = await page.waitForSelector('section', { visibility: false }).catch(e => e);
-      expect(error.message).toContain('Unsupported waitFor option');
+      expect(error.message).toContain('Unsupported visibility option');
     });
     it('should support >> selector syntax', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);

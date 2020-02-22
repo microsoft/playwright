@@ -1031,12 +1031,12 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     it('should throw on hidden and invisible elements', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.display = 'none');
-      const invisibleError = await page.fill('input', 'some value', { waitFor: 'nowait' }).catch(e => e);
+      const invisibleError = await page.fill('input', 'some value', { waitFor: false }).catch(e => e);
       expect(invisibleError.message).toBe('Element is not visible');
 
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.$eval('input', i => i.style.visibility = 'hidden');
-      const hiddenError = await page.fill('input', 'some value', { waitFor: 'nowait' }).catch(e => e);
+      const hiddenError = await page.fill('input', 'some value', { waitFor: false }).catch(e => e);
       expect(hiddenError.message).toBe('Element is hidden');
     });
     it('should be able to fill the body', async({page}) => {
