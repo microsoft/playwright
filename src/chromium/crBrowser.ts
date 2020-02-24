@@ -20,7 +20,7 @@ import { Events as CommonEvents } from '../events';
 import { assert, helper } from '../helper';
 import { BrowserContext, BrowserContextOptions } from '../browserContext';
 import { CRConnection, ConnectionEvents, CRSession } from './crConnection';
-import { Page, Worker } from '../page';
+import { Page } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
@@ -246,10 +246,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   browserTarget(): CRTarget {
     return [...this._targets.values()].find(t => t.type() === 'browser')!;
-  }
-
-  serviceWorker(target: CRTarget): Promise<Worker | null> {
-    return target._worker();
   }
 
   async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {

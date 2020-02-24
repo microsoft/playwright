@@ -82,17 +82,17 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
 
       const target = await browser.waitForTarget(target => target.type() === 'service_worker');
-      const worker = await browser.serviceWorker(target);
+      const worker = await target.serviceWorker();
       expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
     });
-    it('should create a worker from a shared worker', async({browser, page, server, context}) => {
+    it('should not create a worker from a shared worker', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         new SharedWorker('data:text/javascript,console.log("hi")');
       });
       const target = await browser.waitForTarget(target => target.type() === 'shared_worker');
-      const worker = await browser.serviceWorker(target);
-      expect(await worker.evaluate(() => self.toString())).toBe('[object SharedWorkerGlobalScope]');
+      const worker = await target.serviceWorker();
+      expect(worker).toBe(null);
     });
     it('should report when a target url changes', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
