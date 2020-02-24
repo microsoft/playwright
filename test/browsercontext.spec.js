@@ -38,11 +38,11 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
-      const [popupTarget] = await Promise.all([
+      const [popup] = await Promise.all([
         utils.waitEvent(page, 'popup'),
         page.evaluate(url => window.open(url), server.EMPTY_PAGE)
       ]);
-      expect(popupTarget.context()).toBe(context);
+      expect(popup.context()).toBe(context);
       await context.close();
     });
     it('should isolate localStorage and cookies', async function({browser, server}) {

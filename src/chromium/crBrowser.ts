@@ -35,7 +35,7 @@ import { TimeoutSettings } from '../timeoutSettings';
 export class CRBrowser extends platform.EventEmitter implements Browser {
   _connection: CRConnection;
   _client: CRSession;
-  readonly _defaultContext: BrowserContext;
+  readonly _defaultContext: CRBrowserContext;
   readonly _contexts = new Map<string, CRBrowserContext>();
   _targets = new Map<string, CRTarget>();
 
@@ -93,7 +93,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     this._targets.set(event.targetInfo.targetId, target);
 
     if (target._isInitialized || await target._initializedPromise)
-      this.emit(Events.CRBrowser.TargetCreated, target);
+      context.emit(Events.CRBrowserContext.TargetCreated, target);
   }
 
   async _targetDestroyed(event: { targetId: string; }) {
@@ -102,7 +102,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     this._targets.delete(event.targetId);
     target._didClose();
     if (await target._initializedPromise)
-      this.emit(Events.CRBrowser.TargetDestroyed, target);
+      target.context().emit(Events.CRBrowserContext.TargetDestroyed, target);
   }
 
   _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
@@ -112,7 +112,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     const wasInitialized = target._isInitialized;
     target._targetInfoChanged(event.targetInfo);
     if (wasInitialized && previousURL !== target.url())
-      this.emit(Events.CRBrowser.TargetChanged, target);
+      target.context().emit(Events.CRBrowserContext.TargetChanged, target);
   }
 
   async _closePage(page: Page) {
@@ -121,32 +121,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   _allTargets(): CRTarget[] {
     return Array.from(this._targets.values()).filter(target => target._isInitialized);
-  }
-
-  async waitForTarget(predicate: (arg0: CRTarget) => boolean, options: { timeout?: number; } | undefined = {}): Promise<CRTarget> {
-    const {
-      timeout = 30000
-    } = options;
-    const existingTarget = this._allTargets().find(predicate);
-    if (existingTarget)
-      return existingTarget;
-    let resolve: (target: CRTarget) => void;
-    const targetPromise = new Promise<CRTarget>(x => resolve = x);
-    this.on(Events.CRBrowser.TargetCreated, check);
-    this.on(Events.CRBrowser.TargetChanged, check);
-    try {
-      if (!timeout)
-        return await targetPromise;
-      return await helper.waitWithTimeout(targetPromise, 'target', timeout);
-    } finally {
-      this.removeListener(Events.CRBrowser.TargetCreated, check);
-      this.removeListener(Events.CRBrowser.TargetChanged, check);
-    }
-
-    function check(target: CRTarget) {
-      if (predicate(target))
-        resolve(target);
-    }
   }
 
   async close() {
@@ -197,15 +171,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     await this._tracingClient.send('Tracing.end');
     this._tracingRecording = false;
     return contentPromise;
-  }
-
-  targets(context?: BrowserContext): CRTarget[] {
-    const targets = this._allTargets();
-    return context ? targets.filter(t => t.context() === context) : targets;
-  }
-
-  pageTarget(page: Page): CRTarget {
-    return CRTarget.fromPage(page);
   }
 
   isConnected(): boolean {
@@ -337,6 +302,38 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
     this._browser._contexts.delete(this._browserContextId);
     this._closed = true;
     this.emit(CommonEvents.BrowserContext.Close);
+  }
+
+  pageTarget(page: Page): CRTarget {
+    return CRTarget.fromPage(page);
+  }
+
+  targets(): CRTarget[] {
+    return this._browser._allTargets().filter(t => t.context() === this);
+  }
+
+  async waitForTarget(predicate: (arg0: CRTarget) => boolean, options: { timeout?: number; } = {}): Promise<CRTarget> {
+    const { timeout = 30000 } = options;
+    const existingTarget = this._browser._allTargets().find(predicate);
+    if (existingTarget)
+      return existingTarget;
+    let resolve: (target: CRTarget) => void;
+    const targetPromise = new Promise<CRTarget>(x => resolve = x);
+    this.on(Events.CRBrowserContext.TargetCreated, check);
+    this.on(Events.CRBrowserContext.TargetChanged, check);
+    try {
+      if (!timeout)
+        return await targetPromise;
+      return await helper.waitWithTimeout(targetPromise, 'target', timeout);
+    } finally {
+      this.removeListener(Events.CRBrowserContext.TargetCreated, check);
+      this.removeListener(Events.CRBrowserContext.TargetChanged, check);
+    }
+
+    function check(target: CRTarget) {
+      if (predicate(target))
+        resolve(target);
+    }
   }
 
   _browserClosed() {

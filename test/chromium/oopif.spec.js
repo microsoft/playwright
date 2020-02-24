@@ -43,18 +43,18 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
     xit('should report oopif frames', async function({browser, page, server, context}) {
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs(browser).length).toBe(1);
+      expect(oopifs(page.context()).length).toBe(1);
       expect(page.frames().length).toBe(2);
     });
     it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
       await page.route('*', request => request.continue());
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs(browser).length).toBe(1);
+      expect(oopifs(page.context()).length).toBe(1);
     });
   });
 };
 
 
-function oopifs(browser) {
-  return browser.targets().filter(target => target._targetInfo.type === 'iframe');
+function oopifs(context) {
+  return context.targets().filter(target => target._targetInfo.type === 'iframe');
 }

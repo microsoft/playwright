@@ -25,6 +25,7 @@
 - [class: BrowserServer](#class-browserserver)
 - [class: BrowserType](#class-browsertype)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
+- [class: ChromiumBrowserContext](#class-chromiumbrowsercontext)
 - [class: ChromiumCoverage](#class-chromiumcoverage)
 - [class: ChromiumSession](#class-chromiumsession)
 - [class: ChromiumTarget](#class-chromiumtarget)
@@ -3532,15 +3533,9 @@ await browser.stopTracing();
 ```
 
 <!-- GEN:toc -->
-- [event: 'targetchanged'](#event-targetchanged)
-- [event: 'targetcreated'](#event-targetcreated)
-- [event: 'targetdestroyed'](#event-targetdestroyed)
 - [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
-- [chromiumBrowser.pageTarget(page)](#chromiumbrowserpagetargetpage)
 - [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
 - [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
-- [chromiumBrowser.targets(context)](#chromiumbrowsertargetscontext)
-- [chromiumBrowser.waitForTarget(predicate[, options])](#chromiumbrowserwaitfortargetpredicate-options)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-Browser -->
 - [event: 'disconnected'](#event-disconnected)
@@ -3551,36 +3546,10 @@ await browser.stopTracing();
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
 
-#### event: 'targetchanged'
-- <[ChromiumTarget]>
-
-Emitted when the url of a target changes.
-
-> **NOTE** This includes target changes in incognito browser contexts.
-
-
-#### event: 'targetcreated'
-- <[ChromiumTarget]>
-
-Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
-
-> **NOTE** This includes target creations in incognito browser contexts.
-
-#### event: 'targetdestroyed'
-- <[ChromiumTarget]>
-
-Emitted when a target is destroyed, for example when a page is closed.
-
-> **NOTE** This includes target destructions in incognito browser contexts.
-
 #### chromiumBrowser.browserTarget()
 - returns: <[ChromiumTarget]>
 
 Returns browser target.
-
-#### chromiumBrowser.pageTarget(page)
-- `page` <[Page]> Page to return target for.
-- returns: <[ChromiumTarget]> a target given page was created from.
 
 #### chromiumBrowser.startTracing(page, [options])
 - `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
@@ -3595,25 +3564,83 @@ Only one trace can be active at a time per browser.
 #### chromiumBrowser.stopTracing()
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
 
-#### chromiumBrowser.targets(context)
-- `context` <[BrowserContext]> Optional, if specified, only targets from this context are returned.
+### class: ChromiumBrowserContext
+
+* extends: [BrowserContext]
+
+Chromium-specific features including targets, service worker support, etc.
+
+```js
+const backroundPageTarget = await context.waitForTarget(target => target.type() === 'background_page');
+const backgroundPage = await backroundPageTarget.page();
+```
+
+<!-- GEN:toc -->
+- [event: 'targetchanged'](#event-targetchanged)
+- [event: 'targetcreated'](#event-targetcreated)
+- [event: 'targetdestroyed'](#event-targetdestroyed)
+- [chromiumBrowserContext.pageTarget(page)](#chromiumbrowsercontextpagetargetpage)
+- [chromiumBrowserContext.targets()](#chromiumbrowsercontexttargets)
+- [chromiumBrowserContext.waitForTarget(predicate[, options])](#chromiumbrowsercontextwaitfortargetpredicate-options)
+<!-- GEN:stop -->
+<!-- GEN:toc-extends-BrowserContext -->
+- [event: 'close'](#event-close)
+- [browserContext.clearCookies()](#browsercontextclearcookies)
+- [browserContext.clearPermissions()](#browsercontextclearpermissions)
+- [browserContext.close()](#browsercontextclose)
+- [browserContext.cookies([...urls])](#browsercontextcookiesurls)
+- [browserContext.newPage()](#browsercontextnewpage)
+- [browserContext.pages()](#browsercontextpages)
+- [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
+- [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
+- [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
+- [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
+- [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
+<!-- GEN:stop -->
+
+#### event: 'targetchanged'
+- <[ChromiumTarget]>
+
+Emitted when the url of a target changes.
+
+> **NOTE** Only includes targets from this browser context.
+
+
+#### event: 'targetcreated'
+- <[ChromiumTarget]>
+
+Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
+
+> **NOTE** Only includes targets from this browser context.
+
+#### event: 'targetdestroyed'
+- <[ChromiumTarget]>
+
+Emitted when a target is destroyed, for example when a page is closed.
+
+> **NOTE** Only includes targets from this browser context.
+
+#### chromiumBrowserContext.pageTarget(page)
+- `page` <[Page]> Page to return target for.
+- returns: <[ChromiumTarget]> a target given page was created from.
+
+#### chromiumBrowserContext.targets()
 - returns: <[Array]<[ChromiumTarget]>>
 
-An array of all active targets inside the Browser. In case of multiple browser contexts,
-the method will return an array with all the targets in all browser contexts.
+An array of all active targets inside the browser context.
 
-#### chromiumBrowser.waitForTarget(predicate[, options])
+#### chromiumBrowserContext.waitForTarget(predicate[, options])
 - `predicate` <[function]\([ChromiumTarget]\):[boolean]> A function to be run for every target
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
 - returns: <[Promise]<[ChromiumTarget]>> Promise which resolves to the first target found that matches the `predicate` function.
 
-This searches for a target in all browser contexts.
+This searches for a target in the browser context.
 
 An example of finding a target for a page opened via `window.open`:
 ```js
 await page.evaluate(() => window.open('https://www.example.com/'));
-const newWindowTarget = await browser.chromium.waitForTarget(target => target.url() === 'https://www.example.com/');
+const newWindowTarget = await page.context().waitForTarget(target => target.url() === 'https://www.example.com/');
 ```
 
 ### class: ChromiumCoverage
@@ -3875,6 +3902,7 @@ const { chromium } = require('playwright');
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
+[ChromiumBrowserContext]: #class-chromiumbrowsercontext "ChromiumBrowserContext"
 [ChromiumSession]: #class-chromiumsession  "ChromiumSession"
 [ChromiumTarget]: #class-chromiumtarget "ChromiumTarget"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
