@@ -16,7 +16,7 @@
  */
 
 import { Browser, createPageInNewContext } from '../browser';
-import { BrowserContext, BrowserContextOptions } from '../browserContext';
+import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
@@ -27,12 +27,13 @@ import { FFPage } from './ffPage';
 import * as platform from '../platform';
 import { Protocol } from './protocol';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
+import { TimeoutSettings } from '../timeoutSettings';
 
 export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
   _targets: Map<string, Target>;
   readonly _defaultContext: BrowserContext;
-  private _contexts: Map<string, BrowserContext>;
+  readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
 
   static async connect(transport: ConnectionTransport, slowMo?: number): Promise<FFBrowser> {
@@ -47,10 +48,10 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     this._connection = connection;
     this._targets = new Map();
 
-    this._defaultContext = this._createBrowserContext(null, {});
+    this._defaultContext = new FFBrowserContext(this, null, validateBrowserContextOptions({}));
     this._contexts = new Map();
     this._connection.on(ConnectionEvents.Disconnected, () => {
-      for (const context of this.contexts())
+      for (const context of this._contexts.values())
         context._browserClosed();
       this.emit(Events.Browser.Disconnected);
     });
@@ -67,6 +68,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
+    options = validateBrowserContextOptions(options);
     let viewport;
     if (options.viewport) {
       viewport = {
@@ -92,7 +94,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     // TODO: move ignoreHTTPSErrors to browser context level.
     if (options.ignoreHTTPSErrors)
       await this._connection.send('Browser.setIgnoreHTTPSErrors', { enabled: true });
-    const context = this._createBrowserContext(browserContextId, options);
+    const context = new FFBrowserContext(this, browserContextId, options);
     await context._initialize();
     this._contexts.set(browserContextId, context);
     return context;
@@ -176,82 +178,6 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     await disconnected;
   }
 
-  _createBrowserContext(browserContextId: string | null, options: BrowserContextOptions): BrowserContext {
-    BrowserContext.validateOptions(options);
-    const context = new BrowserContext({
-      pages: async (): Promise<Page[]> => {
-        const targets = this._allTargets().filter(target => target.context() === context && target.type() === 'page');
-        const pages = await Promise.all(targets.map(target => target.page()));
-        return pages.filter(page => !!page);
-      },
-
-      existingPages: (): Page[] => {
-        const pages: Page[] = [];
-        for (const target of this._allTargets()) {
-          if (target.context() === context && target._ffPage)
-            pages.push(target._ffPage._page);
-        }
-        return pages;
-      },
-
-      newPage: async (): Promise<Page> => {
-        const {targetId} = await this._connection.send('Target.newPage', {
-          browserContextId: browserContextId || undefined
-        });
-        const target = this._targets.get(targetId)!;
-        return target.page();
-      },
-
-      close: async (): Promise<void> => {
-        assert(browserContextId, 'Non-incognito profiles cannot be closed!');
-        await this._connection.send('Target.removeBrowserContext', { browserContextId });
-        this._contexts.delete(browserContextId);
-      },
-
-      cookies: async (): Promise<network.NetworkCookie[]> => {
-        const { cookies } = await this._connection.send('Browser.getCookies', { browserContextId: browserContextId || undefined });
-        return cookies.map(c => {
-          const copy: any = { ... c };
-          delete copy.size;
-          return copy as network.NetworkCookie;
-        });
-      },
-
-      clearCookies: async (): Promise<void> => {
-        await this._connection.send('Browser.clearCookies', { browserContextId: browserContextId || undefined });
-      },
-
-      setCookies: async (cookies: network.SetNetworkCookieParam[]): Promise<void> => {
-        await this._connection.send('Browser.setCookies', { browserContextId: browserContextId || undefined, cookies });
-      },
-
-      setPermissions: async (origin: string, permissions: string[]): Promise<void> => {
-        const webPermissionToProtocol = new Map<string, 'geo' | 'microphone' | 'camera' | 'desktop-notifications'>([
-          ['geolocation', 'geo'],
-          ['microphone', 'microphone'],
-          ['camera', 'camera'],
-          ['notifications', 'desktop-notifications'],
-        ]);
-        const filtered = permissions.map(permission => {
-          const protocolPermission = webPermissionToProtocol.get(permission);
-          if (!protocolPermission)
-            throw new Error('Unknown permission: ' + permission);
-          return protocolPermission;
-        });
-        await this._connection.send('Browser.grantPermissions', {origin, browserContextId: browserContextId || undefined, permissions: filtered});
-      },
-
-      clearPermissions: async () => {
-        await this._connection.send('Browser.resetPermissions', { browserContextId: browserContextId || undefined });
-      },
-
-      setGeolocation: async (geolocation: types.Geolocation | null): Promise<void> => {
-        throw new Error('Geolocation emulation is not supported in Firefox');
-      }
-    }, options);
-    return context;
-  }
-
   _setDebugFunction(debugFunction: (message: string) => void) {
     this._connection._debugProtocol = debugFunction;
   }
@@ -324,5 +250,118 @@ class Target {
 
   browser() {
     return this._browser;
+  }
+}
+
+export class FFBrowserContext extends platform.EventEmitter implements BrowserContext {
+  readonly _browser: FFBrowser;
+  readonly _browserContextId: string | null;
+  readonly _options: BrowserContextOptions;
+  readonly _timeoutSettings: TimeoutSettings;
+  private _closed = false;
+
+  constructor(browser: FFBrowser, browserContextId: string | null, options: BrowserContextOptions) {
+    super();
+    this._browser = browser;
+    this._browserContextId = browserContextId;
+    this._timeoutSettings = new TimeoutSettings();
+    this._options = options;
+  }
+
+  async _initialize() {
+    const entries = Object.entries(this._options.permissions || {});
+    await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
+    if (this._options.geolocation)
+      await this.setGeolocation(this._options.geolocation);
+  }
+
+  _existingPages(): Page[] {
+    const pages: Page[] = [];
+    for (const target of this._browser._allTargets()) {
+      if (target.context() === this && target._ffPage)
+        pages.push(target._ffPage._page);
+    }
+    return pages;
+  }
+
+  setDefaultNavigationTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
+  }
+
+  async pages(): Promise<Page[]> {
+    const targets = this._browser._allTargets().filter(target => target.context() === this && target.type() === 'page');
+    const pages = await Promise.all(targets.map(target => target.page()));
+    return pages.filter(page => !!page);
+  }
+
+  async newPage(): Promise<Page> {
+    assertBrowserContextIsNotOwned(this);
+    const {targetId} = await this._browser._connection.send('Target.newPage', {
+      browserContextId: this._browserContextId || undefined
+    });
+    const target = this._browser._targets.get(targetId)!;
+    return target.page();
+  }
+
+  async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
+    const { cookies } = await this._browser._connection.send('Browser.getCookies', { browserContextId: this._browserContextId || undefined });
+    return network.filterCookies(cookies.map(c => {
+      const copy: any = { ... c };
+      delete copy.size;
+      return copy as network.NetworkCookie;
+    }), urls);
+  }
+
+  async setCookies(cookies: network.SetNetworkCookieParam[]) {
+    await this._browser._connection.send('Browser.setCookies', { browserContextId: this._browserContextId || undefined, cookies: network.rewriteCookies(cookies) });
+  }
+
+  async clearCookies() {
+    await this._browser._connection.send('Browser.clearCookies', { browserContextId: this._browserContextId || undefined });
+  }
+
+  async setPermissions(origin: string, permissions: string[]): Promise<void> {
+    const webPermissionToProtocol = new Map<string, 'geo' | 'microphone' | 'camera' | 'desktop-notifications'>([
+      ['geolocation', 'geo'],
+      ['microphone', 'microphone'],
+      ['camera', 'camera'],
+      ['notifications', 'desktop-notifications'],
+    ]);
+    const filtered = permissions.map(permission => {
+      const protocolPermission = webPermissionToProtocol.get(permission);
+      if (!protocolPermission)
+        throw new Error('Unknown permission: ' + permission);
+      return protocolPermission;
+    });
+    await this._browser._connection.send('Browser.grantPermissions', {origin, browserContextId: this._browserContextId || undefined, permissions: filtered});
+  }
+
+  async clearPermissions() {
+    await this._browser._connection.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
+  }
+
+  async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
+    throw new Error('Geolocation emulation is not supported in Firefox');
+  }
+
+  async close() {
+    if (this._closed)
+      return;
+    assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
+    await this._browser._connection.send('Target.removeBrowserContext', { browserContextId: this._browserContextId });
+    this._browser._contexts.delete(this._browserContextId);
+    this._closed = true;
+    this.emit(Events.BrowserContext.Close);
+  }
+
+  _browserClosed() {
+    this._closed = true;
+    for (const page of this._existingPages())
+      page._didClose();
+    this.emit(Events.BrowserContext.Close);
   }
 }
