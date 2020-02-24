@@ -4738,18 +4738,6 @@ index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b814
      Vector<WTF::Function<void(bool)>> m_listeners;
      Timer m_updateStateTimer;
  
-diff --git a/Source/WebCore/platform/network/curl/CookieJarDB.h b/Source/WebCore/platform/network/curl/CookieJarDB.h
-index 112f632128b1aa72b4639b62a3eb5a79e37c5f80..37cc9c38d914c13361cf11a5a175d4df3da09f21 100644
---- a/Source/WebCore/platform/network/curl/CookieJarDB.h
-+++ b/Source/WebCore/platform/network/curl/CookieJarDB.h
-@@ -65,6 +65,7 @@ public:
-     bool deleteCookies(const String& url);
-     bool deleteAllCookies();
- 
-+    Vector<Cookie> getAllCookies();
-     WEBCORE_EXPORT CookieJarDB(const String& databasePath);
-     WEBCORE_EXPORT ~CookieJarDB();
- 
 diff --git a/Source/WebCore/platform/win/KeyEventWin.cpp b/Source/WebCore/platform/win/KeyEventWin.cpp
 index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0c6adc527 100644
 --- a/Source/WebCore/platform/win/KeyEventWin.cpp
@@ -12070,18 +12058,6 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..4b1cab0c187352688740c7cca79483fa
  
      return 0;
  }
-diff --git a/Tools/MiniBrowser/win/BrowserWindow.h b/Tools/MiniBrowser/win/BrowserWindow.h
-index 0989d7b1470eaf6b1453861bf482ae68f287aa8d..a7ec3facc0973a128cc4ba07b67e08e3dcce8a4f 100644
---- a/Tools/MiniBrowser/win/BrowserWindow.h
-+++ b/Tools/MiniBrowser/win/BrowserWindow.h
-@@ -51,7 +51,6 @@ public:
- 
-     virtual void print() = 0;
-     virtual void launchInspector() = 0;
--    virtual void openProxySettings() = 0;
- 
-     virtual _bstr_t userAgent() = 0;
-     void setUserAgent(UINT menuID);
 diff --git a/Tools/MiniBrowser/win/Common.cpp b/Tools/MiniBrowser/win/Common.cpp
 index 87fde928c12a91f13a4f8bc2f2dc24097e42f2d0..c81685683a61cfa9f39de2de695e3c7a9b0ab1e3 100644
 --- a/Tools/MiniBrowser/win/Common.cpp
@@ -12363,7 +12339,7 @@ index d79c6fdc4fa05e1e4b9acdcc6932e571163320eb..d7902d4d0da67b9874ce32004e465b13
 +    bool m_headless;
  };
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index dc2b3f257600e3f4d172875ebb821769a160979d..5a33e4bd2d329e9060d33409b8cabbfcbc886c5a 100644
+index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e7972a272 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 @@ -39,6 +39,8 @@
@@ -12415,7 +12391,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..5a33e4bd2d329e9060d33409b8cabbfc
      WKPageSetPageUIClient(page, &uiClient.base);
  
      WKPageStateClientV0 stateClient = { };
-@@ -159,28 +167,30 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
+@@ -159,7 +167,6 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
      stateClient.didChangeActiveURL = didChangeActiveURL;
      WKPageSetPageStateClient(page, &stateClient.base);
  
@@ -12423,57 +12399,45 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..5a33e4bd2d329e9060d33409b8cabbfc
      resetZoom();
  }
  
--void WebKitBrowserWindow::updateProxySettings()
+@@ -183,6 +190,29 @@ void WebKitBrowserWindow::updateProxySettings()
+     WKWebsiteDataStoreEnableCustomNetworkProxySettings(store, url.get(), excludeHosts.get());
+ }
+ 
 +WebKitBrowserWindow::~WebKitBrowserWindow()
- {
--    auto context = WKPageGetContext(WKViewGetPage(m_view.get()));
--    auto store = WKWebsiteDataStoreGetDefaultDataStore();
++{
 +    if (m_alertDialog) {
 +        WKRelease(m_alertDialog);
 +        m_alertDialog = NULL;
 +    }
- 
--    if (!m_proxy.enable) {
--        WKWebsiteDataStoreDisableNetworkProxySettings(store);
--        return;
++
 +    if (m_confirmDialog) {
 +        WKRelease(m_confirmDialog);
 +        m_confirmDialog = NULL;
-     }
- 
--    if (!m_proxy.custom) {
--        WKWebsiteDataStoreEnableDefaultNetworkProxySettings(store);
--        return;
++    }
++
 +    if (m_promptDialog) {
 +        WKRelease(m_promptDialog);
 +        m_promptDialog = NULL;
-     }
- 
--    auto url = createWKURL(m_proxy.url);
--    auto excludeHosts = createWKString(m_proxy.excludeHosts);
--    WKWebsiteDataStoreEnableCustomNetworkProxySettings(store, url.get(), excludeHosts.get());
++    }
++
 +    if (m_beforeUnloadDialog) {
 +        WKRelease(m_beforeUnloadDialog);
 +        m_beforeUnloadDialog = NULL;
 +    }
- }
- 
++}
++
  HRESULT WebKitBrowserWindow::init()
-@@ -247,13 +257,6 @@ void WebKitBrowserWindow::launchInspector()
-     WKInspectorShow(inspector);
+ {
+     return S_OK;
+@@ -251,7 +281,6 @@ void WebKitBrowserWindow::openProxySettings()
+ {
+     if (askProxySettings(m_hMainWnd, m_proxy))
+         updateProxySettings();
+-
  }
  
--void WebKitBrowserWindow::openProxySettings()
--{
--    if (askProxySettings(m_hMainWnd, m_proxy))
--        updateProxySettings();
--
--}
--
  void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
- {
-     auto page = WKViewGetPage(m_view.get());
-@@ -381,18 +384,100 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+@@ -381,18 +410,100 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
      return false;
  }
  
@@ -12505,7 +12469,9 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..5a33e4bd2d329e9060d33409b8cabbfc
 +}
 +
 +void WebKitBrowserWindow::runJavaScriptPrompt(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptPromptResultListenerRef listener, const void *clientInfo)
-+{
+ {
+-    auto& newWindow = MainWindow::create().leakRef();
+-    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    WKRetain(listener);
 +    thisWindow.m_promptDialog = listener;
@@ -12552,9 +12518,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..5a33e4bd2d329e9060d33409b8cabbfc
 +}
 +
 +WKPageRef WebKitBrowserWindow::createViewCallback(WKPageConfigurationRef configuration, bool navigate)
- {
--    auto& newWindow = MainWindow::create().leakRef();
--    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
++{
 +    auto context = WKPageConfigurationGetContext(configuration);
 +    auto dataStore = WKPageConfigurationGetWebsiteDataStore(configuration);
 +    auto& newWindow = MainWindow::create(context, dataStore, s_headless).leakRef();
@@ -12582,7 +12546,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..5a33e4bd2d329e9060d33409b8cabbfc
  }
  
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-index 373d0de77e852c673a6615e0acedd5195e3c021b..9a7f46822593ceb984520cfc90bd7c08d04bf5f7 100644
+index 373d0de77e852c673a6615e0acedd5195e3c021b..2e63607a2299b57947f367fcebc1aa88374827fc 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 @@ -26,6 +26,7 @@
@@ -12609,24 +12573,7 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..9a7f46822593ceb984520cfc90bd7c08
  
      HRESULT init() override;
      HWND hwnd() override;
-@@ -49,7 +54,6 @@ private:
- 
-     void print() override;
-     void launchInspector() override;
--    void openProxySettings() override;
- 
-     _bstr_t userAgent() override;
-     void setUserAgent(_bstr_t&) override;
-@@ -61,8 +65,6 @@ private:
-     void zoomIn() override;
-     void zoomOut() override;
- 
--    void updateProxySettings();
--
-     bool canTrustServerCertificate(WKProtectionSpaceRef);
- 
-     static void didChangeTitle(const void*);
-@@ -71,6 +73,12 @@ private:
+@@ -71,6 +76,12 @@ private:
      static void didChangeActiveURL(const void*);
      static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
      static WKPageRef createNewPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void *);
@@ -12639,7 +12586,7 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..9a7f46822593ceb984520cfc90bd7c08
      static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
  
      BrowserWindowClient& m_client;
-@@ -78,4 +86,8 @@ private:
+@@ -78,4 +89,8 @@ private:
      HWND m_hMainWnd { nullptr };
      ProxySettings m_proxy { };
      std::unordered_map<std::wstring, std::wstring> m_acceptedServerTrustCerts;
