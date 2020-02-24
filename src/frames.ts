@@ -19,7 +19,6 @@ import * as types from './types';
 import * as js from './javascript';
 import * as dom from './dom';
 import * as network from './network';
-import * as input from './input';
 import { helper, assert, RegisteredListener } from './helper';
 import { TimeoutError } from './errors';
 import { Events } from './events';
@@ -780,19 +779,19 @@ export class Frame {
     return result!;
   }
 
-  async click(selector: string, options?: input.ClickOptions & types.WaitForOptions) {
+  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.click(options);
     await handle.dispose();
   }
 
-  async dblclick(selector: string, options?: input.MultiClickOptions & types.WaitForOptions) {
+  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.dblclick(options);
     await handle.dispose();
   }
 
-  async tripleclick(selector: string, options?: input.MultiClickOptions & types.WaitForOptions) {
+  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.tripleclick(options);
     await handle.dispose();
@@ -810,7 +809,7 @@ export class Frame {
     await handle.dispose();
   }
 
-  async hover(selector: string, options?: input.PointerActionOptions & types.WaitForOptions) {
+  async hover(selector: string, options?: dom.PointerActionOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.hover(options);
     await handle.dispose();

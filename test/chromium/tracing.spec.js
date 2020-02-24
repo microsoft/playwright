@@ -80,7 +80,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.goto(server.PREFIX + '/grid.html');
       const oldBufferConcat = Buffer.concat;
       Buffer.concat = bufs => {
-        throw 'error';
+        throw new Error('Buffer.concat fake error, should be caught by playwright');
       };
       const trace = await browser.stopTracing();
       expect(trace).toEqual(null);

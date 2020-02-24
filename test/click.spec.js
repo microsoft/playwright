@@ -162,7 +162,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       let done = false;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
-      const clicked = page.click('button').then(() => done = true);
+      const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
       for (let i = 0; i < 5; i++)
         await page.evaluate('1'); // Do a round trip.
       expect(done).toBe(false);
@@ -307,36 +307,36 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await frame.evaluate(() => window.result)).toBe('Clicked');
       await context.close();
     });
-    it('should click the button with px border with relative point', async({page, server}) => {
+    it('should click the button with px border with offset', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '8px');
-      await page.click('button', { relativePoint: { x: 20, y: 10 } });
+      await page.click('button', { offset: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
       // Safari reports border-relative offsetX/offsetY.
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 20 + 8 : 20);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 10 + 8 : 10);
     });
-    it('should click the button with em border with relative point', async({page, server}) => {
+    it('should click the button with em border with offset', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '2em');
       await page.$eval('button', button => button.style.fontSize = '12px');
-      await page.click('button', { relativePoint: { x: 20, y: 10 } });
+      await page.click('button', { offset: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
       // Safari reports border-relative offsetX/offsetY.
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 12 * 2 + 20 : 20);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 12 * 2 + 10 : 10);
     });
-    it.skip(FFOX)('should click a very large button with relative point', async({page, server}) => {
+    it.skip(FFOX)('should click a very large button with offset', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '8px');
       await page.$eval('button', button => button.style.height = button.style.width = '2000px');
-      await page.click('button', { relativePoint: { x: 1900, y: 1910 } });
+      await page.click('button', { offset: { x: 1900, y: 1910 } });
       expect(await page.evaluate(() => window.result)).toBe('Clicked');
       // Safari reports border-relative offsetX/offsetY.
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
-    it.skip(FFOX)('should click a button in scrolling container with relative point', async({page, server}) => {
+    it.skip(FFOX)('should click a button in scrolling container with offset', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => {
         const container = document.createElement('div');
@@ -349,13 +349,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         button.style.width = '2000px';
         button.style.borderWidth = '8px';
       });
-      await page.click('button', { relativePoint: { x: 1900, y: 1910 } });
+      await page.click('button', { offset: { x: 1900, y: 1910 } });
       expect(await page.evaluate(() => window.result)).toBe('Clicked');
       // Safari reports border-relative offsetX/offsetY.
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
-    it('should click the button with relative point with page scale', async({browser, server}) => {
+    it('should click the button with offset with page scale', async({browser, server}) => {
       const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');
@@ -363,7 +363,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         button.style.borderWidth = '8px';
         document.body.style.margin = '0';
       });
-      await page.click('button', { relativePoint: { x: 20, y: 10 } });
+      await page.click('button', { offset: { x: 20, y: 10 } });
       expect(await page.evaluate(() => result)).toBe('Clicked');
       let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
       if (WEBKIT) {

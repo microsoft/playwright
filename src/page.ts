@@ -485,15 +485,15 @@ export class Page extends platform.EventEmitter {
     return this._closed;
   }
 
-  async click(selector: string, options?: input.ClickOptions & types.WaitForOptions) {
+  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  async dblclick(selector: string, options?: input.MultiClickOptions & types.WaitForOptions) {
+  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  async tripleclick(selector: string, options?: input.MultiClickOptions & types.WaitForOptions) {
+  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
@@ -505,7 +505,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().focus(selector, options);
   }
 
-  async hover(selector: string, options?: input.PointerActionOptions & types.WaitForOptions) {
+  async hover(selector: string, options?: dom.PointerActionOptions & types.WaitForOptions) {
     return this.mainFrame().hover(selector, options);
   }
 
