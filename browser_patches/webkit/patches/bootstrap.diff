@@ -259,18 +259,10 @@ index 0cc2127c9c12c2d82dea9550bad73f4ffb99ba24..490238b408da6b6ce7fbcccf13884997
  }
  
 diff --git a/Source/JavaScriptCore/inspector/InspectorTarget.h b/Source/JavaScriptCore/inspector/InspectorTarget.h
-index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..db2fde501b30c8e4fafcac3b2b403713c768c34f 100644
+index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..f08e769a7b5435d215cd69ca8cc61ea0e741e417 100644
 --- a/Source/JavaScriptCore/inspector/InspectorTarget.h
 +++ b/Source/JavaScriptCore/inspector/InspectorTarget.h
-@@ -47,6 +47,7 @@ public:
-     virtual InspectorTargetType type() const = 0;
- 
-     virtual bool isProvisional() const { return false; }
-+    virtual String oldTargetID() const { return String(); }
-     bool isPaused() const { return m_isPaused; }
-     void pause();
-     void resume();
-@@ -56,6 +57,8 @@ public:
+@@ -56,6 +56,8 @@ public:
      virtual void connect(FrontendChannel::ConnectionType) = 0;
      virtual void disconnect() = 0;
      virtual void sendMessageToTargetBackend(const String&) = 0;
@@ -280,7 +272,7 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..db2fde501b30c8e4fafcac3b2b403713
  private:
      WTF::Function<void()> m_resumeCallback;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..b56ffaa68a34aa3e7119962cd8404cafb9b420ec 100644
+index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..ed2525df326bfe649793701a112eefa30952e375 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 @@ -87,6 +87,28 @@ void InspectorTargetAgent::sendMessageToTarget(ErrorString& errorString, const S
@@ -312,19 +304,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..b56ffaa68a34aa3e7119962cd8404caf
  void InspectorTargetAgent::sendMessageFromTargetToFrontend(const String& targetId, const String& message)
  {
      ASSERT_WITH_MESSAGE(m_targets.get(targetId), "Sending a message from an untracked target to the frontend.");
-@@ -115,8 +137,10 @@ static Ref<Protocol::Target::TargetInfo> buildTargetInfoObject(const InspectorTa
-         .setTargetId(target.identifier())
-         .setType(targetTypeToProtocolType(target.type()))
-         .release();
--    if (target.isProvisional())
-+    if (target.isProvisional()) {
-         result->setIsProvisional(true);
-+        result->setOldTargetId(target.oldTargetID());
-+    }
-     if (target.isPaused())
-         result->setIsPaused(true);
-     return result;
-@@ -144,7 +168,17 @@ void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
+@@ -144,7 +166,17 @@ void InspectorTargetAgent::targetDestroyed(InspectorTarget& target)
      if (!m_isConnected)
          return;
  
@@ -343,7 +323,7 @@ index 8fcb5a1e55750d325a84824d86c49cfe6fb04268..b56ffaa68a34aa3e7119962cd8404caf
  }
  
  void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID, const String& committedTargetID)
-@@ -159,6 +193,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
+@@ -159,6 +191,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
      m_frontendDispatcher->didCommitProvisionalTarget(oldTargetID, committedTargetID);
  }
  
@@ -1245,20 +1225,19 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..2fba82d5f991bcfc1315628728771ff1
      ]
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Target.json b/Source/JavaScriptCore/inspector/protocol/Target.json
-index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..11d40820629d3104408e14a3f92d9f0265b78ce1 100644
+index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..bbbabc4e7259088b9404e8cc07eecd6f45077da0 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Target.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Target.json
-@@ -10,7 +10,8 @@
+@@ -10,7 +10,7 @@
              "properties": [
                  { "name": "targetId", "type": "string", "description": "Unique identifier for the target." },
                  { "name": "type", "type": "string", "enum": ["page", "service-worker", "worker"] },
 -                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "Whether this is a provisional page target." },
 +                { "name": "isProvisional", "type": "boolean", "optional": true, "description": "True value indicates that this is a provisional page target i.e. Such target may be created when current page starts cross-origin navigation. Eventually each provisional target is either committed and swaps with the current target or gets destroyed, e.g. in case of load request failure." },
-+                { "name": "oldTargetId", "type": "string", "optional": true, "description": "Unique identifier of the target which is going to be replaced if this target is committed. Only set for provisional targets." },
                  { "name": "isPaused", "type": "boolean", "optional": true, "description": "Whether the target is paused on start and has to be explicitely resumed by inspector." }
              ]
          }
-@@ -37,6 +38,21 @@
+@@ -37,6 +37,21 @@
                  { "name": "targetId", "type": "string" },
                  { "name": "message", "type": "string", "description": "JSON Inspector Protocol message (command) to be dispatched on the backend." }
              ]
@@ -1280,7 +1259,7 @@ index 52920cded24a9c6b0ef6fb4e518664955db4f9fa..11d40820629d3104408e14a3f92d9f02
          }
      ],
      "events": [
-@@ -49,7 +65,8 @@
+@@ -49,7 +64,8 @@
          {
              "name": "targetDestroyed",
              "parameters": [
@@ -7084,7 +7063,7 @@ index 4896c404bc8b25d69360de7d1c509383282b2317..14bdebf732e929ea367c961f9d0bec85
      // The timeout we use when waiting for a DidUpdateGeometry message.
      static constexpr Seconds didUpdateBackingStoreStateTimeout() { return Seconds::fromMilliseconds(500); }
 diff --git a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
-index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..8259a01bb98789c07f88cafd4f3af553e65d0cf9 100644
+index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..c002691e47a67b6eb89458b7a532087436505365 100644
 --- a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
 @@ -27,11 +27,10 @@
@@ -7134,7 +7113,7 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..8259a01bb98789c07f88cafd4f3af553
      if (m_provisionalPage) {
          m_provisionalPage->send(Messages::WebPage::SendMessageToTargetBackend(identifier(), message));
          return;
-@@ -97,9 +98,35 @@ void InspectorTargetProxy::didCommitProvisionalTarget()
+@@ -97,6 +98,25 @@ void InspectorTargetProxy::didCommitProvisionalTarget()
      m_provisionalPage = nullptr;
  }
  
@@ -7160,18 +7139,8 @@ index 6928ca2fbfb6939062e3cd14bb7ba6f2fdc87f5f..8259a01bb98789c07f88cafd4f3af553
  bool InspectorTargetProxy::isProvisional() const
  {
      return !!m_provisionalPage;
- }
- 
-+String InspectorTargetProxy::oldTargetID() const
-+{
-+    if (!m_provisionalPage)
-+        return String();
-+    return WebPageInspectorTarget::toTargetID(m_page.webPageID());
-+}
-+
- } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.h b/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.h
-index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..f53bd7717be546157dfeb92b835a1df5513a716a 100644
+index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..0f424fbba140712b67de7b388d9ce074c0fe1444 100644
 --- a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.h
 +++ b/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.h
 @@ -37,13 +37,13 @@ class WebPageProxy;
@@ -7191,12 +7160,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..f53bd7717be546157dfeb92b835a1df5
      ~InspectorTargetProxy() = default;
  
      Inspector::InspectorTargetType type() const final { return m_type; }
-@@ -51,16 +51,21 @@ public:
- 
-     void didCommitProvisionalTarget();
-     bool isProvisional() const override;
-+    String oldTargetID() const override;
- 
+@@ -55,12 +55,16 @@ public:
      void connect(Inspector::FrontendChannel::ConnectionType) override;
      void disconnect() override;
      void sendMessageToTargetBackend(const String&) override;
