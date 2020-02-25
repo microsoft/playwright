@@ -306,7 +306,7 @@ module.exports = async function(page, sources) {
 
   // Push base class documentation to derived classes.
   for (const [name, clazz] of documentation.classes.entries()) {
-    clazz.validateOrder(errors);
+    clazz.validateOrder(errors, clazz);
 
     if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
       continue;

@@ -13,3 +13,6 @@ class B extends A {
   bar(override) {
   }
 }
+
+export {A};
+export {B};

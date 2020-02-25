@@ -73,7 +73,7 @@ Documentation.Class = class {
     }
   }
 
-  validateOrder(errors) {
+  validateOrder(errors, cls) {
     const members = this.membersArray;
     // Events should go first.
     let eventIndex = 0;

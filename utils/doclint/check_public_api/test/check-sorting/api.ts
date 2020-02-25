@@ -1,7 +1,5 @@
 class Foo {
-  constructor() {
-    this.ddd = 10;
-  }
+  ddd = 10;
 
   aaa() {}
 
@@ -10,3 +8,4 @@ class Foo {
   ccc() {}
 }
 
+export {Foo};

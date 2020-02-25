@@ -18,3 +18,5 @@ class Foo {
   async asyncFunction() {
   }
 }
+
+export {Foo};
