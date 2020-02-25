@@ -284,61 +284,18 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await waitForSelector;
       expect(boxFound).toBe(true);
     });
-    it('should wait for visible', async({page, server}) => {
-      let divFound = false;
-      const waitForSelector = page.waitForSelector('div').then(() => divFound = true);
-      await page.setContent(`<div style='display: none; visibility: hidden;'>1</div>`);
-      expect(divFound).toBe(false);
-      await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
-      expect(divFound).toBe(false);
-      await page.evaluate(() => document.querySelector('div').style.removeProperty('visibility'));
-      expect(await waitForSelector).toBe(true);
-      expect(divFound).toBe(true);
-    });
-    it('should wait for visible recursively', async({page, server}) => {
-      let divVisible = false;
-      const waitForSelector = page.waitForSelector('div#inner', { visibility: 'visible' }).then(() => divVisible = true);
-      await page.setContent(`<div style='display: none; visibility: hidden;'><div id="inner">hi</div></div>`);
-      expect(divVisible).toBe(false);
-      await page.evaluate(() => document.querySelector('div').style.removeProperty('display'));
-      expect(divVisible).toBe(false);
-      await page.evaluate(() => document.querySelector('div').style.removeProperty('visibility'));
-      expect(await waitForSelector).toBe(true);
-      expect(divVisible).toBe(true);
-    });
-    it('hidden should wait for visibility: hidden', async({page, server}) => {
-      let divHidden = false;
-      await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divHidden = true);
-      await page.waitForSelector('div'); // do a round trip
-      expect(divHidden).toBe(false);
-      await page.evaluate(() => document.querySelector('div').style.setProperty('visibility', 'hidden'));
-      expect(await waitForSelector).toBe(true);
-      expect(divHidden).toBe(true);
-    });
-    it('hidden should wait for display: none', async({page, server}) => {
-      let divHidden = false;
-      await page.setContent(`<div style='display: block;'></div>`);
-      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divHidden = true);
-      await page.waitForSelector('div'); // do a round trip
-      expect(divHidden).toBe(false);
-      await page.evaluate(() => document.querySelector('div').style.setProperty('display', 'none'));
-      expect(await waitForSelector).toBe(true);
-      expect(divHidden).toBe(true);
-    });
-    it('hidden should wait for removal', async({page, server}) => {
+    it('waitForMissing should wait for removal', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let divRemoved = false;
-      const waitForSelector = page.waitForSelector('div', { visibility: 'hidden' }).then(() => divRemoved = true);
+      const waitForSelector = page.waitForSelectorMissing('div').then(() => divRemoved = true);
       await page.waitForSelector('div'); // do a round trip
       expect(divRemoved).toBe(false);
       await page.evaluate(() => document.querySelector('div').remove());
-      expect(await waitForSelector).toBe(true);
+      await waitForSelector;
       expect(divRemoved).toBe(true);
     });
-    it('should return null if waiting to hide non-existing element', async({page, server}) => {
-      const handle = await page.waitForSelector('non-existing', { visibility: 'hidden' });
-      expect(handle).toBe(null);
+    it('should return immediately if waitForMissing non-existing element', async({page, server}) => {
+      await page.waitForSelectorMissing('non-existing');
     });
     it('should respect timeout', async({page, server}) => {
       let error = null;
@@ -347,12 +304,12 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       expect(error.message).toContain('waiting for selector "div" failed: timeout');
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
-    it('should have an error message specifically for awaiting an element to be hidden', async({page, server}) => {
+    it('should have an error message specifically for waitForMissing', async({page, server}) => {
       await page.setContent(`<div></div>`);
       let error = null;
-      await page.waitForSelector('div', { visibility: 'hidden', timeout: 10 }).catch(e => error = e);
+      await page.waitForSelectorMissing('div', { timeout: 10 }).catch(e => error = e);
       expect(error).toBeTruthy();
-      expect(error.message).toContain('waiting for selector "[hidden] div" failed: timeout');
+      expect(error.message).toContain('waiting for selector "div" to be missing failed: timeout');
     });
     it('should respond to node attribute mutation', async({page, server}) => {
       let divFound = false;
@@ -372,25 +329,20 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
       expect(error.stack).toContain('waittask.spec.js');
     });
-    it('should throw for unknown waitFor option', async({page, server}) => {
+    it('should throw for waitFor option', async({page, server}) => {
+      await page.setContent('<section>test</section>');
+      const error = await page.waitForSelector('section', { waitFor: 'foo' }).catch(e => e);
+      expect(error.message).toContain('Unsupported waitFor option, did you mean to click?');
+    });
+    it('should throw for visibility option', async({page, server}) => {
       await page.setContent('<section>test</section>');
       const error = await page.waitForSelector('section', { visibility: 'foo' }).catch(e => e);
-      expect(error.message).toContain('Unsupported visibility option');
+      expect(error.message).toContain('Unsupported visibility option, did you mean to waitForSelectorMissing?');
     });
-    it('should throw for numeric waitFor option', async({page, server}) => {
+    it('should throw for visibility option on waitForMissing', async({page, server}) => {
       await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { visibility: 123 }).catch(e => e);
-      expect(error.message).toContain('Unsupported visibility option');
-    });
-    it('should throw for true waitFor option', async({page, server}) => {
-      await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { visibility: true }).catch(e => e);
-      expect(error.message).toContain('Unsupported visibility option');
-    });
-    it('should throw for false waitFor option', async({page, server}) => {
-      await page.setContent('<section>test</section>');
-      const error = await page.waitForSelector('section', { visibility: false }).catch(e => e);
-      expect(error.message).toContain('Unsupported visibility option');
+      const error = await page.waitForSelectorMissing('section', { visibility: 'foo' }).catch(e => e);
+      expect(error.message).toContain('Unsupported visibility option, did you mean to waitForSelector?');
     });
     it('should support >> selector syntax', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);

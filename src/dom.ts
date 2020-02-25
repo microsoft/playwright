@@ -581,18 +581,13 @@ export function waitForFunctionTask(selector: string | undefined, pageFunction: 
   }, await context._injected(), selector, predicateBody, polling, options.timeout || 0, ...args);
 }
 
-export function waitForSelectorTask(selector: string, visibility: types.Visibility, timeout: number): Task {
+export function waitForSelectorTask(selector: string, present: boolean, timeout: number): Task {
   selector = normalizeSelector(selector);
-  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number) => {
-    const polling = visibility === 'any' ? 'mutation' : 'raf';
-    return injected.poll(polling, selector, timeout, (element: Element | undefined): Element | boolean => {
-      if (!element)
-        return visibility === 'hidden';
-      if (visibility === 'any')
-        return element;
-      return injected.isVisible(element) === (visibility === 'visible') ? element : false;
+  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string, present: boolean, timeout: number) => {
+    return injected.poll('mutation', selector, timeout, (element: Element | undefined) => {
+      return present ? element : !element;
     });
-  }, await context._injected(), selector, visibility, timeout);
+  }, await context._injected(), selector, present, timeout);
 }
 
 export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {

@@ -135,16 +135,6 @@ class Injected {
     return result;
   }
 
-  isVisible(element: Element): boolean {
-    if (!element.ownerDocument || !element.ownerDocument.defaultView)
-      return true;
-    const style = element.ownerDocument.defaultView.getComputedStyle(element);
-    if (!style || style.visibility === 'hidden')
-      return false;
-    const rect = element.getBoundingClientRect();
-    return !!(rect.top || rect.bottom || rect.width || rect.height);
-  }
-
   private _pollMutation(selector: string | undefined, predicate: Predicate, timeout: number): Promise<any> {
     let timedOut = false;
     if (timeout)

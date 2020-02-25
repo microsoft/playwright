@@ -158,7 +158,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const error = await page.click('button', { waitFor: 'visible' }).catch(e => e);
       expect(error.message).toBe('waitFor option should be a boolean, got "string"');
     });
-    it('should waitFor visible', async({page, server}) => {
+    it('should waitFor display:none to be cleared', async({page, server}) => {
       let done = false;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
