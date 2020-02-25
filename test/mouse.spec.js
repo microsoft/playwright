@@ -149,5 +149,15 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       expect(await page.evaluate('result')).toEqual({x: 30, y: 40});
       await context.close();
     });
+    describe('Drag and Drop', function() {
+      xit('should work', async({server, page}) => {
+        await page.goto(server.PREFIX + '/drag-n-drop.html');
+        await page.hover('#source');
+        await page.mouse.down();
+        await page.hover('#target');
+        await page.mouse.up();
+        expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true);
+      })
+    });
   });
 };
