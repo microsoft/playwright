@@ -18,6 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
 const {waitEvent} = utils;
+const vm = require('vm');
 
 /**
  * @type {PageTestSuite}
@@ -303,6 +304,19 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.goto(server.EMPTY_PAGE);
       const [request] = await Promise.all([
         page.waitForRequest(/digits\/\d\.png/),
+        page.evaluate(() => {
+          fetch('/digits/1.png');
+        })
+      ]);
+      expect(request.url()).toBe(server.PREFIX + '/digits/1.png');
+    });
+    it('should work with url match regular expression from a different context', async({page, server}) => {
+      const ctx = vm.createContext();
+      const regexp = vm.runInContext('new RegExp(/digits\\/\\d\\.png/)', ctx);
+
+      await page.goto(server.EMPTY_PAGE);
+      const [request] = await Promise.all([
+        page.waitForRequest(regexp),
         page.evaluate(() => {
           fetch('/digits/1.png');
         })

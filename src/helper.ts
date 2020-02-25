@@ -98,6 +98,10 @@ class Helper {
     return typeof obj === 'number' || obj instanceof Number;
   }
 
+  static isRegExp(obj: any): obj is RegExp {
+    return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+  }
+
   static isObject(obj: any): obj is NonNullable<object> {
     return typeof obj === 'object' && obj !== null;
   }

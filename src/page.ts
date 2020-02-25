@@ -358,7 +358,7 @@ export class Page extends platform.EventEmitter {
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Request, (request: network.Request) => {
-      if (helper.isString(urlOrPredicate) || urlOrPredicate instanceof RegExp)
+      if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
         return platform.urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
     }, timeout, this._disconnectedPromise);
@@ -367,7 +367,7 @@ export class Page extends platform.EventEmitter {
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: network.Response) => boolean), options: types.TimeoutOptions = {}): Promise<network.Response> {
     const { timeout = this._timeoutSettings.timeout() } = options;
     return helper.waitForEvent(this, Events.Page.Response, (response: network.Response) => {
-      if (helper.isString(urlOrPredicate) || urlOrPredicate instanceof RegExp)
+      if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
         return platform.urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
     }, timeout, this._disconnectedPromise);

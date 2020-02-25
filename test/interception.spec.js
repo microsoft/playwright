@@ -19,6 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const { helper } = require('../lib/helper');
 const utils = require('./utils');
+const vm = require('vm');
 
 /**
  * @type {PageTestSuite}
@@ -616,6 +617,28 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpeg')).toBeTruthy();
       expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.png')).toBeTruthy();
       expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
+    });
+  });
+
+  describe('regexp', function() {
+    it('should work with regular expression passed from a different context', async({page, server}) => {
+      const ctx = vm.createContext();
+      const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);
+
+      await page.route(regexp, request => {
+        expect(request.url()).toContain('empty.html');
+        expect(request.headers()['user-agent']).toBeTruthy();
+        expect(request.method()).toBe('GET');
+        expect(request.postData()).toBe(undefined);
+        expect(request.isNavigationRequest()).toBe(true);
+        expect(request.resourceType()).toBe('document');
+        expect(request.frame() === page.mainFrame()).toBe(true);
+        expect(request.frame().url()).toBe('about:blank');
+        request.continue();
+      });
+
+      const response = await page.goto(server.EMPTY_PAGE);
+      expect(response.ok()).toBe(true);
     });
   });
 };
