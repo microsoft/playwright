@@ -24,6 +24,7 @@ import Injected from './injected/injected';
 import { Page } from './page';
 import * as platform from './platform';
 import { Selectors } from './selectors';
+import * as pw from './playwright';
 
 export type PointerActionOptions = {
   modifiers?: input.Modifier[];
@@ -37,7 +38,7 @@ export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOpti
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
 
-  private _injectedPromise?: Promise<js.JSHandle>;
+  private _injectedPromise?: Promise<js.JSHandle<Injected>>;
   private _injectedGeneration = -1;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
@@ -78,7 +79,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return super._createHandle(remoteObject);
   }
 
-  _injected(): Promise<js.JSHandle> {
+  _injected(): Promise<js.JSHandle<Injected>> {
     const selectors = Selectors._instance();
     if (this._injectedPromise && selectors._generation !== this._injectedGeneration) {
       this._injectedPromise.then(handle => handle.dispose());
@@ -90,47 +91,47 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${selectors._sources.join(',\n')}
         ])
       `;
-      this._injectedPromise = this.evaluateHandle(source);
+      this._injectedPromise = this.evaluateHandle(source) as Promise<js.JSHandle<Injected>>;
       this._injectedGeneration = selectors._generation;
     }
     return this._injectedPromise;
   }
 
-  async _$(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
+  async _$(selector: string, scope?: ElementHandle): Promise<ElementHandle<HTMLElement> | null> {
     const handle = await this.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node) => injected.querySelector(selector, scope || document),
         await this._injected(), normalizeSelector(selector), scope
     );
     if (!handle.asElement())
       await handle.dispose();
-    return handle.asElement() as ElementHandle<Element>;
+    return handle.asElement() as ElementHandle<HTMLElement>;
   }
 
-  async _$array(selector: string, scope?: ElementHandle): Promise<js.JSHandle<Element[]>> {
+  async _$array(selector: string, scope?: ElementHandle): Promise<js.JSHandle<HTMLElement[]>> {
     const arrayHandle = await this.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node) => injected.querySelectorAll(selector, scope || document),
         await this._injected(), normalizeSelector(selector), scope
     );
-    return arrayHandle;
+    return arrayHandle as js.JSHandle<HTMLElement[]>;
   }
 
-  async _$$(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element>[]> {
+  async _$$(selector: string, scope?: ElementHandle): Promise<ElementHandle<HTMLElement>[]> {
     const arrayHandle = await this._$array(selector, scope);
     const properties = await arrayHandle.getProperties();
     await arrayHandle.dispose();
-    const result: ElementHandle<Element>[] = [];
+    const result: ElementHandle[] = [];
     for (const property of properties.values()) {
-      const elementHandle = property.asElement() as ElementHandle<Element>;
+      const elementHandle = property.asElement();
       if (elementHandle)
         result.push(elementHandle);
       else
         await property.dispose();
     }
-    return result;
+    return result as ElementHandle<HTMLElement>[];
   }
 }
 
-export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
+export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> implements pw.ElementHandle<T> {
   readonly _context: FrameExecutionContext;
   readonly _page: Page;
 
@@ -140,11 +141,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._page = context.frame._page;
   }
 
-  asElement(): ElementHandle<T> | null {
-    return this;
+  asElement<E extends Node = HTMLElement>(): ElementHandle<E> | null {
+    return this as any as ElementHandle<E>;
   }
 
-  _evaluateInUtility: types.EvaluateWithInjected<T> = async (pageFunction, ...args) => {
+  async _evaluateInUtility<Args extends any[], R>(pageFunction: types.PageFunctionOn2<Injected, T, Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     const utility = await this._context.frame._utilityContext();
     return utility.evaluate(pageFunction as any, await utility._injected(), this, ...args);
   }
@@ -281,7 +282,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this._evaluateInUtility((injected, node, ...optionsToSelect) => injected.selectOptions(node, optionsToSelect), ...options);
+    return this._evaluateInUtility((injected, node, ...optionsToSelect: (Node | types.SelectOption)[]) => injected.selectOptions(node, optionsToSelect), ...options);
   }
 
   async fill(value: string): Promise<void> {
@@ -362,15 +363,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._screenshotter.screenshotElement(this, options);
   }
 
-  $(selector: string): Promise<ElementHandle | null> {
+  async $(selector: string): Promise<pw.ElementHandle | null> {
     return this._context._$(selector, this);
   }
 
-  $$(selector: string): Promise<ElementHandle<Element>[]> {
+  async $$(selector: string): Promise<pw.ElementHandle[]> {
     return this._context._$$(selector, this);
   }
 
-  $eval: types.$Eval = async (selector, pageFunction, ...args) => {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.PageFunctionOn<HTMLElement, Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     const elementHandle = await this._context._$(selector, this);
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
@@ -379,7 +380,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.PageFunctionOn<HTMLElement[], Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     const arrayHandle = await this._context._$array(selector, this);
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
     await arrayHandle.dispose();
@@ -448,7 +449,7 @@ export function waitForFunctionTask(selector: string | undefined, pageFunction: 
         return innerPredicate(...args);
       return innerPredicate(element, ...args);
     });
-  }, await context._injected(), selector, predicateBody, polling, options.timeout || 0, ...args);
+  }, await context._injected(), selector, predicateBody, polling, options.timeout || 0, ...args) as Promise<js.JSHandle>;
 }
 
 export function waitForSelectorTask(selector: string, visibility: types.Visibility, timeout: number): Task {
@@ -462,7 +463,7 @@ export function waitForSelectorTask(selector: string, visibility: types.Visibili
         return element;
       return injected.isVisible(element) === (visibility === 'visible') ? element : false;
     });
-  }, await context._injected(), selector, visibility, timeout);
+  }, await context._injected(), selector, visibility, timeout) as Promise<js.JSHandle>;
 }
 
 export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {

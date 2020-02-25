@@ -16,6 +16,7 @@
 
 import * as types from './types';
 import * as dom from './dom';
+import * as pw from './playwright';
 
 export interface ExecutionContextDelegate {
   evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any>;
@@ -36,11 +37,11 @@ export class ExecutionContext {
     return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
   }
 
-  evaluate: types.Evaluate = async (pageFunction, ...args) => {
+  async evaluate<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     return this._evaluate(true /* returnByValue */, pageFunction, ...args);
   }
 
-  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
+  async evaluateHandle<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<types.SmartHandle<R>> {
     return this._evaluate(false /* returnByValue */, pageFunction, ...args);
   }
 
@@ -49,7 +50,7 @@ export class ExecutionContext {
   }
 }
 
-export class JSHandle<T = any> {
+export class JSHandle<T = any> implements pw.JSHandle<T> {
   readonly _context: ExecutionContext;
   readonly _remoteObject: any;
   _disposed = false;
@@ -59,15 +60,15 @@ export class JSHandle<T = any> {
     this._remoteObject = remoteObject;
   }
 
-  evaluate: types.EvaluateOn<T> = (pageFunction, ...args) => {
+  async evaluate<Args extends any[], R>(pageFunction: types.PageFunctionOn<T, Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     return this._context.evaluate(pageFunction as any, this, ...args);
   }
 
-  evaluateHandle: types.EvaluateHandleOn<T> = (pageFunction, ...args) => {
+  async evaluateHandle<Args extends any[], R>(pageFunction: types.PageFunctionOn<T, Args, R>, ...args: types.Boxed<Args>): Promise<types.SmartHandle<R>> {
     return this._context.evaluateHandle(pageFunction as any, this, ...args);
   }
 
-  async getProperty(propertyName: string): Promise<JSHandle | null> {
+  async getProperty(propertyName: string): Promise<pw.JSHandle | null> {
     const objectHandle = await this.evaluateHandle((object: any, propertyName) => {
       const result: any = {__proto__: null};
       result[propertyName] = object[propertyName];
@@ -87,7 +88,7 @@ export class JSHandle<T = any> {
     return this._context._delegate.handleJSONValue(this);
   }
 
-  asElement(): dom.ElementHandle | null {
+  asElement<E extends Node = HTMLElement>(): dom.ElementHandle<E> | null {
     return null;
   }
 

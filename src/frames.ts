@@ -25,6 +25,7 @@ import { Events } from './events';
 import { Page } from './page';
 import { ConsoleMessage } from './console';
 import * as platform from './platform';
+import * as pw from './playwright';
 
 type ContextType = 'main' | 'utility';
 type ContextData = {
@@ -533,17 +534,17 @@ export class Frame {
     return this._context('utility');
   }
 
-  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
+  async evaluateHandle<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<types.SmartHandle<R>> {
     const context = await this._mainContext();
     return context.evaluateHandle(pageFunction, ...args as any);
   }
 
-  evaluate: types.Evaluate = async (pageFunction, ...args) => {
+  async evaluate<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     const context = await this._mainContext();
     return context.evaluate(pageFunction, ...args as any);
   }
 
-  async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+  async $(selector: string): Promise<pw.ElementHandle | null> {
     const utilityContext = await this._utilityContext();
     const mainContext = await this._mainContext();
     const handle = await utilityContext._$(selector);
@@ -555,23 +556,23 @@ export class Frame {
     return handle;
   }
 
-  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<pw.ElementHandle | null> {
     const { timeout = this._page._timeoutSettings.timeout(), visibility = 'any' } = (options || {});
     const handle = await this._waitForSelectorInUtilityContext(selector, visibility, timeout);
     const mainContext = await this._mainContext();
     if (handle && handle._context !== mainContext) {
       const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
       await handle.dispose();
-      return adopted;
+      return adopted as Promise<dom.ElementHandle<HTMLElement>>;
     }
-    return handle;
+    return handle as dom.ElementHandle<HTMLElement>;
   }
 
-  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<pw.ElementHandle | null> {
     return this.waitForSelector(selector, options);
   }
 
-  $eval: types.$Eval = async (selector, pageFunction, ...args) => {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.PageFunctionOn<HTMLElement, Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     const context = await this._mainContext();
     const elementHandle = await context._$(selector);
     if (!elementHandle)
@@ -581,7 +582,7 @@ export class Frame {
     return result;
   }
 
-  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.PageFunctionOn<HTMLElement[], Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     const context = await this._mainContext();
     const arrayHandle = await context._$array(selector);
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
@@ -589,7 +590,7 @@ export class Frame {
     return result;
   }
 
-  async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
+  async $$(selector: string): Promise<pw.ElementHandle[]> {
     const context = await this._mainContext();
     return context._$$(selector);
   }
@@ -650,7 +651,7 @@ export class Frame {
       url?: string; path?: string;
       content?: string;
       type?: string;
-    }): Promise<dom.ElementHandle> {
+    }): Promise<pw.ElementHandle> {
     const {
       url = null,
       path = null,
@@ -699,7 +700,7 @@ export class Frame {
     }
   }
 
-  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<dom.ElementHandle> {
+  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<pw.ElementHandle> {
     const {
       url = null,
       path = null,
@@ -749,12 +750,12 @@ export class Frame {
     }
   }
 
-  private async _raceWithCSPError(func: () => Promise<dom.ElementHandle>): Promise<dom.ElementHandle> {
+  private async _raceWithCSPError(func: () => Promise<pw.ElementHandle>): Promise<pw.ElementHandle> {
     const listeners: RegisteredListener[] = [];
-    let result: dom.ElementHandle;
+    let result: pw.ElementHandle;
     let error: Error | undefined;
     let cspMessage: ConsoleMessage | undefined;
-    const actionPromise = new Promise<dom.ElementHandle>(async resolve => {
+    const actionPromise = new Promise<pw.ElementHandle>(async resolve => {
       try {
         result = await func();
       } catch (e) {
@@ -851,11 +852,11 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: types.WaitForOptions | undefined): Promise<dom.ElementHandle<Element>> {
+  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: types.WaitForOptions | undefined): Promise<dom.ElementHandle> {
     const { timeout = this._page._timeoutSettings.timeout(), waitFor = true } = (options || {});
     if (!helper.isBoolean(waitFor))
       throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
-    let handle: dom.ElementHandle<Element>;
+    let handle: dom.ElementHandle;
     if (waitFor) {
       const maybeHandle = await this._waitForSelectorInUtilityContext(selector, 'any', timeout);
       if (!maybeHandle)
@@ -870,7 +871,7 @@ export class Frame {
     return handle;
   }
 
-  private async _waitForSelectorInUtilityContext(selector: string, waitFor: types.Visibility, timeout: number): Promise<dom.ElementHandle<Element> | null> {
+  private async _waitForSelectorInUtilityContext(selector: string, waitFor: types.Visibility, timeout: number): Promise<dom.ElementHandle | null> {
     let visibility: types.Visibility = 'any';
     if (waitFor === 'visible' || waitFor === 'hidden' || waitFor === 'any')
       visibility = waitFor;
@@ -882,7 +883,7 @@ export class Frame {
       await result.dispose();
       return null;
     }
-    return result.asElement() as dom.ElementHandle<Element>;
+    return result.asElement();
   }
 
   async waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {

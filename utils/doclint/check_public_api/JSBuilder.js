@@ -99,7 +99,9 @@ function checkSources(sources, externalDependencies) {
           parent = parent.parent;
         className = path.basename(parent.fileName,  '.js');
       }
-      if (className && !excludeClasses.has(className)) {
+      // Temporary hack for transition period.
+      const isPWElementHandle = className === 'ElementHandle' && fileName.endsWith('/playwright.d.ts');
+      if (className && !excludeClasses.has(className) && !isPWElementHandle) {
         classes.push(serializeClass(className, symbol, node));
         inheritance.set(className, parentClasses(node));
         excludeClasses.add(className);

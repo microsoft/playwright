@@ -455,7 +455,7 @@ export class CRPage implements PageDelegate {
     });
     if (!documentElement)
       return null;
-    const remoteObject = toRemoteObject(documentElement);
+    const remoteObject = toRemoteObject(documentElement as js.JSHandle);
     if (!remoteObject.objectId)
       return null;
     const nodeInfo = await this._client.send('DOM.describeNode', {

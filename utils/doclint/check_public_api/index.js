@@ -21,9 +21,6 @@ const Message = require('../Message');
 const path = require('path');
 
 const EXCLUDE_PROPERTIES = new Set([
-  'Browser.create',
-  'Headers.fromPayload',
-  'Page.create',
   'JSHandle.toString',
   'TimeoutError.name',
 ]);

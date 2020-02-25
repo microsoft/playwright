@@ -29,6 +29,7 @@ import { BrowserContext } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import * as accessibility from './accessibility';
 import * as platform from './platform';
+import * as pw from './playwright';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -207,39 +208,39 @@ export class Page extends platform.EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
+  async $(selector: string): Promise<pw.ElementHandle | null> {
     return this.mainFrame().$(selector);
   }
 
-  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<pw.ElementHandle | null> {
     return this.mainFrame().waitForSelector(selector, options);
   }
 
-  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
+  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<pw.ElementHandle | null> {
     return this.mainFrame().$wait(selector, options);
   }
 
-  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
+  async evaluateHandle<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<types.SmartHandle<R>> {
     return this.mainFrame().evaluateHandle(pageFunction, ...args as any);
   }
 
-  $eval: types.$Eval = async  (selector, pageFunction, ...args) => {
+  async $eval<Args extends any[], R>(selector: string, pageFunction: types.PageFunctionOn<HTMLElement, Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     return this.mainFrame().$eval(selector, pageFunction, ...args as any);
   }
 
-  $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
+  async $$eval<Args extends any[], R>(selector: string, pageFunction: types.PageFunctionOn<HTMLElement[], Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     return this.mainFrame().$$eval(selector, pageFunction, ...args as any);
   }
 
-  async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
+  async $$(selector: string): Promise<pw.ElementHandle[]> {
     return this.mainFrame().$$(selector);
   }
 
-  async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<dom.ElementHandle> {
+  async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<pw.ElementHandle> {
     return this.mainFrame().addScriptTag(options);
   }
 
-  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<dom.ElementHandle> {
+  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<pw.ElementHandle> {
     return this.mainFrame().addStyleTag(options);
   }
 
@@ -412,7 +413,7 @@ export class Page extends platform.EventEmitter {
     return this._state.viewportSize;
   }
 
-  evaluate: types.Evaluate = async (pageFunction, ...args) => {
+  async evaluate<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
@@ -595,11 +596,11 @@ export class Worker {
     return this._url;
   }
 
-  evaluate: types.Evaluate = async (pageFunction, ...args) => {
+  async evaluate<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<R> {
     return (await this._executionContextPromise).evaluate(pageFunction, ...args as any);
   }
 
-  evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
+  async evaluateHandle<Args extends any[], R>(pageFunction: types.PageFunction<Args, R>, ...args: types.Boxed<Args>): Promise<types.SmartHandle<R>> {
     return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
   }
 }
