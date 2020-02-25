@@ -199,6 +199,7 @@ Indicates that the browser is connected.
     - `accuracy` <[number]> Optional non-negative accuracy value.
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
+  - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -232,6 +233,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `accuracy` <[number]> Optional non-negative accuracy value.
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
+  - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -271,6 +273,7 @@ await context.close();
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
+- [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
@@ -373,6 +376,14 @@ This setting will change the default maximum navigation time for the following m
 This setting will change the default maximum time for all the methods accepting `timeout` option.
 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout), [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) and [`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout) take priority over [`browserContext.setDefaultTimeout`](#browserContextsetdefaulttimeouttimeout).
+
+#### browserContext.setExtraHTTPHeaders(headers)
+- `headers` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+- returns: <[Promise]>
+
+The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged with page-specific extra HTTP headers set with [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders). If page overrides a particular header, page-specific header value will be used instead of the browser context header value.
+
+> **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
 
 #### browserContext.setGeolocation(geolocation)
 - `geolocation` <[Object]>
@@ -3582,6 +3593,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
+- [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->

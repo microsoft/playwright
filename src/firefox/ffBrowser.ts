@@ -28,6 +28,7 @@ import * as platform from '../platform';
 import { Protocol } from './protocol';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import { TimeoutSettings } from '../timeoutSettings';
+import { headersArray } from './ffNetworkManager';
 
 export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
@@ -274,6 +275,8 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
     await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
     if (this._options.geolocation)
       await this.setGeolocation(this._options.geolocation);
+    if (this._options.extraHTTPHeaders)
+      await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders);
   }
 
   _existingPages(): Page[] {
@@ -347,6 +350,11 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
 
   async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
     throw new Error('Geolocation emulation is not supported in Firefox');
+  }
+
+  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
+    this._options.extraHTTPHeaders = network.verifyHeaders(headers);
+    await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: headersArray(this._options.extraHTTPHeaders) });
   }
 
   async close() {

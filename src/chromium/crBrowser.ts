@@ -294,6 +294,12 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
       await (page._delegate as CRPage)._client.send('Emulation.setGeolocationOverride', geolocation || {});
   }
 
+  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
+    this._options.extraHTTPHeaders = network.verifyHeaders(headers);
+    for (const page of this._existingPages())
+      await (page._delegate as CRPage).updateExtraHTTPHeaders();
+  }
+
   async close() {
     if (this._closed)
       return;
