@@ -156,7 +156,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
         await page.mouse.down();
         await page.hover('#target');
         await page.mouse.up();
-        expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true);
+        expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true, 'could not find source in target');
       })
     });
   });
