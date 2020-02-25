@@ -34,7 +34,7 @@ let browserContext;
 let page;
 
 beforeAll(async function() {
-  browser = await playwright.launch();
+  browser = await playwright.chromium.launch();
   page = await browser.newPage();
 });
 
@@ -65,8 +65,9 @@ async function testLint(state, test) {
   });
 
   const mdSources = await Source.readdir(dirPath, '.md');
+  const tsSources = await Source.readdir(dirPath, '.ts');
   const jsSources = await Source.readdir(dirPath, '.js');
-  const messages = await checkPublicAPI(page, mdSources, jsSources);
+  const messages = await checkPublicAPI(page, mdSources, jsSources.concat(tsSources));
   const errors = messages.map(message => message.text);
   expect(errors.join('\n')).toBeGolden('result.txt');
 }
@@ -86,8 +87,9 @@ async function testJSBuilder(state, test) {
   const {expect} = new Matchers({
     toBeGolden: GoldenUtils.compare.bind(null, dirPath, dirPath)
   });
-  const sources = await Source.readdir(dirPath, '.js');
-  const {documentation} = await jsBuilder(sources);
+  const jsSources = await Source.readdir(dirPath, '.js');
+  const tsSources = await Source.readdir(dirPath, '.ts');
+  const {documentation} = await jsBuilder.checkSources(jsSources.concat(tsSources));
   expect(serialize(documentation)).toBeGolden('result.txt');
 }
 

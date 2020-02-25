@@ -28,7 +28,7 @@ module.exports = { checkSources, expandPrefix };
 function checkSources(sources, externalDependencies) {
   // special treatment for Events.js
   const classEvents = new Map();
-  const eventsSources = sources.filter(source => source.name().startsWith('events.ts'));
+  const eventsSources = sources.filter(source => source.name().startsWith('events.'));
   for (const eventsSource of eventsSources) {
     const {Events} = require(eventsSource.filePath().endsWith('.js') ? eventsSource.filePath() : eventsSource.filePath().replace(/\bsrc\b/, 'lib').replace('.ts', '.js'));
     for (const [className, events] of Object.entries(Events))

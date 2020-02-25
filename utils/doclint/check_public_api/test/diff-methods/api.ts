@@ -14,3 +14,5 @@ class Foo {
   money$$money() {
   }
 }
+
+export {Foo};
