@@ -25,6 +25,15 @@ import { Page } from './page';
 import * as platform from './platform';
 import { Selectors } from './selectors';
 
+export type PointerActionOptions = {
+  modifiers?: input.Modifier[];
+  offset?: types.Point;
+};
+
+export type ClickOptions = PointerActionOptions & input.MouseClickOptions;
+
+export type MultiClickOptions = PointerActionOptions & input.MouseMultiClickOptions;
+
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
 
@@ -207,7 +216,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  private async _relativePoint(relativePoint: types.Point): Promise<types.Point> {
+  private async _offsetPoint(offset: types.Point): Promise<types.Point> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
       this._evaluateInUtility((node: Node) => {
@@ -217,7 +226,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return { x: parseInt(style.borderLeftWidth || '', 10), y: parseInt(style.borderTopWidth || '', 10) };
       }).catch(debugError),
     ]);
-    const point = { x: relativePoint.x, y: relativePoint.y };
+    const point = { x: offset.x, y: offset.y };
     if (box) {
       point.x += box.x;
       point.y += box.y;
@@ -230,15 +239,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: input.PointerActionOptions & types.WaitForOptions): Promise<void> {
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.WaitForOptions): Promise<void> {
     const { waitFor = true } = (options || {});
     if (!helper.isBoolean(waitFor))
       throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
     if (waitFor)
       await this._waitForStablePosition(options);
-    const relativePoint = options ? options.relativePoint : undefined;
-    await this._scrollRectIntoViewIfNeeded(relativePoint ? { x: relativePoint.x, y: relativePoint.y, width: 0, height: 0 } : undefined);
-    const point = relativePoint ? await this._relativePoint(relativePoint) : await this._clickablePoint();
+    const offset = options ? options.offset : undefined;
+    await this._scrollRectIntoViewIfNeeded(offset ? { x: offset.x, y: offset.y, width: 0, height: 0 } : undefined);
+    const point = offset ? await this._offsetPoint(offset) : await this._clickablePoint();
     if (waitFor)
       await this._waitForHitTargetAt(point, options);
     let restoreModifiers: input.Modifier[] | undefined;
@@ -249,19 +258,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page.keyboard._ensureModifiers(restoreModifiers);
   }
 
-  hover(options?: input.PointerActionOptions & types.WaitForOptions): Promise<void> {
+  hover(options?: PointerActionOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: input.ClickOptions & types.WaitForOptions): Promise<void> {
+  click(options?: ClickOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: input.MultiClickOptions & types.WaitForOptions): Promise<void> {
+  dblclick(options?: MultiClickOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: input.MultiClickOptions & types.WaitForOptions): Promise<void> {
+  tripleclick(options?: MultiClickOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 

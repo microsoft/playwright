@@ -15,24 +15,18 @@
  */
 
 import { assert } from './helper';
-import * as types from './types';
 import * as keyboardLayout from './usKeyboardLayout';
 
 export type Modifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 export type Button = 'left' | 'right' | 'middle';
 
-export type PointerActionOptions = {
-  modifiers?: Modifier[];
-  relativePoint?: types.Point;
-};
-
-export type ClickOptions = PointerActionOptions & {
+export type MouseClickOptions = {
   delay?: number;
   button?: Button;
   clickCount?: number;
 };
 
-export type MultiClickOptions = PointerActionOptions & {
+export type MouseMultiClickOptions = {
   delay?: number;
   button?: Button;
 };
@@ -227,7 +221,7 @@ export class Mouse {
     await this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
-  async click(x: number, y: number, options: ClickOptions = {}) {
+  async click(x: number, y: number, options: MouseClickOptions = {}) {
     const {delay = null} = options;
     if (delay !== null) {
       await Promise.all([
@@ -245,7 +239,7 @@ export class Mouse {
     }
   }
 
-  async dblclick(x: number, y: number, options: MultiClickOptions = {}) {
+  async dblclick(x: number, y: number, options: MouseMultiClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
       await this.move(x, y);
@@ -267,7 +261,7 @@ export class Mouse {
     }
   }
 
-  async tripleclick(x: number, y: number, options: MultiClickOptions = {}) {
+  async tripleclick(x: number, y: number, options: MouseMultiClickOptions = {}) {
     const { delay = null } = options;
     if (delay !== null) {
       await this.move(x, y);
