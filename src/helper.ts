@@ -99,7 +99,7 @@ class Helper {
   }
 
   static isRegExp(obj: any): obj is RegExp {
-    return Object.prototype.toString.call(obj) === '[object RegExp]';
+    return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
   }
 
   static async waitForEvent(
