@@ -642,15 +642,3 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 };
-
-/**
- * @param {string} path
- * @return {string}
- */
-function pathToFileURL(path) {
-  let pathName = path.replace(/\\/g, '/');
-  // Windows drive letter must be prefixed with a slash.
-  if (!pathName.startsWith('/'))
-    pathName = '/' + pathName;
-  return 'file://' + pathName;
-}
