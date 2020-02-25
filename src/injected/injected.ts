@@ -19,6 +19,7 @@ import { Utils } from './utils';
 import { CSSEngine } from './cssSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { TextEngine } from './textSelectorEngine';
+import * as types from '../types';
 
 function createAttributeEngine(attribute: string): SelectorEngine {
   const engine: SelectorEngine = {
@@ -233,6 +234,155 @@ class Injected {
     if (polling === 'mutation')
       return this._pollMutation(selector, predicate, timeout);
     return this._pollInterval(selector, polling, predicate, timeout);
+  }
+
+  getElementBorderWidth(node: Node): { left: number; top: number; } {
+    if (node.nodeType !== Node.ELEMENT_NODE || !node.ownerDocument || !node.ownerDocument.defaultView)
+      return { left: 0, top: 0 };
+    const style = node.ownerDocument.defaultView.getComputedStyle(node as Element);
+    return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
+  }
+
+  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]) {
+    if (node.nodeName.toLowerCase() !== 'select')
+      throw new Error('Element is not a <select> element.');
+    const element = node as HTMLSelectElement;
+
+    const options = Array.from(element.options);
+    element.value = undefined as any;
+    for (let index = 0; index < options.length; index++) {
+      const option = options[index];
+      option.selected = optionsToSelect.some(optionToSelect => {
+        if (optionToSelect instanceof Node)
+          return option === optionToSelect;
+        let matches = true;
+        if (optionToSelect.value !== undefined)
+          matches = matches && optionToSelect.value === option.value;
+        if (optionToSelect.label !== undefined)
+          matches = matches && optionToSelect.label === option.label;
+        if (optionToSelect.index !== undefined)
+          matches = matches && optionToSelect.index === index;
+        return matches;
+      });
+      if (option.selected && !element.multiple)
+        break;
+    }
+    element.dispatchEvent(new Event('input', { 'bubbles': true }));
+    element.dispatchEvent(new Event('change', { 'bubbles': true }));
+    return options.filter(option => option.selected).map(option => option.value);
+  }
+
+  fill(node: Node, value: string) {
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      return 'Node is not of type HTMLElement';
+    const element = node as HTMLElement;
+    if (!element.isConnected)
+      return 'Element is not attached to the DOM';
+    if (!element.ownerDocument || !element.ownerDocument.defaultView)
+      return 'Element does not belong to a window';
+
+    const style = element.ownerDocument.defaultView.getComputedStyle(element);
+    if (!style || style.visibility === 'hidden')
+      return 'Element is hidden';
+    if (!element.offsetParent && element.tagName !== 'BODY')
+      return 'Element is not visible';
+    if (element.nodeName.toLowerCase() === 'input') {
+      const input = element as HTMLInputElement;
+      const type = input.getAttribute('type') || '';
+      const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
+      if (!kTextInputTypes.has(type.toLowerCase()))
+        return 'Cannot fill input of type "' + type + '".';
+      if (type.toLowerCase() === 'number') {
+        value = value.trim();
+        if (!value || isNaN(Number(value)))
+          return 'Cannot type text into input[type=number].';
+      }
+      if (input.disabled)
+        return 'Cannot fill a disabled input.';
+      if (input.readOnly)
+        return 'Cannot fill a readonly input.';
+      input.select();
+      input.focus();
+    } else if (element.nodeName.toLowerCase() === 'textarea') {
+      const textarea = element as HTMLTextAreaElement;
+      if (textarea.disabled)
+        return 'Cannot fill a disabled textarea.';
+      if (textarea.readOnly)
+        return 'Cannot fill a readonly textarea.';
+      textarea.selectionStart = 0;
+      textarea.selectionEnd = textarea.value.length;
+      textarea.focus();
+    } else if (element.isContentEditable) {
+      const range = element.ownerDocument.createRange();
+      range.selectNodeContents(element);
+      const selection = element.ownerDocument.defaultView.getSelection();
+      if (!selection)
+        return 'Element belongs to invisible iframe.';
+      selection.removeAllRanges();
+      selection.addRange(range);
+      element.focus();
+    } else {
+      return 'Element is not an <input>, <textarea> or [contenteditable] element.';
+    }
+    return false;
+  }
+
+  isCheckboxChecked(node: Node) {
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      throw new Error('Not a checkbox or radio button');
+
+    let element: Element | undefined = node as Element;
+    if (element.getAttribute('role') === 'checkbox')
+      return element.getAttribute('aria-checked') === 'true';
+
+    if (element.nodeName === 'LABEL') {
+      const forId = element.getAttribute('for');
+      if (forId && element.ownerDocument)
+        element = element.ownerDocument.querySelector(`input[id="${forId}"]`) || undefined;
+      else
+        element = element.querySelector('input[type=checkbox],input[type=radio]') || undefined;
+    }
+    if (element && element.nodeName === 'INPUT') {
+      const type = element.getAttribute('type');
+      if (type && (type.toLowerCase() === 'checkbox' || type.toLowerCase() === 'radio'))
+        return (element as HTMLInputElement).checked;
+    }
+    throw new Error('Not a checkbox');
+  }
+
+  waitForStablePosition(node: Node, timeout: number) {
+    if (!node.isConnected)
+      throw new Error('Element is not attached to the DOM');
+    const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!element)
+      throw new Error('Element is not attached to the DOM');
+
+    let lastRect: types.Rect | undefined;
+    let counter = 0;
+    return this.poll('raf', undefined, timeout, () => {
+      // First raf happens in the same animation frame as evaluation, so it does not produce
+      // any client rect difference compared to synchronous call. We skip the synchronous call
+      // and only force layout during actual rafs as a small optimisation.
+      if (++counter === 1)
+        return false;
+      const clientRect = element.getBoundingClientRect();
+      const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+      const isStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+      lastRect = rect;
+      return isStable;
+    });
+  }
+
+  waitForHitTargetAt(node: Node, timeout: number, point: types.Point) {
+    const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!element)
+      throw new Error('Element is not attached to the DOM');
+    return this.poll('raf', undefined, timeout, () => {
+      let hitElement = this.utils.deepElementFromPoint(document, point.x, point.y);
+      while (hitElement && hitElement !== element)
+        hitElement = this.utils.parentElementOrShadowHost(hitElement);
+      return hitElement === element;
+    });
   }
 }
 
