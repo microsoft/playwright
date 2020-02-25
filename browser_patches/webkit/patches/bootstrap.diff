@@ -12092,7 +12092,7 @@ index d996feb64e02d7399f2ed0b34d3d0dd03133f824..4ab1fa69437ed5a11a5357a331cb7e1c
      CommandLineOptions()
  #if ENABLE(WEBKIT)
 diff --git a/Tools/MiniBrowser/win/MainWindow.cpp b/Tools/MiniBrowser/win/MainWindow.cpp
-index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d505f1161 100644
+index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2250cbb7e 100644
 --- a/Tools/MiniBrowser/win/MainWindow.cpp
 +++ b/Tools/MiniBrowser/win/MainWindow.cpp
 @@ -102,7 +102,10 @@ bool MainWindow::isInstance(HWND hwnd)
@@ -12179,7 +12179,17 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
  
      if (m_browserWindow->usesLayeredWebView() || !m_browserWindow->hwnd())
          return;
-@@ -309,17 +321,15 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+@@ -254,6 +266,9 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+ {
+     LRESULT result = 0;
+     RefPtr<MainWindow> thisWindow = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
++    if (!thisWindow && message != WM_CREATE)
++        return DefWindowProc(hWnd, message, wParam, lParam);
++
+     switch (message) {
+     case WM_ACTIVATE:
+         switch (LOWORD(wParam)) {
+@@ -309,17 +324,15 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
              break;
  #if ENABLE(WEBKIT)
          case IDM_NEW_WEBKIT_WINDOW: {
@@ -12199,7 +12209,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
              break;
          }
  #endif
-@@ -443,6 +453,9 @@ void MainWindow::setDefaultURLToCurrentURL()
+@@ -443,6 +456,9 @@ void MainWindow::setDefaultURLToCurrentURL()
  
  bool MainWindow::toggleMenuItem(UINT menuID)
  {
@@ -12209,7 +12219,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
      HMENU menu = ::GetMenu(hwnd());
  
      switch (menuID) {
-@@ -519,6 +532,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+@@ -519,6 +535,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
  INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
  {
      MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
@@ -12218,7 +12228,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
      switch (message) {
      case WM_INITDIALOG:
          SetWindowLongPtr(hDlg, DWLP_USER, lParam);
-@@ -549,6 +564,8 @@ INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wP
+@@ -549,6 +567,8 @@ INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wP
  INT_PTR CALLBACK MainWindow::customUserAgentDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
  {
      MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
@@ -12227,7 +12237,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
      switch (message) {
      case WM_INITDIALOG: {
          MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(lParam);
-@@ -594,27 +611,26 @@ void MainWindow::loadURL(std::wstring url)
+@@ -594,27 +614,26 @@ void MainWindow::loadURL(std::wstring url)
          if (SUCCEEDED(::UrlCreateFromPath(url.c_str(), fileURL, &fileURLLength, 0)))
              url = fileURL;
      }
@@ -12261,7 +12271,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
      wchar_t url[INTERNET_MAX_URL_LENGTH];
      GetWindowText(m_hURLBarWnd, url, INTERNET_MAX_URL_LENGTH);
      loadURL(url);
-@@ -622,6 +638,8 @@ void MainWindow::onURLBarEnter()
+@@ -622,6 +641,8 @@ void MainWindow::onURLBarEnter()
  
  void MainWindow::updateDeviceScaleFactor()
  {
@@ -12270,7 +12280,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
      if (m_hURLBarFont)
          ::DeleteObject(m_hURLBarFont);
  
-@@ -638,6 +656,8 @@ void MainWindow::updateDeviceScaleFactor()
+@@ -638,6 +659,8 @@ void MainWindow::updateDeviceScaleFactor()
  
  void MainWindow::progressChanged(double progress)
  {
@@ -12279,7 +12289,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..57d3b3662c4f31dba750a340b628744d
      std::wostringstream text;
      text << static_cast<int>(progress * 100) << L'%';
      SetWindowText(m_hProgressIndicator, text.str().c_str());
-@@ -645,10 +665,14 @@ void MainWindow::progressChanged(double progress)
+@@ -645,10 +668,14 @@ void MainWindow::progressChanged(double progress)
  
  void MainWindow::progressFinished()
  {
