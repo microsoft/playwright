@@ -105,12 +105,8 @@ const { chromium } = require('playwright');
 
 (async () => {
   const browser = await chromium.launch();
-<<<<<<< HEAD
   const page = await browser.newPage('https://www.example.com/');
   await page.goto('https://www.example.com/');
-=======
-  const page = await browser.newPage();
->>>>>>> update for new version
 
   const dimensions = await page.evaluate(() => {
     return {
@@ -133,11 +129,7 @@ Playwright can intercept network requests from a page to [modify or stub](https:
 const { webkit } = require('playwright');
 
 (async () => {
-<<<<<<< HEAD
-  const browser = await firefox.launch({ headless: false });
-=======
   const browser = await webkit.launch();
->>>>>>> update for new version
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto('http://todomvc.com');
