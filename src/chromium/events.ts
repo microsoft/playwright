@@ -16,7 +16,7 @@
  */
 
 export const Events = {
-  CRBrowser: {
+  CRBrowserContext: {
     TargetCreated: 'targetcreated',
     TargetDestroyed: 'targetdestroyed',
     TargetChanged: 'targetchanged',

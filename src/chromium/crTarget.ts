@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { CRBrowser } from './crBrowser';
-import { BrowserContext } from '../browserContext';
+import { CRBrowser, CRBrowserContext } from './crBrowser';
 import { CRSession, CRSessionEvents } from './crConnection';
 import { Events } from '../events';
 import { Page, Worker } from '../page';
@@ -30,7 +29,7 @@ const targetSymbol = Symbol('target');
 export class CRTarget {
   private _targetInfo: Protocol.Target.TargetInfo;
   private readonly _browser: CRBrowser;
-  private readonly _browserContext: BrowserContext;
+  private readonly _browserContext: CRBrowserContext;
   readonly _targetId: string;
   private _sessionFactory: () => Promise<CRSession>;
   private _pagePromise: Promise<Page> | null = null;
@@ -47,7 +46,7 @@ export class CRTarget {
   constructor(
     browser: CRBrowser,
     targetInfo: Protocol.Target.TargetInfo,
-    browserContext: BrowserContext,
+    browserContext: CRBrowserContext,
     sessionFactory: () => Promise<CRSession>) {
     this._targetInfo = targetInfo;
     this._browser = browser;
@@ -91,8 +90,8 @@ export class CRTarget {
     return this._pagePromise;
   }
 
-  async _worker(): Promise<Worker | null> {
-    if (this._targetInfo.type !== 'service_worker' && this._targetInfo.type !== 'shared_worker')
+  async serviceWorker(): Promise<Worker | null> {
+    if (this._targetInfo.type !== 'service_worker')
       return null;
     if (!this._workerPromise) {
       // TODO(einbinder): Make workers send their console logs.
@@ -120,7 +119,7 @@ export class CRTarget {
     return 'other';
   }
 
-  context(): BrowserContext {
+  context(): CRBrowserContext {
     return this._browserContext;
   }
 

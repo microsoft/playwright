@@ -78,9 +78,9 @@ module.exports.describe = function({testRunner, expect, WEBKIT}) {
       await context.clearPermissions();
       expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
     });
-    it('should isolate permissions between browser contexs', async({page, server, context, newContext}) => {
+    it('should isolate permissions between browser contexs', async({page, server, context, browser}) => {
       await page.goto(server.EMPTY_PAGE);
-      const otherContext = await newContext();
+      const otherContext = await browser.newContext();
       const otherPage = await otherContext.newPage();
       await otherPage.goto(server.EMPTY_PAGE);
       expect(await getPermission(page, 'geolocation')).toBe('prompt');
@@ -94,6 +94,7 @@ module.exports.describe = function({testRunner, expect, WEBKIT}) {
       await context.clearPermissions();
       expect(await getPermission(page, 'geolocation')).toBe('prompt');
       expect(await getPermission(otherPage, 'geolocation')).toBe('granted');
+      await otherContext.close();
     });
   });
 };

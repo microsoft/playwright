@@ -168,8 +168,8 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       await page.goto(server.EMPTY_PAGE);
       expect(cookie).toBe('cookie=value');
     });
-    it('should isolate cookies in browser contexts', async({context, server, newContext}) => {
-      const anotherContext = await newContext();
+    it('should isolate cookies in browser contexts', async({context, server, browser}) => {
+      const anotherContext = await browser.newContext();
       await context.setCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page1value'}]);
       await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page2value'}]);
 
@@ -181,8 +181,9 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       expect(cookies1[0].value).toBe('page1value');
       expect(cookies2[0].name).toBe('isolatecookie');
       expect(cookies2[0].value).toBe('page2value');
+      await anotherContext.close();
     });
-    it('should isolate session cookies', async({context, server, newContext}) => {
+    it('should isolate session cookies', async({context, server, browser}) => {
       server.setRoute('/setcookie.html', (req, res) => {
         res.setHeader('Set-Cookie', 'session=value');
         res.end();
@@ -199,14 +200,15 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expect(cookies.map(c => c.value).join(',')).toBe('value');
       }
       {
-        const context2 = await newContext();
+        const context2 = await browser.newContext();
         const page = await context2.newPage();
         await page.goto(server.EMPTY_PAGE);
         const cookies = await context2.cookies();
         expect(cookies[0] && cookies[0].name).toBe(undefined);
+        await context2.close();
       }
     });
-    it.skip(WEBKIT)('should isolate persistent cookies', async({context, server, newContext}) => {
+    it.skip(WEBKIT)('should isolate persistent cookies', async({context, server, browser}) => {
       server.setRoute('/setcookie.html', (req, res) => {
         res.setHeader('Set-Cookie', 'persistent=persistent-value; max-age=3600');
         res.end();
@@ -215,7 +217,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       await page.goto(server.PREFIX + '/setcookie.html');
 
       const context1 = context;
-      const context2 = await newContext();
+      const context2 = await browser.newContext();
       const [page1, page2] = await Promise.all([context1.newPage(), context2.newPage()]);
       await Promise.all([page1.goto(server.EMPTY_PAGE), page2.goto(server.EMPTY_PAGE)]);
       const [cookies1, cookies2] = await Promise.all([context1.cookies(), context2.cookies()]);
@@ -223,8 +225,9 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       expect(cookies1[0].name).toBe('persistent');
       expect(cookies1[0].value).toBe('persistent-value');
       expect(cookies2.length).toBe(0);
+      await context2.close();
     });
-    it('should isolate send cookie header', async({server, context, newContext}) => {
+    it('should isolate send cookie header', async({server, context, browser}) => {
       let cookie = [];
       server.setRoute('/empty.html', (req, res) => {
         cookie = req.headers.cookie || '';
@@ -237,9 +240,11 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expect(cookie).toBe('sendcookie=value');
       }
       {
-        const page = await (await newContext()).newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         expect(cookie).toBe('');
+        await context.close();
       }
     });
     it('should isolate cookies between launches', async({server}) => {
@@ -449,8 +454,8 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       await context.clearCookies();
       expect(await page.evaluate('document.cookie')).toBe('');
     });
-    it('should isolate cookies when clearing', async({context, server, newContext}) => {
-      const anotherContext = await newContext();
+    it('should isolate cookies when clearing', async({context, server, browser}) => {
+      const anotherContext = await browser.newContext();
       await context.setCookies([{url: server.EMPTY_PAGE, name: 'page1cookie', value: 'page1value'}]);
       await anotherContext.setCookies([{url: server.EMPTY_PAGE, name: 'page2cookie', value: 'page2value'}]);
 
@@ -464,6 +469,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       await anotherContext.clearCookies();
       expect((await context.cookies()).length).toBe(0);
       expect((await anotherContext.cookies()).length).toBe(0);
+      await anotherContext.close();
     });
   });
 };

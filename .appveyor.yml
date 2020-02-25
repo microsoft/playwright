@@ -1,19 +1,12 @@
 environment:
   matrix:
-    - nodejs_version: "8.16.0"
-      FLAKINESS_DASHBOARD_NAME: Appveyor Chromium (Win + node8)
-  FLAKINESS_DASHBOARD_PASSWORD:
-    secure: g66jP+j6C+hkXLutBV9fdxB5fRJgcQQzy93SgQzXUmcCl/RjkJwnzyHvX0xfCVnv
+    - nodejs_version: "12"
 
 build: off
 
 install:
-  - ps: $env:FLAKINESS_DASHBOARD_BUILD_URL="https://ci.appveyor.com/project/aslushnikov/playwright/builds/$env:APPVEYOR_BUILD_ID/job/$env:APPVEYOR_JOB_ID"
   - ps: Install-Product node $env:nodejs_version
   - npm install
-  - if "%nodejs_version%" == "8.16.0" (
-      npm run lint &&
-      npm run coverage  &&
-      npm run test-doclint &&
-      npm run test-types
-    )
+  - npm run ctest
+  - npm run wtest
+  - npm run ftest

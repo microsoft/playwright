@@ -1,7 +1,7 @@
 class A {
+  property1 = 1;
+  _property2 = 2;
   constructor(delegate) {
-    this.property1 = 1;
-    this._property2 = 2;
   }
 
   get getter() {
@@ -11,3 +11,5 @@ class A {
   async method(foo, bar) {
   }
 }
+
+export {A};

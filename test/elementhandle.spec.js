@@ -68,8 +68,9 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       }, element);
       expect(pwBoundingBox).toEqual(webBoundingBox);
     });
-    it('should work with page scale', async({newPage, server}) => {
-      const page = await newPage({ viewport: { width: 400, height: 400, isMobile: true} });
+    it('should work with page scale', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true} });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
       await button.evaluate(button => {
@@ -85,6 +86,35 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(Math.round(box.y * 100)).toBe(23 * 100);
       expect(Math.round(box.width * 100)).toBe(200 * 100);
       expect(Math.round(box.height * 100)).toBe(20 * 100);
+      await context.close();
+    });
+    it('should work when inline box child is outside of viewport', async({page, server}) => {
+      await page.setContent(`
+        <style>
+        i {
+          position: absolute;
+          top: -1000px;
+        }
+        body {
+          margin: 0;
+          font-size: 12px;
+        }
+        </style>
+        <span><i>woof</i><b>doggo</b></span>
+      `);
+      const handle = await page.$('span');
+      const box = await handle.boundingBox();
+      const webBoundingBox = await handle.evaluate(e => {
+        const rect = e.getBoundingClientRect();
+        return {x: rect.x, y: rect.y, width: rect.width, height: rect.height};
+      });
+      const round = box => ({
+        x: Math.round(box.x * 100),
+        y: Math.round(box.y * 100),
+        width: Math.round(box.width * 100),
+        height: Math.round(box.height * 100),
+      });
+      expect(round(box)).toEqual(round(webBoundingBox));
     });
   });
 
@@ -228,7 +258,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.evaluate(button => button.remove(), button);
       let error = null;
       await button.click().catch(err => error = err);
-      expect(error.message).toContain('Node is detached from document');
+      expect(error.message).toContain('Element is not attached to the DOM');
     });
     it('should throw for hidden nodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
@@ -268,36 +298,20 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
   });
 
-  describe('ElementHandle.visibleRatio', function() {
-    it('should work', async({page, server}) => {
-      await page.goto(server.PREFIX + '/offscreenbuttons.html');
-      for (let i = 0; i < 11; ++i) {
-        const button = await page.$('#btn' + i);
-        const ratio = await button.visibleRatio();
-        expect(Math.round(ratio * 10)).toBe(10 - i);
-      }
-    });
-    it('should work when Node is removed', async({page, server}) => {
-      await page.goto(server.PREFIX + '/offscreenbuttons.html');
-      await page.evaluate(() => delete window['Node']);
-      for (let i = 0; i < 11; ++i) {
-        const button = await page.$('#btn' + i);
-        const ratio = await button.visibleRatio();
-        expect(Math.round(ratio * 10)).toBe(10 - i);
-      }
-    });
-  });
-
   describe('ElementHandle.scrollIntoViewIfNeeded', function() {
     it.skip(FFOX)('should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/offscreenbuttons.html');
       for (let i = 0; i < 11; ++i) {
         const button = await page.$('#btn' + i);
-        const before = await button.visibleRatio();
-        expect(Math.round(before * 10)).toBe(10 - i);
+        const before = await button.evaluate(button => {
+          return button.getBoundingClientRect().right - window.innerWidth;
+        });
+        expect(before).toBe(10 * i);
         await button.scrollIntoViewIfNeeded();
-        const after = await button.visibleRatio();
-        expect(Math.round(after * 10)).toBe(10);
+        const after = await button.evaluate(button => {
+          return button.getBoundingClientRect().right - window.innerWidth;
+        });
+        expect(after <= 0).toBe(true);
         await page.evaluate(() => window.scrollTo(0, 0));
       }
     });

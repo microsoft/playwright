@@ -25,28 +25,31 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
 	describe('Target', function() {
-    it('Chromium.targets should return all of the targets', async({page, server, browser}) => {
-      // The pages will be the testing page and the original newtab page
-      const targets = browser.targets();
-      expect(targets.some(target => target.type() === 'page' &&
-        target.url() === 'about:blank')).toBeTruthy('Missing blank page');
-      expect(targets.some(target => target.type() === 'browser')).toBeTruthy('Missing browser target');
+    it('ChromiumBrowserContext.targets should return all of the targets', async({page, server, browser}) => {
+      const second = await page.context().newPage();
+      await second.goto(server.EMPTY_PAGE);
+      const targets = page.context().targets();
+      // The pages will be the testing page from the harness and the one created here.
+      expect(targets.length).toBe(2);
+      expect(targets.some(target => target.type() !== 'page')).toBe(false);
+      expect(targets.some(target => target.url() === 'about:blank')).toBeTruthy('Missing blank page');
+      expect(targets.some(target => target.url() === server.EMPTY_PAGE)).toBeTruthy('Missing new page');
+      await second.close();
     });
-    it('Browser.pages should return all of the pages', async({page, server, context}) => {
-      // The pages will be the testing page
+    it('BrowserContext.pages should return all of the pages', async({page, server, context}) => {
+      const second = await page.context().newPage();
       const allPages = await context.pages();
-      expect(allPages.length).toBe(1);
+      expect(allPages.length).toBe(2);
       expect(allPages).toContain(page);
-      expect(allPages[0]).not.toBe(allPages[1]);
+      expect(allPages).toContain(second);
+      await second.close();
     });
-    it('should contain browser target', async({browser}) => {
-      const targets = browser.targets();
-      const browserTarget = targets.find(target => target.type() === 'browser');
-      expect(browserTarget).toBe(browser.browserTarget());
+    it('should report browser target', async({browser}) => {
+      expect(browser.browserTarget()).toBeTruthy();
     });
     it('should report when a new page is created and closed', async({browser, page, server, context}) => {
       const [otherPage] = await Promise.all([
-        browser.waitForTarget(target => target.url() === server.CROSS_PROCESS_PREFIX + '/empty.html').then(target => target.page()),
+        page.context().waitForTarget(target => target.url() === server.CROSS_PROCESS_PREFIX + '/empty.html').then(target => target.page()),
         page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html'),
       ]);
       expect(otherPage.url()).toContain(server.CROSS_PROCESS_PREFIX);
@@ -57,50 +60,50 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(allPages).toContain(page);
       expect(allPages).toContain(otherPage);
 
-      const closePagePromise = new Promise(fulfill => browser.once('targetdestroyed', target => fulfill(target.page())));
+      const closePagePromise = new Promise(fulfill => page.context().once('targetdestroyed', target => fulfill(target.page())));
       await otherPage.close();
       expect(await closePagePromise).toBe(otherPage);
 
-      allPages = await Promise.all(browser.targets().map(target => target.page()));
+      allPages = await Promise.all(page.context().targets().map(target => target.page()));
       expect(allPages).toContain(page);
       expect(allPages).not.toContain(otherPage);
     });
     it('should report when a service worker is created and destroyed', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
-      const createdTarget = new Promise(fulfill => browser.once('targetcreated', target => fulfill(target)));
+      const createdTarget = new Promise(fulfill => page.context().once('targetcreated', target => fulfill(target)));
 
       await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
 
       expect((await createdTarget).type()).toBe('service_worker');
       expect((await createdTarget).url()).toBe(server.PREFIX + '/serviceworkers/empty/sw.js');
 
-      const destroyedTarget = new Promise(fulfill => browser.once('targetdestroyed', target => fulfill(target)));
+      const destroyedTarget = new Promise(fulfill => page.context().once('targetdestroyed', target => fulfill(target)));
       await page.evaluate(() => window.registrationPromise.then(registration => registration.unregister()));
       expect(await destroyedTarget).toBe(await createdTarget);
     });
     it('should create a worker from a service worker', async({browser, page, server, context}) => {
       await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
 
-      const target = await browser.waitForTarget(target => target.type() === 'service_worker');
-      const worker = await browser.serviceWorker(target);
+      const target = await page.context().waitForTarget(target => target.type() === 'service_worker');
+      const worker = await target.serviceWorker();
       expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
     });
-    it('should create a worker from a shared worker', async({browser, page, server, context}) => {
+    it('should not create a worker from a shared worker', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(() => {
         new SharedWorker('data:text/javascript,console.log("hi")');
       });
-      const target = await browser.waitForTarget(target => target.type() === 'shared_worker');
-      const worker = await browser.serviceWorker(target);
-      expect(await worker.evaluate(() => self.toString())).toBe('[object SharedWorkerGlobalScope]');
+      const target = await page.context().waitForTarget(target => target.type() === 'shared_worker');
+      const worker = await target.serviceWorker();
+      expect(worker).toBe(null);
     });
     it('should report when a target url changes', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
-      let changedTarget = new Promise(fulfill => browser.once('targetchanged', target => fulfill(target)));
+      let changedTarget = new Promise(fulfill => page.context().once('targetchanged', target => fulfill(target)));
       await page.goto(server.CROSS_PROCESS_PREFIX + '/');
       expect((await changedTarget).url()).toBe(server.CROSS_PROCESS_PREFIX + '/');
 
-      changedTarget = new Promise(fulfill => browser.once('targetchanged', target => fulfill(target)));
+      changedTarget = new Promise(fulfill => page.context().once('targetchanged', target => fulfill(target)));
       await page.goto(server.EMPTY_PAGE);
       expect((await changedTarget).url()).toBe(server.EMPTY_PAGE);
     });
@@ -108,13 +111,13 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       let targetChanged = false;
       const listener = () => targetChanged = true;
       browser.on('targetchanged', listener);
-      const targetPromise = new Promise(fulfill => browser.once('targetcreated', target => fulfill(target)));
+      const targetPromise = new Promise(fulfill => context.once('targetcreated', target => fulfill(target)));
       const newPagePromise = context.newPage();
       const target = await targetPromise;
       expect(target.url()).toBe('about:blank');
 
       const newPage = await newPagePromise;
-      const targetPromise2 = new Promise(fulfill => browser.once('targetcreated', target => fulfill(target)));
+      const targetPromise2 = new Promise(fulfill => context.once('targetcreated', target => fulfill(target)));
       const evaluatePromise = newPage.evaluate(() => window.open('about:blank'));
       const target2 = await targetPromise2;
       expect(target2.url()).toBe('about:blank');
@@ -132,7 +135,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         server.waitForRequest('/one-style.css')
       ]);
       // Connect to the opened page.
-      const target = await browser.waitForTarget(target => target.url().includes('one-style.html'));
+      const target = await page.context().waitForTarget(target => target.url().includes('one-style.html'));
       const newPage = await target.page();
       // Issue a redirect.
       serverResponse.writeHead(302, { location: '/injectedstyle.css' });
@@ -145,59 +148,59 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     it('should have an opener', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       const [createdTarget] = await Promise.all([
-        new Promise(fulfill => browser.once('targetcreated', target => fulfill(target))),
+        new Promise(fulfill => page.context().once('targetcreated', target => fulfill(target))),
         page.goto(server.PREFIX + '/popup/window-open.html')
       ]);
       expect((await createdTarget.page()).url()).toBe(server.PREFIX + '/popup/popup.html');
-      expect(createdTarget.opener()).toBe(browser.pageTarget(page));
-      expect(browser.pageTarget(page).opener()).toBe(null);
+      expect(createdTarget.opener()).toBe(page.context().pageTarget(page));
+      expect(page.context().pageTarget(page).opener()).toBe(null);
     });
-    it('should close all belonging targets once closing context', async function({browser, newContext}) {
-      const targets = async (context) => (await browser.targets()).filter(t => t.type() === 'page' && t.context() === context);
-
-      const context = await newContext();
+    it('should close all belonging targets once closing context', async function({browser}) {
+      const context = await browser.newContext();
       await context.newPage();
-      expect((await targets(context)).length).toBe(1);
+      expect((await context.targets()).length).toBe(1);
       expect((await context.pages()).length).toBe(1);
 
       await context.close();
-      expect((await targets(context)).length).toBe(0);
+      expect((await context.targets()).length).toBe(0);
     });
   });
 
   describe('Chromium.waitForTarget', () => {
-    it('should wait for a target', async function({browser, server, newContext}) {
-      const context = await newContext();
+    it('should wait for a target', async function({server, browser}) {
+      const context = await browser.newContext();
       let resolved = false;
-      const targetPromise = browser.waitForTarget(target => target.context() === context && target.url() === server.EMPTY_PAGE);
+      const targetPromise = context.waitForTarget(target => target.url() === server.EMPTY_PAGE);
       targetPromise.then(() => resolved = true);
       const page = await context.newPage();
       expect(resolved).toBe(false);
       await page.goto(server.EMPTY_PAGE);
       const target = await targetPromise;
       expect(await target.page()).toBe(page);
+      await context.close();
     });
     it('should timeout waiting for a non-existent target', async function({browser, context, server}) {
-      const error = await browser.waitForTarget(target => target.context() === context && target.url() === server.EMPTY_PAGE, {timeout: 1}).catch(e => e);
+      const error = await context.waitForTarget(target => target.url() === server.EMPTY_PAGE, {timeout: 1}).catch(e => e);
       expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
     });
     it('should wait for a target', async function({browser, server}) {
+      const context = await browser.newContext();
       let resolved = false;
-      const targetPromise = browser.waitForTarget(target => target.url() === server.EMPTY_PAGE);
+      const targetPromise = context.waitForTarget(target => target.url() === server.EMPTY_PAGE);
       targetPromise.then(() => resolved = true);
-      const page = await browser.newPage();
+      const page = await context.newPage();
       expect(resolved).toBe(false);
       await page.goto(server.EMPTY_PAGE);
       const target = await targetPromise;
       expect(await target.page()).toBe(page);
-      await page.context().close();
+      await context.close();
     });
-    it('should fire target events', async function({browser, newContext, server}) {
-      const context = await newContext();
+    it('should fire target events', async function({browser, server}) {
+      const context = await browser.newContext();
       const events = [];
-      browser.on('targetcreated', target => events.push('CREATED: ' + target.url()));
-      browser.on('targetchanged', target => events.push('CHANGED: ' + target.url()));
-      browser.on('targetdestroyed', target => events.push('DESTROYED: ' + target.url()));
+      context.on('targetcreated', target => events.push('CREATED: ' + target.url()));
+      context.on('targetchanged', target => events.push('CHANGED: ' + target.url()));
+      context.on('targetdestroyed', target => events.push('DESTROYED: ' + target.url()));
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.close();
@@ -206,6 +209,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         `CHANGED: ${server.EMPTY_PAGE}`,
         `DESTROYED: ${server.EMPTY_PAGE}`
       ]);
+      await context.close();
     });
   });
 

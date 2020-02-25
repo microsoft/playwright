@@ -55,13 +55,11 @@ Install [azure-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
 
 ### 2. Export "az" to the mingw world
 
-Run `cmd` as administrator and run the following line:
+The easiest away to export "az" to mingw is to create `c:\mozilla-build\bin\az` with the following content:
 
 ```
-> echo cmd.exe /c "\"C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\az.cmd\" $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16}" > "%SYSTEMROOT%\az"
+cmd.exe /c "\"C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\az.cmd\" $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16}"
 ```
-
-This command will create a `c:\Windows\az` file that will call azure-cli with passed parameters (Not the most beautiful solution, but it works!)
 
 ### 3. Install node.js 
 

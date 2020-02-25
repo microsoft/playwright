@@ -23,6 +23,7 @@ const Multimap = require('./Multimap');
 const fs = require('fs');
 const {SourceMapSupport} = require('./SourceMapSupport');
 const debug = require('debug');
+const {getCallerLocation} = require('./utils');
 
 const INFINITE_TIMEOUT = 2147483647;
 
@@ -41,7 +42,7 @@ class UserCallback {
     });
 
     this.timeout = timeout;
-    this.location = this._getLocation();
+    this.location = getCallerLocation(__filename);
   }
 
   async run(...args) {
@@ -60,35 +61,6 @@ class UserCallback {
     } finally {
       clearTimeout(timeoutId);
     }
-  }
-
-  _getLocation() {
-    const error = new Error();
-    const stackFrames = error.stack.split('\n').slice(1);
-    // Find first stackframe that doesn't point to this file.
-    for (let frame of stackFrames) {
-      frame = frame.trim();
-      if (!frame.startsWith('at '))
-        return null;
-      if (frame.endsWith(')')) {
-        const from = frame.indexOf('(');
-        frame = frame.substring(from + 1, frame.length - 1);
-      } else {
-        frame = frame.substring('at '.length);
-      }
-
-      const match = frame.match(/^(.*):(\d+):(\d+)$/);
-      if (!match)
-        return null;
-      const filePath = match[1];
-      const lineNumber = parseInt(match[2], 10);
-      const columnNumber = parseInt(match[3], 10);
-      if (filePath === __filename)
-        continue;
-      const fileName = filePath.split(path.sep).pop();
-      return { fileName, filePath, lineNumber, columnNumber };
-    }
-    return null;
   }
 
   terminate() {
@@ -119,6 +91,7 @@ class Test {
     this.declaredMode = declaredMode;
     this._userCallback = new UserCallback(callback, timeout);
     this.location = this._userCallback.location;
+    this.timeout = timeout;
 
     // Test results
     this.result = null;
@@ -422,7 +395,10 @@ class TestRunner extends EventEmitter {
     const runnableTests = this._runnableTests();
     this.emit(TestRunner.Events.Started, runnableTests);
     this._runningPass = new TestPass(this, this._rootSuite, runnableTests, this._parallel, this._breakOnFailure);
-    const termination = await this._runningPass.run();
+    const termination = await this._runningPass.run().catch(e => {
+      console.error(e);
+      throw e;
+    });
     this._runningPass = null;
     const result = {};
     if (termination) {

@@ -19,8 +19,8 @@ import * as types from './types';
 import * as js from './javascript';
 import * as dom from './dom';
 import * as network from './network';
+import * as input from './input';
 import { helper, assert, RegisteredListener } from './helper';
-import { ClickOptions, MultiClickOptions, PointerActionOptions } from './input';
 import { TimeoutError } from './errors';
 import { Events } from './events';
 import { Page } from './page';
@@ -52,7 +52,6 @@ export type GotoResult = {
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
 const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
 
-export type WaitForOptions = types.TimeoutOptions & { waitFor?: types.Visibility | 'nowait' };
 type ConsoleTagHandler = () => void;
 
 export class FrameManager {
@@ -428,9 +427,10 @@ export class Frame {
     let resolve: (error: Error|void) => void;
     const promise = new Promise<Error|void>(x => resolve = x);
     const watch = (documentId: string, error?: Error) => {
-      if (documentId !== expectedDocumentId)
-        return resolve(new Error('Navigation interrupted by another one'));
-      resolve(error);
+      if (documentId === expectedDocumentId)
+        resolve(error);
+      else if (!error)
+        resolve(new Error('Navigation interrupted by another one'));
     };
     const dispose = () => this._documentWatchers.delete(watch);
     this._documentWatchers.add(watch);
@@ -780,43 +780,43 @@ export class Frame {
     return result!;
   }
 
-  async click(selector: string, options?: WaitForOptions & ClickOptions) {
+  async click(selector: string, options?: input.ClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.click(options);
     await handle.dispose();
   }
 
-  async dblclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
+  async dblclick(selector: string, options?: input.MultiClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.dblclick(options);
     await handle.dispose();
   }
 
-  async tripleclick(selector: string, options?: WaitForOptions & MultiClickOptions) {
+  async tripleclick(selector: string, options?: input.MultiClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.tripleclick(options);
     await handle.dispose();
   }
 
-  async fill(selector: string, value: string, options?: WaitForOptions) {
+  async fill(selector: string, value: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.fill(value);
     await handle.dispose();
   }
 
-  async focus(selector: string, options?: WaitForOptions) {
+  async focus(selector: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.focus();
     await handle.dispose();
   }
 
-  async hover(selector: string, options?: WaitForOptions & PointerActionOptions) {
+  async hover(selector: string, options?: input.PointerActionOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.hover(options);
     await handle.dispose();
   }
 
-  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | undefined, options?: WaitForOptions): Promise<string[]> {
+  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | undefined, options?: types.WaitForOptions): Promise<string[]> {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
     const result = await handle.select(...values);
@@ -824,21 +824,21 @@ export class Frame {
     return result;
   }
 
-  async type(selector: string, text: string, options?: WaitForOptions & { delay?: number }) {
+  async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.type(text, options);
     await handle.dispose();
   }
 
-  async check(selector: string, options?: WaitForOptions) {
+  async check(selector: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    await handle.check();
+    await handle.check(options);
     await handle.dispose();
   }
 
-  async uncheck(selector: string, options?: WaitForOptions) {
+  async uncheck(selector: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    await handle.uncheck();
+    await handle.uncheck(options);
     await handle.dispose();
   }
 
@@ -852,13 +852,15 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: WaitForOptions | undefined): Promise<dom.ElementHandle<Element>> {
-    const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'visible' } = (options || {});
+  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: types.WaitForOptions | undefined): Promise<dom.ElementHandle<Element>> {
+    const { timeout = this._page._timeoutSettings.timeout(), waitFor = true } = (options || {});
+    if (!helper.isBoolean(waitFor))
+      throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
     let handle: dom.ElementHandle<Element>;
-    if (waitFor !== 'nowait') {
-      const maybeHandle = await this._waitForSelectorInUtilityContext(selector, waitFor, timeout);
+    if (waitFor) {
+      const maybeHandle = await this._waitForSelectorInUtilityContext(selector, 'any', timeout);
       if (!maybeHandle)
-        throw new Error('No node found for selector: ' + selectorToString(selector, waitFor));
+        throw new Error('No node found for selector: ' + selectorToString(selector, 'any'));
       handle = maybeHandle;
     } else {
       const context = await this._context('utility');
@@ -874,7 +876,7 @@ export class Frame {
     if (waitFor === 'visible' || waitFor === 'hidden' || waitFor === 'any')
       visibility = waitFor;
     else
-      throw new Error(`Unsupported waitFor option "${waitFor}"`);
+      throw new Error(`Unsupported visibility option "${waitFor}"`);
     const task = dom.waitForSelectorTask(selector, visibility, timeout);
     const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, visibility)}"`);
     if (!result.asElement()) {

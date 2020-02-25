@@ -51,17 +51,18 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it('background_page target type should be available', async() => {
       const browserWithExtension = await playwright.launch(extensionOptions);
       const page = await browserWithExtension.newPage();
-      const backgroundPageTarget = await browserWithExtension.waitForTarget(target => target.type() === 'background_page');
+      const backgroundPageTarget = await page.context().waitForTarget(target => target.type() === 'background_page');
       await page.close();
       await browserWithExtension.close();
       expect(backgroundPageTarget).toBeTruthy();
     });
     it('target.page() should return a background_page', async({}) => {
       const browserWithExtension = await playwright.launch(extensionOptions);
-      const backgroundPageTarget = await browserWithExtension.waitForTarget(target => target.type() === 'background_page');
-      const page = await backgroundPageTarget.page();
-      expect(await page.evaluate(() => 2 * 3)).toBe(6);
-      expect(await page.evaluate(() => window.MAGIC)).toBe(42);
+      const page = await browserWithExtension.newPage();
+      const backgroundPageTarget = await page.context().waitForTarget(target => target.type() === 'background_page');
+      const backgroundPage = await backgroundPageTarget.page();
+      expect(await backgroundPage.evaluate(() => 2 * 3)).toBe(6);
+      expect(await backgroundPage.evaluate(() => window.MAGIC)).toBe(42);
       await browserWithExtension.close();
     });
     // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
@@ -91,7 +92,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       const context = await browser.newContext();
       await Promise.all([
         context.newPage(),
-        browser.waitForTarget(target => target.context() === context && target.url().includes('devtools://')),
+        context.waitForTarget(target => target.url().includes('devtools://')),
       ]);
       await browser.close();
     });

@@ -25,19 +25,27 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
   const iPhone = playwright.devices['iPhone 6'];
   const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
 
-  describe('Page.viewport', function() {
+  describe('BrowserContext({viewport})', function() {
     it('should get the proper viewport size', async({page, server}) => {
-      expect(page.viewportSize()).toEqual({width: 800, height: 600});
+      expect(page.viewportSize()).toEqual({width: 1280, height: 720});
+      expect(await page.evaluate(() => window.innerWidth)).toBe(1280);
+      expect(await page.evaluate(() => window.innerHeight)).toBe(720);
+    });
+    it('should set the proper viewport size', async({page, server}) => {
+      expect(page.viewportSize()).toEqual({width: 1280, height: 720});
       await page.setViewportSize({width: 123, height: 456});
       expect(page.viewportSize()).toEqual({width: 123, height: 456});
+      expect(await page.evaluate(() => window.innerWidth)).toBe(123);
+      expect(await page.evaluate(() => window.innerHeight)).toBe(456);
     });
-    it('should support mobile emulation', async({newContext, server}) => {
-      const context = await newContext({ viewport: iPhone.viewport });
+    it('should support mobile emulation', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: iPhone.viewport });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
       await page.setViewportSize({width: 400, height: 300});
       expect(await page.evaluate(() => window.innerWidth)).toBe(400);
+      await context.close();
     });
     it('should not have touch by default', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
@@ -45,12 +53,13 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await page.goto(server.PREFIX + '/detect-touch.html');
       expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
     });
-    it('should support touch emulation', async({newContext, server}) => {
-      const context = await newContext({ viewport: iPhone.viewport });
+    it('should support touch emulation', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: iPhone.viewport });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
       expect(await page.evaluate(dispatchTouch)).toBe('Received touch');
+      await context.close();
 
       function dispatchTouch() {
         let fulfill;
@@ -65,30 +74,34 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
         return promise;
       }
     });
-    it('should be detectable by Modernizr', async({newContext, server}) => {
-      const context = await newContext({ viewport: iPhone.viewport });
+    it('should be detectable by Modernizr', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: iPhone.viewport });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/detect-touch.html');
       expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
+      await context.close();
     });
-    it('should detect touch when applying viewport with touches', async({newContext, server}) => {
-      const context = await newContext({ viewport: { width: 800, height: 600, isMobile: true } });
+    it('should detect touch when applying viewport with touches', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: { width: 800, height: 600, isMobile: true } });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
       expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
+      await context.close();
     });
-    it.skip(FFOX)('should support landscape emulation', async({newContext, server}) => {
-      const context1 = await newContext({ viewport: iPhone.viewport });
+    it.skip(FFOX)('should support landscape emulation', async({browser, server}) => {
+      const context1 = await browser.newContext({ viewport: iPhone.viewport });
       const page1 = await context1.newPage();
       await page1.goto(server.PREFIX + '/mobile.html');
       expect(await page1.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
-      const context2 = await newContext({ viewport: iPhoneLandscape.viewport });
+      const context2 = await browser.newContext({ viewport: iPhoneLandscape.viewport });
       const page2 = await context2.newPage();
       expect(await page2.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true);
+      await context1.close();
+      await context2.close();
     });
-    it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({newContext, server}) => {
-      const context = await newContext({ viewport: { width: 300, height: 400, isMobile: true } });
+    it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: { width: 300, height: 400, isMobile: true } });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       await page.evaluate(() => {
@@ -103,35 +116,42 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       const event2 = page.waitForEvent('console');
       await page.setViewportSize({width: 300, height: 400});
       expect((await event2).text()).toBe('2');
+      await context.close();
     });
-    it.skip(FFOX)('default mobile viewports to 980 width', async({newContext, server}) => {
-      const context = await newContext({ viewport: {width: 320, height: 480, isMobile: true} });
+    it.skip(FFOX)('default mobile viewports to 980 width', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/empty.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(980);
+      await context.close();
     });
-    it.skip(FFOX)('respect meta viewport tag', async({newContext, server}) => {
-      const context = await newContext({ viewport: {width: 320, height: 480, isMobile: true} });
+    it.skip(FFOX)('respect meta viewport tag', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(320);
+      await context.close();
     });
   });
 
   describe('Page.emulate', function() {
-    it('should work', async({newPage, server}) => {
-      const page = await newPage({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
+    it('should work', async({browser, server}) => {
+      const context = await browser.newContext({viewport: iPhone.viewport, userAgent: iPhone.userAgent});
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
       expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
+      await context.close();
     });
-    it('should support clicking', async({newPage, server}) => {
-      const page = await newPage({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
+    it('should support clicking', async({browser, server}) => {
+      const context = await browser.newContext({ viewport: iPhone.viewport, userAgent: iPhone.userAgent });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
       await page.evaluate(button => button.style.marginTop = '200px', button);
       await button.click();
       expect(await page.evaluate(() => result)).toBe('Clicked');
+      await context.close();
     });
   });
 
@@ -194,72 +214,94 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
   });
 
   describe.skip(FFOX)('BrowserContext({timezoneId})', function() {
-    it('should work', async ({ newPage }) => {
+    it('should work', async ({ browser }) => {
       const func = () => new Date(1479579154987).toString();
       {
-        const page = await newPage({ timezoneId: 'America/Jamaica' });
+        const context = await browser.newContext({ timezoneId: 'America/Jamaica' });
+        const page = await context.newPage();
         expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
+        await context.close();
       }
       {
-        const page = await newPage({ timezoneId: 'Pacific/Honolulu' });
+        const context = await browser.newContext({ timezoneId: 'Pacific/Honolulu' });
+        const page = await context.newPage();
         expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 08:12:34 GMT-1000 (Hawaii-Aleutian Standard Time)');
+        await context.close();
       }
       {
-        const page = await newPage({ timezoneId: 'America/Buenos_Aires' });
+        const context = await browser.newContext({ timezoneId: 'America/Buenos_Aires' });
+        const page = await context.newPage();
         expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
+        await context.close();
       }
       {
-        const page = await newPage({ timezoneId: 'Europe/Berlin' });
+        const context = await browser.newContext({ timezoneId: 'Europe/Berlin' });
+        const page = await context.newPage();
         expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 19:12:34 GMT+0100 (Central European Standard Time)');
+        await context.close();
       }
     });
 
-    it('should throw for invalid timezone IDs', async({newPage}) => {
-      let error = null;
-      await newPage({ timezoneId: 'Foo/Bar' }).catch(e => error = e);
-      expect(error.message).toBe('Invalid timezone ID: Foo/Bar');
-      await newPage({ timezoneId: 'Baz/Qux' }).catch(e => error = e);
-      expect(error.message).toBe('Invalid timezone ID: Baz/Qux');
+    it('should throw for invalid timezone IDs when creating pages', async({browser}) => {
+      for (const timezoneId of ['Foo/Bar', 'Baz/Qux']) {
+        let error = null;
+        const context = await browser.newContext({ timezoneId });
+        const page = await context.newPage().catch(e => error = e);
+        expect(error.message).toBe(`Invalid timezone ID: ${timezoneId}`);
+        await context.close();
+      }
     });
   });
 
   describe.skip(CHROMIUM || FFOX)('BrowserContext({locale})', function() {
-    it('should affect accept-language header', async({newPage, server}) => {
-      const page = await newPage({ locale: 'fr-CH' });
+    it('should affect accept-language header', async({browser, server}) => {
+      const context = await browser.newContext({ locale: 'fr-CH' });
+      const page = await context.newPage();
       const [request] = await Promise.all([
         server.waitForRequest('/empty.html'),
         page.goto(server.EMPTY_PAGE),
       ]);
       expect(request.headers['accept-language'].substr(0, 5)).toBe('fr-CH');
+      await context.close();
     });
-    it('should affect navigator.language', async({newPage, server}) => {
-      const page = await newPage({ locale: 'fr-CH' });
+    it('should affect navigator.language', async({browser, server}) => {
+      const context = await browser.newContext({ locale: 'fr-CH' });
+      const page = await context.newPage();
       expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+      await context.close();
     });
-    it('should format number', async({newPage, server}) => {
+    it('should format number', async({browser, server}) => {
       {
-        const page = await newPage({ locale: 'en-US' });
+        const context = await browser.newContext({ locale: 'en-US' });
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         expect(await page.evaluate(() => (1000000.50).toLocaleString())).toBe('1,000,000.5');
+        await context.close();
       }
       {
-        const page = await newPage({ locale: 'fr-CH' });
+        const context = await browser.newContext({ locale: 'fr-CH' });
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         expect(await page.evaluate(() => (1000000.50).toLocaleString().replace(/\s/g, ' '))).toBe('1 000 000,5');
+        await context.close();
       }
     });
-    it('should format date', async({newPage, server}) => {
+    it('should format date', async({browser, server}) => {
       {
-        const page = await newPage({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
+        const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         const formatted = 'Sat Nov 19 2016 10:12:34 GMT-0800 (Pacific Standard Time)';
         expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(formatted);
+        await context.close();
       }
       {
-        const page = await newPage({ locale: 'de-DE', timezoneId: 'Europe/Berlin' });
+        const context = await browser.newContext({ locale: 'de-DE', timezoneId: 'Europe/Berlin' });
+        const page = await context.newPage();
         await page.goto(server.EMPTY_PAGE);
         expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe(
             'Sat Nov 19 2016 19:12:34 GMT+0100 (Mitteleuropäische Normalzeit)');
+        await context.close();
       }
     });
   });

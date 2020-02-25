@@ -326,9 +326,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await request.continue().catch(e => error = e);
       expect(error).toBe(null);
     });
-    it('should throw if interception is not enabled', async({newPage, server}) => {
+    it('should throw if interception is not enabled', async({browser, server}) => {
       let error = null;
-      const page = await newPage();
+      const context = await browser.newContext();
+      const page = await context.newPage();
       page.on('request', async request => {
         try {
           await request.continue();
@@ -338,6 +339,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       });
       await page.goto(server.EMPTY_PAGE);
       expect(error.message).toContain('Request Interception is not enabled');
+      await context.close();
     });
     it('should intercept main resource during cross-process navigation', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
@@ -559,12 +561,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   });
 
   describe('ignoreHTTPSErrors', function() {
-    it('should work with request interception', async({newPage, httpsServer}) => {
-      const page = await newPage({ ignoreHTTPSErrors: true, interceptNetwork: true });
+    it('should work with request interception', async({browser, httpsServer}) => {
+      const context = await browser.newContext({ ignoreHTTPSErrors: true, interceptNetwork: true });
+      const page = await context.newPage();
 
       await page.route('**/*', request => request.continue());
       const response = await page.goto(httpsServer.EMPTY_PAGE);
       expect(response.status()).toBe(200);
+      await context.close();
     });
   });
 

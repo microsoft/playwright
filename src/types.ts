@@ -36,6 +36,8 @@ export type Rect = Size & Point;
 export type Quad = [ Point, Point, Point, Point ];
 
 export type TimeoutOptions = { timeout?: number };
+export type WaitForOptions = TimeoutOptions & { waitFor?: boolean };
+
 export type Visibility = 'visible' | 'hidden' | 'any';
 
 export type Polling = 'raf' | 'mutation' | number;

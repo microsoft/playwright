@@ -27,6 +27,8 @@ class SourceMapSupport {
   }
 
   async rewriteStackTraceWithSourceMaps(error) {
+    if (!error.stack || typeof error.stack !== 'string')
+      return;
     const stackFrames = error.stack.split('\n');
     for (let i = 0; i < stackFrames.length; ++i) {
       const stackFrame = stackFrames[i];
