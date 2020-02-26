@@ -469,16 +469,17 @@ index 6dca2b78830edc1ddbd66264bd332853729dac71..fbe89c9682834e11b9d9219d9eb056ed
  
 diff --git a/testing/juggler/BrowserContextManager.js b/testing/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..8f031b3f9afbb357a6bebc9938fca50a04d0421c
+index 0000000000000000000000000000000000000000..483667dbec8e4c76533e4cf5e69ca9e322f2e708
 --- /dev/null
 +++ b/testing/juggler/BrowserContextManager.js
-@@ -0,0 +1,180 @@
+@@ -0,0 +1,194 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const helper = new Helper();
 +
 +const IDENTITY_NAME = 'JUGGLER ';
@@ -536,6 +537,8 @@ index 0000000000000000000000000000000000000000..8f031b3f9afbb357a6bebc9938fca50a
 +
 +class BrowserContext {
 +  constructor(manager, browserContextId, options) {
++    EventEmitter.decorate(this);
++
 +    this._manager = manager;
 +    this.browserContextId = browserContextId;
 +    this.userContextId = undefined;
@@ -547,6 +550,7 @@ index 0000000000000000000000000000000000000000..8f031b3f9afbb357a6bebc9938fca50a
 +    this._manager._browserContextIdToBrowserContext.set(this.browserContextId, this);
 +    this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
 +    this.options = options || {};
++    this.options.scriptsToEvaluateOnNewDocument = [];
 +  }
 +
 +  destroy() {
@@ -556,6 +560,11 @@ index 0000000000000000000000000000000000000000..8f031b3f9afbb357a6bebc9938fca50a
 +    }
 +    this._manager._browserContextIdToBrowserContext.delete(this.browserContextId);
 +    this._manager._userContextIdToBrowserContext.delete(this.userContextId);
++  }
++
++  addScriptToEvaluateOnNewDocument(script) {
++    this.options.scriptsToEvaluateOnNewDocument.push(script);
++    this.emit(BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded, script);
 +  }
 +
 +  grantPermissions(origin, permissions) {
@@ -646,12 +655,17 @@ index 0000000000000000000000000000000000000000..8f031b3f9afbb357a6bebc9938fca50a
 +  }
 +}
 +
++BrowserContext.Events = {
++  ScriptToEvaluateOnNewDocumentAdded: Symbol('BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded'),
++};
++
 +function dirPath(path) {
 +  return path.substring(0, path.lastIndexOf('/') + 1);
 +}
 +
-+var EXPORTED_SYMBOLS = ['BrowserContextManager'];
++var EXPORTED_SYMBOLS = ['BrowserContextManager', 'BrowserContext'];
 +this.BrowserContextManager = BrowserContextManager;
++this.BrowserContext = BrowserContext;
 +
 diff --git a/testing/juggler/Helper.js b/testing/juggler/Helper.js
 new file mode 100644
@@ -1458,13 +1472,14 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..4de911fc5bc9c93b961b0e70474ddbe10e4af8c6
+index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cabf7e79ee5
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,239 @@
+@@ -0,0 +1,246 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const {BrowserContext} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
 +
 +const Cc = Components.classes;
 +const Ci = Components.interfaces;
@@ -1619,6 +1634,12 @@ index 0000000000000000000000000000000000000000..4de911fc5bc9c93b961b0e70474ddbe1
 +
 +    this._contentReadyPromise = new Promise(f => this._contentReadyCallback = f);
 +    this._waitForInitialNavigation = false;
++
++    if (browserContext) {
++      this._eventListeners.push(helper.on(browserContext, BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded, script => {
++        tab.linkedBrowser.messageManager.sendAsyncMessage('juggler:add-script-to-evaluate-on-new-document', script);
++      }));
++    }
 +
 +    if (browserContext && browserContext.options.viewport)
 +      this.setViewportSize(browserContext.options.viewport.viewportSize);
@@ -1923,10 +1944,10 @@ index 0000000000000000000000000000000000000000..3891da101e6906ae2a3888e256aefd03
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6735dd39c6cfb6f945d5d094cfb7902f4eb9cefd
+index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f913637890
 --- /dev/null
 +++ b/testing/juggler/content/FrameTree.js
-@@ -0,0 +1,266 @@
+@@ -0,0 +1,275 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -1957,6 +1978,7 @@ index 0000000000000000000000000000000000000000..6735dd39c6cfb6f945d5d094cfb7902f
 +      Ci.nsIWebProgressListener2,
 +      Ci.nsISupportsWeakReference,
 +    ]);
++    this._scriptsToEvaluateOnNewDocument = [];
 +
 +    const flags = Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT |
 +                  Ci.nsIWebProgress.NOTIFY_FRAME_LOCATION;
@@ -1976,6 +1998,14 @@ index 0000000000000000000000000000000000000000..6735dd39c6cfb6f945d5d094cfb7902f
 +
 +  isPageReady() {
 +    return this._pageReady;
++  }
++
++  addScriptToEvaluateOnNewDocument(script) {
++    this._scriptsToEvaluateOnNewDocument.push(script);
++  }
++
++  scriptsToEvaluateOnNewDocument() {
++    return this._scriptsToEvaluateOnNewDocument;
 +  }
 +
 +  frameForDocShell(docShell) {
@@ -2263,10 +2293,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..994b683a78c43f8fb072cc185f2e5f8d2badec3c
+index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a58ae1fce
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,912 @@
+@@ -0,0 +1,922 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2317,6 +2347,16 @@ index 0000000000000000000000000000000000000000..994b683a78c43f8fb072cc185f2e5f8d
 +
 +    for (const bindingName of this._agent._bindingsToAdd.values())
 +      this.exposeFunction(bindingName);
++    for (const script of this._agent._frameTree.scriptsToEvaluateOnNewDocument()) {
++      // TODO: this should actually be handled in FrameTree, but first we have to move
++      // execution contexts there.
++      try {
++        let result = this.mainContext.evaluateScript(script);
++        if (result && result.objectId)
++          this.mainContext.disposeObject(result.objectId);
++      } catch (e) {
++      }
++    }
 +    for (const {script, worldName} of this._agent._scriptsToEvaluateOnNewDocument.values()) {
 +      const context = worldName ? this.createIsolatedWorld(worldName) : this.mainContext;
 +      try {
@@ -3972,10 +4012,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..556f48d627401b8507b8bbec6dbf7ca797644baf
+index 0000000000000000000000000000000000000000..437c47f4cf637d94498b592fdcab5d38070d80fc
 --- /dev/null
 +++ b/testing/juggler/content/main.js
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,83 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {ContentSession} = ChromeUtils.import('chrome://juggler/content/content/ContentSession.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
@@ -4008,7 +4048,7 @@ index 0000000000000000000000000000000000000000..556f48d627401b8507b8bbec6dbf7ca7
 +    response = { sessionIds: [], browserContextOptions: {}, waitForInitialNavigation: false };
 +
 +  const { sessionIds, browserContextOptions, waitForInitialNavigation } = response;
-+  const { userAgent, bypassCSP, javaScriptDisabled, viewport} = browserContextOptions;
++  const { userAgent, bypassCSP, javaScriptDisabled, viewport, scriptsToEvaluateOnNewDocument } = browserContextOptions;
 +
 +  if (userAgent !== undefined)
 +    docShell.customUserAgent = userAgent;
@@ -4024,6 +4064,8 @@ index 0000000000000000000000000000000000000000..556f48d627401b8507b8bbec6dbf7ca7
 +  }
 +
 +  frameTree = new FrameTree(docShell, waitForInitialNavigation);
++  for (const script of scriptsToEvaluateOnNewDocument || [])
++    frameTree.addScriptToEvaluateOnNewDocument(script);
 +  networkMonitor = new NetworkMonitor(docShell, frameTree);
 +  for (const sessionId of sessionIds)
 +    createContentSession(sessionId);
@@ -4037,6 +4079,11 @@ index 0000000000000000000000000000000000000000..556f48d627401b8507b8bbec6dbf7ca7
 +    helper.addMessageListener(messageManager, 'juggler:dispose-content-session', msg => {
 +      const sessionId = msg.data;
 +      disposeContentSession(sessionId);
++    }),
++
++    helper.addMessageListener(messageManager, 'juggler:add-script-to-evaluate-on-new-document', msg => {
++      const script = msg.data;
++      frameTree.addScriptToEvaluateOnNewDocument(script);
 +    }),
 +
 +    helper.addEventListener(messageManager, 'unload', msg => {
@@ -4132,10 +4179,10 @@ index 0000000000000000000000000000000000000000..a2d3b79469566ca2edb7d864621f7085
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..af071300faeb8018ec2e956743d0a619886248b8
+index 0000000000000000000000000000000000000000..061bcb4ff8a34610a5ec433393bf7901c4cafe86
 --- /dev/null
 +++ b/testing/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,81 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4183,6 +4230,10 @@ index 0000000000000000000000000000000000000000..af071300faeb8018ec2e956743d0a619
 +
 +  setExtraHTTPHeaders({browserContextId, headers}) {
 +    this._contextManager.browserContextForId(browserContextId).options.extraHTTPHeaders = headers;
++  }
++
++  addScriptToEvaluateOnNewDocument({browserContextId, script}) {
++    this._contextManager.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
 +  }
 +
 +  setCookies({browserContextId, cookies}) {
@@ -5079,10 +5130,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..b6da790c65f25363a5bb85d7525bf2185d884235
+index 0000000000000000000000000000000000000000..838b642eb08efee8a8e6e61421731aa3555e8429
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,758 @@
+@@ -0,0 +1,764 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5284,6 +5335,12 @@ index 0000000000000000000000000000000000000000..b6da790c65f25363a5bb85d7525bf218
 +        browserContextId: t.Optional(t.String),
 +        headers: t.Array(networkTypes.HTTPHeader),
 +      },
++    },
++    'addScriptToEvaluateOnNewDocument': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        script: t.String,
++      }
 +    },
 +    'grantPermissions': {
 +      params: {
