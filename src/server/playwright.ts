@@ -15,24 +15,41 @@
  */
 
 import * as types from '../types';
+import * as api from '../api';
+import { helper } from '../helper';
 import { TimeoutError } from '../errors';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { Chromium } from './chromium';
 import { WebKit } from './webkit';
 import { Firefox } from './firefox';
 
+const packageJSON = require('../../package.json');
+
+for (const className in api) {
+  if (typeof (api as any)[className] === 'function')
+    helper.installApiHooks(className[0].toLowerCase() + className.substring(1), (api as any)[className]);
+}
+
 export class Playwright {
+  readonly selectors = api.Selectors._instance();
   readonly devices: types.Devices;
   readonly errors: { TimeoutError: typeof TimeoutError };
-  readonly chromium: Chromium;
-  readonly firefox: Firefox;
-  readonly webkit: WebKit;
+  readonly chromium: (Chromium|undefined);
+  readonly firefox: (Firefox|undefined);
+  readonly webkit: (WebKit|undefined);
 
-  constructor(projectRoot: string, revisions: { chromium_revision: string, firefox_revision: string, webkit_revision: string }) {
+  constructor(options: {downloadPath: string, browsers: Array<('firefox'|'webkit'|'chromium')>}) {
+    const {
+      downloadPath,
+      browsers,
+    } = options;
     this.devices = DeviceDescriptors;
     this.errors = { TimeoutError };
-    this.chromium = new Chromium(projectRoot, revisions.chromium_revision);
-    this.firefox = new Firefox(projectRoot, revisions.firefox_revision);
-    this.webkit = new WebKit(projectRoot, revisions.webkit_revision);
+    if (browsers.includes('chromium'))
+      this.chromium = new Chromium(downloadPath, packageJSON.playwright.chromium_revision);
+    if (browsers.includes('webkit'))
+      this.webkit = new WebKit(downloadPath, packageJSON.playwright.webkit_revision);
+    if (browsers.includes('firefox'))
+      this.firefox = new Firefox(downloadPath, packageJSON.playwright.firefox_revision);
   }
 }

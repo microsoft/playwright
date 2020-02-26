@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-module.exports = {
-  ...require('playwright-core'),
-  // Keep exporting Chromium and nullify other browsers.
-  webkit: undefined,
-  firefox: undefined,
-}
+const {Playwright} = require('playwright-core/lib/server/playwright.js');
+
+module.exports = new Playwright({
+  downloadPath: __dirname,
+  browsers: ['chromium'],
+});
+

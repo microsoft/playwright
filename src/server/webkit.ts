@@ -40,11 +40,11 @@ import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
 
 export class WebKit implements BrowserType {
-  private _projectRoot: string;
+  private _downloadPath: string;
   readonly _revision: string;
 
-  constructor(projectRoot: string, preferredRevision: string) {
-    this._projectRoot = projectRoot;
+  constructor(downloadPath: string, preferredRevision: string) {
+    this._downloadPath = downloadPath;
     this._revision = preferredRevision;
   }
 
@@ -200,7 +200,7 @@ export class WebKit implements BrowserType {
     };
 
     const defaultOptions = {
-      path: path.join(this._projectRoot, '.local-webkit'),
+      path: path.join(this._downloadPath, '.local-webkit'),
       host: 'https://playwright.azureedge.net',
       platform: (() => {
         const platform = os.platform();
