@@ -35,7 +35,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should work with file URL', async({page, server}) => {
       const fileurl = url.pathToFileURL(path.join(__dirname, 'assets', 'frames', 'two-frames.html')).href;
       await page.goto(fileurl);
-      expect(page.url()).toBe(fileurl);
+      expect(page.url().toLowerCase()).toBe(fileurl.toLowerCase());
       expect(page.frames().length).toBe(3);
     });
     it('should use http for no protocol', async({page, server}) => {
