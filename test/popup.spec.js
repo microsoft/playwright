@@ -74,6 +74,18 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(size).toEqual({width: 400, height: 500});
     });
+    it.skip(CHROMIUM || WEBKIT)('should apply evaluateOnNewDocument from browser context', async function({browser, server}) {
+      const context = await browser.newContext();
+      await context.evaluateOnNewDocument(() => window.injected = 123);
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const injected = await page.evaluate(() => {
+        const win = window.open('about:blank');
+        return win.injected;
+      });
+      await context.close();
+      expect(injected).toBe(123);
+    });
   });
 
   describe('Page.Events.Popup', function() {

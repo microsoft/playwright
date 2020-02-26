@@ -33,7 +33,7 @@ import { headersArray } from './ffNetworkManager';
 export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
   _targets: Map<string, Target>;
-  readonly _defaultContext: BrowserContext;
+  readonly _defaultContext: FFBrowserContext;
   readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
 
@@ -261,6 +261,7 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
   readonly _options: BrowserContextOptions;
   readonly _timeoutSettings: TimeoutSettings;
   private _closed = false;
+  private readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: FFBrowser, browserContextId: string | null, options: BrowserContextOptions) {
     super();
@@ -268,6 +269,7 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
     this._browserContextId = browserContextId;
     this._timeoutSettings = new TimeoutSettings();
     this._options = options;
+    this._evaluateOnNewDocumentSources = [];
   }
 
   async _initialize() {
@@ -355,6 +357,12 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
     await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: headersArray(this._options.extraHTTPHeaders) });
+  }
+
+  async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
+    const source = helper.evaluationString(pageFunction, ...args);
+    this._evaluateOnNewDocumentSources.push(source);
+    await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
   }
 
   async close() {

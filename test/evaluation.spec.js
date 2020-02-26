@@ -285,6 +285,24 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.goto(server.PREFIX + '/tamperable.html');
       expect(await page.evaluate(() => window.result)).toBe(123);
     });
+    it('should work with browser context scripts', async({browser, server}) => {
+      const context = await browser.newContext();
+      await context.evaluateOnNewDocument(() => window.temp = 123);
+      const page = await context.newPage();
+      await page.evaluateOnNewDocument(() => window.injected = window.temp);
+      await page.goto(server.PREFIX + '/tamperable.html');
+      expect(await page.evaluate(() => window.result)).toBe(123);
+      await context.close();
+    });
+    it('should work with browser context scripts for already created pages', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await context.evaluateOnNewDocument(() => window.temp = 123);
+      await page.evaluateOnNewDocument(() => window.injected = window.temp);
+      await page.goto(server.PREFIX + '/tamperable.html');
+      expect(await page.evaluate(() => window.result)).toBe(123);
+      await context.close();
+    });
     it('should support multiple scripts', async({page, server}) => {
       await page.evaluateOnNewDocument(function(){
         window.script1 = 1;

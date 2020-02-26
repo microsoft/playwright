@@ -187,6 +187,7 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
   readonly _browserContextId: string | null;
   readonly _options: BrowserContextOptions;
   readonly _timeoutSettings: TimeoutSettings;
+  readonly _evaluateOnNewDocumentSources: string[];
   private _closed = false;
 
   constructor(browser: CRBrowser, browserContextId: string | null, options: BrowserContextOptions) {
@@ -195,6 +196,7 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
     this._browserContextId = browserContextId;
     this._timeoutSettings = new TimeoutSettings();
     this._options = options;
+    this._evaluateOnNewDocumentSources = [];
   }
 
   async _initialize() {
@@ -298,6 +300,13 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
     for (const page of this._existingPages())
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
+  }
+
+  async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
+    const source = helper.evaluationString(pageFunction, ...args);
+    this._evaluateOnNewDocumentSources.push(source);
+    for (const page of this._existingPages())
+      await (page._delegate as CRPage).evaluateOnNewDocument(source);
   }
 
   async close() {

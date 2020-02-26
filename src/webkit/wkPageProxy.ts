@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
 import { RegisteredListener, helper, assert, debugError } from '../helper';
 import { Events } from '../events';
+import { WKBrowserContext } from './wkBrowser';
 
 const isPovisionalSymbol = Symbol('isPovisional');
 
 export class WKPageProxy {
   private readonly _pageProxySession: WKSession;
-  readonly _browserContext: BrowserContext;
+  readonly _browserContext: WKBrowserContext;
   private readonly _opener: WKPageProxy | null;
   private readonly _pagePromise: Promise<Page | null>;
   private _pagePromiseFulfill: (page: Page | null) => void = () => {};
@@ -36,7 +36,7 @@ export class WKPageProxy {
   private readonly _sessions = new Map<string, WKSession>();
   private readonly _eventListeners: RegisteredListener[];
 
-  constructor(pageProxySession: WKSession, browserContext: BrowserContext, opener: WKPageProxy | null) {
+  constructor(pageProxySession: WKSession, browserContext: WKBrowserContext, opener: WKPageProxy | null) {
     this._pageProxySession = pageProxySession;
     this._browserContext = browserContext;
     this._opener = opener;

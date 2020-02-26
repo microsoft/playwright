@@ -33,8 +33,7 @@ import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRCoverage } from './crCoverage';
 import { CRPDF } from './crPdf';
-import { CRBrowser } from './crBrowser';
-import { BrowserContext } from '../browserContext';
+import { CRBrowser, CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import * as platform from '../platform';
@@ -54,14 +53,16 @@ export class CRPage implements PageDelegate {
   private _browser: CRBrowser;
   private _pdf: CRPDF;
   private _coverage: CRCoverage;
+  private readonly _browserContext: CRBrowserContext;
 
-  constructor(client: CRSession, browser: CRBrowser, browserContext: BrowserContext) {
+  constructor(client: CRSession, browser: CRBrowser, browserContext: CRBrowserContext) {
     this._client = client;
     this._browser = browser;
     this.rawKeyboard = new RawKeyboardImpl(client);
     this.rawMouse = new RawMouseImpl(client);
     this._pdf = new CRPDF(client);
     this._coverage = new CRCoverage(client);
+    this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
     this._networkManager = new CRNetworkManager(client, this._page);
 
@@ -119,6 +120,8 @@ export class CRPage implements PageDelegate {
     if (options.geolocation)
       promises.push(this._client.send('Emulation.setGeolocationOverride', options.geolocation));
     promises.push(this.updateExtraHTTPHeaders());
+    for (const source of this._browserContext._evaluateOnNewDocumentSources)
+      promises.push(this.evaluateOnNewDocument(source));
     await Promise.all(promises);
   }
 
