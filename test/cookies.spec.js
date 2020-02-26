@@ -208,7 +208,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         await context2.close();
       }
     });
-    it.skip(WEBKIT)('should isolate persistent cookies', async({context, server, browser}) => {
+    it('should isolate persistent cookies', async({context, server, browser}) => {
       server.setRoute('/setcookie.html', (req, res) => {
         res.setHeader('Set-Cookie', 'persistent=persistent-value; max-age=3600');
         res.end();
