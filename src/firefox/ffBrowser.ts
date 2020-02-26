@@ -90,6 +90,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
       bypassCSP: options.bypassCSP,
       javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,
       viewport,
+      removeOnDetach: true
     });
     // TODO: move ignoreHTTPSErrors to browser context level.
     if (options.ignoreHTTPSErrors)
