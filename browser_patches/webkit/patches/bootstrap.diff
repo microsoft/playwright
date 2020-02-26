@@ -13661,10 +13661,10 @@ index 0000000000000000000000000000000000000000..00fb6b0006c743091a8bbf8edb18b211
 +</Scheme>
 diff --git a/Tools/Playwright/mac/AppDelegate.h b/Tools/Playwright/mac/AppDelegate.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..d98c51764861371a35e78a8888bb6e81522951f4
+index 0000000000000000000000000000000000000000..86e7b0c64df5fccdd66b87eecd995e0a10d57b83
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.h
-@@ -0,0 +1,56 @@
+@@ -0,0 +1,53 @@
 +/*
 + * Copyright (C) 2010 Apple Inc. All rights reserved.
 + *
@@ -13711,9 +13711,6 @@ index 0000000000000000000000000000000000000000..d98c51764861371a35e78a8888bb6e81
 +
 +- (void)browserWindowWillClose:(NSWindow *)window;
 +
-+@property (readonly, nonatomic) WKUserContentController *userContentContoller;
-+@property (readonly, nonatomic) WKPreferences *defaultPreferences;
-+
 +@end
 +
 +@interface NSApplication (PlaywrightApplicationExtensions)
@@ -13723,10 +13720,10 @@ index 0000000000000000000000000000000000000000..d98c51764861371a35e78a8888bb6e81
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf58854a6c2
+index 0000000000000000000000000000000000000000..f6157600282944225a1e18b4aaa3b6d34ade5be9
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,492 @@
+@@ -0,0 +1,398 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -13767,13 +13764,6 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +#import <WebKit/_WKInternalDebugFeature.h>
 +#import <WebKit/_WKProcessPoolConfiguration.h>
 +#import <WebKit/_WKWebsiteDataStoreConfiguration.h>
-+
-+enum {
-+    WebKit1NewWindowTag = 1,
-+    WebKit2NewWindowTag = 2,
-+    WebKit1NewEditorTag = 3,
-+    WebKit2NewEditorTag = 4
-+};
 +
 +@implementation NSApplication (PlaywrightApplicationExtensions)
 +
@@ -13922,11 +13912,6 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +    return configuration;
 +}
 +
-+- (WKPreferences *)defaultPreferences
-+{
-+    return self.defaultConfiguration.preferences;
-+}
-+
 +- (BrowserWindowController *)createBrowserWindowController:(id)sender
 +{
 +    if (_headless)
@@ -13939,33 +13924,6 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +    return controller;
 +}
 +
-+- (IBAction)newWindow:(id)sender
-+{
-+    BrowserWindowController *controller = [self createBrowserWindowController:sender];
-+    if (!controller)
-+        return;
-+
-+    [[controller window] makeKeyAndOrderFront:sender];
-+    [controller loadURLString:@"about:blank"];
-+}
-+
-+- (IBAction)newPrivateWindow:(id)sender
-+{
-+    if (_headless)
-+        return;
-+
-+    WKWebViewConfiguration *privateConfiguraton = [self.defaultConfiguration copy];
-+    privateConfiguraton.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
-+
-+    BrowserWindowController *controller = [[BrowserWindowController alloc] initWithConfiguration:privateConfiguraton];
-+    [privateConfiguraton release];
-+
-+    [[controller window] makeKeyAndOrderFront:sender];
-+    [_browserWindowControllers addObject:controller];
-+
-+    [controller loadURLString:@"about:blank"];
-+}
-+
 +- (void)browserWindowWillClose:(NSWindow *)window
 +{
 +    [_browserWindowControllers removeObject:window.windowController];
@@ -13973,19 +13931,13 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +
 +- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 +{
-+    if (_noStartupWindow) {
-+        _initialURL = nil;
-+        return;
-+    }
++    if (!_headless)
++        [self _updateNewWindowKeyEquivalents];
 +
-+    if (_headless) {
-+        [self createNewPage:0];
++    if (_noStartupWindow)
 +        return;
-+    }
 +
-+    [self _updateNewWindowKeyEquivalents];
-+    if (!_initialURL)
-+        [self newWindow:self];
++    [self createNewPage:0];
 +    _initialURL = nil;
 +}
 +
@@ -14005,59 +13957,11 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +    return nil;
 +}
 +
-+- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
-+{
-+    BrowserWindowController *controller = [self createBrowserWindowController:nil];
-+    if (!controller)
-+        return NO;
-+
-+    [controller.window makeKeyAndOrderFront:self];
-+    [controller loadURLString:_initialURL ? _initialURL : [NSURL fileURLWithPath:filename].absoluteString];
-+    return YES;
-+}
-+
-+- (IBAction)openDocument:(id)sender
-+{
-+    if (_headless)
-+        return;
-+
-+    BrowserWindowController *browserWindowController = [self frontmostBrowserWindowController];
-+
-+    if (browserWindowController) {
-+        NSOpenPanel *openPanel = [[NSOpenPanel openPanel] retain];
-+        [openPanel beginSheetModalForWindow:browserWindowController.window completionHandler:^(NSInteger result) {
-+            if (result != NSModalResponseOK)
-+                return;
-+
-+            NSURL *url = [openPanel.URLs objectAtIndex:0];
-+            [browserWindowController loadURLString:[url absoluteString]];
-+        }];
-+        return;
-+    }
-+
-+    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
-+    [openPanel beginWithCompletionHandler:^(NSInteger result) {
-+        if (result != NSModalResponseOK)
-+            return;
-+
-+        BrowserWindowController *controller = [self createBrowserWindowController:nil];
-+        [controller.window makeKeyAndOrderFront:self];
-+
-+        NSURL *url = [openPanel.URLs objectAtIndex:0];
-+        [controller loadURLString:[url absoluteString]];
-+    }];
-+}
-+
 +- (void)_updateNewWindowKeyEquivalents
 +{
 +    NSString *normalWindowEquivalent = @"n";
 +    _newWebKit2WindowItem.keyEquivalentModifierMask = NSEventModifierFlagCommand;
 +    _newWebKit2WindowItem.keyEquivalent = normalWindowEquivalent;
-+}
-+
-+- (WKUserContentController *)userContentContoller
-+{
-+    return self.defaultConfiguration.userContentController;
 +}
 +
 +#pragma mark WKBrowserInspectorDelegate
@@ -14077,20 +13981,26 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +
 +- (WKWebView *)createNewPage:(uint64_t)sessionID
 +{
-+    if (_headless)
-+        return [self createHeadlessPage:sessionID];
-+
++    NSString* urlString = _initialURL ? _initialURL : @"about:blank";
 +    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
++    if (_headless)
++        return [self createHeadlessPage:configuration withURL:urlString];
++    return [self createHeadfulPage:configuration withURL:urlString];
++}
++
++- (WKWebView *)createHeadfulPage:(WKWebViewConfiguration *)configuration withURL:(NSString*)urlString
++{
++
 +    BrowserWindowController *controller = [[[BrowserWindowController alloc] initWithConfiguration:configuration] autorelease];
 +    if (!controller)
 +        return nil;
 +    [[controller window] makeKeyAndOrderFront:nil];
 +    [_browserWindowControllers addObject:controller];
-+    [controller loadURLString:@"about:blank"];
++    [controller loadURLString:urlString];
 +    return [controller webView];
 +}
 +
-+- (WKWebView *)createHeadlessWebView:(WKWebViewConfiguration *)configuration forPopup:(BOOL)popup
++- (WKWebView *)createHeadlessPage:(WKWebViewConfiguration *)configuration withURL:(NSString*)urlString
 +{
 +    NSRect rect = NSMakeRect(0, 0, 1024, 768);
 +    NSScreen *firstScreen = [[NSScreen screens] objectAtIndex:0];
@@ -14104,20 +14014,13 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +
 +    webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 +    [window.contentView addSubview:webView];
-+    if (!popup) {
-+      NSURL *url = [NSURL _webkit_URLWithUserTypedString:_initialURL ? _initialURL : @"about:blank"];
-+      _initialURL = nil;
-+      [webView loadRequest:[NSURLRequest requestWithURL:url]];
++    if (urlString) {
++        NSURL *url = [NSURL _webkit_URLWithUserTypedString:urlString];
++        [webView loadRequest:[NSURLRequest requestWithURL:url]];
 +    }
 +    [_headlessWindows addObject:window];
 +    webView.UIDelegate = self;
 +    return [webView autorelease];
-+}
-+
-+- (WKWebView *)createHeadlessPage:(uint64_t)sessionID
-+{
-+    WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
-+    return [self createHeadlessWebView:configuration forPopup:NO];
 +}
 +
 +- (_WKBrowserContext *)createBrowserContext
@@ -14215,7 +14118,7 @@ index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf5
 +
 +- (nullable WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 +{
-+    return [self createHeadlessWebView:configuration forPopup:YES];
++    return [self createHeadlessPage:configuration withURL:nil];
 +}
 +
 +@end
@@ -15377,10 +15280,10 @@ index 0000000000000000000000000000000000000000..4ed50c40f2f0dfd0ddf7c546b3451ab4
 +</plist>
 diff --git a/Tools/Playwright/mac/MainMenu.xib b/Tools/Playwright/mac/MainMenu.xib
 new file mode 100644
-index 0000000000000000000000000000000000000000..a291f32251271200132b8eb08d513f6936e5a0a5
+index 0000000000000000000000000000000000000000..b16d639a1ad18354e058c613987d846acd70b361
 --- /dev/null
 +++ b/Tools/Playwright/mac/MainMenu.xib
-@@ -0,0 +1,366 @@
+@@ -0,0 +1,333 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15505" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
 +    <dependencies>
@@ -15452,34 +15355,6 @@ index 0000000000000000000000000000000000000000..a291f32251271200132b8eb08d513f69
 +                                <connections>
 +                                    <action selector="openLocation:" target="-1" id="575"/>
 +                                </connections>
-+                            </menuItem>
-+                            <menuItem title="New Window" tag="2" keyEquivalent="n" id="571">
-+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-+                                <connections>
-+                                    <action selector="newWindow:" target="-1" id="572"/>
-+                                </connections>
-+                            </menuItem>
-+                            <menuItem title="New Private Window" tag="2" id="Zqs-AO-XAX">
-+                                <modifierMask key="keyEquivalentModifierMask"/>
-+                                <connections>
-+                                    <action selector="newPrivateWindow:" target="-1" id="mf5-zi-a5R"/>
-+                                </connections>
-+                            </menuItem>
-+                            <menuItem title="Open…" keyEquivalent="o" id="72">
-+                                <connections>
-+                                    <action selector="openDocument:" target="-1" id="374"/>
-+                                </connections>
-+                            </menuItem>
-+                            <menuItem title="Open Recent" id="124">
-+                                <menu key="submenu" title="Open Recent" systemMenu="recentDocuments" id="125">
-+                                    <items>
-+                                        <menuItem title="Clear Menu" id="126">
-+                                            <connections>
-+                                                <action selector="clearRecentDocuments:" target="-1" id="127"/>
-+                                            </connections>
-+                                        </menuItem>
-+                                    </items>
-+                                </menu>
 +                            </menuItem>
 +                            <menuItem isSeparatorItem="YES" id="79">
 +                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
@@ -15739,12 +15614,7 @@ index 0000000000000000000000000000000000000000..a291f32251271200132b8eb08d513f69
 +            </items>
 +            <point key="canvasLocation" x="139" y="-50"/>
 +        </menu>
-+        <customObject id="494" customClass="BrowserAppDelegate">
-+            <connections>
-+                <outlet property="_newWebKit2WindowItem" destination="571" id="1Gv-mK-aul"/>
-+            </connections>
-+        </customObject>
-+        <customObject id="420" customClass="NSFontManager"/>
++        <customObject id="494" customClass="BrowserAppDelegate"/>
 +    </objects>
 +</document>
 diff --git a/Tools/Playwright/mac/Playwright_Prefix.pch b/Tools/Playwright/mac/Playwright_Prefix.pch
