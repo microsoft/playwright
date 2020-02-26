@@ -38,11 +38,11 @@ import { BrowserContext } from '../browserContext';
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
 export class Firefox implements BrowserType {
-  private _projectRoot: string;
+  private _downloadPath: string;
   readonly _revision: string;
 
-  constructor(projectRoot: string, preferredRevision: string) {
-    this._projectRoot = projectRoot;
+  constructor(downloadPath: string, preferredRevision: string) {
+    this._downloadPath = downloadPath;
     this._revision = preferredRevision;
   }
 
@@ -216,7 +216,7 @@ export class Firefox implements BrowserType {
     };
 
     const defaultOptions = {
-      path: path.join(this._projectRoot, '.local-firefox'),
+      path: path.join(this._downloadPath, '.local-firefox'),
       host: 'https://playwright.azureedge.net',
       platform: (() => {
         const platform = os.platform();

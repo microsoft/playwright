@@ -13,4 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('playwright-core');
+const {Playwright} = require('playwright-core/lib/server/playwright.js');
+
+module.exports = new Playwright({
+  downloadPath: __dirname,
+  browsers: ['webkit', 'chromium', 'firefox'],
+});
+

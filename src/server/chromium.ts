@@ -37,11 +37,11 @@ import { ConnectionTransport } from '../transport';
 import { BrowserContext } from '../browserContext';
 
 export class Chromium implements BrowserType {
-  private _projectRoot: string;
+  private _downloadPath: string;
   readonly _revision: string;
 
-  constructor(projectRoot: string, preferredRevision: string) {
-    this._projectRoot = projectRoot;
+  constructor(downloadPath: string, preferredRevision: string) {
+    this._downloadPath = downloadPath;
     this._revision = preferredRevision;
   }
 
@@ -218,7 +218,7 @@ export class Chromium implements BrowserType {
     };
 
     const defaultOptions = {
-      path: path.join(this._projectRoot, '.local-chromium'),
+      path: path.join(this._downloadPath, '.local-chromium'),
       host: 'https://storage.googleapis.com',
       platform: (() => {
         const platform = os.platform();
