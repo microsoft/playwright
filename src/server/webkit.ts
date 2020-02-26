@@ -97,7 +97,6 @@ export class WebKit implements BrowserType {
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
-      timeout = 30000
     } = options;
 
     let temporaryUserDataDir: string | null = null;
