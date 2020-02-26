@@ -1235,9 +1235,9 @@ The `format` options are:
 - returns: <[Promise]>.
 
 Routing activates the request interception and enables `request.abort`, `request.continue` and
-`request.respond` methods on the request.  This provides the capability to modify network requests that are made by a page.
+`request.fulfill` methods on the request.  This provides the capability to modify network requests that are made by a page.
 
-Once request interception is enabled, every request matching the url pattern will stall unless it's continued, responded or aborted.
+Once request interception is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
 An example of a naïve request interceptor that aborts all image requests:
 
 ```js
@@ -2997,7 +2997,7 @@ An example of fulfilling all requests with 404 responses:
 
 ```js
 await page.route('**/*', request => {
-  request.respond({
+  request.fulfill({
     status: 404,
     contentType: 'text/plain',
     body: 'Not Found!'
@@ -3006,7 +3006,7 @@ await page.route('**/*', request => {
 ```
 
 > **NOTE** Mocking responses for dataURL requests is not supported.
-> Calling `request.respond` for a dataURL request is a noop.
+> Calling `request.fulfill` for a dataURL request is a noop.
 
 #### request.headers()
 - returns: <[Object]> An object with HTTP headers associated with the request. All header names are lower-case.
