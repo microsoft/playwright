@@ -31,7 +31,7 @@ for (const className in api) {
 }
 
 export class Playwright {
-  readonly selectors = api.Selectors;
+  readonly selectors = api.Selectors._instance();
   readonly devices: types.Devices;
   readonly errors: { TimeoutError: typeof TimeoutError };
   readonly chromium: (Chromium|undefined);
