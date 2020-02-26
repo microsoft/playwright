@@ -763,10 +763,10 @@ index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2
 +
 diff --git a/testing/juggler/NetworkObserver.js b/testing/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e33da53803
+index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc0819bf0fc01
 --- /dev/null
 +++ b/testing/juggler/NetworkObserver.js
-@@ -0,0 +1,681 @@
+@@ -0,0 +1,689 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -774,6 +774,8 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 +const {CommonUtils} = ChromeUtils.import("resource://services-common/utils.js");
++const {TargetRegistry} = ChromeUtils.import('chrome://juggler/content/TargetRegistry.js');
++const {BrowserContextManager} = ChromeUtils.import('chrome://juggler/content/BrowserContextManager.js');
 +
 +
 +const Cc = Components.classes;
@@ -992,11 +994,10 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +      new ResponseBodyListener(this, browser, httpChannel);
 +      return;
 +    }
-+    const extraHeaders = this._extraHTTPHeaders.get(browser);
-+    if (extraHeaders) {
-+      for (const header of extraHeaders)
-+        httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
-+    }
++    const browserContext = TargetRegistry.instance().browserContextForBrowser(browser);
++    if (browserContext)
++      this._appendExtraHTTPHeaders(httpChannel, browserContext.options.extraHTTPHeaders);
++    this._appendExtraHTTPHeaders(httpChannel, this._extraHTTPHeaders.get(browser));
 +    const requestId = this._requestId(httpChannel);
 +    const isRedirect = this._redirectMap.has(requestId);
 +    const interceptors = this._browserInterceptors.get(browser);
@@ -1020,6 +1021,13 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +      new NotificationCallbacks(this, browser, httpChannel, true);
 +      // We'll issue onRequest once it's intercepted.
 +    }
++  }
++
++  _appendExtraHTTPHeaders(httpChannel, headers) {
++    if (!headers)
++      return;
++    for (const header of headers)
++      httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
 +  }
 +
 +  _onIntercepted(httpChannel, interceptor) {
@@ -1450,10 +1458,10 @@ index 0000000000000000000000000000000000000000..66f61d432f9ad2f50931b780ec5ea0e3
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6a128959f9128a87cd3d46a5d906028ff500f9e0
+index 0000000000000000000000000000000000000000..4de911fc5bc9c93b961b0e70474ddbe10e4af8c6
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,239 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -1554,6 +1562,16 @@ index 0000000000000000000000000000000000000000..6a128959f9128a87cd3d46a5d906028f
 +    return this._targets.get(targetId);
 +  }
 +
++  targetForBrowser(browser) {
++    const tab = this._mainWindow.gBrowser.getTabForBrowser(browser);
++    return tab ? this._tabToTarget.get(tab) : undefined;
++  }
++
++  browserContextForBrowser(browser) {
++    const tab = this._mainWindow.gBrowser.getTabForBrowser(browser);
++    return tab ? this._contextManager.browserContextForUserContextId(tab.userContextId) : undefined;
++  }
++
 +  _createTargetForTab(tab) {
 +    if (this._tabToTarget.has(tab))
 +      throw new Error(`Internal error: two targets per tab`);
@@ -1570,10 +1588,7 @@ index 0000000000000000000000000000000000000000..6a128959f9128a87cd3d46a5d906028f
 +      const browser = subject.ownerElement;
 +      if (!browser)
 +        return;
-+      const tab = this._mainWindow.gBrowser.getTabForBrowser(browser);
-+      if (!tab)
-+        return;
-+      const target = this._tabToTarget.get(tab);
++      const target = this.targetForBrowser(browser);
 +      if (!target)
 +        return;
 +      this.emit(TargetRegistry.Events.TargetCrashed, target.id());
@@ -4117,10 +4132,10 @@ index 0000000000000000000000000000000000000000..a2d3b79469566ca2edb7d864621f7085
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6b42032e8f6d39025f455300d376084826a781cc
+index 0000000000000000000000000000000000000000..af071300faeb8018ec2e956743d0a619886248b8
 --- /dev/null
 +++ b/testing/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,77 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4164,6 +4179,10 @@ index 0000000000000000000000000000000000000000..6b42032e8f6d39025f455300d3760848
 +
 +  resetPermissions({browserContextId}) {
 +    this._contextManager.browserContextForId(browserContextId).resetPermissions();
++  }
++
++  setExtraHTTPHeaders({browserContextId, headers}) {
++    this._contextManager.browserContextForId(browserContextId).options.extraHTTPHeaders = headers;
 +  }
 +
 +  setCookies({browserContextId, cookies}) {
@@ -5060,10 +5079,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6751bfaa84655952f4a51e3dd4353eb84f517fcb
+index 0000000000000000000000000000000000000000..b6da790c65f25363a5bb85d7525bf2185d884235
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,752 @@
+@@ -0,0 +1,758 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5225,6 +5244,21 @@ index 0000000000000000000000000000000000000000..6751bfaa84655952f4a51e3dd4353eb8
 +  foundObject: t.Optional(t.Boolean),
 +}
 +
++const networkTypes = {};
++
++networkTypes.HTTPHeader = {
++  name: t.String,
++  value: t.String,
++};
++
++networkTypes.SecurityDetails = {
++  protocol: t.String,
++  subjectName: t.String,
++  issuer: t.String,
++  validFrom: t.Number,
++  validTo: t.Number,
++};
++
 +const Browser = {
 +  targets: ['browser'],
 +
@@ -5243,6 +5277,12 @@ index 0000000000000000000000000000000000000000..6751bfaa84655952f4a51e3dd4353eb8
 +    'setIgnoreHTTPSErrors': {
 +      params: {
 +        enabled: t.Boolean,
++      },
++    },
++    'setExtraHTTPHeaders': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        headers: t.Array(networkTypes.HTTPHeader),
 +      },
 +    },
 +    'grantPermissions': {
@@ -5341,21 +5381,6 @@ index 0000000000000000000000000000000000000000..6751bfaa84655952f4a51e3dd4353eb8
 +      },
 +    },
 +  },
-+};
-+
-+const networkTypes = {};
-+
-+networkTypes.HTTPHeader = {
-+  name: t.String,
-+  value: t.String,
-+};
-+
-+networkTypes.SecurityDetails = {
-+  protocol: t.String,
-+  subjectName: t.String,
-+  issuer: t.String,
-+  validFrom: t.Number,
-+  validTo: t.Number,
 +};
 +
 +const Network = {
@@ -5861,7 +5886,7 @@ index 0000000000000000000000000000000000000000..089e66c617f114fcb32b3cea20abc6fb
 +this.RuntimeHandler = RuntimeHandler;
 diff --git a/testing/juggler/protocol/TargetHandler.js b/testing/juggler/protocol/TargetHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..4795a4ddecdd016d6efbcde35aa7321af17cd7dc
+index 0000000000000000000000000000000000000000..c0bab449971de13f993ac9825ac13368f8d8e226
 --- /dev/null
 +++ b/testing/juggler/protocol/TargetHandler.js
 @@ -0,0 +1,100 @@
@@ -5935,7 +5960,7 @@ index 0000000000000000000000000000000000000000..4795a4ddecdd016d6efbcde35aa7321a
 +      if (browserContext.options.removeOnDetach)
 +        browserContext.destroy();
 +    }
-+    this._createdBrowserContextOptions.clear();
++    this._createdBrowserContextIds.clear();
 +  }
 +
 +  _onTargetCreated(targetInfo) {
