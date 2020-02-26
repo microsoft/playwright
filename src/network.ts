@@ -15,7 +15,7 @@
  */
 
 import * as frames from './frames';
-import { assert } from './helper';
+import { assert, helper } from './helper';
 import * as platform from './platform';
 
 export type NetworkCookie = {
@@ -373,3 +373,31 @@ export const STATUS_TEXTS: { [status: string]: string } = {
   '510': 'Not Extended',
   '511': 'Network Authentication Required',
 };
+
+export function verifyHeaders(headers: Headers): Headers {
+  const result: Headers = {};
+  for (const key of Object.keys(headers)) {
+    const value = headers[key];
+    assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
+    result[key] = value;
+  }
+  return result;
+}
+
+export function mergeHeaders(headers: (Headers | undefined | null)[]): Headers {
+  const lowerCaseToValue = new Map<string, string>();
+  const lowerCaseToOriginalCase = new Map<string, string>();
+  for (const h of headers) {
+    if (!h)
+      continue;
+    for (const key of Object.keys(h)) {
+      const lower = key.toLowerCase();
+      lowerCaseToOriginalCase.set(lower, key);
+      lowerCaseToValue.set(lower, h[key]);
+    }
+  }
+  const result: Headers = {};
+  for (const [lower, value] of lowerCaseToValue)
+    result[lowerCaseToOriginalCase.get(lower)!] = value;
+  return result;
+}

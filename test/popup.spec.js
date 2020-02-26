@@ -36,6 +36,18 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
+    it.skip(CHROMIUM)('should inherit extra headers from browser context', async function({browser, server}) {
+      const context = await browser.newContext({
+        extraHTTPHeaders: { 'foo': 'bar' },
+      });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const requestPromise = server.waitForRequest('/dummy.html');
+      await page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/dummy.html');
+      const request = await requestPromise;
+      await context.close();
+      expect(request.headers['foo']).toBe('bar');
+    });
     it.skip(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }

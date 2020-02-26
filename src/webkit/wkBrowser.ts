@@ -28,6 +28,7 @@ import { WKConnection, WKSession, kPageProxyMessageReceived, PageProxyMessageRec
 import { WKPageProxy } from './wkPageProxy';
 import * as platform from '../platform';
 import { TimeoutSettings } from '../timeoutSettings';
+import { WKPage } from './wkPage';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
@@ -267,6 +268,12 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
     this._options.geolocation = geolocation || undefined;
     const payload: any = geolocation ? { ...geolocation, timestamp: Date.now() } : undefined;
     await this._browser._browserSession.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });
+  }
+
+  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
+    this._options.extraHTTPHeaders = network.verifyHeaders(headers);
+    for (const page of this._existingPages())
+      await (page._delegate as WKPage).updateExtraHTTPHeaders();
   }
 
   async close() {

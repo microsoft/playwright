@@ -331,6 +331,35 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       ]);
       expect(request.headers['foo']).toBe('bar');
     });
+    it('should work with extra headers from browser context', async({browser, server}) => {
+      const context = await browser.newContext();
+      await context.setExtraHTTPHeaders({
+        'foo': 'bar',
+      });
+      const page = await context.newPage();
+      const [request] = await Promise.all([
+        server.waitForRequest('/empty.html'),
+        page.goto(server.EMPTY_PAGE),
+      ]);
+      await context.close();
+      expect(request.headers['foo']).toBe('bar');
+    });
+    it('should override extra headers from browser context', async({browser, server}) => {
+      const context = await browser.newContext({
+        extraHTTPHeaders: { 'fOo': 'bAr', 'baR': 'foO' },
+      });
+      const page = await context.newPage();
+      await page.setExtraHTTPHeaders({
+        'Foo': 'Bar'
+      });
+      const [request] = await Promise.all([
+        server.waitForRequest('/empty.html'),
+        page.goto(server.EMPTY_PAGE),
+      ]);
+      await context.close();
+      expect(request.headers['foo']).toBe('Bar');
+      expect(request.headers['bar']).toBe('foO');
+    });
     it('should throw for non-string header values', async({page, server}) => {
       let error = null;
       try {

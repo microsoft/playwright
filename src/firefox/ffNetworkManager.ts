@@ -208,7 +208,7 @@ class InterceptableRequest implements network.RequestDelegate {
   }
 }
 
-function headersArray(headers: network.Headers): Protocol.Network.HTTPHeader[] {
+export function headersArray(headers: network.Headers): Protocol.Network.HTTPHeader[] {
   const result: Protocol.Network.HTTPHeader[] = [];
   for (const name in headers) {
     if (!Object.is(headers[name], undefined))

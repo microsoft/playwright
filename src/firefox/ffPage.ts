@@ -21,14 +21,13 @@ import * as dom from '../dom';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
 import { Page, PageDelegate, Worker } from '../page';
-import { FFNetworkManager } from './ffNetworkManager';
+import { FFNetworkManager, headersArray } from './ffNetworkManager';
 import { Events } from '../events';
 import * as dialog from '../dialog';
 import { Protocol } from './protocol';
 import { RawMouseImpl, RawKeyboardImpl } from './ffInput';
 import { BrowserContext } from '../browserContext';
 import { getAccessibilityTree } from './ffAccessibility';
-import * as network from '../network';
 import * as types from '../types';
 import * as platform from '../platform';
 import { kScreenshotDuringNavigationError } from '../screenshotter';
@@ -251,11 +250,8 @@ export class FFPage implements PageDelegate {
     return { newDocumentId: response.navigationId || undefined };
   }
 
-  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
-    const array = [];
-    for (const [name, value] of Object.entries(headers))
-      array.push({ name, value });
-    await this._session.send('Network.setExtraHTTPHeaders', { headers: array });
+  async updateExtraHTTPHeaders(): Promise<void> {
+    await this._session.send('Network.setExtraHTTPHeaders', { headers: headersArray(this._page._state.extraHTTPHeaders || {}) });
   }
 
   async setViewportSize(viewportSize: types.Size): Promise<void> {

@@ -142,12 +142,7 @@ export class WKPage implements PageDelegate {
     }
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
-    if (this._page._state.extraHTTPHeaders || contextOptions.locale) {
-      const headers = this._page._state.extraHTTPHeaders || {};
-      if (contextOptions.locale)
-        headers['Accept-Language'] = contextOptions.locale;
-      promises.push(session.send('Network.setExtraHTTPHeaders', { headers }));
-    }
+    promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
     if (this._page._state.hasTouch)
       promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
     if (contextOptions.timezoneId) {
@@ -378,12 +373,19 @@ export class WKPage implements PageDelegate {
     await Promise.all(promises);
   }
 
-  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
-    const copy = { ...headers };
+  async updateExtraHTTPHeaders(): Promise<void> {
+    await this._updateState('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() });
+  }
+
+  _calculateExtraHTTPHeaders(): network.Headers {
+    const headers = network.mergeHeaders([
+      this._page.context()._options.extraHTTPHeaders,
+      this._page._state.extraHTTPHeaders
+    ]);
     const locale = this._page.context()._options.locale;
     if (locale)
-      copy['Accept-Language'] = locale;
-    await this._updateState('Network.setExtraHTTPHeaders', { headers: copy });
+      headers['Accept-Language'] = locale;
+    return headers;
   }
 
   async setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void> {

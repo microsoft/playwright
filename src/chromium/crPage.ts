@@ -118,6 +118,7 @@ export class CRPage implements PageDelegate {
       promises.push(emulateTimezone(this._client, options.timezoneId));
     if (options.geolocation)
       promises.push(this._client.send('Emulation.setGeolocationOverride', options.geolocation));
+    promises.push(this.updateExtraHTTPHeaders());
     await Promise.all(promises);
   }
 
@@ -316,7 +317,11 @@ export class CRPage implements PageDelegate {
     this._page._onFileChooserOpened(handle);
   }
 
-  async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
+  async updateExtraHTTPHeaders(): Promise<void> {
+    const headers = network.mergeHeaders([
+      this._page.context()._options.extraHTTPHeaders,
+      this._page._state.extraHTTPHeaders
+    ]);
     await this._client.send('Network.setExtraHTTPHeaders', { headers });
   }
 

@@ -30,7 +30,8 @@ export type BrowserContextOptions = {
   locale?: string,
   timezoneId?: string,
   geolocation?: types.Geolocation,
-  permissions?: { [key: string]: string[] };
+  permissions?: { [key: string]: string[] },
+  extraHTTPHeaders?: network.Headers,
 };
 
 export interface BrowserContext {
@@ -44,6 +45,7 @@ export interface BrowserContext {
   setPermissions(origin: string, permissions: string[]): Promise<void>;
   clearPermissions(): Promise<void>;
   setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
+  setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
   close(): Promise<void>;
 
   _existingPages(): Page[];
@@ -67,6 +69,8 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): B
     result.viewport = { ...result.viewport };
   if (result.geolocation)
     result.geolocation = verifyGeolocation(result.geolocation);
+  if (result.extraHTTPHeaders)
+    result.extraHTTPHeaders = network.verifyHeaders(result.extraHTTPHeaders);
   return result;
 }
 

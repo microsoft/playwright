@@ -45,7 +45,7 @@ export interface PageDelegate {
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
-  setExtraHTTPHeaders(extraHTTPHeaders: network.Headers): Promise<void>;
+  updateExtraHTTPHeaders(): Promise<void>;
   setViewportSize(viewportSize: types.Size): Promise<void>;
   setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
@@ -268,13 +268,8 @@ export class Page extends platform.EventEmitter {
   }
 
   setExtraHTTPHeaders(headers: network.Headers) {
-    this._state.extraHTTPHeaders = {};
-    for (const key of Object.keys(headers)) {
-      const value = headers[key];
-      assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
-      this._state.extraHTTPHeaders[key] = value;
-    }
-    return this._delegate.setExtraHTTPHeaders(headers);
+    this._state.extraHTTPHeaders = network.verifyHeaders(headers);
+    return this._delegate.updateExtraHTTPHeaders();
   }
 
   async _onBindingCalled(payload: string, context: js.ExecutionContext) {
