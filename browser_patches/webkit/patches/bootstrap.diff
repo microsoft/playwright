@@ -13661,10 +13661,10 @@ index 0000000000000000000000000000000000000000..00fb6b0006c743091a8bbf8edb18b211
 +</Scheme>
 diff --git a/Tools/Playwright/mac/AppDelegate.h b/Tools/Playwright/mac/AppDelegate.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..41b5751cab626971cd12c5066218c6d14c00fba0
+index 0000000000000000000000000000000000000000..d98c51764861371a35e78a8888bb6e81522951f4
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.h
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,56 @@
 +/*
 + * Copyright (C) 2010 Apple Inc. All rights reserved.
 + *
@@ -13702,6 +13702,7 @@ index 0000000000000000000000000000000000000000..41b5751cab626971cd12c5066218c6d1
 +    NSMutableSet *_headlessWindows;
 +    NSMutableSet *_browserContexts;
 +    bool _headless;
++    bool _noStartupWindow;
 +    NSMutableSet *_dialogs;
 +    NSString* _initialURL;
 +    NSString* _userDataDir;
@@ -13722,10 +13723,10 @@ index 0000000000000000000000000000000000000000..41b5751cab626971cd12c5066218c6d1
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..7fbd8c5426eb43b96a7c8e793a7f85810819053e
+index 0000000000000000000000000000000000000000..6d6c3a8c8e56e740ed37149e61f9daf58854a6c2
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,490 @@
+@@ -0,0 +1,492 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -13828,6 +13829,7 @@ index 0000000000000000000000000000000000000000..7fbd8c5426eb43b96a7c8e793a7f8581
 +    }
 +
 +    _headless = [arguments containsObject: @"--headless"];
++    _noStartupWindow = [arguments containsObject: @"--no-startup-window"];
 +    _browserContexts = [[NSMutableSet alloc] init];
 +
 +    if (_headless) {
@@ -13971,14 +13973,15 @@ index 0000000000000000000000000000000000000000..7fbd8c5426eb43b96a7c8e793a7f8581
 +
 +- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 +{
++    if (_noStartupWindow) {
++        _initialURL = nil;
++        return;
++    }
++
 +    if (_headless) {
 +        [self createNewPage:0];
 +        return;
 +    }
-+
-+    WebHistory *webHistory = [[WebHistory alloc] init];
-+    [WebHistory setOptionalSharedHistory:webHistory];
-+    [webHistory release];
 +
 +    [self _updateNewWindowKeyEquivalents];
 +    if (!_initialURL)
