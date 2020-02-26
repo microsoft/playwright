@@ -22,7 +22,7 @@ import * as types from '../types';
 import { WKBrowser } from '../webkit/wkBrowser';
 import { execSync } from 'child_process';
 import { PipeTransport } from './pipeTransport';
-import { launchProcess, waitForLine } from './processLauncher';
+import { launchProcess } from './processLauncher';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as platform from '../platform';
@@ -31,7 +31,7 @@ import * as os from 'os';
 import { assert, helper } from '../helper';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
-import { ConnectionTransport, DeferWriteTransport } from '../transport';
+import { ConnectionTransport } from '../transport';
 import * as ws from 'ws';
 import * as uuidv4 from 'uuid/v4';
 import { ConnectOptions, LaunchType } from '../browser';
@@ -108,9 +108,9 @@ export class WebKit implements BrowserType {
 
     const webkitArguments = [];
     if (!ignoreDefaultArgs)
-      webkitArguments.push(...this._defaultArgs(options, userDataDir!, port || 0));
+      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0));
     else if (Array.isArray(ignoreDefaultArgs))
-      webkitArguments.push(...this._defaultArgs(options, userDataDir!, port || 0).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      webkitArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
     else
       webkitArguments.push(...args);
 
@@ -149,9 +149,7 @@ export class WebKit implements BrowserType {
       },
     });
 
-    const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to WebKit! The only WebKit revision guaranteed to work is r${this._revision}`);
-    await waitForLine(launchedProcess, launchedProcess.stdout, /^Web Inspector is reading from pipe #3$/, timeout, timeoutError);
-    transport = new DeferWriteTransport(new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream));
+    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
     return { browserServer, transport };
   }
@@ -173,7 +171,7 @@ export class WebKit implements BrowserType {
     return { TimeoutError };
   }
 
-  _defaultArgs(options: BrowserArgOptions = {}, userDataDir: string, port: number): string[] {
+  _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
     const {
       devtools = false,
       headless = !devtools,
@@ -187,7 +185,10 @@ export class WebKit implements BrowserType {
     const webkitArguments = ['--inspector-pipe'];
     if (headless)
       webkitArguments.push('--headless');
-    webkitArguments.push(`--user-data-dir=${userDataDir}`);
+    if (launchType === 'persistent')
+      webkitArguments.push(`--user-data-dir=${userDataDir}`);
+    else
+      webkitArguments.push(`--no-startup-window`);
     webkitArguments.push(...args);
     return webkitArguments;
   }
@@ -361,18 +362,6 @@ async function wrapTransportWithWebSocket(transport: ConnectionTransport, port: 
       return;
     }
     sockets.add(socket);
-    // Following two messages are reporting the default browser context and the default page.
-    socket.send(JSON.stringify({
-      method: 'Browser.pageProxyCreated',
-      params: { pageProxyInfo: { pageProxyId: '5', browserContextId: '0000000000000002' } }
-    }));
-    socket.send(JSON.stringify({
-      method: 'Target.targetCreated',
-      params: {
-        targetInfo: { targetId: 'page-6', type: 'page', isPaused: false }
-      },
-      pageProxyId: '5'
-    }));
 
     socket.on('message', (message: string) => {
       const parsedMessage = JSON.parse(Buffer.from(message).toString());
