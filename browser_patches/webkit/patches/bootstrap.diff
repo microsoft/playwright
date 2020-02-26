@@ -7570,10 +7570,10 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..46b9901263286eab6de0bc4f899349d5
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..78daef3868dc0036bdd612c8c3cc6ba8fb033af2
+index 0000000000000000000000000000000000000000..f119a3bcf90af6d3183a4079a4a3b06a6b75cabc
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,516 @@
+@@ -0,0 +1,526 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7727,6 +7727,12 @@ index 0000000000000000000000000000000000000000..78daef3868dc0036bdd612c8c3cc6ba8
 +    }
 +    for (auto* page : pages)
 +        page->closePage();
++
++    if (!WebProcessPool::allProcessPools().size()) {
++        m_client->closeBrowser();
++        callback->sendSuccess();
++        return;
++    }
 +
 +    WebProcessPool::allProcessPools().first()->syncLocalStorage([this, callback = WTFMove(callback)] () {
 +        if (!callback->isActive())
@@ -8074,8 +8080,12 @@ index 0000000000000000000000000000000000000000..78daef3868dc0036bdd612c8c3cc6ba8
 +BrowserContext InspectorBrowserAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
 +{
 +    if (!browserContextID) {
-+        auto* pool = WebProcessPool::allProcessPools().first();
 +        BrowserContext context;
++        if (!WebProcessPool::allProcessPools().size()) {
++            errorString = "Browser started with no default context"_s;
++            return context;
++        }
++        auto* pool = WebProcessPool::allProcessPools().first();
 +        context.processPool = pool;
 +        context.dataStore = pool->websiteDataStore();
 +        return context;
@@ -8458,10 +8468,10 @@ index 8a871bf2916d5eab86becf5fde0faed79283d88c..a19a429c4d53edf81c3028c7053265e6
  
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..6d19c534e58e35ec2012a36238e25a78706f2786
+index 0000000000000000000000000000000000000000..0b4ec2de5671723f4045e98b3e398fc11180b3b8
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,219 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8644,9 +8654,6 @@ index 0000000000000000000000000000000000000000..6d19c534e58e35ec2012a36238e25a78
 +
 +void RemoteInspectorPipe::workerRun()
 +{
-+    fprintf(stdout, "\nWeb Inspector is reading from pipe #3\n\n");
-+    fflush(stdout);
-+
 +    const size_t bufSize = 256 * 1024;
 +    auto buffer = makeUniqueArray<char>(bufSize);
 +    Vector<char> line;
@@ -12023,10 +12030,10 @@ index 4c5147dcd38a53e2feaeaae0fce38f92dc60eba6..4b1cab0c187352688740c7cca79483fa
      return 0;
  }
 diff --git a/Tools/MiniBrowser/win/Common.cpp b/Tools/MiniBrowser/win/Common.cpp
-index 87fde928c12a91f13a4f8bc2f2dc24097e42f2d0..c81685683a61cfa9f39de2de695e3c7a9b0ab1e3 100644
+index 87fde928c12a91f13a4f8bc2f2dc24097e42f2d0..40f62e51f18279a1c48d01386120b49a0f9f6029 100644
 --- a/Tools/MiniBrowser/win/Common.cpp
 +++ b/Tools/MiniBrowser/win/Common.cpp
-@@ -278,6 +278,12 @@ CommandLineOptions parseCommandLine()
+@@ -278,6 +278,14 @@ CommandLineOptions parseCommandLine()
  #if ENABLE(WEBKIT)
          else if (!wcsicmp(argv[i], L"--wk2") || !wcsicmp(argv[i], L"--webkit"))
              options.windowType = BrowserWindowType::WebKit;
@@ -12036,19 +12043,22 @@ index 87fde928c12a91f13a4f8bc2f2dc24097e42f2d0..c81685683a61cfa9f39de2de695e3c7a
 +            options.userDataDir = argv[i] + 16;
 +        else if (!wcsicmp(argv[i], L"--headless"))
 +            options.headless = true;
++        else if (!wcsicmp(argv[i], L"--no-startup-window"))
++            options.noStartupWindow = true;
  #endif
          else if (!options.requestedURL)
              options.requestedURL = argv[i];
 diff --git a/Tools/MiniBrowser/win/Common.h b/Tools/MiniBrowser/win/Common.h
-index d996feb64e02d7399f2ed0b34d3d0dd03133f824..4ab1fa69437ed5a11a5357a331cb7e1c6fbbb6ef 100644
+index d996feb64e02d7399f2ed0b34d3d0dd03133f824..044069ecd792654e533bac276b98ad45410fb9c7 100644
 --- a/Tools/MiniBrowser/win/Common.h
 +++ b/Tools/MiniBrowser/win/Common.h
-@@ -36,8 +36,11 @@ enum class BrowserWindowType {
+@@ -36,8 +36,12 @@ enum class BrowserWindowType {
  struct CommandLineOptions {
      bool usesLayeredWebView { };
      bool useFullDesktop { };
 +    bool inspectorPipe { };
 +    bool headless { };
++    bool noStartupWindow { };
      BrowserWindowType windowType;
      _bstr_t requestedURL;
 +    _bstr_t userDataDir;
@@ -12056,46 +12066,60 @@ index d996feb64e02d7399f2ed0b34d3d0dd03133f824..4ab1fa69437ed5a11a5357a331cb7e1c
      CommandLineOptions()
  #if ENABLE(WEBKIT)
 diff --git a/Tools/MiniBrowser/win/MainWindow.cpp b/Tools/MiniBrowser/win/MainWindow.cpp
-index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2250cbb7e 100644
+index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..d157cb5c13bf61ad2593989353237629ae60d710 100644
 --- a/Tools/MiniBrowser/win/MainWindow.cpp
 +++ b/Tools/MiniBrowser/win/MainWindow.cpp
-@@ -102,7 +102,10 @@ bool MainWindow::isInstance(HWND hwnd)
+@@ -60,6 +60,14 @@ static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
+ std::wstring MainWindow::s_windowClass;
+ size_t MainWindow::s_numInstances;
+ 
++bool MainWindow::s_headless = false;
++bool MainWindow::s_noStartupWindow = false;
++
++void MainWindow::configure(bool headless, bool noStartupWindow) {
++    s_headless = headless;
++    s_noStartupWindow = noStartupWindow;
++}
++
+ static std::wstring loadString(int id)
+ {
+     constexpr size_t length = 100;
+@@ -102,7 +110,9 @@ bool MainWindow::isInstance(HWND hwnd)
      return s_windowClass == buff;
  }
  
 -MainWindow::MainWindow()
-+MainWindow::MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless)
++MainWindow::MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore)
 +    : m_context(context)
 +    , m_dataStore(dataStore)
-+    , m_headless(headless)
  {
      s_numInstances++;
  }
-@@ -112,9 +115,9 @@ MainWindow::~MainWindow()
+@@ -112,9 +122,9 @@ MainWindow::~MainWindow()
      s_numInstances--;
  }
  
 -Ref<MainWindow> MainWindow::create()
-+Ref<MainWindow> MainWindow::create(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless)
++Ref<MainWindow> MainWindow::create(WKContextRef context, WKWebsiteDataStoreRef dataStore)
  {
 -    return adoptRef(*new MainWindow());
-+    return adoptRef(*new MainWindow(context, dataStore, headless));
++    return adoptRef(*new MainWindow(context, dataStore));
  }
  
  void MainWindow::createToolbar(HINSTANCE hInstance)
-@@ -202,24 +205,26 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
+@@ -202,24 +212,26 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
  
      auto title = loadString(IDS_APP_TITLE);
  
 -    m_hMainWnd = CreateWindow(s_windowClass.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW,
 -        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, hInstance, this);
-+    m_hMainWnd = CreateWindowExW(m_headless ? WS_EX_NOACTIVATE : 0, s_windowClass.c_str(), title.c_str(),
++    m_hMainWnd = CreateWindowExW(s_headless ? WS_EX_NOACTIVATE : 0, s_windowClass.c_str(), title.c_str(),
 +        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, hInstance, this);
  
      if (!m_hMainWnd)
          return false;
  
-+    if (!m_headless) {
++    if (!s_headless) {
  #if !ENABLE(WEBKIT)
 -    EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKIT_WINDOW, MF_GRAYED);
 +        EnableMenuItem(GetMenu(m_hMainWnd), IDM_NEW_WEBKIT_WINDOW, MF_GRAYED);
@@ -12118,13 +12142,13 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2
      if (!m_browserWindow)
          return false;
      HRESULT hr = m_browserWindow->init();
-@@ -228,7 +233,13 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
+@@ -228,7 +240,13 @@ bool MainWindow::init(BrowserWindowFactory factory, HINSTANCE hInstance, bool us
  
      updateDeviceScaleFactor();
      resizeSubViews();
 -    SetFocus(m_hURLBarWnd);
 +
-+    if (m_headless) {
++    if (s_headless) {
 +        SetMenu(m_hMainWnd, NULL);
 +    } else {
 +        SetFocus(m_hURLBarWnd);
@@ -12133,17 +12157,18 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2
      return true;
  }
  
-@@ -237,7 +248,8 @@ void MainWindow::resizeSubViews()
+@@ -236,6 +254,10 @@ void MainWindow::resizeSubViews()
+ {
      RECT rcClient;
      GetClientRect(m_hMainWnd, &rcClient);
++    if (s_headless) {
++        MoveWindow(m_browserWindow->hwnd(), 0, 0, rcClient.right, rcClient.bottom, true);
++        return;
++    }
  
--    resizeToolbar(rcClient.right);
-+    if (!m_headless)
-+        resizeToolbar(rcClient.right);
+     resizeToolbar(rcClient.right);
  
-     if (m_browserWindow->usesLayeredWebView() || !m_browserWindow->hwnd())
-         return;
-@@ -254,6 +266,9 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+@@ -254,6 +276,9 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
  {
      LRESULT result = 0;
      RefPtr<MainWindow> thisWindow = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
@@ -12153,12 +12178,12 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2
      switch (message) {
      case WM_ACTIVATE:
          switch (LOWORD(wParam)) {
-@@ -309,17 +324,15 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+@@ -309,17 +334,15 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
              break;
  #if ENABLE(WEBKIT)
          case IDM_NEW_WEBKIT_WINDOW: {
 -            auto& newWindow = MainWindow::create().leakRef();
-+            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get(), false).leakRef();
++            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
              newWindow.init(WebKitBrowserWindow::create, hInst);
 -            ShowWindow(newWindow.hwnd(), SW_SHOW);
              break;
@@ -12167,41 +12192,50 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2
  #if ENABLE(WEBKIT_LEGACY)
          case IDM_NEW_WEBKITLEGACY_WINDOW: {
 -            auto& newWindow = MainWindow::create().leakRef();
-+            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get(), false).leakRef();
++            auto& newWindow = MainWindow::create(thisWindow->m_context.get(), thisWindow->m_dataStore.get()).leakRef();
              newWindow.init(WebKitLegacyBrowserWindow::create, hInst);
 -            ShowWindow(newWindow.hwnd(), SW_SHOW);
              break;
          }
  #endif
-@@ -443,6 +456,9 @@ void MainWindow::setDefaultURLToCurrentURL()
+@@ -384,7 +407,7 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
+     case WM_DESTROY:
+         SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
+         thisWindow->deref();
+-        if (s_numInstances > 1)
++        if (s_noStartupWindow || s_numInstances > 1)
+             return 0;
+ #if USE(CF)
+         CFRunLoopStop(CFRunLoopGetMain());
+@@ -443,6 +466,9 @@ void MainWindow::setDefaultURLToCurrentURL()
  
  bool MainWindow::toggleMenuItem(UINT menuID)
  {
-+    if (m_headless)
++    if (s_headless)
 +        return (INT_PTR)FALSE;
 +
      HMENU menu = ::GetMenu(hwnd());
  
      switch (menuID) {
-@@ -519,6 +535,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+@@ -518,6 +544,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+ 
  INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
  {
-     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
-+    if (thisWindow.m_headless)
++    if (s_headless)
 +        return (INT_PTR)FALSE;
+     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
      switch (message) {
      case WM_INITDIALOG:
-         SetWindowLongPtr(hDlg, DWLP_USER, lParam);
-@@ -549,6 +567,8 @@ INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wP
+@@ -548,6 +576,8 @@ INT_PTR CALLBACK MainWindow::cachesDialogProc(HWND hDlg, UINT message, WPARAM wP
+ 
  INT_PTR CALLBACK MainWindow::customUserAgentDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
  {
-     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
-+    if (thisWindow.m_headless)
++    if (s_headless)
 +        return (INT_PTR)FALSE;
+     MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(GetWindowLongPtr(hDlg, DWLP_USER));
      switch (message) {
      case WM_INITDIALOG: {
-         MainWindow& thisWindow = *reinterpret_cast<MainWindow*>(lParam);
-@@ -594,27 +614,26 @@ void MainWindow::loadURL(std::wstring url)
+@@ -594,27 +624,26 @@ void MainWindow::loadURL(std::wstring url)
          if (SUCCEEDED(::UrlCreateFromPath(url.c_str(), fileURL, &fileURLLength, 0)))
              url = fileURL;
      }
@@ -12213,7 +12247,7 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2
          return;
  
 -    SetFocus(m_browserWindow->hwnd());
-+    if (!m_headless)
++    if (!s_headless)
 +        SetFocus(m_browserWindow->hwnd());
  }
  
@@ -12230,46 +12264,46 @@ index 08131e61107bc4163c4fb1e9a65ee5a1ecda6b04..bfe54fa7c027b75c470ad2da4c5f83f2
  
  void MainWindow::onURLBarEnter()
  {
-+    if (m_headless)
++    if (s_headless)
 +        return;
      wchar_t url[INTERNET_MAX_URL_LENGTH];
      GetWindowText(m_hURLBarWnd, url, INTERNET_MAX_URL_LENGTH);
      loadURL(url);
-@@ -622,6 +641,8 @@ void MainWindow::onURLBarEnter()
+@@ -622,6 +651,8 @@ void MainWindow::onURLBarEnter()
  
  void MainWindow::updateDeviceScaleFactor()
  {
-+    if (m_headless)
++    if (s_headless)
 +        return;
      if (m_hURLBarFont)
          ::DeleteObject(m_hURLBarFont);
  
-@@ -638,6 +659,8 @@ void MainWindow::updateDeviceScaleFactor()
+@@ -638,6 +669,8 @@ void MainWindow::updateDeviceScaleFactor()
  
  void MainWindow::progressChanged(double progress)
  {
-+    if (m_headless)
++    if (s_headless)
 +        return;
      std::wostringstream text;
      text << static_cast<int>(progress * 100) << L'%';
      SetWindowText(m_hProgressIndicator, text.str().c_str());
-@@ -645,10 +668,14 @@ void MainWindow::progressChanged(double progress)
+@@ -645,10 +678,14 @@ void MainWindow::progressChanged(double progress)
  
  void MainWindow::progressFinished()
  {
-+    if (m_headless)
++    if (s_headless)
 +        return;
      SetWindowText(m_hProgressIndicator, L"");
  }
  
  void MainWindow::activeURLChanged(std::wstring url)
  {
-+    if (m_headless)
++    if (s_headless)
 +        return;
      SetWindowText(m_hURLBarWnd, url.c_str());
  }
 diff --git a/Tools/MiniBrowser/win/MainWindow.h b/Tools/MiniBrowser/win/MainWindow.h
-index d79c6fdc4fa05e1e4b9acdcc6932e571163320eb..d7902d4d0da67b9874ce32004e465b13eb5f8d8b 100644
+index d79c6fdc4fa05e1e4b9acdcc6932e571163320eb..99718b19797788634f4233a8892729b57ae642d0 100644
 --- a/Tools/MiniBrowser/win/MainWindow.h
 +++ b/Tools/MiniBrowser/win/MainWindow.h
 @@ -26,6 +26,8 @@
@@ -12281,28 +12315,32 @@ index d79c6fdc4fa05e1e4b9acdcc6932e571163320eb..d7902d4d0da67b9874ce32004e465b13
  #include <functional>
  #include <memory>
  #include <string>
-@@ -33,9 +35,9 @@
+@@ -33,9 +35,10 @@
  
  class MainWindow final : public RefCounted<MainWindow>, public BrowserWindowClient {
  public:
 -    using BrowserWindowFactory = std::function<Ref<BrowserWindow>(BrowserWindowClient&, HWND mainWnd, bool usesLayeredWebView)>;
 +    using BrowserWindowFactory = std::function<Ref<BrowserWindow>(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool usesLayeredWebView)>;
++    static void configure(bool headless, bool noStartupWindow);
  
 -    static Ref<MainWindow> create();
-+    static Ref<MainWindow> create(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless);
++    static Ref<MainWindow> create(WKContextRef context, WKWebsiteDataStoreRef dataStore);
  
      ~MainWindow();
      bool init(BrowserWindowFactory, HINSTANCE hInstance, bool usesLayeredWebView = false);
-@@ -57,7 +59,7 @@ private:
+@@ -56,8 +59,10 @@ private:
+     static void registerClass(HINSTANCE hInstance);
      static std::wstring s_windowClass;
      static size_t s_numInstances;
++    static bool s_headless;
++    static bool s_noStartupWindow;
  
 -    MainWindow();
-+    MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore, bool headless);
++    MainWindow(WKContextRef context, WKWebsiteDataStoreRef dataStore);
      void setDefaultURLToCurrentURL();
      bool toggleMenuItem(UINT menuID);
      void onURLBarEnter();
-@@ -78,6 +80,9 @@ private:
+@@ -78,6 +83,8 @@ private:
      HWND m_hProgressIndicator { nullptr };
      HWND m_hCacheWnd { nullptr };
      HGDIOBJ m_hURLBarFont { nullptr };
@@ -12310,22 +12348,12 @@ index d79c6fdc4fa05e1e4b9acdcc6932e571163320eb..d7902d4d0da67b9874ce32004e465b13
 +    WKRetainPtr<WKWebsiteDataStoreRef> m_dataStore;
      RefPtr<BrowserWindow> m_browserWindow;
      int m_toolbarItemsWidth { };
-+    bool m_headless;
  };
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e7972a272 100644
+index dc2b3f257600e3f4d172875ebb821769a160979d..9e0072a181ebea8834b96ba5c0020a722f7f3cd4 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.cpp
-@@ -39,6 +39,8 @@
- #include <WebKit/WKWebsiteDataStoreRefCurl.h>
- #include <vector>
- 
-+static bool s_headless = false;
-+
- std::wstring createString(WKStringRef wkString)
- {
-     size_t maxSize = WKStringGetLength(wkString);
-@@ -107,7 +109,7 @@ WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
+@@ -107,7 +107,7 @@ WKRetainPtr<WKURLRef> createWKURL(const std::wstring& str)
      return adoptWK(WKURLCreateWithUTF8CString(utf8.data()));
  }
  
@@ -12334,7 +12362,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
  {
      auto conf = adoptWK(WKPageConfigurationCreate());
  
-@@ -121,8 +123,8 @@ Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND
+@@ -121,8 +121,8 @@ Ref<BrowserWindow> WebKitBrowserWindow::create(BrowserWindowClient& client, HWND
      WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
      WKPageConfigurationSetPreferences(conf.get(), prefs.get());
  
@@ -12345,7 +12373,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
  
      return adoptRef(*new WebKitBrowserWindow(client, conf.get(), mainWnd));
  }
-@@ -143,11 +145,17 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
+@@ -143,11 +143,17 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
      navigationClient.didReceiveAuthenticationChallenge = didReceiveAuthenticationChallenge;
      WKPageSetPageNavigationClient(page, &navigationClient.base);
  
@@ -12365,7 +12393,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
      WKPageSetPageUIClient(page, &uiClient.base);
  
      WKPageStateClientV0 stateClient = { };
-@@ -159,7 +167,6 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
+@@ -159,7 +165,6 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, WKPageConf
      stateClient.didChangeActiveURL = didChangeActiveURL;
      WKPageSetPageStateClient(page, &stateClient.base);
  
@@ -12373,7 +12401,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
      resetZoom();
  }
  
-@@ -183,6 +190,29 @@ void WebKitBrowserWindow::updateProxySettings()
+@@ -183,6 +188,29 @@ void WebKitBrowserWindow::updateProxySettings()
      WKWebsiteDataStoreEnableCustomNetworkProxySettings(store, url.get(), excludeHosts.get());
  }
  
@@ -12403,7 +12431,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
  HRESULT WebKitBrowserWindow::init()
  {
      return S_OK;
-@@ -251,7 +281,6 @@ void WebKitBrowserWindow::openProxySettings()
+@@ -251,7 +279,6 @@ void WebKitBrowserWindow::openProxySettings()
  {
      if (askProxySettings(m_hMainWnd, m_proxy))
          updateProxySettings();
@@ -12411,19 +12439,15 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
  }
  
  void WebKitBrowserWindow::setUserAgent(_bstr_t& customUAString)
-@@ -381,18 +410,100 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
+@@ -381,18 +408,94 @@ bool WebKitBrowserWindow::canTrustServerCertificate(WKProtectionSpaceRef protect
      return false;
  }
  
 -WKPageRef WebKitBrowserWindow::createNewPage(WKPageRef page, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
-+// static
-+void WebKitBrowserWindow::setHeadless(bool headless)
-+{
-+    s_headless = headless;
-+}
-+
 +void WebKitBrowserWindow::closeWindow(WKPageRef page, const void* clientInfo)
-+{
+ {
+-    auto& newWindow = MainWindow::create().leakRef();
+-    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    PostMessage(thisWindow.m_hMainWnd, WM_CLOSE, 0, 0);
 +}
@@ -12443,9 +12467,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
 +}
 +
 +void WebKitBrowserWindow::runJavaScriptPrompt(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, WKSecurityOriginRef securityOrigin, WKPageRunJavaScriptPromptResultListenerRef listener, const void *clientInfo)
- {
--    auto& newWindow = MainWindow::create().leakRef();
--    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, bool) -> auto {
++{
 +    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
 +    WKRetain(listener);
 +    thisWindow.m_promptDialog = listener;
@@ -12495,7 +12517,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
 +{
 +    auto context = WKPageConfigurationGetContext(configuration);
 +    auto dataStore = WKPageConfigurationGetWebsiteDataStore(configuration);
-+    auto& newWindow = MainWindow::create(context, dataStore, s_headless).leakRef();
++    auto& newWindow = MainWindow::create(context, dataStore).leakRef();
 +    auto factory = [configuration](BrowserWindowClient& client, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool) -> auto {
          return adoptRef(*new WebKitBrowserWindow(client, configuration, mainWnd));
      };
@@ -12520,7 +12542,7 @@ index dc2b3f257600e3f4d172875ebb821769a160979d..852f3207690c53f4fb5657d3f2d5709e
  }
  
 diff --git a/Tools/MiniBrowser/win/WebKitBrowserWindow.h b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
-index 373d0de77e852c673a6615e0acedd5195e3c021b..2e63607a2299b57947f367fcebc1aa88374827fc 100644
+index 373d0de77e852c673a6615e0acedd5195e3c021b..cfeb4f806f79d1a213fdb13346e2b383b9a64273 100644
 --- a/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 +++ b/Tools/MiniBrowser/win/WebKitBrowserWindow.h
 @@ -26,6 +26,7 @@
@@ -12531,13 +12553,12 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..2e63607a2299b57947f367fcebc1aa88
  #include <WebKit/WKRetainPtr.h>
  #include <WebKit/WebKit2_C.h>
  #include <unordered_map>
-@@ -33,10 +34,14 @@
+@@ -33,10 +34,13 @@
  
  class WebKitBrowserWindow : public BrowserWindow {
  public:
 -    static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, bool useLayeredWebView = false);
 +    static Ref<BrowserWindow> create(BrowserWindowClient&, HWND mainWnd, WKContextRef, WKWebsiteDataStoreRef, bool useLayeredWebView = false);
-+    static void setHeadless(bool headless);
 +    static WKPageRef createPageCallback(WKPageConfigurationRef);
  
  private:
@@ -12547,7 +12568,7 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..2e63607a2299b57947f367fcebc1aa88
  
      HRESULT init() override;
      HWND hwnd() override;
-@@ -71,6 +76,12 @@ private:
+@@ -71,6 +75,12 @@ private:
      static void didChangeActiveURL(const void*);
      static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
      static WKPageRef createNewPage(WKPageRef, WKPageConfigurationRef, WKNavigationActionRef, WKWindowFeaturesRef, const void *);
@@ -12560,7 +12581,7 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..2e63607a2299b57947f367fcebc1aa88
      static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
  
      BrowserWindowClient& m_client;
-@@ -78,4 +89,8 @@ private:
+@@ -78,4 +88,8 @@ private:
      HWND m_hMainWnd { nullptr };
      ProxySettings m_proxy { };
      std::unordered_map<std::wstring, std::wstring> m_acceptedServerTrustCerts;
@@ -12570,10 +12591,10 @@ index 373d0de77e852c673a6615e0acedd5195e3c021b..2e63607a2299b57947f367fcebc1aa88
 +    WKPageRunBeforeUnloadConfirmPanelResultListenerRef m_beforeUnloadDialog = { };
  };
 diff --git a/Tools/MiniBrowser/win/WinMain.cpp b/Tools/MiniBrowser/win/WinMain.cpp
-index 6008ca19e26a938cf962c0c336299fff7d13f9a3..ba66a0716d84f9eba19a94b627f69c94c335d4f7 100644
+index 6008ca19e26a938cf962c0c336299fff7d13f9a3..a5f7daaf5c2dc860296b5d9379d5637d611ca707 100644
 --- a/Tools/MiniBrowser/win/WinMain.cpp
 +++ b/Tools/MiniBrowser/win/WinMain.cpp
-@@ -31,6 +31,10 @@
+@@ -31,7 +31,12 @@
  #include "stdafx.h"
  #include "Common.h"
  #include "MiniBrowserLibResource.h"
@@ -12582,9 +12603,11 @@ index 6008ca19e26a938cf962c0c336299fff7d13f9a3..ba66a0716d84f9eba19a94b627f69c94
 +#include <WebKit/WKWebsiteDataStoreConfigurationRef.h>
 +#include <WebKit/WKWebsiteDataStoreRef.h>
  #include <wtf/win/SoftLinking.h>
++#include <wtf/RunLoop.h>
  
  #if USE(CF)
-@@ -46,11 +50,31 @@
+ #include <CoreFoundation/CoreFoundation.h>
+@@ -46,11 +51,30 @@
  #include <WebKitLegacy/WebKitCOMAPI.h>
  #endif
  
@@ -12610,18 +12633,16 @@ index 6008ca19e26a938cf962c0c336299fff7d13f9a3..ba66a0716d84f9eba19a94b627f69c94
  int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpstrCmdLine, _In_ int nCmdShow)
  {
 +#if ENABLE(WEBKIT)
-+    // WebKit2 does not use RunLoop.
-+    WTF::initializeMainThread();
++    WTF::RunLoop::initializeMainRunLoop();
 +#endif
  #ifdef _CRTDBG_MAP_ALLOC
      _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
      _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
-@@ -66,6 +90,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+@@ -66,6 +90,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
      InitCommonControlsEx(&InitCtrlEx);
  
      auto options = parseCommandLine();
 +    if (options.inspectorPipe) {
-+        WebKitBrowserWindow::setHeadless(options.headless);
 +        WKInspectorInitializeRemoteInspectorPipe(
 +            WebKitBrowserWindow::createPageCallback,
 +            []() { PostQuitMessage(0); });
@@ -12629,7 +12650,7 @@ index 6008ca19e26a938cf962c0c336299fff7d13f9a3..ba66a0716d84f9eba19a94b627f69c94
  
      if (options.useFullDesktop)
          computeFullDesktopFrame();
-@@ -74,9 +104,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+@@ -74,32 +103,50 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
      OleInitialize(nullptr);
  
      if (SetProcessDpiAwarenessContextPtr())
@@ -12638,41 +12659,64 @@ index 6008ca19e26a938cf962c0c336299fff7d13f9a3..ba66a0716d84f9eba19a94b627f69c94
 -        ::SetProcessDPIAware();
 +        SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
  
++    MainWindow::configure(options.headless, options.noStartupWindow);
++
++    if (!options.noStartupWindow) {
  #if !ENABLE(WEBKIT_LEGACY)
-     auto factory = WebKitBrowserWindow::create;
-@@ -85,13 +113,29 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+-    auto factory = WebKitBrowserWindow::create;
++        auto factory = WebKitBrowserWindow::create;
+ #elif !ENABLE(WEBKIT)
+-    auto factory = WebKitLegacyBrowserWindow::create;
++        auto factory = WebKitLegacyBrowserWindow::create;
  #else
-     auto factory = options.windowType == BrowserWindowType::WebKit ? WebKitBrowserWindow::create : WebKitLegacyBrowserWindow::create;
+-    auto factory = options.windowType == BrowserWindowType::WebKit ? WebKitBrowserWindow::create : WebKitLegacyBrowserWindow::create;
++        auto factory = options.windowType == BrowserWindowType::WebKit ? WebKitBrowserWindow::create : WebKitLegacyBrowserWindow::create;
  #endif
 -    auto& mainWindow = MainWindow::create().leakRef();
-+
-+    auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
-+    if (options.userDataDir.length()) {
-+        std::string profileFolder = toUTF8String(options.userDataDir, options.userDataDir.length());
-+        WKWebsiteDataStoreConfigurationSetApplicationCacheDirectory(configuration.get(), toWK(profileFolder + "\\ApplicationCache").get());
-+        WKWebsiteDataStoreConfigurationSetNetworkCacheDirectory(configuration.get(), toWK(profileFolder + "\\Cache").get());
-+        WKWebsiteDataStoreConfigurationSetCacheStorageDirectory(configuration.get(), toWK(profileFolder + "\\CacheStorage").get());
-+        WKWebsiteDataStoreConfigurationSetIndexedDBDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\IndexedDB").get());
-+        WKWebsiteDataStoreConfigurationSetLocalStorageDirectory(configuration.get(), toWK(profileFolder + "\\LocalStorage").get());
-+        WKWebsiteDataStoreConfigurationSetWebSQLDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\WebSQL").get());
-+        WKWebsiteDataStoreConfigurationSetMediaKeysStorageDirectory(configuration.get(), toWK(profileFolder + "\\MediaKeys").get());
-+        WKWebsiteDataStoreConfigurationSetResourceLoadStatisticsDirectory(configuration.get(), toWK(profileFolder + "\\ResourceLoadStatistics").get());
-+        WKWebsiteDataStoreConfigurationSetServiceWorkerRegistrationDirectory(configuration.get(), toWK(profileFolder + "\\ServiceWorkers").get());
-+    }
-+    auto context = adoptWK(WKContextCreateWithConfiguration(nullptr));
-+    auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
-+    WKContextSetPrimaryDataStore(context.get(), dataStore.get());
-+
-+    auto& mainWindow = MainWindow::create(context.get(), dataStore.get(), options.headless).leakRef();
-     HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
-     if (FAILED(hr))
-         goto exit;
+-    HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
+-    if (FAILED(hr))
+-        goto exit;
  
 -    ShowWindow(mainWindow.hwnd(), nCmdShow);
--
++        auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
++        if (options.userDataDir.length()) {
++            std::string profileFolder = toUTF8String(options.userDataDir, options.userDataDir.length());
++            WKWebsiteDataStoreConfigurationSetApplicationCacheDirectory(configuration.get(), toWK(profileFolder + "\\ApplicationCache").get());
++            WKWebsiteDataStoreConfigurationSetNetworkCacheDirectory(configuration.get(), toWK(profileFolder + "\\Cache").get());
++            WKWebsiteDataStoreConfigurationSetCacheStorageDirectory(configuration.get(), toWK(profileFolder + "\\CacheStorage").get());
++            WKWebsiteDataStoreConfigurationSetIndexedDBDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\IndexedDB").get());
++            WKWebsiteDataStoreConfigurationSetLocalStorageDirectory(configuration.get(), toWK(profileFolder + "\\LocalStorage").get());
++            WKWebsiteDataStoreConfigurationSetWebSQLDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\WebSQL").get());
++            WKWebsiteDataStoreConfigurationSetMediaKeysStorageDirectory(configuration.get(), toWK(profileFolder + "\\MediaKeys").get());
++            WKWebsiteDataStoreConfigurationSetResourceLoadStatisticsDirectory(configuration.get(), toWK(profileFolder + "\\ResourceLoadStatistics").get());
++            WKWebsiteDataStoreConfigurationSetServiceWorkerRegistrationDirectory(configuration.get(), toWK(profileFolder + "\\ServiceWorkers").get());
++        }
++        auto context = adoptWK(WKContextCreateWithConfiguration(nullptr));
++        auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
++        WKContextSetPrimaryDataStore(context.get(), dataStore.get());
++
++        auto& mainWindow = MainWindow::create(context.get(), dataStore.get()).leakRef();
++        HRESULT hr = mainWindow.init(factory, hInst, options.usesLayeredWebView);
++        if (FAILED(hr))
++            goto exit;
++
++        if (options.requestedURL.length())
++            mainWindow.loadURL(options.requestedURL.GetBSTR());
++        else
++            mainWindow.goHome();
++    }
+ 
      hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_MINIBROWSER));
      hPreAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDR_ACCELERATORS_PRE));
  
+-    if (options.requestedURL.length())
+-        mainWindow.loadURL(options.requestedURL.GetBSTR());
+-    else
+-        mainWindow.goHome();
+-
+ #pragma warning(disable:4509)
+ 
+     // Main message loop:
 diff --git a/Tools/MiniBrowser/wpe/CMakeLists.txt b/Tools/MiniBrowser/wpe/CMakeLists.txt
 index 04d3630dc2b0f5e937af173046268001da003753..ba0a60b832cd353776bb50b8198df2d8c4ee9f68 100644
 --- a/Tools/MiniBrowser/wpe/CMakeLists.txt
