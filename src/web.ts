@@ -23,7 +23,7 @@ const connect = {
   chromium: {
     connect: async (url: string) => {
       return await platform.connectToWebsocket(url, transport => {
-        return ChromiumBrowser.connect(transport);
+        return ChromiumBrowser.connect(transport, false);
       });
     }
   },

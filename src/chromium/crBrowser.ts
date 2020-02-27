@@ -43,10 +43,26 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
 
-  static async connect(transport: ConnectionTransport, slowMo?: number): Promise<CRBrowser> {
+  static async connect(transport: ConnectionTransport, isPersistent: boolean, slowMo?: number): Promise<CRBrowser> {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
     const browser = new CRBrowser(connection);
-    await connection.rootSession.send('Target.setDiscoverTargets', { discover: true });
+    const session = connection.rootSession;
+    const promises = [session.send('Target.setDiscoverTargets', { discover: true })];
+    if (isPersistent) {
+      // First page and background pages in the persistent context are created automatically
+      // and may be initialized before we enable auto-attach.
+      function attachToExistingPage({targetInfo}: Protocol.Target.targetCreatedPayload) {
+        if (!CRTarget.isPageType(targetInfo.type))
+          return;
+        promises.push(session.send('Target.attachToTarget', {targetId: targetInfo.targetId, flatten: true}));
+      }
+      session.on('Target.targetCreated', attachToExistingPage);
+      promises.push(session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }));
+      Promise.all(promises).then(() => session.off('Target.targetCreated', attachToExistingPage)).catch(debugError);
+    } else {
+      promises.push(session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }));
+    }
+    await Promise.all(promises);
     return browser;
   }
 
@@ -64,6 +80,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     this._client.on('Target.targetCreated', this._targetCreated.bind(this));
     this._client.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
     this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
+    this._client.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -83,14 +100,20 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return createPageInNewContext(this, options);
   }
 
-  async _targetCreated(event: Protocol.Target.targetCreatedPayload) {
-    const targetInfo = event.targetInfo;
+  async _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
+    if (!CRTarget.isPageType(event.targetInfo.type))
+      return;
+    const target = this._targets.get(event.targetInfo.targetId);
+    const session = this._connection.session(event.sessionId)!;
+    await target!.initializePageSession(session).catch(debugError);
+  }
+
+  async _targetCreated({targetInfo}: Protocol.Target.targetCreatedPayload) {
     const {browserContextId} = targetInfo;
     const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId)! : this._defaultContext;
-
     const target = new CRTarget(this, targetInfo, context, () => this._connection.createSession(targetInfo));
-    assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
-    this._targets.set(event.targetInfo.targetId, target);
+    assert(!this._targets.has(targetInfo.targetId), 'Target should not exist before targetCreated');
+    this._targets.set(targetInfo.targetId, target);
 
     try {
       switch (targetInfo.type) {
@@ -120,7 +143,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   async _targetDestroyed(event: { targetId: string; }) {
     const target = this._targets.get(event.targetId)!;
-    target._initializedCallback(false);
     this._targets.delete(event.targetId);
     target._didClose();
   }
@@ -136,7 +158,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   }
 
   _allTargets(): CRTarget[] {
-    return Array.from(this._targets.values()).filter(target => target._isInitialized);
+    return Array.from(this._targets.values());
   }
 
   async close() {
@@ -252,7 +274,6 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
     assertBrowserContextIsNotOwned(this);
     const { targetId } = await this._browser._client.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId || undefined });
     const target = this._browser._targets.get(targetId)!;
-    assert(await target._initializedPromise, 'Failed to create target for page');
     const page = await target.page();
     return page!;
   }
