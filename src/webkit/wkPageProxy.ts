@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import { Protocol } from './protocol';
@@ -28,30 +27,34 @@ const isPovisionalSymbol = Symbol('isPovisional');
 export class WKPageProxy {
   private readonly _pageProxySession: WKSession;
   readonly _browserContext: BrowserContext;
-  private readonly _openerResolver: () => WKPageProxy | null;
-  private _pagePromise: Promise<Page> | null = null;
-  private _wkPage: WKPage | null = null;
-  private readonly _firstTargetPromise: Promise<void>;
-  private _firstTargetCallback?: () => void;
-  private _pagePausedOnStart: boolean = false;
+  private readonly _opener: WKPageProxy | null;
+  private readonly _pagePromise: Promise<Page | null>;
+  private _pagePromiseFulfill: (page: Page | null) => void = () => {};
+  private _pagePromiseReject: (error: Error) => void = () => {};
+  private readonly _wkPage: WKPage;
+  private _initialized = false;
   private readonly _sessions = new Map<string, WKSession>();
   private readonly _eventListeners: RegisteredListener[];
 
-  constructor(pageProxySession: WKSession, browserContext: BrowserContext, openerResolver: () => (WKPageProxy | null)) {
+  constructor(pageProxySession: WKSession, browserContext: BrowserContext, opener: WKPageProxy | null) {
     this._pageProxySession = pageProxySession;
     this._browserContext = browserContext;
-    this._openerResolver = openerResolver;
-    this._firstTargetPromise = new Promise(r => this._firstTargetCallback = r);
+    this._opener = opener;
     this._eventListeners = [
       helper.addEventListener(this._pageProxySession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
     ];
+    this._pagePromise = new Promise((f, r) => {
+      this._pagePromiseFulfill = f;
+      this._pagePromiseReject = r;
+    });
+    this._wkPage = new WKPage(this._browserContext, this._pageProxySession, this._opener);
   }
 
   didClose() {
-    if (this._wkPage)
+    if (this._initialized)
       this._wkPage.didClose(false);
   }
 
@@ -61,8 +64,7 @@ export class WKPageProxy {
     for (const session of this._sessions.values())
       session.dispose();
     this._sessions.clear();
-    if (this._wkPage)
-      this._wkPage.dispose();
+    this._wkPage.dispose();
   }
 
   dispatchMessageToSession(message: any) {
@@ -78,7 +80,7 @@ export class WKPageProxy {
   }
 
   handleProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
-    if (!this._wkPage)
+    if (!this._initialized)
       return;
     if (!this._isProvisionalCrossProcessLoadInProgress())
       return;
@@ -88,46 +90,15 @@ export class WKPageProxy {
     this._wkPage._page._frameManager.provisionalLoadFailed(this._wkPage._page.mainFrame(), event.loaderId, errorText);
   }
 
-  async page(): Promise<Page> {
-    if (!this._pagePromise)
-      this._pagePromise = this._initializeWKPage();
+  async page(): Promise<Page | null> {
     return this._pagePromise;
   }
 
   existingPage(): Page | undefined {
-    return this._wkPage ? this._wkPage._page : undefined;
+    return this._initialized ? this._wkPage._page : undefined;
   }
 
-  onPopupCreated(popupPageProxy: WKPageProxy) {
-    if (this._wkPage)
-      popupPageProxy.page().then(page => this._wkPage!._page.emit(Events.Page.Popup, page));
-  }
-
-  private async _initializeWKPage(): Promise<Page> {
-    await this._firstTargetPromise;
-    let session: WKSession | undefined;
-    for (const anySession of this._sessions.values()) {
-      if (!(anySession as any)[isPovisionalSymbol]) {
-        session = anySession;
-        break;
-      }
-    }
-    assert(session, 'One non-provisional target session must exist');
-    this._wkPage = new WKPage(this._browserContext, this._pageProxySession, async () => {
-      const pageProxy = this._openerResolver();
-      if (!pageProxy)
-        return null;
-      return await pageProxy.page();
-    });
-    await this._wkPage.initialize(session);
-    if (this._pagePausedOnStart) {
-      this._resumeTarget(session.sessionId);
-      this._pagePausedOnStart = false;
-    }
-    return this._wkPage._page;
-  }
-
-  private _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
+  private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
     const { targetInfo } = event;
     const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, (message: any) => {
       this._pageProxySession.send('Target.sendMessageToTarget', {
@@ -138,26 +109,38 @@ export class WKPageProxy {
     });
     assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
     this._sessions.set(targetInfo.targetId, session);
-    if (this._firstTargetCallback) {
-      this._firstTargetCallback();
-      this._firstTargetCallback = undefined;
-    }
-    if (targetInfo.isProvisional) {
-      (session as any)[isPovisionalSymbol] = true;
-      if (this._wkPage) {
-        const provisionalPageInitialized = this._wkPage.initializeProvisionalPage(session);
-        if (targetInfo.isPaused)
-          provisionalPageInitialized.then(() => this._resumeTarget(targetInfo.targetId));
-      } else if (targetInfo.isPaused) {
-        this._resumeTarget(targetInfo.targetId);
+
+    if (!this._initialized) {
+      assert(!targetInfo.isProvisional);
+      this._initialized = true;
+      let page: Page | null = null;
+      let error: Error | undefined;
+      try {
+        await this._wkPage.initialize(session);
+        page = this._wkPage._page;
+      } catch (e) {
+        if (!this._pageProxySession.isDisposed())
+          error = e;
       }
-    } else if (this._pagePromise) {
-      assert(!this._pagePausedOnStart);
-      // This is the first time page target is created, will resume
-      // after finishing intialization.
-      this._pagePausedOnStart = !!targetInfo.isPaused;
-    } else if (targetInfo.isPaused) {
-      this._resumeTarget(targetInfo.targetId);
+      if (error)
+        this._pagePromiseReject(error);
+      else
+        this._pagePromiseFulfill(page);
+      if (targetInfo.isPaused)
+        this._resumeTarget(targetInfo.targetId);
+      if (page && this._opener) {
+        this._opener.page().then(openerPage => {
+          if (!openerPage || page!.isClosed())
+            return;
+          openerPage.emit(Events.Page.Popup, page);
+        });
+      }
+    } else {
+      assert(targetInfo.isProvisional);
+      (session as any)[isPovisionalSymbol] = true;
+      const provisionalPageInitialized = this._wkPage.initializeProvisionalPage(session);
+      if (targetInfo.isPaused)
+        provisionalPageInitialized.then(() => this._resumeTarget(targetInfo.targetId));
     }
   }
 
@@ -171,8 +154,7 @@ export class WKPageProxy {
     assert(session, 'Unknown target destroyed: ' + targetId);
     session.dispose();
     this._sessions.delete(targetId);
-    if (this._wkPage)
-      this._wkPage.onSessionDestroyed(session, crashed);
+    this._wkPage.onSessionDestroyed(session, crashed);
   }
 
   private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
@@ -191,7 +173,6 @@ export class WKPageProxy {
     // TODO: make some calls like screenshot catch swapped out error and retry.
     oldSession.errorText = 'Target was swapped out.';
     (newSession as any)[isPovisionalSymbol] = undefined;
-    if (this._wkPage)
-      this._wkPage.onProvisionalLoadCommitted(newSession);
+    this._wkPage.onProvisionalLoadCommitted(newSession);
   }
 }

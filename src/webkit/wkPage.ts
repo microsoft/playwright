@@ -34,6 +34,7 @@ import * as accessibility from '../accessibility';
 import * as platform from '../platform';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
+import { WKPageProxy } from './wkPageProxy';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -45,7 +46,7 @@ export class WKPage implements PageDelegate {
   private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;
   private readonly _pageProxySession: WKSession;
-  private readonly _openerResolver: () => Promise<Page | null>;
+  private readonly _opener: WKPageProxy | null;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
@@ -53,9 +54,9 @@ export class WKPage implements PageDelegate {
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
 
-  constructor(browserContext: BrowserContext, pageProxySession: WKSession, openerResolver: () => Promise<Page | null>) {
+  constructor(browserContext: BrowserContext, pageProxySession: WKSession, opener: WKPageProxy | null) {
     this._pageProxySession = pageProxySession;
-    this._openerResolver = openerResolver;
+    this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
     this._contextIdToContext = new Map();
@@ -436,8 +437,9 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
-  async opener() {
-    return await this._openerResolver();
+  async opener(): Promise<Page | null> {
+    const openerPage = this._opener ? await this._opener.page() : null;
+    return openerPage && !openerPage.isClosed() ? openerPage : null;
   }
 
   async reload(): Promise<void> {
