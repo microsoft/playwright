@@ -79,7 +79,7 @@ export class WebKit implements BrowserType {
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
     const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await WKBrowser.connect(transport!);
+    const browser = await WKBrowser.connect(transport!, undefined, true);
     await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;

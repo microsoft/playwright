@@ -34,6 +34,7 @@ const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) Appl
 
 export class WKBrowser extends platform.EventEmitter implements Browser {
   private readonly _connection: WKConnection;
+  private readonly _attachToDefaultContext: boolean;
   readonly _browserSession: WKSession;
   readonly _defaultContext: BrowserContext;
   readonly _contexts = new Map<string, WKBrowserContext>();
@@ -43,14 +44,15 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   private _firstPageProxyCallback?: () => void;
   private readonly _firstPageProxyPromise: Promise<void>;
 
-  static async connect(transport: ConnectionTransport, slowMo: number = 0): Promise<WKBrowser> {
-    const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo));
+  static async connect(transport: ConnectionTransport, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
+    const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo), attachToDefaultContext);
     return browser;
   }
 
-  constructor(transport: ConnectionTransport) {
+  constructor(transport: ConnectionTransport, attachToDefaultContext: boolean) {
     super();
     this._connection = new WKConnection(transport, this._onDisconnect.bind(this));
+    this._attachToDefaultContext = attachToDefaultContext;
     this._browserSession = this._connection.browserSession;
 
     this._defaultContext = new WKBrowserContext(this, undefined, validateBrowserContextOptions({}));
@@ -108,26 +110,16 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       // lifecycle events.
       context = this._contexts.get(pageProxyInfo.browserContextId);
     }
+    if (!context && !this._attachToDefaultContext)
+      return;
     if (!context)
       context =  this._defaultContext;
     const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
-    const pageProxy = new WKPageProxy(pageProxySession, context, () => {
-      if (!pageProxyInfo.openerId)
-        return null;
-      const opener = this._pageProxies.get(pageProxyInfo.openerId);
-      if (!opener)
-        return null;
-      return opener;
-    });
+    const opener = pageProxyInfo.openerId ? this._pageProxies.get(pageProxyInfo.openerId) : undefined;
+    const pageProxy = new WKPageProxy(pageProxySession, context, opener || null);
     this._pageProxies.set(pageProxyId, pageProxy);
-
-    if (pageProxyInfo.openerId) {
-      const opener = this._pageProxies.get(pageProxyInfo.openerId);
-      if (opener)
-        opener.onPopupCreated(pageProxy);
-    }
 
     if (this._firstPageProxyCallback) {
       this._firstPageProxyCallback();
@@ -137,19 +129,25 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   _onPageProxyDestroyed(event: Protocol.Browser.pageProxyDestroyedPayload) {
     const pageProxyId = event.pageProxyId;
-    const pageProxy = this._pageProxies.get(pageProxyId)!;
+    const pageProxy = this._pageProxies.get(pageProxyId);
+    if (!pageProxy)
+      return;
     pageProxy.didClose();
     pageProxy.dispose();
     this._pageProxies.delete(pageProxyId);
   }
 
   _onPageProxyMessageReceived(event: PageProxyMessageReceivedPayload) {
-    const pageProxy = this._pageProxies.get(event.pageProxyId)!;
+    const pageProxy = this._pageProxies.get(event.pageProxyId);
+    if (!pageProxy)
+      return;
     pageProxy.dispatchMessageToSession(event.message);
   }
 
   _onProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
-    const pageProxy = this._pageProxies.get(event.pageProxyId)!;
+    const pageProxy = this._pageProxies.get(event.pageProxyId);
+    if (!pageProxy)
+      return;
     pageProxy.handleProvisionalLoadFailed(event);
   }
 
@@ -218,14 +216,16 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
 
   async pages(): Promise<Page[]> {
     const pageProxies = Array.from(this._browser._pageProxies.values()).filter(proxy => proxy._browserContext === this);
-    return await Promise.all(pageProxies.map(proxy => proxy.page()));
+    const pages = await Promise.all(pageProxies.map(proxy => proxy.page()));
+    return pages.filter(page => !!page) as Page[];
   }
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
     const { pageProxyId } = await this._browser._browserSession.send('Browser.createPage', { browserContextId: this._browserContextId });
     const pageProxy = this._browser._pageProxies.get(pageProxyId)!;
-    return await pageProxy.page();
+    const page = await pageProxy.page();
+    return page!;
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
