@@ -1733,16 +1733,16 @@ index 7d50ddc7a38a3723e4ee7d66ca97c8acb37c726a..7ee70c6dd4bb84012a682ed648dc3c0c
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorController.h b/Source/WebCore/inspector/InspectorController.h
-index cd4497c9cdf7e3dc7fe89ffdbf188d47f2aaa00d..f43c827156971ec704b495f17e7b5f2d40ae4200 100644
+index cd4497c9cdf7e3dc7fe89ffdbf188d47f2aaa00d..8cadb40ac6cd04fa3921866a6c4d3142518cb0c3 100644
 --- a/Source/WebCore/inspector/InspectorController.h
 +++ b/Source/WebCore/inspector/InspectorController.h
 @@ -100,6 +100,10 @@ public:
      WEBCORE_EXPORT void willComposite(Frame&);
      WEBCORE_EXPORT void didComposite(Frame&);
  
-+    void pauseWhenShown();
-+    void resumeIfPausedInNewWindow();
-+    void didShowNewWindow();
++    WEBCORE_EXPORT void pauseWhenShown();
++    WEBCORE_EXPORT void resumeIfPausedInNewWindow();
++    WEBCORE_EXPORT void didShowNewWindow();
 +
      bool isUnderTest() const { return m_isUnderTest; }
      void setIsUnderTest(bool isUnderTest) { m_isUnderTest = isUnderTest; }
