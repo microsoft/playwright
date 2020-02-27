@@ -481,8 +481,7 @@ page.removeListener('request', logRequest);
 - [event: 'requestfailed'](#event-requestfailed)
 - [event: 'requestfinished'](#event-requestfinished)
 - [event: 'response'](#event-response)
-- [event: 'workercreated'](#event-workercreated)
-- [event: 'workerdestroyed'](#event-workerdestroyed)
+- [event: 'worker'](#event-worker)
 - [page.$(selector)](#pageselector)
 - [page.$$(selector)](#pageselector-1)
 - [page.$$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args)
@@ -653,15 +652,10 @@ Emitted when a request finishes successfully.
 
 Emitted when a [response] is received.
 
-#### event: 'workercreated'
+#### event: 'worker'
 - <[Worker]>
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
-
-#### event: 'workerdestroyed'
-- <[Worker]>
-
-Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
 #### page.$(selector)
 - `selector` <[string]> A selector to query page for
@@ -3272,11 +3266,14 @@ function findFocusedNode(node) {
 ### class: Worker
 
 The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
-The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
+`worker` event is emitted on the page object to signal a worker creation.
+`close` event is emitted on the worker object when the worker is gone.
 
 ```js
-page.on('workercreated', worker => console.log('Worker created: ' + worker.url()));
-page.on('workerdestroyed', worker => console.log('Worker destroyed: ' + worker.url()));
+page.on('worker', worker => {
+  console.log('Worker created: ' + worker.url());
+  worker.on('close', worker => console.log('Worker destroyed: ' + worker.url()));
+});
 
 console.log('Current workers:');
 for (const worker of page.workers())
@@ -3284,10 +3281,16 @@ for (const worker of page.workers())
 ```
 
 <!-- GEN:toc -->
+- [event: 'close'](#event-close-2)
 - [worker.evaluate(pageFunction[, ...args])](#workerevaluatepagefunction-args)
 - [worker.evaluateHandle(pageFunction[, ...args])](#workerevaluatehandlepagefunction-args)
 - [worker.url()](#workerurl)
 <!-- GEN:stop -->
+
+#### event: 'close'
+- <[Worker]>
+
+Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
 #### worker.evaluate(pageFunction[, ...args])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
@@ -3314,7 +3317,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 ### class: BrowserServer
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-2)
+- [event: 'close'](#event-close-3)
 - [browserServer.close()](#browserserverclose)
 - [browserServer.kill()](#browserserverkill)
 - [browserServer.process()](#browserserverprocess)

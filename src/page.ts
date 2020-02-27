@@ -534,20 +534,20 @@ export class Page extends platform.EventEmitter {
 
   _addWorker(workerId: string, worker: Worker) {
     this._workers.set(workerId, worker);
-    this.emit(Events.Page.WorkerCreated, worker);
+    this.emit(Events.Page.Worker, worker);
   }
 
   _removeWorker(workerId: string) {
     const worker = this._workers.get(workerId);
     if (!worker)
       return;
-    this.emit(Events.Page.WorkerDestroyed, worker);
+    worker.emit(Events.Worker.Close, worker);
     this._workers.delete(workerId);
   }
 
   _clearWorkers() {
     for (const [workerId, worker] of this._workers) {
-      this.emit(Events.Page.WorkerDestroyed, worker);
+      worker.emit(Events.Worker.Close, worker);
       this._workers.delete(workerId);
     }
   }
@@ -569,13 +569,14 @@ export class Page extends platform.EventEmitter {
   }
 }
 
-export class Worker {
+export class Worker extends platform.EventEmitter {
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
 
   constructor(url: string) {
+    super();
     this._url = url;
     this._executionContextCallback = () => {};
     this._executionContextPromise = new Promise(x => this._executionContextCallback = x);

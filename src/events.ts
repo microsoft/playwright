@@ -46,7 +46,10 @@ export const Events = {
     FrameNavigated: 'framenavigated',
     Load: 'load',
     Popup: 'popup',
-    WorkerCreated: 'workercreated',
-    WorkerDestroyed: 'workerdestroyed',
+    Worker: 'worker',
+  },
+
+  Worker: {
+    Close: 'close',
   },
 };

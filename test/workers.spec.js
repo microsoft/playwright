@@ -29,7 +29,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   describe('Workers', function() {
     it('Page.workers', async function({page, server}) {
       await Promise.all([
-        page.waitForEvent('workercreated'),
+        page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html')]);
       const worker = page.workers()[0];
       expect(worker.url()).toContain('worker.js');
@@ -40,11 +40,11 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(page.workers().length).toBe(0);
     });
     it('should emit created and destroyed events', async function({page}) {
-      const workerCreatedPromise = page.waitForEvent('workercreated');
+      const workerCreatedPromise = page.waitForEvent('worker');
       const workerObj = await page.evaluateHandle(() => new Worker(URL.createObjectURL(new Blob(['1'], {type: 'application/javascript'}))));
       const worker = await workerCreatedPromise;
       const workerThisObj = await worker.evaluateHandle(() => this);
-      const workerDestroyedPromise = new Promise(x => page.once('workerdestroyed', x));
+      const workerDestroyedPromise = new Promise(x => worker.once('close', x));
       await page.evaluate(workerObj => workerObj.terminate(), workerObj);
       expect(await workerDestroyedPromise).toBe(worker);
       const error = await workerThisObj.getProperty('self').catch(error => error);
@@ -66,7 +66,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(await (await log.args()[3].getProperty('origin')).jsonValue()).toBe('null');
     });
     it('should evaluate', async function({page}) {
-      const workerCreatedPromise = page.waitForEvent('workercreated');
+      const workerCreatedPromise = page.waitForEvent('worker');
       page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
       const worker = await workerCreatedPromise;
       expect(await worker.evaluate('1+1')).toBe(2);
@@ -79,31 +79,31 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
     it('should clear upon navigation', async function({server, page}) {
       await page.goto(server.EMPTY_PAGE);
-      const workerCreatedPromise = page.waitForEvent('workercreated');
+      const workerCreatedPromise = page.waitForEvent('worker');
       page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
-      await workerCreatedPromise;
+      const worker = await workerCreatedPromise;
       expect(page.workers().length).toBe(1);
       let destroyed = false;
-      page.once('workerdestroyed', () => destroyed = true);
+      worker.once('close', () => destroyed = true);
       await page.goto(server.PREFIX + '/one-style.html');
       expect(destroyed).toBe(true);
       expect(page.workers().length).toBe(0);
     });
     it('should clear upon cross-process navigation', async function({server, page}) {
       await page.goto(server.EMPTY_PAGE);
-      const workerCreatedPromise = page.waitForEvent('workercreated');
+      const workerCreatedPromise = page.waitForEvent('worker');
       page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'}))));
-      await workerCreatedPromise;
+      const worker = await workerCreatedPromise;
       expect(page.workers().length).toBe(1);
       let destroyed = false;
-      page.once('workerdestroyed', () => destroyed = true);
+      worker.once('close', () => destroyed = true);
       await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
       expect(destroyed).toBe(true);
       expect(page.workers().length).toBe(0);
     });
     it('should report network activity', async function({page, server}) {
       const [worker] = await Promise.all([
-        page.waitForEvent('workercreated'),
+        page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html'),
       ]);
       const url = server.PREFIX + '/one-style.css';
@@ -133,7 +133,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
     false && it.skip(FFOX)('should report web socket activity', async function({page, server}) {
       const [worker] = await Promise.all([
-        page.waitForEvent('workercreated'),
+        page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html'),
       ]);
       const log = [];
