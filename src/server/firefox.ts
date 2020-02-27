@@ -85,7 +85,7 @@ export class Firefox implements BrowserType {
     return browserContext;
   }
 
-  private async _launchServer(options: LaunchOptions = {}, connectionType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
+  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -107,9 +107,9 @@ export class Firefox implements BrowserType {
     }
 
     if (!ignoreDefaultArgs)
-      firefoxArguments.push(...this._defaultArgs(options, userDataDir!, port || 0));
+      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0));
     else if (Array.isArray(ignoreDefaultArgs))
-      firefoxArguments.push(...this._defaultArgs(options, userDataDir!, port || 0).filter(arg => !ignoreDefaultArgs.includes(arg)));
+      firefoxArguments.push(...this._defaultArgs(options, launchType, userDataDir!, port || 0).filter(arg => !ignoreDefaultArgs.includes(arg)));
     else
       firefoxArguments.push(...args);
 
@@ -155,8 +155,8 @@ export class Firefox implements BrowserType {
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const browserWSEndpoint = match[1];
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, connectionType === 'server' ? browserWSEndpoint : null);
-    return { browserServer, transport: connectionType === 'server' ? undefined : new platform.WebSocketTransport(browserWSEndpoint) };
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? browserWSEndpoint : null);
+    return { browserServer, transport: launchType === 'server' ? undefined : new platform.WebSocketTransport(browserWSEndpoint) };
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
@@ -176,7 +176,7 @@ export class Firefox implements BrowserType {
     return { TimeoutError };
   }
 
-  private _defaultArgs(options: BrowserArgOptions = {}, userDataDir: string, port: number): string[] {
+  private _defaultArgs(options: BrowserArgOptions = {}, launchType: LaunchType, userDataDir: string, port: number): string[] {
     const {
       devtools = false,
       headless = !devtools,
@@ -189,6 +189,8 @@ export class Firefox implements BrowserType {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
+    if (launchType !== 'persistent' && args.find(arg => !arg.startsWith('-')))
+      throw new Error('Arguments can not specify page to be opened');
 
     const firefoxArguments = ['-no-remote'];
     if (headless) {

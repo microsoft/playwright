@@ -45,6 +45,12 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         await playwright.launch(options).catch(e => waitError = e);
         expect(waitError.message).toContain('launchPersistent');
       });
+      it('should throw if page argument is passed', async() => {
+        let waitError = null;
+        const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
+        await playwright.launch(options).catch(e => waitError = e);
+        expect(waitError.message).toContain('can not specify page');
+      });
       it('should reject if executable path is invalid', async({server}) => {
         let waitError = null;
         const options = Object.assign({}, defaultBrowserOptions, {executablePath: 'random-invalid-path'});

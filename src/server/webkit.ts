@@ -181,6 +181,8 @@ export class WebKit implements BrowserType {
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir='));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter instead of specifying --user-data-dir argument');
+    if (launchType !== 'persistent' && args.find(arg => !arg.startsWith('-')))
+      throw new Error('Arguments can not specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
     if (headless)
       webkitArguments.push('--headless');
