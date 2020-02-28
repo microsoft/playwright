@@ -359,8 +359,8 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
     await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: headersArray(this._options.extraHTTPHeaders) });
   }
 
-  async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
-    const source = helper.evaluationString(pageFunction, ...args);
+  async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
+    const source = await helper.evaluationScript(script, ...args);
     this._evaluateOnNewDocumentSources.push(source);
     await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
   }

@@ -74,9 +74,9 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(size).toEqual({width: 400, height: 500});
     });
-    it.skip(CHROMIUM || WEBKIT)('should apply evaluateOnNewDocument from browser context', async function({browser, server}) {
+    it.skip(CHROMIUM)('should apply addInitScript from browser context', async function({browser, server}) {
       const context = await browser.newContext();
-      await context.evaluateOnNewDocument(() => window.injected = 123);
+      await context.addInitScript(() => window.injected = 123);
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
       const injected = await page.evaluate(() => {

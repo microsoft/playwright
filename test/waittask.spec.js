@@ -85,7 +85,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await watchdog;
     });
     it('should work when resolved right before execution context disposal', async({page, server}) => {
-      await page.evaluateOnNewDocument(() => window.__RELOADED = true);
+      await page.addInitScript(() => window.__RELOADED = true);
       await page.waitForFunction(() => {
         if (!window.__RELOADED)
           window.location.reload();

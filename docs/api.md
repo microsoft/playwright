@@ -264,11 +264,11 @@ await context.close();
 
 <!-- GEN:toc -->
 - [event: 'close'](#event-close)
+- [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([...urls])](#browsercontextcookiesurls)
-- [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
@@ -285,6 +285,32 @@ Emitted when Browser context gets closed. This might happen because of one of th
 - Browser context is closed.
 - Browser application is closed or crashed.
 - The [`browser.close`](#browserclose) method was called.
+
+#### browserContext.addInitScript(script[, ...args])
+- `script` <[function]|[string]|[Object]> Script to be evaluated in all pages in the browser context.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `content` <[string]> Raw script content.
+- `...args` <...[Serializable]> Arguments to pass to `script` (only supported when passing a function).
+- returns: <[Promise]>
+
+Adds a script which would be evaluated in one of the following scenarios:
+- Whenever a page is created in the browser context or is navigated.
+- Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is evaluated in the context of the newly attached frame.
+
+The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend  the JavaScript environment, e.g. to seed `Math.random`.
+
+An example of overriding `Math.random` before the page loads:
+
+```js
+// preload.js
+Math.random = () => 42;
+
+// In your playwright script, assuming the preload.js file is in same folder
+const preloadFile = fs.readFileSync('./preload.js', 'utf8');
+await browserContext.addInitScript(preloadFile);
+```
+
+> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args) and [page.addInitScript(script[, ...args])](#pageaddinitscriptscript-args) is not defined.
 
 #### browserContext.clearCookies()
 - returns: <[Promise]>
@@ -327,30 +353,6 @@ will be closed.
 
 If no URLs are specified, this method returns all cookies.
 If URLs are specified, only cookies that affect those URLs are returned.
-
-#### browserContext.evaluateOnNewDocument(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated in all pages in the browser context
-- `...args` <...[Serializable]> Arguments to pass to `pageFunction`
-- returns: <[Promise]>
-
-Adds a function which would be invoked in one of the following scenarios:
-- Whenever a page is created in the browser context or is navigated.
-- Whenever a child frame is attached or navigated in any page in the browser context. In this case, the function is invoked in the context of the newly attached frame.
-
-The function is invoked after the document was created but before any of its scripts were run. This is useful to amend  the JavaScript environment, e.g. to seed `Math.random`.
-
-An example of overriding `Math.random` before the page loads:
-
-```js
-// preload.js
-Math.random = () => 42;
-
-// In your playwright script, assuming the preload.js file is in same folder
-const preloadFile = fs.readFileSync('./preload.js', 'utf8');
-await browserContext.evaluateOnNewDocument(preloadFile);
-```
-
-> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args) and [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args) is not defined.
 
 #### browserContext.newPage()
 - returns: <[Promise]<[Page]>>
@@ -511,6 +513,7 @@ page.removeListener('request', logRequest);
 - [page.$eval(selector, pageFunction[, ...args])](#pageevalselector-pagefunction-args-1)
 - [page.$wait(selector[, options])](#pagewaitselector-options)
 - [page.accessibility](#pageaccessibility)
+- [page.addInitScript(script[, ...args])](#pageaddinitscriptscript-args)
 - [page.addScriptTag(options)](#pageaddscripttagoptions)
 - [page.addStyleTag(options)](#pageaddstyletagoptions)
 - [page.authenticate(credentials)](#pageauthenticatecredentials)
@@ -524,7 +527,6 @@ page.removeListener('request', logRequest);
 - [page.emulateMedia(options)](#pageemulatemediaoptions)
 - [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
 - [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
-- [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args)
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
 - [page.fill(selector, value, options)](#pagefillselector-value-options)
 - [page.focus(selector, options)](#pagefocusselector-options)
@@ -752,6 +754,32 @@ This is a shortcut to [page.waitForSelector(selector[, options])](#pagewaitforse
 #### page.accessibility
 - returns: <[Accessibility]>
 
+#### page.addInitScript(script[, ...args])
+- `script` <[function]|[string]|[Object]> Script to be evaluated in the page.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `content` <[string]> Raw script content.
+- `...args` <...[Serializable]> Arguments to pass to `script` (only supported when passing a function).
+- returns: <[Promise]>
+
+Adds a script which would be evaluated in one of the following scenarios:
+- Whenever the page is navigated.
+- Whenever the child frame is attached or navigated. In this case, the scritp is evaluated in the context of the newly attached frame.
+
+The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend  the JavaScript environment, e.g. to seed `Math.random`.
+
+An example of overriding `Math.random` before the page loads:
+
+```js
+// preload.js
+Math.random = () => 42;
+
+// In your playwright script, assuming the preload.js file is in same folder
+const preloadFile = fs.readFileSync('./preload.js', 'utf8');
+await page.addInitScript(preloadFile);
+```
+
+> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args) and [page.addInitScript(script[, ...args])](#pageaddinitscriptscript-args) is not defined.
+
 #### page.addScriptTag(options)
 - `options` <[Object]>
   - `url` <[string]> URL of a script to be added.
@@ -965,30 +993,6 @@ const resultHandle = await page.evaluateHandle(body => body.innerHTML, aHandle);
 console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
-
-#### page.evaluateOnNewDocument(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated in the page
-- `...args` <...[Serializable]> Arguments to pass to `pageFunction`
-- returns: <[Promise]>
-
-Adds a function which would be invoked in one of the following scenarios:
-- whenever the page is navigated
-- whenever the child frame is attached or navigated. In this case, the function is invoked in the context of the newly attached frame
-
-The function is invoked after the document was created but before any of its scripts were run. This is useful to amend  the JavaScript environment, e.g. to seed `Math.random`.
-
-An example of overriding `Math.random` before the page loads:
-
-```js
-// preload.js
-Math.random = () => 42;
-
-// In your playwright script, assuming the preload.js file is in same folder
-const preloadFile = fs.readFileSync('./preload.js', 'utf8');
-await page.evaluateOnNewDocument(preloadFile);
-```
-
-> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args) and [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args) is not defined.
 
 #### page.exposeFunction(name, playwrightFunction)
 - `name` <[string]> Name of the function on the window object
@@ -3606,11 +3610,11 @@ const backgroundPage = await backroundPageTarget.page();
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-BrowserContext -->
 - [event: 'close'](#event-close)
+- [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([...urls])](#browsercontextcookiesurls)
-- [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)

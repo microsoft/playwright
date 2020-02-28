@@ -16,7 +16,7 @@
  */
 
 const utils = require('./utils');
-
+const path = require('path');
 const bigint = typeof BigInt !== 'undefined';
 
 /**
@@ -277,19 +277,41 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     })
   });
 
-  describe('Page.evaluateOnNewDocument', function() {
+  describe('Page.addInitScript', function() {
     it('should evaluate before anything else on the page', async({page, server}) => {
-      await page.evaluateOnNewDocument(function(){
+      await page.addInitScript(function(){
         window.injected = 123;
       });
       await page.goto(server.PREFIX + '/tamperable.html');
       expect(await page.evaluate(() => window.result)).toBe(123);
     });
+    it('should work with a path', async({page, server}) => {
+      await page.addInitScript({ path: path.join(__dirname, 'assets/injectedfile.js') });
+      await page.goto(server.PREFIX + '/tamperable.html');
+      expect(await page.evaluate(() => window.result)).toBe(123);
+    });
+    it('should work with content', async({page, server}) => {
+      await page.addInitScript({ content: 'window.injected = 123' });
+      await page.goto(server.PREFIX + '/tamperable.html');
+      expect(await page.evaluate(() => window.result)).toBe(123);
+    });
+    it('should throw without path and content', async({page, server}) => {
+      const error = await page.addInitScript({ foo: 'bar' }).catch(e => e);
+      expect(error.message).toBe('Either path or content property must be present');
+    });
     it('should work with browser context scripts', async({browser, server}) => {
       const context = await browser.newContext();
-      await context.evaluateOnNewDocument(() => window.temp = 123);
+      await context.addInitScript(() => window.temp = 123);
       const page = await context.newPage();
-      await page.evaluateOnNewDocument(() => window.injected = window.temp);
+      await page.addInitScript(() => window.injected = window.temp);
+      await page.goto(server.PREFIX + '/tamperable.html');
+      expect(await page.evaluate(() => window.result)).toBe(123);
+      await context.close();
+    });
+    it('should work with browser context scripts with a path', async({browser, server}) => {
+      const context = await browser.newContext();
+      await context.addInitScript({ path: path.join(__dirname, 'assets/injectedfile.js') });
+      const page = await context.newPage();
       await page.goto(server.PREFIX + '/tamperable.html');
       expect(await page.evaluate(() => window.result)).toBe(123);
       await context.close();
@@ -297,17 +319,17 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     it('should work with browser context scripts for already created pages', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
-      await context.evaluateOnNewDocument(() => window.temp = 123);
-      await page.evaluateOnNewDocument(() => window.injected = window.temp);
+      await context.addInitScript(() => window.temp = 123);
+      await page.addInitScript(() => window.injected = window.temp);
       await page.goto(server.PREFIX + '/tamperable.html');
       expect(await page.evaluate(() => window.result)).toBe(123);
       await context.close();
     });
     it('should support multiple scripts', async({page, server}) => {
-      await page.evaluateOnNewDocument(function(){
+      await page.addInitScript(function(){
         window.script1 = 1;
       });
-      await page.evaluateOnNewDocument(function(){
+      await page.addInitScript(function(){
         window.script2 = 2;
       });
       await page.goto(server.PREFIX + '/tamperable.html');
@@ -316,7 +338,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
     it('should work with CSP', async({page, server}) => {
       server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
-      await page.evaluateOnNewDocument(function(){
+      await page.addInitScript(function(){
         window.injected = 123;
       });
       await page.goto(server.PREFIX + '/empty.html');
@@ -328,7 +350,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
     });
     it('should work after a cross origin navigation', async({page, server}) => {
       await page.goto(server.CROSS_PROCESS_PREFIX);
-      await page.evaluateOnNewDocument(function(){
+      await page.addInitScript(function(){
         window.injected = 123;
       });
       await page.goto(server.PREFIX + '/tamperable.html');

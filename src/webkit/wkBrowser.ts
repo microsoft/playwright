@@ -278,8 +278,8 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
       await (page._delegate as WKPage).updateExtraHTTPHeaders();
   }
 
-  async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
-    const source = helper.evaluationString(pageFunction, ...args);
+  async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
+    const source = await helper.evaluationScript(script, ...args);
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this._existingPages())
       await (page._delegate as WKPage)._updateBootstrapScript();
