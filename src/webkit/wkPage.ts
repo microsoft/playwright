@@ -27,7 +27,6 @@ import { WKWorkers } from './wkWorkers';
 import { Page, PageDelegate } from '../page';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
-import { BrowserContext } from '../browserContext';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
 import * as types from '../types';
 import * as accessibility from '../accessibility';
@@ -35,6 +34,7 @@ import * as platform from '../platform';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKPageProxy } from './wkPageProxy';
+import { WKBrowserContext } from './wkBrowser';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -53,8 +53,9 @@ export class WKPage implements PageDelegate {
   private _mainFrameContextId?: number;
   private _sessionListeners: RegisteredListener[] = [];
   private readonly _bootstrapScripts: string[] = [];
+  private readonly _browserContext: WKBrowserContext;
 
-  constructor(browserContext: BrowserContext, pageProxySession: WKSession, opener: WKPageProxy | null) {
+  constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPageProxy | null) {
     this._pageProxySession = pageProxySession;
     this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
@@ -63,6 +64,7 @@ export class WKPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
+    this._browserContext = browserContext;
     this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame, false));
   }
 
@@ -137,10 +139,7 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
-    if (this._bootstrapScripts.length) {
-      const source = this._bootstrapScripts.join(';');
-      promises.push(session.send('Page.setBootstrapScript', { source }));
-    }
+    promises.push(session.send('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
@@ -465,18 +464,21 @@ export class WKPage implements PageDelegate {
   async exposeBinding(name: string, bindingFunction: string): Promise<void> {
     const script = `self.${name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${bindingFunction}`;
     this._bootstrapScripts.unshift(script);
-    await this._setBootstrapScripts();
+    await this._updateBootstrapScript();
     await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(debugError)));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
     this._bootstrapScripts.push(script);
-    await this._setBootstrapScripts();
+    await this._updateBootstrapScript();
   }
 
-  private async _setBootstrapScripts() {
-    const source = this._bootstrapScripts.join(';');
-    await this._updateState('Page.setBootstrapScript', { source });
+  private _calculateBootstrapScript(): string {
+    return [...this._browserContext._evaluateOnNewDocumentSources, ...this._bootstrapScripts].join(';');
+  }
+
+  async _updateBootstrapScript(): Promise<void> {
+    await this._updateState('Page.setBootstrapScript', { source: this._calculateBootstrapScript() });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {

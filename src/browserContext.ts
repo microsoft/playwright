@@ -46,6 +46,7 @@ export interface BrowserContext {
   clearPermissions(): Promise<void>;
   setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
   setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
+  evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]): Promise<void>;
   close(): Promise<void>;
 
   _existingPages(): Page[];

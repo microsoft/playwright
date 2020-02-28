@@ -85,7 +85,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await watchdog;
     });
     it('should work when resolved right before execution context disposal', async({page, server}) => {
-      // FIXME: implement Page.addScriptToEvaluateOnNewDocument in WebKit.
       await page.evaluateOnNewDocument(() => window.__RELOADED = true);
       await page.waitForFunction(() => {
         if (!window.__RELOADED)

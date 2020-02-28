@@ -268,6 +268,7 @@ await context.close();
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([...urls])](#browsercontextcookiesurls)
+- [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
@@ -308,7 +309,7 @@ context.clearPermissions();
 Closes the browser context. All the targets that belong to the browser context
 will be closed.
 
-> **NOTE** only incognito browser contexts can be closed.
+> **NOTE** the default browser context cannot be closed.
 
 #### browserContext.cookies([...urls])
 - `...urls` <...[string]>
@@ -327,7 +328,29 @@ will be closed.
 If no URLs are specified, this method returns all cookies.
 If URLs are specified, only cookies that affect those URLs are returned.
 
-> **NOTE** the default browser context cannot be closed.
+#### browserContext.evaluateOnNewDocument(pageFunction[, ...args])
+- `pageFunction` <[function]|[string]> Function to be evaluated in all pages in the browser context
+- `...args` <...[Serializable]> Arguments to pass to `pageFunction`
+- returns: <[Promise]>
+
+Adds a function which would be invoked in one of the following scenarios:
+- Whenever a page is created in the browser context or is navigated.
+- Whenever a child frame is attached or navigated in any page in the browser context. In this case, the function is invoked in the context of the newly attached frame.
+
+The function is invoked after the document was created but before any of its scripts were run. This is useful to amend  the JavaScript environment, e.g. to seed `Math.random`.
+
+An example of overriding `Math.random` before the page loads:
+
+```js
+// preload.js
+Math.random = () => 42;
+
+// In your playwright script, assuming the preload.js file is in same folder
+const preloadFile = fs.readFileSync('./preload.js', 'utf8');
+await browserContext.evaluateOnNewDocument(preloadFile);
+```
+
+> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args) and [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args) is not defined.
 
 #### browserContext.newPage()
 - returns: <[Promise]<[Page]>>
@@ -944,7 +967,7 @@ await resultHandle.dispose();
 ```
 
 #### page.evaluateOnNewDocument(pageFunction[, ...args])
-- `pageFunction` <[function]|[string]> Function to be evaluated in browser context
+- `pageFunction` <[function]|[string]> Function to be evaluated in the page
 - `...args` <...[Serializable]> Arguments to pass to `pageFunction`
 - returns: <[Promise]>
 
@@ -954,22 +977,18 @@ Adds a function which would be invoked in one of the following scenarios:
 
 The function is invoked after the document was created but before any of its scripts were run. This is useful to amend  the JavaScript environment, e.g. to seed `Math.random`.
 
-An example of overriding the navigator.languages property before the page loads:
+An example of overriding `Math.random` before the page loads:
 
 ```js
 // preload.js
+Math.random = () => 42;
 
-// overwrite the `languages` property to use a custom getter
-Object.defineProperty(navigator, "languages", {
-  get: function() {
-    return ["en-US", "en", "bn"];
-  }
-});
-
-// In your playwright script, assuming the preload.js file is in same folder of our script
+// In your playwright script, assuming the preload.js file is in same folder
 const preloadFile = fs.readFileSync('./preload.js', 'utf8');
 await page.evaluateOnNewDocument(preloadFile);
 ```
+
+> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args) and [page.evaluateOnNewDocument(pageFunction[, ...args])](#pageevaluateonnewdocumentpagefunction-args) is not defined.
 
 #### page.exposeFunction(name, playwrightFunction)
 - `name` <[string]> Name of the function on the window object
@@ -3591,6 +3610,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([...urls])](#browsercontextcookiesurls)
+- [browserContext.evaluateOnNewDocument(pageFunction[, ...args])](#browsercontextevaluateonnewdocumentpagefunction-args)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)

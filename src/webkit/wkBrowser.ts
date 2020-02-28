@@ -36,7 +36,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   private readonly _connection: WKConnection;
   private readonly _attachToDefaultContext: boolean;
   readonly _browserSession: WKSession;
-  readonly _defaultContext: BrowserContext;
+  readonly _defaultContext: WKBrowserContext;
   readonly _contexts = new Map<string, WKBrowserContext>();
   readonly _pageProxies = new Map<string, WKPageProxy>();
   private readonly _eventListeners: RegisteredListener[];
@@ -174,6 +174,7 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
   readonly _options: BrowserContextOptions;
   readonly _timeoutSettings: TimeoutSettings;
   private _closed = false;
+  readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: BrowserContextOptions) {
     super();
@@ -181,6 +182,7 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
     this._browserContextId = browserContextId;
     this._timeoutSettings = new TimeoutSettings();
     this._options = options;
+    this._evaluateOnNewDocumentSources = [];
   }
 
   async _initialize() {
@@ -274,6 +276,13 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
     for (const page of this._existingPages())
       await (page._delegate as WKPage).updateExtraHTTPHeaders();
+  }
+
+  async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
+    const source = helper.evaluationString(pageFunction, ...args);
+    this._evaluateOnNewDocumentSources.push(source);
+    for (const page of this._existingPages())
+      await (page._delegate as WKPage)._updateBootstrapScript();
   }
 
   async close() {
