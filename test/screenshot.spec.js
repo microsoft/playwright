@@ -156,7 +156,8 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       });
       expect(Buffer.from(screenshot, 'base64')).toBeGolden('screenshot-sanity.png');
     });
-    it.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
+    !FFOX && it('should work with a mobile viewport', async({browser, server}) => {
+      // Firefox does not support isMobile.
       const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');

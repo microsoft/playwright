@@ -48,7 +48,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(request.headers['foo']).toBe('bar');
     });
-    it.skip(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
+    !FFOX && it.skip(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
+      // Firefox does not support isMobile.
       const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }
       });

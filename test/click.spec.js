@@ -217,8 +217,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button.does-not-exist', { waitFor: false }).catch(e => error = e);
       expect(error.message).toBe('No node found for selector: button.does-not-exist');
     });
-    // @see https://github.com/GoogleChrome/puppeteer/issues/161
-    it('should not hang with touch-enabled viewports', async({server, browser}) => {
+    !FFOX && it('should not hang with touch-enabled viewports', async({server, browser}) => {
+      // Firefox does not support isMobile.
+      // @see https://github.com/GoogleChrome/puppeteer/issues/161
       const context = await browser.newContext({ viewport: playwright.devices['iPhone 6'].viewport });
       const page = await context.newPage();
       await page.mouse.down();
@@ -355,7 +356,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
-    it('should click the button with offset with page scale', async({browser, server}) => {
+    !FFOX && it('should click the button with offset with page scale', async({browser, server}) => {
+      // Firefox does not support isMobile.
       const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');

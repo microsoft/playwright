@@ -132,8 +132,9 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
         [200, 300]
       ]);
     });
-    // @see https://crbug.com/929806
-    it('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+    !FFOX && it('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+      // Firefox does not support isMobile.
+      // @see https://crbug.com/929806
       const context = await browser.newContext({ viewport: {width: 360, height: 640, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
