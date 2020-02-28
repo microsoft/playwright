@@ -3,36 +3,58 @@ dist: bionic
 addons:
   apt:
     packages:
-      # These are required to run webkit
-      - libwoff1
-      - libopus0
-      - libwebp6
-      - libwebpdemux2
-      - libenchant1c2a
-      - libgudev-1.0-0
-      - libsecret-1-0
-      - libhyphen0
-      - libgdk-pixbuf2.0-0
-      - libegl1
-      - libgles2
-      - libevent-2.1-6
-      - libnotify4
-      - libxslt1.1
-      - libvpx5
+    # These are required to run webkit
+    - libwoff1
+    - libopus0
+    - libwebp6
+    - libwebpdemux2
+    - libenchant1c2a
+    - libgudev-1.0-0
+    - libsecret-1-0
+    - libhyphen0
+    - libgdk-pixbuf2.0-0
+    - libegl1
+    - libgles2
+    - libevent-2.1-6
+    - libnotify4
+    - libxslt1.1
+    - libvpx5
     # This is required to run chromium
-      - libgbm1
+    - libgbm1
     # this is needed for running headful tests
-      - xvfb
+    - xvfb
 notifications:
   email: false
 cache:
   directories:
-    - node_modules
+  - node_modules
 script:
-  - "npm run lint"
-  - "xvfb-run --auto-servernum npm run ctest"
-  - "xvfb-run --auto-servernum npm run ftest"
-  - "xvfb-run --auto-servernum npm run wtest"
+- npm run lint
+- xvfb-run --auto-servernum npm run ctest
+- xvfb-run --auto-servernum npm run ftest
+- xvfb-run --auto-servernum npm run wtest
 jobs:
   include:
-    - node_js: "12"
+  - node_js: '12'
+
+before_deploy: npm run apply-next-version
+deploy:
+  matrix:
+  - provider: npm
+    edge: true
+    email: aslushnikov@gmail.com
+    src: '.'
+    on:
+      branch: master
+    skip_cleanup: true
+    tag: next
+  - provider: npm
+    edge: true
+    email: aslushnikov@gmail.com
+    src: './packages/playwright-firefox'
+    on:
+      branch: master
+    skip_cleanup: true
+    tag: next
+  api_key:
+    secure: QtmA/u49smYLUj/XWw9XsYukpbsuK6PxB4tOt1xC7wVtFdB0SZhF9tpWfpRSmH0zKgd+aACzm+8rpI+FpWTYvvP3tZZFwWhWiOWs1GQTpOfKbncpK5JhxjJDO+4ELbdXgsm615sbimRDGP1J40u4QOZ7BJzL7LgYQuuYu64YVv0i+eO/3WbRb5srZjxsz6PAKD8Hy2Zv3tXo2mVCBCS9rpCtniI+00hZNZxZlDfHcuqrIM8Dm2u/AgDtbTBeO7ZOX78Bc2Q/RPF4YKy4zlX1NTVObOAc/z67ItyKmTRVS1wFGXw3wRkPWvXj4zHWxlxe72WashyDc9sjisNuHcRwcisCNkKLY3N7iHxKqa4zTSQDsLaYXfUobBOYMf+7qlxkRYdmOCZhMR9REaIOngX3tm7VpBdrOWcJeeBlCLpH++sN7q5Ba2MCa18DKoin5Hz+P8/oLfaqQErcDBbBmrM2UzWKjsNjw+ns2lq3fm8LGOTLR1T5CN8ON02/4L8lLdp8OjE1heNzr7e2uRGpOd0ne5Cy1wQzeo+s4vuG4jV8qkPTMAzo/SaBRcl99jLASHa+2jaP/E7fwk9Ss/lfFbibT25ql7cyWnY/7Yl7EfE64YVHWK51Nd3o5G6qN6ua9ll/yFG7x59VdqnHsrfQPZomwXq4D2qxJ+78AoR3QHeuXOA=
