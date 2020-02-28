@@ -3,6 +3,7 @@ dist: bionic
 addons:
   apt:
     packages:
+    # These are required to run webkit
     - libwoff1
     - libopus0
     - libwebp6
@@ -18,7 +19,9 @@ addons:
     - libnotify4
     - libxslt1.1
     - libvpx5
+    # This is required to run chromium
     - libgbm1
+    # this is needed for running headful tests
     - xvfb
 notifications:
   email: false
