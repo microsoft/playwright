@@ -2,6 +2,12 @@ const path = require('path');
 const fs = require('fs');
 const execSync = require('child_process').execSync;
 
+if (!process.env.TRAVIS_BUILD_NUMBER) {
+  console.log('ERROR: TRAVIS_BUILD_NUMBER is not defined in env!');
+  process.exit(1);
+  return;
+}
+
 // Compare current HEAD to upstream master SHA.
 // If they are not equal - refuse to publish since
 // we're not tip-of-tree.
@@ -19,7 +25,7 @@ let version = package.version;
 const dashIndex = version.indexOf('-');
 if (dashIndex !== -1)
   version = version.substring(0, dashIndex);
-version += '-next.' + Date.now();
+version += '-next.' + process.env.TRAVIS_BUILD_NUMBER;
 console.log('Setting version to ' + version);
 
 execSync(`npm --no-git-tag-version version ${version}`);
