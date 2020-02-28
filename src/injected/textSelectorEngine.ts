@@ -80,6 +80,6 @@ function createMatcher(selector: string): Matcher {
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
     return text => re.test(text);
   }
-  selector = selector.trim();
-  return text => text.trim() === selector;
+  selector = selector.trim().toLowerCase();
+  return text => text.trim().toLowerCase() === selector;
 }
