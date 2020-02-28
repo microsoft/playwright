@@ -93,6 +93,18 @@ export type FileChooser = {
   multiple: boolean
 };
 
+export class PageEvent {
+  private readonly _page: Page;
+
+  constructor(page: Page) {
+    this._page = page;
+  }
+
+  async page(/* options?: frames.NavigateOptions */): Promise<Page> {
+    return this._page;
+  }
+}
+
 export class Page extends platform.EventEmitter {
   private _closed = false;
   private _closedCallback: () => void;

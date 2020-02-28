@@ -31,7 +31,7 @@ export class CRTarget {
   private readonly _browser: CRBrowser;
   private readonly _browserContext: CRBrowserContext;
   readonly _targetId: string;
-  private _sessionFactory: () => Promise<CRSession>;
+  readonly sessionFactory: () => Promise<CRSession>;
   private _pagePromise: Promise<Page> | null = null;
   _crPage: CRPage | null = null;
   private _workerPromise: Promise<Worker> | null = null;
@@ -52,7 +52,7 @@ export class CRTarget {
     this._browser = browser;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
-    this._sessionFactory = sessionFactory;
+    this.sessionFactory = sessionFactory;
     this._initializedPromise = new Promise(fulfill => this._initializedCallback = fulfill).then(async success => {
       if (!success)
         return false;
@@ -78,7 +78,7 @@ export class CRTarget {
 
   async page(): Promise<Page | null> {
     if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
-      this._pagePromise = this._sessionFactory().then(async client => {
+      this._pagePromise = this.sessionFactory().then(async client => {
         this._crPage = new CRPage(client, this._browser, this._browserContext);
         const page = this._crPage.page();
         (page as any)[targetSymbol] = this;
@@ -95,7 +95,7 @@ export class CRTarget {
       return null;
     if (!this._workerPromise) {
       // TODO(einbinder): Make workers send their console logs.
-      this._workerPromise = this._sessionFactory().then(session => {
+      this._workerPromise = this.sessionFactory().then(session => {
         const worker = new Worker(this._targetInfo.url);
         session.once('Runtime.executionContextCreated', async event => {
           worker._createExecutionContext(new CRExecutionContext(session, event.context));
@@ -128,10 +128,6 @@ export class CRTarget {
     if (!openerId)
       return null;
     return this._browser._targets.get(openerId)!;
-  }
-
-  createCDPSession(): Promise<CRSession> {
-    return this._sessionFactory();
   }
 
   _targetInfoChanged(targetInfo: Protocol.Target.TargetInfo) {
