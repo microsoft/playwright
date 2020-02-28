@@ -41,6 +41,21 @@ class Helper {
     }
   }
 
+  static async evaluationScript(fun: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<string> {
+    if (!helper.isString(fun) && typeof fun !== 'function') {
+      if (fun.content !== undefined) {
+        fun = fun.content;
+      } else if (fun.path !== undefined) {
+        let contents = await platform.readFileAsync(fun.path, 'utf8');
+        contents += '//# sourceURL=' + fun.path.replace(/\n/g, '');
+        fun = contents;
+      } else {
+        throw new Error('Either path or content property must be present');
+      }
+    }
+    return helper.evaluationString(fun, ...args);
+  }
+
   static installApiHooks(className: string, classType: any) {
     const log = platform.debug('pw:api');
     for (const methodName of Reflect.ownKeys(classType.prototype)) {

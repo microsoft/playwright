@@ -411,9 +411,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().evaluate(pageFunction, ...args as any);
   }
 
-  async evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]) {
-    const source = helper.evaluationString(pageFunction, ...args);
-    await this._delegate.evaluateOnNewDocument(source);
+  async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
+    await this._delegate.evaluateOnNewDocument(await helper.evaluationScript(script, ...args));
   }
 
   async setCacheEnabled(enabled: boolean = true) {

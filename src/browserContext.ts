@@ -46,7 +46,7 @@ export interface BrowserContext {
   clearPermissions(): Promise<void>;
   setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
   setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
-  evaluateOnNewDocument(pageFunction: Function | string, ...args: any[]): Promise<void>;
+  addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<void>;
   close(): Promise<void>;
 
   _existingPages(): Page[];

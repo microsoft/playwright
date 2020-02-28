@@ -412,12 +412,12 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       });
       expect(thrown).toBe(null);
     });
-    it('should be callable from-inside evaluateOnNewDocument', async({page, server}) => {
+    it('should be callable from-inside addInitScript', async({page, server}) => {
       let called = false;
       await page.exposeFunction('woof', function() {
         called = true;
       });
-      await page.evaluateOnNewDocument(() => woof());
+      await page.addInitScript(() => woof());
       await page.reload();
       expect(called).toBe(true);
     });
