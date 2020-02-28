@@ -298,7 +298,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-scrolled-into-view.png');
     });
-    it.skip(CHROMIUM)('should scroll 15000px into view', async({page, server}) => {
+    it('should scroll 15000px into view', async({page, server}) => {
       await page.setViewportSize({width: 500, height: 500});
       await page.setContent(`
         <div style="height: 14px">oooo</div>
