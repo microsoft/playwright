@@ -99,7 +99,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async _$(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
     const handle = await this.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node) => injected.querySelector(selector, scope || document),
-        await this._injected(), normalizeSelector(selector), scope
+        await this._injected(), selector, scope
     );
     if (!handle.asElement())
       await handle.dispose();
@@ -109,7 +109,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async _$array(selector: string, scope?: ElementHandle): Promise<js.JSHandle<Element[]>> {
     const arrayHandle = await this.evaluateHandle(
         (injected: Injected, selector: string, scope?: Node) => injected.querySelectorAll(selector, scope || document),
-        await this._injected(), normalizeSelector(selector), scope
+        await this._injected(), selector, scope
     );
     return arrayHandle;
   }
@@ -410,19 +410,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 }
 
-function normalizeSelector(selector: string): string {
-  const eqIndex = selector.indexOf('=');
-  if (eqIndex !== -1 && selector.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-]+$/))
-    return selector;
-  // If selector starts with '//' or '//' prefixed with multiple opening
-  // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
-  if (/^\(*\/\//.test(selector))
-    return 'xpath=' + selector;
-  if (selector.startsWith('"'))
-    return 'text=' + selector;
-  return 'css=' + selector;
-}
-
 export type Task = (context: FrameExecutionContext) => Promise<js.JSHandle>;
 
 function assertPolling(polling: types.Polling) {
@@ -438,8 +425,6 @@ export function waitForFunctionTask(selector: string | undefined, pageFunction: 
   const { polling = 'raf' } = options;
   assertPolling(polling);
   const predicateBody = helper.isString(pageFunction) ? 'return (' + pageFunction + ')' : 'return (' + pageFunction + ')(...args)';
-  if (selector !== undefined)
-    selector = normalizeSelector(selector);
 
   return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string | undefined, predicateBody: string, polling: types.Polling, timeout: number, ...args) => {
     const innerPredicate = new Function('...args', predicateBody);
@@ -452,7 +437,6 @@ export function waitForFunctionTask(selector: string | undefined, pageFunction: 
 }
 
 export function waitForSelectorTask(selector: string, visibility: types.Visibility, timeout: number): Task {
-  selector = normalizeSelector(selector);
   return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number) => {
     const polling = visibility === 'any' ? 'mutation' : 'raf';
     return injected.poll(polling, selector, timeout, (element: Element | undefined): Element | boolean => {

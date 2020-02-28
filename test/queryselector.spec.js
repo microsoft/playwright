@@ -76,6 +76,11 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const idAttribute = await page.$eval('section[id="testAttribute"]', e => e.id);
       expect(idAttribute).toBe('testAttribute');
     });
+    it('should auto-detect nested selectors', async({page, server}) => {
+      await page.setContent('<div foo=bar><section>43543<span>Hello<div id=target></div></span></section></div>');
+      const idAttribute = await page.$eval('div[foo=bar] > section >> "Hello" >> div', e => e.id);
+      expect(idAttribute).toBe('target');
+    });
     it('should accept arguments', async({page, server}) => {
       await page.setContent('<section>hello</section>');
       const text = await page.$eval('section', (e, suffix) => e.textContent + suffix, ' world!');
