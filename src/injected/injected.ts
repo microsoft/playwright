@@ -106,12 +106,25 @@ class Injected {
     let start = 0;
     const result: ParsedSelector = [];
     const append = () => {
-      const part = selector.substring(start, index);
+      const part = selector.substring(start, index).trim();
       const eqIndex = part.indexOf('=');
-      if (eqIndex === -1)
-        throw new Error(`Cannot parse selector ${selector}`);
-      const name = part.substring(0, eqIndex).trim();
-      const body = part.substring(eqIndex + 1);
+      let name: string;
+      let body: string;
+      if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-]+$/)) {
+        name = part.substring(0, eqIndex).trim();
+        body = part.substring(eqIndex + 1);
+      } else if (part.startsWith('"')) {
+        name = 'text';
+        body = part;
+      } else if (/^\(*\/\//.test(part)) {
+        // If selector starts with '//' or '//' prefixed with multiple opening
+        // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
+        name = 'xpath';
+        body = part;
+      } else {
+        name = 'css';
+        body = part;
+      }
       const engine = this.engines.get(name.toLowerCase());
       if (!engine)
         throw new Error(`Unknown engine ${name} while parsing selector ${selector}`);
