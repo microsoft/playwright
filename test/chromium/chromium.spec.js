@@ -109,6 +109,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         new Promise(fulfill => context.once('pageevent', async event => fulfill(await event.page()))),
         page.goto(server.PREFIX + '/popup/window-open.html')
       ]);
+      await popup.waitForLoadState();
       expect(popup.url()).toBe(server.PREFIX + '/popup/popup.html');
       expect(await popup.opener()).toBe(page);
       expect(await page.opener()).toBe(null);
