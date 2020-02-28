@@ -141,10 +141,13 @@ function objectFormatter(received, expected) {
   return `Received:\n${highlighted}`;
 }
 
+function isBigString(maybeString) {
+  return typeof maybeString === 'string' && maybeString.length > 40 || !/[\n\r]/.test(maybeString);
+}
+
 function toBeFormatter(received, expected) {
-  if (typeof expected === 'string' && typeof received === 'string') {
+  if (isBigString(received) && isBigString(expected))
     return stringFormatter(JSON.stringify(received), JSON.stringify(expected));
-  }
   return [
     `Expected: ${JSON.stringify(expected)}`,
     `Received: ${colors.red(JSON.stringify(received))}`,
