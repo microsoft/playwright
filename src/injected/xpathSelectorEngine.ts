@@ -20,8 +20,6 @@ const maxTextLength = 80;
 const minMeaningfulSelectorLegth = 100;
 
 export const XPathEngine: SelectorEngine = {
-  name: 'xpath',
-
   create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
     const maybeDocument = root instanceof Document ? root : root.ownerDocument;
     if (!maybeDocument)

@@ -250,16 +250,16 @@ class TestPass {
     if (error === TimeoutError) {
       const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       const message = `${location} - Timeout Exceeded ${hook.timeout}ms while running "${hookName}" in suite "${suite.fullName}"`;
-      this._runner._didFailHook(suite, hook, hookName);
+      this._runner._didFailHook(suite, hook, hookName, workerId);
       return await this._terminate(TestResult.Crashed, message, null);
     }
     if (error) {
       const location = `${hook.location.fileName}:${hook.location.lineNumber}:${hook.location.columnNumber}`;
       const message = `${location} - FAILED while running "${hookName}" in suite "${suite.fullName}"`;
-      this._runner._didFailHook(suite, hook, hookName);
+      this._runner._didFailHook(suite, hook, hookName, workerId);
       return await this._terminate(TestResult.Crashed, message, error);
     }
-    this._runner._didCompleteHook(suite, hook, hookName);
+    this._runner._didCompleteHook(suite, hook, hookName, workerId);
     return false;
   }
 
@@ -495,23 +495,23 @@ class TestRunner extends EventEmitter {
   }
 
   _willStartTestBody(test, workerId) {
-    debug('testrunner:test')(`starting "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
+    debug('testrunner:test')(`[${workerId}] starting "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
   }
 
   _didFinishTestBody(test, workerId) {
-    debug('testrunner:test')(`${test.result.toUpperCase()} "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
+    debug('testrunner:test')(`[${workerId}] ${test.result.toUpperCase()} "${test.fullName}" (${test.location.fileName + ':' + test.location.lineNumber})`);
   }
 
   _willStartHook(suite, hook, hookName, workerId) {
-    debug('testrunner:hook')(`"${hookName}" started for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+    debug('testrunner:hook')(`[${workerId}] "${hookName}" started for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 
   _didFailHook(suite, hook, hookName, workerId) {
-    debug('testrunner:hook')(`"${hookName}" FAILED for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+    debug('testrunner:hook')(`[${workerId}] "${hookName}" FAILED for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 
   _didCompleteHook(suite, hook, hookName, workerId) {
-    debug('testrunner:hook')(`"${hookName}" OK for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
+    debug('testrunner:hook')(`[${workerId}] "${hookName}" OK for "${suite.fullName}" (${hook.location.fileName + ':' + hook.location.lineNumber})`);
   }
 
   _willTerminate(termination) {

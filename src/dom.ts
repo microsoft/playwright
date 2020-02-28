@@ -85,9 +85,12 @@ export class FrameExecutionContext extends js.ExecutionContext {
       this._injectedPromise = undefined;
     }
     if (!this._injectedPromise) {
+      const custom: string[] = [];
+      for (const [name, source] of selectors._engines)
+        custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
         new (${injectedSource.source})([
-          ${selectors._sources.join(',\n')}
+          ${custom.join(',\n')}
         ])
       `;
       this._injectedPromise = this.evaluateHandle(source);

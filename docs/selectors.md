@@ -84,11 +84,10 @@ Id engines are selecting based on the corresponding atrribute value. For example
 
 ## Custom selector engines
 
-Playwright supports custom selector engines, registered with [selectors.register(engineFunction[, ...args])](api.md#selectorsregisterenginefunction-args).
+Playwright supports custom selector engines, registered with [selectors.register(name, script)](api.md#selectorsregistername-script).
 
 Selector engine should have the following properties:
 
-- `name` Selector name used in selector strings.
 - `create` Function to create a relative selector from `root` (root is either a `Document`, `ShadowRoot` or `Element`) to a `target` element.
 - `query` Function to query first element matching `selector` relative to the `root`.
 - `queryAll` Function to query all elements matching `selector` relative to the `root`.
@@ -97,9 +96,6 @@ An example of registering selector engine that queries elements based on a tag n
 ```js
 // Must be a function that evaluates to a selector engine instance.
 const createTagNameEngine = () => ({
-  // Selectors will be prefixed with "tag=".
-  name: 'tag',
-
   // Creates a selector that matches given target when queried at the root.
   // Can return undefined if unable to create one.
   create(root, target) {
@@ -117,8 +113,8 @@ const createTagNameEngine = () => ({
   }
 });
 
-// Register the engine.
-await selectors.register(createTagNameEngine);
+// Register the engine. Selectors will be prefixed with "tag=".
+await selectors.register('tag', createTagNameEngine);
 
 // Now we can use 'tag=' selectors.
 const button = await page.$('tag=button');

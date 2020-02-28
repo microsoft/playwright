@@ -17,8 +17,6 @@
 import { SelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
 
 export const TextEngine: SelectorEngine = {
-  name: 'text',
-
   create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
     const document = root instanceof Document ? root : root.ownerDocument;
     if (!document)
