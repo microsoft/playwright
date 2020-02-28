@@ -751,8 +751,6 @@ class Engine {
 }
 
 const ZSSelectorEngine: SelectorEngine = {
-  name: 'zs',
-
   create(root: SelectorRoot, element: Element, type?: SelectorType): string {
     return new Engine().create(root, element, type || 'default');
   },

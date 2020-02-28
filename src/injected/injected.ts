@@ -23,8 +23,6 @@ import * as types from '../types';
 
 function createAttributeEngine(attribute: string): SelectorEngine {
   const engine: SelectorEngine = {
-    name: attribute,
-
     create(root: SelectorRoot, target: Element): string | undefined {
       const value = target.getAttribute(attribute);
       if (!value)
@@ -51,20 +49,19 @@ class Injected {
   readonly utils: Utils;
   readonly engines: Map<string, SelectorEngine>;
 
-  constructor(customEngines: SelectorEngine[]) {
-    const defaultEngines = [
-      CSSEngine,
-      XPathEngine,
-      TextEngine,
-      createAttributeEngine('id'),
-      createAttributeEngine('data-testid'),
-      createAttributeEngine('data-test-id'),
-      createAttributeEngine('data-test'),
-    ];
+  constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
     this.utils = new Utils();
     this.engines = new Map();
-    for (const engine of [...defaultEngines, ...customEngines])
-      this.engines.set(engine.name, engine);
+    // Note: keep predefined names in sync with Selectors class.
+    this.engines.set('css', CSSEngine);
+    this.engines.set('xpath', XPathEngine);
+    this.engines.set('text', TextEngine);
+    this.engines.set('id', createAttributeEngine('id'));
+    this.engines.set('data-testid', createAttributeEngine('data-testid'));
+    this.engines.set('data-test-id', createAttributeEngine('data-test-id'));
+    this.engines.set('data-test', createAttributeEngine('data-test'));
+    for (const {name, engine} of customEngines)
+      this.engines.set(name, engine);
   }
 
   querySelector(selector: string, root: Node): Element | undefined {

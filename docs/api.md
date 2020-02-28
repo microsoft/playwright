@@ -3149,12 +3149,14 @@ Contains the URL of the response.
 Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more information.
 
 <!-- GEN:toc -->
-- [selectors.register(engineFunction[, ...args])](#selectorsregisterenginefunction-args)
+- [selectors.register(name, script)](#selectorsregistername-script)
 <!-- GEN:stop -->
 
-#### selectors.register(engineFunction[, ...args])
-- `engineFunction` <[function]|[string]> Function that evaluates to a selector engine instance.
-- `...args` <...[Serializable]> Arguments to pass to `engineFunction`.
+#### selectors.register(name, script)
+- `name` <[string]> Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only contain `[a-zA-Z0-9_]` characters.
+- `script` <[function]|[string]|[Object]> Script that evaluates to a selector engine instance.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `content` <[string]> Raw script content.
 - returns: <[Promise]>
 
 An example of registering selector engine that queries elements based on a tag name:
@@ -3164,9 +3166,6 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 (async () => {
   // Must be a function that evaluates to a selector engine instance.
   const createTagNameEngine = () => ({
-    // Selectors will be prefixed with "tag=".
-    name: 'tag',
-
     // Creates a selector that matches given target when queried at the root.
     // Can return undefined if unable to create one.
     create(root, target) {
@@ -3184,8 +3183,8 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
     }
   });
 
-  // Register the engine.
-  await selectors.register(createTagNameEngine);
+  // Register the engine. Selectors will be prefixed with "tag=".
+  await selectors.register('tag', createTagNameEngine);
 
   const browser = await firefox.launch();
   const page = await browser.newPage();

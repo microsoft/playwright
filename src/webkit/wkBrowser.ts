@@ -279,7 +279,7 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
-    const source = await helper.evaluationScript(script, ...args);
+    const source = await helper.evaluationScript(script, args);
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this._existingPages())
       await (page._delegate as WKPage)._updateBootstrapScript();

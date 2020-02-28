@@ -41,13 +41,14 @@ class Helper {
     }
   }
 
-  static async evaluationScript(fun: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<string> {
+  static async evaluationScript(fun: Function | string | { path?: string, content?: string }, args: any[] = [], addSourceUrl: boolean = true): Promise<string> {
     if (!helper.isString(fun) && typeof fun !== 'function') {
       if (fun.content !== undefined) {
         fun = fun.content;
       } else if (fun.path !== undefined) {
         let contents = await platform.readFileAsync(fun.path, 'utf8');
-        contents += '//# sourceURL=' + fun.path.replace(/\n/g, '');
+        if (addSourceUrl)
+          contents += '//# sourceURL=' + fun.path.replace(/\n/g, '');
         fun = contents;
       } else {
         throw new Error('Either path or content property must be present');

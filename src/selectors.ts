@@ -21,7 +21,7 @@ import { helper } from './helper';
 let selectors: Selectors;
 
 export class Selectors {
-  readonly _sources: string[];
+  readonly _engines: Map<string, string>;
   _generation = 0;
 
   static _instance() {
@@ -31,12 +31,19 @@ export class Selectors {
   }
 
   constructor() {
-    this._sources = [];
+    this._engines = new Map();
   }
 
-  async register(engineFunction: string | Function, ...args: any[]) {
-    const source = helper.evaluationString(engineFunction, ...args);
-    this._sources.push(source);
+  async register(name: string, script: string | Function | { path?: string, content?: string }): Promise<void> {
+    if (!name.match(/^[a-zA-Z_0-9-]+$/))
+      throw new Error('Selector engine name may only contain [a-zA-Z0-9_] characters');
+    // Note: keep in sync with Injected class, and also keep 'zs' for future.
+    if (['css', 'xpath', 'text', 'id', 'zs', 'data-testid', 'data-test-id', 'data-test'].includes(name))
+      throw new Error(`"${name}" is a predefined selector engine`);
+    const source = await helper.evaluationScript(script, [], false);
+    if (this._engines.has(name))
+      throw new Error(`"${name}" selector engine has been already registered`);
+    this._engines.set(name, source);
     ++this._generation;
   }
 

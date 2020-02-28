@@ -360,7 +360,7 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
-    const source = await helper.evaluationScript(script, ...args);
+    const source = await helper.evaluationScript(script, args);
     this._evaluateOnNewDocumentSources.push(source);
     await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
   }
