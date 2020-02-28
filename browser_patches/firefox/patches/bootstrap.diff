@@ -469,10 +469,10 @@ index 6dca2b78830edc1ddbd66264bd332853729dac71..fbe89c9682834e11b9d9219d9eb056ed
  
 diff --git a/testing/juggler/BrowserContextManager.js b/testing/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..483667dbec8e4c76533e4cf5e69ca9e322f2e708
+index 0000000000000000000000000000000000000000..e8f2cf88760fa7f2c15574bfb74e818fbf7751e6
 --- /dev/null
 +++ b/testing/juggler/BrowserContextManager.js
-@@ -0,0 +1,194 @@
+@@ -0,0 +1,246 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -551,6 +551,8 @@ index 0000000000000000000000000000000000000000..483667dbec8e4c76533e4cf5e69ca9e3
 +    this._manager._userContextIdToBrowserContext.set(this.userContextId, this);
 +    this.options = options || {};
 +    this.options.scriptsToEvaluateOnNewDocument = [];
++    this._tabs = new Set();
++    this._tabDestoryed = new WeakMap();
 +  }
 +
 +  destroy() {
@@ -567,14 +569,64 @@ index 0000000000000000000000000000000000000000..483667dbec8e4c76533e4cf5e69ca9e3
 +    this.emit(BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded, script);
 +  }
 +
-+  grantPermissions(origin, permissions) {
++  async grantPermissions(origin, permissions) {
 +    const attrs = {userContextId: this.userContextId};
 +    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(origin), attrs);
 +    this._principals.push(principal);
++    let observedAChange = false;
++    const observer = {
++      observe() {
++        observedAChange = true;
++      }
++    };
++    Services.obs.addObserver(observer, 'perm-changed');
++    const tabs = [...this._tabs];
 +    for (const permission of ALL_PERMISSIONS) {
 +      const action = permissions.includes(permission) ? Ci.nsIPermissionManager.ALLOW_ACTION : Ci.nsIPermissionManager.DENY_ACTION;
++      const {promise, teardown} = waitForPermChangeInTabs.call(this, tabs);
++      observedAChange = false;
 +      Services.perms.addFromPrincipal(principal, permission, action);
++      if (observedAChange)
++        await promise;
++      teardown();
 +    }
++    Services.obs.removeObserver(observer, 'perm-changed');
++
++    function waitForPermChangeInTabs(tabs) {
++      const promises = [];
++      const teardowns = [];
++      for (const tab of tabs) {
++        const {promise, teardown} = waitForPermChangeInTab.call(this, tab);
++        promises.push(promise);
++        teardowns.push(teardown);
++      }
++      return {
++        promise: Promise.all(promises),
++        teardown: () => teardowns.forEach(t => t())
++      }
++    }
++    function waitForPermChangeInTab(tab) {
++      let resolve;
++      const promise = new Promise(x => resolve = x);
++      this._tabDestoryed.set(tab, resolve);
++      tab.linkedBrowser.messageManager.addMessageListener('juggler:perm-changed', resolve);
++      const teardown = () => {
++        this._tabDestoryed.delete(tab);
++        tab.linkedBrowser.messageManager.removeMessageListener('juggler:perm-changed', resolve);
++      }
++      return {promise, teardown}
++    }
++  }
++
++  addTab(tab) {
++    this._tabs.add(tab);
++  }
++
++  removeTab(tab) {
++    const destoryedCallback = this._tabDestoryed.get(tab);
++    if (destoryedCallback)
++      destoryedCallback();
++    this._tabs.delete(tab);
 +  }
 +
 +  resetPermissions() {
@@ -1472,10 +1524,10 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cabf7e79ee5
+index 0000000000000000000000000000000000000000..1f8721c31851739ff664a4c1f2878abaa6429a6a
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,256 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -1521,6 +1573,9 @@ index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cab
 +    });
 +    this._mainWindow.gBrowser.tabContainer.addEventListener('TabClose', event => {
 +      const tab = event.target;
++      const browserContext = this._contextManager.browserContextForUserContextId(tab.userContextId);
++      if (browserContext)
++        browserContext.removeTab(tab);
 +      const target = this._tabToTarget.get(tab);
 +      if (!target)
 +        return;
@@ -1591,11 +1646,18 @@ index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cab
 +    if (this._tabToTarget.has(tab))
 +      throw new Error(`Internal error: two targets per tab`);
 +    const openerTarget = tab.openerTab ? this._tabToTarget.get(tab.openerTab) : null;
-+    const target = new PageTarget(this, tab, this._contextManager.browserContextForUserContextId(tab.userContextId), openerTarget);
++    const browserContext = this._contextManager.browserContextForUserContextId(tab.userContextId);
++    if (browserContext)
++      browserContext.addTab(tab);
++    const target = new PageTarget(this, tab, browserContext, openerTarget);
 +    this._targets.set(target.id(), target);
 +    this._tabToTarget.set(tab, target);
 +    this.emit(TargetRegistry.Events.TargetCreated, target.info());
 +    return target;
++  }
++
++  tabsInBrowserContext(browserContext) {
++    return Array.from(this._tabToTarget.keys()).filter(tab => tab.userContextId === browserContext.userContextId);
 +  }
 +
 +  observe(subject, topic, data) {
@@ -4012,15 +4074,22 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..437c47f4cf637d94498b592fdcab5d38070d80fc
+index 0000000000000000000000000000000000000000..6b666017592b05cf356cf8fbc36e428a7353f009
 --- /dev/null
 +++ b/testing/juggler/content/main.js
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,90 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {ContentSession} = ChromeUtils.import('chrome://juggler/content/content/ContentSession.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
 +const {NetworkMonitor} = ChromeUtils.import('chrome://juggler/content/content/NetworkMonitor.js');
 +const {ScrollbarManager} = ChromeUtils.import('chrome://juggler/content/content/ScrollbarManager.js');
++const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
++const permissionObserver = {
++  observe() {
++    sendAsyncMessage('juggler:perm-changed', {});
++  }
++};
++Services.obs.addObserver(permissionObserver, 'perm-changed');
 +
 +const sessions = new Map();
 +const scrollbarManager = new ScrollbarManager(docShell);
@@ -4179,7 +4248,7 @@ index 0000000000000000000000000000000000000000..a2d3b79469566ca2edb7d864621f7085
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..061bcb4ff8a34610a5ec433393bf7901c4cafe86
+index 0000000000000000000000000000000000000000..25ac5e74f0897b4ee01c66df0974fb2c4ff4c455
 --- /dev/null
 +++ b/testing/juggler/protocol/BrowserHandler.js
 @@ -0,0 +1,81 @@
@@ -4220,8 +4289,8 @@ index 0000000000000000000000000000000000000000..061bcb4ff8a34610a5ec433393bf7901
 +    }
 +  }
 +
-+  grantPermissions({browserContextId, origin, permissions}) {
-+    this._contextManager.browserContextForId(browserContextId).grantPermissions(origin, permissions);
++  async grantPermissions({browserContextId, origin, permissions}) {
++    await this._contextManager.browserContextForId(browserContextId).grantPermissions(origin, permissions);
 +  }
 +
 +  resetPermissions({browserContextId}) {
