@@ -523,6 +523,11 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       await page.setContent(`<div> "yo <div></div>ya</div>`);
       expect(await selectors._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
     });
+    it('should be case sensitive iff quotes are sepcified', async({page}) => {
+      await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
+      expect(await page.$eval(`text=yA`, e => e.outerHTML)).toBe('<div>ya</div>');
+      expect(await page.$(`text="yA"`)).toBe(null);
+    });
   });
 
   describe('selectors.register', () => {
