@@ -38,10 +38,11 @@ jobs:
   - node_js: '12'
 before_deploy: npm run apply-next-version
 deploy:
+  - src: "."
+  - src: "packages/playwright-firefox"
   provider: npm
   edge: true
   email: aslushnikov@gmail.com
-  src: "."
   on:
     branch: master
   skip_cleanup: true
