@@ -17,7 +17,7 @@
 
 import { Events } from './events';
 import { Events as CommonEvents } from '../events';
-import { assert, debugError } from '../helper';
+import { assert, helper, debugError } from '../helper';
 import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
 import { CRConnection, ConnectionEvents, CRSession } from './crConnection';
 import { Page, PageEvent } from '../page';
