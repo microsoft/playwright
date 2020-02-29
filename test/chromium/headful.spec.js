@@ -55,7 +55,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       const backgroundPages = await context.backgroundPages();
       let backgroundPage = backgroundPages.length
           ? backgroundPages[0]
-          : await new Promise(fulfill => context.once('backgroundpage', fulfill(page)));
+          : await new Promise(fulfill => context.once('backgroundpage', async event => fulfill(await event.page())));
       expect(backgroundPage).toBeTruthy();
       expect(await context.backgroundPages()).toContain(backgroundPage);
       expect(await context.pages()).not.toContain(backgroundPage);

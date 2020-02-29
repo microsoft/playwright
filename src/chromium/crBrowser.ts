@@ -102,7 +102,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
         }
         case 'background_page': {
           const page = await target.page();
-          context.emit(Events.CRBrowserContext.BackgroundPage, page);
+          const event = new PageEvent(page!);
+          context.emit(Events.CRBrowserContext.BackgroundPage, event);
           break;
         }
         case 'service_worker': {

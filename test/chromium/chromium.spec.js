@@ -24,7 +24,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-	describe('BrowserContext', function() {
+  describe('BrowserContext', function() {
     it('pages() should return all of the pages', async({page, server, context}) => {
       const second = await page.context().newPage();
       const allPages = await context.pages();
@@ -35,7 +35,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     });
     it('should report when a new page is created and closed', async({browser, page, server, context}) => {
       const [otherPage] = await Promise.all([
-        new Promise(r => context.once('pageevent', async event => r(await event.page()))),
+        new Promise(r => context.once('page', async event => r(await event.page()))),
         page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html'),
       ]);
       expect(otherPage.url()).toContain(server.CROSS_PROCESS_PREFIX);
@@ -72,12 +72,12 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(serviceWorkerCreated).not.toBeTruthy();
     });
     it('should not report uninitialized pages', async({browser, context}) => {
-      const pagePromise = new Promise(fulfill => context.once('pageevent', async event => fulfill(await event.page())));
+      const pagePromise = new Promise(fulfill => context.once('page', async event => fulfill(await event.page())));
       context.newPage();
       const newPage = await pagePromise;
       expect(newPage.url()).toBe('about:blank');
 
-      const popupPromise = new Promise(fulfill => context.once('pageevent', async event => fulfill(await event.page())));
+      const popupPromise = new Promise(fulfill => context.once('page', async event => fulfill(await event.page())));
       const evaluatePromise = newPage.evaluate(() => window.open('about:blank'));
       const popup = await popupPromise;
       expect(popup.url()).toBe('about:blank');
@@ -89,7 +89,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       server.setRoute('/one-style.css', (req, res) => serverResponse = res);
       // Open a new page. Use window.open to connect to the page later.
       const [newPage] = await Promise.all([
-        new Promise(fulfill => context.once('pageevent', async event => fulfill(await event.page()))),
+        new Promise(fulfill => context.once('page', async event => fulfill(await event.page()))),
         page.evaluate(url => window.open(url), server.PREFIX + '/one-style.html'),
         server.waitForRequest('/one-style.css')
       ]);
@@ -106,7 +106,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     it('should have an opener', async({browser, page, server, context}) => {
       await page.goto(server.EMPTY_PAGE);
       const [popup] = await Promise.all([
-        new Promise(fulfill => context.once('pageevent', async event => fulfill(await event.page()))),
+        new Promise(fulfill => context.once('page', async event => fulfill(await event.page()))),
         page.goto(server.PREFIX + '/popup/window-open.html')
       ]);
       await popup.waitForLoadState();
@@ -125,7 +125,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     it('should fire page lifecycle events', async function({browser, server}) {
       const context = await browser.newContext();
       const events = [];
-      context.on('pageevent', async event => {
+      context.on('page', async event => {
         const page = await event.page();
         events.push('CREATED: ' + page.url());
         page.on('close', () => events.push('DESTROYED: ' + page.url()))

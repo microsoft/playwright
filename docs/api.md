@@ -265,7 +265,7 @@ await context.close();
 
 <!-- GEN:toc -->
 - [event: 'close'](#event-close)
-- [event: 'pageevent'](#event-pageevent)
+- [event: 'page'](#event-page)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
@@ -288,7 +288,7 @@ Emitted when Browser context gets closed. This might happen because of one of th
 - Browser application is closed or crashed.
 - The [`browser.close`](#browserclose) method was called.
 
-#### event: 'pageevent'
+#### event: 'page'
 - <[PageEvent]>
 
 Emitted when a new Page is created in the BrowserContext. The event will also fire for popup
@@ -1671,7 +1671,7 @@ This method returns all of the dedicated [WebWorkers](https://developer.mozilla.
 
 ### class: PageEvent
 
-Event object passed to the listeners of 'pageevent' on 'BrowserContext'. Provides access
+Event object passed to the listeners of ['page'](#event-page) on [`BrowserContext`](#class-browsercontext). Provides access
 to the newly created page.
 
 #### pageEvent.page()
@@ -3619,7 +3619,7 @@ const backgroundPage = await backroundPageTarget.page();
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-BrowserContext -->
 - [event: 'close'](#event-close)
-- [event: 'pageevent'](#event-pageevent)
+- [event: 'page'](#event-page)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
@@ -3636,14 +3636,14 @@ const backgroundPage = await backroundPageTarget.page();
 <!-- GEN:stop -->
 
 #### event: 'backgroundpage'
-- <[Page]>
+- <[PageEvent]>
 
 Emitted when new background page is created in the context.
 
 > **NOTE** Only works with persistent context.
 
 #### event: 'serviceworker'
-- <[Page]>
+- <[Worker]>
 
 Emitted when new service worker is created in the context.
 
@@ -3894,7 +3894,7 @@ const { chromium } = require('playwright');
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Page]: #class-page "Page"
-[PageEvent]: #class-pageevent "PageEvent"
+[PageEvent]: #class-page "PageEvent"
 [Playwright]: #class-playwright "Playwright"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
