@@ -100,8 +100,8 @@ export class WKPageProxy {
 
   private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
     const { targetInfo } = event;
-    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, (message: any) => {
-      this._pageProxySession.send('Target.sendMessageToTarget', {
+    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, async (message: any): Promise<void> => {
+      await this._pageProxySession.send('Target.sendMessageToTarget', {
         message: JSON.stringify(message), targetId: targetInfo.targetId
       }).catch(e => {
         session.dispatchMessage({ id: message.id, error: { message: e.message } });

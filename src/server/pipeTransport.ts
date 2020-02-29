@@ -42,7 +42,7 @@ export class PipeTransport implements ConnectionTransport {
     this.onclose = undefined;
   }
 
-  send(message: string) {
+  async send(message: string): Promise<void> {
     this._pipeWrite!.write(message);
     this._pipeWrite!.write('\0');
   }

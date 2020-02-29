@@ -73,9 +73,13 @@ export class FFConnection extends platform.EventEmitter {
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     const id = this.nextMessageId();
-    this._rawSend({id, method, params});
+    const rawSent = this._rawSend({id, method, params});
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+      rawSent.catch(e => {
+        this._callbacks.delete(id);
+        reject(e);
+      });
     });
   }
 
@@ -83,10 +87,10 @@ export class FFConnection extends platform.EventEmitter {
     return ++this._lastId;
   }
 
-  _rawSend(message: any) {
+  _rawSend(message: any): Promise<void> {
     const data = JSON.stringify(message);
     this._debugProtocol('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
-    this._transport.send(data);
+    return this._transport.send(data);
   }
 
   async _onMessage(message: string) {

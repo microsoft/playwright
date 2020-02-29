@@ -16,13 +16,13 @@
  */
 
 export interface ConnectionTransport {
-  send(s: string): void;
+  send(s: string): Promise<void>;
   close(): void;  // Note: calling close is expected to issue onclose at some point.
   onmessage?: (message: string) => void,
   onclose?: () => void,
 }
 
-export class SlowMoTransport {
+export class SlowMoTransport implements ConnectionTransport {
   private readonly _delay: number;
   private readonly _delegate: ConnectionTransport;
   private _incomingMessageQueue: string[] = [];
@@ -75,8 +75,8 @@ export class SlowMoTransport {
     this._delegate.onclose = undefined;
   }
 
-  send(s: string) {
-    this._delegate.send(s);
+  send(s: string): Promise<void> {
+    return this._delegate.send(s);
   }
 
   close() {

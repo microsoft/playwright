@@ -54,15 +54,17 @@ export class CRConnection extends platform.EventEmitter {
     return this._sessions.get(sessionId) || null;
   }
 
-  _rawSend(sessionId: string, message: any): number {
-    const id = ++this._lastId;
-    message.id = id;
+
+  nextMessageId(): number {
+    return ++this._lastId;
+  }
+
+  _rawSend(sessionId: string, message: any): Promise<void> {
     if (sessionId)
       message.sessionId = sessionId;
     const data = JSON.stringify(message);
     this._debugProtocol('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
-    this._transport.send(data);
-    return id;
+    return this._transport.send(data);
   }
 
   async _onMessage(message: string) {
@@ -145,10 +147,16 @@ export class CRSession extends platform.EventEmitter {
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (!this._connection)
-      return Promise.reject(new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`));
-    const id = this._connection._rawSend(this._sessionId, { method, params });
-    return new Promise((resolve, reject) => {
+      throw new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`);
+    const id = this._connection.nextMessageId();
+    const messageObj = { id, method, params };
+    const rawSent = this._connection._rawSend(this._sessionId, messageObj);
+    return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+      rawSent.catch(e => {
+        this._callbacks.delete(id);
+        reject(e);
+      });
     });
   }
 

@@ -115,7 +115,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     if (!context)
       context =  this._defaultContext;
     const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {
-      this._connection.rawSend({ ...message, pageProxyId });
+      return this._connection.rawSend({ ...message, pageProxyId });
     });
     const opener = pageProxyInfo.openerId ? this._pageProxies.get(pageProxyInfo.openerId) : undefined;
     const pageProxy = new WKPageProxy(pageProxySession, context, opener || null);

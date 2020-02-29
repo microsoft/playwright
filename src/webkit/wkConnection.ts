@@ -44,7 +44,7 @@ export class WKConnection {
     this._transport.onclose = this._onClose.bind(this);
     this._onDisconnect = onDisconnect;
     this.browserSession = new WKSession(this, '', 'Browser has been closed.', (message: any) => {
-      this.rawSend(message);
+      return this.rawSend(message);
     });
   }
 
@@ -52,10 +52,10 @@ export class WKConnection {
     return ++this._lastId;
   }
 
-  rawSend(message: any) {
+  rawSend(message: any): Promise<void> {
     const data = JSON.stringify(message);
     this._debugFunction('SEND ► ' + (rewriteInjectedScriptEvaluationLog(message) || data));
-    this._transport.send(data);
+    return this._transport.send(data);
   }
 
   private _dispatchMessage(message: string) {
@@ -95,7 +95,7 @@ export class WKSession extends platform.EventEmitter {
   readonly sessionId: string;
 
   private _disposed = false;
-  private readonly _rawSend: (message: any) => void;
+  private readonly _rawSend: (message: any) => Promise<void>;
   private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
 
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -104,7 +104,7 @@ export class WKSession extends platform.EventEmitter {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(connection: WKConnection, sessionId: string, errorText: string, rawSend: (message: any) => void) {
+  constructor(connection: WKConnection, sessionId: string, errorText: string, rawSend: (message: any) => Promise<void>) {
     super();
     this.connection = connection;
     this.sessionId = sessionId;
@@ -127,9 +127,13 @@ export class WKSession extends platform.EventEmitter {
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     platform.debug('pw:wrapped:' + this.sessionId)('SEND ► ' + JSON.stringify(messageObj, null, 2));
-    this._rawSend(messageObj);
+    const rawSent = this._rawSend(messageObj);
     return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
       this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+      rawSent.catch(e => {
+        this._callbacks.delete(id);
+        reject(e);
+      });
     });
   }
 
