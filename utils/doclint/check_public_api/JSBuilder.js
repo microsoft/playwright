@@ -81,7 +81,7 @@ function checkSources(sources, externalDependencies) {
           visit(classesByName.get(parent));
       };
       visit(cls);
-      return new Documentation.Class(expandPrefix(cls.name), Array.from(membersMap.values()));
+      return new Documentation.Class(expandPrefix(cls.name), Array.from(membersMap.values()), undefined, cls.comment, cls.templates);
     });
   }
 
@@ -264,6 +264,7 @@ function checkSources(sources, externalDependencies) {
   function serializeClass(className, symbol, node) {
     /** @type {!Array<!Documentation.Member>} */
     const members = classEvents.get(className) || [];
+    const templates = [];
     for (const [name, member] of symbol.members || []) {
       if (className === 'Error')
         continue;
@@ -281,13 +282,15 @@ function checkSources(sources, externalDependencies) {
       }
       const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
       const signature = signatureForType(memberType);
-      if (signature)
+      if (member.flags & ts.SymbolFlags.TypeParameter)
+        templates.push(name);
+      else if (signature)
         members.push(serializeSignature(name, signature));
       else
         members.push(serializeProperty(name, memberType));
     }
 
-    return new Documentation.Class(className, members);
+    return new Documentation.Class(className, members, undefined, undefined, templates);
   }
 
   /**
@@ -312,8 +315,9 @@ function checkSources(sources, externalDependencies) {
   function serializeSignature(name, signature) {
     const minArgumentCount = signature.minArgumentCount || 0;
     const parameters = signature.parameters.map((s, index) => serializeSymbol(s, [], index < minArgumentCount));
+    const templates = signature.typeParameters ? signature.typeParameters.map(t => t.symbol.name) : [];
     const returnType = serializeType(signature.getReturnType());
-    return Documentation.Member.createMethod(name, parameters, returnType.name !== 'void' ? returnType : null);
+    return Documentation.Member.createMethod(name, parameters, returnType.name !== 'void' ? returnType : null, undefined, undefined, templates);
   }
 
   /**

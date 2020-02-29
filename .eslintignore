@@ -3,12 +3,13 @@ third_party/*
 utils/browser/playwright-web.js
 utils/doclint/check_public_api/test/
 utils/testrunner/examples/
-node6/*
-node6-test/*
-node6-testrunner/*
 lib/
 *.js
 src/generated/*
 src/chromium/protocol.ts
 src/firefox/protocol.ts
 src/webkit/protocol.ts
+/types/*
+/index.d.ts
+utils/generate_types/overrides.d.ts
+utils/generate_types/test/test.ts

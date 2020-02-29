@@ -7,7 +7,7 @@
 # Injected files are included via lib/generated, see src/injected/README.md
 lib/injected/
 #types
-!lib/**/*.d.ts
+!types/*
 !index.d.ts
 
 # used for npm install scripts

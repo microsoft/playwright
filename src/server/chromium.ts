@@ -32,7 +32,7 @@ import { Events } from '../events';
 import { ConnectionTransport } from '../transport';
 import { BrowserContext } from '../browserContext';
 
-export class Chromium implements BrowserType {
+export class Chromium implements BrowserType<CRBrowser> {
   private _executablePath: (string|undefined);
 
   executablePath(): string {

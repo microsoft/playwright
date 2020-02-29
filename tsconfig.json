@@ -7,7 +7,7 @@
     "rootDir": "./src",
     "outDir": "./lib",
     "strict": true,
-    "declaration": true
+    "declaration": false
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts"],

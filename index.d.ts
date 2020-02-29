@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-export * from './lib/api';
-export const devices: typeof import('./lib/deviceDescriptors').DeviceDescriptors;
-export const errors: { TimeoutError: typeof import('./lib/errors').TimeoutError };
-export const chromium: import('./lib/server/chromium').Chromium;
-export const firefox: import('./lib/server/firefox').Firefox;
-export const webkit: import('./lib/server/webkit').WebKit;
-export const selectors: import('./lib/api').Selectors;
-export type PlaywrightWeb = typeof import('./lib/web');
+import * as types from './types/types';
+
+export * from './types/types';
+export const webkit: types.BrowserType<types.WebKitBrowser>;
+export const chromium: types.BrowserType<types.ChromiumBrowser>;
+export const firefox: types.BrowserType<types.FirefoxBrowser>;

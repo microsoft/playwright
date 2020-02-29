@@ -32,7 +32,7 @@ import { BrowserServer } from './browserServer';
 import { Events } from '../events';
 import { BrowserContext } from '../browserContext';
 
-export class WebKit implements BrowserType {
+export class WebKit implements BrowserType<WKBrowser> {
   private _executablePath: (string|undefined);
 
   executablePath(): string {

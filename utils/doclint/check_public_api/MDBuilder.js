@@ -107,6 +107,16 @@ class MDOutline {
        */
       function parseClass(content) {
         const members = [];
+        const commentWalker = document.createTreeWalker(content, NodeFilter.SHOW_COMMENT, {
+          acceptNode(node) {
+            if (!(node instanceof Comment))
+              return NodeFilter.FILTER_REJECT;
+            if (node.data.trim() === 'GEN:toc')
+              return NodeFilter.FILTER_ACCEPT;
+            return NodeFilter.FILTER_REJECT;
+          }
+        });
+        const tocStart = commentWalker.nextNode();
         const headers = content.querySelectorAll('h4');
         const name = content.firstChild.textContent;
         let extendsName = null;
@@ -116,7 +126,7 @@ class MDOutline {
           commentStart = extendsElement.nextSibling;
           extendsName = extendsElement.querySelector('a').textContent;
         }
-        const comment = parseComment(extractSiblingsIntoFragment(commentStart, headers[0]));
+        const comment = parseComment(extractSiblingsIntoFragment(commentStart, tocStart));
         for (let i = 0; i < headers.length; i++) {
           const fragment = extractSiblingsIntoFragment(headers[i], headers[i + 1]);
           members.push(parseMember(fragment));

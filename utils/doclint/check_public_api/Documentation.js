@@ -33,12 +33,14 @@ Documentation.Class = class {
    * @param {!Array<!Documentation.Member>} membersArray
    * @param {?string=} extendsName
    * @param {string=} comment
+   * @param {string[]=} templates
    */
-  constructor(name, membersArray, extendsName = null, comment = '') {
+  constructor(name, membersArray, extendsName = null, comment = '', templates = []) {
     this.name = name;
     this.membersArray = membersArray;
     this.comment = comment;
     this.extends = extendsName;
+    this.templates = templates;
     this.index();
   }
 
@@ -124,8 +126,12 @@ Documentation.Member = class {
    * @param {string} name
    * @param {?Documentation.Type} type
    * @param {!Array<!Documentation.Member>} argsArray
+   * @param {string=} comment
+   * @param {string=} returnComment
+   * @param {boolean=} required
+   * @param {string[]=} templates
    */
-  constructor(kind, name, type, argsArray, comment = '', returnComment = '', required = true) {
+  constructor(kind, name, type, argsArray, comment = '', returnComment = '', required = true, templates = []) {
     if (name === 'code') debugger;
     this.kind = kind;
     this.name = name;
@@ -134,6 +140,7 @@ Documentation.Member = class {
     this.returnComment = returnComment;
     this.argsArray = argsArray;
     this.required = required;
+    this.templates = templates;
     /** @type {!Map<string, !Documentation.Member>} */
     this.args = new Map();
     for (const arg of argsArray)
@@ -144,10 +151,13 @@ Documentation.Member = class {
    * @param {string} name
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {?Documentation.Type} returnType
+   * @param {string=} returnComment
+   * @param {string=} comment
+   * @param {string[]=} templates
    * @return {!Documentation.Member}
    */
-  static createMethod(name, argsArray, returnType, returnComment, comment) {
-    return new Documentation.Member('method', name, returnType, argsArray, comment, returnComment);
+  static createMethod(name, argsArray, returnType, returnComment, comment, templates) {
+    return new Documentation.Member('method', name, returnType, argsArray, comment, returnComment, undefined, templates);
   }
 
   /**

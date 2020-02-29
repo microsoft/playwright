@@ -33,9 +33,10 @@
     "debug-test": "node --inspect-brk test/test.js",
     "clean": "rimraf lib",
     "prepare": "node install-from-github.js",
-    "build": "node utils/runWebpack.js --mode='development' && tsc -p .",
+    "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run generate-types",
     "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
-    "version": "node utils/sync_package_versions.js && npm run doc"
+    "version": "node utils/sync_package_versions.js && npm run doc",
+    "generate-types": "node utils/generate_types/"
   },
   "author": {
     "name": "Microsoft Corporation"
