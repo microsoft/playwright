@@ -37,7 +37,7 @@ script:
 jobs:
   include:
   - node_js: '12'
-before_deploy: npm run apply-next-version
+after_success: npm run apply-next-version
 deploy:
   - provider: npm
     src: "."
