@@ -23,6 +23,7 @@
 * [jest-playwright](https://github.com/mmarkelov/jest-playwright): Jest present to run Playwright tests with Jest
 * [query-selector-shadow-dom](https://github.com/Georgegriff/query-selector-shadow-dom): Custom selector engine to pierce shadow DOM roots
 * [Playwright Sharp](https://github.com/kblok/playwright-sharp): Work in progress port of Playwright to .NET
+* [playwright-controller](https://github.com/hdorgeval/playwright-controller): Fluent API around Playwright
 
 ## Examples
  
