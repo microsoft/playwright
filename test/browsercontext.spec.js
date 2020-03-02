@@ -20,7 +20,7 @@ const utils = require('./utils');
 /**
  * @type {BrowserTestSuite}
  */
-module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FFOX, WEBKIT}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -289,6 +289,123 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const context = await browser.newContext({ javaScriptEnabled: false });
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
+      await context.close();
+    });
+  });
+
+  describe('BrowserContext.pages()', function() {
+    it('should return all of the pages', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const second = await context.newPage();
+      const allPages = await context.pages();
+      expect(allPages.length).toBe(2);
+      expect(allPages).toContain(page);
+      expect(allPages).toContain(second);
+      await context.close();
+    });
+  });
+
+  describe('Events.BrowserContext.PageEvent', function() {
+    it('should report when a new page is created and closed', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [otherPage] = await Promise.all([
+        new Promise(r => context.once('page', async event => r(await event.page()))),
+        page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html').catch(e => console.log('eee = ' + e)),
+      ]);
+      await otherPage.waitForLoadState();
+      expect(otherPage.url()).toContain(server.CROSS_PROCESS_PREFIX);
+      expect(await otherPage.evaluate(() => ['Hello', 'world'].join(' '))).toBe('Hello world');
+      expect(await otherPage.$('body')).toBeTruthy();
+
+      let allPages = await context.pages();
+      expect(allPages).toContain(page);
+      expect(allPages).toContain(otherPage);
+
+      let closeEventReceived;
+      otherPage.once('close', () => closeEventReceived = true);
+      await otherPage.close();
+      expect(closeEventReceived).toBeTruthy();
+
+      allPages = await context.pages();
+      expect(allPages).toContain(page);
+      expect(allPages).not.toContain(otherPage);
+      await context.close();
+    });
+    it('should not report uninitialized pages', async({browser, server}) => {
+      const context = await browser.newContext();
+      const pagePromise = new Promise(fulfill => context.once('page', async event => fulfill(await event.page())));
+      context.newPage();
+      const newPage = await pagePromise;
+      expect(newPage.url()).toBe('about:blank');
+
+      const popupPromise = new Promise(fulfill => context.once('page', async event => fulfill(await event.page())));
+      const evaluatePromise = newPage.evaluate(() => window.open('about:blank'));
+      const popup = await popupPromise;
+      await popup.waitForLoadState();
+      expect(popup.url()).toBe('about:blank');
+      await evaluatePromise;
+      await context.close();
+    });
+    it('should not crash while redirecting if original request was missed', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      let serverResponse = null;
+      server.setRoute('/one-style.css', (req, res) => serverResponse = res);
+      // Open a new page. Use window.open to connect to the page later.
+      const [newPage] = await Promise.all([
+        new Promise(fulfill => context.once('page', async event => fulfill(await event.page()))),
+        page.evaluate(url => window.open(url), server.PREFIX + '/one-style.html'),
+        server.waitForRequest('/one-style.css')
+      ]);
+      // Connect to the opened page.
+      expect(newPage.url()).toBe(server.PREFIX + '/one-style.html');
+      // Issue a redirect.
+      serverResponse.writeHead(302, { location: '/injectedstyle.css' });
+      serverResponse.end();
+      // Wait for the new page to load.
+      await newPage.waitForLoadState();
+      // Cleanup.
+      await context.close();
+    });
+    it.fail(WEBKIT)('should have an opener', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        new Promise(fulfill => context.once('page', async event => fulfill(await event.page()))),
+        page.goto(server.PREFIX + '/popup/window-open.html')
+      ]);
+      await popup.waitForLoadState();
+      expect(popup.url()).toBe(server.PREFIX + '/popup/popup.html');
+      expect(await popup.opener()).toBe(page);
+      expect(await page.opener()).toBe(null);
+      await context.close();
+    });
+    it('should close all belonging targets once closing context', async function({browser}) {
+      const context = await browser.newContext();
+      await context.newPage();
+      expect((await context.pages()).length).toBe(1);
+
+      await context.close();
+      expect((await context.pages()).length).toBe(0);
+    });
+    it('should fire page lifecycle events', async function({browser, server}) {
+      const context = await browser.newContext();
+      const events = [];
+      context.on('page', async event => {
+        const page = await event.page();
+        events.push('CREATED: ' + page.url());
+        page.on('close', () => events.push('DESTROYED: ' + page.url()));
+      });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.close();
+      expect(events).toEqual([
+        'CREATED: about:blank',
+        `DESTROYED: ${server.EMPTY_PAGE}`
+      ]);
       await context.close();
     });
   });
