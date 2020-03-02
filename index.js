@@ -18,5 +18,6 @@ const {Playwright} = require('./lib/server/playwright.js');
 module.exports = new Playwright({
   downloadPath: __dirname,
   browsers: ['webkit', 'chromium', 'firefox'],
+  respectEnvironmentVariables: false,
 });
 

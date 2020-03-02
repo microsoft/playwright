@@ -19,5 +19,6 @@ const {Playwright} = require('playwright-core/lib/server/playwright.js');
 module.exports = new Playwright({
   downloadPath: __dirname,
   browsers: ['webkit'],
+  respectEnvironmentVariables: true,
 });
 
