@@ -163,10 +163,33 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
       const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
-      for (let i = 0; i < 5; i++)
-        await page.evaluate('1'); // Do a round trip.
+      for (let i = 0; i < 10; i++) {
+        // Do enough double rafs to check for possible races.
+        await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+      }
       expect(done).toBe(false);
       await page.$eval('button', b => b.style.display = 'block');
+      await clicked;
+      expect(done).toBe(true);
+      expect(await page.evaluate(() => result)).toBe('Clicked');
+    });
+    it('should timeout waiting for visible', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', b => b.style.display = 'none');
+      const error = await page.click('button', { timeout: 100 }).catch(e => e);
+      expect(error.message).toContain('timeout 100ms exceeded');
+    });
+    it('should waitFor visible when parent is hidden', async({page, server}) => {
+      let done = false;
+      await page.goto(server.PREFIX + '/input/button.html');
+      await page.$eval('button', b => b.parentElement.style.display = 'none');
+      const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
+      for (let i = 0; i < 10; i++) {
+        // Do enough double rafs to check for possible races.
+        await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
+      }
+      expect(done).toBe(false);
+      await page.$eval('button', b => b.parentElement.style.display = 'block');
       await clicked;
       expect(done).toBe(true);
       expect(await page.evaluate(() => result)).toBe('Clicked');

@@ -360,7 +360,7 @@ class Injected {
     throw new Error('Not a checkbox');
   }
 
-  waitForStablePosition(node: Node, timeout: number) {
+  waitForDisplayedAtStablePosition(node: Node, timeout: number) {
     if (!node.isConnected)
       throw new Error('Element is not attached to the DOM');
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
@@ -377,9 +377,9 @@ class Injected {
         return false;
       const clientRect = element.getBoundingClientRect();
       const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-      const isStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
+      const isDisplayedAndStable = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height && rect.width > 0 && rect.height > 0;
       lastRect = rect;
-      return isStable;
+      return isDisplayedAndStable;
     });
   }
 

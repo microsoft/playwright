@@ -264,20 +264,20 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
       await page.evaluate(button => button.style.display = 'none', button);
-      const error = await button.click().catch(err => err);
+      const error = await button.click({ waitFor: false }).catch(err => err);
       expect(error.message).toBe('Node is either not visible or not an HTMLElement');
     });
     it('should throw for recursively hidden nodes', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       const button = await page.$('button');
       await page.evaluate(button => button.parentElement.style.display = 'none', button);
-      const error = await button.click().catch(err => err);
+      const error = await button.click({ waitFor: false }).catch(err => err);
       expect(error.message).toBe('Node is either not visible or not an HTMLElement');
     });
     it('should throw for <br> elements', async({page, server}) => {
       await page.setContent('hello<br>goodbye');
       const br = await page.$('br');
-      const error = await br.click().catch(err => err);
+      const error = await br.click({ waitFor: false }).catch(err => err);
       expect(error.message).toBe('Node is either not visible or not an HTMLElement');
     });
   });
