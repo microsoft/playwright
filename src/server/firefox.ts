@@ -15,25 +15,24 @@
  * limitations under the License.
  */
 
-import { FFBrowser } from '../firefox/ffBrowser';
-import { BrowserFetcher, OnProgressCallback, BrowserFetcherOptions } from './browserFetcher';
-import { DeviceDescriptors } from '../deviceDescriptors';
-import { launchProcess, waitForLine } from './processLauncher';
-import * as types from '../types';
-import * as platform from '../platform';
-import { kBrowserCloseMessageId } from '../firefox/ffConnection';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { TimeoutError } from '../errors';
-import { assert, helper } from '../helper';
-import { LaunchOptions, BrowserArgOptions, BrowserType } from './browserType';
 import { ConnectOptions, LaunchType } from '../browser';
-import { BrowserServer } from './browserServer';
-import { Events } from '../events';
-import { ConnectionTransport } from '../transport';
 import { BrowserContext } from '../browserContext';
+import { DeviceDescriptors } from '../deviceDescriptors';
+import { TimeoutError } from '../errors';
+import { Events } from '../events';
+import { FFBrowser } from '../firefox/ffBrowser';
+import { kBrowserCloseMessageId } from '../firefox/ffConnection';
+import { assert, helper } from '../helper';
+import * as platform from '../platform';
+import * as types from '../types';
+import { BrowserFetcher, BrowserFetcherOptions, OnProgressCallback } from './browserFetcher';
+import { BrowserServer } from './browserServer';
+import { BrowserArgOptions, BrowserType, LaunchOptions } from './browserType';
+import { launchProcess, waitForLine } from './processLauncher';
 
 const mkdtempAsync = platform.promisify(fs.mkdtemp);
 
@@ -62,8 +61,10 @@ export class Firefox implements BrowserType {
   async launch(options?: LaunchOptions & { slowMo?: number }): Promise<FFBrowser> {
     if (options && (options as any).userDataDir)
       throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
-    const { browserServer, transport } = await this._launchServer(options, 'local');
-    const browser = await FFBrowser.connect(transport!, options && options.slowMo);
+    const browserServer = await this._launchServer(options, 'local');
+    const browser = await platform.WebSocketTransport.createAndConnect(browserServer.wsEndpoint()!, transport => {
+      return FFBrowser.connect(transport, options && options.slowMo);
+    });
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     browser.close = () => browserServer.close();
     (browser as any)['__server__'] = browserServer;
@@ -71,13 +72,15 @@ export class Firefox implements BrowserType {
   }
 
   async launchServer(options?: LaunchOptions & { port?: number }): Promise<BrowserServer> {
-    return (await this._launchServer(options, 'server', undefined, options && options.port)).browserServer;
+    return await this._launchServer(options, 'server', undefined, options && options.port);
   }
 
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
-    const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await FFBrowser.connect(transport!);
+    const browserServer = await this._launchServer(options, 'persistent', userDataDir);
+    const browser = await platform.WebSocketTransport.createAndConnect(browserServer.wsEndpoint()!, transport => {
+      return FFBrowser.connect(transport);
+    });
     await helper.waitWithTimeout(browser._waitForTarget(t => t.type() === 'page'), 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
@@ -85,7 +88,7 @@ export class Firefox implements BrowserType {
     return browserContext;
   }
 
-  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
+  private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<BrowserServer> {
     const {
       ignoreDefaultArgs = false,
       args = [],
@@ -142,7 +145,7 @@ export class Firefox implements BrowserType {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const transport = new platform.WebSocketTransport(browserWSEndpoint);
+        const transport = await platform.WebSocketTransport.createAndConnect(browserWSEndpoint, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         await transport.send(JSON.stringify(message));
       },
@@ -155,13 +158,14 @@ export class Firefox implements BrowserType {
     const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Firefox!`);
     const match = await waitForLine(launchedProcess, launchedProcess.stdout, /^Juggler listening on (ws:\/\/.*)$/, timeout, timeoutError);
     const browserWSEndpoint = match[1];
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? browserWSEndpoint : null);
-    return { browserServer, transport: launchType === 'server' ? undefined : new platform.WebSocketTransport(browserWSEndpoint) };
+    browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
+    return browserServer;
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
-    const transport = new platform.WebSocketTransport(options.wsEndpoint);
-    return FFBrowser.connect(transport, options.slowMo);
+    return await platform.WebSocketTransport.createAndConnect(options.wsEndpoint, transport => {
+      return FFBrowser.connect(transport, options.slowMo);
+    });
   }
 
   executablePath(): string {

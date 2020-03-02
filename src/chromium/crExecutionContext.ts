@@ -72,25 +72,23 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
         throw new Error('Passed function is not well-serializable!');
       }
     }
-    let callFunctionOnPromise;
     try {
-      callFunctionOnPromise = this._client.send('Runtime.callFunctionOn', {
+      const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
         functionDeclaration: functionText + '\n' + suffix + '\n',
         executionContextId: this._contextId,
         arguments: args.map(convertArgument.bind(this)),
         returnByValue,
         awaitPromise: true,
         userGesture: true
-      });
+      }).catch(rewriteError);
+      if (exceptionDetails)
+        throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+      return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
     } catch (err) {
       if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
         err.message += ' Are you passing a nested JSHandle?';
       throw err;
     }
-    const { exceptionDetails, result: remoteObject } = await callFunctionOnPromise.catch(rewriteError);
-    if (exceptionDetails)
-      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
-    return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
 
     function convertArgument(arg: any): any {
       if (typeof arg === 'bigint') // eslint-disable-line valid-typeof

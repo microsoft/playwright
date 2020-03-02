@@ -140,7 +140,7 @@ export class CRSession extends platform.EventEmitter {
     this.once = super.once;
   }
 
-  send<T extends keyof Protocol.CommandParameters>(
+  async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {

@@ -22,20 +22,23 @@ import * as platform from './platform';
 const connect = {
   chromium: {
     connect: async (url: string) => {
-      const transport = new platform.WebSocketTransport(url);
-      return ChromiumBrowser.connect(transport);
+      return await platform.WebSocketTransport.createAndConnect(url, transport => {
+        return ChromiumBrowser.connect(transport);
+      });
     }
   },
   webkit: {
     connect: async (url: string) => {
-      const transport = new platform.WebSocketTransport(url);
-      return WebKitBrowser.connect(transport);
+      return await platform.WebSocketTransport.createAndConnect(url, transport => {
+        return WebKitBrowser.connect(transport);
+      });
     }
   },
   firefox: {
     connect: async (url: string) => {
-      const transport = new platform.WebSocketTransport(url);
-      return FirefoxBrowser.connect(transport);
+      return await platform.WebSocketTransport.createAndConnect(url, transport => {
+        return FirefoxBrowser.connect(transport);
+      });
     }
   }
 };
