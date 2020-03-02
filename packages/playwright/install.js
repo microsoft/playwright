@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 const {downloadBrowser} = require('playwright-core/download-browser');
+const playwright = require('.');
 (async function() {
-  await downloadBrowser('chromium');
-  await downloadBrowser('firefox');
-  await downloadBrowser('webkit');
+  await downloadBrowser(playwright.chromium);
+  await downloadBrowser(playwright.firefox);
+  await downloadBrowser(playwright.webkit);
 })();

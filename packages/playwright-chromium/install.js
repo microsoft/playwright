@@ -14,4 +14,5 @@
  * limitations under the License.
  */
 const {downloadBrowser} = require('playwright-core/download-browser');
-downloadBrowser('chromium');
+const playwright = require('.');
+downloadBrowser(playwright.chromium);

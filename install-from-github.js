@@ -25,36 +25,37 @@ try {
 } catch (e) {
 }
 const {downloadBrowser} = require('./download-browser');
+const playwright = require('.');
 
 (async function() {
   const protocolGenerator = require('./utils/protocol-types-generator');
   try {
-    const chromeRevision = await downloadAndCleanup('chromium');
+    const chromeRevision = await downloadAndCleanup(playwright.chromium);
     await protocolGenerator.generateChromiunProtocol(chromeRevision);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
-    const firefoxRevision = await downloadAndCleanup('firefox');
+    const firefoxRevision = await downloadAndCleanup(playwright.firefox);
     await protocolGenerator.generateFirefoxProtocol(firefoxRevision);
   } catch (e) {
     console.warn(e.message);
   }
 
   try {
-    const webkitRevision = await downloadAndCleanup('webkit');
+    const webkitRevision = await downloadAndCleanup(playwright.webkit);
     await protocolGenerator.generateWebKitProtocol(webkitRevision);
   } catch (e) {
     console.warn(e.message);
   }
 })();
 
-async function downloadAndCleanup(browser) {
-  const revisionInfo = await downloadBrowser(browser);
+async function downloadAndCleanup(browserType) {
+  const revisionInfo = await downloadBrowser(browserType);
 
   // Remove previous revisions.
-  const fetcher = require('.')[browser]._createBrowserFetcher();
+  const fetcher = browserType._createBrowserFetcher();
   const localRevisions = await fetcher.localRevisions();
   const cleanupOldVersions = localRevisions.filter(revision => revision !== revisionInfo.revision).map(revision => fetcher.remove(revision));
   await Promise.all([...cleanupOldVersions]);
