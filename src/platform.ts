@@ -315,15 +315,10 @@ export function makeWaitForNextTask() {
 // avoid missing incoming messages.
 export async function connectToWebsocket<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T>): Promise<T> {
   const transport = new WebSocketTransport(url);
-  let fulfill: (r: T) => void;
-  let reject: (e: Error) => void;
-  const result = new Promise<T>((f, r) => {
-    fulfill = f;
-    reject = r;
+  return new Promise<T>((fulfill, reject) => {
+    transport._ws.addEventListener('open', async () => fulfill(await onopen(transport)));
+    transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
   });
-  transport._ws.addEventListener('open', async () => fulfill(await onopen(transport)));
-  transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
-  return await result;
 }
 
 class WebSocketTransport implements ConnectionTransport {
