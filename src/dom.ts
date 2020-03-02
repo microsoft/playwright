@@ -242,7 +242,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!helper.isBoolean(waitFor))
       throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
     if (waitFor)
-      await this._waitForStablePosition(options);
+      await this._waitForDisplayedAtStablePosition(options);
     const offset = options ? options.offset : undefined;
     await this._scrollRectIntoViewIfNeeded(offset ? { x: offset.x, y: offset.y, width: 0, height: 0 } : undefined);
     const point = offset ? await this._offsetPoint(offset) : await this._clickablePoint();
@@ -389,11 +389,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _waitForStablePosition(options: types.TimeoutOptions = {}): Promise<void> {
+  async _waitForDisplayedAtStablePosition(options: types.TimeoutOptions = {}): Promise<void> {
     const stablePromise = this._evaluateInUtility((injected, node, timeout) => {
-      return injected.waitForStablePosition(node, timeout);
+      return injected.waitForDisplayedAtStablePosition(node, timeout);
     }, options.timeout || 0);
-    await helper.waitWithTimeout(stablePromise, 'element to stop moving', options.timeout || 0);
+    await helper.waitWithTimeout(stablePromise, 'element to be displayed and not moving', options.timeout || 0);
   }
 
   async _waitForHitTargetAt(point: types.Point, options: types.TimeoutOptions = {}): Promise<void> {
