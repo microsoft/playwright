@@ -68,14 +68,20 @@ class Injected {
     const parsed = this._parseSelector(selector);
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
-    let element = root as SelectorRoot;
-    for (const { engine, selector } of parsed) {
-      const next = engine.query((element as Element).shadowRoot || element, selector);
-      if (!next)
-        return;
-      element = next;
+    return this._querySelectorRecursively(root as SelectorRoot, parsed, 0);
+  }
+
+  private _querySelectorRecursively(root: SelectorRoot, parsed: ParsedSelector, index: number): Element | undefined {
+    const current = parsed[index];
+    root = (root as Element).shadowRoot || root;
+    if (index === parsed.length - 1)
+      return current.engine.query(root, current.selector);
+    const all = current.engine.queryAll(root, current.selector);
+    for (const next of all) {
+      const result = this._querySelectorRecursively(next, parsed, index + 1);
+      if (result)
+        return result;
     }
-    return element as Element;
   }
 
   querySelectorAll(selector: string, root: Node): Element[] {

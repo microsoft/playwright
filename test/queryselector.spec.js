@@ -126,6 +126,11 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const text4 = await page.$eval('xpath=/html/body/section/div >> css=div >> css=span', e => e.textContent);
       expect(text4).toBe('Hello from root2');
     });
+    it('should not stop at first failure with >> syntax', async({page, server}) => {
+      await page.setContent('<div><span>Next</span><button>Previous</button><button>Next</button></div>');
+      const html = await page.$eval('button >> "Next"', e => e.outerHTML);
+      expect(html).toBe('<button>Next</button>');
+    });
   });
 
   describe('Page.$$eval', function() {
