@@ -41,7 +41,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       await removeUserDataDir(userDataDir);
     });
     // see https://github.com/microsoft/playwright/issues/717
-    it.skip((WIN && CHROMIUM) || FFOX)('headless should be able to read cookies written by headful', async({server}) => {
+    it.fail((WIN && CHROMIUM) || FFOX)('headless should be able to read cookies written by headful', async({server}) => {
       const userDataDir = await makeUserDataDir();
       // Write a cookie in headful chrome
       const headfulContext = await playwright.launchPersistent(userDataDir, headfulOptions);
@@ -59,7 +59,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       await removeUserDataDir(userDataDir);
       expect(cookie).toBe('foo=true');
     });
-    it.skip(FFOX)('should close browser with beforeunload page', async({server}) => {
+    it.fail(FFOX)('should close browser with beforeunload page', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await playwright.launchPersistent(userDataDir, headfulOptions);
       const page = await browserContext.newPage();

@@ -231,7 +231,7 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       expect(responses[0].request()).toBeTruthy();
     });
 
-    it.skip(FFOX)('Page.Events.RequestFailed', async({page, server}) => {
+    it.fail(FFOX)('Page.Events.RequestFailed', async({page, server}) => {
       server.setRoute('/one-style.css', (req, res) => {
         req.socket.write('deadbeef');
         req.socket.end();

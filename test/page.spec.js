@@ -667,7 +667,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
 
     // Firefox fires onload for blocked script before it issues the CSP console error.
-    it.skip(FFOX)('should throw when added with content to the CSP page', async({page, server}) => {
+    it.fail(FFOX)('should throw when added with content to the CSP page', async({page, server}) => {
       await page.goto(server.PREFIX + '/csp.html');
       let error = null;
       await page.addScriptTag({ content: 'window.__injected = 35;' }).catch(e => error = e);

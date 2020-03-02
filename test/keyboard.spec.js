@@ -78,7 +78,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await page.keyboard.sendCharacters('a');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨a');
     });
-    it.skip(FFOX)('should report shiftKey', async({page, server}) => {
+    it.fail(FFOX)('should report shiftKey', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/keyboard.html');
       const keyboard = page.keyboard;
       const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
@@ -241,7 +241,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await textarea.type('👹 Tokyo street Japan 🇯🇵');
       expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
     });
-    it.skip(CHROMIUM && MAC)('should handle selectAll', async({page, server}) => {
+    it.fail(CHROMIUM && MAC)('should handle selectAll', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       const textarea = await page.$('textarea');
       await textarea.type('some text');
@@ -252,7 +252,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await page.keyboard.press('Backspace');
       expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
     });
-    it.skip(CHROMIUM && MAC)('should be able to prevent selectAll', async({page, server}) => {
+    it.fail(CHROMIUM && MAC)('should be able to prevent selectAll', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       const textarea = await page.$('textarea');
       await textarea.type('some text');

@@ -117,7 +117,7 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.evaluate(() => window.__FOO = 'hit');
       await watchdog;
     });
-    it.skip(FFOX)('should work with strict CSP policy', async({page, server}) => {
+    it.fail(FFOX)('should work with strict CSP policy', async({page, server}) => {
       server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
       await page.goto(server.EMPTY_PAGE);
       let error = null;
