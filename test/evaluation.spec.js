@@ -259,7 +259,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(result).toEqual([42]);
     });
     // Works in WebKit, but slow
-    it.skip(FFOX)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
+    it.fail(FFOX)('should transfer 100Mb of data from page to node.js', async({page, server}) => {
       const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
       expect(a.length).toBe(100 * 1024 * 1024);
     });
@@ -425,7 +425,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       const error = await page.evaluate(body => body.innerHTML, bodyHandle).catch(e => e);
       expect(error.message).toContain('Unable to adopt element handle from a different document');
     });
-    it.skip(FFOX)('should return non-empty Node.constructor.name in utility context', async({page,server}) => {
+    it.fail(FFOX)('should return non-empty Node.constructor.name in utility context', async({page,server}) => {
       await page.goto(server.EMPTY_PAGE);
       await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
       const frame = page.frames()[1];

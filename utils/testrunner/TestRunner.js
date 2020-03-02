@@ -72,13 +72,13 @@ const TestMode = {
   Run: 'run',
   Skip: 'skip',
   Focus: 'focus',
-  Fail: 'fail',
+  ExpectToFail: 'fail',
   Flake: 'flake'
 };
 
 const TestResult = {
   Ok: 'ok',
-  Skipped: 'skipped', // User skipped the test
+  ExpectToFail: 'skipped', // User marked as failed
   Failed: 'failed', // Exception happened during running
   TimedOut: 'timedout', // Timeout Exceeded while running
   Terminated: 'terminated', // Execution terminated
@@ -138,7 +138,7 @@ class TestPass {
       for (let suite = test.suite; suite; suite = suite.parentSuite)
         this._workerDistribution.set(suite, workerId);
       // Do not shard skipped tests across workers.
-      if (test.declaredMode !== TestMode.Skip)
+      if (test.declaredMode !== TestMode.ExpectToFail)
         workerId = (workerId + 1) % parallel;
     }
 
@@ -200,8 +200,8 @@ class TestPass {
     if (this._termination)
       return;
     this._runner._willStartTest(test, workerId);
-    if (test.declaredMode === TestMode.Skip) {
-      test.result = TestResult.Skipped;
+    if (test.declaredMode === TestMode.ExpectToFail) {
+      test.result = TestResult.ExpectToFail;
       this._runner._didFinishTest(test, workerId);
       return;
     }
@@ -296,7 +296,7 @@ function specBuilder(action) {
   };
   func.fail = condition => {
     if (condition)
-      mode = TestMode.Fail;
+      mode = TestMode.ExpectToFail;
     return func;
   };
   func.flake = condition => {
@@ -344,15 +344,13 @@ class TestRunner extends EventEmitter {
     this.it = specBuilder((mode, name, callback) => this._addTest(name, callback, mode, this._timeout));
     this.fit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Focus, this._timeout));
     this.xit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Skip, this._timeout));
-    
-    this._debuggerLogBreakpointLines = new Multimap();
-    this.dit = (name, callback) => {
+    this.dit = specBuilder((mode, name, callback) => {
       const test = this._addTest(name, callback, TestMode.Focus, INFINITE_TIMEOUT);
       const N = callback.toString().split('\n').length;
       for (let i = 0; i < N; ++i)
         this._debuggerLogBreakpointLines.set(test.location.filePath, i + test.location.lineNumber);
-    };
-    this.dit.skip = () => this.dit; // no-op;
+    });
+    this._debuggerLogBreakpointLines = new Multimap();
 
     this.beforeAll = this._addHook.bind(this, 'beforeAll');
     this.beforeEach = this._addHook.bind(this, 'beforeEach');
@@ -370,11 +368,15 @@ class TestRunner extends EventEmitter {
   }
 
   _addTest(name, callback, mode, timeout) {
+    if (mode === TestMode.Skip)
+      return;
     let suite = this._currentSuite;
-    let isSkipped = suite.declaredMode === TestMode.Skip;
+    let expectToFail = suite.declaredMode === TestMode.ExpectToFail;
     while ((suite = suite.parentSuite))
-      isSkipped |= suite.declaredMode === TestMode.Skip;
-    const test = new Test(this._currentSuite, name, callback, isSkipped ? TestMode.Skip : mode, timeout);
+      expectToFail |= suite.declaredMode === TestMode.ExpectToFail;
+    if (expectToFail)
+      mode = TestMode.ExpectToFail;
+    const test = new Test(this._currentSuite, name, callback, mode, timeout);
     this._currentSuite.children.push(test);
     this._tests.push(test);
     this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
@@ -382,11 +384,13 @@ class TestRunner extends EventEmitter {
   }
 
   _addSuite(mode, name, callback, ...args) {
+    if (mode === TestMode.Skip)
+      return;
     const oldSuite = this._currentSuite;
     const suite = new Suite(this._currentSuite, name, mode);
     this._currentSuite.children.push(suite);
     this._currentSuite = suite;
-    const result = callback(...args);
+    callback(...args);
     this._currentSuite = oldSuite;
     this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
   }

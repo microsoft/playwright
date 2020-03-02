@@ -89,7 +89,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
       await context.close();
     });
-    it.skip(FFOX)('should support landscape emulation', async({browser, server}) => {
+    it.fail(FFOX)('should support landscape emulation', async({browser, server}) => {
       const context1 = await browser.newContext({ viewport: iPhone.viewport });
       const page1 = await context1.newPage();
       await page1.goto(server.PREFIX + '/mobile.html');
@@ -100,7 +100,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context1.close();
       await context2.close();
     });
-    it.skip(FFOX || WEBKIT)('should fire orientationchange event', async({browser, server}) => {
+    it.fail(FFOX || WEBKIT)('should fire orientationchange event', async({browser, server}) => {
       const context = await browser.newContext({ viewport: { width: 300, height: 400, isMobile: true } });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
@@ -118,14 +118,14 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect((await event2).text()).toBe('2');
       await context.close();
     });
-    it.skip(FFOX)('default mobile viewports to 980 width', async({browser, server}) => {
+    it.fail(FFOX)('default mobile viewports to 980 width', async({browser, server}) => {
       const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/empty.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(980);
       await context.close();
     });
-    it.skip(FFOX)('respect meta viewport tag', async({browser, server}) => {
+    it.fail(FFOX)('respect meta viewport tag', async({browser, server}) => {
       const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
@@ -199,7 +199,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
       expect(error.message).toBe('Unsupported color scheme: bad');
     });
-    it.skip(FFOX)('should work during navigation', async({page, server}) => {
+    it.fail(FFOX)('should work during navigation', async({page, server}) => {
       await page.emulateMedia({ colorScheme: 'light' });
       const navigated = page.goto(server.EMPTY_PAGE);
       for (let i = 0; i < 9; i++) {
@@ -213,7 +213,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
   });
 
-  describe.skip(FFOX)('BrowserContext({timezoneId})', function() {
+  describe.fail(FFOX)('BrowserContext({timezoneId})', function() {
     it('should work', async ({ browser }) => {
       const func = () => new Date(1479579154987).toString();
       {
@@ -253,7 +253,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
   });
 
-  describe.skip(FFOX)('BrowserContext({locale})', function() {
+  describe.fail(FFOX)('BrowserContext({locale})', function() {
     it('should affect accept-language header', async({browser, server}) => {
       const context = await browser.newContext({ locale: 'fr-CH' });
       const page = await context.newPage();
@@ -307,7 +307,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
   });
 
   describe('focus', function() {
-    it.skip(!headless)('should think that it is focused by default', async({page}) => {
+    it.fail(!headless)('should think that it is focused by default', async({page}) => {
       expect(await page.evaluate('document.hasFocus()')).toBe(true);
     });
   });

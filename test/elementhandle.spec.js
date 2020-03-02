@@ -299,7 +299,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   });
 
   describe('ElementHandle.scrollIntoViewIfNeeded', function() {
-    it.skip(FFOX)('should work', async({page, server}) => {
+    it.fail(FFOX)('should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/offscreenbuttons.html');
       for (let i = 0; i < 11; ++i) {
         const button = await page.$('#btn' + i);

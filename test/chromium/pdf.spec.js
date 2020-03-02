@@ -26,7 +26,7 @@ module.exports.describe = function({testRunner, expect, headless, ASSETS_DIR}) {
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
 	// Printing to pdf is currently only supported in headless
-  describe.skip(!headless)('Page.pdf', function() {
+  describe.fail(!headless)('Page.pdf', function() {
     it('should be able to save file', async({page, server}) => {
       const outputFile = path.join(ASSETS_DIR, 'output.pdf');
       await page.pdf({path: outputFile});

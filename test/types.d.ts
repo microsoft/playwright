@@ -22,9 +22,9 @@ interface Expect<T> {
     not: Expect<T>;
 }
 
-type DescribeFunction = ((name: string, inner: () => void) => void) & {skip(condition: boolean): DescribeFunction};
+type DescribeFunction = ((name: string, inner: () => void) => void) & {fail(condition: boolean): DescribeFunction};
 
-type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {skip(condition: boolean): ItFunction<STATE>; repeat(n: number): ItFunction<STATE>};
+type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {fail(condition: boolean): ItFunction<STATE>; repeat(n: number): ItFunction<STATE>};
 
 type TestRunner<STATE> = {
     describe: DescribeFunction;

@@ -283,7 +283,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
       await removeUserDataDir(userDataDir);
     });
-    it.skip(FFOX)('userDataDir option should restore state', async({server}) => {
+    it.fail(FFOX)('userDataDir option should restore state', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();
@@ -309,7 +309,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await removeUserDataDir(userDataDir2);
     });
     // See https://github.com/microsoft/playwright/issues/717
-    it.skip(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
+    it.fail(FFOX || (WIN && CHROMIUM))('userDataDir option should restore cookies', async({server}) => {
       const userDataDir = await makeUserDataDir();
       const browserContext = await playwright.launchPersistent(userDataDir, defaultBrowserOptions);
       const page = await browserContext.newPage();

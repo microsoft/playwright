@@ -54,7 +54,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       expect(cookies.length).toBe(1);
       expect(cookies[0].httpOnly).toBe(true);
     });
-    it.skip(WEBKIT && !MAC)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
+    it.fail(WEBKIT && !MAC)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
         res.end();
@@ -64,7 +64,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       expect(cookies.length).toBe(1);
       expect(cookies[0].sameSite).toBe('Strict');
     });
-    it.skip(WEBKIT && !MAC)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
+    it.fail(WEBKIT && !MAC)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
         res.end();

@@ -26,7 +26,7 @@ module.exports.describe = function({testRunner, expect, WIN, WEBKIT}) {
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Capabilities', function() {
-    it.skip(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
+    it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
       await page.goto(server.PREFIX + '/wasm/table2.html');
       expect(await page.evaluate(() => loadTable())).toBe('42, 83');
     });

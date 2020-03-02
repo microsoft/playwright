@@ -117,7 +117,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
         expect(screenshots[i]).toBeGolden(`grid-cell-${i}.png`);
       await Promise.all(pages.map(page => page.close()));
     });
-    it.skip(FFOX)('should allow transparency', async({page, server}) => {
+    it.fail(FFOX)('should allow transparency', async({page, server}) => {
       await page.setViewportSize({ width: 50, height: 150 });
       await page.setContent(`
         <style>
@@ -156,7 +156,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       });
       expect(Buffer.from(screenshot, 'base64')).toBeGolden('screenshot-sanity.png');
     });
-    it.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
+    it.fail(FFOX)('should work with a mobile viewport', async({browser, server}) => {
       const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/overflow.html');
@@ -176,7 +176,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-translateZ.png');
     });
-    it.skip(FFOX || WEBKIT)('should work for webgl', async({page, server}) => {
+    it.fail(FFOX || WEBKIT)('should work for webgl', async({page, server}) => {
       await page.setViewportSize({width: 640, height: 480});
       await page.goto(server.PREFIX + '/screenshots/webgl.html');
       const screenshot = await page.screenshot();

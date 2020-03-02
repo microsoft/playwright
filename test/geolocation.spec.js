@@ -23,7 +23,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe.skip(FFOX)('Overrides.setGeolocation', function() {
+  describe.fail(FFOX)('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
       await context.setPermissions(server.PREFIX, ['geolocation']);
       await page.goto(server.EMPTY_PAGE);

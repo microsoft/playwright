@@ -326,7 +326,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 12 * 2 + 20 : 20);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 12 * 2 + 10 : 10);
     });
-    it.skip(FFOX)('should click a very large button with offset', async({page, server}) => {
+    it.fail(FFOX)('should click a very large button with offset', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => button.style.borderWidth = '8px');
       await page.$eval('button', button => button.style.height = button.style.width = '2000px');
@@ -336,7 +336,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
       expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
     });
-    it.skip(FFOX)('should click a button in scrolling container with offset', async({page, server}) => {
+    it.fail(FFOX)('should click a button in scrolling container with offset', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', button => {
         const container = document.createElement('div');
