@@ -23,7 +23,7 @@ import * as network from '../network';
 import { CRSession, CRConnection } from './crConnection';
 import { EVALUATION_SCRIPT_URL, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
-import { Page, Worker } from '../page';
+import { Page, Worker, PageBinding } from '../page';
 import { Protocol } from './protocol';
 import { Events } from '../events';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
@@ -120,6 +120,8 @@ export class CRPage implements PageDelegate {
     if (options.geolocation)
       promises.push(this._client.send('Emulation.setGeolocationOverride', options.geolocation));
     promises.push(this.updateExtraHTTPHeaders());
+    for (const binding of this._browserContext._pageBindings.values())
+      promises.push(this._initBinding(binding));
     for (const source of this._browserContext._evaluateOnNewDocumentSources)
       promises.push(this.evaluateOnNewDocument(source));
     await Promise.all(promises);
@@ -276,10 +278,16 @@ export class CRPage implements PageDelegate {
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
 
-  async exposeBinding(name: string, bindingFunction: string) {
-    await this._client.send('Runtime.addBinding', {name: name});
-    await this._client.send('Page.addScriptToEvaluateOnNewDocument', {source: bindingFunction});
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(bindingFunction).catch(debugError)));
+  async exposeBinding(binding: PageBinding) {
+    await this._initBinding(binding);
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(debugError)));
+  }
+
+  async _initBinding(binding: PageBinding) {
+    await Promise.all([
+      this._client.send('Runtime.addBinding', { name: binding.name }),
+      this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source })
+    ]);
   }
 
   _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {

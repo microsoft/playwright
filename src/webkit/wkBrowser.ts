@@ -19,7 +19,7 @@ import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
-import { Page, PageEvent } from '../page';
+import { Page, PageBinding, PageEvent } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { Events } from '../events';
@@ -187,6 +187,7 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
   readonly _timeoutSettings: TimeoutSettings;
   private _closed = false;
   readonly _evaluateOnNewDocumentSources: string[];
+  readonly _pageBindings = new Map<string, PageBinding>();
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: BrowserContextOptions) {
     super();
@@ -295,6 +296,19 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this._existingPages())
       await (page._delegate as WKPage)._updateBootstrapScript();
+  }
+
+  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
+    for (const page of this._existingPages()) {
+      if (page._pageBindings.has(name))
+        throw new Error(`Function "${name}" has been already registered in one of the pages`);
+    }
+    if (this._pageBindings.has(name))
+      throw new Error(`Function "${name}" has been already registered`);
+    const binding = new PageBinding(name, playwrightFunction);
+    this._pageBindings.set(name, binding);
+    for (const page of this._existingPages())
+      await (page._delegate as WKPage).exposeBinding(binding);
   }
 
   async close() {

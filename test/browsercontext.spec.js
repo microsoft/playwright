@@ -306,6 +306,48 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
+  describe('BrowserContext.exposeFunction', () => {
+    it.fail(CHROMIUM || FFOX)('should work', async({browser, server}) => {
+      const context = await browser.newContext();
+      await context.exposeFunction('add', (a, b) => a + b);
+      const page = await context.newPage();
+      await page.exposeFunction('mul', (a, b) => a * b);
+      const result = await page.evaluate(async function() {
+        return { mul: await mul(9, 4), add: await add(9, 4) };
+      });
+      expect(result).toEqual({ mul: 36, add: 13 });
+      await context.close();
+    });
+    it.fail(FFOX)('should throw for duplicate registrations', async({browser, server}) => {
+      const context = await browser.newContext();
+      await context.exposeFunction('foo', () => {});
+      await context.exposeFunction('bar', () => {});
+      let error = await context.exposeFunction('foo', () => {}).catch(e => e);
+      expect(error.message).toBe('Function "foo" has been already registered');
+      const page = await context.newPage();
+      error = await page.exposeFunction('foo', () => {}).catch(e => e);
+      expect(error.message).toBe('Function "foo" has been already registered in the browser context');
+      await page.exposeFunction('baz', () => {});
+      error = await context.exposeFunction('baz', () => {}).catch(e => e);
+      expect(error.message).toBe('Function "baz" has been already registered in one of the pages');
+      await context.close();
+    });
+    it.skip(FFOX)('should be callable from-inside addInitScript', async({browser, server}) => {
+      const context = await browser.newContext();
+      let args = [];
+      await context.exposeFunction('woof', function(arg) {
+        args.push(arg);
+      });
+      await context.addInitScript(() => woof('context'));
+      const page = await context.newPage();
+      await page.addInitScript(() => woof('page'));
+      args = [];
+      await page.reload();
+      expect(args).toEqual(['context', 'page']);
+      await context.close();
+    });
+  });
+
   describe('Events.BrowserContext.Page', function() {
     it('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();

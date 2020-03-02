@@ -274,7 +274,15 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.evaluate(() => { window.JSON.stringify = null; window.JSON = null; });
       const result = await page.evaluate(() => ({abc: 123}));
       expect(result).toEqual({abc: 123});
-    })
+    });
+    it.fail(WEBKIT)('should await promise from popup', async function({page, server}) {
+      await page.goto(server.EMPTY_PAGE);
+      const result = await page.evaluate(() => {
+        const win = window.open('about:blank');
+        return new win.Promise(f => f(42));
+      });
+      expect(result).toBe(42);
+    });
   });
 
   describe('Page.addInitScript', function() {

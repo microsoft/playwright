@@ -20,7 +20,7 @@ import { helper, RegisteredListener, debugError, assert } from '../helper';
 import * as dom from '../dom';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
-import { Page, PageDelegate, Worker } from '../page';
+import { Page, PageDelegate, Worker, PageBinding } from '../page';
 import { FFNetworkManager, headersArray } from './ffNetworkManager';
 import { Events } from '../events';
 import * as dialog from '../dialog';
@@ -233,10 +233,10 @@ export class FFPage implements PageDelegate {
     this._page._didCrash();
   }
 
-  async exposeBinding(name: string, bindingFunction: string): Promise<void> {
-    await this._session.send('Page.addBinding', {name: name});
-    await this._session.send('Page.addScriptToEvaluateOnNewDocument', {script: bindingFunction});
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(bindingFunction).catch(debugError)));
+  async exposeBinding(binding: PageBinding) {
+    await this._session.send('Page.addBinding', {name: binding.name});
+    await this._session.send('Page.addScriptToEvaluateOnNewDocument', {script: binding.source});
+    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(debugError)));
   }
 
   didClose() {

@@ -21,7 +21,7 @@ import { Events } from '../events';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
 import * as types from '../types';
-import { Page, PageEvent } from '../page';
+import { Page, PageEvent, PageBinding } from '../page';
 import { ConnectionEvents, FFConnection, FFSessionEvents, FFSession } from './ffConnection';
 import { FFPage } from './ffPage';
 import * as platform from '../platform';
@@ -265,6 +265,7 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
   readonly _timeoutSettings: TimeoutSettings;
   private _closed = false;
   private readonly _evaluateOnNewDocumentSources: string[];
+  readonly _pageBindings = new Map<string, PageBinding>();
 
   constructor(browser: FFBrowser, browserContextId: string | null, options: BrowserContextOptions) {
     super();
@@ -366,6 +367,18 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
     const source = await helper.evaluationScript(script, args);
     this._evaluateOnNewDocumentSources.push(source);
     await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
+  }
+
+  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
+    for (const page of this._existingPages()) {
+      if (page._pageBindings.has(name))
+        throw new Error(`Function "${name}" has been already registered in one of the pages`);
+    }
+    if (this._pageBindings.has(name))
+      throw new Error(`Function "${name}" has been already registered`);
+    const binding = new PageBinding(name, playwrightFunction);
+    this._pageBindings.set(name, binding);
+    throw new Error('Not implemented');
   }
 
   async close() {
