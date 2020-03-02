@@ -71,7 +71,9 @@ class UserCallback {
 const TestMode = {
   Run: 'run',
   Skip: 'skip',
-  Focus: 'focus'
+  Focus: 'focus',
+  Fail: 'fail',
+  Flake: 'flake'
 };
 
 const TestResult = {
@@ -276,6 +278,39 @@ class TestPass {
   }
 }
 
+function specBuilder(action) {
+  let mode = TestMode.Run;
+  let repeat = 1;
+
+  const func = (...args) => {
+    for (let i = 0; i < repeat; ++i)
+      action(mode, ...args);
+    mode = TestMode.Run;
+    repeat = 1;
+  };
+
+  func.skip = condition => {
+    if (condition)
+      mode = TestMode.Skip;
+    return func;
+  };
+  func.fail = condition => {
+    if (condition)
+      mode = TestMode.Fail;
+    return func;
+  };
+  func.flake = condition => {
+    if (condition)
+      mode = TestMode.Flake;
+    return func;
+  };
+  func.repeat = count => {
+    repeat = count;
+    return func;
+  };
+  return func;
+}
+
 class TestRunner extends EventEmitter {
   constructor(options = {}) {
     super();
@@ -303,41 +338,13 @@ class TestRunner extends EventEmitter {
       }
     }
 
-    const duplicateTest = (amount, mode, timeout) => {
-      return (name, callback) => {
-        for (let i = 0; i < amount; ++i)
-          this._addTest(name, callback, mode, timeout);
-      }
-    }
-
-    const duplicateSuite = (amount, mode) => {
-      return (name, callback, ...args) => {
-        for (let i = 0; i < amount; ++i)
-          this._addSuite(mode, name, callback, ...args);
-      }
-    }
-
-    // bind methods so that they can be used as a DSL.
-    this.describe = this._addSuite.bind(this, TestMode.Run);
-    this.describe.skip = condition => condition ? this.xdescribe : this.describe;
-    this.describe.repeat = number => duplicateSuite(number, TestMode.Run);
-    this.fdescribe = this._addSuite.bind(this, TestMode.Focus);
-    this.fdescribe.skip = () => this.fdescribe; // no-op
-    this.fdescribe.repeat = number => duplicateSuite(number, TestMode.Focus);
-    this.xdescribe = this._addSuite.bind(this, TestMode.Skip);
-    this.xdescribe.skip = () => this.xdescribe; // no-op
-    this.xdescribe.repeat = number => duplicateSuite(number, TestMode.Skip);
-
-    this.it = (name, callback) => void this._addTest(name, callback, TestMode.Run, this._timeout);
-    this.it.skip = condition => condition ? this.xit : this.it;
-    this.it.repeat = number => duplicateTest(number, TestMode.Run, this._timeout);
-    this.fit = (name, callback) => void this._addTest(name, callback, TestMode.Focus, this._timeout);
-    this.fit.skip = () => this.fit; // no-op
-    this.fit.repeat = number => duplicateTest(number, TestMode.Focus, this._timeout);
-    this.xit = (name, callback) => void this._addTest(name, callback, TestMode.Skip, this._timeout);
-    this.xit.skip = () => this.xit; // no-op
-    this.xit.repeat = number => duplicateTest(number, TestMode.Skip, this._timeout);
-
+    this.describe = specBuilder((mode, ...args) => this._addSuite(mode, ...args));
+    this.fdescribe = specBuilder((mode, ...args) => this._addSuite(TestMode.Focus, ...args));
+    this.xdescribe = specBuilder((mode, ...args) => this._addSuite(TestMode.Skip, ...args));
+    this.it = specBuilder((mode, name, callback) => this._addTest(name, callback, mode, this._timeout));
+    this.fit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Focus, this._timeout));
+    this.xit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Skip, this._timeout));
+    
     this._debuggerLogBreakpointLines = new Multimap();
     this.dit = (name, callback) => {
       const test = this._addTest(name, callback, TestMode.Focus, INFINITE_TIMEOUT);
