@@ -38,6 +38,16 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => window.innerWidth)).toBe(123);
       expect(await page.evaluate(() => window.innerHeight)).toBe(456);
     });
+    it('should not have touch by default', async({page, server}) => {
+      await page.goto(server.PREFIX + '/mobile.html');
+      expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
+      await page.goto(server.PREFIX + '/detect-touch.html');
+      expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
+    });
+  });
+
+  describe.skip(FFOX)('viewport.isMobile', () => {
+    // Firefox does not support isMobile.
     it('should support mobile emulation', async({browser, server}) => {
       const context = await browser.newContext({ viewport: iPhone.viewport });
       const page = await context.newPage();
@@ -46,12 +56,6 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await page.setViewportSize({width: 400, height: 300});
       expect(await page.evaluate(() => window.innerWidth)).toBe(400);
       await context.close();
-    });
-    it('should not have touch by default', async({page, server}) => {
-      await page.goto(server.PREFIX + '/mobile.html');
-      expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
-      await page.goto(server.PREFIX + '/detect-touch.html');
-      expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
     });
     it('should support touch emulation', async({browser, server}) => {
       const context = await browser.newContext({ viewport: iPhone.viewport });
@@ -89,7 +93,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => Modernizr.touchevents)).toBe(true);
       await context.close();
     });
-    it.fail(FFOX)('should support landscape emulation', async({browser, server}) => {
+    it('should support landscape emulation', async({browser, server}) => {
       const context1 = await browser.newContext({ viewport: iPhone.viewport });
       const page1 = await context1.newPage();
       await page1.goto(server.PREFIX + '/mobile.html');
@@ -100,7 +104,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       await context1.close();
       await context2.close();
     });
-    it.fail(FFOX || WEBKIT)('should fire orientationchange event', async({browser, server}) => {
+    it.fail(WEBKIT)('should fire orientationchange event', async({browser, server}) => {
       const context = await browser.newContext({ viewport: { width: 300, height: 400, isMobile: true } });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
@@ -118,14 +122,14 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect((await event2).text()).toBe('2');
       await context.close();
     });
-    it.fail(FFOX)('default mobile viewports to 980 width', async({browser, server}) => {
+    it('default mobile viewports to 980 width', async({browser, server}) => {
       const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/empty.html');
       expect(await page.evaluate(() => window.innerWidth)).toBe(980);
       await context.close();
     });
-    it.fail(FFOX)('respect meta viewport tag', async({browser, server}) => {
+    it('respect meta viewport tag', async({browser, server}) => {
       const context = await browser.newContext({ viewport: {width: 320, height: 480, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/mobile.html');
@@ -134,7 +138,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
     });
   });
 
-  describe('Page.emulate', function() {
+  describe.skip(FFOX)('Page.emulate', function() {
     it('should work', async({browser, server}) => {
       const context = await browser.newContext({viewport: iPhone.viewport, userAgent: iPhone.userAgent});
       const page = await context.newPage();

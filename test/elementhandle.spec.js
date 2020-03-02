@@ -68,7 +68,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       }, element);
       expect(pwBoundingBox).toEqual(webBoundingBox);
     });
-    it('should work with page scale', async({browser, server}) => {
+    it.skip(FFOX)('should work with page scale', async({browser, server}) => {
       const context = await browser.newContext({ viewport: { width: 400, height: 400, isMobile: true} });
       const page = await context.newPage();
       await page.goto(server.PREFIX + '/input/button.html');

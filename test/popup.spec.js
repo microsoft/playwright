@@ -61,7 +61,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(hasTouch).toBe(true);
     });
-    it.fail(CHROMIUM)('should inherit viewport size from browser context', async function({browser, server}) {
+    it.skip(FFOX).fail(CHROMIUM)('should inherit viewport size from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500 }
       });
