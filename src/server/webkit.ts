@@ -41,10 +41,12 @@ import { BrowserContext } from '../browserContext';
 
 export class WebKit implements BrowserType {
   private _downloadPath: string;
+  private _downloadHost: string;
   readonly _revision: string;
 
-  constructor(downloadPath: string, preferredRevision: string) {
+  constructor(downloadPath: string, downloadHost: (string|undefined), preferredRevision: string) {
     this._downloadPath = downloadPath;
+    this._downloadHost = downloadHost || 'https://playwright.azureedge.net';
     this._revision = preferredRevision;
   }
 
@@ -203,7 +205,7 @@ export class WebKit implements BrowserType {
 
     const defaultOptions = {
       path: path.join(this._downloadPath, '.local-webkit'),
-      host: 'https://playwright.azureedge.net',
+      host: this._downloadHost,
       platform: (() => {
         const platform = os.platform();
         if (platform === 'darwin')

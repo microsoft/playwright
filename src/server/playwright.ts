@@ -30,6 +30,12 @@ for (const className in api) {
     helper.installApiHooks(className[0].toLowerCase() + className.substring(1), (api as any)[className]);
 }
 
+type PlaywrightOptions = {
+  downloadPath: string,
+  browsers: Array<('firefox'|'webkit'|'chromium')>,
+  respectEnvironmentVariables: boolean,
+};
+
 export class Playwright {
   readonly selectors = api.Selectors._instance();
   readonly devices: types.Devices;
@@ -38,18 +44,27 @@ export class Playwright {
   readonly firefox: (Firefox|undefined);
   readonly webkit: (WebKit|undefined);
 
-  constructor(options: {downloadPath: string, browsers: Array<('firefox'|'webkit'|'chromium')>}) {
+  constructor(options: PlaywrightOptions) {
     const {
       downloadPath,
       browsers,
+      respectEnvironmentVariables,
     } = options;
     this.devices = DeviceDescriptors;
     this.errors = { TimeoutError };
+    const downloadHost = respectEnvironmentVariables ? getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') : undefined;
     if (browsers.includes('chromium'))
-      this.chromium = new Chromium(downloadPath, packageJSON.playwright.chromium_revision);
+      this.chromium = new Chromium(downloadPath, downloadHost, packageJSON.playwright.chromium_revision);
     if (browsers.includes('webkit'))
-      this.webkit = new WebKit(downloadPath, packageJSON.playwright.webkit_revision);
+      this.webkit = new WebKit(downloadPath, downloadHost, packageJSON.playwright.webkit_revision);
     if (browsers.includes('firefox'))
-      this.firefox = new Firefox(downloadPath, packageJSON.playwright.firefox_revision);
+      this.firefox = new Firefox(downloadPath, downloadHost, packageJSON.playwright.firefox_revision);
   }
+}
+
+function getFromENV(name: string): (string|undefined) {
+  let value = process.env[name];
+  value = value || process.env[`npm_config_${name.toLowerCase()}`];
+  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
+  return value;
 }

@@ -38,10 +38,12 @@ import { BrowserContext } from '../browserContext';
 
 export class Chromium implements BrowserType {
   private _downloadPath: string;
+  private _downloadHost: string;
   readonly _revision: string;
 
-  constructor(downloadPath: string, preferredRevision: string) {
+  constructor(downloadPath: string, downloadHost: (string|undefined), preferredRevision: string) {
     this._downloadPath = downloadPath;
+    this._downloadHost = downloadHost || 'https://storage.googleapis.com';
     this._revision = preferredRevision;
   }
 
@@ -221,7 +223,7 @@ export class Chromium implements BrowserType {
 
     const defaultOptions = {
       path: path.join(this._downloadPath, '.local-chromium'),
-      host: 'https://storage.googleapis.com',
+      host: this._downloadHost,
       platform: (() => {
         const platform = os.platform();
         if (platform === 'darwin')

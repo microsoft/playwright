@@ -31,6 +31,7 @@
 - [class: ChromiumTarget](#class-chromiumtarget)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: WebKitBrowser](#class-webkitbrowser)
+- [Environment Variables](#environment-variables)
 - [Working with selectors](#working-with-selectors)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
 <!-- GEN:stop -->
@@ -3847,6 +3848,16 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.newContext(options)](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
+
+### Environment Variables
+
+> **NOTE** [playwright-core](https://www.npmjs.com/package/playwright-core) **does not** respect environment variables.
+
+Playwright looks for certain [environment variables](https://en.wikipedia.org/wiki/Environment_variable) to aid its operations.
+If Playwright doesn't find them in the environment, a lowercased variant of these variables will be used from the [npm config](https://docs.npmjs.com/cli/config).
+
+- `PLAYWRIGHT_DOWNLOAD_HOST` - overwrite URL prefix that is used to download browsers. Note: this includes protocol and might even include path prefix. By default, Playwright uses `https://storage.googleapis.com` to download Chromium and `https://playwright.azureedge.net` to download Webkit & Firefox.
+
 
 ### Working with selectors
 
