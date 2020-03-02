@@ -62,7 +62,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       await removeUserDataDir(userDataDir);
     });
     // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
-    xit('OOPIF: should report google.com frame', async({server}) => {
+    it.fail(true)('OOPIF: should report google.com frame', async({server}) => {
       // https://google.com is isolated by default in Chromium embedder.
       const browser = await playwright.launch(headfulOptions);
       const page = await browser.newPage();

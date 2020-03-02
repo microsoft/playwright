@@ -27,7 +27,7 @@ module.exports.describe = function({testRunner, expect, WEBKIT}) {
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
-  describe.fail(WEBKIT)('Permissions', function() {
+  describe.skip(WEBKIT)('Permissions', function() {
     function getPermission(page, name) {
       return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
     }

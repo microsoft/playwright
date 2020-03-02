@@ -308,7 +308,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     // @see https://github.com/GoogleChrome/puppeteer/issues/4110
     // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
     // @see https://chromium-review.googlesource.com/c/chromium/src/+/1742784
-    xit('should click the button with fixed position inside an iframe', async({page, server}) => {
+    it.fail(true)('should click the button with fixed position inside an iframe', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setViewportSize({width: 500, height: 500});
       await page.setContent('<div style="width:100px;height:2000px">spacer</div>');
@@ -519,7 +519,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       await page.click('button');
       expect(await page.evaluate('window.clicked')).toBe(true);
     });
-    xit('should fail to click a button animated via CSS animations and setInterval', async({page}) => {
+    it.fail(true)('should fail to click a button animated via CSS animations and setInterval', async({page}) => {
       // This test has a setInterval that consistently animates a button.
       // It checks that we detect the button to be continuously animating, and never try to click it.
       // This test exposes two issues:

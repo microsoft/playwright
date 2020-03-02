@@ -41,7 +41,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await state.browser.close();
       state.browser = null;
     });
-    xit('should report oopif frames', async function({browser, page, server, context}) {
+    it.fail(true)('should report oopif frames', async function({browser, page, server, context}) {
       const browserSession = await browser.createBrowserSession();
       await browserSession.send('Target.setDiscoverTargets', { discover: true });
       const oopifs = [];
