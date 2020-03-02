@@ -652,7 +652,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(await page.evaluate(() => __injected)).toBe(42);
     });
 
-    (CHROMIUM || FFOX) && it('should include sourceURL when path is provided', async({page, server}) => {
+    it.skip(WEBKIT)('should include sourceURL when path is provided', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
       const result = await page.evaluate(() => __injectedError.stack);

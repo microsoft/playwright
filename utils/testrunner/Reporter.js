@@ -22,14 +22,14 @@ class Reporter {
   constructor(runner, options = {}) {
     const {
       showSlowTests = 3,
-      showSkippedTests = Infinity,
+      showMarkedAsFailingTests = Infinity,
       verbose = false,
       summary = true,
     } = options;
     this._filePathToLines = new Map();
     this._runner = runner;
     this._showSlowTests = showSlowTests;
-    this._showSkippedTests = showSkippedTests;
+    this._showMarkedAsFailingTests = showMarkedAsFailingTests;
     this._verbose = verbose;
     this._summary = summary;
     this._testCounter = 0;
@@ -110,16 +110,17 @@ class Reporter {
     }
 
     const skippedTests = this._runner.skippedTests();
-    if (this._showSkippedTests && this._summary && skippedTests.length) {
-      if (skippedTests.length > 0) {
-        console.log('\nSkipped:');
-        skippedTests.slice(0, this._showSkippedTests).forEach((test, index) => {
+    const markedAsFailingTests = this._runner.markedAsFailingTests();
+    if (this._showMarkedAsFailingTests && this._summary && markedAsFailingTests.length) {
+      if (markedAsFailingTests.length > 0) {
+        console.log('\nMarked as failing:');
+        markedAsFailingTests.slice(0, this._showMarkedAsFailingTests).forEach((test, index) => {
           console.log(`${index + 1}) ${test.fullName} (${formatLocation(test.location)})`);
         });
       }
-      if (this._showSkippedTests < skippedTests.length) {
+      if (this._showMarkedAsFailingTests < markedAsFailingTests.length) {
         console.log('');
-        console.log(`... and ${colors.yellow(skippedTests.length - this._showSkippedTests)} more skipped tests ...`);
+        console.log(`... and ${colors.yellow(markedAsFailingTests.length - this._showMarkedAsFailingTests)} more marked as failing tests ...`);
       }
     }
 
@@ -139,12 +140,14 @@ class Reporter {
 
     const tests = this._runner.tests();
     const executedTests = tests.filter(test => test.result);
-    const okTestsLength = executedTests.length - failedTests.length - skippedTests.length;
+    const okTestsLength = executedTests.length - failedTests.length - markedAsFailingTests.length - skippedTests.length;
     let summaryText = '';
-    if (failedTests.length || skippedTests.length) {
+    if (failedTests.length || markedAsFailingTests.length) {
       const summary = [`ok - ${colors.green(okTestsLength)}`];
       if (failedTests.length)
         summary.push(`failed - ${colors.red(failedTests.length)}`);
+      if (markedAsFailingTests.length)
+        summary.push(`marked as failing - ${colors.yellow(markedAsFailingTests.length)}`);
       if (skippedTests.length)
         summary.push(`skipped - ${colors.yellow(skippedTests.length)}`);
       summaryText = ` (${summary.join(', ')})`;
@@ -167,9 +170,11 @@ class Reporter {
       this._printVerboseTestResult(this._testCounter, test, workerId);
     } else {
       if (test.result === 'ok')
-        process.stdout.write(colors.green('.'));
+        process.stdout.write(colors.green('\u00B7'));
       else if (test.result === 'skipped')
-        process.stdout.write(colors.yellow('*'));
+        process.stdout.write(colors.yellow('\u00B7'));
+      else if (test.result === 'markedAsFailing')
+        process.stdout.write(colors.yellow('\u00D7'));
       else if (test.result === 'failed')
         process.stdout.write(colors.red('F'));
       else if (test.result === 'crashed')
@@ -192,7 +197,8 @@ class Reporter {
     } else if (test.result === 'crashed') {
       console.log(`${prefix} ${colors.red('[CRASHED]')} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'skipped') {
-      console.log(`${prefix} ${colors.yellow('[SKIP]')} ${test.fullName} (${formatLocation(test.location)})`);
+    } else if (test.result === 'markedAsFailing') {
+      console.log(`${prefix} ${colors.yellow('[MARKED AS FAILING]')} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'timedout') {
       console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout}ms]`)} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'failed') {

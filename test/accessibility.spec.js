@@ -140,7 +140,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
         expect(await page.accessibility.snapshot()).toEqual(golden);
       });
       // WebKit rich text accessibility is iffy
-      !WEBKIT && it('rich text editable fields should have children', async function({page}) {
+      it.skip(WEBKIT)('rich text editable fields should have children', async function({page}) {
         await page.setContent(`
         <div contenteditable="true">
           Edit this image: <img src="fakeimage.png" alt="my fake image">
@@ -171,7 +171,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
         expect(snapshot.children[0]).toEqual(golden);
       });
       // WebKit rich text accessibility is iffy
-      !WEBKIT && it('rich text editable fields with role should have children', async function({page}) {
+      it.skip(WEBKIT)('rich text editable fields with role should have children', async function({page}) {
         await page.setContent(`
         <div contenteditable="true" role='textbox'>
           Edit this image: <img src="fakeimage.png" alt="my fake image">
@@ -201,7 +201,7 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       });
       // Firefox does not support contenteditable="plaintext-only".
       // WebKit rich text accessibility is iffy
-      !FFOX && !WEBKIT && describe('plaintext contenteditable', function() {
+      describe.skip(FFOX || WEBKIT)('plaintext contenteditable', function() {
         it('plain text field with role should not have children', async function({page}) {
           await page.setContent(`
           <div contenteditable="plaintext-only" role='textbox'>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);

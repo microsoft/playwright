@@ -72,13 +72,14 @@ const TestMode = {
   Run: 'run',
   Skip: 'skip',
   Focus: 'focus',
-  ExpectToFail: 'fail',
+  MarkAsFailing: 'markAsFailing',
   Flake: 'flake'
 };
 
 const TestResult = {
   Ok: 'ok',
-  ExpectToFail: 'skipped', // User marked as failed
+  MarkedAsFailing: 'markedAsFailing', // User marked as failed
+  Skipped: 'skipped', // User marked as skipped
   Failed: 'failed', // Exception happened during running
   TimedOut: 'timedout', // Timeout Exceeded while running
   Terminated: 'terminated', // Execution terminated
@@ -138,7 +139,7 @@ class TestPass {
       for (let suite = test.suite; suite; suite = suite.parentSuite)
         this._workerDistribution.set(suite, workerId);
       // Do not shard skipped tests across workers.
-      if (test.declaredMode !== TestMode.ExpectToFail)
+      if (test.declaredMode !== TestMode.MarkAsFailing && test.declaredMode !== TestMode.Skip)
         workerId = (workerId + 1) % parallel;
     }
 
@@ -200,8 +201,13 @@ class TestPass {
     if (this._termination)
       return;
     this._runner._willStartTest(test, workerId);
-    if (test.declaredMode === TestMode.ExpectToFail) {
-      test.result = TestResult.ExpectToFail;
+    if (test.declaredMode === TestMode.MarkAsFailing) {
+      test.result = TestResult.MarkedAsFailing;
+      this._runner._didFinishTest(test, workerId);
+      return;
+    }
+    if (test.declaredMode === TestMode.Skip) {
+      test.result = TestResult.Skipped;
       this._runner._didFinishTest(test, workerId);
       return;
     }
@@ -296,7 +302,7 @@ function specBuilder(action) {
   };
   func.fail = condition => {
     if (condition)
-      mode = TestMode.ExpectToFail;
+      mode = TestMode.MarkAsFailing;
     return func;
   };
   func.flake = condition => {
@@ -368,14 +374,20 @@ class TestRunner extends EventEmitter {
   }
 
   _addTest(name, callback, mode, timeout) {
-    if (mode === TestMode.Skip)
-      return;
     let suite = this._currentSuite;
-    let expectToFail = suite.declaredMode === TestMode.ExpectToFail;
+    let markedAsFailing = suite.declaredMode === TestMode.MarkAsFailing;
     while ((suite = suite.parentSuite))
-      expectToFail |= suite.declaredMode === TestMode.ExpectToFail;
-    if (expectToFail)
-      mode = TestMode.ExpectToFail;
+      markedAsFailing |= suite.declaredMode === TestMode.MarkAsFailing;
+    if (markedAsFailing)
+      mode = TestMode.MarkAsFailing;
+
+    suite = this._currentSuite;
+    let skip = suite.declaredMode === TestMode.Skip;
+    while ((suite = suite.parentSuite))
+    skip |= suite.declaredMode === TestMode.Skip;
+    if (skip)
+      mode = TestMode.Skip;
+  
     const test = new Test(this._currentSuite, name, callback, mode, timeout);
     this._currentSuite.children.push(test);
     this._tests.push(test);
@@ -384,8 +396,6 @@ class TestRunner extends EventEmitter {
   }
 
   _addSuite(mode, name, callback, ...args) {
-    if (mode === TestMode.Skip)
-      return;
     const oldSuite = this._currentSuite;
     const suite = new Suite(this._currentSuite, name, mode);
     this._currentSuite.children.push(suite);
@@ -489,6 +499,10 @@ class TestRunner extends EventEmitter {
 
   skippedTests() {
     return this._tests.filter(test => test.result === 'skipped');
+  }
+
+  markedAsFailingTests() {
+    return this._tests.filter(test => test.result === 'markedAsFailing');
   }
 
   parallel() {

@@ -22,7 +22,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  (CHROMIUM || FFOX) && describe('Web SDK', function() {
+  describe('Web SDK', function() {
     beforeAll(async state => {
       state.controlledBrowserApp = await playwright.launchServer(defaultBrowserOptions);
       state.hostBrowser = await playwright.launch(defaultBrowserOptions);

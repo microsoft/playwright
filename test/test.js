@@ -125,7 +125,7 @@ new Reporter(testRunner, {
   verbose: process.argv.includes('--verbose'),
   summary: !process.argv.includes('--verbose'),
   showSlowTests: process.env.CI ? 5 : 0,
-  showSkippedTests: 10,
+  showMarkedAsFailingTests: 10,
 });
 
 // await utils.initializeFlakinessDashboardIfNeeded(testRunner);
