@@ -70,7 +70,8 @@ export class Chromium implements BrowserType {
     const { timeout = 30000 } = options || {};
     const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await CRBrowser.connect(transport!);
-    await helper.waitWithTimeout(browser._defaultContext.waitForTarget(t => t.type() === 'page'), 'first page', timeout);
+    const firstPage = new Promise(r => browser._defaultContext.once(Events.BrowserContext.PageEvent, r));
+    await helper.waitWithTimeout(firstPage, 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
     browserContext.close = () => browserServer.close();

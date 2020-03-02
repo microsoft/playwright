@@ -18,6 +18,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const util = require('util');
+const { makeUserDataDir, removeUserDataDir } = require('../utils');
 
 const rmAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -48,22 +49,17 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
   });
 
   describe('ChromiumHeadful', function() {
-    it('background_page target type should be available', async() => {
-      const browserWithExtension = await playwright.launch(extensionOptions);
-      const page = await browserWithExtension.newPage();
-      const backgroundPageTarget = await page.context().waitForTarget(target => target.type() === 'background_page');
-      await page.close();
-      await browserWithExtension.close();
-      expect(backgroundPageTarget).toBeTruthy();
-    });
-    it('target.page() should return a background_page', async({}) => {
-      const browserWithExtension = await playwright.launch(extensionOptions);
-      const page = await browserWithExtension.newPage();
-      const backgroundPageTarget = await page.context().waitForTarget(target => target.type() === 'background_page');
-      const backgroundPage = await backgroundPageTarget.page();
-      expect(await backgroundPage.evaluate(() => 2 * 3)).toBe(6);
-      expect(await backgroundPage.evaluate(() => window.MAGIC)).toBe(42);
-      await browserWithExtension.close();
+    it('Context.backgroundPages should return a background pages', async() => {
+      const userDataDir = await makeUserDataDir();
+      const context = await playwright.launchPersistent(userDataDir, extensionOptions);
+      const backgroundPages = await context.backgroundPages();
+      let backgroundPage = backgroundPages.length
+          ? backgroundPages[0]
+          : await new Promise(fulfill => context.once('backgroundpage', async event => fulfill(await event.page())));
+      expect(backgroundPage).toBeTruthy();
+      expect(await context.backgroundPages()).toContain(backgroundPage);
+      expect(await context.pages()).not.toContain(backgroundPage);
+      await removeUserDataDir(userDataDir);
     });
     // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
     xit('OOPIF: should report google.com frame', async({server}) => {
@@ -90,9 +86,15 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it('should open devtools when "devtools: true" option is given', async({server}) => {
       const browser = await playwright.launch(Object.assign({devtools: true}, headfulOptions));
       const context = await browser.newContext();
+      const browserSession = await browser.createBrowserSession();
+      await browserSession.send('Target.setDiscoverTargets', { discover: true });
+      const devtoolsPagePromise = new Promise(fulfill => browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+        if (targetInfo.type === 'other' && targetInfo.url.includes('devtools://'))
+           fulfill();
+      }));
       await Promise.all([
-        context.newPage(),
-        context.waitForTarget(target => target.url().includes('devtools://')),
+        devtoolsPagePromise,
+        context.newPage()
       ]);
       await browser.close();
     });

@@ -17,10 +17,10 @@
 
 import { Events } from './events';
 import { Events as CommonEvents } from '../events';
-import { assert, helper } from '../helper';
+import { assert, helper, debugError } from '../helper';
 import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
 import { CRConnection, ConnectionEvents, CRSession } from './crConnection';
-import { Page } from '../page';
+import { Page, PageEvent } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
@@ -92,8 +92,30 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     assert(!this._targets.has(event.targetInfo.targetId), 'Target should not exist before targetCreated');
     this._targets.set(event.targetInfo.targetId, target);
 
-    if (target._isInitialized || await target._initializedPromise)
-      context.emit(Events.CRBrowserContext.TargetCreated, target);
+    try {
+      switch (targetInfo.type) {
+        case 'page': {
+          const page = await target.page();
+          const event = new PageEvent(page!);
+          context.emit(CommonEvents.BrowserContext.PageEvent, event);
+          break;
+        }
+        case 'background_page': {
+          const page = await target.page();
+          const event = new PageEvent(page!);
+          context.emit(Events.CRBrowserContext.BackgroundPage, event);
+          break;
+        }
+        case 'service_worker': {
+          const serviceWorker = await target.serviceWorker();
+          context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
+          break;
+        }
+      }
+    } catch (e) {
+      // Do not dispatch the event if initialization failed.
+      debugError(e);
+    }
   }
 
   async _targetDestroyed(event: { targetId: string; }) {
@@ -101,18 +123,12 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     target._initializedCallback(false);
     this._targets.delete(event.targetId);
     target._didClose();
-    if (await target._initializedPromise)
-      target.context().emit(Events.CRBrowserContext.TargetDestroyed, target);
   }
 
   _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
     const target = this._targets.get(event.targetInfo.targetId)!;
     assert(target, 'target should exist before targetInfoChanged');
-    const previousURL = target.url();
-    const wasInitialized = target._isInitialized;
     target._targetInfoChanged(event.targetInfo);
-    if (wasInitialized && previousURL !== target.url())
-      target.context().emit(Events.CRBrowserContext.TargetChanged, target);
   }
 
   async _closePage(page: Page) {
@@ -130,8 +146,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     await disconnected;
   }
 
-  browserTarget(): CRTarget {
-    return [...this._targets.values()].find(t => t.type() === 'browser')!;
+  async createBrowserSession(): Promise<CRSession> {
+    return await this._connection.createBrowserSession();
   }
 
   async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
@@ -319,36 +335,14 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
     this.emit(CommonEvents.BrowserContext.Close);
   }
 
-  pageTarget(page: Page): CRTarget {
-    return CRTarget.fromPage(page);
+  async backgroundPages(): Promise<Page[]> {
+    const targets = this._browser._allTargets().filter(target => target.context() === this && target.type() === 'background_page');
+    const pages = await Promise.all(targets.map(target => target.page()));
+    return pages.filter(page => !!page) as Page[];
   }
 
-  targets(): CRTarget[] {
-    return this._browser._allTargets().filter(t => t.context() === this);
-  }
-
-  async waitForTarget(predicate: (arg0: CRTarget) => boolean, options: { timeout?: number; } = {}): Promise<CRTarget> {
-    const { timeout = 30000 } = options;
-    const existingTarget = this._browser._allTargets().find(predicate);
-    if (existingTarget)
-      return existingTarget;
-    let resolve: (target: CRTarget) => void;
-    const targetPromise = new Promise<CRTarget>(x => resolve = x);
-    this.on(Events.CRBrowserContext.TargetCreated, check);
-    this.on(Events.CRBrowserContext.TargetChanged, check);
-    try {
-      if (!timeout)
-        return await targetPromise;
-      return await helper.waitWithTimeout(targetPromise, 'target', timeout);
-    } finally {
-      this.removeListener(Events.CRBrowserContext.TargetCreated, check);
-      this.removeListener(Events.CRBrowserContext.TargetChanged, check);
-    }
-
-    function check(target: CRTarget) {
-      if (predicate(target))
-        resolve(target);
-    }
+  async createSession(page: Page): Promise<CRSession> {
+    return CRTarget.fromPage(page).sessionFactory();
   }
 
   _browserClosed() {

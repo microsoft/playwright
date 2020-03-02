@@ -9,6 +9,7 @@
 - [class: Browser](#class-browser)
 - [class: BrowserContext](#class-browsercontext)
 - [class: Page](#class-page)
+- [class: PageEvent](#class-pageevent)
 - [class: Frame](#class-frame)
 - [class: ElementHandle](#class-elementhandle)
 - [class: JSHandle](#class-jshandle)
@@ -28,7 +29,6 @@
 - [class: ChromiumBrowserContext](#class-chromiumbrowsercontext)
 - [class: ChromiumCoverage](#class-chromiumcoverage)
 - [class: ChromiumSession](#class-chromiumsession)
-- [class: ChromiumTarget](#class-chromiumtarget)
 - [class: FirefoxBrowser](#class-firefoxbrowser)
 - [class: WebKitBrowser](#class-webkitbrowser)
 - [Environment Variables](#environment-variables)
@@ -265,6 +265,7 @@ await context.close();
 
 <!-- GEN:toc -->
 - [event: 'close'](#event-close)
+- [event: 'page'](#event-page)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
@@ -286,6 +287,12 @@ Emitted when Browser context gets closed. This might happen because of one of th
 - Browser context is closed.
 - Browser application is closed or crashed.
 - The [`browser.close`](#browserclose) method was called.
+
+#### event: 'page'
+- <[PageEvent]>
+
+Emitted when a new Page is created in the BrowserContext. The event will also fire for popup
+pages.
 
 #### browserContext.addInitScript(script[, ...args])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in all pages in the browser context.
@@ -312,7 +319,6 @@ await browserContext.addInitScript(preloadFile);
 ```
 
 > **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args) and [page.addInitScript(script[, ...args])](#pageaddinitscriptscript-args) is not defined.
-
 #### browserContext.clearCookies()
 - returns: <[Promise]>
 
@@ -361,7 +367,8 @@ If URLs are specified, only cookies that affect those URLs are returned.
 Creates a new page in the browser context.
 
 #### browserContext.pages()
-- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [chromiumTarget.page()](#chromiumtargetpage).
+- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all open pages. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using
+[chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
 
 An array of all pages inside the browser context.
 
@@ -1662,6 +1669,13 @@ This method returns all of the dedicated [WebWorkers](https://developer.mozilla.
 
 > **NOTE** This does not contain ServiceWorkers
 
+### class: PageEvent
+
+Event object passed to the listeners of ['page'](#event-page) on [`BrowserContext`](#class-browsercontext). Provides access
+to the newly created page.
+
+#### pageEvent.page()
+- returns: <[Promise]<[Page]>> Promise which resolves to the created page.
 
 ### class: Frame
 
@@ -3556,7 +3570,7 @@ await browser.stopTracing();
 ```
 
 <!-- GEN:toc -->
-- [chromiumBrowser.browserTarget()](#chromiumbrowserbrowsertarget)
+- [chromiumBrowser.createBrowserSession()](#chromiumbrowsercreatebrowsersession)
 - [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
 - [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
 <!-- GEN:stop -->
@@ -3569,10 +3583,9 @@ await browser.stopTracing();
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
 
-#### chromiumBrowser.browserTarget()
-- returns: <[ChromiumTarget]>
-
-Returns browser target.
+#### chromiumBrowser.createBrowserSession()
+- returns: <[Promise]<[ChromiumSession]>> Promise that resolves to the newly created browser
+session.
 
 #### chromiumBrowser.startTracing(page, [options])
 - `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
@@ -3599,15 +3612,14 @@ const backgroundPage = await backroundPageTarget.page();
 ```
 
 <!-- GEN:toc -->
-- [event: 'targetchanged'](#event-targetchanged)
-- [event: 'targetcreated'](#event-targetcreated)
-- [event: 'targetdestroyed'](#event-targetdestroyed)
-- [chromiumBrowserContext.pageTarget(page)](#chromiumbrowsercontextpagetargetpage)
-- [chromiumBrowserContext.targets()](#chromiumbrowsercontexttargets)
-- [chromiumBrowserContext.waitForTarget(predicate[, options])](#chromiumbrowsercontextwaitfortargetpredicate-options)
+- [event: 'backgroundpage'](#event-backgroundpage)
+- [event: 'serviceworker'](#event-serviceworker)
+- [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages)
+- [chromiumBrowserContext.createSession(page)](#chromiumbrowsercontextcreatesessionpage)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-BrowserContext -->
 - [event: 'close'](#event-close)
+- [event: 'page'](#event-page)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
@@ -3623,50 +3635,24 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
 
-#### event: 'targetchanged'
-- <[ChromiumTarget]>
+#### event: 'backgroundpage'
+- <[PageEvent]>
 
-Emitted when the url of a target changes.
+Emitted when new background page is created in the context.
 
-> **NOTE** Only includes targets from this browser context.
+> **NOTE** Only works with persistent context.
 
+#### event: 'serviceworker'
+- <[Worker]>
 
-#### event: 'targetcreated'
-- <[ChromiumTarget]>
+Emitted when new service worker is created in the context.
 
-Emitted when a target is created, for example when a new page is opened by [`window.open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) or [`browserContext.newPage`](#browsercontextnewpage).
+#### chromiumBrowserContext.backgroundPages()
+- returns: <[Promise]<[Array]<[Page]>>> Promise which resolves to an array of all existing background pages in the context.
 
-> **NOTE** Only includes targets from this browser context.
-
-#### event: 'targetdestroyed'
-- <[ChromiumTarget]>
-
-Emitted when a target is destroyed, for example when a page is closed.
-
-> **NOTE** Only includes targets from this browser context.
-
-#### chromiumBrowserContext.pageTarget(page)
-- `page` <[Page]> Page to return target for.
-- returns: <[ChromiumTarget]> a target given page was created from.
-
-#### chromiumBrowserContext.targets()
-- returns: <[Array]<[ChromiumTarget]>>
-
-An array of all active targets inside the browser context.
-
-#### chromiumBrowserContext.waitForTarget(predicate[, options])
-- `predicate` <[function]\([ChromiumTarget]\):[boolean]> A function to be run for every target
-- `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds. Pass `0` to disable the timeout. Defaults to 30 seconds.
-- returns: <[Promise]<[ChromiumTarget]>> Promise which resolves to the first target found that matches the `predicate` function.
-
-This searches for a target in the browser context.
-
-An example of finding a target for a page opened via `window.open`:
-```js
-await page.evaluate(() => window.open('https://www.example.com/'));
-const newWindowTarget = await page.context().waitForTarget(target => target.url() === 'https://www.example.com/');
-```
+#### chromiumBrowserContext.createSession(page)
+- `page` <[Page]> Page to create new session for.
+- returns: <[Promise]<[ChromiumSession]>> Promise that resolves to the newly created session.
 
 ### class: ChromiumCoverage
 
@@ -3737,7 +3723,7 @@ reported.
 
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
-The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
+The `ChromiumSession` instances are used to talk raw Chrome Devtools Protocol:
 - protocol methods can be called with `session.send` method.
 - protocol events can be subscribed to with `session.on` method.
 
@@ -3746,7 +3732,7 @@ Useful links:
 - Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
 
 ```js
-const client = await chromium.pageTarget(page).createCDPSession();
+const client = await page.context().createSession(page);
 await client.send('Animation.enable');
 client.on('Animation.animationCreated', () => console.log('Animation created!'));
 const response = await client.send('Animation.getPlaybackRate');
@@ -3764,60 +3750,13 @@ await client.send('Animation.setPlaybackRate', {
 #### chromiumSession.detach()
 - returns: <[Promise]>
 
-Detaches the cdpSession from the target. Once detached, the cdpSession object won't emit any events and can't be used
+Detaches the chromiumSession from the target. Once detached, the chromiumSession object won't emit any events and can't be used
 to send messages.
 
 #### chromiumSession.send(method[, params])
 - `method` <[string]> protocol method name
 - `params` <[Object]> Optional method parameters
 - returns: <[Promise]<[Object]>>
-
-### class: ChromiumTarget
-
-
-<!-- GEN:toc -->
-- [chromiumTarget.context()](#chromiumtargetcontext)
-- [chromiumTarget.createCDPSession()](#chromiumtargetcreatecdpsession)
-- [chromiumTarget.opener()](#chromiumtargetopener)
-- [chromiumTarget.page()](#chromiumtargetpage)
-- [chromiumTarget.serviceWorker()](#chromiumtargetserviceworker)
-- [chromiumTarget.type()](#chromiumtargettype)
-- [chromiumTarget.url()](#chromiumtargeturl)
-<!-- GEN:stop -->
-
-#### chromiumTarget.context()
-
-- returns: <[BrowserContext]>
-
-The browser context the target belongs to.
-
-#### chromiumTarget.createCDPSession()
-- returns: <[Promise]<[CDPSession]>>
-
-Creates a Chrome Devtools Protocol session attached to the target.
-
-#### chromiumTarget.opener()
-- returns: <?[ChromiumTarget]>
-
-Get the target that opened this target. Top-level targets return `null`.
-
-#### chromiumTarget.page()
-- returns: <[Promise]<?[Page]>>
-
-If the target is not of type `"page"` or `"background_page"`, returns `null`.
-
-#### chromiumTarget.serviceWorker()
-- returns: <[Promise]<?[Worker]>>
-
-Attaches to the service worker target. If the target is not of type `"service_worker"`, returns `null`.
-
-#### chromiumTarget.type()
-- returns: <"page"|"background_page"|"service_worker"|"shared_worker"|"other"|"browser">
-
-Identifies what kind of target this is. Can be `"page"`, [`"background_page"`](https://developer.chrome.com/extensions/background_pages), `"service_worker"`, `"shared_worker"`, `"browser"` or `"other"`.
-
-#### chromiumTarget.url()
-- returns: <[string]>
 
 ### class: FirefoxBrowser
 
@@ -3908,18 +3847,18 @@ const { chromium } = require('playwright');
 
 (async () => {
   const pathToExtension = require('path').join(__dirname, 'my-extension');
-  const browser = await chromium.launch({
+  const userDataDir = '/tmp/test-user-data-dir';
+  const browserContext = await chromium.launchPersistent(userDataDir,{
     headless: false,
     args: [
       `--disable-extensions-except=${pathToExtension}`,
       `--load-extension=${pathToExtension}`
     ]
   });
-  const targets = await browser.targets();
-  const backgroundPageTarget = targets.find(target => target.type() === 'background_page');
-  const backgroundPage = await backgroundPageTarget.page();
+  const backgroundPages = await browserContext.backgroundPages();
+  const backgroundPage = backgroundPages[0];
   // Test the background page as you would any other page.
-  await browser.close();
+  await browserContext.close();
 })();
 ```
 
@@ -3939,7 +3878,6 @@ const { chromium } = require('playwright');
 [ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
 [ChromiumBrowserContext]: #class-chromiumbrowsercontext "ChromiumBrowserContext"
 [ChromiumSession]: #class-chromiumsession  "ChromiumSession"
-[ChromiumTarget]: #class-chromiumtarget "ChromiumTarget"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
 [Coverage]: #class-coverage "Coverage"
 [Dialog]: #class-dialog "Dialog"
@@ -3956,6 +3894,7 @@ const { chromium } = require('playwright');
 [Mouse]: #class-mouse "Mouse"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Page]: #class-page "Page"
+[PageEvent]: #class-page "PageEvent"
 [Playwright]: #class-playwright "Playwright"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
 [RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp

@@ -42,19 +42,29 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       state.browser = null;
     });
     xit('should report oopif frames', async function({browser, page, server, context}) {
+      const browserSession = await browser.createBrowserSession();
+      await browserSession.send('Target.setDiscoverTargets', { discover: true });
+      const oopifs = [];
+      browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+        if (targetInfo.type === 'iframe')
+           oopifs.push(targetInfo);
+      });
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs(page.context()).length).toBe(1);
+      expect(oopifs.length).toBe(1);
       expect(page.frames().length).toBe(2);
     });
     it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
       await page.route('*', request => request.continue());
+      const browserSession = await browser.createBrowserSession();
+      await browserSession.send('Target.setDiscoverTargets', { discover: true });
+      const oopifs = [];
+      browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+        if (targetInfo.type === 'iframe')
+           oopifs.push(targetInfo);
+      });
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs(page.context()).length).toBe(1);
+      expect(oopifs.length).toBe(1);
+      await browserSession.detach();
     });
   });
 };
-
-
-function oopifs(context) {
-  return context.targets().filter(target => target._targetInfo.type === 'iframe');
-}
