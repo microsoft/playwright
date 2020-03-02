@@ -14,4 +14,5 @@
  * limitations under the License.
  */
 const {downloadBrowser} = require('playwright-core/download-browser');
-downloadBrowser('webkit');
+const playwright = require('.');
+downloadBrowser(playwright.webkit);

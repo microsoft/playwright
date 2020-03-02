@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-async function downloadBrowser(browser) {
-  const browserType = require('.')[browser];
+async function downloadBrowser(browserType) {
+  const browser = browserType.name();
   let progressBar = null;
   let lastDownloadedBytes = 0;
   function onProgress(downloadedBytes, totalBytes) {
