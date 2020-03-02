@@ -68,7 +68,7 @@ export class FFConnection extends platform.EventEmitter {
     return this._sessions.get(sessionId) || null;
   }
 
-  send<T extends keyof Protocol.CommandParameters>(
+  async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
@@ -179,12 +179,12 @@ export class FFSession extends platform.EventEmitter {
     this.once = super.once;
   }
 
-  send<T extends keyof Protocol.CommandParameters>(
+  async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (this._disposed)
-      return Promise.reject(new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`));
+      throw new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`);
     const id = this._connection.nextMessageId();
     this._rawSend({method, params, id});
     return new Promise((resolve, reject) => {
