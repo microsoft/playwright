@@ -156,8 +156,9 @@ export class WebKit implements BrowserType {
   }
 
   async connect(options: ConnectOptions): Promise<WKBrowser> {
-    const transport = new platform.WebSocketTransport(options.wsEndpoint);
-    return WKBrowser.connect(transport, options.slowMo);
+    return await platform.connectToWebsocket(options.wsEndpoint, transport => {
+      return WKBrowser.connect(transport, options.slowMo);
+    });
   }
 
   executablePath(): string {
@@ -273,7 +274,7 @@ class SequenceNumberMixer<V> {
   }
 }
 
-async function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
+function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number) {
   const server = new ws.Server({ port });
   const guid = uuidv4();
   const idMixer = new SequenceNumberMixer<{id: number, socket: ws}>();

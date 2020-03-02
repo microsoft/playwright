@@ -72,22 +72,15 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
         throw new Error('Passed function is not well-serializable!');
       }
     }
-    let callFunctionOnPromise;
-    try {
-      callFunctionOnPromise = this._client.send('Runtime.callFunctionOn', {
-        functionDeclaration: functionText + '\n' + suffix + '\n',
-        executionContextId: this._contextId,
-        arguments: args.map(convertArgument.bind(this)),
-        returnByValue,
-        awaitPromise: true,
-        userGesture: true
-      });
-    } catch (err) {
-      if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
-        err.message += ' Are you passing a nested JSHandle?';
-      throw err;
-    }
-    const { exceptionDetails, result: remoteObject } = await callFunctionOnPromise.catch(rewriteError);
+
+    const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
+      functionDeclaration: functionText + '\n' + suffix + '\n',
+      executionContextId: this._contextId,
+      arguments: args.map(convertArgument.bind(this)),
+      returnByValue,
+      awaitPromise: true,
+      userGesture: true
+    }).catch(rewriteError);
     if (exceptionDetails)
       throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
     return returnByValue ? valueFromRemoteObject(remoteObject) : context._createHandle(remoteObject);
@@ -127,6 +120,8 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
       if (error.message.endsWith('Cannot find context with specified id') || error.message.endsWith('Inspected target navigated or closed') || error.message.endsWith('Execution context was destroyed.'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
+      if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
+        error.message += ' Are you passing a nested JSHandle?';
       throw error;
     }
   }

@@ -311,22 +311,27 @@ export function makeWaitForNextTask() {
   };
 }
 
-export class WebSocketTransport implements ConnectionTransport {
-  private _ws: WebSocket;
+// 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
+// avoid missing incoming messages.
+export async function connectToWebsocket<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T>): Promise<T> {
+  const transport = new WebSocketTransport(url);
+  return new Promise<T>((fulfill, reject) => {
+    transport._ws.addEventListener('open', async () => fulfill(await onopen(transport)));
+    transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
+  });
+}
+
+class WebSocketTransport implements ConnectionTransport {
+  _ws: WebSocket;
 
   onmessage?: (message: string) => void;
   onclose?: () => void;
-  private _connectPromise: Promise<(Error|null)>;
 
   constructor(url: string) {
     this._ws = (isNode ? new NodeWebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb
     }) : new WebSocket(url)) as WebSocket;
-    this._connectPromise = new Promise(fulfill => {
-      this._ws.addEventListener('open', () => fulfill(null));
-      this._ws.addEventListener('error', event => fulfill(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
-    });
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
     // are dispatched into separate tasks, so there's no need
@@ -348,10 +353,7 @@ export class WebSocketTransport implements ConnectionTransport {
     this._ws.addEventListener('error', () => {});
   }
 
-  async send(message: string) {
-    const error = await this._connectPromise;
-    if (error)
-      throw error;
+  send(message: string) {
     this._ws.send(message);
   }
 

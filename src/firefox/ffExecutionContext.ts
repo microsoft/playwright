@@ -79,20 +79,13 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
         return {unserializableValue: 'NaN'};
       return {value: arg};
     });
-    let callFunctionPromise;
-    try {
-      callFunctionPromise = this._session.send('Runtime.callFunction', {
-        functionDeclaration: functionText,
-        args: protocolArgs,
-        returnByValue,
-        executionContextId: this._executionContextId
-      });
-    } catch (err) {
-      if (err instanceof TypeError && err.message.startsWith('Converting circular structure to JSON'))
-        err.message += ' Are you passing a nested JSHandle?';
-      throw err;
-    }
-    const payload = await callFunctionPromise.catch(rewriteError);
+
+    const payload = await this._session.send('Runtime.callFunction', {
+      functionDeclaration: functionText,
+      args: protocolArgs,
+      returnByValue,
+      executionContextId: this._executionContextId
+    }).catch(rewriteError);
     checkException(payload.exceptionDetails);
     if (returnByValue)
       return deserializeValue(payload.result!);
@@ -103,6 +96,8 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
         return {result: {type: 'undefined', value: undefined}};
       if (error.message.includes('Failed to find execution context with id') || error.message.includes('Execution context was destroyed!'))
         throw new Error('Execution context was destroyed, most likely because of a navigation.');
+      if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
+        error.message += ' Are you passing a nested JSHandle?';
       throw error;
     }
   }
