@@ -311,26 +311,26 @@ export function makeWaitForNextTask() {
   };
 }
 
-export class WebSocketTransport implements ConnectionTransport {
-  private _ws: WebSocket;
+// 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
+// avoid missing incoming messages.
+export async function connectToWebsocket<T>(url: string, onopen: (transport: ConnectionTransport) => Promise<T>): Promise<T> {
+  const transport = new WebSocketTransport(url);
+  let fulfill: (r: T) => void;
+  let reject: (e: Error) => void;
+  const result = new Promise<T>((f, r) => {
+    fulfill = f;
+    reject = r;
+  });
+  transport._ws.addEventListener('open', async () => fulfill(await onopen(transport)));
+  transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
+  return await result;
+}
+
+class WebSocketTransport implements ConnectionTransport {
+  _ws: WebSocket;
 
   onmessage?: (message: string) => void;
   onclose?: () => void;
-
-  // 'onmessage' handler must be installed synchronously when 'onopen' callback is invoked to
-  // avoid missing incoming messages.
-  static async createAndConnect<T>(url: string, onopen: (transport: WebSocketTransport) => Promise<T>): Promise<T> {
-    const transport = new WebSocketTransport(url);
-    let fulfill: (r: T) => void;
-    let reject: (e: Error) => void;
-    const result = new Promise<T>((f, r) => {
-      fulfill = f;
-      reject = r;
-    });
-    transport._ws.addEventListener('open', async () => fulfill(await onopen(transport)));
-    transport._ws.addEventListener('error', event => reject(new Error('WebSocket error: ' + (event as ErrorEvent).message)));
-    return await result;
-  }
 
   constructor(url: string) {
     this._ws = (isNode ? new NodeWebSocket(url, [], {

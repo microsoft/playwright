@@ -62,7 +62,7 @@ export class Firefox implements BrowserType {
     if (options && (options as any).userDataDir)
       throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
     const browserServer = await this._launchServer(options, 'local');
-    const browser = await platform.WebSocketTransport.createAndConnect(browserServer.wsEndpoint()!, transport => {
+    const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, options && options.slowMo);
     });
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
@@ -78,7 +78,7 @@ export class Firefox implements BrowserType {
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
     const browserServer = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await platform.WebSocketTransport.createAndConnect(browserServer.wsEndpoint()!, transport => {
+    const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport);
     });
     await helper.waitWithTimeout(browser._waitForTarget(t => t.type() === 'page'), 'first page', timeout);
@@ -145,7 +145,7 @@ export class Firefox implements BrowserType {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const transport = await platform.WebSocketTransport.createAndConnect(browserWSEndpoint, async transport => transport);
+        const transport = await platform.connectToWebsocket(browserWSEndpoint, async transport => transport);
         const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
         await transport.send(JSON.stringify(message));
       },
@@ -163,7 +163,7 @@ export class Firefox implements BrowserType {
   }
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
-    return await platform.WebSocketTransport.createAndConnect(options.wsEndpoint, transport => {
+    return await platform.connectToWebsocket(options.wsEndpoint, transport => {
       return FFBrowser.connect(transport, options.slowMo);
     });
   }

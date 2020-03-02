@@ -158,8 +158,8 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       const error = await page.click('button', { waitFor: 'visible' }).catch(e => e);
       expect(error.message).toBe('waitFor option should be a boolean, got "string"');
     });
-    // The test is flaky: https://github.com/microsoft/playwright/issues/1180
     xit('should waitFor visible', async({page, server}) => {
+      // The test is flaky: https://github.com/microsoft/playwright/issues/1180
       let done = false;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
