@@ -22,7 +22,7 @@ export const Events = {
 
   BrowserContext: {
     Close: 'close',
-    PageEvent: 'page',
+    Page: 'page',
   },
 
   BrowserServer: {

@@ -17,9 +17,9 @@
 
 import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
-import { assert, helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
-import { Page } from '../page';
+import { Page, PageEvent } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { Events } from '../events';
@@ -102,13 +102,13 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   _onPageProxyCreated(event: Protocol.Browser.pageProxyCreatedPayload) {
     const { pageProxyInfo } = event;
     const pageProxyId = pageProxyInfo.pageProxyId;
-    let context = null;
+    let context: WKBrowserContext | null = null;
     if (pageProxyInfo.browserContextId) {
       // FIXME: we don't know about the default context id, so assume that all targets from
       // unknown contexts are created in the 'default' context which can in practice be represented
       // by multiple actual contexts in WebKit. Solving this properly will require adding context
       // lifecycle events.
-      context = this._contexts.get(pageProxyInfo.browserContextId);
+      context = this._contexts.get(pageProxyInfo.browserContextId) || null;
     }
     if (!context && !this._attachToDefaultContext)
       return;
@@ -125,6 +125,18 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       this._firstPageProxyCallback();
       this._firstPageProxyCallback = undefined;
     }
+
+    pageProxy.page().then(async page => {
+      if (!page)
+        return;
+      context!.emit(Events.BrowserContext.Page, new PageEvent(page));
+      if (!opener)
+        return;
+      const openerPage = await opener.page();
+      if (!openerPage || page.isClosed())
+        return;
+      openerPage.emit(Events.Page.Popup, page);
+    }).catch(debugError); // Just not emit the event in case of initialization failure.
   }
 
   _onPageProxyDestroyed(event: Protocol.Browser.pageProxyDestroyedPayload) {

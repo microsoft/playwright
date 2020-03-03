@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
+import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Page } from '../page';
 import { Protocol } from './protocol';
+import { WKBrowserContext } from './wkBrowser';
 import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { RegisteredListener, helper, assert, debugError } from '../helper';
-import { Events } from '../events';
-import { WKBrowserContext } from './wkBrowser';
 
 const isPovisionalSymbol = Symbol('isPovisional');
 
@@ -122,19 +121,12 @@ export class WKPageProxy {
         if (!this._pageProxySession.isDisposed())
           error = e;
       }
+      if (targetInfo.isPaused)
+        this._resumeTarget(targetInfo.targetId);
       if (error)
         this._pagePromiseReject(error);
       else
         this._pagePromiseFulfill(page);
-      if (targetInfo.isPaused)
-        this._resumeTarget(targetInfo.targetId);
-      if (page && this._opener) {
-        this._opener.page().then(openerPage => {
-          if (!openerPage || page!.isClosed())
-            return;
-          openerPage.emit(Events.Page.Popup, page);
-        });
-      }
     } else {
       assert(targetInfo.isProvisional);
       (session as any)[isPovisionalSymbol] = true;

@@ -21,7 +21,7 @@ import { Events } from '../events';
 import { assert, helper, RegisteredListener, debugError } from '../helper';
 import * as network from '../network';
 import * as types from '../types';
-import { Page } from '../page';
+import { Page, PageEvent } from '../page';
 import { ConnectionEvents, FFConnection, FFSessionEvents, FFSession } from './ffConnection';
 import { FFPage } from './ffPage';
 import * as platform from '../platform';
@@ -162,13 +162,16 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const {targetId} = payload.targetInfo;
     const target = this._targets.get(targetId)!;
     target._initPagePromise(this._connection.getSession(payload.sessionId)!);
+    const page = await target.page();
+    if (!page)
+      return;
+    target.context().emit(Events.BrowserContext.Page, new PageEvent(page));
+
     const opener = target.opener();
     if (opener && opener._pagePromise) {
       const openerPage = await opener._pagePromise;
-      if (openerPage.listenerCount(Events.Page.Popup)) {
-        const popupPage = await target.page();
-        openerPage.emit(Events.Page.Popup, popupPage);
-      }
+      if (openerPage.listenerCount(Events.Page.Popup))
+        openerPage.emit(Events.Page.Popup, page);
     }
   }
 
@@ -189,14 +192,14 @@ class Target {
   _pagePromise?: Promise<Page>;
   _ffPage: FFPage | null = null;
   private readonly _browser: FFBrowser;
-  private readonly _context: BrowserContext;
+  private readonly _context: FFBrowserContext;
   private readonly _connection: FFConnection;
   private readonly _targetId: string;
   private readonly _type: 'page' | 'browser';
   _url: string;
   private readonly _openerId: string | undefined;
 
-  constructor(connection: any, browser: FFBrowser, context: BrowserContext, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
+  constructor(connection: any, browser: FFBrowser, context: FFBrowserContext, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
     this._browser = browser;
     this._context = context;
     this._connection = connection;
@@ -223,7 +226,7 @@ class Target {
     return this._url;
   }
 
-  context(): BrowserContext {
+  context(): FFBrowserContext {
     return this._context;
   }
 
