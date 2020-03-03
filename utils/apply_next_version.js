@@ -1,3 +1,5 @@
+const {execSync} = require('child_process');
+
 const package = require('../package.json');
 let version = package.version;
 const dashIndex = version.indexOf('-');
