@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
+import { assert, debugError, helper, RegisteredListener } from '../helper';
 import { Page } from '../page';
 import { Protocol } from './protocol';
+import { WKBrowserContext } from './wkBrowser';
 import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { RegisteredListener, helper, assert, debugError } from '../helper';
-import { Events } from '../events';
-import { WKBrowserContext } from './wkBrowser';
 
 const isPovisionalSymbol = Symbol('isPovisional');
 
