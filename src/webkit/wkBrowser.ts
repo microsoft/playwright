@@ -129,7 +129,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     pageProxy.page().then(async page => {
       if (!page)
         return;
-      context!.emit(Events.BrowserContext.PageEvent, new PageEvent(page));
+      context!.emit(Events.BrowserContext.Page, new PageEvent(page));
       if (!opener)
         return;
       const openerPage = await opener.page();

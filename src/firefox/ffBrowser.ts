@@ -165,7 +165,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const page = await target.page();
     if (!page)
       return;
-    target.context().emit(Events.BrowserContext.PageEvent, new PageEvent(page));
+    target.context().emit(Events.BrowserContext.Page, new PageEvent(page));
 
     const opener = target.opener();
     if (opener && opener._pagePromise) {

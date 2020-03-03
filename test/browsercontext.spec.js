@@ -306,7 +306,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
-  describe('Events.BrowserContext.PageEvent', function() {
+  describe('Events.BrowserContext.Page', function() {
     it('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
