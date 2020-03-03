@@ -1,0 +1,26 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: aslushnikov/playwright
+    steps:
+      - checkout
+
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+
+      - run:
+          command: npm install
+
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - ./.local-chromium
+            - ./.local-firefox
+            - ./.local-webkit
+
+      - run:
+          command: |
+            xvfb-run --auto-servernum npm run ctest
+            xvfb-run --auto-servernum npm run ftest
+            xvfb-run --auto-servernum npm run wtest
