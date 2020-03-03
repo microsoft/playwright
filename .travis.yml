@@ -30,7 +30,8 @@ cache:
   directories:
   - node_modules
 script:
-- npm run lint
+- echo "debug"
+#- npm run lint
 #- xvfb-run --auto-servernum npm run ctest
 #- xvfb-run --auto-servernum npm run ftest
 #- xvfb-run --auto-servernum npm run wtest
