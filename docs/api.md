@@ -886,7 +886,7 @@ Get the browser context that the page belongs to.
 
 #### page.coverage
 
-- returns: <?[any]>
+- returns: <?[ChromiumCoverage]>
 
 Browser-specific Coverage implementation, only available for Chromium atm. See [ChromiumCoverage](#class-chromiumcoverage) for more details.
 
@@ -3877,9 +3877,9 @@ const { chromium } = require('playwright');
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
 [ChromiumBrowserContext]: #class-chromiumbrowsercontext "ChromiumBrowserContext"
+[ChromiumCoverage]: #class-chromiumcoverage "ChromiumCoverage"
 [ChromiumSession]: #class-chromiumsession  "ChromiumSession"
 [ConsoleMessage]: #class-consolemessage "ConsoleMessage"
-[Coverage]: #class-coverage "Coverage"
 [Dialog]: #class-dialog "Dialog"
 [ElementHandle]: #class-elementhandle "ElementHandle"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
