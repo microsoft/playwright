@@ -38,6 +38,11 @@ jobs:
   include:
   - node_js: '12'
 
-after_success:
+before_deploy:
   - node utils/apply_next_version.js
-  - ./utils/publish_all_packages.sh --tip-of-tree
+
+deploy:
+  provider: script
+  script: utils/publish_all_packages.sh --tip-of-tree
+  on:
+    branch: master

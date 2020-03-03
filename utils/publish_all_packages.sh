@@ -20,11 +20,6 @@ if [[ $# < 1 ]]; then
   exit 1
 fi
 
-if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]]; then
-  echo "ERROR: Cannot publish from branch '$(git rev-parse --abbrev-ref HEAD)' - it has to be 'master'"
-  exit 1
-fi
-
 if ! command -v npm >/dev/null; then
   echo "ERROR: NPM is not found"
   exit 1
