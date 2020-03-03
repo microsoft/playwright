@@ -37,50 +37,7 @@ script:
 jobs:
   include:
   - node_js: '12'
-after_success: npm run apply-next-version
-deploy:
-  - provider: npm
-    src: "."
-    edge: true
-    email: aslushnikov@gmail.com
-    on:
-      branch: master
-    tag: next
-    api_token:
-      secure: MzswBGmhSf8AR47qvqEfwWLvMx7+UDLXL0CeTXdHi7gRg6XPQjnUf5xtV9+3WEsCrsUFa0rFYNKLQ8M2Qmubc1/UltnVQubF00/ImIW6gMRQn5wyE0CPKb+DPdSj892wh0LwCXzaUr3e7NdDRcOSRlvyIuPwhVZLeua5Z01CcIKQ/DCFguXrrgURB73hrrM77CdcPW3Fjy3SKo2tilBM0LX8KdJFxPqBTNA0CZwUdSGDyvyG6Z2+/RdMTh7appRdydKbvNVfAfNMo0vYPAwb7V+Exmxox2d/XKq0KeZusn20g17rZRndha9NPx/vGQrROz8FjSZh0kyqLfvxYCkh0qa7sj+DHOrxZnXSoFp5mTq7zm25GP7lp+MRzcEx2gGhpwu6j2n6XeFA1EuDtjDneLqGunK1UZA49ooQEfZoQHqtgoYV19VizG0kB3Lv8SAr/8zGZNofOWHaGCEGrof5WIC2HUJNurqXqVU5r/UUOy6eW941W0FNidbDZUvTbcI33dUlvvss7kDs4lHEBT4Hw/6Uusb2RLE69RgvNj83OaJ+F8V8e88ge4weYKhlcftlNS05UTSZiZQySXjiXyzYLZiZLTjO5T4zBITSAIP9mTdgfTYTPqApskzZZ1Yn5h35YcP8nopkO0WtKfAiZRV3/i/n/OdM+w8yYH6XBfQ4Gdk=
-  - provider: npm
-    src: "packages/playwright-firefox"
-    edge: true
-    email: aslushnikov@gmail.com
-    on:
-      branch: master
-    tag: next
-    api_token:
-      secure: MzswBGmhSf8AR47qvqEfwWLvMx7+UDLXL0CeTXdHi7gRg6XPQjnUf5xtV9+3WEsCrsUFa0rFYNKLQ8M2Qmubc1/UltnVQubF00/ImIW6gMRQn5wyE0CPKb+DPdSj892wh0LwCXzaUr3e7NdDRcOSRlvyIuPwhVZLeua5Z01CcIKQ/DCFguXrrgURB73hrrM77CdcPW3Fjy3SKo2tilBM0LX8KdJFxPqBTNA0CZwUdSGDyvyG6Z2+/RdMTh7appRdydKbvNVfAfNMo0vYPAwb7V+Exmxox2d/XKq0KeZusn20g17rZRndha9NPx/vGQrROz8FjSZh0kyqLfvxYCkh0qa7sj+DHOrxZnXSoFp5mTq7zm25GP7lp+MRzcEx2gGhpwu6j2n6XeFA1EuDtjDneLqGunK1UZA49ooQEfZoQHqtgoYV19VizG0kB3Lv8SAr/8zGZNofOWHaGCEGrof5WIC2HUJNurqXqVU5r/UUOy6eW941W0FNidbDZUvTbcI33dUlvvss7kDs4lHEBT4Hw/6Uusb2RLE69RgvNj83OaJ+F8V8e88ge4weYKhlcftlNS05UTSZiZQySXjiXyzYLZiZLTjO5T4zBITSAIP9mTdgfTYTPqApskzZZ1Yn5h35YcP8nopkO0WtKfAiZRV3/i/n/OdM+w8yYH6XBfQ4Gdk=
-  - provider: npm
-    src: "packages/playwright-chromium"
-    edge: true
-    email: aslushnikov@gmail.com
-    on:
-      branch: master
-    tag: next
-    api_token:
-      secure: MzswBGmhSf8AR47qvqEfwWLvMx7+UDLXL0CeTXdHi7gRg6XPQjnUf5xtV9+3WEsCrsUFa0rFYNKLQ8M2Qmubc1/UltnVQubF00/ImIW6gMRQn5wyE0CPKb+DPdSj892wh0LwCXzaUr3e7NdDRcOSRlvyIuPwhVZLeua5Z01CcIKQ/DCFguXrrgURB73hrrM77CdcPW3Fjy3SKo2tilBM0LX8KdJFxPqBTNA0CZwUdSGDyvyG6Z2+/RdMTh7appRdydKbvNVfAfNMo0vYPAwb7V+Exmxox2d/XKq0KeZusn20g17rZRndha9NPx/vGQrROz8FjSZh0kyqLfvxYCkh0qa7sj+DHOrxZnXSoFp5mTq7zm25GP7lp+MRzcEx2gGhpwu6j2n6XeFA1EuDtjDneLqGunK1UZA49ooQEfZoQHqtgoYV19VizG0kB3Lv8SAr/8zGZNofOWHaGCEGrof5WIC2HUJNurqXqVU5r/UUOy6eW941W0FNidbDZUvTbcI33dUlvvss7kDs4lHEBT4Hw/6Uusb2RLE69RgvNj83OaJ+F8V8e88ge4weYKhlcftlNS05UTSZiZQySXjiXyzYLZiZLTjO5T4zBITSAIP9mTdgfTYTPqApskzZZ1Yn5h35YcP8nopkO0WtKfAiZRV3/i/n/OdM+w8yYH6XBfQ4Gdk=
-  - provider: npm
-    src: "packages/playwright-webkit"
-    edge: true
-    email: aslushnikov@gmail.com
-    on:
-      branch: master
-    tag: next
-    api_token:
-      secure: MzswBGmhSf8AR47qvqEfwWLvMx7+UDLXL0CeTXdHi7gRg6XPQjnUf5xtV9+3WEsCrsUFa0rFYNKLQ8M2Qmubc1/UltnVQubF00/ImIW6gMRQn5wyE0CPKb+DPdSj892wh0LwCXzaUr3e7NdDRcOSRlvyIuPwhVZLeua5Z01CcIKQ/DCFguXrrgURB73hrrM77CdcPW3Fjy3SKo2tilBM0LX8KdJFxPqBTNA0CZwUdSGDyvyG6Z2+/RdMTh7appRdydKbvNVfAfNMo0vYPAwb7V+Exmxox2d/XKq0KeZusn20g17rZRndha9NPx/vGQrROz8FjSZh0kyqLfvxYCkh0qa7sj+DHOrxZnXSoFp5mTq7zm25GP7lp+MRzcEx2gGhpwu6j2n6XeFA1EuDtjDneLqGunK1UZA49ooQEfZoQHqtgoYV19VizG0kB3Lv8SAr/8zGZNofOWHaGCEGrof5WIC2HUJNurqXqVU5r/UUOy6eW941W0FNidbDZUvTbcI33dUlvvss7kDs4lHEBT4Hw/6Uusb2RLE69RgvNj83OaJ+F8V8e88ge4weYKhlcftlNS05UTSZiZQySXjiXyzYLZiZLTjO5T4zBITSAIP9mTdgfTYTPqApskzZZ1Yn5h35YcP8nopkO0WtKfAiZRV3/i/n/OdM+w8yYH6XBfQ4Gdk=
-  - provider: npm
-    src: "packages/playwright"
-    edge: true
-    email: aslushnikov@gmail.com
-    on:
-      branch: master
-    tag: next
-    api_token:
-      secure: MzswBGmhSf8AR47qvqEfwWLvMx7+UDLXL0CeTXdHi7gRg6XPQjnUf5xtV9+3WEsCrsUFa0rFYNKLQ8M2Qmubc1/UltnVQubF00/ImIW6gMRQn5wyE0CPKb+DPdSj892wh0LwCXzaUr3e7NdDRcOSRlvyIuPwhVZLeua5Z01CcIKQ/DCFguXrrgURB73hrrM77CdcPW3Fjy3SKo2tilBM0LX8KdJFxPqBTNA0CZwUdSGDyvyG6Z2+/RdMTh7appRdydKbvNVfAfNMo0vYPAwb7V+Exmxox2d/XKq0KeZusn20g17rZRndha9NPx/vGQrROz8FjSZh0kyqLfvxYCkh0qa7sj+DHOrxZnXSoFp5mTq7zm25GP7lp+MRzcEx2gGhpwu6j2n6XeFA1EuDtjDneLqGunK1UZA49ooQEfZoQHqtgoYV19VizG0kB3Lv8SAr/8zGZNofOWHaGCEGrof5WIC2HUJNurqXqVU5r/UUOy6eW941W0FNidbDZUvTbcI33dUlvvss7kDs4lHEBT4Hw/6Uusb2RLE69RgvNj83OaJ+F8V8e88ge4weYKhlcftlNS05UTSZiZQySXjiXyzYLZiZLTjO5T4zBITSAIP9mTdgfTYTPqApskzZZ1Yn5h35YcP8nopkO0WtKfAiZRV3/i/n/OdM+w8yYH6XBfQ4Gdk=
+
+after_success:
+  - node utils/apply_next_version.js
+  - ./utils/publish_all_packages.sh --tip-of-tree
