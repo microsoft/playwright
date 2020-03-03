@@ -7287,7 +7287,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..79f3ff84327dc075ec96983e04db4b10
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
-index 1ee28bf716374371433215148aa20a51927a8a33..4441b7ca96e4ec349609c8be06a69ea53c55f4ce 100644
+index 1ee28bf716374371433215148aa20a51927a8a33..a41732eb550bc4079ae14d2cbd2c3b082e1fda73 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 @@ -26,10 +26,16 @@
@@ -7559,7 +7559,7 @@ index 1ee28bf716374371433215148aa20a51927a8a33..4441b7ca96e4ec349609c8be06a69ea5
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -218,4 +389,16 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -218,4 +389,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -7573,6 +7573,10 @@ index 1ee28bf716374371433215148aa20a51927a8a33..4441b7ca96e4ec349609c8be06a69ea5
 +    // Navigation to cached pages doesn't fire some of the events (e.g. execution context created)
 +    // that inspector depends on. So we disable the cache when front-end connects.
 +    m_page.preferences().setUsesBackForwardCache(false);
++
++    // Enable popup debugging.
++    // TODO: allow to set preferences over the inspector protocol or find a better place for this.
++    m_page.preferences().setJavaScriptCanOpenWindowsAutomatically(true);
 +}
 +
  } // namespace WebKit
