@@ -60,8 +60,8 @@ if [[ $1 == "--release" ]]; then
   fi
   VERSION=$(node -e 'console.log(require("./package.json").version)')
   echo -n "Publish Playwright v${VERSION} (y/n)? "
-  read answer
-  if [ "$answer" != "${answer#[Yy]}" ] ;then
+  read ANSWER
+  if [[ "$ANSWER" != "y" ]]; then
     echo "Bailing out."
     exit 1
   fi
@@ -72,6 +72,7 @@ if [[ $1 == "--release" ]]; then
   npm publish packages/playwright-webkit
   npm publish packages/playwright-chromium
   npm publish packages/playwright
+  echo "Done."
 elif [[ $1 == "--tip-of-tree" ]]; then
   if [[ -z $CI ]]; then
     echo "Did not find \$CI env - cannot publish tip-of-tree release not from CI"
@@ -83,6 +84,7 @@ elif [[ $1 == "--tip-of-tree" ]]; then
   npm publish packages/playwright-webkit --tag="next"
   npm publish packages/playwright-chromium --tag="next"
   npm publish packages/playwright --tag="next"
+  echo "Done."
 else
   echo "unknown argument - '$1'"
   exit 1
