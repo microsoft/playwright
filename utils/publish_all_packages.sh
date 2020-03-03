@@ -59,7 +59,7 @@ if [[ $1 == "--release" ]]; then
     exit 1
   fi
   VERSION=$(node -e 'console.log(require("./package.json").version)')
-  echo -n "Publish Playwright v${VERSION} (y/n)? "
+  echo -n "Publish Playwright v${VERSION} (y/N)? "
   read ANSWER
   if [[ "$ANSWER" != "y" ]]; then
     echo "Bailing out."
