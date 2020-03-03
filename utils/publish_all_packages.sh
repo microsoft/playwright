@@ -25,7 +25,7 @@ if ! command -v npm >/dev/null; then
   exit 1
 fi
 
-if [[ (-n $CI) && (-n $NPM_AUTH_TOKEN) && (! -f $HOME/.npmrc) ]]; then
+if [[ (-n $CI) && (-n $NPM_AUTH_TOKEN) ]]; then
   echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > $HOME/.npmrc
 fi
 
