@@ -181,4 +181,5 @@ Playwright is being actively developed as we get to the feature parity across Ch
 ## Resources
 
 * [API documentation](docs/api.md)
+* [Getting started on CI](docs/ci.md)
 * [Community showcase](docs/showcase.md)
