@@ -383,10 +383,10 @@ index 1eb7abb2fa21d7a8ec0833160f53e5c523ec4317..7709bcc2ec69aab0589ca1b954db1fb2
      FrontendChannel::ConnectionType connectionType() const;
 diff --git a/Source/JavaScriptCore/inspector/protocol/Browser.json b/Source/JavaScriptCore/inspector/protocol/Browser.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..0f9b1c8950b8f5631ddfd8180a851d1ecea4c475
+index 0000000000000000000000000000000000000000..d4f5cbc813facbd8036c0be46304e4a607cbcb79
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Browser.json
-@@ -0,0 +1,210 @@
+@@ -0,0 +1,211 @@
 +{
 +    "domain": "Browser",
 +    "availability": ["web"],
@@ -476,6 +476,7 @@ index 0000000000000000000000000000000000000000..0f9b1c8950b8f5631ddfd8180a851d1e
 +        },
 +        {
 +            "name": "deleteContext",
++            "async": true,
 +            "description": "Deletes browser context previously created with createContect. The command will automatically close all pages that use the context.",
 +            "parameters": [
 +                { "name": "browserContextId", "$ref": "ContextID", "description": "Identifier of the context to delete." }
@@ -7694,10 +7695,10 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..42070f8b1969caa0d00863279fcefe01
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f119a3bcf90af6d3183a4079a4a3b06a6b75cabc
+index 0000000000000000000000000000000000000000..28221673d566aff5e6e839d36ef9c83d244291ba
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,526 @@
+@@ -0,0 +1,587 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7799,6 +7800,55 @@ index 0000000000000000000000000000000000000000..f119a3bcf90af6d3183a4079a4a3b06a
 +
 +}  // namespace
 +
++Vector<WebPageProxy*> BrowserContext::pages() const {
++    Vector<WebPageProxy*> pages;
++    for (auto& process : processPool->processes()) {
++        for (auto* page : process->pages())
++            pages.append(page);
++    }
++    return pages;
++}
++
++class InspectorBrowserAgent::BrowserContextDeletion {
++    WTF_MAKE_NONCOPYABLE(BrowserContextDeletion);
++    WTF_MAKE_FAST_ALLOCATED;
++public:
++    BrowserContextDeletion(const BrowserContext& context, size_t numberOfPages, Ref<DeleteContextCallback>&& callback)
++        : m_browserContext(context)
++        , m_numberOfPages(numberOfPages)
++        , m_callback(WTFMove(callback)) { }
++
++    void willDestroyPage(const WebPageProxy& page)
++    {
++        ASSERT(m_browserContext.dataStore->sessionID() == page.sessionID());
++        // Check if new pages have been created during the context destruction and
++        // close all of them if necessary.
++        if (m_numberOfPages == 1) {
++            Vector<WebPageProxy*> pages = m_browserContext.pages();
++            size_t numberOfPages = pages.size();
++            if (numberOfPages > 1) {
++                m_numberOfPages = numberOfPages;
++                for (auto* existingPage : pages) {
++                    if (existingPage != &page)
++                        existingPage->closePage();
++                }
++            }
++        }
++        --m_numberOfPages;
++        if (m_numberOfPages)
++            return;
++        m_callback->sendSuccess();
++    }
++
++    bool isFinished() const { return !m_numberOfPages; }
++
++private:
++    BrowserContext m_browserContext;
++    size_t m_numberOfPages;
++    Ref<DeleteContextCallback> m_callback;
++};
++
++
 +InspectorBrowserAgent::InspectorBrowserAgent(Inspector::FrontendRouter& frontendRouter, Inspector::BackendDispatcher& backendDispatcher, InspectorBrowserAgentClient* client, PageProxyIDMap& pageProxyIDMap)
 +    : InspectorAgentBase("Browser"_s)
 +    , m_frontendDispatcher(makeUnique<BrowserFrontendDispatcher>(frontendRouter))
@@ -7818,8 +7868,18 @@ index 0000000000000000000000000000000000000000..f119a3bcf90af6d3183a4079a4a3b06a
 +
 +void InspectorBrowserAgent::willDestroyWebPageProxy(const WebPageProxy& page)
 +{
-+    if (m_isConnected)
-+        m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
++    if (!m_isConnected)
++        return;
++
++    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
++
++    auto it = m_browserContextDeletions.find(page.sessionID());
++    if (it == m_browserContextDeletions.end())
++        return;
++
++    it->value->willDestroyPage(page);
++    if (it->value->isFinished())
++        m_browserContextDeletions.remove(it);
 +}
 +
 +void InspectorBrowserAgent::didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*)
@@ -7838,6 +7898,7 @@ index 0000000000000000000000000000000000000000..f119a3bcf90af6d3183a4079a4a3b06a
 +void InspectorBrowserAgent::willDestroyFrontendAndBackend(DisconnectReason)
 +{
 +    m_isConnected = false;
++    m_browserContextDeletions.clear();
 +}
 +
 +void InspectorBrowserAgent::close(Ref<CloseCallback>&& callback)
@@ -7885,24 +7946,25 @@ index 0000000000000000000000000000000000000000..f119a3bcf90af6d3183a4079a4a3b06a
 +    m_browserContexts.set(*browserContextID, browserContext);
 +}
 +
-+void InspectorBrowserAgent::deleteContext(ErrorString& errorString, const String& browserContextID)
++void InspectorBrowserAgent::deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback)
 +{
++    String errorString;
 +    BrowserContext browserContext = lookupBrowserContext(errorString, &browserContextID);
-+    if (!errorString.isEmpty())
++    if (!errorString.isEmpty()) {
++        callback->sendFailure(errorString);
 +        return;
-+
-+    Vector<WebPageProxy*> pages;
-+    for (auto& process : browserContext.processPool->processes()) {
-+        for (auto* page : process->pages())
-+            pages.append(page);
 +    }
++
++    Vector<WebPageProxy*> pages = browserContext.pages();
++    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
++
++    m_browserContexts.remove(browserContextID);
++    m_browserContextDeletions.set(sessionID, makeUnique<BrowserContextDeletion>(browserContext, pages.size(), WTFMove(callback)));
 +
 +    for (auto* page : pages)
 +        page->closePage();
 +
-+    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
 +    m_client->deleteBrowserContext(errorString, sessionID);
-+    m_browserContexts.remove(browserContextID);
 +}
 +
 +void InspectorBrowserAgent::createPage(ErrorString& errorString, const String* browserContextID, String* pageProxyID)
@@ -8226,10 +8288,10 @@ index 0000000000000000000000000000000000000000..f119a3bcf90af6d3183a4079a4a3b06a
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.h b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..ad8f3d99f45fa6284738c62fe813330b2c208c92
+index 0000000000000000000000000000000000000000..56ecacafe2d97971880f77913c40ec32393e1997
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.h
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,116 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8310,7 +8372,7 @@ index 0000000000000000000000000000000000000000..ad8f3d99f45fa6284738c62fe813330b
 +    // BrowserBackendDispatcherHandler
 +    void close(Ref<CloseCallback>&&) override;
 +    void createContext(Inspector::ErrorString&, String* browserContextID) override;
-+    void deleteContext(Inspector::ErrorString&, const String& browserContextID) override;
++    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
 +    void createPage(Inspector::ErrorString&, const String* browserContextID, String* pageProxyID) override;
 +    void navigate(const String& url, const String& pageProxyID, const String* frameId, const String* referrer, Ref<NavigateCallback>&&) override;
 +    void setIgnoreCertificateErrors(Inspector::ErrorString&, const String* browserContextID, bool ignore) override;
@@ -8328,6 +8390,7 @@ index 0000000000000000000000000000000000000000..ad8f3d99f45fa6284738c62fe813330b
 +    static String toPageProxyIDProtocolString(const WebPageProxy&);
 +
 +private:
++    class BrowserContextDeletion;
 +    BrowserContext lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
 +    WebFrameProxy* frameForID(const String& frameID, String& error);
 +
@@ -8338,6 +8401,7 @@ index 0000000000000000000000000000000000000000..ad8f3d99f45fa6284738c62fe813330b
 +    using Permissions = HashMap<String, HashSet<String>>;
 +    HashMap<String, Permissions> m_permissions;
 +    HashMap<String, BrowserContext> m_browserContexts;
++    HashMap<PAL::SessionID, std::unique_ptr<BrowserContextDeletion>> m_browserContextDeletions;
 +    bool m_isConnected { false };
 +};
 +
@@ -8346,10 +8410,10 @@ index 0000000000000000000000000000000000000000..ad8f3d99f45fa6284738c62fe813330b
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..21f8cc9bffd8f2d4a88764a4eafa13f367aa1e7c
+index 0000000000000000000000000000000000000000..199295c91249d0c400589249feaa2ed24ee35f19
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgentClient.h
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,56 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8389,6 +8453,7 @@ index 0000000000000000000000000000000000000000..21f8cc9bffd8f2d4a88764a4eafa13f3
 +class WebProcessPool;
 +
 +struct BrowserContext {
++    Vector<WebPageProxy*> pages() const;
 +    RefPtr<WebsiteDataStore> dataStore;
 +    RefPtr<WebProcessPool> processPool;
 +};
