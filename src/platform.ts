@@ -234,9 +234,9 @@ export function urlMatches(urlString: string, match: types.URLMatch | undefined)
   return match(url);
 }
 
-export function pngToJpeg(buffer: Buffer): Buffer {
+export function pngToJpeg(buffer: Buffer, quality?: number): Buffer {
   assert(isNode, 'Converting from png to jpeg is only supported in Node.js');
-  return jpeg.encode(png.PNG.sync.read(buffer)).data;
+  return jpeg.encode(png.PNG.sync.read(buffer), quality).data;
 }
 
 function nodeFetch(url: string): Promise<string> {

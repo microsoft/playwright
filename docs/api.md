@@ -1298,18 +1298,18 @@ await browser.close();
 #### page.screenshot([options])
 - `options` <[Object]> Options object which might have the following properties:
   - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the image won't be saved to the disk.
-  - `type` <"png"|"jpeg"> Specify screenshot type, defaults to 'png'.
+  - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
-  - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page. Defaults to `false`.
-  - `clip` <[Object]> An object which specifies clipping region of the page. Should have the following fields:
+  - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visibvle viewport. Defaults to `false`.
+  - `clip` <[Object]> An object which specifies clipping of the resulting image. Should have the following fields:
     - `x` <[number]> x-coordinate of top-left corner of clip area
     - `y` <[number]> y-coordinate of top-left corner of clip area
     - `width` <[number]> width of clipping area
     - `height` <[number]> height of clipping area
-  - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Defaults to `false`.
+  - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
 - returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with the captured screenshot.
 
-> **NOTE** Screenshots take at least 1/6 second on OS X. See https://crbug.com/741689 for discussion.
+> **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for discussion.
 
 #### page.select(selector, value, options)
 - `selector` <[string]> A selector to query frame for.
@@ -2483,13 +2483,12 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 #### elementHandle.screenshot([options])
 - `options` <[Object]> Screenshot options.
   - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the image won't be saved to the disk.
-  - `type` <"png"|"jpeg"> Specify screenshot type, defaults to 'png'.
+  - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
-  - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Defaults to `false`.
+  - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
 - returns: <[Promise]<|[Buffer]>> Promise which resolves to buffer with the captured screenshot.
 
-This method scrolls element into view if needed, and then uses [page.screenshot](#pagescreenshotoptions) to take a screenshot of the element.
-If the element is detached from DOM, the method throws an error.
+This method scrolls element into view if needed before taking a screenshot. If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.scrollIntoViewIfNeeded()
 - returns: <[Promise]> Resolves after the element has been scrolled into view.

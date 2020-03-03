@@ -317,15 +317,6 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.close', { runBeforeUnload });
   }
 
-  async getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
-    const frameId = handle._context.frame._id;
-    const response = await this._session.send('Page.getBoundingBox', {
-      frameId,
-      objectId: handle._remoteObject.objectId,
-    });
-    return response.boundingBox;
-  }
-
   canScreenshotOutsideViewport(): boolean {
     return true;
   }
@@ -335,11 +326,22 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
+  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<platform.BufferType> {
+    if (!documentRect) {
+      const context = await this._page.mainFrame()._utilityContext();
+      const scrollOffset = await context.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+      documentRect = {
+        x: viewportRect!.x + scrollOffset.x,
+        y: viewportRect!.y + scrollOffset.y,
+        width: viewportRect!.width,
+        height: viewportRect!.height,
+      };
+    }
+    // TODO: remove fullPage option from Page.screenshot.
+    // TODO: remove Page.getBoundingBox method.
     const { data } = await this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
-      fullPage: options.fullPage,
-      clip: options.clip,
+      clip: documentRect,
     }).catch(e => {
       if (e instanceof Error && e.message.includes('document.documentElement is null'))
         e.message = kScreenshotDuringNavigationError;
@@ -349,7 +351,7 @@ export class FFPage implements PageDelegate {
   }
 
   async resetViewport(): Promise<void> {
-    await this._session.send('Page.setViewportSize', { viewportSize: null });
+    assert(false, 'Should not be called');
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

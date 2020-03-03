@@ -17,6 +17,7 @@
 
 import { TimeoutError } from './errors';
 import * as platform from './platform';
+import * as types from './types';
 
 export const debugError = platform.debug(`pw:error`);
 
@@ -265,6 +266,18 @@ class Helper {
     const leftHalf = maxLength >> 1;
     const rightHalf = maxLength - leftHalf - 1;
     return string.substr(0, leftHalf) + '\u2026' + string.substr(this.length - rightHalf, rightHalf);
+  }
+
+  static enclosingIntRect(rect: types.Rect): types.Rect {
+    const x = Math.floor(rect.x + 1e-3);
+    const y = Math.floor(rect.y + 1e-3);
+    const x2 = Math.ceil(rect.x + rect.width - 1e-3);
+    const y2 = Math.ceil(rect.y + rect.height - 1e-3);
+    return { x, y, width: x2 - x, height: y2 - y };
+  }
+
+  static enclosingIntSize(size: types.Size): types.Size {
+    return { width: Math.floor(size.width + 1e-3), height: Math.floor(size.height + 1e-3) };
   }
 }
 
