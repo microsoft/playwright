@@ -359,13 +359,13 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
         page.evaluate(url => window.open(url), server.PREFIX + '/one-style.html'),
         server.waitForRequest('/one-style.css')
       ]);
-      // Connect to the opened page.
-      expect(newPage.url()).toBe(server.PREFIX + '/one-style.html');
       // Issue a redirect.
       serverResponse.writeHead(302, { location: '/injectedstyle.css' });
       serverResponse.end();
       // Wait for the new page to load.
       await newPage.waitForLoadState();
+      // Connect to the opened page.
+      expect(newPage.url()).toBe(server.PREFIX + '/one-style.html');
       // Cleanup.
       await context.close();
     });
