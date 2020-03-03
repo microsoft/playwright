@@ -366,7 +366,7 @@ class Injected {
     throw new Error('Not a checkbox');
   }
 
-  waitForDisplayedAtStablePosition(node: Node, timeout: number) {
+  async waitForDisplayedAtStablePosition(node: Node, timeout: number) {
     if (!node.isConnected)
       throw new Error('Element is not attached to the DOM');
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
@@ -375,7 +375,7 @@ class Injected {
 
     let lastRect: types.Rect | undefined;
     let counter = 0;
-    return this.poll('raf', undefined, timeout, () => {
+    const result = await this.poll('raf', undefined, timeout, () => {
       // First raf happens in the same animation frame as evaluation, so it does not produce
       // any client rect difference compared to synchronous call. We skip the synchronous call
       // and only force layout during actual rafs as a small optimisation.
@@ -387,18 +387,22 @@ class Injected {
       lastRect = rect;
       return isDisplayedAndStable;
     });
+    if (!result)
+      throw new Error(`waiting for element to be displayed and not moving failed: timeout ${timeout}ms exceeded`);
   }
 
-  waitForHitTargetAt(node: Node, timeout: number, point: types.Point) {
+  async waitForHitTargetAt(node: Node, timeout: number, point: types.Point) {
     const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element)
       throw new Error('Element is not attached to the DOM');
-    return this.poll('raf', undefined, timeout, () => {
+    const result = await this.poll('raf', undefined, timeout, () => {
       let hitElement = this.utils.deepElementFromPoint(document, point.x, point.y);
       while (hitElement && hitElement !== element)
         hitElement = this.utils.parentElementOrShadowHost(hitElement);
       return hitElement === element;
     });
+    if (!result)
+      throw new Error(`waiting for element to receive mouse events failed: timeout ${timeout}ms exceeded`);
   }
 }
 
