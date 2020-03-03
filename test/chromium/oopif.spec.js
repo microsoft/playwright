@@ -22,6 +22,10 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
+  const headfulOptions = Object.assign({}, defaultBrowserOptions, {
+    headless: false
+  });
+
   describe('OOPIF', function() {
     beforeAll(async function(state) {
       state.browser = await playwright.launch(Object.assign({}, defaultBrowserOptions, {
@@ -54,7 +58,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(page.frames().length).toBe(2);
     });
     it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
-      await page.route('*', request => request.continue());
+      await page.route('**/*', request => request.continue());
       const browserSession = await browser.createBrowserSession();
       await browserSession.send('Target.setDiscoverTargets', { discover: true });
       const oopifs = [];
@@ -65,6 +69,29 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
       expect(oopifs.length).toBe(1);
       await browserSession.detach();
+    });
+    it.fail(true)('should report google.com frame with headful', async({server}) => {
+      // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
+      // https://google.com is isolated by default in Chromium embedder.
+      const browser = await playwright.launch(headfulOptions);
+      const page = await browser.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.route('**/*', request => {
+        request.fulfill({body: 'YO, GOOGLE.COM'});
+      });
+      await page.evaluate(() => {
+        const frame = document.createElement('iframe');
+        frame.setAttribute('src', 'https://google.com/');
+        document.body.appendChild(frame);
+        return new Promise(x => frame.onload = x);
+      });
+      await page.waitForSelector('iframe[src="https://google.com/"]');
+      const urls = page.frames().map(frame => frame.url()).sort();
+      expect(urls).toEqual([
+        server.EMPTY_PAGE,
+        'https://google.com/'
+      ]);
+      await browser.close();
     });
   });
 };

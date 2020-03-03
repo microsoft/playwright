@@ -392,6 +392,21 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       const error = await failed;
       expect(error.message).toBeTruthy();
     });
+    it('extraHttpHeaders should be pushed to provisional page', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      const pagePath = '/one-style.html';
+      server.setRoute(pagePath, async (req, res) => {
+        page.setExtraHTTPHeaders({ foo: 'bar' });
+        server.serveFile(req, res, pagePath);
+      });
+      const [htmlReq, cssReq] = await Promise.all([
+        server.waitForRequest(pagePath),
+        server.waitForRequest('/one-style.css'),
+        page.goto(server.CROSS_PROCESS_PREFIX + pagePath)
+      ]);
+      expect(htmlReq.headers['foo']).toBe(undefined);
+      expect(cssReq.headers['foo']).toBe('bar');
+    });
 
     describe('network idle', function() {
       it('should navigate to empty page with networkidle0', async({page, server}) => {
@@ -404,11 +419,11 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       });
 
       /**
-       * @param {import('../src/frames').Frame} frame 
-       * @param {TestServer} server 
-       * @param {'networkidle0'|'networkidle2'} signal 
-       * @param {() => Promise<void>} action 
-       * @param {boolean} isSetContent 
+       * @param {import('../src/frames').Frame} frame
+       * @param {TestServer} server
+       * @param {'networkidle0'|'networkidle2'} signal
+       * @param {() => Promise<void>} action
+       * @param {boolean} isSetContent
        */
       async function networkIdleTest(frame, server, signal, action, isSetContent) {
         const finishResponse = response => {

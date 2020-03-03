@@ -22,6 +22,7 @@ const readFileAsync = util.promisify(fs.readFile);
 const rmAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const statAsync = util.promisify(fs.stat);
+const { makeUserDataDir, removeUserDataDir } = require('../utils');
 
 const TMP_FOLDER = path.join(os.tmpdir(), 'pw_tmp_folder-');
 
@@ -33,24 +34,60 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('CrPlaywright', function() {
-    describe('Playwright.launch webSocket option', function() {
-      it('should support the remote-debugging-port argument', async() => {
-        const options = Object.assign({}, defaultBrowserOptions);
-        const browserServer = await playwright.launchServer({ ...options, port: 0 });
-        const browser = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
-        expect(browserServer.wsEndpoint()).not.toBe(null);
-        const page = await browser.newPage();
-        expect(await page.evaluate('11 * 11')).toBe(121);
-        await page.close();
-        await browserServer.close();
-      });
-      it('should throw with remote-debugging-pipe argument and webSocket', async() => {
-        const options = Object.assign({}, defaultBrowserOptions);
-        options.args = ['--remote-debugging-pipe'].concat(options.args || []);
-        const error = await playwright.launchServer(options).catch(e => e);
-        expect(error.message).toContain('Playwright manages remote debugging connection itself');
-      });
+  const headfulOptions = Object.assign({}, defaultBrowserOptions, {
+    headless: false
+  });
+  const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
+  const extensionOptions = Object.assign({}, defaultBrowserOptions, {
+    headless: false,
+    args: [
+      `--disable-extensions-except=${extensionPath}`,
+      `--load-extension=${extensionPath}`,
+    ],
+  });
+
+  describe('launcher', function() {
+    it('should throw with remote-debugging-pipe argument', async() => {
+      const options = Object.assign({}, defaultBrowserOptions);
+      options.args = ['--remote-debugging-pipe'].concat(options.args || []);
+      const error = await playwright.launchServer(options).catch(e => e);
+      expect(error.message).toContain('Playwright manages remote debugging connection itself');
+    });
+    it('should throw with remote-debugging-port argument', async() => {
+      const options = Object.assign({}, defaultBrowserOptions);
+      options.args = ['--remote-debugging-port=9222'].concat(options.args || []);
+      const error = await playwright.launchServer(options).catch(e => e);
+      expect(error.message).toContain('Playwright manages remote debugging connection itself');
+    });
+    it('should open devtools when "devtools: true" option is given', async({server}) => {
+      const browser = await playwright.launch(Object.assign({devtools: true}, headfulOptions));
+      const context = await browser.newContext();
+      const browserSession = await browser.createBrowserSession();
+      await browserSession.send('Target.setDiscoverTargets', { discover: true });
+      const devtoolsPagePromise = new Promise(fulfill => browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+        if (targetInfo.type === 'other' && targetInfo.url.includes('devtools://'))
+           fulfill();
+      }));
+      await Promise.all([
+        devtoolsPagePromise,
+        context.newPage()
+      ]);
+      await browser.close();
+    });
+  });
+
+  describe('extensions', () => {
+    it('should return background pages', async() => {
+      const userDataDir = await makeUserDataDir();
+      const context = await playwright.launchPersistent(userDataDir, extensionOptions);
+      const backgroundPages = await context.backgroundPages();
+      let backgroundPage = backgroundPages.length
+          ? backgroundPages[0]
+          : await new Promise(fulfill => context.once('backgroundpage', async event => fulfill(await event.page())));
+      expect(backgroundPage).toBeTruthy();
+      expect(await context.backgroundPages()).toContain(backgroundPage);
+      expect(await context.pages()).not.toContain(backgroundPage);
+      await removeUserDataDir(userDataDir);
     });
   });
 

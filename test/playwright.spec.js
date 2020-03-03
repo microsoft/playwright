@@ -181,16 +181,15 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
         testRunner.loadTests(require('./workers.spec.js'), testOptions);
         testRunner.loadTests(require('./capabilities.spec.js'), testOptions);
       });
+      describe('[Permissions]', () => {
+        testRunner.loadTests(require('./permissions.spec.js'), testOptions);
+      });
 
       describe.skip(!CHROMIUM)('[Chromium]', () => {
         testRunner.loadTests(require('./chromium/chromium.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/coverage.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/pdf.spec.js'), testOptions);
         testRunner.loadTests(require('./chromium/session.spec.js'), testOptions);
-      });
-
-      describe('[Permissions]', () => {
-        testRunner.loadTests(require('./features/permissions.spec.js'), testOptions);
       });
     });
 
@@ -214,7 +213,6 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
 
   describe.skip(!CHROMIUM)('[Chromium]', () => {
     testRunner.loadTests(require('./chromium/launcher.spec.js'), testOptions);
-    testRunner.loadTests(require('./chromium/headful.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/oopif.spec.js'), testOptions);
     testRunner.loadTests(require('./chromium/tracing.spec.js'), testOptions);
   });
