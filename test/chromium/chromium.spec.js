@@ -24,7 +24,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('BrowserContext', function() {
+  describe('ChromiumBrowserContext', function() {
     it('should create a worker from a service worker', async({browser, page, server, context}) => {
       const [worker] = await Promise.all([
         new Promise(fulfill => context.once('serviceworker', fulfill)),
