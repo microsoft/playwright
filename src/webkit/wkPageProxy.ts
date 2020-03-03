@@ -122,19 +122,12 @@ export class WKPageProxy {
         if (!this._pageProxySession.isDisposed())
           error = e;
       }
+      if (targetInfo.isPaused)
+        this._resumeTarget(targetInfo.targetId);
       if (error)
         this._pagePromiseReject(error);
       else
         this._pagePromiseFulfill(page);
-      if (targetInfo.isPaused)
-        this._resumeTarget(targetInfo.targetId);
-      if (page && this._opener) {
-        this._opener.page().then(openerPage => {
-          if (!openerPage || page!.isClosed())
-            return;
-          openerPage.emit(Events.Page.Popup, page);
-        });
-      }
     } else {
       assert(targetInfo.isProvisional);
       (session as any)[isPovisionalSymbol] = true;

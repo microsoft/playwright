@@ -126,8 +126,16 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       this._firstPageProxyCallback = undefined;
     }
 
-    pageProxy.page().then(page => {
-      context!.emit(Events.BrowserContext.PageEvent, new PageEvent(page!));
+    pageProxy.page().then(async page => {
+      if (!page)
+        return;
+      context!.emit(Events.BrowserContext.PageEvent, new PageEvent(page));
+      if (!opener)
+        return;
+      const openerPage = await opener.page();
+      if (!openerPage || page.isClosed())
+        return;
+      openerPage.emit(Events.Page.Popup, page);
     }).catch(debugError); // Just not emit the event in case of initialization failure.
   }
 
