@@ -304,6 +304,14 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(allPages).toContain(second);
       await context.close();
     });
+    it('should close all belonging pages once closing context', async function({browser}) {
+      const context = await browser.newContext();
+      await context.newPage();
+      expect((await context.pages()).length).toBe(1);
+
+      await context.close();
+      expect((await context.pages()).length).toBe(0);
+    });
   });
 
   describe('Events.BrowserContext.Page', function() {
@@ -333,7 +341,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(allPages).not.toContain(otherPage);
       await context.close();
     });
-    it('should not report uninitialized pages', async({browser, server}) => {
+    it('should report initialized pages', async({browser, server}) => {
       const context = await browser.newContext();
       const pagePromise = new Promise(fulfill => context.once('page', async event => fulfill(await event.page())));
       context.newPage();
@@ -348,7 +356,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       await evaluatePromise;
       await context.close();
     });
-    it('should not crash while redirecting if original request was missed', async({browser, server}) => {
+    it('should not crash while redirecting of original request was missed', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       let serverResponse = null;
@@ -382,14 +390,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await popup.opener()).toBe(page);
       expect(await page.opener()).toBe(null);
       await context.close();
-    });
-    it('should close all belonging targets once closing context', async function({browser}) {
-      const context = await browser.newContext();
-      await context.newPage();
-      expect((await context.pages()).length).toBe(1);
-
-      await context.close();
-      expect((await context.pages()).length).toBe(0);
     });
     it('should fire page lifecycle events', async function({browser, server}) {
       const context = await browser.newContext();
