@@ -369,7 +369,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       // Cleanup.
       await context.close();
     });
-    it.fail(WEBKIT)('should have an opener', async({browser, server}) => {
+    it('should have an opener', async({browser, server}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);
