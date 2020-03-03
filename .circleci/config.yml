@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: aslushnikov/playwright
+      - image: aslushnikov/playwright:bionic
     steps:
       - checkout
 
