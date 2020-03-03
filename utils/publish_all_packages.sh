@@ -73,7 +73,8 @@ elif [[ $1 == "--tip-of-tree" ]]; then
     echo "Did not find \$CI env - cannot publish tip-of-tree release not from CI"
     exit 1
   fi
-  npm run clean
+  # We don't do `npm run clean` here since travis deploy will remove node
+  # modules, and our `npm run clean` relies on `rimraf` to be installed.
   npm publish . --tag="next"
   npm publish packages/playwright-firefox --tag="next"
   npm publish packages/playwright-webkit --tag="next"
