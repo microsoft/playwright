@@ -514,7 +514,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().hover(selector, options);
   }
 
-  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | undefined, options?: types.WaitForOptions): Promise<string[]> {
+  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions): Promise<string[]> {
     return this.mainFrame().select(selector, value, options);
   }
 

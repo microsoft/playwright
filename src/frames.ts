@@ -815,9 +815,9 @@ export class Frame {
     await handle.dispose();
   }
 
-  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | undefined, options?: types.WaitForOptions): Promise<string[]> {
+  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions): Promise<string[]> {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    const values = value === undefined ? [] : Array.isArray(value) ? value : [value];
+    const values = Array.isArray(value) ? value : [value];
     const result = await handle.select(...values);
     await handle.dispose();
     return result;

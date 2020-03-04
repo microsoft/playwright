@@ -886,20 +886,20 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
     it('should return [] on no values',async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
-      const result = await page.select('select');
+      const result = await page.select('select', []);
       expect(result).toEqual([]);
     });
     it('should deselect all options when passed no values for a multiple select',async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.evaluate(() => makeMultiple());
       await page.select('select', ['blue','black','magenta']);
-      await page.select('select');
+      await page.select('select', []);
       expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
     });
     it('should deselect all options when passed no values for a select without multiple',async({page, server}) => {
       await page.goto(server.PREFIX + '/input/select.html');
       await page.select('select', ['blue','black','magenta']);
-      await page.select('select');
+      await page.select('select', []);
       expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
     });
     it('should throw if passed wrong types', async({page, server}) => {
