@@ -165,9 +165,7 @@ export class Request {
   }
 
   async _waitForResponse(): Promise<Response> {
-    const response = await this._waitForResponsePromise;
-    await response._finishedPromise;
-    return response;
+    return await this._waitForResponsePromise;
   }
 
   _setResponse(response: Response) {
@@ -269,6 +267,10 @@ export class Response {
 
   headers(): object {
     return this._headers;
+  }
+
+  finished(): Promise<Error | null> {
+    return this._finishedPromise;
   }
 
   buffer(): Promise<platform.BufferType> {
