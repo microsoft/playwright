@@ -5842,10 +5842,10 @@ index 0000000000000000000000000000000000000000..b64d1a6d54ec15a99164294706543cee
 +
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..f31834b80328fc5c182c64de53ff51e4065c62a9
+index 0000000000000000000000000000000000000000..41604f05e700d40638469c226b54d44ee748bd22
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKBrowserInspector.mm
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,60 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -5888,15 +5888,23 @@ index 0000000000000000000000000000000000000000..f31834b80328fc5c182c64de53ff51e4
 ++ (void)initializeRemoteInspectorPipe:(id<_WKBrowserInspectorDelegate>)delegate headless:(BOOL)headless
 +{
 +#if ENABLE(REMOTE_INSPECTOR)
-+  InitializeWebKit2();
-+  PageClientImpl::setHeadless(headless);
-+  initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientMac>(delegate));
++    InitializeWebKit2();
++    PageClientImpl::setHeadless(headless);
++    initializeBrowserInspectorPipe(makeUnique<InspectorBrowserAgentClientMac>(delegate));
 +#endif
 +}
 +
 +@end
 +
 +@implementation _WKBrowserContext
++- (void)dealloc
++{
++    [_dataStore release];
++    [_processPool release];
++    _dataStore = nil;
++    _processPool = nil;
++    [super dealloc];
++}
 +@end
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
 index 04922b10809ed4754279184a42169defa5f01ec8..a40edf790cded9f05943aa226db1e1e7e7211cb6 100644
@@ -14008,10 +14016,10 @@ index 0000000000000000000000000000000000000000..86e7b0c64df5fccdd66b87eecd995e0a
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..903587d11239d0071f49f0d91a844e28e65daa71
+index 0000000000000000000000000000000000000000..144bb42f13cc92a5ddd91417cbef2512613bd27c
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,396 @@
+@@ -0,0 +1,401 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -14070,6 +14078,12 @@ index 0000000000000000000000000000000000000000..903587d11239d0071f49f0d91a844e28
 +@end
 +
 +@implementation WebViewDialog
++- (void)dealloc
++{
++    [_webView release];
++    _webView = nil;
++    [super dealloc];
++}
 +@end
 +
 +enum {
@@ -14396,7 +14410,6 @@ index 0000000000000000000000000000000000000000..903587d11239d0071f49f0d91a844e28
 +        if (dialog.webView != webView)
 +            continue;
 +        dialog.completionHandler(accept, value);
-+        dialog.webView = nil;
 +        [_dialogs removeObject:dialog];
 +        break;
 +    }
