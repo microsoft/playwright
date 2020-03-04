@@ -39,7 +39,7 @@ export interface PageDelegate {
   reload(): Promise<void>;
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
-  exposeBinding(name: string, bindingFunction: string): Promise<void>;
+  exposeBinding(binding: PageBinding): Promise<void>;
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
 
@@ -117,7 +117,7 @@ export class Page extends platform.EventEmitter {
   readonly _timeoutSettings: TimeoutSettings;
   readonly _delegate: PageDelegate;
   readonly _state: PageState;
-  private _pageBindings = new Map<string, Function>();
+  readonly _pageBindings = new Map<string, PageBinding>();
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
@@ -256,26 +256,12 @@ export class Page extends platform.EventEmitter {
 
   async exposeFunction(name: string, playwrightFunction: Function) {
     if (this._pageBindings.has(name))
-      throw new Error(`Failed to add page binding with name ${name}: window['${name}'] already exists!`);
-    this._pageBindings.set(name, playwrightFunction);
-    await this._delegate.exposeBinding(name, helper.evaluationString(addPageBinding, name));
-
-    function addPageBinding(bindingName: string) {
-      const binding = (window as any)[bindingName];
-      (window as any)[bindingName] = (...args: any[]) => {
-        const me = (window as any)[bindingName];
-        let callbacks = me['callbacks'];
-        if (!callbacks) {
-          callbacks = new Map();
-          me['callbacks'] = callbacks;
-        }
-        const seq = (me['lastSeq'] || 0) + 1;
-        me['lastSeq'] = seq;
-        const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));
-        binding(JSON.stringify({name: bindingName, seq, args}));
-        return promise;
-      };
-    }
+      throw new Error(`Function "${name}" has been already registered`);
+    if (this._browserContext._pageBindings.has(name))
+      throw new Error(`Function "${name}" has been already registered in the browser context`);
+    const binding = new PageBinding(name, playwrightFunction);
+    this._pageBindings.set(name, binding);
+    await this._delegate.exposeBinding(binding);
   }
 
   setExtraHTTPHeaders(headers: network.Headers) {
@@ -284,35 +270,7 @@ export class Page extends platform.EventEmitter {
   }
 
   async _onBindingCalled(payload: string, context: js.ExecutionContext) {
-    const {name, seq, args} = JSON.parse(payload);
-    let expression = null;
-    try {
-      const result = await this._pageBindings.get(name)!(...args);
-      expression = helper.evaluationString(deliverResult, name, seq, result);
-    } catch (error) {
-      if (error instanceof Error)
-        expression = helper.evaluationString(deliverError, name, seq, error.message, error.stack);
-      else
-        expression = helper.evaluationString(deliverErrorValue, name, seq, error);
-    }
-    context.evaluate(expression).catch(debugError);
-
-    function deliverResult(name: string, seq: number, result: any) {
-      (window as any)[name]['callbacks'].get(seq).resolve(result);
-      (window as any)[name]['callbacks'].delete(seq);
-    }
-
-    function deliverError(name: string, seq: number, message: string, stack: string) {
-      const error = new Error(message);
-      error.stack = stack;
-      (window as any)[name]['callbacks'].get(seq).reject(error);
-      (window as any)[name]['callbacks'].delete(seq);
-    }
-
-    function deliverErrorValue(name: string, seq: number, value: any) {
-      (window as any)[name]['callbacks'].get(seq).reject(value);
-      (window as any)[name]['callbacks'].delete(seq);
-    }
+    await PageBinding.dispatch(this, payload, context);
   }
 
   _addConsoleMessage(type: string, args: js.JSHandle[], location: ConsoleMessageLocation, text?: string) {
@@ -608,4 +566,68 @@ export class Worker extends platform.EventEmitter {
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
     return (await this._executionContextPromise).evaluateHandle(pageFunction, ...args as any);
   }
+}
+
+export class PageBinding {
+  readonly name: string;
+  readonly playwrightFunction: Function;
+  readonly source: string;
+
+  constructor(name: string, playwrightFunction: Function) {
+    this.name = name;
+    this.playwrightFunction = playwrightFunction;
+    this.source = helper.evaluationString(addPageBinding, name);
+  }
+
+  static async dispatch(page: Page, payload: string, context: js.ExecutionContext) {
+    const {name, seq, args} = JSON.parse(payload);
+    let expression = null;
+    try {
+      let binding = page._pageBindings.get(name);
+      if (!binding)
+        binding = page.context()._pageBindings.get(name);
+      const result = await binding!.playwrightFunction(...args);
+      expression = helper.evaluationString(deliverResult, name, seq, result);
+    } catch (error) {
+      if (error instanceof Error)
+        expression = helper.evaluationString(deliverError, name, seq, error.message, error.stack);
+      else
+        expression = helper.evaluationString(deliverErrorValue, name, seq, error);
+    }
+    context.evaluate(expression).catch(debugError);
+
+    function deliverResult(name: string, seq: number, result: any) {
+      (window as any)[name]['callbacks'].get(seq).resolve(result);
+      (window as any)[name]['callbacks'].delete(seq);
+    }
+
+    function deliverError(name: string, seq: number, message: string, stack: string) {
+      const error = new Error(message);
+      error.stack = stack;
+      (window as any)[name]['callbacks'].get(seq).reject(error);
+      (window as any)[name]['callbacks'].delete(seq);
+    }
+
+    function deliverErrorValue(name: string, seq: number, value: any) {
+      (window as any)[name]['callbacks'].get(seq).reject(value);
+      (window as any)[name]['callbacks'].delete(seq);
+    }
+  }
+}
+
+function addPageBinding(bindingName: string) {
+  const binding = (window as any)[bindingName];
+  (window as any)[bindingName] = (...args: any[]) => {
+    const me = (window as any)[bindingName];
+    let callbacks = me['callbacks'];
+    if (!callbacks) {
+      callbacks = new Map();
+      me['callbacks'] = callbacks;
+    }
+    const seq = (me['lastSeq'] || 0) + 1;
+    me['lastSeq'] = seq;
+    const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));
+    binding(JSON.stringify({name: bindingName, seq, args}));
+    return promise;
+  };
 }

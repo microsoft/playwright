@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Page } from './page';
+import { Page, PageBinding } from './page';
 import * as network from './network';
 import * as types from './types';
 import { helper } from './helper';
@@ -47,11 +47,13 @@ export interface BrowserContext {
   setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
   setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<void>;
+  exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   close(): Promise<void>;
 
   _existingPages(): Page[];
   readonly _timeoutSettings: TimeoutSettings;
   readonly _options: BrowserContextOptions;
+  readonly _pageBindings: Map<string, PageBinding>;
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {

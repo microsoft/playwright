@@ -86,6 +86,18 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(injected).toBe(123);
     });
+    it.fail(CHROMIUM || FFOX)('should expose function from browser context', async function({browser, server}) {
+      const context = await browser.newContext();
+      await context.exposeFunction('add', (a, b) => a + b);
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const added = await page.evaluate(async () => {
+        const win = window.open('about:blank');
+        return win.add(9, 4);
+      });
+      await context.close();
+      expect(added).toBe(13);
+    });
   });
 
   describe('Page.Events.Popup', function() {

@@ -24,7 +24,7 @@ import { Events } from '../events';
 import { WKExecutionContext } from './wkExecutionContext';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKWorkers } from './wkWorkers';
-import { Page, PageDelegate } from '../page';
+import { Page, PageDelegate, PageBinding } from '../page';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
@@ -52,7 +52,7 @@ export class WKPage implements PageDelegate {
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _mainFrameContextId?: number;
   private _sessionListeners: RegisteredListener[] = [];
-  private readonly _bootstrapScripts: string[] = [];
+  private readonly _evaluateOnNewDocumentSources: string[] = [];
   private readonly _browserContext: WKBrowserContext;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPageProxy | null) {
@@ -140,6 +140,8 @@ export class WKPage implements PageDelegate {
     if (this._page._state.mediaType || this._page._state.colorScheme)
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme));
     promises.push(session.send('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }));
+    for (const binding of this._browserContext._pageBindings.values())
+      promises.push(this._evaluateBindingScript(binding));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
@@ -461,20 +463,34 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  async exposeBinding(name: string, bindingFunction: string): Promise<void> {
-    const script = `self.${name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${bindingFunction}`;
-    this._bootstrapScripts.unshift(script);
+  async exposeBinding(binding: PageBinding): Promise<void> {
     await this._updateBootstrapScript();
+    await this._evaluateBindingScript(binding);
+  }
+
+  private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
+    const script = this._bindingToScript(binding);
     await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(debugError)));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
-    this._bootstrapScripts.push(script);
+    this._evaluateOnNewDocumentSources.push(script);
     await this._updateBootstrapScript();
   }
 
+  private _bindingToScript(binding: PageBinding): string {
+    return `self.${binding.name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${binding.source}`;
+  }
+
   private _calculateBootstrapScript(): string {
-    return [...this._browserContext._evaluateOnNewDocumentSources, ...this._bootstrapScripts].join(';');
+    const scripts: string[] = [];
+    for (const binding of this._browserContext._pageBindings.values())
+      scripts.push(this._bindingToScript(binding));
+    for (const binding of this._page._pageBindings.values())
+      scripts.push(this._bindingToScript(binding));
+    scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
+    scripts.push(...this._evaluateOnNewDocumentSources);
+    return scripts.join(';');
   }
 
   async _updateBootstrapScript(): Promise<void> {

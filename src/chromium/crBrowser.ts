@@ -20,7 +20,7 @@ import { Events as CommonEvents } from '../events';
 import { assert, helper, debugError } from '../helper';
 import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
 import { CRConnection, ConnectionEvents, CRSession } from './crConnection';
-import { Page, PageEvent } from '../page';
+import { Page, PageEvent, PageBinding } from '../page';
 import { CRTarget } from './crTarget';
 import { Protocol } from './protocol';
 import { CRPage } from './crPage';
@@ -204,6 +204,7 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
   readonly _options: BrowserContextOptions;
   readonly _timeoutSettings: TimeoutSettings;
   readonly _evaluateOnNewDocumentSources: string[];
+  readonly _pageBindings = new Map<string, PageBinding>();
   private _closed = false;
 
   constructor(browser: CRBrowser, browserContextId: string | null, options: BrowserContextOptions) {
@@ -323,6 +324,19 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
     this._evaluateOnNewDocumentSources.push(source);
     for (const page of this._existingPages())
       await (page._delegate as CRPage).evaluateOnNewDocument(source);
+  }
+
+  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
+    for (const page of this._existingPages()) {
+      if (page._pageBindings.has(name))
+        throw new Error(`Function "${name}" has been already registered in one of the pages`);
+    }
+    if (this._pageBindings.has(name))
+      throw new Error(`Function "${name}" has been already registered`);
+    const binding = new PageBinding(name, playwrightFunction);
+    this._pageBindings.set(name, binding);
+    for (const page of this._existingPages())
+      await (page._delegate as CRPage).exposeBinding(binding);
   }
 
   async close() {
