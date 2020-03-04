@@ -4,7 +4,7 @@ class A {
   constructor(delegate) {
   }
 
-  get getter() {
+  get getter() : any {
     return null;
   }
 

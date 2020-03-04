@@ -150,7 +150,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return await this._connection.createBrowserSession();
   }
 
-  async startTracing(page: Page | undefined, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+  async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._tracingRecording, 'Cannot start recording trace while already recording trace.');
     this._tracingClient = page ? (page._delegate as CRPage)._client : this._client;
 

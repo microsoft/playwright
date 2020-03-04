@@ -154,7 +154,7 @@ class MDOutline {
             returnType = parseProperty(element);
           } else if (element.matches('li') && element.firstChild.matches && element.firstChild.matches('code')) {
             const property = parseProperty(element);
-            property.required = !optionalparams.has(property.name);
+            property.required = !optionalparams.has(property.name) && !property.name.startsWith('...');
             args.push(property);
           } else if (element.matches('li') && element.firstChild.nodeType === Element.TEXT_NODE && element.firstChild.textContent.toLowerCase().startsWith('return')) {
             returnType = parseProperty(element);

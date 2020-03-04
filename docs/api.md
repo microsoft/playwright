@@ -71,7 +71,7 @@ This object can be used to launch or connect to Chromium, returning instances of
 #### playwright.devices
 - returns: <[Object]>
 
-Returns a list of devices to be used with [`browser.newContext(options)`](#browsernewcontextoptions) or [`browser.newPage(options)`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+Returns a list of devices to be used with [`browser.newContext([options])`](#browsernewcontextoptions) or [`browser.newPage([options])`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
 
 ```js
 const { webkit, devices } = require('playwright');
@@ -145,14 +145,14 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
-See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [browserType.connect(options)](#browsertypeconnectoptions) and [browserType.launch(options)](#browsertypelaunchoptions) always return a specific browser instance, based on the browser being connected to or launched.
+See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [browserType.connect(options)](#browsertypeconnectoptions) and [browserType.launch([options])](#browsertypelaunchoptions) always return a specific browser instance, based on the browser being connected to or launched.
 
 <!-- GEN:toc -->
 - [event: 'disconnected'](#event-disconnected)
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
-- [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
 
@@ -182,7 +182,7 @@ a single instance of [BrowserContext].
 
 Indicates that the browser is connected.
 
-#### browser.newContext(options)
+#### browser.newContext([options])
 - `options` <[Object]>
   - `ignoreHTTPSErrors` <?[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <?[boolean]> Toggles bypassing page's Content-Security-Policy.
@@ -604,8 +604,8 @@ page.removeListener('request', logRequest);
 - [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
 - [page.evaluateHandle(pageFunction[, ...args])](#pageevaluatehandlepagefunction-args)
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
-- [page.fill(selector, value, options)](#pagefillselector-value-options)
-- [page.focus(selector, options)](#pagefocusselector-options)
+- [page.fill(selector, value[, options])](#pagefillselector-value-options)
+- [page.focus(selector[, options])](#pagefocusselector-options)
 - [page.frames()](#pageframes)
 - [page.goBack([options])](#pagegobackoptions)
 - [page.goForward([options])](#pagegoforwardoptions)
@@ -620,7 +620,7 @@ page.removeListener('request', logRequest);
 - [page.reload([options])](#pagereloadoptions)
 - [page.route(url, handler)](#pagerouteurl-handler)
 - [page.screenshot([options])](#pagescreenshotoptions)
-- [page.select(selector, value, options)](#pageselectselector-value-options)
+- [page.select(selector, value[, options])](#pageselectselector-value-options)
 - [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
 - [page.setContent(html[, options])](#pagesetcontenthtml-options)
 - [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
@@ -1135,7 +1135,7 @@ const fs = require('fs');
 })();
 ```
 
-#### page.fill(selector, value, options)
+#### page.fill(selector, value[, options])
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
@@ -1150,7 +1150,7 @@ If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matchi
 
 Shortcut for [page.mainFrame().fill()](#framefillselector-value)
 
-#### page.focus(selector, options)
+#### page.focus(selector[, options])
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - `options` <[Object]>
   - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
@@ -1216,7 +1216,7 @@ Navigate to the next page in history.
 
 > **NOTE** Headless mode doesn't support navigation to a PDF document. See the [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
 
-Shortcut for [page.mainFrame().goto(url, options)](#framegotourl-options)
+Shortcut for [page.mainFrame().goto(url[, options])](#framegotourl-options)
 
 #### page.hover(selector[, options])
 - `selector` <[string]> A selector to search for element to hover. If there are multiple elements satisfying the selector, the first will be hovered.
@@ -1381,7 +1381,7 @@ await browser.close();
 
 > **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for discussion.
 
-#### page.select(selector, value, options)
+#### page.select(selector, value[, options])
 - `selector` <[string]> A selector to query frame for.
 - `value` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
@@ -1412,7 +1412,7 @@ page.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 Shortcut for [page.mainFrame().select()](#frameselectselector-values)
 
 #### page.setCacheEnabled([enabled])
-- `enabled` <[boolean]> sets the `enabled` state of the cache.
+- `enabled` <[boolean]> sets the `enabled` state of the cache. Defaults to `true`.
 - returns: <[Promise]>
 
 Toggles ignoring cache for each request based on the enabled state. By default, caching is enabled.
@@ -1468,7 +1468,7 @@ The extra HTTP headers will be sent with every request the page initiates.
   - `height` <[number]> page height in pixels. **required**
 - returns: <[Promise]>
 
-In the case of multiple pages in a single browser, each page can have its own viewport size. However, [browser.newContext(options)](#browsernewcontextoptions) allows to set viewport size (and more) for all pages in the context at once.
+In the case of multiple pages in a single browser, each page can have its own viewport size. However, [browser.newContext([options])](#browsernewcontextoptions) allows to set viewport size (and more) for all pages in the context at once.
 
 `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the viewport size before navigating to the page.
 
@@ -1800,15 +1800,15 @@ An example of getting text from an iframe element:
 - [frame.dblclick(selector[, options])](#framedblclickselector-options)
 - [frame.evaluate(pageFunction[, ...args])](#frameevaluatepagefunction-args)
 - [frame.evaluateHandle(pageFunction[, ...args])](#frameevaluatehandlepagefunction-args)
-- [frame.fill(selector, value, options)](#framefillselector-value-options)
-- [frame.focus(selector, options)](#framefocusselector-options)
+- [frame.fill(selector, value[, options])](#framefillselector-value-options)
+- [frame.focus(selector[, options])](#framefocusselector-options)
 - [frame.frameElement()](#frameframeelement)
 - [frame.goto(url[, options])](#framegotourl-options)
 - [frame.hover(selector[, options])](#framehoverselector-options)
 - [frame.isDetached()](#frameisdetached)
 - [frame.name()](#framename)
 - [frame.parentFrame()](#frameparentframe)
-- [frame.select(selector, value, options)](#frameselectselector-value-options)
+- [frame.select(selector, value[, options])](#frameselectselector-value-options)
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
 - [frame.title()](#frametitle)
 - [frame.tripleclick(selector[, options])](#frametripleclickselector-options)
@@ -2025,7 +2025,7 @@ console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
 
-#### frame.fill(selector, value, options)
+#### frame.fill(selector, value[, options])
 - `selector` <[string]> A selector to query page for.
 - `value` <[string]> Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - `options` <[Object]>
@@ -2036,7 +2036,7 @@ await resultHandle.dispose();
 This method focuses the element and triggers an `input` event after filling.
 If there's no text `<input>`, `<textarea>` or `[contenteditable]` element matching `selector`, the method throws an error.
 
-#### frame.focus(selector, options)
+#### frame.focus(selector[, options])
 - `selector` <[string]> A selector of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
 - `options` <[Object]>
   - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
@@ -2116,7 +2116,7 @@ If the name is empty, returns the id attribute instead.
 #### frame.parentFrame()
 - returns: <?[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
 
-#### frame.select(selector, value, options)
+#### frame.select(selector, value[, options])
 - `selector` <[string]> A selector to query frame for.
 - `value` <[string]|[ElementHandle]|[Object]|[Array]<[string]>|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
   - `value` <[string]> Matches by `option.value`.
@@ -3488,7 +3488,7 @@ This methods attaches Playwright to an existing browser instance.
 #### browserType.devices
 - returns: <[Object]>
 
-Returns a list of devices to be used with [`browser.newContext(options)`](#browsernewcontextoptions) and [`browser.newPage(options)`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+Returns a list of devices to be used with [`browser.newContext([options])`](#browsernewcontextoptions) and [`browser.newPage([options])`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
 
 ```js
 const { webkit } = require('playwright');
@@ -3640,7 +3640,7 @@ await browser.stopTracing();
 
 <!-- GEN:toc -->
 - [chromiumBrowser.createBrowserSession()](#chromiumbrowsercreatebrowsersession)
-- [chromiumBrowser.startTracing(page, [options])](#chromiumbrowserstarttracingpage-options)
+- [chromiumBrowser.startTracing([page, options])](#chromiumbrowserstarttracingpage-options)
 - [chromiumBrowser.stopTracing()](#chromiumbrowserstoptracing)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-Browser -->
@@ -3648,7 +3648,7 @@ await browser.stopTracing();
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
-- [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
 
@@ -3656,7 +3656,7 @@ await browser.stopTracing();
 - returns: <[Promise]<[ChromiumSession]>> Promise that resolves to the newly created browser
 session.
 
-#### chromiumBrowser.startTracing(page, [options])
+#### chromiumBrowser.startTracing([page, options])
 - `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
 - `options` <[Object]>
   - `path` <[string]> A path to write the trace file to.
@@ -3839,7 +3839,7 @@ Firefox browser instance does not expose Firefox-specific features.
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
-- [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
 
@@ -3854,7 +3854,7 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
-- [browser.newContext(options)](#browsernewcontextoptions)
+- [browser.newContext([options])](#browsernewcontextoptions)
 - [browser.newPage([options])](#browsernewpageoptions)
 <!-- GEN:stop -->
 
