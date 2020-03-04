@@ -1470,14 +1470,145 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +
 +var EXPORTED_SYMBOLS = ['NetworkObserver'];
 +this.NetworkObserver = NetworkObserver;
+diff --git a/testing/juggler/SimpleChannel.js b/testing/juggler/SimpleChannel.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..fa3ce0cbe9062ab2154c0b345823cd2b4ae76df6
+--- /dev/null
++++ b/testing/juggler/SimpleChannel.js
+@@ -0,0 +1,124 @@
++"use strict";
++// Note: this file should be loadabale with eval() into worker environment.
++// Avoid Components.*, ChromeUtils and global const variables.
++
++const SIMPLE_CHANNEL_MESSAGE_NAME = 'juggler:simplechannel';
++
++class SimpleChannel {
++  static createForMessageManager(name, mm) {
++    const channel = new SimpleChannel(name);
++
++    const messageListener = {
++      receiveMessage: message => channel._onMessage(message)
++    };
++    mm.addMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener);
++
++    channel.transport.sendMessage = obj => mm.sendAsyncMessage(SIMPLE_CHANNEL_MESSAGE_NAME, obj);
++    channel.transport.dispose = () => {
++      mm.removeMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener);
++    };
++    return channel;
++  }
++
++  constructor(name) {
++    this._name = name;
++    this._messageId = 0;
++    this._pendingMessages = new Map();
++    this._handlers = new Map();
++    this.transport = {
++      sendMessage: null,
++      dispose: null,
++    };
++    this._disposed = false;
++  }
++
++  dispose() {
++    if (this._disposed)
++      return;
++    this._disposed = true;
++    for (const {resolve, reject, methodName} of this._pendingMessages.values())
++      reject(new Error(`Failed "${methodName}": ${this._name} is disposed.`));
++    this._pendingMessages.clear();
++    this.transport.dispose();
++  }
++
++  connect(namespace) {
++    return {
++      send: (...args) => this._send(namespace, ...args),
++      emit: (...args) => void this._send(namespace, ...args).catch(e => {}),
++    };
++  }
++
++  handler(namespace) {
++    return this._handlers.get(namespace);
++  }
++
++  handlers() {
++    return [...this._handlers.values()];
++  }
++
++  register(namespace, handler) {
++    if (this._handlers.has(namespace))
++      throw new Error('ERROR: double-register for namespace ' + namespace);
++    this._handlers.set(namespace, handler);
++    return () => this.unregister(namespace);
++  }
++
++  unregister(namespace) {
++    this._handlers.delete(namespace);
++  }
++
++  /**
++   * @param {string} sessionId
++   * @param {string} methodName
++   * @param {*} params
++   * @return {!Promise<*>}
++   */
++  async _send(namespace, methodName, ...params) {
++    if (this._disposed)
++      throw new Error(`ERROR: channel ${this._name} is already disposed! Cannot send "${methodName}" to "${namespace}"`);
++    const id = ++this._messageId;
++    const promise = new Promise((resolve, reject) => {
++      this._pendingMessages.set(id, {resolve, reject, methodName});
++    });
++    this.transport.sendMessage({requestId: id, methodName, params, namespace});
++    return promise;
++  }
++
++  async _onMessage({data}) {
++    if (data.responseId) {
++      const {resolve, reject} = this._pendingMessages.get(data.responseId);
++      this._pendingMessages.delete(data.responseId);
++      if (data.error)
++        reject(new Error(data.error));
++      else
++        resolve(data.result);
++    } else if (data.requestId) {
++      const namespace = data.namespace;
++      const handler = this._handlers.get(namespace);
++      if (!handler) {
++        this.transport.sendMessage({responseId: data.requestId, error: `error in channel "${this._name}": No handler for namespace "${namespace}"`});
++        return;
++      }
++      const method = handler[data.methodName];
++      if (!method) {
++        this.transport.sendMessage({responseId: data.requestId, error: `error in channel "${this._name}": No method "${data.methodName}" in namespace "${namespace}"`});
++        return;
++      }
++      try {
++        const result = await method.call(handler, ...data.params);
++        this.transport.sendMessage({responseId: data.requestId, result});
++      } catch (error) {
++        this.transport.sendMessage({responseId: data.requestId, error: `error in channel "${this._name}": exception while running method "${data.methodName}" in namespace "${namespace}": ${error.message} ${error.stack}`});
++        return;
++      }
++    } else {
++      dump(`
++        ERROR: unknown message in channel "${this._name}": ${JSON.stringify(data)}
++      `);
++    }
++  }
++}
++
++var EXPORTED_SYMBOLS = ['SimpleChannel'];
++this.SimpleChannel = SimpleChannel;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cabf7e79ee5
+index 0000000000000000000000000000000000000000..2260a6b9c20eac83154c63fee169f02cae01248d
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,257 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {BrowserContext} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
 +
@@ -1573,6 +1704,15 @@ index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cab
 +    return target._tab;
 +  }
 +
++  contentChannelForTarget(targetId) {
++    const target = this._targets.get(targetId);
++    if (!target)
++      throw new Error(`Target "${targetId}" does not exist!`);
++    if (!(target instanceof PageTarget))
++      throw new Error(`Target "${targetId}" is not a page!`);
++    return target._channel;
++  }
++
 +  targetForId(targetId) {
 +    return this._targets.get(targetId);
 +  }
@@ -1620,6 +1760,7 @@ index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cab
 +    this._browserContext = browserContext;
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._url = tab.linkedBrowser.currentURI.spec;
++    this._channel = SimpleChannel.createForMessageManager('browser::page', tab.linkedBrowser.messageManager);
 +
 +    const navigationListener = {
 +      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
@@ -1637,7 +1778,7 @@ index 0000000000000000000000000000000000000000..ca05335a4b68a1129e4307e6578f0cab
 +
 +    if (browserContext) {
 +      this._eventListeners.push(helper.on(browserContext, BrowserContext.Events.ScriptToEvaluateOnNewDocumentAdded, script => {
-+        tab.linkedBrowser.messageManager.sendAsyncMessage('juggler:add-script-to-evaluate-on-new-document', script);
++        this._channel.connect('').emit('addScriptToEvaluateOnNewDocument', {script});
 +      }));
 +    }
 +
@@ -1867,80 +2008,6 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +    "juggler.js",
 +    "juggler.manifest",
 +]
-+
-diff --git a/testing/juggler/content/ContentSession.js b/testing/juggler/content/ContentSession.js
-new file mode 100644
-index 0000000000000000000000000000000000000000..3891da101e6906ae2a3888e256aefd03f724ab4b
---- /dev/null
-+++ b/testing/juggler/content/ContentSession.js
-@@ -0,0 +1,68 @@
-+const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-+const {RuntimeAgent} = ChromeUtils.import('chrome://juggler/content/content/RuntimeAgent.js');
-+const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
-+
-+const helper = new Helper();
-+
-+class ContentSession {
-+  /**
-+   * @param {string} sessionId
-+   * @param {!ContentFrameMessageManager} messageManager
-+   * @param {!FrameTree} frameTree
-+   * @param {!NetworkMonitor} networkMonitor
-+   */
-+  constructor(sessionId, messageManager, frameTree, networkMonitor) {
-+    this._sessionId = sessionId;
-+    this._messageManager = messageManager;
-+    const runtimeAgent = new RuntimeAgent(this);
-+    const pageAgent = new PageAgent(this, runtimeAgent, frameTree, networkMonitor);
-+    this._agents = {
-+      Page: pageAgent,
-+      Runtime: runtimeAgent,
-+    };
-+    this._eventListeners = [
-+      helper.addMessageListener(messageManager, this._sessionId, this._onMessage.bind(this)),
-+    ];
-+    runtimeAgent.enable();
-+    pageAgent.enable();
-+  }
-+
-+  emitEvent(eventName, params) {
-+    this._messageManager.sendAsyncMessage(this._sessionId, {eventName, params});
-+  }
-+
-+  mm() {
-+    return this._messageManager;
-+  }
-+
-+  async handleMessage({ id, methodName, params }) {
-+    try {
-+      const [domain, method] = methodName.split('.');
-+      const agent = this._agents[domain];
-+      if (!agent)
-+        throw new Error(`unknown domain: ${domain}`);
-+      const handler = agent[method];
-+      if (!handler)
-+        throw new Error(`unknown method: ${domain}.${method}`);
-+      const result = await handler.call(agent, params);
-+      return {id, result};
-+    } catch (e) {
-+      return {id, error: e.message + '\n' + e.stack};
-+    }
-+  }
-+
-+  async _onMessage(msg) {
-+    const response = await this.handleMessage(msg.data);
-+    this._messageManager.sendAsyncMessage(this._sessionId, response);
-+  }
-+
-+  dispose() {
-+    helper.removeListeners(this._eventListeners);
-+    for (const agent of Object.values(this._agents))
-+      agent.dispose();
-+  }
-+}
-+
-+var EXPORTED_SYMBOLS = ['ContentSession'];
-+this.ContentSession = ContentSession;
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
@@ -2293,10 +2360,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a58ae1fce
+index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188af33a58ff
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,922 @@
+@@ -0,0 +1,923 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2370,7 +2437,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +
 +  exposeFunction(name) {
 +    Cu.exportFunction((...args) => {
-+      this._agent._session.emitEvent('Page.bindingCalled', {
++      this._agent._session.emit('protocol', 'Page.bindingCalled', {
 +        executionContextId: this.mainContext.id(),
 +        name,
 +        payload: args[0]
@@ -2413,7 +2480,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +  workerCreated(workerDebugger) {
 +    const workerId = helper.generateId();
 +    this._workers.set(workerId, workerDebugger);
-+    this._agent._session.emitEvent('Page.workerCreated', {
++    this._agent._session.emit('protocol', 'Page.workerCreated', {
 +      workerId,
 +      frameId: this._frame.id(),
 +      url: workerDebugger.url,
@@ -2425,7 +2492,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +    }
 +    registeredWorkerListeners.set(workerId, message => {
 +      if (message.command === 'dispatch') {
-+        this._agent._session.emitEvent('Page.dispatchMessageFromWorker', {
++        this._agent._session.emit('protocol', 'Page.dispatchMessageFromWorker', {
 +          workerId,
 +          message: message.message,
 +        });
@@ -2439,7 +2506,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +  workerDestroyed(wd) {
 +    for (const [workerId, workerDebugger] of this._workers) {
 +      if (workerDebugger === wd) {
-+        this._agent._session.emitEvent('Page.workerDestroyed', {
++        this._agent._session.emit('protocol', 'Page.workerDestroyed', {
 +          workerId,
 +        });
 +        this._workers.delete(workerId);
@@ -2465,7 +2532,8 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +}
 +
 +class PageAgent {
-+  constructor(session, runtimeAgent, frameTree, networkMonitor) {
++  constructor(messageManager, session, runtimeAgent, frameTree, networkMonitor) {
++    this._messageManager = messageManager;
 +    this._session = session;
 +    this._runtime = runtimeAgent;
 +    this._frameTree = frameTree;
@@ -2494,7 +2562,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +      const frame = this._frameTree.frameForDocShell(domWindow.docShell);
 +      if (!frame)
 +        return;
-+      this._session.emitEvent('Page.uncaughtError', {
++      this._session.emit('protocol', 'Page.uncaughtError', {
 +        frameId: frame.id(),
 +        message,
 +        stack,
@@ -2574,17 +2642,17 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +    this._eventListeners = [
 +      helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
 +      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
-+      helper.addEventListener(this._session.mm(), 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
-+      helper.addEventListener(this._session.mm(), 'pageshow', this._onLoad.bind(this)),
++      helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
++      helper.addEventListener(this._messageManager, 'pageshow', this._onLoad.bind(this)),
 +      helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
-+      helper.addEventListener(this._session.mm(), 'error', this._onError.bind(this)),
++      helper.addEventListener(this._messageManager, 'error', this._onError.bind(this)),
 +      helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
 +      helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
 +      helper.on(this._frameTree, 'navigationstarted', this._onNavigationStarted.bind(this)),
 +      helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
 +      helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
 +      helper.on(this._frameTree, 'samedocumentnavigation', this._onSameDocumentNavigation.bind(this)),
-+      helper.on(this._frameTree, 'pageready', () => this._session.emitEvent('Page.ready', {})),
++      helper.on(this._frameTree, 'pageready', () => this._session.send('protocol', 'Page.ready', {})),
 +    ];
 +
 +    this._wdm.addListener(this._wdmListener);
@@ -2592,7 +2660,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +      this._onWorkerCreated(workerDebugger);
 +
 +    if (this._frameTree.isPageReady())
-+      this._session.emitEvent('Page.ready', {});
++      this._session.send('protocol', 'Page.ready', {});
 +  }
 +
 +  setInterceptFileChooserDialog({enabled}) {
@@ -2630,7 +2698,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +    if (inputElement.ownerGlobal.docShell !== this._docShell)
 +      return;
 +    const frameData = this._findFrameForNode(inputElement);
-+    this._session.emitEvent('Page.fileChooserOpened', {
++    this._session.send('protocol', 'Page.fileChooserOpened', {
 +      executionContextId: frameData.mainContext.id(),
 +      element: frameData.mainContext.rawValueToRemoteObject(inputElement)
 +    });
@@ -2648,7 +2716,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emitEvent('Page.eventFired', {
++    this._session.emit('protocol', 'Page.eventFired', {
 +      frameId: frame.id(),
 +      name: 'DOMContentLoaded',
 +    });
@@ -2659,7 +2727,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emitEvent('Page.uncaughtError', {
++    this._session.emit('protocol', 'Page.uncaughtError', {
 +      frameId: frame.id(),
 +      message: errorEvent.message,
 +      stack: errorEvent.error.stack
@@ -2671,7 +2739,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emitEvent('Page.eventFired', {
++    this._session.emit('protocol', 'Page.eventFired', {
 +      frameId: frame.id(),
 +      name: 'load'
 +    });
@@ -2682,14 +2750,14 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emitEvent('Page.eventFired', {
++    this._session.emit('protocol', 'Page.eventFired', {
 +      frameId: frame.id(),
 +      name: 'load'
 +    });
 +  }
 +
 +  _onNavigationStarted(frame) {
-+    this._session.emitEvent('Page.navigationStarted', {
++    this._session.emit('protocol', 'Page.navigationStarted', {
 +      frameId: frame.id(),
 +      navigationId: frame.pendingNavigationId(),
 +      url: frame.pendingNavigationURL(),
@@ -2697,7 +2765,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +  }
 +
 +  _onNavigationAborted(frame, navigationId, errorText) {
-+    this._session.emitEvent('Page.navigationAborted', {
++    this._session.emit('protocol', 'Page.navigationAborted', {
 +      frameId: frame.id(),
 +      navigationId,
 +      errorText,
@@ -2705,14 +2773,14 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +  }
 +
 +  _onSameDocumentNavigation(frame) {
-+    this._session.emitEvent('Page.sameDocumentNavigation', {
++    this._session.emit('protocol', 'Page.sameDocumentNavigation', {
 +      frameId: frame.id(),
 +      url: frame.url(),
 +    });
 +  }
 +
 +  _onNavigationCommitted(frame) {
-+    this._session.emitEvent('Page.navigationCommitted', {
++    this._session.emit('protocol', 'Page.navigationCommitted', {
 +      frameId: frame.id(),
 +      navigationId: frame.lastCommittedNavigationId() || undefined,
 +      url: frame.url(),
@@ -2729,7 +2797,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +  }
 +
 +  _onFrameAttached(frame) {
-+    this._session.emitEvent('Page.frameAttached', {
++    this._session.emit('protocol', 'Page.frameAttached', {
 +      frameId: frame.id(),
 +      parentFrameId: frame.parentFrame() ? frame.parentFrame().id() : undefined,
 +    });
@@ -2738,7 +2806,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +
 +  _onFrameDetached(frame) {
 +    this._frameData.delete(frame);
-+    this._session.emitEvent('Page.frameDetached', {
++    this._session.emit('protocol', 'Page.frameDetached', {
 +      frameId: frame.id(),
 +    });
 +  }
@@ -2954,7 +3022,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +  }
 +
 +  async screenshot({mimeType, fullPage, clip}) {
-+    const content = this._session.mm().content;
++    const content = this._messageManager.content;
 +    if (clip) {
 +      const data = takeScreenshot(content, clip.x, clip.y, clip.width, clip.height, mimeType);
 +      return {data};
@@ -3221,7 +3289,7 @@ index 0000000000000000000000000000000000000000..e6f4e9a384a202cc3f2811140d37792a
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..c6568d0e98cb3405877f711a3242ab31b55ce7c1
+index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc0237e867
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
 @@ -0,0 +1,549 @@
@@ -3332,7 +3400,7 @@ index 0000000000000000000000000000000000000000..c6568d0e98cb3405877f711a3242ab31
 +          [Ci.nsIConsoleMessage.warn]: 'warn',
 +          [Ci.nsIConsoleMessage.error]: 'error',
 +        };
-+        this._session.emitEvent('Runtime.console', {
++        this._session.emit('protocol', 'Runtime.console', {
 +          args: [{
 +            value: message.message,
 +          }],
@@ -3395,7 +3463,7 @@ index 0000000000000000000000000000000000000000..c6568d0e98cb3405877f711a3242ab31
 +    if (!type)
 +      return;
 +    const args = message.arguments.map(arg => executionContext.rawValueToRemoteObject(arg));
-+    this._session.emitEvent('Runtime.console', {
++    this._session.emit('protocol', 'Runtime.console', {
 +      args,
 +      type,
 +      executionContextId: executionContext.id(),
@@ -3410,7 +3478,7 @@ index 0000000000000000000000000000000000000000..c6568d0e98cb3405877f711a3242ab31
 +  _notifyExecutionContextCreated(executionContext) {
 +    if (!this._enabled)
 +      return;
-+    this._session.emitEvent('Runtime.executionContextCreated', {
++    this._session.emit('protocol', 'Runtime.executionContextCreated', {
 +      executionContextId: executionContext._id,
 +      auxData: executionContext._auxData,
 +    });
@@ -3419,7 +3487,7 @@ index 0000000000000000000000000000000000000000..c6568d0e98cb3405877f711a3242ab31
 +  _notifyExecutionContextDestroyed(executionContext) {
 +    if (!this._enabled)
 +      return;
-+    this._session.emitEvent('Runtime.executionContextDestroyed', {
++    this._session.emit('protocol', 'Runtime.executionContextDestroyed', {
 +      executionContextId: executionContext._id,
 +    });
 +  }
@@ -3867,7 +3935,7 @@ index 0000000000000000000000000000000000000000..caee4df323d0a526ed7e38947c41c643
 +
 diff --git a/testing/juggler/content/WorkerMain.js b/testing/juggler/content/WorkerMain.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..73cdce649608f068e59e1ff7808883c4482bff7e
+index 0000000000000000000000000000000000000000..5a90ad143d105abfb62c036e71defd31c6cc36f2
 --- /dev/null
 +++ b/testing/juggler/content/WorkerMain.js
 @@ -0,0 +1,67 @@
@@ -3892,7 +3960,7 @@ index 0000000000000000000000000000000000000000..73cdce649608f068e59e1ff7808883c4
 +    this._send({command: 'dispatch', message: JSON.stringify(protocolMessage)});
 +  }
 +
-+  emitEvent(eventName, params) {
++  emit(protocol, eventName, params) {
 +    this._dispatchProtocolMessage({method: eventName, params});
 +  }
 +
@@ -4012,34 +4080,40 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..437c47f4cf637d94498b592fdcab5d38070d80fc
+index 0000000000000000000000000000000000000000..34a96d8c38f35cdb03c2f9f739cd52741e7b31b1
 --- /dev/null
 +++ b/testing/juggler/content/main.js
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,95 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-+const {ContentSession} = ChromeUtils.import('chrome://juggler/content/content/ContentSession.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
 +const {NetworkMonitor} = ChromeUtils.import('chrome://juggler/content/content/NetworkMonitor.js');
 +const {ScrollbarManager} = ChromeUtils.import('chrome://juggler/content/content/ScrollbarManager.js');
++const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
++const {RuntimeAgent} = ChromeUtils.import('chrome://juggler/content/content/RuntimeAgent.js');
++const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
 +
-+const sessions = new Map();
 +const scrollbarManager = new ScrollbarManager(docShell);
 +let frameTree;
 +let networkMonitor;
 +const helper = new Helper();
 +const messageManager = this;
-+let gListeners;
 +
-+function createContentSession(sessionId) {
-+  sessions.set(sessionId, new ContentSession(sessionId, messageManager, frameTree, networkMonitor));
++function createContentSession(channel, sessionId) {
++  const runtimeAgent = new RuntimeAgent(channel.connect(sessionId + 'runtime'));
++  const pageAgent = new PageAgent(messageManager, channel.connect(sessionId + 'page'), runtimeAgent, frameTree, networkMonitor);
++
++  channel.register(sessionId + 'runtime', runtimeAgent);
++  channel.register(sessionId + 'page', pageAgent);
++
++  runtimeAgent.enable();
++  pageAgent.enable();
 +}
 +
-+function disposeContentSession(sessionId) {
-+  const session = sessions.get(sessionId);
-+  if (!session)
-+    return;
-+  sessions.delete(sessionId);
-+  session.dispose();
++function disposeContentSession(channel, sessionId) {
++  channel.handler(sessionId + 'runtime').dispose();
++  channel.handler(sessionId + 'page').dispose();
++  channel.unregister(sessionId + 'runtime');
++  channel.unregister(sessionId + 'page');
 +}
 +
 +function initialize() {
@@ -4067,30 +4141,36 @@ index 0000000000000000000000000000000000000000..437c47f4cf637d94498b592fdcab5d38
 +  for (const script of scriptsToEvaluateOnNewDocument || [])
 +    frameTree.addScriptToEvaluateOnNewDocument(script);
 +  networkMonitor = new NetworkMonitor(docShell, frameTree);
++
++  const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
++
 +  for (const sessionId of sessionIds)
-+    createContentSession(sessionId);
++    createContentSession(channel, sessionId);
 +
-+  gListeners = [
-+    helper.addMessageListener(messageManager, 'juggler:create-content-session', msg => {
-+      const sessionId = msg.data;
-+      createContentSession(sessionId);
-+    }),
++  channel.register('', {
++    attach({sessionId}) {
++      createContentSession(channel, sessionId);
++    },
 +
-+    helper.addMessageListener(messageManager, 'juggler:dispose-content-session', msg => {
-+      const sessionId = msg.data;
-+      disposeContentSession(sessionId);
-+    }),
++    detach({sessionId}) {
++      disposeContentSession(channel, sessionId);
++    },
 +
-+    helper.addMessageListener(messageManager, 'juggler:add-script-to-evaluate-on-new-document', msg => {
-+      const script = msg.data;
++    addScriptToEvaluateOnNewDocument({script}) {
 +      frameTree.addScriptToEvaluateOnNewDocument(script);
-+    }),
++    },
 +
++    dispose() {
++    },
++  });
++
++  const gListeners = [
 +    helper.addEventListener(messageManager, 'unload', msg => {
 +      helper.removeListeners(gListeners);
-+      for (const session of sessions.values())
-+        session.dispose();
-+      sessions.clear();
++      for (const handler of channel.handlers())
++        handler.dispose();
++      channel.dispose();
++
 +      scrollbarManager.dispose();
 +      networkMonitor.dispose();
 +      frameTree.dispose();
@@ -4101,7 +4181,7 @@ index 0000000000000000000000000000000000000000..437c47f4cf637d94498b592fdcab5d38
 +initialize();
 diff --git a/testing/juggler/jar.mn b/testing/juggler/jar.mn
 new file mode 100644
-index 0000000000000000000000000000000000000000..76377927a8c9af3cac3b028ff754491966d03ba3
+index 0000000000000000000000000000000000000000..cf3a7fa162cf22146a23521b8d31b6ac38de839e
 --- /dev/null
 +++ b/testing/juggler/jar.mn
 @@ -0,0 +1,30 @@
@@ -4115,6 +4195,7 @@ index 0000000000000000000000000000000000000000..76377927a8c9af3cac3b028ff7544919
 +  content/NetworkObserver.js (NetworkObserver.js)
 +  content/BrowserContextManager.js (BrowserContextManager.js)
 +  content/TargetRegistry.js (TargetRegistry.js)
++  content/SimpleChannel.js (SimpleChannel.js)
 +  content/protocol/PrimitiveTypes.js (protocol/PrimitiveTypes.js)
 +  content/protocol/Protocol.js (protocol/Protocol.js)
 +  content/protocol/Dispatcher.js (protocol/Dispatcher.js)
@@ -4125,7 +4206,6 @@ index 0000000000000000000000000000000000000000..76377927a8c9af3cac3b028ff7544919
 +  content/protocol/TargetHandler.js (protocol/TargetHandler.js)
 +  content/protocol/AccessibilityHandler.js (protocol/AccessibilityHandler.js)
 +  content/content/main.js (content/main.js)
-+  content/content/ContentSession.js (content/ContentSession.js)
 +  content/content/FrameTree.js (content/FrameTree.js)
 +  content/content/NetworkMonitor.js (content/NetworkMonitor.js)
 +  content/content/PageAgent.js (content/PageAgent.js)
@@ -4158,18 +4238,18 @@ index 0000000000000000000000000000000000000000..1a0a3130bf9509829744fadc692a7975
 +
 diff --git a/testing/juggler/protocol/AccessibilityHandler.js b/testing/juggler/protocol/AccessibilityHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a2d3b79469566ca2edb7d864621f708537d48301
+index 0000000000000000000000000000000000000000..1567ee73588aa7338cda236be0a403c11ec532ce
 --- /dev/null
 +++ b/testing/juggler/protocol/AccessibilityHandler.js
 @@ -0,0 +1,15 @@
 +class AccessibilityHandler {
-+  constructor(chromeSession, contentSession) {
++  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentSession;
++    this._contentSession = contentChannel.connect(sessionId + 'page');
 +  }
 +
 +  async getFullAXTree(params) {
-+    return await this._contentSession.send('Page.getFullAXTree', params);
++    return await this._contentSession.send('getFullAXTree', params);
 +  }
 +
 +  dispose() { }
@@ -4266,14 +4346,15 @@ index 0000000000000000000000000000000000000000..061bcb4ff8a34610a5ec433393bf7901
 +this.BrowserHandler = BrowserHandler;
 diff --git a/testing/juggler/protocol/Dispatcher.js b/testing/juggler/protocol/Dispatcher.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5c5a73b35cd178b51899ab3dd681d46b6c3e4770
+index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d42da002f
 --- /dev/null
 +++ b/testing/juggler/protocol/Dispatcher.js
-@@ -0,0 +1,265 @@
+@@ -0,0 +1,197 @@
 +const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 +const {protocol, checkScheme} = ChromeUtils.import("chrome://juggler/content/protocol/Protocol.js");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const helper = new Helper();
++const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 +
 +const PROTOCOL_HANDLERS = {
 +  Page: ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js").PageHandler,
@@ -4295,7 +4376,7 @@ index 0000000000000000000000000000000000000000..5c5a73b35cd178b51899ab3dd681d46b
 +
 +    this._targetSessions = new Map();
 +    this._sessions = new Map();
-+    this._rootSession = new ChromeSession(this, undefined, null /* contentSession */, TargetRegistry.instance().browserTargetInfo());
++    this._rootSession = new ChromeSession(this, undefined, null /* contentChannel */, TargetRegistry.instance().browserTargetInfo());
 +
 +    this._eventListeners = [
 +      helper.on(TargetRegistry.instance(), TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
@@ -4313,10 +4394,10 @@ index 0000000000000000000000000000000000000000..5c5a73b35cd178b51899ab3dd681d46b
 +    }
 +
 +    const sessionId = helper.generateId();
-+    const contentSession = targetInfo.type === 'page' ? new ContentSession(this, sessionId, targetInfo) : null;
-+    if (shouldConnect && contentSession)
-+      contentSession.connect();
-+    const chromeSession = new ChromeSession(this, sessionId, contentSession, targetInfo);
++    const contentChannel = targetInfo.type === 'page' ? TargetRegistry.instance().contentChannelForTarget(targetInfo.targetId) : null;
++    if (shouldConnect && contentChannel)
++      contentChannel.connect('').send('attach', {sessionId});
++    const chromeSession = new ChromeSession(this, sessionId, contentChannel, targetInfo);
 +    targetSessions.set(sessionId, chromeSession);
 +    this._sessions.set(sessionId, chromeSession);
 +    this._emitEvent(this._rootSession._sessionId, 'Target.attachedToTarget', {
@@ -4404,16 +4485,16 @@ index 0000000000000000000000000000000000000000..5c5a73b35cd178b51899ab3dd681d46b
 +  /**
 +   * @param {Connection} connection
 +   */
-+  constructor(dispatcher, sessionId, contentSession, targetInfo) {
++  constructor(dispatcher, sessionId, contentChannel, targetInfo) {
 +    this._dispatcher = dispatcher;
 +    this._sessionId = sessionId;
-+    this._contentSession = contentSession;
++    this._contentChannel = contentChannel;
 +    this._targetInfo = targetInfo;
 +
 +    this._handlers = {};
 +    for (const [domainName, handlerFactory] of Object.entries(PROTOCOL_HANDLERS)) {
 +      if (protocol.domains[domainName].targets.includes(targetInfo.type))
-+        this._handlers[domainName] = new handlerFactory(this, contentSession);
++        this._handlers[domainName] = new handlerFactory(this, sessionId, contentChannel);
 +    }
 +    const pageHandler = this._handlers['Page'];
 +    if (pageHandler)
@@ -4432,9 +4513,9 @@ index 0000000000000000000000000000000000000000..5c5a73b35cd178b51899ab3dd681d46b
 +  }
 +
 +  dispose() {
-+    if (this._contentSession)
-+      this._contentSession.dispose();
-+    this._contentSession = null;
++    if (this._contentChannel)
++      this._contentChannel.connect('').emit('detach', {sessionId: this._sessionId});
++    this._contentChannel = null;
 +    for (const [domainName, handler] of Object.entries(this._handlers)) {
 +      if (!handler.dispose)
 +        throw new Error(`Handler for "${domainName}" domain does not define |dispose| method!`);
@@ -4463,84 +4544,15 @@ index 0000000000000000000000000000000000000000..5c5a73b35cd178b51899ab3dd681d46b
 +  }
 +}
 +
-+class ContentSession {
-+  constructor(dispatcher, sessionId, targetInfo) {
-+    this._dispatcher = dispatcher;
-+    const tab = TargetRegistry.instance().tabForTarget(targetInfo.targetId);
-+    this._browser = tab.linkedBrowser;
-+    this._messageId = 0;
-+    this._pendingMessages = new Map();
-+    this._sessionId = sessionId;
-+    this._disposed = false;
-+    this._eventListeners = [
-+      helper.addMessageListener(this._browser.messageManager, this._sessionId, {
-+        receiveMessage: message => this._onMessage(message)
-+      }),
-+    ];
-+  }
-+
-+  connect() {
-+    this._browser.messageManager.sendAsyncMessage('juggler:create-content-session', this._sessionId);
-+  }
-+
-+  isDisposed() {
-+    return this._disposed;
-+  }
-+
-+  dispose() {
-+    if (this._disposed)
-+      return;
-+    this._disposed = true;
-+    helper.removeListeners(this._eventListeners);
-+    for (const {resolve, reject, methodName} of this._pendingMessages.values())
-+      reject(new Error(`Failed "${methodName}": Page closed.`));
-+    this._pendingMessages.clear();
-+    if (this._browser.messageManager)
-+      this._browser.messageManager.sendAsyncMessage('juggler:dispose-content-session', this._sessionId);
-+  }
-+
-+  /**
-+   * @param {string} methodName
-+   * @param {*} params
-+   * @return {!Promise<*>}
-+   */
-+  send(methodName, params) {
-+    const id = ++this._messageId;
-+    const promise = new Promise((resolve, reject) => {
-+      this._pendingMessages.set(id, {resolve, reject, methodName});
-+    });
-+    this._browser.messageManager.sendAsyncMessage(this._sessionId, {id, methodName, params});
-+    return promise;
-+  }
-+
-+  _onMessage({data}) {
-+    if (data.id) {
-+      const {resolve, reject} = this._pendingMessages.get(data.id);
-+      this._pendingMessages.delete(data.id);
-+      if (data.error)
-+        reject(new Error(data.error));
-+      else
-+        resolve(data.result);
-+    } else {
-+      const {
-+        eventName,
-+        params = {}
-+      } = data;
-+      this._dispatcher._emitEvent(this._sessionId, eventName, params);
-+    }
-+  }
-+}
-+
-+
 +this.EXPORTED_SYMBOLS = ['Dispatcher'];
 +this.Dispatcher = Dispatcher;
 +
 diff --git a/testing/juggler/protocol/NetworkHandler.js b/testing/juggler/protocol/NetworkHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9cf800f869
+index 0000000000000000000000000000000000000000..ad991d3d16fc9e5ba75614ab75803ee275f9357a
 --- /dev/null
 +++ b/testing/juggler/protocol/NetworkHandler.js
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,163 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4551,13 +4563,12 @@ index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9c
 +const Ci = Components.interfaces;
 +const Cu = Components.utils;
 +const XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
-+const FRAME_SCRIPT = "chrome://juggler/content/content/ContentSession.js";
 +const helper = new Helper();
 +
 +class NetworkHandler {
-+  constructor(chromeSession, contentSession) {
++  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentSession;
++    this._contentSession = contentChannel.connect(sessionId + 'page');
 +    this._networkObserver = NetworkObserver.instance();
 +    this._httpActivity = new Map();
 +    this._enabled = false;
@@ -4665,13 +4676,11 @@ index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9c
 +    this._pendingRequstWillBeSentEvents.add(pendingRequestPromise);
 +    let details = null;
 +    try {
-+      details = await this._contentSession.send('Page.requestDetails', {channelId: httpChannel.channelId});
++      details = await this._contentSession.send('requestDetails', {channelId: httpChannel.channelId});
 +    } catch (e) {
-+      if (this._contentSession.isDisposed()) {
-+        pendingRequestCallback();
-+        this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
-+        return;
-+      }
++      pendingRequestCallback();
++      this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
++      return;
 +    }
 +    // Inherit frameId for redirects when details are not available.
 +    const frameId = details ? details.frameId : (eventDetails.redirectedFrom ? this._requestIdToFrameId.get(eventDetails.redirectedFrom) : undefined);
@@ -4709,10 +4718,10 @@ index 0000000000000000000000000000000000000000..5d776ab6f28ccff44ef4663e8618ad9c
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699be43b3d4
+index 0000000000000000000000000000000000000000..1d8d790e6c864f14b12dd12d0daf85afa652d423
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,266 @@
+@@ -0,0 +1,269 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4723,18 +4732,21 @@ index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699
 +const Ci = Components.interfaces;
 +const Cu = Components.utils;
 +const XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
-+const FRAME_SCRIPT = "chrome://juggler/content/content/ContentSession.js";
 +const helper = new Helper();
 +
 +class PageHandler {
-+  constructor(chromeSession, contentSession) {
++  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentSession;
++    this._contentSession = contentChannel.connect(sessionId + 'page');
++    this._eventListeners = [
++      contentChannel.register(sessionId + 'page', {
++        protocol: (eventName, params) => this._chromeSession.emitEvent(eventName, params),
++      }),
++    ];
 +    this._pageTarget = TargetRegistry.instance().targetForId(chromeSession.targetId());
 +    this._browser = TargetRegistry.instance().tabForTarget(chromeSession.targetId()).linkedBrowser;
 +    this._dialogs = new Map();
 +
-+    this._eventListeners = [];
 +    this._enabled = false;
 +  }
 +
@@ -4751,7 +4763,7 @@ index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699
 +    this._enabled = true;
 +    this._updateModalDialogs();
 +
-+    this._eventListeners = [
++    this._eventListeners.push(...[
 +      helper.addEventListener(this._browser, 'DOMWillOpenModalDialog', async (event) => {
 +        // wait for the dialog to be actually added to DOM.
 +        await Promise.resolve();
@@ -4762,7 +4774,7 @@ index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699
 +        if (targetId === this._chromeSession.targetId())
 +          this._chromeSession.emitEvent('Page.crashed', {});
 +      }),
-+    ];
++    ]);
 +  }
 +
 +  dispose() {
@@ -4771,7 +4783,7 @@ index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699
 +
 +  async setViewportSize({viewportSize}) {
 +    const size = this._pageTarget.setViewportSize(viewportSize);
-+    await this._contentSession.send('Page.awaitViewportDimensions', {
++    await this._contentSession.send('awaitViewportDimensions', {
 +      width: size.width,
 +      height: size.height
 +    });
@@ -4804,99 +4816,99 @@ index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699
 +  }
 +
 +  async setFileInputFiles(options) {
-+    return await this._contentSession.send('Page.setFileInputFiles', options);
++    return await this._contentSession.send('setFileInputFiles', options);
 +  }
 +
 +  async setEmulatedMedia(options) {
-+    return await this._contentSession.send('Page.setEmulatedMedia', options);
++    return await this._contentSession.send('setEmulatedMedia', options);
 +  }
 +
 +  async setCacheDisabled(options) {
-+    return await this._contentSession.send('Page.setCacheDisabled', options);
++    return await this._contentSession.send('setCacheDisabled', options);
 +  }
 +
 +  async addBinding(options) {
-+    return await this._contentSession.send('Page.addBinding', options);
++    return await this._contentSession.send('addBinding', options);
 +  }
 +
 +  async adoptNode(options) {
-+    return await this._contentSession.send('Page.adoptNode', options);
++    return await this._contentSession.send('adoptNode', options);
 +  }
 +
 +  async screenshot(options) {
-+    return await this._contentSession.send('Page.screenshot', options);
++    return await this._contentSession.send('screenshot', options);
 +  }
 +
 +  async getBoundingBox(options) {
-+    return await this._contentSession.send('Page.getBoundingBox', options);
++    return await this._contentSession.send('getBoundingBox', options);
 +  }
 +
 +  async getContentQuads(options) {
-+    return await this._contentSession.send('Page.getContentQuads', options);
++    return await this._contentSession.send('getContentQuads', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async navigate(options) {
-+    return await this._contentSession.send('Page.navigate', options);
++    return await this._contentSession.send('navigate', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async goBack(options) {
-+    return await this._contentSession.send('Page.goBack', options);
++    return await this._contentSession.send('goBack', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async goForward(options) {
-+    return await this._contentSession.send('Page.goForward', options);
++    return await this._contentSession.send('goForward', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async reload(options) {
-+    return await this._contentSession.send('Page.reload', options);
++    return await this._contentSession.send('reload', options);
 +  }
 +
 +  async describeNode(options) {
-+    return await this._contentSession.send('Page.describeNode', options);
++    return await this._contentSession.send('describeNode', options);
 +  }
 +
 +  async scrollIntoViewIfNeeded(options) {
-+    return await this._contentSession.send('Page.scrollIntoViewIfNeeded', options);
++    return await this._contentSession.send('scrollIntoViewIfNeeded', options);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument(options) {
-+    return await this._contentSession.send('Page.addScriptToEvaluateOnNewDocument', options);
++    return await this._contentSession.send('addScriptToEvaluateOnNewDocument', options);
 +  }
 +
 +  async removeScriptToEvaluateOnNewDocument(options) {
-+    return await this._contentSession.send('Page.removeScriptToEvaluateOnNewDocument', options);
++    return await this._contentSession.send('removeScriptToEvaluateOnNewDocument', options);
 +  }
 +
 +  async dispatchKeyEvent(options) {
-+    return await this._contentSession.send('Page.dispatchKeyEvent', options);
++    return await this._contentSession.send('dispatchKeyEvent', options);
 +  }
 +
 +  async dispatchTouchEvent(options) {
-+    return await this._contentSession.send('Page.dispatchTouchEvent', options);
++    return await this._contentSession.send('dispatchTouchEvent', options);
 +  }
 +
 +  async dispatchMouseEvent(options) {
-+    return await this._contentSession.send('Page.dispatchMouseEvent', options);
++    return await this._contentSession.send('dispatchMouseEvent', options);
 +  }
 +
 +  async insertText(options) {
-+    return await this._contentSession.send('Page.insertText', options);
++    return await this._contentSession.send('insertText', options);
 +  }
 +
 +  async crash(options) {
-+    return await this._contentSession.send('Page.crash', options);
++    return await this._contentSession.send('crash', options);
 +  }
 +
 +  async handleDialog({dialogId, accept, promptText}) {
@@ -4910,15 +4922,15 @@ index 0000000000000000000000000000000000000000..8333a58253745298fa88f7ce17909699
 +  }
 +
 +  async setInterceptFileChooserDialog(options) {
-+    return await this._contentSession.send('Page.setInterceptFileChooserDialog', options);
++    return await this._contentSession.send('setInterceptFileChooserDialog', options);
 +  }
 +
 +  async handleFileChooser(options) {
-+    return await this._contentSession.send('Page.handleFileChooser', options);
++    return await this._contentSession.send('handleFileChooser', options);
 +  }
 +
 +  async sendMessageToWorker(options) {
-+    return await this._contentSession.send('Page.sendMessageToWorker', options);
++    return await this._contentSession.send('sendMessageToWorker', options);
 +  }
 +}
 +
@@ -5900,10 +5912,10 @@ index 0000000000000000000000000000000000000000..838b642eb08efee8a8e6e61421731aa3
 +this.EXPORTED_SYMBOLS = ['protocol', 'checkScheme'];
 diff --git a/testing/juggler/protocol/RuntimeHandler.js b/testing/juggler/protocol/RuntimeHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..089e66c617f114fcb32b3cea20abc6fb80e26a1e
+index 0000000000000000000000000000000000000000..ae793a57dc0f948dfc4dcbb43c92f2360f12a728
 --- /dev/null
 +++ b/testing/juggler/protocol/RuntimeHandler.js
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,44 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -5915,28 +5927,35 @@ index 0000000000000000000000000000000000000000..089e66c617f114fcb32b3cea20abc6fb
 +const helper = new Helper();
 +
 +class RuntimeHandler {
-+  constructor(chromeSession, contentSession) {
++  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentSession;
++    this._contentSession = contentChannel.connect(sessionId + 'runtime');
++    this._eventListeners = [
++      contentChannel.register(sessionId + 'runtime', {
++        protocol: (eventName, params) => this._chromeSession.emitEvent(eventName, params),
++      }),
++    ];
 +  }
 +
 +  async evaluate(options) {
-+    return await this._contentSession.send('Runtime.evaluate', options);
++    return await this._contentSession.send('evaluate', options);
 +  }
 +
 +  async callFunction(options) {
-+    return await this._contentSession.send('Runtime.callFunction', options);
++    return await this._contentSession.send('callFunction', options);
 +  }
 +
 +  async getObjectProperties(options) {
-+    return await this._contentSession.send('Runtime.getObjectProperties', options);
++    return await this._contentSession.send('getObjectProperties', options);
 +  }
 +
 +  async disposeObject(options) {
-+    return await this._contentSession.send('Runtime.disposeObject', options);
++    return await this._contentSession.send('disposeObject', options);
 +  }
 +
-+  dispose() {}
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++  }
 +}
 +
 +var EXPORTED_SYMBOLS = ['RuntimeHandler'];
