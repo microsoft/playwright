@@ -7695,10 +7695,10 @@ index 78caedf0c0ce83675569502d150fcc44e5f9868c..42070f8b1969caa0d00863279fcefe01
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..28221673d566aff5e6e839d36ef9c83d244291ba
+index 0000000000000000000000000000000000000000..7992dc1f6542ce5e219acda63d4ebd678c2ebcda
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorBrowserAgent.cpp
-@@ -0,0 +1,587 @@
+@@ -0,0 +1,588 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -7957,13 +7957,14 @@ index 0000000000000000000000000000000000000000..28221673d566aff5e6e839d36ef9c83d
 +
 +    Vector<WebPageProxy*> pages = browserContext.pages();
 +    PAL::SessionID sessionID = browserContext.dataStore->sessionID();
-+
 +    m_browserContexts.remove(browserContextID);
-+    m_browserContextDeletions.set(sessionID, makeUnique<BrowserContextDeletion>(browserContext, pages.size(), WTFMove(callback)));
-+
-+    for (auto* page : pages)
-+        page->closePage();
-+
++    if (pages.isEmpty()) {
++        callback->sendSuccess();
++    } else {
++        m_browserContextDeletions.set(sessionID, makeUnique<BrowserContextDeletion>(browserContext, pages.size(), WTFMove(callback)));
++        for (auto* page : pages)
++            page->closePage();
++    }
 +    m_client->deleteBrowserContext(errorString, sessionID);
 +}
 +
@@ -13059,7 +13060,7 @@ index 04d3630dc2b0f5e937af173046268001da003753..ba0a60b832cd353776bb50b8198df2d8
  )
  
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9a6b69081 100644
+index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a71a4279bb9bf3cc5485c7fb085bc1a1382951cc 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -13135,7 +13136,7 @@ index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -164,14 +191,54 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -164,14 +191,47 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
  
@@ -13150,13 +13151,6 @@ index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9
 +            "web-context", webContext,
 +            nullptr));
 +    }
-+    auto* settings = webkit_settings_new_with_settings(
-+        "enable-developer-extras", TRUE,
-+        "enable-webgl", TRUE,
-+        "enable-media-stream", TRUE,
-+        "enable-encrypted-media", TRUE,
-+        nullptr);
-+    webkit_web_view_set_settings(newWebView, settings);
  
      g_signal_connect(newWebView, "close", G_CALLBACK(webViewClose), nullptr);
 -
@@ -13193,7 +13187,7 @@ index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -206,6 +273,14 @@ int main(int argc, char *argv[])
+@@ -206,6 +266,14 @@ int main(int argc, char *argv[])
      }
  
      auto* loop = g_main_loop_new(nullptr, FALSE);
@@ -13208,7 +13202,7 @@ index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9
  
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -215,7 +290,19 @@ int main(int argc, char *argv[])
+@@ -215,7 +283,19 @@ int main(int argc, char *argv[])
          return 1;
      }
  
@@ -13229,7 +13223,7 @@ index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
-@@ -300,7 +387,9 @@ int main(int argc, char *argv[])
+@@ -300,7 +380,9 @@ int main(int argc, char *argv[])
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
      g_signal_connect(webView, "create", G_CALLBACK(createWebView), nullptr);
@@ -13240,7 +13234,7 @@ index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9
  
      if (ignoreTLSErrors)
          webkit_web_context_set_tls_errors_policy(webContext, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
-@@ -319,7 +408,7 @@ int main(int argc, char *argv[])
+@@ -319,7 +401,7 @@ int main(int argc, char *argv[])
          g_object_unref(file);
          webkit_web_view_load_uri(webView, url);
          g_free(url);
@@ -13249,7 +13243,7 @@ index a0ca94ac2dcc005b403180aa11407ff7b33dcbc6..a10ce93a58f138eb475273444bba33f9
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -327,8 +416,7 @@ int main(int argc, char *argv[])
+@@ -327,8 +409,7 @@ int main(int argc, char *argv[])
      g_main_loop_run(loop);
  
      g_object_unref(webView);
