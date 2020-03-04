@@ -173,8 +173,16 @@ The [Browser] object itself is considered to be disposed and cannot be used anym
 #### browser.contexts()
 - returns: <[Array]<[BrowserContext]>>
 
-Returns an array of all open browser contexts. In a newly created browser, this will return
-a single instance of [BrowserContext].
+Returns an array of all open browser contexts. In a newly created browser, this will return zero
+browser contexts.
+
+```js
+const browser = await pw.webkit.launch();
+console.log(browser.contexts().length); // prints `0`
+
+const context = await browser.newContext();
+console.log(browser.contexts().length); // prints `1`
+```
 
 #### browser.isConnected()
 
