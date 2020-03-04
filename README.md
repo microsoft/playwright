@@ -74,30 +74,7 @@ const iPhone11 = devices['iPhone 11 Pro'];
 })();
 ```
 
-And here is the same script for Chrome on Android.
-
-```js
-const { chromium, devices } = require('playwright');
-const pixel2 = devices['Pixel 2'];
-
-(async () => {
-  const browser = await chromium.launch();
-  const context = await browser.newContext({
-    viewport: pixel2.viewport,
-    userAgent: pixel2.userAgent,
-    geolocation: { longitude: 12.492507, latitude: 41.889938 },
-    permissions: { 'https://www.google.com': ['geolocation'] }
-  });
-  const page = await context.newPage();
-  await page.goto('https://maps.google.com');
-  await page.click('text="Your location"');
-  await page.waitForRequest(/.*pwa\/net.js.*/);
-  await page.screenshot({ path: 'colosseum-android.png' });
-  await browser.close();
-})();
-```
-
-#### Evaluate script
+#### Evaluate in browser context
 
 This code snippet navigates to example.com in Firefox, and executes a script in the page context.
 
@@ -118,6 +95,29 @@ const { firefox } = require('playwright');
   })
   console.log(dimensions);
 
+  await browser.close();
+})();
+```
+
+#### Intercept network requests
+
+This code snippet sets up network interception for a WebKit page to log all network requests.
+
+```js
+const { webkit } = require('playwright');
+
+(async () => {
+  const browser = await webkit.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  // Log and continue all network requests
+  page.route('**', request => {
+    console.log(request.url());
+    request.continue();
+  });
+
+  await page.goto('http://todomvc.com');
   await browser.close();
 })();
 ```
