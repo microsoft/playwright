@@ -109,6 +109,10 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(await page.evaluate('window.innerHeight')).toBe(789);
       await context.close();
     });
+    it('close() should work for empty context', async({ browser }) => {
+      const context = await browser.newContext();
+      await context.close();
+    });
   });
 
   describe('BrowserContext({userAgent})', function() {
