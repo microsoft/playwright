@@ -3881,7 +3881,7 @@ index d6a3d0acd246de70cb485880a04b38941c832f65..61c8d5478f5eefccf88532bebf69b94d
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index 8cf9c5c47cea3ad27f282b5d73cfd5d6e3e7834a..8325b2ab10497f72a43dab18c15b5b54dfdf5afc 100644
+index 8cf9c5c47cea3ad27f282b5d73cfd5d6e3e7834a..3c5b8808424f849925f5fcb3ac97d10eee2f5f07 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1178,6 +1178,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -3901,7 +3901,15 @@ index 8cf9c5c47cea3ad27f282b5d73cfd5d6e3e7834a..8325b2ab10497f72a43dab18c15b5b54
      // The search for a target frame is done earlier in the case of form submission.
      Frame* targetFrame = isFormSubmission ? nullptr : findFrameForNavigation(effectiveFrameName);
      if (targetFrame && targetFrame != &m_frame) {
-@@ -1597,6 +1600,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
+@@ -1495,6 +1498,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
+ 
+ void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, NavigationAction&& action, LockHistory lockHistory, FrameLoadType type, RefPtr<FormState>&& formState, AllowNavigationToInvalidURL allowNavigationToInvalidURL, const String& downloadAttribute, CompletionHandler<void()>&& completionHandler)
+ {
++    InspectorInstrumentation::frameScheduledNavigation(m_frame, Seconds(0));
+     FRAMELOADER_RELEASE_LOG_IF_ALLOWED(ResourceLoading, "loadWithNavigationAction: frame load started");
+ 
+     Ref<DocumentLoader> loader = m_client.createDocumentLoader(request, defaultSubstituteDataForURL(request.url()));
+@@ -1597,6 +1601,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
      const String& httpMethod = loader->request().httpMethod();
  
      if (shouldPerformFragmentNavigation(isFormSubmission, httpMethod, policyChecker().loadType(), newURL)) {
@@ -3910,7 +3918,7 @@ index 8cf9c5c47cea3ad27f282b5d73cfd5d6e3e7834a..8325b2ab10497f72a43dab18c15b5b54
          RefPtr<DocumentLoader> oldDocumentLoader = m_documentLoader;
          NavigationAction action { *m_frame.document(), loader->request(), InitiatedByMainFrame::Unknown, policyChecker().loadType(), isFormSubmission };
  
-@@ -3182,6 +3187,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
+@@ -3182,6 +3188,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
      checkCompleted();
      if (m_frame.page())
          checkLoadComplete();
@@ -3919,7 +3927,7 @@ index 8cf9c5c47cea3ad27f282b5d73cfd5d6e3e7834a..8325b2ab10497f72a43dab18c15b5b54
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3944,9 +3951,6 @@ String FrameLoader::referrer() const
+@@ -3944,9 +3952,6 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
@@ -3929,7 +3937,7 @@ index 8cf9c5c47cea3ad27f282b5d73cfd5d6e3e7834a..8325b2ab10497f72a43dab18c15b5b54
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
      for (auto& world : worlds)
-@@ -3955,13 +3959,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+@@ -3955,13 +3960,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {
@@ -14000,10 +14008,10 @@ index 0000000000000000000000000000000000000000..86e7b0c64df5fccdd66b87eecd995e0a
 +@end
 diff --git a/Tools/Playwright/mac/AppDelegate.m b/Tools/Playwright/mac/AppDelegate.m
 new file mode 100644
-index 0000000000000000000000000000000000000000..f6157600282944225a1e18b4aaa3b6d34ade5be9
+index 0000000000000000000000000000000000000000..903587d11239d0071f49f0d91a844e28e65daa71
 --- /dev/null
 +++ b/Tools/Playwright/mac/AppDelegate.m
-@@ -0,0 +1,398 @@
+@@ -0,0 +1,396 @@
 +/*
 + * Copyright (C) 2010-2016 Apple Inc. All rights reserved.
 + *
@@ -14348,7 +14356,6 @@ index 0000000000000000000000000000000000000000..f6157600282944225a1e18b4aaa3b6d3
 +    dialog.webView = webView;
 +    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
 +        completionHandler();
-+        [_dialogs removeObject:dialog];
 +    };
 +    [_dialogs addObject:dialog];
 +}
@@ -14359,7 +14366,6 @@ index 0000000000000000000000000000000000000000..f6157600282944225a1e18b4aaa3b6d3
 +    dialog.webView = webView;
 +    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
 +        completionHandler(accept);
-+        [_dialogs removeObject:dialog];
 +    };
 +    [_dialogs addObject:dialog];
 +}
@@ -14370,7 +14376,6 @@ index 0000000000000000000000000000000000000000..f6157600282944225a1e18b4aaa3b6d3
 +    dialog.webView = webView;
 +    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
 +        completionHandler(accept && value ? value : nil);
-+        [_dialogs removeObject:dialog];
 +    };
 +    [_dialogs addObject:dialog];
 +}
@@ -14381,7 +14386,6 @@ index 0000000000000000000000000000000000000000..f6157600282944225a1e18b4aaa3b6d3
 +    dialog.webView = webView;
 +    dialog.completionHandler = ^void (BOOL accept, NSString* value) {
 +        completionHandler(accept);
-+        [_dialogs removeObject:dialog];
 +    };
 +    [_dialogs addObject:dialog];
 +}
@@ -14392,6 +14396,8 @@ index 0000000000000000000000000000000000000000..f6157600282944225a1e18b4aaa3b6d3
 +        if (dialog.webView != webView)
 +            continue;
 +        dialog.completionHandler(accept, value);
++        dialog.webView = nil;
++        [_dialogs removeObject:dialog];
 +        break;
 +    }
 +}
