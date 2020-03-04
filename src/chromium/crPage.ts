@@ -47,7 +47,7 @@ export class CRPage implements PageDelegate {
   readonly _networkManager: CRNetworkManager;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _isolatedWorlds = new Set<string>();
-  private _eventListeners: RegisteredListener[];
+  private _eventListeners: RegisteredListener[] = [];
   rawMouse: RawMouseImpl;
   rawKeyboard: RawKeyboardImpl;
   private _browser: CRBrowser;
@@ -65,35 +65,34 @@ export class CRPage implements PageDelegate {
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
     this._networkManager = new CRNetworkManager(client, this._page);
-
-    this._eventListeners = [
-      helper.addEventListener(client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
-      helper.addEventListener(client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
-      helper.addEventListener(client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
-      helper.addEventListener(client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
-      helper.addEventListener(client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
-      helper.addEventListener(client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
-      helper.addEventListener(client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
-      helper.addEventListener(client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
-      helper.addEventListener(client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)),
-      helper.addEventListener(client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
-      helper.addEventListener(client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
-      helper.addEventListener(client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
-      helper.addEventListener(client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
-      helper.addEventListener(client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-      helper.addEventListener(client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
-      helper.addEventListener(client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
-      helper.addEventListener(client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
-      helper.addEventListener(client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
-    ];
   }
 
   async initialize() {
-    const [,{frameTree}] = await Promise.all([
+    const [, { frameTree }] = await Promise.all([
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree'),
     ] as const);
     this._handleFrameTree(frameTree);
+    this._eventListeners = [
+      helper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
+      helper.addEventListener(this._client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
+      helper.addEventListener(this._client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
+      helper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
+      helper.addEventListener(this._client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      helper.addEventListener(this._client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
+      helper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
+      helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)),
+      helper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      helper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
+      helper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
+      helper.addEventListener(this._client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
+      helper.addEventListener(this._client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      helper.addEventListener(this._client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
+      helper.addEventListener(this._client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
+      helper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
+      helper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
+    ];
     const promises: Promise<any>[] = [
       this._client.send('Log.enable', {}),
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
