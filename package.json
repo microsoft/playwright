@@ -45,7 +45,7 @@
     "jpeg-js": "^0.3.6",
     "pngjs": "^3.4.0",
     "progress": "^2.0.3",
-    "proxy-from-env": "^1.0.0",
+    "proxy-from-env": "^1.1.0",
     "rimraf": "^3.0.2",
     "uuid": "^3.4.0",
     "ws": "^6.1.0"
