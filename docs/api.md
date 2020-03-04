@@ -190,7 +190,7 @@ Indicates that the browser is connected.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
   - `userAgent` <?[string]> Specific user agent to use in this context.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
@@ -224,7 +224,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
-    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account. Defaults to `false`.
+    - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
   - `userAgent` <?[string]> Specific user agent to use in this context.
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.

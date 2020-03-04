@@ -48,7 +48,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(request.headers['foo']).toBe('bar');
     });
-    it.fail(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
+    it.skip(FFOX).fail(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }
       });
@@ -61,7 +61,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(hasTouch).toBe(true);
     });
-    it.skip(FFOX).fail(CHROMIUM)('should inherit viewport size from browser context', async function({browser, server}) {
+    it.fail(CHROMIUM)('should inherit viewport size from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500 }
       });

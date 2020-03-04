@@ -72,17 +72,20 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     options = validateBrowserContextOptions(options);
     let viewport;
     if (options.viewport) {
+      // TODO: remove isMobile/hasTouch from the protocol?
+      if (options.viewport.isMobile)
+        throw new Error('viewport.isMobile is not supported in Firefox');
       viewport = {
         viewportSize: { width: options.viewport.width, height: options.viewport.height },
-        isMobile: !!options.viewport.isMobile,
         deviceScaleFactor: options.viewport.deviceScaleFactor || 1,
-        hasTouch: !!options.viewport.isMobile,
+        isMobile: false,
+        hasTouch: false,
       };
     } else if (options.viewport !== null) {
       viewport = {
         viewportSize: { width: 1280, height: 720 },
-        isMobile: false,
         deviceScaleFactor: 1,
+        isMobile: false,
         hasTouch: false,
       };
     }
