@@ -10,7 +10,7 @@
   "playwright": {
     "chromium_revision": "745253",
     "firefox_revision": "1032",
-    "webkit_revision": "1166"
+    "webkit_revision": "1167"
   },
   "scripts": {
     "ctest": "cross-env BROWSER=chromium node test/test.js",
