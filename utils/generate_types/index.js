@@ -11,7 +11,10 @@ const handledMethods = new Set();
 /** @type {import('../doclint/check_public_api/Documentation')} */
 let documentation;
 (async function() {
-  fs.writeFileSync(path.join(PROJECT_DIR, 'types', 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'chromium', 'protocol.ts')), 'utf8');
+  const typesDir = path.join(PROJECT_DIR, 'types');
+  if (!fs.existsSync(typesDir))
+    fs.mkdirSync(typesDir)
+  fs.writeFileSync(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'chromium', 'protocol.ts')), 'utf8');
   const browser = await chromium.launch();
   const page = await browser.newPage();
   const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
@@ -40,9 +43,8 @@ let documentation;
         return '';
       throw new Error(`Unknown override method "${className}.${methodName}"`);
     }
-    return memberJSDOC(method, '  ');
+    return memberJSDOC(method, '  ').trimLeft();
   }, (className) => {
-    
     return classBody(docClassForName(className));
   });
   const classes = documentation.classesArray.filter(cls => !handledClasses.has(cls.name));
@@ -59,7 +61,7 @@ ${overrides}
 ${classes.map(classDesc => classToString(classDesc)).join('\n')}
 ${objectDefinitionsToString()}
 `;
-  fs.writeFileSync(path.join(PROJECT_DIR, 'types', 'types.d.ts'), output, 'utf8');
+  fs.writeFileSync(path.join(typesDir, 'types.d.ts'), output, 'utf8');
 })().catch(e => {
   console.error(e);
   process.exit(1);
@@ -98,6 +100,15 @@ function classToString(classDesc) {
 }
 
 /**
+ * @param {string} type 
+ */
+function argNameForType(type) {
+  if (type === 'void')
+    return null;
+  return type[0].toLowerCase() + type.slice(1);
+}
+
+/**
  * @param {import('../doclint/check_public_api/Documentation').Class} classDesc 
  */
 function classBody(classDesc) {
@@ -106,7 +117,10 @@ function classBody(classDesc) {
     for (const [eventName, value] of classDesc.events) {
       if (value.comment)
         parts.push(writeComment(value.comment, '  '));
-      parts.push(`  ${method}(event: '${eventName}', listener: (arg0 : ${typeToString(value && value.type, classDesc.name, eventName, 'payload')}) => void): this;\n`);
+      const type = typeToString(value && value.type, classDesc.name, eventName, 'payload');
+      const argName = argNameForType(type);
+      const params = argName ? `${argName} : ${type}` : '';
+      parts.push(`  ${method}(event: '${eventName}', listener: (${params}) => void): this;\n`);
     }
   }
   const members = classDesc.membersArray.filter(member => member.kind !== 'event');
@@ -171,8 +185,6 @@ function typeToString(type, ...namespace) {
   if (!type)
     return 'void';
   let typeString = stringifyType(parseType(type.name));
-  for (let i = 0; i < type.properties.length; i++)
-    typeString = typeString.replace('arg' + i, type.properties[i].name);
   if (type.properties.length && typeString.indexOf('Object') !== -1) {
     const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
     typeString = typeString.replace('Object', name);
@@ -242,6 +254,9 @@ function parseType(type) {
   };
 }
 
+/**
+ * @return {string}
+ */
 function stringifyType(parsedType) {
   if (!parsedType)
     return 'void';
@@ -255,7 +270,7 @@ function stringifyType(parsedType) {
       arg.next = null;
       stringArgs.push(stringifyType(arg));
     }
-    out = `((${stringArgs.map((type, index) => `arg${index} : ${type}`).join(', ')}, ...args: any[]) => ${stringifyType(parsedType.retType)})`;
+    out = `((${stringArgs.map((type, index) => `arg${index} : ${type}`).join(', ')}) => ${stringifyType(parsedType.retType)})`;
   } else if (parsedType.name === 'function') {
     out = 'Function';
   }
@@ -292,6 +307,7 @@ function argsFromMember(member, ...namespace) {
 }
 /**
  * @param {import('../doclint/check_public_api/Documentation').Member} member
+ * @param {string} indent
  */
 function memberJSDOC(member, indent) {
   const lines = [];

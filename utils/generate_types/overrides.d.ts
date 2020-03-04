@@ -11,23 +11,29 @@ type WaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   visibility: 'visible'|'any';
 }
 
-export interface Page<C=BrowserContext> {
-  context(): C;
+type HTMLOrSVGElement = SVGElement | HTMLElement;
+type HTMLOrSVGElementHandle = ElementHandle<HTMLOrSVGElement>;
 
+export interface Page {
   evaluate<Args extends any[], R>(pageFunction: PageFunction<Args, R>, ...args: Boxed<Args>): Promise<R>;
   evaluateHandle<Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>): Promise<Handle<R>>;
 
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<ElementHandle<Element> | null>;
+  $(selector: string): Promise<HTMLOrSVGElementHandle | null>;
+
+  $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
+  $$(selector: string): Promise<HTMLOrSVGElementHandle[]>;
 
   $eval<K extends keyof HTMLElementTagNameMap, Args extends any[], R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Args, R>, ...args: Boxed<Args>): Promise<R>;
-  $eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>): Promise<R>;
+  $eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, Args, R>, ...args: Boxed<Args>): Promise<R>;
 
   $$eval<K extends keyof HTMLElementTagNameMap, Args extends any[], R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Args, R>, ...args: Boxed<Args>): Promise<R>;
-  $$eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>): Promise<R>;
+  $$eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], Args, R>, ...args: Boxed<Args>): Promise<R>;
 
-  waitForSelector(selector: string, options?: WaitForSelectorOptionsNotHidden): Promise<ElementHandle>;
-  waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle>;
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: WaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
+  waitForSelector(selector: string, options?: WaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
+  waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
 }
 
 export interface Frame {
@@ -35,13 +41,21 @@ export interface Frame {
   evaluateHandle<Args extends any[], R>(pageFunction: PageFunction<Args,  R>, ...args: Boxed<Args>): Promise<Handle<R>>;
 
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<ElementHandle<Element> | null>;
+  $(selector: string): Promise<HTMLOrSVGElementHandle | null>;
+
+  $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
+  $$(selector: string): Promise<HTMLOrSVGElementHandle[]>;
 
   $eval<K extends keyof HTMLElementTagNameMap, Args extends any[], R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Args, R>, ...args: Boxed<Args>): Promise<R>;
-  $eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>): Promise<R>;
+  $eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, Args, R>, ...args: Boxed<Args>): Promise<R>;
 
   $$eval<K extends keyof HTMLElementTagNameMap, Args extends any[], R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Args, R>, ...args: Boxed<Args>): Promise<R>;
-  $$eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>): Promise<R>;
+  $$eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], Args, R>, ...args: Boxed<Args>): Promise<R>;
+
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: WaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
+  waitForSelector(selector: string, options?: WaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
+  waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
 }
 
 export interface Worker {
@@ -58,24 +72,28 @@ export interface JSHandle<T = any> {
 
 export interface ElementHandle<T=Node> extends JSHandle<T> {
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
-  $(selector: string): Promise<ElementHandle<Element> | null>;
+  $(selector: string): Promise<HTMLOrSVGElementHandle | null>;
+
+  $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
+  $$(selector: string): Promise<HTMLOrSVGElementHandle[]>;
 
   $eval<K extends keyof HTMLElementTagNameMap, Args extends any[], R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Args, R>, ...args: Boxed<Args>): Promise<R>;
-  $eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element, Args, R>, ...args: Boxed<Args>): Promise<R>;
+  $eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement, Args, R>, ...args: Boxed<Args>): Promise<R>;
 
   $$eval<K extends keyof HTMLElementTagNameMap, Args extends any[], R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Args, R>, ...args: Boxed<Args>): Promise<R>;
-  $$eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<Element[], Args, R>, ...args: Boxed<Args>): Promise<R>;
-}
-
-export interface ChromiumBrowser extends Browser {
-  newPage(options?: BrowserNewPageOptions): Promise<Page<ChromiumBrowserContext>>;
+  $$eval<Args extends any[], R>(selector: string, pageFunction: PageFunctionOn<HTMLOrSVGElement[], Args, R>, ...args: Boxed<Args>): Promise<R>;
 }
 
 export interface BrowserType<Browser> {
-  
+
 }
 
-export interface ChromiumSession { 
+export interface ChromiumBrowser extends Browser {
+  contexts(): Array<ChromiumBrowserContext>;
+  newContext(options?: BrowserNewContextOptions): Promise<ChromiumBrowserContext>;
+}
+
+export interface ChromiumSession {
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;

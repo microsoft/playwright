@@ -111,7 +111,7 @@ class MDOutline {
           acceptNode(node) {
             if (!(node instanceof Comment))
               return NodeFilter.FILTER_REJECT;
-            if (node.data.trim() === 'GEN:toc')
+            if (node.data.trim().startsWith('GEN:toc'))
               return NodeFilter.FILTER_ACCEPT;
             return NodeFilter.FILTER_REJECT;
           }
@@ -188,7 +188,7 @@ class MDOutline {
               errors.push(`${name} has mistyped 'return' type declaration: expected exactly '${expectedText}', found '${actualText}'.`);
           }
         }
-        const comment = parseComment(extractSiblingsIntoFragment(ul ? ul.nextSibling : content));
+        const comment = parseComment(extractSiblingsIntoFragment(ul ? ul.nextSibling : content.querySelector('h4').nextSibling));
         return {
           name,
           args,
