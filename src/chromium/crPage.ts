@@ -119,6 +119,8 @@ export class CRPage implements PageDelegate {
     if (options.geolocation)
       promises.push(this._client.send('Emulation.setGeolocationOverride', options.geolocation));
     promises.push(this.updateExtraHTTPHeaders());
+    if (options.offline)
+      promises.push(this._networkManager.setOffline(options.offline));
     for (const binding of this._browserContext._pageBindings.values())
       promises.push(this._initBinding(binding));
     for (const source of this._browserContext._evaluateOnNewDocumentSources)
@@ -371,10 +373,6 @@ export class CRPage implements PageDelegate {
 
   async setRequestInterception(enabled: boolean): Promise<void> {
     await this._networkManager.setRequestInterception(enabled);
-  }
-
-  async setOfflineMode(value: boolean) {
-    await this._networkManager.setOfflineMode(value);
   }
 
   async authenticate(credentials: types.Credentials | null) {

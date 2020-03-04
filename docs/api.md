@@ -209,6 +209,7 @@ Indicates that the browser is connected.
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+  - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -243,6 +244,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+  - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -287,6 +289,7 @@ await context.close();
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
 - [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
+- [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
 
@@ -509,6 +512,10 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 
 > **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
+#### browserContext.setOffline(offline)
+- `offline` <[boolean]> Whether to emulate network being offline for the browser context.
+- returns: <[Promise]>
+
 #### browserContext.setPermissions(origin, permissions[])
 - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
 - `permissions` <[Array]<[string]>> An array of permissions to grant. All permissions that are not listed here will be automatically denied. Permissions can be one of the following values:
@@ -634,7 +641,6 @@ page.removeListener('request', logRequest);
 - [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
-- [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
 - [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
 - [page.title()](#pagetitle)
 - [page.tripleclick(selector[, options])](#pagetripleclickselector-options)
@@ -1465,10 +1471,6 @@ This setting will change the default maximum time for all the methods accepting 
 The extra HTTP headers will be sent with every request the page initiates.
 
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
-
-#### page.setOfflineMode(enabled)
-- `enabled` <[boolean]> When `true`, enables offline mode for the page.
-- returns: <[Promise]>
 
 #### page.setViewportSize(viewportSize)
 - `viewportSize` <[Object]>
@@ -3710,6 +3712,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
 - [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
+- [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
 

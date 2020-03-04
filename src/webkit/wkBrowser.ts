@@ -207,6 +207,8 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
     await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
     if (this._options.geolocation)
       await this.setGeolocation(this._options.geolocation);
+    if (this._options.offline)
+      await this.setOffline(this._options.offline);
   }
 
   _existingPages(): Page[] {
@@ -289,6 +291,12 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
     for (const page of this._existingPages())
       await (page._delegate as WKPage).updateExtraHTTPHeaders();
+  }
+
+  async setOffline(offline: boolean): Promise<void> {
+    this._options.offline = offline;
+    for (const page of this._existingPages())
+      await (page._delegate as WKPage).updateOffline();
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {

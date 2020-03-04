@@ -50,7 +50,6 @@ export interface PageDelegate {
   setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
   setCacheEnabled(enabled: boolean): Promise<void>;
   setRequestInterception(enabled: boolean): Promise<void>;
-  setOfflineMode(enabled: boolean): Promise<void>;
   authenticate(credentials: types.Credentials | null): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
 
@@ -82,7 +81,6 @@ type PageState = {
   extraHTTPHeaders: network.Headers | null;
   cacheEnabled: boolean | null;
   interceptNetwork: boolean | null;
-  offlineMode: boolean | null;
   credentials: types.Credentials | null;
   hasTouch: boolean | null;
 };
@@ -149,7 +147,6 @@ export class Page extends platform.EventEmitter {
       extraHTTPHeaders: null,
       cacheEnabled: null,
       interceptNetwork: null,
-      offlineMode: null,
       credentials: null,
       hasTouch: null,
     };
@@ -410,13 +407,6 @@ export class Page extends platform.EventEmitter {
       }
     }
     request.continue();
-  }
-
-  async setOfflineMode(enabled: boolean) {
-    if (this._state.offlineMode === enabled)
-      return;
-    this._state.offlineMode = enabled;
-    await this._delegate.setOfflineMode(enabled);
   }
 
   async authenticate(credentials: types.Credentials | null) {

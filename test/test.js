@@ -87,7 +87,7 @@ if (process.env.BROWSER === 'firefox') {
     ...require('../lib/events').Events,
     ...require('../lib/chromium/events').Events,
   };
-  missingCoverage = ['browserContext.setGeolocation', 'page.setOfflineMode'];
+  missingCoverage = ['browserContext.setGeolocation', 'browserContext.setOffline'];
 } else if (process.env.BROWSER === 'webkit') {
   product = 'WebKit';
   events = require('../lib/events').Events;
