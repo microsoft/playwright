@@ -80,6 +80,7 @@ export class CRPage implements PageDelegate {
       helper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
       helper.addEventListener(this._client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
       helper.addEventListener(this._client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      helper.addEventListener(this._client, 'Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
       helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)),
@@ -170,6 +171,10 @@ export class CRPage implements PageDelegate {
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
+  }
+
+  _onFrameRequestedNavigation(payload: Protocol.Page.frameRequestedNavigationPayload) {
+    this._page._frameManager.frameRequestedNavigation(payload.frameId);
   }
 
   async _ensureIsolatedWorld(name: string) {
