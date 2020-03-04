@@ -367,10 +367,6 @@ export class CRPage implements PageDelegate {
     await this._client.send('Emulation.setEmulatedMedia', { media: mediaType || '', features });
   }
 
-  setCacheEnabled(enabled: boolean): Promise<void> {
-    return this._networkManager.setCacheEnabled(enabled);
-  }
-
   async setRequestInterception(enabled: boolean): Promise<void> {
     await this._networkManager.setRequestInterception(enabled);
   }

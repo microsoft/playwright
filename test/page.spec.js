@@ -756,29 +756,6 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  describe('Page.setCacheEnabled', function() {
-    it('should enable or disable the cache based on the state passed', async({page, server}) => {
-      await page.goto(server.PREFIX + '/cached/one-style.html');
-      // WebKit does r.setCachePolicy(ResourceRequestCachePolicy::ReloadIgnoringCacheData);
-      // when navigating to the same url, load empty.html to avoid that.
-      await page.goto(server.EMPTY_PAGE);
-      const [cachedRequest] = await Promise.all([
-        server.waitForRequest('/cached/one-style.html'),
-        page.goto(server.PREFIX + '/cached/one-style.html'),
-      ]);
-      // Rely on "if-modified-since" caching in our test server.
-      expect(cachedRequest.headers['if-modified-since']).not.toBe(undefined);
-
-      await page.setCacheEnabled(false);
-      await page.goto(server.EMPTY_PAGE);
-      const [nonCachedRequest] = await Promise.all([
-        server.waitForRequest('/cached/one-style.html'),
-        page.goto(server.PREFIX + '/cached/one-style.html'),
-      ]);
-      expect(nonCachedRequest.headers['if-modified-since']).toBe(undefined);
-    });
-  });
-
   describe('Page.title', function() {
     it('should return the page title', async({page, server}) => {
       await page.goto(server.PREFIX + '/title.html');

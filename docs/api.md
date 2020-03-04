@@ -209,7 +209,7 @@ Indicates that the browser is connected.
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
-  - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
+  - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -244,7 +244,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `locale` <?[string]> Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
-  - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
+  - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -637,7 +637,6 @@ page.removeListener('request', logRequest);
 - [page.route(url, handler)](#pagerouteurl-handler)
 - [page.screenshot([options])](#pagescreenshotoptions)
 - [page.select(selector, value[, options])](#pageselectselector-value-options)
-- [page.setCacheEnabled([enabled])](#pagesetcacheenabledenabled)
 - [page.setContent(html[, options])](#pagesetcontenthtml-options)
 - [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout)
 - [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout)
@@ -1433,12 +1432,6 @@ page.select('select#colors', { value: 'blue' }, { index: 2 }, 'red');
 ```
 
 Shortcut for [page.mainFrame().select()](#frameselectselector-values)
-
-#### page.setCacheEnabled([enabled])
-- `enabled` <[boolean]> sets the `enabled` state of the cache. Defaults to `true`.
-- returns: <[Promise]>
-
-Toggles ignoring cache for each request based on the enabled state. By default, caching is enabled.
 
 #### page.setContent(html[, options])
 - `html` <[string]> HTML markup to assign to the page.

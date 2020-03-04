@@ -33,7 +33,6 @@ export class CRNetworkManager {
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
-  private _userCacheDisabled = false;
   private _requestIdToInterceptionId = new Map<string, string>();
   private _eventListeners: RegisteredListener[];
 
@@ -77,11 +76,6 @@ export class CRNetworkManager {
     });
   }
 
-  async setCacheEnabled(enabled: boolean) {
-    this._userCacheDisabled = !enabled;
-    await this._updateProtocolCacheDisabled();
-  }
-
   async setRequestInterception(value: boolean) {
     this._userRequestInterceptionEnabled = value;
     await this._updateProtocolRequestInterception();
@@ -94,7 +88,7 @@ export class CRNetworkManager {
     this._protocolRequestInterceptionEnabled = enabled;
     if (enabled) {
       await Promise.all([
-        this._updateProtocolCacheDisabled(),
+        this._client.send('Network.setCacheDisabled', { cacheDisabled: true }),
         this._client.send('Fetch.enable', {
           handleAuthRequests: true,
           patterns: [{urlPattern: '*'}],
@@ -102,16 +96,10 @@ export class CRNetworkManager {
       ]);
     } else {
       await Promise.all([
-        this._updateProtocolCacheDisabled(),
+        this._client.send('Network.setCacheDisabled', { cacheDisabled: false }),
         this._client.send('Fetch.disable')
       ]);
     }
-  }
-
-  async _updateProtocolCacheDisabled() {
-    await this._client.send('Network.setCacheDisabled', {
-      cacheDisabled: this._userCacheDisabled || this._protocolRequestInterceptionEnabled
-    });
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
