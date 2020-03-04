@@ -417,16 +417,6 @@ export class CRPage implements PageDelegate {
       await this._browser._closePage(this._page);
   }
 
-  async getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
-    const rect = await handle.boundingBox();
-    if (!rect)
-      return rect;
-    const { layoutViewport: { pageX, pageY } } = await this._client.send('Page.getLayoutMetrics');
-    rect.x += pageX;
-    rect.y += pageY;
-    return rect;
-  }
-
   canScreenshotOutsideViewport(): boolean {
     return false;
   }
@@ -435,10 +425,23 @@ export class CRPage implements PageDelegate {
     await this._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: 'png' | 'jpeg', options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
+  async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<platform.BufferType> {
+    const { visualViewport } = await this._client.send('Page.getLayoutMetrics');
+    if (!documentRect) {
+      documentRect = {
+        x: visualViewport.pageX + viewportRect!.x,
+        y: visualViewport.pageY + viewportRect!.y,
+        ...helper.enclosingIntSize({
+          width: viewportRect!.width / visualViewport.scale,
+          height: viewportRect!.height / visualViewport.scale,
+        })
+      };
+    }
     await this._client.send('Page.bringToFront', {});
-    const clip = options.clip ? { ...options.clip, scale: 1 } : undefined;
-    const result = await this._client.send('Page.captureScreenshot', { format, quality: options.quality, clip });
+    // When taking screenshots with documentRect (based on the page content, not viewport),
+    // ignore current page scale.
+    const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
+    const result = await this._client.send('Page.captureScreenshot', { format, quality, clip });
     return platform.Buffer.from(result.data, 'base64');
   }
 

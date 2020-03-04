@@ -488,12 +488,8 @@ export class WKPage implements PageDelegate {
     }).catch(debugError);
   }
 
-  getBoundingBoxForScreenshot(handle: dom.ElementHandle<Node>): Promise<types.Rect | null> {
-    return handle.boundingBox();
-  }
-
   canScreenshotOutsideViewport(): boolean {
-    return false;
+    return true;
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
@@ -501,18 +497,20 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(format: string, options: types.ScreenshotOptions, viewportSize: types.Size): Promise<platform.BufferType> {
-    const rect = options.clip || { x: 0, y: 0, width: viewportSize.width, height: viewportSize.height };
-    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: options.fullPage ? 'Page' : 'Viewport' });
+  async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<platform.BufferType> {
+    // TODO: documentRect does not include pageScale, while backend considers it does.
+    // This brakes mobile screenshots of elements or full page.
+    const rect = (documentRect || viewportRect)!;
+    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport' });
     const prefix = 'data:image/png;base64,';
     let buffer = platform.Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
-      buffer = platform.pngToJpeg(buffer);
+      buffer = platform.pngToJpeg(buffer, quality);
     return buffer;
   }
 
-  async resetViewport(oldSize: types.Size): Promise<void> {
-    await this._pageProxySession.send('Emulation.setDeviceMetricsOverride', { ...oldSize, fixedLayout: false, deviceScaleFactor: 0 });
+  async resetViewport(): Promise<void> {
+    assert(false, 'Should not be called');
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

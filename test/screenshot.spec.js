@@ -43,6 +43,21 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       });
       expect(screenshot).toBeGolden('screenshot-clip-rect.png');
     });
+    it('should clip rect with fullPage', async({page, server}) => {
+      await page.setViewportSize({width: 500, height: 500});
+      await page.goto(server.PREFIX + '/grid.html');
+      await page.evaluate(() => window.scrollBy(150, 200));
+      const screenshot = await page.screenshot({
+        fullPage: true,
+        clip: {
+          x: 50,
+          y: 100,
+          width: 150,
+          height: 100,
+        },
+      });
+      expect(screenshot).toBeGolden('screenshot-clip-rect.png');
+    });
     it('should clip elements to the viewport', async({page, server}) => {
       await page.setViewportSize({width: 500, height: 500});
       await page.goto(server.PREFIX + '/grid.html');
@@ -67,7 +82,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
           height: 100
         }
       }).catch(error => error);
-      expect(screenshotError.message).toBe('Clipped area is either empty or outside the viewport');
+      expect(screenshotError.message).toBe('Clipped area is either empty or outside the resulting image');
     });
     it('should run in parallel', async({page, server}) => {
       await page.setViewportSize({width: 500, height: 500});
@@ -162,6 +177,22 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       await page.goto(server.PREFIX + '/overflow.html');
       const screenshot = await page.screenshot();
       expect(screenshot).toBeGolden('screenshot-mobile.png');
+      await context.close();
+    });
+    it.skip(FFOX)('should work with a mobile viewport and clip', async({browser, server}) => {
+      const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
+      const page = await context.newPage();
+      await page.goto(server.PREFIX + '/overflow.html');
+      const screenshot = await page.screenshot({ clip: { x: 10, y: 10, width: 100, height: 150 } });
+      expect(screenshot).toBeGolden('screenshot-mobile-clip.png');
+      await context.close();
+    });
+    it.skip(FFOX).fail(WEBKIT)('should work with a mobile viewport and fullPage', async({browser, server}) => {
+      const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
+      const page = await context.newPage();
+      await page.goto(server.PREFIX + '/overflow-large.html');
+      const screenshot = await page.screenshot({ fullPage: true });
+      expect(screenshot).toBeGolden('screenshot-mobile-fullpage.png');
       await context.close();
     });
     it('should work for canvas', async({page, server}) => {
@@ -339,7 +370,7 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const elementHandle = await page.$('h1');
       await page.evaluate(element => element.remove(), elementHandle);
       const screenshotError = await elementHandle.screenshot().catch(error => error);
-      expect(screenshotError.message).toBe('Node is either not visible or not an HTMLElement');
+      expect(screenshotError.message).toContain('Node is detached');
     });
     it('should not hang with zero width/height element', async({page, server}) => {
       await page.setContent('<div style="width: 50px; height: 0"></div>');
@@ -352,6 +383,16 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       const elementHandle = await page.$('div');
       const screenshot = await elementHandle.screenshot();
       expect(screenshot).toBeGolden('screenshot-element-fractional.png');
+    });
+    it.skip(FFOX).fail(WEBKIT)('should work with a mobile viewport', async({browser, server}) => {
+      const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
+      const page = await context.newPage();
+      await page.goto(server.PREFIX + '/grid.html');
+      await page.evaluate(() => window.scrollBy(50, 100));
+      const elementHandle = await page.$('.box:nth-of-type(3)');
+      const screenshot = await elementHandle.screenshot();
+      expect(screenshot).toBeGolden('screenshot-element-mobile.png');
+      await context.close();
     });
     it('should work for an element with an offset', async({page}) => {
       await page.setContent('<div style="position:absolute; top: 10.3px; left: 20.4px;width:50.3px;height:20.2px;border:1px solid black;"></div>');
