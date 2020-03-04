@@ -40,6 +40,7 @@ function checkSources(sources, externalDependencies) {
     options: {
       allowJs: true,
       target: ts.ScriptTarget.ESNext,
+      strict: true
     },
     rootNames: sources.map(source => source.filePath())
   });
@@ -152,15 +153,39 @@ function checkSources(sources, externalDependencies) {
     return parents;
   }
 
-  function serializeSymbol(symbol, circular = []) {
+  /**
+   * @param {ts.Symbol} symbol
+   * @param {string[]=} circular
+   * @param {boolean=} parentRequired
+   */
+  function serializeSymbol(symbol, circular = [], parentRequired = true) {
     const type = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
     const name = symbol.getName();
     if (symbol.valueDeclaration && symbol.valueDeclaration.dotDotDotToken) {
       const innerType = serializeType(type.typeArguments ? type.typeArguments[0] : type, circular);
       innerType.name = '...' + innerType.name;
-      return Documentation.Member.createProperty('...' + name, innerType);
+      const required = false;
+      return Documentation.Member.createProperty('...' + name, innerType, undefined, required);
     }
-    return Documentation.Member.createProperty(name, serializeType(type, circular));
+
+    const required = parentRequired && !typeHasUndefined(type);
+    return Documentation.Member.createProperty(name, serializeType(type, circular), undefined, required);
+  }
+
+  /**
+   * @param {!ts.Type} type
+   */
+  function typeHasUndefined(type) {
+    if (!type.isUnion())
+      return type.flags & ts.TypeFlags.Undefined;
+    return type.types.some(typeHasUndefined);
+  }
+
+  /**
+   * @param {!ts.Type} type
+   */
+  function isNotNullish(type) {
+    return !((type.flags & ts.TypeFlags.Undefined) || (type.flags & ts.TypeFlags.Null));
   }
 
   /**
@@ -208,7 +233,9 @@ function checkSources(sources, externalDependencies) {
       return new Documentation.Type('Object', properties);
     }
     if (type.isUnion() && (typeName.includes('|') || type.types.every(type => type.isStringLiteral() || type.intrinsicName === 'number'))) {
-      const types = type.types.map(type => serializeType(type, circular));
+      const types = type.types
+        .filter(isNotNullish)
+        .map(type => serializeType(type, circular));
       const name = types.map(type => type.name).join('|');
       const properties = [].concat(...types.map(type => type.properties));
       return new Documentation.Type(name.replace(/false\|true/g, 'boolean'), properties);
@@ -253,7 +280,7 @@ function checkSources(sources, externalDependencies) {
         continue;
       }
       const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
-      const signature = memberType.getCallSignatures()[0];
+      const signature = signatureForType(memberType);
       if (signature)
         members.push(serializeSignature(name, signature));
       else
@@ -264,11 +291,27 @@ function checkSources(sources, externalDependencies) {
   }
 
   /**
+   * @param {ts.Type} type
+   */
+  function signatureForType(type) {
+    const signatures = type.getCallSignatures();
+    if (signatures.length)
+      return signatures[0];
+    if (type.isUnion()) {
+      const innerTypes = type.types.filter(isNotNullish);
+      if (innerTypes.length === 1)
+        return signatureForType(innerTypes[0]);
+    }
+    return null;
+  }
+
+  /**
    * @param {string} name
    * @param {!ts.Signature} signature
    */
   function serializeSignature(name, signature) {
-    const parameters = signature.parameters.map(s => serializeSymbol(s));
+    const minArgumentCount = signature.minArgumentCount || 0;
+    const parameters = signature.parameters.map((s, index) => serializeSymbol(s, [], index < minArgumentCount));
     const returnType = serializeType(signature.getReturnType());
     return Documentation.Member.createMethod(name, parameters, returnType.name !== 'void' ? returnType : null);
   }

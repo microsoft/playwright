@@ -143,6 +143,13 @@ function compareDocumentations(actual, expected) {
         for (const arg of argsDiff.extra)
           text.push(`- Non-existing argument found: ${arg}`);
         errors.push(text.join('\n'));
+      } else {
+        for (const name of actualMethod.args.keys()) {
+          const actual = actualMethod.args.get(name);
+          const expected = expectedMethod.args.get(name);
+          if (actual.required !== expected.required)
+            errors.push(`${className}.${methodName}(): ${name} should be ${expected.required ? 'required' : 'optional'}`);
+        }
       }
 
       for (const arg of argsDiff.equal)
