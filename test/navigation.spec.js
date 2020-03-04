@@ -392,7 +392,9 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       const error = await failed;
       expect(error.message).toBeTruthy();
     });
-    it('extraHttpHeaders should be pushed to provisional page', async({page, server}) => {
+    it.skip(true)('extraHttpHeaders should be pushed to provisional page', async({page, server}) => {
+      // This test is flaky, because we cannot await page.setExtraHTTPHeaders.
+      // We need a way to test our implementation by more than just public api.
       await page.goto(server.EMPTY_PAGE);
       const pagePath = '/one-style.html';
       server.setRoute(pagePath, async (req, res) => {
