@@ -3185,6 +3185,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 
 <!-- GEN:toc -->
 - [response.buffer()](#responsebuffer)
+- [response.finished()](#responsefinished)
 - [response.frame()](#responseframe)
 - [response.headers()](#responseheaders)
 - [response.json()](#responsejson)
@@ -3198,6 +3199,9 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 
 #### response.buffer()
 - returns: <Promise<[Buffer]>> Promise which resolves to a buffer with response body.
+
+#### response.finished()
+- returns: <Promise[?string]> Waits for this response to finish, throws when corresponding request failed.
 
 #### response.frame()
 - returns: <?[Frame]> A [Frame] that initiated this response, or `null` if navigating to error pages.

@@ -258,21 +258,23 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       expect(failedRequests[0].frame()).toBeTruthy();
     });
     it('Page.Events.RequestFinished', async({page, server}) => {
-      const requests = [];
-      page.on('requestfinished', request => requests.push(request));
-      await page.goto(server.EMPTY_PAGE);
-      expect(requests.length).toBe(1);
-      expect(requests[0].url()).toBe(server.EMPTY_PAGE);
-      expect(requests[0].response()).toBeTruthy();
-      expect(requests[0].frame() === page.mainFrame()).toBe(true);
-      expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
+      const [response] = await Promise.all([
+        page.goto(server.EMPTY_PAGE),
+        page.waitForEvent('requestfinished')
+      ]);
+      const request = response.request();
+      expect(request.url()).toBe(server.EMPTY_PAGE);
+      expect(request.response()).toBeTruthy();
+      expect(request.frame() === page.mainFrame()).toBe(true);
+      expect(request.frame().url()).toBe(server.EMPTY_PAGE);
     });
     it('should fire events in proper order', async({page, server}) => {
       const events = [];
       page.on('request', request => events.push('request'));
       page.on('response', response => events.push('response'));
-      page.on('requestfinished', request => events.push('requestfinished'));
-      await page.goto(server.EMPTY_PAGE);
+      const response = await page.goto(server.EMPTY_PAGE);
+      await response.finished();
+      events.push('requestfinished')
       expect(events).toEqual(['request', 'response', 'requestfinished']);
     });
     it('should support redirects', async({page, server}) => {
@@ -284,6 +286,7 @@ module.exports.describe = function({testRunner, expect, MAC, WIN, FFOX, CHROMIUM
       server.setRedirect('/foo.html', '/empty.html');
       const FOO_URL = server.PREFIX + '/foo.html';
       const response = await page.goto(FOO_URL);
+      await response.finished();
       expect(events).toEqual([
         `GET ${FOO_URL}`,
         `302 ${FOO_URL}`,
