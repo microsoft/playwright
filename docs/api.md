@@ -614,6 +614,7 @@ page.removeListener('request', logRequest);
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
 - [page.fill(selector, value[, options])](#pagefillselector-value-options)
 - [page.focus(selector[, options])](#pagefocusselector-options)
+- [page.frame(options)](#pageframeoptions)
 - [page.frames()](#pageframes)
 - [page.goBack([options])](#pagegobackoptions)
 - [page.goForward([options])](#pagegoforwardoptions)
@@ -1169,6 +1170,14 @@ This method fetches an element with `selector` and focuses it.
 If there's no element matching `selector`, the method throws an error.
 
 Shortcut for [page.mainFrame().focus(selector)](#framefocusselector).
+
+#### page.frame(options)
+- `options` <[Object]>
+  - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
+  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+- returns: <[Frame]> frame matching the criteria.
+
+Returns frame matching the specified criteria. Either `name` or `url` must to be specified.
 
 #### page.frames()
 - returns: <[Array]<[Frame]>> An array of all frames attached to the page.

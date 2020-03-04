@@ -206,6 +206,15 @@ export class Page extends platform.EventEmitter {
     return this._frameManager.mainFrame();
   }
 
+  frame(options: { name?: string, url?: types.URLMatch }): frames.Frame | null {
+    assert(options.name || options.url, 'Either name or url matcher should be specified');
+    return this.frames().find(f => {
+      if (options.name)
+        return f.name() === options.name;
+      return platform.urlMatches(f.url(), options.url);
+    }) || null;
+  }
+
   frames(): frames.Frame[] {
     return this._frameManager.frames();
   }
