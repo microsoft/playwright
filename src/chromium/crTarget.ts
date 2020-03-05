@@ -32,15 +32,18 @@ export class CRTarget {
   private readonly _browserContext: CRBrowserContext;
   readonly _targetId: string;
   readonly sessionFactory: () => Promise<CRSession>;
+  private _pagePromiseFulfill: ((page: Page) => void) | null = null;
+  private _pagePromiseReject: ((error: Error) => void) | null = null;
   private _pagePromise: Promise<Page> | null = null;
   _crPage: CRPage | null = null;
   private _workerPromise: Promise<Worker> | null = null;
-  readonly _initializedPromise: Promise<boolean>;
-  _initializedCallback: (success: boolean) => void = () => {};
-  _isInitialized: boolean;
 
   static fromPage(page: Page): CRTarget {
     return (page as any)[targetSymbol];
+  }
+
+  static isPageType(type: string): boolean {
+    return type === 'page' || type === 'background_page';
   }
 
   constructor(
@@ -53,22 +56,12 @@ export class CRTarget {
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this.sessionFactory = sessionFactory;
-    this._initializedPromise = new Promise(fulfill => this._initializedCallback = fulfill).then(async success => {
-      if (!success)
-        return false;
-      const opener = this.opener();
-      if (!opener || !opener._pagePromise || this.type() !== 'page')
-        return true;
-      const openerPage = await opener._pagePromise;
-      if (!openerPage.listenerCount(Events.Page.Popup))
-        return true;
-      const popupPage = await this.page();
-      openerPage.emit(Events.Page.Popup, popupPage);
-      return true;
-    });
-    this._isInitialized = this._targetInfo.type !== 'page' || this._targetInfo.url !== '';
-    if (this._isInitialized)
-      this._initializedCallback(true);
+    if (CRTarget.isPageType(targetInfo.type)) {
+      this._pagePromise = new Promise<Page>((fulfill, reject) => {
+        this._pagePromiseFulfill = fulfill;
+        this._pagePromiseReject = reject;
+      });
+    }
   }
 
   _didClose() {
@@ -77,17 +70,30 @@ export class CRTarget {
   }
 
   async page(): Promise<Page | null> {
-    if ((this._targetInfo.type === 'page' || this._targetInfo.type === 'background_page') && !this._pagePromise) {
-      this._pagePromise = this.sessionFactory().then(async client => {
-        this._crPage = new CRPage(client, this._browser, this._browserContext);
-        const page = this._crPage.page();
-        (page as any)[targetSymbol] = this;
-        client.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
-        await this._crPage.initialize();
-        return page;
-      });
-    }
     return this._pagePromise;
+  }
+
+  async initializePageSession(session: CRSession) {
+    this._crPage = new CRPage(session, this._browser, this._browserContext);
+    const page = this._crPage.page();
+    (page as any)[targetSymbol] = this;
+    session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
+    try {
+      await this._crPage.initialize();
+      this._pagePromiseFulfill!(page);
+    } catch (error) {
+      this._pagePromiseReject!(error);
+    }
+
+    if (this.type() !== 'page')
+      return;
+    const opener = this.opener();
+    if (!opener)
+      return;
+    const openerPage = await opener.page();
+    if (!openerPage)
+      return;
+    openerPage.emit(Events.Page.Popup, page);
   }
 
   async serviceWorker(): Promise<Worker | null> {
@@ -132,11 +138,5 @@ export class CRTarget {
 
   _targetInfoChanged(targetInfo: Protocol.Target.TargetInfo) {
     this._targetInfo = targetInfo;
-
-    if (!this._isInitialized && (this._targetInfo.type !== 'page' || this._targetInfo.url !== '')) {
-      this._isInitialized = true;
-      this._initializedCallback(true);
-      return;
-    }
   }
 }

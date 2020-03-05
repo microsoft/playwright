@@ -55,7 +55,7 @@ export class Chromium implements BrowserType {
     if (options && (options as any).userDataDir)
       throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
-    const browser = await CRBrowser.connect(transport!, options && options.slowMo);
+    const browser = await CRBrowser.connect(transport!, false, options && options.slowMo);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     browser.close = () => browserServer.close();
     (browser as any)['__server__'] = browserServer;
@@ -69,7 +69,7 @@ export class Chromium implements BrowserType {
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
     const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
-    const browser = await CRBrowser.connect(transport!);
+    const browser = await CRBrowser.connect(transport!, true);
     const firstPage = new Promise(r => browser._defaultContext.once(Events.BrowserContext.Page, r));
     await helper.waitWithTimeout(firstPage, 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
@@ -155,7 +155,7 @@ export class Chromium implements BrowserType {
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {
     return await platform.connectToWebsocket(options.wsEndpoint, transport => {
-      return CRBrowser.connect(transport, options.slowMo);
+      return CRBrowser.connect(transport, false, options.slowMo);
     });
   }
 

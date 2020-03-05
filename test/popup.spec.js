@@ -19,8 +19,30 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
-  describe('window.open', function() {
+  describe('Link navigation', function() {
     it.fail(CHROMIUM)('should inherit user agent from browser context', async function({browser, server}) {
+      const context = await browser.newContext({
+        userAgent: 'hey'
+      });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent('<a target=_blank rel=noopener href="/popup/popup.html">link</a>');
+      const requestPromise = server.waitForRequest('/popup/popup.html');
+      const [popup] = await Promise.all([
+        new Promise(fulfill => context.once('page', async pageEvent => fulfill(await pageEvent.page()))),
+        page.click('a'),
+      ]);
+      await popup.waitForLoadState();
+      const userAgent = await popup.evaluate(() => window.initialUserAgent);
+      const request = await requestPromise;
+      await context.close();
+      expect(userAgent).toBe('hey');
+      expect(request.headers['user-agent']).toBe('hey');
+    });
+  });
+
+  describe('window.open', function() {
+    it('should inherit user agent from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         userAgent: 'hey'
       });
@@ -36,7 +58,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
-    it.fail(CHROMIUM)('should inherit extra headers from browser context', async function({browser, server}) {
+    it('should inherit extra headers from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         extraHTTPHeaders: { 'foo': 'bar' },
       });
@@ -60,7 +82,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(online).toBe(false);
     });
-    it.skip(FFOX).fail(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
+    it.skip(FFOX)('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }
       });
@@ -73,7 +95,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(hasTouch).toBe(true);
     });
-    it.fail(CHROMIUM)('should inherit viewport size from browser context', async function({browser, server}) {
+    it('should inherit viewport size from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500 }
       });
@@ -124,7 +146,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
-    it.fail(CHROMIUM)('should work with empty url', async({browser}) => {
+    it('should work with empty url', async({browser}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
