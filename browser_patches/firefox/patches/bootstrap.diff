@@ -1472,10 +1472,10 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +this.NetworkObserver = NetworkObserver;
 diff --git a/testing/juggler/SimpleChannel.js b/testing/juggler/SimpleChannel.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..fa3ce0cbe9062ab2154c0b345823cd2b4ae76df6
+index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b171af40b7
 --- /dev/null
 +++ b/testing/juggler/SimpleChannel.js
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,130 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
 +// Avoid Components.*, ChromeUtils and global const variables.
@@ -1487,7 +1487,7 @@ index 0000000000000000000000000000000000000000..fa3ce0cbe9062ab2154c0b345823cd2b
 +    const channel = new SimpleChannel(name);
 +
 +    const messageListener = {
-+      receiveMessage: message => channel._onMessage(message)
++      receiveMessage: message => channel._onMessage(message.data)
 +    };
 +    mm.addMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener);
 +
@@ -1501,6 +1501,7 @@ index 0000000000000000000000000000000000000000..fa3ce0cbe9062ab2154c0b345823cd2b
 +  constructor(name) {
 +    this._name = name;
 +    this._messageId = 0;
++    this._connectorId = 0;
 +    this._pendingMessages = new Map();
 +    this._handlers = new Map();
 +    this.transport = {
@@ -1517,22 +1518,26 @@ index 0000000000000000000000000000000000000000..fa3ce0cbe9062ab2154c0b345823cd2b
 +    for (const {resolve, reject, methodName} of this._pendingMessages.values())
 +      reject(new Error(`Failed "${methodName}": ${this._name} is disposed.`));
 +    this._pendingMessages.clear();
++    this._handlers.clear();
 +    this.transport.dispose();
 +  }
 +
++  _rejectCallbacksFromConnector(connectorId) {
++    for (const [messageId, callback] of this._pendingMessages) {
++      if (callback.connectorId === connectorId) {
++        callback.reject(new Error(`Failed "${callback.methodName}": connector for namespace "${callback.namespace}" in channel "${this._name}" is disposed.`));
++        this._pendingMessages.delete(messageId);
++      }
++    }
++  }
++
 +  connect(namespace) {
++    const connectorId = ++this._connectorId;
 +    return {
-+      send: (...args) => this._send(namespace, ...args),
-+      emit: (...args) => void this._send(namespace, ...args).catch(e => {}),
++      send: (...args) => this._send(namespace, connectorId, ...args),
++      emit: (...args) => void this._send(namespace, connectorId, ...args).catch(e => {}),
++      dispose: () => this._rejectCallbacksFromConnector(connectorId),
 +    };
-+  }
-+
-+  handler(namespace) {
-+    return this._handlers.get(namespace);
-+  }
-+
-+  handlers() {
-+    return [...this._handlers.values()];
 +  }
 +
 +  register(namespace, handler) {
@@ -1547,23 +1552,24 @@ index 0000000000000000000000000000000000000000..fa3ce0cbe9062ab2154c0b345823cd2b
 +  }
 +
 +  /**
-+   * @param {string} sessionId
++   * @param {string} namespace
++   * @param {number} connectorId
 +   * @param {string} methodName
-+   * @param {*} params
++   * @param {...*} params
 +   * @return {!Promise<*>}
 +   */
-+  async _send(namespace, methodName, ...params) {
++  async _send(namespace, connectorId, methodName, ...params) {
 +    if (this._disposed)
 +      throw new Error(`ERROR: channel ${this._name} is already disposed! Cannot send "${methodName}" to "${namespace}"`);
 +    const id = ++this._messageId;
 +    const promise = new Promise((resolve, reject) => {
-+      this._pendingMessages.set(id, {resolve, reject, methodName});
++      this._pendingMessages.set(id, {connectorId, resolve, reject, methodName, namespace});
 +    });
 +    this.transport.sendMessage({requestId: id, methodName, params, namespace});
 +    return promise;
 +  }
 +
-+  async _onMessage({data}) {
++  async _onMessage(data) {
 +    if (data.responseId) {
 +      const {resolve, reject} = this._pendingMessages.get(data.responseId);
 +      this._pendingMessages.delete(data.responseId);
@@ -1602,7 +1608,7 @@ index 0000000000000000000000000000000000000000..fa3ce0cbe9062ab2154c0b345823cd2b
 +this.SimpleChannel = SimpleChannel;
 diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..2260a6b9c20eac83154c63fee169f02cae01248d
+index 0000000000000000000000000000000000000000..2cb5f24b079289f00d84d0d7b266443635edd2b2
 --- /dev/null
 +++ b/testing/juggler/TargetRegistry.js
 @@ -0,0 +1,257 @@
@@ -1760,7 +1766,7 @@ index 0000000000000000000000000000000000000000..2260a6b9c20eac83154c63fee169f02c
 +    this._browserContext = browserContext;
 +    this._openerId = opener ? opener.id() : undefined;
 +    this._url = tab.linkedBrowser.currentURI.spec;
-+    this._channel = SimpleChannel.createForMessageManager('browser::page', tab.linkedBrowser.messageManager);
++    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, tab.linkedBrowser.messageManager);
 +
 +    const navigationListener = {
 +      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
@@ -2011,16 +2017,17 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f913637890
+index 0000000000000000000000000000000000000000..ba3aa173d496bdd5f9ff6dcffa56c755fa871763
 --- /dev/null
 +++ b/testing/juggler/content/FrameTree.js
-@@ -0,0 +1,275 @@
+@@ -0,0 +1,373 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
 +const Cu = Components.utils;
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +
 +const helper = new Helper();
@@ -2034,6 +2041,7 @@ index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f9
 +      this._browsingContextGroup.__jugglerFrameTrees = new Set();
 +    this._browsingContextGroup.__jugglerFrameTrees.add(this);
 +
++    this._workers = new Map();
 +    this._docShellToFrame = new Map();
 +    this._frameIdToFrame = new Map();
 +    this._pageReady = !waitForInitialNavigation;
@@ -2047,6 +2055,17 @@ index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f9
 +    ]);
 +    this._scriptsToEvaluateOnNewDocument = [];
 +
++    this._wdm = Cc["@mozilla.org/dom/workers/workerdebuggermanager;1"].createInstance(Ci.nsIWorkerDebuggerManager);
++    this._wdmListener = {
++      QueryInterface: ChromeUtils.generateQI([Ci.nsIWorkerDebuggerManagerListener]),
++      onRegister: this._onWorkerCreated.bind(this),
++      onUnregister: this._onWorkerDestroyed.bind(this),
++    };
++    this._wdm.addListener(this._wdmListener);
++    for (const workerDebugger of this._wdm.getWorkerDebuggerEnumerator())
++      this._onWorkerCreated(workerDebugger);
++
++
 +    const flags = Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT |
 +                  Ci.nsIWebProgress.NOTIFY_FRAME_LOCATION;
 +    this._eventListeners = [
@@ -2054,6 +2073,41 @@ index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f9
 +      helper.addObserver(subject => this._onDocShellDestroyed(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-destroy'),
 +      helper.addProgressListener(webProgress, this, flags),
 +    ];
++  }
++
++  workers() {
++    return [...this._workers.values()];
++  }
++
++  _frameForWorker(workerDebugger) {
++    if (workerDebugger.type !== Ci.nsIWorkerDebugger.TYPE_DEDICATED)
++      return null;
++    const docShell = workerDebugger.window.docShell;
++    return this._docShellToFrame.get(docShell) || null;
++  }
++
++  _onWorkerCreated(workerDebugger) {
++    // Note: we do not interoperate with firefox devtools.
++    if (workerDebugger.isInitialized)
++      return;
++    const frame = this._frameForWorker(workerDebugger);
++    if (!frame)
++      return;
++    const worker = new Worker(frame, workerDebugger);
++    this._workers.set(workerDebugger, worker);
++    this.emit(FrameTree.Events.WorkerCreated, worker);
++  }
++
++  _onWorkerDestroyed(workerDebugger) {
++    const frame = this._frameForWorker(workerDebugger);
++    if (!frame)
++      return;
++    const worker = this._workers.get(workerDebugger);
++    if (!worker)
++      return;
++    worker.dispose();
++    this._workers.delete(workerDebugger);
++    this.emit(FrameTree.Events.WorkerDestroyed, worker);
 +  }
 +
 +  allFramesInBrowsingContextGroup(group) {
@@ -2101,6 +2155,7 @@ index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f9
 +
 +  dispose() {
 +    this._browsingContextGroup.__jugglerFrameTrees.delete(this);
++    this._wdm.removeListener(this._wdmListener);
 +    helper.removeListeners(this._eventListeners);
 +  }
 +
@@ -2209,6 +2264,8 @@ index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f9
 +FrameTree.Events = {
 +  FrameAttached: 'frameattached',
 +  FrameDetached: 'framedetached',
++  WorkerCreated: 'workercreated',
++  WorkerDestroyed: 'workerdestroyed',
 +  NavigationStarted: 'navigationstarted',
 +  NavigationCommitted: 'navigationcommitted',
 +  NavigationAborted: 'navigationaborted',
@@ -2285,6 +2342,53 @@ index 0000000000000000000000000000000000000000..7bd2f67a1c45435237fb22a5a66fc1f9
 +  url() {
 +    return this._url;
 +  }
++
++}
++
++class Worker {
++  constructor(frame, workerDebugger) {
++    this._frame = frame;
++    this._workerId = helper.generateId();
++    this._workerDebugger = workerDebugger;
++
++    workerDebugger.initialize('chrome://juggler/content/content/WorkerMain.js');
++
++    this._channel = new SimpleChannel(`content::worker[${this._workerId}]`);
++    this._channel.transport = {
++      sendMessage: obj => workerDebugger.postMessage(JSON.stringify(obj)),
++      dispose: () => {},
++    };
++    this._workerDebuggerListener = {
++      QueryInterface: ChromeUtils.generateQI([Ci.nsIWorkerDebuggerListener]),
++      onMessage: msg => void this._channel._onMessage(JSON.parse(msg)),
++      onClose: () => void this._channel.dispose(),
++      onError: (filename, lineno, message) => {
++        dump(`Error in worker: ${message} @${filename}:${lineno}\n`);
++      },
++    };
++    workerDebugger.addListener(this._workerDebuggerListener);
++  }
++
++  channel() {
++    return this._channel;
++  }
++
++  frame() {
++    return this._frame;
++  }
++
++  id() {
++    return this._workerId;
++  }
++
++  url() {
++    return this._workerDebugger.url;
++  }
++
++  dispose() {
++    this._channel.dispose();
++    this._workerDebugger.removeListener(this._workerDebuggerListener);
++  }
 +}
 +
 +var EXPORTED_SYMBOLS = ['FrameTree'];
@@ -2360,10 +2464,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188af33a58ff
+index 0000000000000000000000000000000000000000..8c47b147be6fee0a013edd7021b6f8deb640f831
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,923 @@
+@@ -0,0 +1,885 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2375,28 +2479,45 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +
 +const helper = new Helper();
 +
-+const registeredWorkerListeners = new Map();
-+const workerListener =  {
-+  QueryInterface: ChromeUtils.generateQI([Ci.nsIWorkerDebuggerListener]),
-+  onMessage: (wrapped) => {
-+    const message = JSON.parse(wrapped);
-+    const listener = registeredWorkerListeners.get(message.workerId);
-+    if (listener)
-+      listener(message);
-+  },
-+  onClose: () => {
-+  },
-+  onError: (filename, lineno, message) => {
-+    dump(`Error in worker: ${message} @${filename}:${lineno}\n`);
-+  },
-+};
++class WorkerData {
++  constructor(pageAgent, browserChannel, sessionId, worker) {
++    this._workerRuntime = worker.channel().connect(sessionId + 'runtime');
++    this._browserWorker = browserChannel.connect(sessionId + worker.id());
++    this._worker = worker;
++    this._sessionId = sessionId;
++    const emit = name => {
++      return (...args) => this._browserWorker.emit(name, ...args);
++    };
++    this._eventListeners = [
++      worker.channel().register(sessionId + 'runtime', {
++        runtimeConsole: emit('runtimeConsole'),
++        runtimeExecutionContextCreated: emit('runtimeExecutionContextCreated'),
++        runtimeExecutionContextDestroyed: emit('runtimeExecutionContextDestroyed'),
++        workerConsoleMessage: (hash) => pageAgent._runtime.filterConsoleMessage(hash),
++      }),
++      browserChannel.register(sessionId + worker.id(), {
++        evaluate: (options) => this._workerRuntime.send('evaluate', options),
++        callFunction: (options) => this._workerRuntime.send('callFunction', options),
++        getObjectProperties: (options) => this._workerRuntime.send('getObjectProperties', options),
++        disposeObject: (options) =>this._workerRuntime.send('disposeObject', options),
++      }),
++    ];
++    worker.channel().connect('').emit('connect', {sessionId});
++  }
++
++  dispose() {
++    this._worker.channel().connect('').emit('disconnect', {sessionId: this._sessionId});
++    this._workerRuntime.dispose();
++    this._browserWorker.dispose();
++    helper.removeListeners(this._eventListeners);
++  }
++}
 +
 +class FrameData {
 +  constructor(agent, frame) {
 +    this._agent = agent;
 +    this._frame = frame;
 +    this._isolatedWorlds = new Map();
-+    this._workers = new Map();
 +    this.reset();
 +  }
 +
@@ -2437,7 +2558,7 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +
 +  exposeFunction(name) {
 +    Cu.exportFunction((...args) => {
-+      this._agent._session.emit('protocol', 'Page.bindingCalled', {
++      this._agent._session.emit('pageBindingCalled', {
 +        executionContextId: this.mainContext.id(),
 +        name,
 +        payload: args[0]
@@ -2477,73 +2598,27 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +    throw new Error('Cannot find object with id = ' + objectId);
 +  }
 +
-+  workerCreated(workerDebugger) {
-+    const workerId = helper.generateId();
-+    this._workers.set(workerId, workerDebugger);
-+    this._agent._session.emit('protocol', 'Page.workerCreated', {
-+      workerId,
-+      frameId: this._frame.id(),
-+      url: workerDebugger.url,
-+    });
-+    // Note: this does not interoperate with firefox devtools.
-+    if (!workerDebugger.isInitialized) {
-+      workerDebugger.initialize('chrome://juggler/content/content/WorkerMain.js');
-+      workerDebugger.addListener(workerListener);
-+    }
-+    registeredWorkerListeners.set(workerId, message => {
-+      if (message.command === 'dispatch') {
-+        this._agent._session.emit('protocol', 'Page.dispatchMessageFromWorker', {
-+          workerId,
-+          message: message.message,
-+        });
-+      }
-+      if (message.command === 'console')
-+        this._agent._runtime.filterConsoleMessage(message.hash);
-+    });
-+    workerDebugger.postMessage(JSON.stringify({command: 'connect', workerId}));
-+  }
-+
-+  workerDestroyed(wd) {
-+    for (const [workerId, workerDebugger] of this._workers) {
-+      if (workerDebugger === wd) {
-+        this._agent._session.emit('protocol', 'Page.workerDestroyed', {
-+          workerId,
-+        });
-+        this._workers.delete(workerId);
-+        registeredWorkerListeners.delete(workerId);
-+      }
-+    }
-+  }
-+
-+  sendMessageToWorker(workerId, message) {
-+    const workerDebugger = this._workers.get(workerId);
-+    if (!workerDebugger)
-+      throw new Error('Cannot find worker with id "' + workerId + '"');
-+    workerDebugger.postMessage(JSON.stringify({command: 'dispatch', workerId, message}));
-+  }
-+
-+  dispose() {
-+    for (const [workerId, workerDebugger] of this._workers) {
-+      workerDebugger.postMessage(JSON.stringify({command: 'disconnect', workerId}));
-+      registeredWorkerListeners.delete(workerId);
-+    }
-+    this._workers.clear();
-+  }
++  dispose() {}
 +}
 +
 +class PageAgent {
-+  constructor(messageManager, session, runtimeAgent, frameTree, networkMonitor) {
++  constructor(messageManager, browserChannel, sessionId, runtimeAgent, frameTree, networkMonitor) {
 +    this._messageManager = messageManager;
-+    this._session = session;
++    this._browserChannel = browserChannel;
++    this._sessionId = sessionId;
++    this._session = browserChannel.connect(sessionId + 'page');
 +    this._runtime = runtimeAgent;
 +    this._frameTree = frameTree;
 +    this._networkMonitor = networkMonitor;
 +
 +    this._frameData = new Map();
++    this._workerData = new Map();
 +    this._scriptsToEvaluateOnNewDocument = new Map();
 +    this._bindingsToAdd = new Set();
 +
-+    this._eventListeners = [];
++    this._eventListeners = [
++      browserChannel.register(sessionId + 'page', this),
++    ];
 +    this._enabled = false;
 +
 +    const docShell = frameTree.mainFrame().docShell();
@@ -2551,18 +2626,11 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +    this._initialDPPX = docShell.contentViewer.overrideDPPX;
 +    this._customScrollbars = null;
 +
-+    this._wdm = Cc["@mozilla.org/dom/workers/workerdebuggermanager;1"].createInstance(Ci.nsIWorkerDebuggerManager);
-+    this._wdmListener = {
-+      QueryInterface: ChromeUtils.generateQI([Ci.nsIWorkerDebuggerManagerListener]),
-+      onRegister: this._onWorkerCreated.bind(this),
-+      onUnregister: this._onWorkerDestroyed.bind(this),
-+    };
-+
 +    this._runtime.setOnErrorFromWorker((domWindow, message, stack) => {
 +      const frame = this._frameTree.frameForDocShell(domWindow.docShell);
 +      if (!frame)
 +        return;
-+      this._session.emit('protocol', 'Page.uncaughtError', {
++      this._session.emit('pageUncaughtError', {
 +        frameId: frame.id(),
 +        message,
 +        stack,
@@ -2639,7 +2707,10 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +        this._onNavigationStarted(frame);
 +    }
 +
-+    this._eventListeners = [
++    for (const worker of this._frameTree.workers())
++      this._onWorkerCreated(worker);
++
++    this._eventListeners.push(...[
 +      helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
 +      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
 +      helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
@@ -2652,53 +2723,45 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +      helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
 +      helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
 +      helper.on(this._frameTree, 'samedocumentnavigation', this._onSameDocumentNavigation.bind(this)),
-+      helper.on(this._frameTree, 'pageready', () => this._session.send('protocol', 'Page.ready', {})),
-+    ];
-+
-+    this._wdm.addListener(this._wdmListener);
-+    for (const workerDebugger of this._wdm.getWorkerDebuggerEnumerator())
-+      this._onWorkerCreated(workerDebugger);
++      helper.on(this._frameTree, 'pageready', () => this._session.emit('pageReady', {})),
++      helper.on(this._frameTree, 'workercreated', this._onWorkerCreated.bind(this)),
++      helper.on(this._frameTree, 'workerdestroyed', this._onWorkerDestroyed.bind(this)),
++    ]);
 +
 +    if (this._frameTree.isPageReady())
-+      this._session.send('protocol', 'Page.ready', {});
++      this._session.emit('pageReady', {});
++  }
++
++  _onWorkerCreated(worker) {
++    const workerData = new WorkerData(this, this._browserChannel, this._sessionId, worker);
++    this._workerData.set(worker.id(), workerData);
++    this._session.emit('pageWorkerCreated', {
++      workerId: worker.id(),
++      frameId: worker.frame().id(),
++      url: worker.url(),
++    });
++  }
++
++  _onWorkerDestroyed(worker) {
++    const workerData = this._workerData.get(worker.id());
++    if (!workerData)
++      return;
++    this._workerData.delete(worker.id());
++    workerData.dispose();
++    this._session.emit('pageWorkerDestroyed', {
++      workerId: worker.id(),
++    });
 +  }
 +
 +  setInterceptFileChooserDialog({enabled}) {
 +    this._docShell.fileInputInterceptionEnabled = !!enabled;
 +  }
 +
-+  _frameForWorker(workerDebugger) {
-+    if (workerDebugger.type !== Ci.nsIWorkerDebugger.TYPE_DEDICATED)
-+      return null;
-+    const docShell = workerDebugger.window.docShell;
-+    const frame = this._frameTree.frameForDocShell(docShell);
-+    return frame ? this._frameData.get(frame) : null;
-+  }
-+
-+  _onWorkerCreated(workerDebugger) {
-+    const frameData = this._frameForWorker(workerDebugger);
-+    if (frameData)
-+      frameData.workerCreated(workerDebugger);
-+  }
-+
-+  _onWorkerDestroyed(workerDebugger) {
-+    const frameData = this._frameForWorker(workerDebugger);
-+    if (frameData)
-+      frameData.workerDestroyed(workerDebugger);
-+  }
-+
-+  sendMessageToWorker({frameId, workerId, message}) {
-+    const frame = this._frameTree.frame(frameId);
-+    if (!frame)
-+      throw new Error('Failed to find frame with id = ' + frameId);
-+    this._frameData.get(frame).sendMessageToWorker(workerId, message);
-+  }
-+
 +  _filePickerShown(inputElement) {
 +    if (inputElement.ownerGlobal.docShell !== this._docShell)
 +      return;
 +    const frameData = this._findFrameForNode(inputElement);
-+    this._session.send('protocol', 'Page.fileChooserOpened', {
++    this._session.emit('pageFileChooserOpened', {
 +      executionContextId: frameData.mainContext.id(),
 +      element: frameData.mainContext.rawValueToRemoteObject(inputElement)
 +    });
@@ -2716,7 +2779,7 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('protocol', 'Page.eventFired', {
++    this._session.emit('pageEventFired', {
 +      frameId: frame.id(),
 +      name: 'DOMContentLoaded',
 +    });
@@ -2727,7 +2790,7 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('protocol', 'Page.uncaughtError', {
++    this._session.emit('pageUncaughtError', {
 +      frameId: frame.id(),
 +      message: errorEvent.message,
 +      stack: errorEvent.error.stack
@@ -2739,7 +2802,7 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('protocol', 'Page.eventFired', {
++    this._session.emit('pageEventFired', {
 +      frameId: frame.id(),
 +      name: 'load'
 +    });
@@ -2750,14 +2813,14 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('protocol', 'Page.eventFired', {
++    this._session.emit('pageEventFired', {
 +      frameId: frame.id(),
 +      name: 'load'
 +    });
 +  }
 +
 +  _onNavigationStarted(frame) {
-+    this._session.emit('protocol', 'Page.navigationStarted', {
++    this._session.emit('pageNavigationStarted', {
 +      frameId: frame.id(),
 +      navigationId: frame.pendingNavigationId(),
 +      url: frame.pendingNavigationURL(),
@@ -2765,7 +2828,7 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +  }
 +
 +  _onNavigationAborted(frame, navigationId, errorText) {
-+    this._session.emit('protocol', 'Page.navigationAborted', {
++    this._session.emit('pageNavigationAborted', {
 +      frameId: frame.id(),
 +      navigationId,
 +      errorText,
@@ -2773,14 +2836,14 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +  }
 +
 +  _onSameDocumentNavigation(frame) {
-+    this._session.emit('protocol', 'Page.sameDocumentNavigation', {
++    this._session.emit('pageSameDocumentNavigation', {
 +      frameId: frame.id(),
 +      url: frame.url(),
 +    });
 +  }
 +
 +  _onNavigationCommitted(frame) {
-+    this._session.emit('protocol', 'Page.navigationCommitted', {
++    this._session.emit('pageNavigationCommitted', {
 +      frameId: frame.id(),
 +      navigationId: frame.lastCommittedNavigationId() || undefined,
 +      url: frame.url(),
@@ -2797,7 +2860,7 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +  }
 +
 +  _onFrameAttached(frame) {
-+    this._session.emit('protocol', 'Page.frameAttached', {
++    this._session.emit('pageFrameAttached', {
 +      frameId: frame.id(),
 +      parentFrameId: frame.parentFrame() ? frame.parentFrame().id() : undefined,
 +    });
@@ -2806,16 +2869,19 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +
 +  _onFrameDetached(frame) {
 +    this._frameData.delete(frame);
-+    this._session.emit('protocol', 'Page.frameDetached', {
++    this._session.emit('pageFrameDetached', {
 +      frameId: frame.id(),
 +    });
 +  }
 +
 +  dispose() {
++    for (const workerData of this._workerData.values())
++      workerData.dispose();
++    this._workerData.clear();
 +    for (const frameData of this._frameData.values())
 +      frameData.dispose();
++    this._frameData.clear();
 +    helper.removeListeners(this._eventListeners);
-+    this._wdm.removeListener(this._wdmListener);
 +  }
 +
 +  async navigate({frameId, url, referer}) {
@@ -3289,10 +3355,10 @@ index 0000000000000000000000000000000000000000..efb4835ca5251dfc984939e31e94188a
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc0237e867
+index 0000000000000000000000000000000000000000..a65fe9c34601f1311578c3f84d701d33cf8ab901
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
-@@ -0,0 +1,549 @@
+@@ -0,0 +1,551 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
 +// Avoid Components.*, ChromeUtils and global const variables.
@@ -3345,17 +3411,19 @@ index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc
 +]);
 +
 +class RuntimeAgent {
-+  constructor(session, onWorkerConsoleMessage) {
++  constructor(channel, channelId, isWorker = false) {
 +    this._debugger = new Debugger();
 +    this._pendingPromises = new Map();
-+    this._session = session;
 +    this._executionContexts = new Map();
 +    this._windowToExecutionContext = new Map();
-+    this._eventListeners = [];
++    this._session = channel.connect(channelId + 'runtime');
++    this._eventListeners = [
++      channel.register(channelId + 'runtime', this),
++    ];
 +    this._enabled = false;
 +    this._filteredConsoleMessageHashes = new Set();
 +    this._onErrorFromWorker = null;
-+    this._onWorkerConsoleMessage = onWorkerConsoleMessage;
++    this._isWorker = isWorker;
 +  }
 +
 +  enable() {
@@ -3365,8 +3433,7 @@ index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc
 +    for (const executionContext of this._executionContexts.values())
 +      this._notifyExecutionContextCreated(executionContext);
 +
-+    const isWorker = !!this._onWorkerConsoleMessage;
-+    if (isWorker) {
++    if (this._isWorker) {
 +      this._registerConsoleEventHandler();
 +    } else {
 +      const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -3400,7 +3467,7 @@ index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc
 +          [Ci.nsIConsoleMessage.warn]: 'warn',
 +          [Ci.nsIConsoleMessage.error]: 'error',
 +        };
-+        this._session.emit('protocol', 'Runtime.console', {
++        this._session.emit('runtimeConsole', {
 +          args: [{
 +            value: message.message,
 +          }],
@@ -3439,7 +3506,7 @@ index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc
 +
 +  _registerConsoleEventHandler() {
 +    setConsoleEventHandler(message => {
-+      this._onWorkerConsoleMessage(this._consoleMessageHash(message));
++      this._session.emit('workerConsoleMessage', this._consoleMessageHash(message));
 +      const executionContext = Array.from(this._executionContexts.values())[0];
 +      this._onConsoleMessage(executionContext, message);
 +    });
@@ -3463,7 +3530,7 @@ index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc
 +    if (!type)
 +      return;
 +    const args = message.arguments.map(arg => executionContext.rawValueToRemoteObject(arg));
-+    this._session.emit('protocol', 'Runtime.console', {
++    this._session.emit('runtimeConsole', {
 +      args,
 +      type,
 +      executionContextId: executionContext.id(),
@@ -3478,7 +3545,7 @@ index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc
 +  _notifyExecutionContextCreated(executionContext) {
 +    if (!this._enabled)
 +      return;
-+    this._session.emit('protocol', 'Runtime.executionContextCreated', {
++    this._session.emit('runtimeExecutionContextCreated', {
 +      executionContextId: executionContext._id,
 +      auxData: executionContext._auxData,
 +    });
@@ -3487,12 +3554,13 @@ index 0000000000000000000000000000000000000000..28df14104d50202c7789b4bee75291bc
 +  _notifyExecutionContextDestroyed(executionContext) {
 +    if (!this._enabled)
 +      return;
-+    this._session.emit('protocol', 'Runtime.executionContextDestroyed', {
++    this._session.emit('runtimeExecutionContextDestroyed', {
 +      executionContextId: executionContext._id,
 +    });
 +  }
 +
 +  dispose() {
++    this._session.dispose();
 +    for (const tearDown of this._eventListeners)
 +      tearDown.call(null);
 +    this._eventListeners = [];
@@ -3935,77 +4003,39 @@ index 0000000000000000000000000000000000000000..caee4df323d0a526ed7e38947c41c643
 +
 diff --git a/testing/juggler/content/WorkerMain.js b/testing/juggler/content/WorkerMain.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..5a90ad143d105abfb62c036e71defd31c6cc36f2
+index 0000000000000000000000000000000000000000..6d93903d340a39e5d90654fa6006ade2f980ebb9
 --- /dev/null
 +++ b/testing/juggler/content/WorkerMain.js
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,29 @@
 +"use strict";
 +loadSubScript('chrome://juggler/content/content/RuntimeAgent.js');
++loadSubScript('chrome://juggler/content/SimpleChannel.js');
 +
-+class WorkerSession {
-+  constructor(workerId) {
-+    this._workerId = workerId;
-+    this._agents = {
-+      Runtime: new RuntimeAgent(this, hash => this._send({command: 'console', hash})),
-+    };
-+    this._agents.Runtime.enable();
-+    this._agents.Runtime.createExecutionContext(null /* domWindow */, global, {});
-+  }
++const runtimeAgents = new Map();
 +
-+  _send(command) {
-+    postMessage(JSON.stringify({...command, workerId: this._workerId}));
-+  }
++const channel = new SimpleChannel('worker::worker');
++const eventListener = event => channel._onMessage(JSON.parse(event.data));
++this.addEventListener('message', eventListener);
++channel.transport = {
++  sendMessage: msg => postMessage(JSON.stringify(msg)),
++  dispose: () => this.removeEventListener('message', eventListener),
++};
 +
-+  _dispatchProtocolMessage(protocolMessage) {
-+    this._send({command: 'dispatch', message: JSON.stringify(protocolMessage)});
-+  }
++channel.register('', {
++  connect: ({sessionId}) => {
++    const runtimeAgent = new RuntimeAgent(channel, sessionId, true /* isWorker */);
++    runtimeAgents.set(sessionId, runtimeAgent);
++    runtimeAgent.createExecutionContext(null /* domWindow */, global, {});
++    runtimeAgent.enable();
++  },
 +
-+  emit(protocol, eventName, params) {
-+    this._dispatchProtocolMessage({method: eventName, params});
-+  }
-+
-+  async _onMessage(message) {
-+    const object = JSON.parse(message);
-+    const id = object.id;
-+    try {
-+      const [domainName, methodName] = object.method.split('.');
-+      const agent = this._agents[domainName];
-+      if (!agent)
-+        throw new Error(`unknown domain: ${domainName}`);
-+      const handler = agent[methodName];
-+      if (!handler)
-+        throw new Error(`unknown method: ${domainName}.${methodName}`);
-+      const result = await handler.call(agent, object.params);
-+      this._dispatchProtocolMessage({id, result});
-+    } catch (e) {
-+      this._dispatchProtocolMessage({id, error: e.message + '\n' + e.stack});
-+    }
-+  }
-+
-+  dispose() {
-+    for (const agent of Object.values(this._agents))
-+      agent.dispose();
-+  }
-+}
-+
-+const workerSessions = new Map();
-+
-+this.addEventListener('message', event => {
-+  const data = JSON.parse(event.data);
-+  if (data.command === 'connect') {
-+    const session = new WorkerSession(data.workerId);
-+    workerSessions.set(data.workerId, session);
-+  }
-+  if (data.command === 'disconnect') {
-+    const session = workerSessions.get(data.workerId);
-+    session.dispose();
-+    workerSessions.delete(data.workerId);
-+  }
-+  if (data.command === 'dispatch') {
-+    const session = workerSessions.get(data.workerId);
-+    session._onMessage(data.message);
-+  }
++  disconnect: ({sessionId}) => {
++    const runtimeAgent = runtimeAgents.get(sessionId);
++    runtimeAgents.delete(sessionId);
++    runtimeAgent.dispose();
++  },
 +});
++
 diff --git a/testing/juggler/content/floating-scrollbars.css b/testing/juggler/content/floating-scrollbars.css
 new file mode 100644
 index 0000000000000000000000000000000000000000..7709bdd34c65062fc63684ef17fc792d3991d965
@@ -4080,10 +4110,10 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +
 diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..34a96d8c38f35cdb03c2f9f739cd52741e7b31b1
+index 0000000000000000000000000000000000000000..887180f71ef78604d2756ffa6a026ac968bda276
 --- /dev/null
 +++ b/testing/juggler/content/main.js
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,96 @@
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
 +const {NetworkMonitor} = ChromeUtils.import('chrome://juggler/content/content/NetworkMonitor.js');
@@ -4098,22 +4128,22 @@ index 0000000000000000000000000000000000000000..34a96d8c38f35cdb03c2f9f739cd5274
 +const helper = new Helper();
 +const messageManager = this;
 +
-+function createContentSession(channel, sessionId) {
-+  const runtimeAgent = new RuntimeAgent(channel.connect(sessionId + 'runtime'));
-+  const pageAgent = new PageAgent(messageManager, channel.connect(sessionId + 'page'), runtimeAgent, frameTree, networkMonitor);
++const sessions = new Map();
 +
-+  channel.register(sessionId + 'runtime', runtimeAgent);
-+  channel.register(sessionId + 'page', pageAgent);
++function createContentSession(channel, sessionId) {
++  const runtimeAgent = new RuntimeAgent(channel, sessionId);
++  const pageAgent = new PageAgent(messageManager, channel, sessionId, runtimeAgent, frameTree, networkMonitor);
++  sessions.set(sessionId, [runtimeAgent, pageAgent]);
 +
 +  runtimeAgent.enable();
 +  pageAgent.enable();
 +}
 +
-+function disposeContentSession(channel, sessionId) {
-+  channel.handler(sessionId + 'runtime').dispose();
-+  channel.handler(sessionId + 'page').dispose();
-+  channel.unregister(sessionId + 'runtime');
-+  channel.unregister(sessionId + 'page');
++function disposeContentSession(sessionId) {
++  const handlers = sessions.get(sessionId);
++  sessions.delete(sessionId);
++  for (const handler of handlers)
++    handler.dispose();
 +}
 +
 +function initialize() {
@@ -4153,7 +4183,7 @@ index 0000000000000000000000000000000000000000..34a96d8c38f35cdb03c2f9f739cd5274
 +    },
 +
 +    detach({sessionId}) {
-+      disposeContentSession(channel, sessionId);
++      disposeContentSession(sessionId);
 +    },
 +
 +    addScriptToEvaluateOnNewDocument({script}) {
@@ -4167,9 +4197,10 @@ index 0000000000000000000000000000000000000000..34a96d8c38f35cdb03c2f9f739cd5274
 +  const gListeners = [
 +    helper.addEventListener(messageManager, 'unload', msg => {
 +      helper.removeListeners(gListeners);
-+      for (const handler of channel.handlers())
-+        handler.dispose();
 +      channel.dispose();
++
++      for (const sessionId of sessions.keys())
++        disposeContentSession(sessionId);
 +
 +      scrollbarManager.dispose();
 +      networkMonitor.dispose();
@@ -4238,21 +4269,23 @@ index 0000000000000000000000000000000000000000..1a0a3130bf9509829744fadc692a7975
 +
 diff --git a/testing/juggler/protocol/AccessibilityHandler.js b/testing/juggler/protocol/AccessibilityHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1567ee73588aa7338cda236be0a403c11ec532ce
+index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de87598507
 --- /dev/null
 +++ b/testing/juggler/protocol/AccessibilityHandler.js
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,17 @@
 +class AccessibilityHandler {
 +  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentChannel.connect(sessionId + 'page');
++    this._contentPage = contentChannel.connect(sessionId + 'page');
 +  }
 +
 +  async getFullAXTree(params) {
-+    return await this._contentSession.send('getFullAXTree', params);
++    return await this._contentPage.send('getFullAXTree', params);
 +  }
 +
-+  dispose() { }
++  dispose() {
++    this._contentPage.dispose();
++  }
 +}
 +
 +var EXPORTED_SYMBOLS = ['AccessibilityHandler'];
@@ -4549,10 +4582,10 @@ index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d
 +
 diff --git a/testing/juggler/protocol/NetworkHandler.js b/testing/juggler/protocol/NetworkHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ad991d3d16fc9e5ba75614ab75803ee275f9357a
+index 0000000000000000000000000000000000000000..698290fdb37d0b000a40a5009a607a8c66683ecc
 --- /dev/null
 +++ b/testing/juggler/protocol/NetworkHandler.js
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,164 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4568,7 +4601,7 @@ index 0000000000000000000000000000000000000000..ad991d3d16fc9e5ba75614ab75803ee2
 +class NetworkHandler {
 +  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentChannel.connect(sessionId + 'page');
++    this._contentPage = contentChannel.connect(sessionId + 'page');
 +    this._networkObserver = NetworkObserver.instance();
 +    this._httpActivity = new Map();
 +    this._enabled = false;
@@ -4627,6 +4660,7 @@ index 0000000000000000000000000000000000000000..ad991d3d16fc9e5ba75614ab75803ee2
 +  }
 +
 +  dispose() {
++    this._contentPage.dispose();
 +    helper.removeListeners(this._eventListeners);
 +  }
 +
@@ -4676,7 +4710,7 @@ index 0000000000000000000000000000000000000000..ad991d3d16fc9e5ba75614ab75803ee2
 +    this._pendingRequstWillBeSentEvents.add(pendingRequestPromise);
 +    let details = null;
 +    try {
-+      details = await this._contentSession.send('requestDetails', {channelId: httpChannel.channelId});
++      details = await this._contentPage.send('requestDetails', {channelId: httpChannel.channelId});
 +    } catch (e) {
 +      pendingRequestCallback();
 +      this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
@@ -4718,10 +4752,10 @@ index 0000000000000000000000000000000000000000..ad991d3d16fc9e5ba75614ab75803ee2
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1d8d790e6c864f14b12dd12d0daf85afa652d423
+index 0000000000000000000000000000000000000000..cbc64728a5fd21d1f7dde389efb58e89fd209912
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,269 @@
+@@ -0,0 +1,351 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4734,13 +4768,76 @@ index 0000000000000000000000000000000000000000..1d8d790e6c864f14b12dd12d0daf85af
 +const XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
 +const helper = new Helper();
 +
++class WorkerHandler {
++  constructor(chromeSession, contentChannel, sessionId, workerId) {
++    this._chromeSession = chromeSession;
++    this._sessionId = sessionId;
++    this._contentWorker = contentChannel.connect(sessionId + workerId);
++    this._workerId = workerId;
++
++    const emitWrappedProtocolEvent = eventName => {
++      return params => {
++        this._chromeSession.emitEvent('Page.dispatchMessageFromWorker', {
++          workerId,
++          message: JSON.stringify({method: eventName, params}),
++        });
++      }
++    }
++
++    this._eventListeners = [
++      contentChannel.register(sessionId + workerId, {
++        runtimeConsole: emitWrappedProtocolEvent('Runtime.console'),
++        runtimeExecutionContextCreated: emitWrappedProtocolEvent('Runtime.executionContextCreated'),
++        runtimeExecutionContextDestroyed: emitWrappedProtocolEvent('Runtime.executionContextDestroyed'),
++      }),
++    ];
++  }
++
++  async sendMessage(message) {
++    const [domain, method] = message.method.split('.');
++    if (domain !== 'Runtime')
++      throw new Error('ERROR: can only dispatch to Runtime domain inside worker');
++    const result = await this._contentWorker.send(method, message.params);
++    this._chromeSession.emitEvent('Page.dispatchMessageFromWorker', {
++      workerId: this._workerId,
++      message: JSON.stringify({result, id: message.id}),
++    });
++  }
++
++  dispose() {
++    this._contentWorker.dispose();
++    helper.removeListeners(this._eventListeners);
++  }
++}
++
 +class PageHandler {
 +  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentChannel.connect(sessionId + 'page');
++    this._contentChannel = contentChannel;
++    this._sessionId = sessionId;
++    this._contentPage = contentChannel.connect(sessionId + 'page');
++    this._workers = new Map();
++
++    const emitProtocolEvent = eventName => {
++      return (...args) => this._chromeSession.emitEvent(eventName, ...args);
++    }
++
 +    this._eventListeners = [
 +      contentChannel.register(sessionId + 'page', {
-+        protocol: (eventName, params) => this._chromeSession.emitEvent(eventName, params),
++        pageBindingCalled: emitProtocolEvent('Page.bindingCalled'),
++        pageDispatchMessageFromWorker: emitProtocolEvent('Page.dispatchMessageFromWorker'),
++        pageEventFired: emitProtocolEvent('Page.eventFired'),
++        pageFileChooserOpened: emitProtocolEvent('Page.fileChooserOpened'),
++        pageFrameAttached: emitProtocolEvent('Page.frameAttached'),
++        pageFrameDetached: emitProtocolEvent('Page.frameDetached'),
++        pageNavigationAborted: emitProtocolEvent('Page.navigationAborted'),
++        pageNavigationCommitted: emitProtocolEvent('Page.navigationCommitted'),
++        pageNavigationStarted: emitProtocolEvent('Page.navigationStarted'),
++        pageReady: emitProtocolEvent('Page.ready'),
++        pageSameDocumentNavigation: emitProtocolEvent('Page.sameDocumentNavigation'),
++        pageUncaughtError: emitProtocolEvent('Page.uncaughtError'),
++        pageWorkerCreated: this._onWorkerCreated.bind(this),
++        pageWorkerDestroyed: this._onWorkerDestroyed.bind(this),
 +      }),
 +    ];
 +    this._pageTarget = TargetRegistry.instance().targetForId(chromeSession.targetId());
@@ -4748,6 +4845,21 @@ index 0000000000000000000000000000000000000000..1d8d790e6c864f14b12dd12d0daf85af
 +    this._dialogs = new Map();
 +
 +    this._enabled = false;
++  }
++
++  _onWorkerCreated({workerId, frameId, url}) {
++    const worker = new WorkerHandler(this._chromeSession, this._contentChannel, this._sessionId, workerId);
++    this._workers.set(workerId, worker);
++    this._chromeSession.emitEvent('Page.workerCreated', {workerId, frameId, url});
++  }
++
++  _onWorkerDestroyed({workerId}) {
++    const worker = this._workers.get(workerId);
++    if (!worker)
++      return;
++    this._workers.delete(workerId);
++    worker.dispose();
++    this._chromeSession.emitEvent('Page.workerDestroyed', {workerId});
 +  }
 +
 +  async close({runBeforeUnload}) {
@@ -4778,12 +4890,13 @@ index 0000000000000000000000000000000000000000..1d8d790e6c864f14b12dd12d0daf85af
 +  }
 +
 +  dispose() {
++    this._contentPage.dispose();
 +    helper.removeListeners(this._eventListeners);
 +  }
 +
 +  async setViewportSize({viewportSize}) {
 +    const size = this._pageTarget.setViewportSize(viewportSize);
-+    await this._contentSession.send('awaitViewportDimensions', {
++    await this._contentPage.send('awaitViewportDimensions', {
 +      width: size.width,
 +      height: size.height
 +    });
@@ -4816,99 +4929,99 @@ index 0000000000000000000000000000000000000000..1d8d790e6c864f14b12dd12d0daf85af
 +  }
 +
 +  async setFileInputFiles(options) {
-+    return await this._contentSession.send('setFileInputFiles', options);
++    return await this._contentPage.send('setFileInputFiles', options);
 +  }
 +
 +  async setEmulatedMedia(options) {
-+    return await this._contentSession.send('setEmulatedMedia', options);
++    return await this._contentPage.send('setEmulatedMedia', options);
 +  }
 +
 +  async setCacheDisabled(options) {
-+    return await this._contentSession.send('setCacheDisabled', options);
++    return await this._contentPage.send('setCacheDisabled', options);
 +  }
 +
 +  async addBinding(options) {
-+    return await this._contentSession.send('addBinding', options);
++    return await this._contentPage.send('addBinding', options);
 +  }
 +
 +  async adoptNode(options) {
-+    return await this._contentSession.send('adoptNode', options);
++    return await this._contentPage.send('adoptNode', options);
 +  }
 +
 +  async screenshot(options) {
-+    return await this._contentSession.send('screenshot', options);
++    return await this._contentPage.send('screenshot', options);
 +  }
 +
 +  async getBoundingBox(options) {
-+    return await this._contentSession.send('getBoundingBox', options);
++    return await this._contentPage.send('getBoundingBox', options);
 +  }
 +
 +  async getContentQuads(options) {
-+    return await this._contentSession.send('getContentQuads', options);
++    return await this._contentPage.send('getContentQuads', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async navigate(options) {
-+    return await this._contentSession.send('navigate', options);
++    return await this._contentPage.send('navigate', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async goBack(options) {
-+    return await this._contentSession.send('goBack', options);
++    return await this._contentPage.send('goBack', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async goForward(options) {
-+    return await this._contentSession.send('goForward', options);
++    return await this._contentPage.send('goForward', options);
 +  }
 +
 +  /**
 +   * @param {{frameId: string, url: string}} options
 +   */
 +  async reload(options) {
-+    return await this._contentSession.send('reload', options);
++    return await this._contentPage.send('reload', options);
 +  }
 +
 +  async describeNode(options) {
-+    return await this._contentSession.send('describeNode', options);
++    return await this._contentPage.send('describeNode', options);
 +  }
 +
 +  async scrollIntoViewIfNeeded(options) {
-+    return await this._contentSession.send('scrollIntoViewIfNeeded', options);
++    return await this._contentPage.send('scrollIntoViewIfNeeded', options);
 +  }
 +
 +  async addScriptToEvaluateOnNewDocument(options) {
-+    return await this._contentSession.send('addScriptToEvaluateOnNewDocument', options);
++    return await this._contentPage.send('addScriptToEvaluateOnNewDocument', options);
 +  }
 +
 +  async removeScriptToEvaluateOnNewDocument(options) {
-+    return await this._contentSession.send('removeScriptToEvaluateOnNewDocument', options);
++    return await this._contentPage.send('removeScriptToEvaluateOnNewDocument', options);
 +  }
 +
 +  async dispatchKeyEvent(options) {
-+    return await this._contentSession.send('dispatchKeyEvent', options);
++    return await this._contentPage.send('dispatchKeyEvent', options);
 +  }
 +
 +  async dispatchTouchEvent(options) {
-+    return await this._contentSession.send('dispatchTouchEvent', options);
++    return await this._contentPage.send('dispatchTouchEvent', options);
 +  }
 +
 +  async dispatchMouseEvent(options) {
-+    return await this._contentSession.send('dispatchMouseEvent', options);
++    return await this._contentPage.send('dispatchMouseEvent', options);
 +  }
 +
 +  async insertText(options) {
-+    return await this._contentSession.send('insertText', options);
++    return await this._contentPage.send('insertText', options);
 +  }
 +
 +  async crash(options) {
-+    return await this._contentSession.send('crash', options);
++    return await this._contentPage.send('crash', options);
 +  }
 +
 +  async handleDialog({dialogId, accept, promptText}) {
@@ -4922,15 +5035,18 @@ index 0000000000000000000000000000000000000000..1d8d790e6c864f14b12dd12d0daf85af
 +  }
 +
 +  async setInterceptFileChooserDialog(options) {
-+    return await this._contentSession.send('setInterceptFileChooserDialog', options);
++    return await this._contentPage.send('setInterceptFileChooserDialog', options);
 +  }
 +
 +  async handleFileChooser(options) {
-+    return await this._contentSession.send('handleFileChooser', options);
++    return await this._contentPage.send('handleFileChooser', options);
 +  }
 +
-+  async sendMessageToWorker(options) {
-+    return await this._contentSession.send('sendMessageToWorker', options);
++  async sendMessageToWorker({workerId, message}) {
++    const worker = this._workers.get(workerId);
++    if (!worker)
++      throw new Error('ERROR: cannot find worker with id ' + workerId);
++    return await worker.sendMessage(JSON.parse(message));
 +  }
 +}
 +
@@ -5912,10 +6028,10 @@ index 0000000000000000000000000000000000000000..838b642eb08efee8a8e6e61421731aa3
 +this.EXPORTED_SYMBOLS = ['protocol', 'checkScheme'];
 diff --git a/testing/juggler/protocol/RuntimeHandler.js b/testing/juggler/protocol/RuntimeHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ae793a57dc0f948dfc4dcbb43c92f2360f12a728
+index 0000000000000000000000000000000000000000..5cc68241bdb420668fd14b45f1a702284a43fad7
 --- /dev/null
 +++ b/testing/juggler/protocol/RuntimeHandler.js
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,52 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -5929,31 +6045,39 @@ index 0000000000000000000000000000000000000000..ae793a57dc0f948dfc4dcbb43c92f236
 +class RuntimeHandler {
 +  constructor(chromeSession, sessionId, contentChannel) {
 +    this._chromeSession = chromeSession;
-+    this._contentSession = contentChannel.connect(sessionId + 'runtime');
++    this._contentRuntime = contentChannel.connect(sessionId + 'runtime');
++
++    const emitProtocolEvent = eventName => {
++      return (...args) => this._chromeSession.emitEvent(eventName, ...args);
++    }
++
 +    this._eventListeners = [
 +      contentChannel.register(sessionId + 'runtime', {
-+        protocol: (eventName, params) => this._chromeSession.emitEvent(eventName, params),
++        runtimeConsole: emitProtocolEvent('Runtime.console'),
++        runtimeExecutionContextCreated: emitProtocolEvent('Runtime.executionContextCreated'),
++        runtimeExecutionContextDestroyed: emitProtocolEvent('Runtime.executionContextDestroyed'),
 +      }),
 +    ];
 +  }
 +
 +  async evaluate(options) {
-+    return await this._contentSession.send('evaluate', options);
++    return await this._contentRuntime.send('evaluate', options);
 +  }
 +
 +  async callFunction(options) {
-+    return await this._contentSession.send('callFunction', options);
++    return await this._contentRuntime.send('callFunction', options);
 +  }
 +
 +  async getObjectProperties(options) {
-+    return await this._contentSession.send('getObjectProperties', options);
++    return await this._contentRuntime.send('getObjectProperties', options);
 +  }
 +
 +  async disposeObject(options) {
-+    return await this._contentSession.send('disposeObject', options);
++    return await this._contentRuntime.send('disposeObject', options);
 +  }
 +
 +  dispose() {
++    this._contentRuntime.dispose();
 +    helper.removeListeners(this._eventListeners);
 +  }
 +}
