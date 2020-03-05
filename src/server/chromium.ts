@@ -197,8 +197,8 @@ export class Chromium implements BrowserType {
           '--mute-audio'
       );
     }
+    chromeArguments.push(...args);
     if (launchType === 'persistent') {
-      chromeArguments.push(...args);
       if (args.every(arg => arg.startsWith('-')))
         chromeArguments.push('about:blank');
     } else {
