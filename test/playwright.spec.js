@@ -200,6 +200,10 @@ module.exports.describe = ({testRunner, product, playwrightPath}) => {
       testRunner.loadTests(require('./ignorehttpserrors.spec.js'), testOptions);
       testRunner.loadTests(require('./popup.spec.js'), testOptions);
     });
+
+    describe.skip(!CHROMIUM)('[Chromium]', () => {
+      testRunner.loadTests(require('./chromium/browsercontext.spec.js'), testOptions);
+    });
   });
 
   // Top-level tests that launch Browser themselves.
