@@ -360,6 +360,53 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
+  describe('BrowserContext.setHTTPCredentials', function() {
+    it('should work', async({browser, server}) => {
+      server.setAuth('/empty.html', 'user', 'pass');
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      let response = await page.goto(server.EMPTY_PAGE);
+      expect(response.status()).toBe(401);
+      await context.setHTTPCredentials({
+        username: 'user',
+        password: 'pass'
+      });
+      response = await page.reload();
+      expect(response.status()).toBe(200);
+      await context.close();
+    });
+    it('should fail if wrong credentials', async({browser, server}) => {
+      server.setAuth('/empty.html', 'user', 'pass');
+      const context = await browser.newContext({
+        httpCredentials: { username: 'foo', password: 'bar' }
+      });
+      const page = await context.newPage();
+      let response = await page.goto(server.EMPTY_PAGE);
+      expect(response.status()).toBe(401);
+      await context.setHTTPCredentials({
+        username: 'user',
+        password: 'pass'
+      });
+      response = await page.goto(server.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
+      await context.close();
+    });
+    it('should allow disable authentication', async({browser, server}) => {
+      server.setAuth('/empty.html', 'user', 'pass');
+      const context = await browser.newContext({
+        httpCredentials: { username: 'user', password: 'pass' }
+      });
+      const page = await context.newPage();
+      let response = await page.goto(server.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
+      await context.setHTTPCredentials(null);
+      // Navigate to a different origin to bust Chromium's credential caching.
+      response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+      expect(response.status()).toBe(401);
+      await context.close();
+    });
+  });
+
   describe.fail(FFOX)('BrowserContext.setOffline', function() {
     it('should work with initial option', async({browser, server}) => {
       const context = await browser.newContext({offline: true});

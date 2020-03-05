@@ -33,6 +33,7 @@ export type BrowserContextOptions = {
   permissions?: { [key: string]: string[] },
   extraHTTPHeaders?: network.Headers,
   offline?: boolean,
+  httpCredentials?: types.Credentials,
 };
 
 export interface BrowserContext {
@@ -48,6 +49,7 @@ export interface BrowserContext {
   setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
   setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
   setOffline(offline: boolean): Promise<void>;
+  setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   close(): Promise<void>;

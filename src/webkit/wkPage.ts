@@ -72,13 +72,14 @@ export class WKPage implements PageDelegate {
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Dialog.enable'),
       this._pageProxySession.send('Emulation.setActiveAndFocused', { active: true }),
-      this.authenticate(this._page._state.credentials)
     ];
     const contextOptions = this._page.context()._options;
     if (contextOptions.javaScriptEnabled === false)
       promises.push(this._pageProxySession.send('Emulation.setJavaScriptEnabled', { enabled: false }));
     if (this._page._state.viewportSize || contextOptions.viewport)
       promises.push(this._updateViewport(true /* updateTouch */));
+    if (contextOptions.httpCredentials)
+      promises.push(this.updateHttpCredentials());
     await Promise.all(promises);
   }
 
@@ -428,8 +429,9 @@ export class WKPage implements PageDelegate {
     await this._updateState('Network.setEmulateOfflineState', { offline: !!this._page.context()._options.offline });
   }
 
-  async authenticate(credentials: types.Credentials | null) {
-    await this._pageProxySession.send('Emulation.setAuthCredentials', { ...(credentials || { username: '', password: '' }) });
+  async updateHttpCredentials() {
+    const credentials = this._page.context()._options.httpCredentials || { username: '', password: '' };
+    await this._pageProxySession.send('Emulation.setAuthCredentials', { username: credentials.username, password: credentials.password });
   }
 
   async setFileChooserIntercepted(enabled: boolean) {

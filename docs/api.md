@@ -210,6 +210,9 @@ Indicates that the browser is connected.
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
+  - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+    - `username` <[string]>
+    - `password` <[string]>
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -245,6 +248,9 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `permissions` <[Object]> A map from origin keys to permissions values. See [browserContext.setPermissions](#browsercontextsetpermissionsorigin-permissions) for more details.
   - `extraHTTPHeaders` <[Object]> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
   - `offline` <[boolean]> Whether to emulate network being offline. Defaults to `false`.
+  - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+    - `username` <[string]>
+    - `password` <[string]>
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -289,6 +295,7 @@ await context.close();
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
 - [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
+- [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->
@@ -520,6 +527,16 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 
 > **NOTE** Consider using [browserContext.setPermissions](#browsercontextsetpermissions-permissions) to grant permissions for the page to read its geolocation.
 
+#### browserContext.setHTTPCredentials(httpCredentials)
+- `httpCredentials` <?[Object]>
+  - `username` <[string]>
+  - `password` <[string]>
+- returns: <[Promise]>
+
+Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+
+To disable authentication, pass `null`.
+
 #### browserContext.setOffline(offline)
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]>
@@ -615,7 +632,6 @@ page.removeListener('request', logRequest);
 - [page.addInitScript(script[, ...args])](#pageaddinitscriptscript-args)
 - [page.addScriptTag(options)](#pageaddscripttagoptions)
 - [page.addStyleTag(options)](#pageaddstyletagoptions)
-- [page.authenticate(credentials)](#pageauthenticatecredentials)
 - [page.check(selector, [options])](#pagecheckselector-options)
 - [page.click(selector[, options])](#pageclickselector-options)
 - [page.close([options])](#pagecloseoptions)
@@ -902,16 +918,6 @@ Shortcut for [page.mainFrame().addScriptTag(options)](#frameaddscripttagoptions)
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the content.
 
 Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
-
-#### page.authenticate(credentials)
-- `credentials` <?[Object]>
-  - `username` <[string]>
-  - `password` <[string]>
-- returns: <[Promise]>
-
-Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
-
-To disable authentication, pass `null`.
 
 #### page.check(selector, [options])
 - `selector` <[string]> A selector to search for checkbox or radio button to check. If there are multiple elements satisfying the selector, the first will be checked.
@@ -3727,6 +3733,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
 - [browserContext.setExtraHTTPHeaders(headers)](#browsercontextsetextrahttpheadersheaders)
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
+- [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
 <!-- GEN:stop -->

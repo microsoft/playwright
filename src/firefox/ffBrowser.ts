@@ -296,6 +296,8 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
       await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders);
     if (this._options.offline)
       await this.setOffline(this._options.offline);
+    if (this._options.httpCredentials)
+      await this.setHTTPCredentials(this._options.httpCredentials);
   }
 
   _existingPages(): Page[] {
@@ -386,6 +388,11 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
     if (offline)
       throw new Error('Offline mode is not implemented in Firefox');
     this._options.offline = offline;
+  }
+
+  async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
+    this._options.httpCredentials = httpCredentials || undefined;
+    await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId || undefined, credentials: httpCredentials });
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {

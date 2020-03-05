@@ -82,6 +82,21 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(online).toBe(false);
     });
+    it('should inherit http credentials from browser context', async function({browser, server}) {
+      // Use unique user/password since Chromium caches credentials per origin.
+      server.setAuth('/title.html', 'user', 'pass');
+      const context = await browser.newContext({
+        httpCredentials: { username: 'user', password: 'pass' }
+      });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
+        page.evaluate(url => window._popup = window.open(url), server.PREFIX + '/title.html'),
+      ]);
+      expect(await popup.title()).toBe('Woof-Woof');
+      await context.close();
+    });
     it.skip(FFOX)('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }

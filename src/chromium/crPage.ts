@@ -121,6 +121,8 @@ export class CRPage implements PageDelegate {
     promises.push(this.updateExtraHTTPHeaders());
     if (options.offline)
       promises.push(this._networkManager.setOffline(options.offline));
+    if (options.httpCredentials)
+      promises.push(this._networkManager.authenticate(options.httpCredentials));
     for (const binding of this._browserContext._pageBindings.values())
       promises.push(this._initBinding(binding));
     for (const source of this._browserContext._evaluateOnNewDocumentSources)
@@ -374,10 +376,6 @@ export class CRPage implements PageDelegate {
 
   async setRequestInterception(enabled: boolean): Promise<void> {
     await this._networkManager.setRequestInterception(enabled);
-  }
-
-  async authenticate(credentials: types.Credentials | null) {
-    await this._networkManager.authenticate(credentials);
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
