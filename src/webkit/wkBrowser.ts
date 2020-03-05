@@ -16,19 +16,18 @@
  */
 
 import { Browser, createPageInNewContext } from '../browser';
-import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
+import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, PageEvent } from '../page';
+import * as platform from '../platform';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
-import { Events } from '../events';
 import { Protocol } from './protocol';
-import { WKConnection, WKSession, kPageProxyMessageReceived, PageProxyMessageReceivedPayload } from './wkConnection';
-import { WKPageProxy } from './wkPageProxy';
-import * as platform from '../platform';
-import { TimeoutSettings } from '../timeoutSettings';
+import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
+import { WKPageProxy } from './wkPageProxy';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
@@ -177,21 +176,16 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 }
 
-export class WKBrowserContext extends platform.EventEmitter implements BrowserContext {
+export class WKBrowserContext extends BrowserContextBase {
   readonly _browser: WKBrowser;
   readonly _browserContextId: string | undefined;
-  readonly _options: BrowserContextOptions;
-  readonly _timeoutSettings: TimeoutSettings;
   private _closed = false;
   readonly _evaluateOnNewDocumentSources: string[];
-  readonly _pageBindings = new Map<string, PageBinding>();
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: BrowserContextOptions) {
-    super();
+    super(options);
     this._browser = browser;
     this._browserContextId = browserContextId;
-    this._timeoutSettings = new TimeoutSettings();
-    this._options = options;
     this._evaluateOnNewDocumentSources = [];
   }
 
@@ -218,14 +212,6 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
         pages.push(page);
     }
     return pages;
-  }
-
-  setDefaultNavigationTimeout(timeout: number) {
-    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-  }
-
-  setDefaultTimeout(timeout: number) {
-    this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
   async pages(): Promise<Page[]> {

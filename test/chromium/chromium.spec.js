@@ -27,7 +27,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
   describe('ChromiumBrowserContext', function() {
     it('should create a worker from a service worker', async({browser, page, server, context}) => {
       const [worker] = await Promise.all([
-        new Promise(fulfill => context.once('serviceworker', fulfill)),
+        context.waitForEvent('serviceworker'),
         page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
       ]);
       expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');

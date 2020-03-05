@@ -101,7 +101,7 @@ export class CRPage implements PageDelegate {
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
       this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }),
     ];
-    const options = this._page.context()._options;
+    const options = this._browserContext._options;
     if (options.bypassCSP)
       promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
     if (options.ignoreHTTPSErrors)
@@ -336,7 +336,7 @@ export class CRPage implements PageDelegate {
 
   async updateExtraHTTPHeaders(): Promise<void> {
     const headers = network.mergeHeaders([
-      this._page.context()._options.extraHTTPHeaders,
+      this._browserContext._options.extraHTTPHeaders,
       this._page._state.extraHTTPHeaders
     ]);
     await this._client.send('Network.setExtraHTTPHeaders', { headers });
@@ -348,7 +348,7 @@ export class CRPage implements PageDelegate {
   }
 
   async _updateViewport(updateTouch: boolean): Promise<void> {
-    let viewport = this._page.context()._options.viewport || { width: 0, height: 0 };
+    let viewport = this._browserContext._options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
       viewport = { ...viewport, ...viewportSize };

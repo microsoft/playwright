@@ -25,7 +25,7 @@ import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, BrowserContextBase } from './browserContext';
 import { ConsoleMessage, ConsoleMessageLocation } from './console';
 import * as accessibility from './accessibility';
 import * as platform from './platform';
@@ -113,7 +113,7 @@ export class Page extends platform.EventEmitter {
   private _disconnected = false;
   private _disconnectedCallback: (e: Error) => void;
   readonly _disconnectedPromise: Promise<Error>;
-  private _browserContext: BrowserContext;
+  readonly _browserContext: BrowserContextBase;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
@@ -129,7 +129,7 @@ export class Page extends platform.EventEmitter {
   readonly _requestHandlers: { url: types.URLMatch, handler: (request: network.Request) => void }[] = [];
   _ownedContext: BrowserContext | undefined;
 
-  constructor(delegate: PageDelegate, browserContext: BrowserContext) {
+  constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
     super();
     this._delegate = delegate;
     this._closedCallback = () => {};
@@ -580,7 +580,7 @@ export class PageBinding {
     try {
       let binding = page._pageBindings.get(name);
       if (!binding)
-        binding = page.context()._pageBindings.get(name);
+        binding = page._browserContext._pageBindings.get(name);
       const result = await binding!.playwrightFunction(...args);
       expression = helper.evaluationString(deliverResult, name, seq, result);
     } catch (error) {

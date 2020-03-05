@@ -16,19 +16,18 @@
  */
 
 import { Browser, createPageInNewContext } from '../browser';
-import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned } from '../browserContext';
+import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
-import * as types from '../types';
-import { Page, PageEvent, PageBinding } from '../page';
-import { ConnectionEvents, FFConnection, FFSessionEvents, FFSession } from './ffConnection';
-import { FFPage } from './ffPage';
+import { Page, PageBinding, PageEvent } from '../page';
 import * as platform from '../platform';
-import { Protocol } from './protocol';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
-import { TimeoutSettings } from '../timeoutSettings';
+import * as types from '../types';
+import { ConnectionEvents, FFConnection, FFSession, FFSessionEvents } from './ffConnection';
 import { headersArray } from './ffNetworkManager';
+import { FFPage } from './ffPage';
+import { Protocol } from './protocol';
 
 export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
@@ -269,21 +268,16 @@ class Target {
   }
 }
 
-export class FFBrowserContext extends platform.EventEmitter implements BrowserContext {
+export class FFBrowserContext extends BrowserContextBase {
   readonly _browser: FFBrowser;
   readonly _browserContextId: string | null;
-  readonly _options: BrowserContextOptions;
-  readonly _timeoutSettings: TimeoutSettings;
   private _closed = false;
   private readonly _evaluateOnNewDocumentSources: string[];
-  readonly _pageBindings = new Map<string, PageBinding>();
 
   constructor(browser: FFBrowser, browserContextId: string | null, options: BrowserContextOptions) {
-    super();
+    super(options);
     this._browser = browser;
     this._browserContextId = browserContextId;
-    this._timeoutSettings = new TimeoutSettings();
-    this._options = options;
     this._evaluateOnNewDocumentSources = [];
   }
 

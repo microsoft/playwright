@@ -26,7 +26,7 @@ import { Events } from '../events';
 import * as dialog from '../dialog';
 import { Protocol } from './protocol';
 import { RawMouseImpl, RawKeyboardImpl } from './ffInput';
-import { BrowserContext } from '../browserContext';
+import { BrowserContextBase } from '../browserContext';
 import { getAccessibilityTree } from './ffAccessibility';
 import * as types from '../types';
 import * as platform from '../platform';
@@ -45,7 +45,7 @@ export class FFPage implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
 
-  constructor(session: FFSession, browserContext: BrowserContext, openerResolver: () => Promise<Page | null>) {
+  constructor(session: FFSession, browserContext: BrowserContextBase, openerResolver: () => Promise<Page | null>) {
     this._session = session;
     this._openerResolver = openerResolver;
     this.rawKeyboard = new RawKeyboardImpl(session);
