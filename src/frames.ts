@@ -320,7 +320,12 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
-  async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
+  async goto(url: string | URL, options: GotoOptions = {}): Promise<network.Response | null> {
+    let targetUrl: string;
+    if (url instanceof URL)
+      targetUrl = url.href;
+    else
+      targetUrl = url;
     const headers = (this._page._state.extraHTTPHeaders || {});
     let referer = headers['referer'] || headers['Referer'];
     if (options.referer !== undefined) {
@@ -328,7 +333,7 @@ export class Frame {
         throw new Error('"referer" is already specified as extra HTTP header');
       referer = options.referer;
     }
-    url = helper.completeUserURL(url);
+    targetUrl = helper.completeUserURL(targetUrl);
     const { timeout = this._page._timeoutSettings.navigationTimeout() } = options;
     const disposer = new Disposer();
 
@@ -339,7 +344,7 @@ export class Frame {
     let navigateResult: GotoResult;
     const navigate = async () => {
       try {
-        navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
+        navigateResult = await this._page._delegate.navigateFrame(this, targetUrl, referer);
       } catch (error) {
         return error;
       }
@@ -370,7 +375,7 @@ export class Frame {
       if (!error)
         return;
       disposer.dispose();
-      const message = `While navigating to ${url}: ${error.message}`;
+      const message = `While navigating to ${targetUrl}: ${error.message}`;
       if (error instanceof TimeoutError)
         throw new TimeoutError(message);
       throw new Error(message);
