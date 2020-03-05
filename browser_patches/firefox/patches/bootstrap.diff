@@ -2037,10 +2037,10 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +
 diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ba3aa173d496bdd5f9ff6dcffa56c755fa871763
+index 0000000000000000000000000000000000000000..1197aec925e07a52c5802e09e9fd797b48091fd3
 --- /dev/null
 +++ b/testing/juggler/content/FrameTree.js
-@@ -0,0 +1,373 @@
+@@ -0,0 +1,370 @@
 +"use strict";
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -2119,9 +2119,6 @@ index 0000000000000000000000000000000000000000..ba3aa173d496bdd5f9ff6dcffa56c755
 +  }
 +
 +  _onWorkerDestroyed(workerDebugger) {
-+    const frame = this._frameForWorker(workerDebugger);
-+    if (!frame)
-+      return;
 +    const worker = this._workers.get(workerDebugger);
 +    if (!worker)
 +      return;
@@ -2484,10 +2481,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f9ec07d7c
+index 0000000000000000000000000000000000000000..27a99df370a12f3c98f68017106050f4ee4c5675
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,893 @@
+@@ -0,0 +1,919 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2522,11 +2519,11 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +        disposeObject: (options) =>this._workerRuntime.send('disposeObject', options),
 +      }),
 +    ];
-+    worker.channel().connect('').emit('connect', {sessionId});
++    worker.channel().connect('').emit('attach', {sessionId});
 +  }
 +
 +  dispose() {
-+    this._worker.channel().connect('').emit('disconnect', {sessionId: this._sessionId});
++    this._worker.channel().connect('').emit('detach', {sessionId: this._sessionId});
 +    this._workerRuntime.dispose();
 +    this._browserWorker.dispose();
 +    helper.removeListeners(this._eventListeners);
@@ -2578,7 +2575,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +
 +  exposeFunction(name) {
 +    Cu.exportFunction((...args) => {
-+      this._agent._session.emit('pageBindingCalled', {
++      this._agent._browserPage.emit('pageBindingCalled', {
 +        executionContextId: this.mainContext.id(),
 +        name,
 +        payload: args[0]
@@ -2626,7 +2623,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    this._messageManager = messageManager;
 +    this._browserChannel = browserChannel;
 +    this._sessionId = sessionId;
-+    this._session = browserChannel.connect(sessionId + 'page');
++    this._browserPage = browserChannel.connect(sessionId + 'page');
 +    this._runtime = runtimeAgent;
 +    this._frameTree = frameTree;
 +    this._networkMonitor = networkMonitor;
@@ -2637,7 +2634,33 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    this._bindingsToAdd = new Set();
 +
 +    this._eventListeners = [
-+      browserChannel.register(sessionId + 'page', this),
++      browserChannel.register(sessionId + 'page', {
++        addBinding: this._addBinding.bind(this),
++        addScriptToEvaluateOnNewDocument: this._addScriptToEvaluateOnNewDocument.bind(this),
++        adoptNode: this._adoptNode.bind(this),
++        awaitViewportDimensions: this._awaitViewportDimensions.bind(this),
++        crash: this._crash.bind(this),
++        describeNode: this._describeNode.bind(this),
++        dispatchKeyEvent: this._dispatchKeyEvent.bind(this),
++        dispatchMouseEvent: this._dispatchMouseEvent.bind(this),
++        dispatchTouchEvent: this._dispatchTouchEvent.bind(this),
++        getBoundingBox: this._getBoundingBox.bind(this),
++        getContentQuads: this._getContentQuads.bind(this),
++        getFullAXTree: this._getFullAXTree.bind(this),
++        goBack: this._goBack.bind(this),
++        goForward: this._goForward.bind(this),
++        insertText: this._insertText.bind(this),
++        navigate: this._navigate.bind(this),
++        reload: this._reload.bind(this),
++        removeScriptToEvaluateOnNewDocument: this._removeScriptToEvaluateOnNewDocument.bind(this),
++        requestDetails: this._requestDetails.bind(this),
++        screenshot: this._screenshot.bind(this),
++        scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
++        setCacheDisabled: this._setCacheDisabled.bind(this),
++        setEmulatedMedia: this._setEmulatedMedia.bind(this),
++        setFileInputFiles: this._setFileInputFiles.bind(this),
++        setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
++      }),
 +    ];
 +    this._enabled = false;
 +
@@ -2650,7 +2673,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +      const frame = this._frameTree.frameForDocShell(domWindow.docShell);
 +      if (!frame)
 +        return;
-+      this._session.emit('pageUncaughtError', {
++      this._browserPage.emit('pageUncaughtError', {
 +        frameId: frame.id(),
 +        message,
 +        stack,
@@ -2658,7 +2681,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    });
 +  }
 +
-+  async awaitViewportDimensions({width, height}) {
++  async _awaitViewportDimensions({width, height}) {
 +    const win = this._frameTree.mainFrame().domWindow();
 +    if (win.innerWidth === width && win.innerHeight === height)
 +      return;
@@ -2672,11 +2695,11 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    });
 +  }
 +
-+  requestDetails({channelId}) {
++  _requestDetails({channelId}) {
 +    return this._networkMonitor.requestDetails(channelId);
 +  }
 +
-+  async setEmulatedMedia({type, colorScheme}) {
++  async _setEmulatedMedia({type, colorScheme}) {
 +    const docShell = this._frameTree.mainFrame().docShell();
 +    const cv = docShell.contentViewer;
 +    if (type === '')
@@ -2690,7 +2713,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    }
 +  }
 +
-+  addScriptToEvaluateOnNewDocument({script, worldName}) {
++  _addScriptToEvaluateOnNewDocument({script, worldName}) {
 +    const scriptId = helper.generateId();
 +    this._scriptsToEvaluateOnNewDocument.set(scriptId, {script, worldName});
 +    if (worldName) {
@@ -2700,11 +2723,11 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {scriptId};
 +  }
 +
-+  removeScriptToEvaluateOnNewDocument({scriptId}) {
++  _removeScriptToEvaluateOnNewDocument({scriptId}) {
 +    this._scriptsToEvaluateOnNewDocument.delete(scriptId);
 +  }
 +
-+  setCacheDisabled({cacheDisabled}) {
++  _setCacheDisabled({cacheDisabled}) {
 +    const enable = Ci.nsIRequest.LOAD_NORMAL;
 +    const disable = Ci.nsIRequest.LOAD_BYPASS_CACHE |
 +                  Ci.nsIRequest.INHIBIT_CACHING;
@@ -2745,19 +2768,19 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +      helper.on(this._frameTree, 'navigationcommitted', this._onNavigationCommitted.bind(this)),
 +      helper.on(this._frameTree, 'navigationaborted', this._onNavigationAborted.bind(this)),
 +      helper.on(this._frameTree, 'samedocumentnavigation', this._onSameDocumentNavigation.bind(this)),
-+      helper.on(this._frameTree, 'pageready', () => this._session.emit('pageReady', {})),
++      helper.on(this._frameTree, 'pageready', () => this._browserPage.emit('pageReady', {})),
 +      helper.on(this._frameTree, 'workercreated', this._onWorkerCreated.bind(this)),
 +      helper.on(this._frameTree, 'workerdestroyed', this._onWorkerDestroyed.bind(this)),
 +    ]);
 +
 +    if (this._frameTree.isPageReady())
-+      this._session.emit('pageReady', {});
++      this._browserPage.emit('pageReady', {});
 +  }
 +
 +  _onWorkerCreated(worker) {
 +    const workerData = new WorkerData(this, this._browserChannel, this._sessionId, worker);
 +    this._workerData.set(worker.id(), workerData);
-+    this._session.emit('pageWorkerCreated', {
++    this._browserPage.emit('pageWorkerCreated', {
 +      workerId: worker.id(),
 +      frameId: worker.frame().id(),
 +      url: worker.url(),
@@ -2770,12 +2793,12 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +      return;
 +    this._workerData.delete(worker.id());
 +    workerData.dispose();
-+    this._session.emit('pageWorkerDestroyed', {
++    this._browserPage.emit('pageWorkerDestroyed', {
 +      workerId: worker.id(),
 +    });
 +  }
 +
-+  setInterceptFileChooserDialog({enabled}) {
++  _setInterceptFileChooserDialog({enabled}) {
 +    this._docShell.fileInputInterceptionEnabled = !!enabled;
 +  }
 +
@@ -2789,7 +2812,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    if (inputElement.ownerGlobal.docShell !== this._docShell)
 +      return;
 +    const frameData = this._findFrameForNode(inputElement);
-+    this._session.emit('pageFileChooserOpened', {
++    this._browserPage.emit('pageFileChooserOpened', {
 +      executionContextId: frameData.mainContext.id(),
 +      element: frameData.mainContext.rawValueToRemoteObject(inputElement)
 +    });
@@ -2807,7 +2830,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('pageEventFired', {
++    this._browserPage.emit('pageEventFired', {
 +      frameId: frame.id(),
 +      name: 'DOMContentLoaded',
 +    });
@@ -2818,7 +2841,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('pageUncaughtError', {
++    this._browserPage.emit('pageUncaughtError', {
 +      frameId: frame.id(),
 +      message: errorEvent.message,
 +      stack: errorEvent.error.stack
@@ -2830,7 +2853,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('pageEventFired', {
++    this._browserPage.emit('pageEventFired', {
 +      frameId: frame.id(),
 +      name: 'load'
 +    });
@@ -2841,14 +2864,14 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    const frame = this._frameTree.frameForDocShell(docShell);
 +    if (!frame)
 +      return;
-+    this._session.emit('pageEventFired', {
++    this._browserPage.emit('pageEventFired', {
 +      frameId: frame.id(),
 +      name: 'load'
 +    });
 +  }
 +
 +  _onNavigationStarted(frame) {
-+    this._session.emit('pageNavigationStarted', {
++    this._browserPage.emit('pageNavigationStarted', {
 +      frameId: frame.id(),
 +      navigationId: frame.pendingNavigationId(),
 +      url: frame.pendingNavigationURL(),
@@ -2856,7 +2879,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +  }
 +
 +  _onNavigationAborted(frame, navigationId, errorText) {
-+    this._session.emit('pageNavigationAborted', {
++    this._browserPage.emit('pageNavigationAborted', {
 +      frameId: frame.id(),
 +      navigationId,
 +      errorText,
@@ -2864,14 +2887,14 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +  }
 +
 +  _onSameDocumentNavigation(frame) {
-+    this._session.emit('pageSameDocumentNavigation', {
++    this._browserPage.emit('pageSameDocumentNavigation', {
 +      frameId: frame.id(),
 +      url: frame.url(),
 +    });
 +  }
 +
 +  _onNavigationCommitted(frame) {
-+    this._session.emit('pageNavigationCommitted', {
++    this._browserPage.emit('pageNavigationCommitted', {
 +      frameId: frame.id(),
 +      navigationId: frame.lastCommittedNavigationId() || undefined,
 +      url: frame.url(),
@@ -2888,7 +2911,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +  }
 +
 +  _onFrameAttached(frame) {
-+    this._session.emit('pageFrameAttached', {
++    this._browserPage.emit('pageFrameAttached', {
 +      frameId: frame.id(),
 +      parentFrameId: frame.parentFrame() ? frame.parentFrame().id() : undefined,
 +    });
@@ -2897,7 +2920,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +
 +  _onFrameDetached(frame) {
 +    this._frameData.delete(frame);
-+    this._session.emit('pageFrameDetached', {
++    this._browserPage.emit('pageFrameDetached', {
 +      frameId: frame.id(),
 +    });
 +  }
@@ -2912,7 +2935,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    helper.removeListeners(this._eventListeners);
 +  }
 +
-+  async navigate({frameId, url, referer}) {
++  async _navigate({frameId, url, referer}) {
 +    try {
 +      const uri = NetUtil.newURI(url);
 +    } catch (e) {
@@ -2944,14 +2967,14 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
 +  }
 +
-+  async reload({frameId, url}) {
++  async _reload({frameId, url}) {
 +    const frame = this._frameTree.frame(frameId);
 +    const docShell = frame.docShell().QueryInterface(Ci.nsIWebNavigation);
 +    docShell.reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
 +    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
 +  }
 +
-+  async goBack({frameId, url}) {
++  async _goBack({frameId, url}) {
 +    const frame = this._frameTree.frame(frameId);
 +    const docShell = frame.docShell();
 +    if (!docShell.canGoBack)
@@ -2960,7 +2983,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
 +  }
 +
-+  async goForward({frameId, url}) {
++  async _goForward({frameId, url}) {
 +    const frame = this._frameTree.frame(frameId);
 +    const docShell = frame.docShell();
 +    if (!docShell.canGoForward)
@@ -2969,7 +2992,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
 +  }
 +
-+  addBinding({name}) {
++  _addBinding({name}) {
 +    if (this._bindingsToAdd.has(name))
 +      throw new Error(`Binding with name ${name} already exists`);
 +    this._bindingsToAdd.add(name);
@@ -2977,7 +3000,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +      frameData.exposeFunction(name);
 +  }
 +
-+  async adoptNode({frameId, objectId, executionContextId}) {
++  async _adoptNode({frameId, objectId, executionContextId}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
@@ -2991,7 +3014,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return { remoteObject: context.rawValueToRemoteObject(unsafeObject) };
 +  }
 +
-+  async setFileInputFiles({objectId, frameId, files}) {
++  async _setFileInputFiles({objectId, frameId, files}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
@@ -3002,7 +3025,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    unsafeObject.mozSetFileArray(nsFiles);
 +  }
 +
-+  getContentQuads({objectId, frameId}) {
++  _getContentQuads({objectId, frameId}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
@@ -3020,7 +3043,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {quads};
 +  }
 +
-+  describeNode({objectId, frameId}) {
++  _describeNode({objectId, frameId}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
@@ -3042,7 +3065,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    };
 +  }
 +
-+  async scrollIntoViewIfNeeded({objectId, frameId, rect}) {
++  async _scrollIntoViewIfNeeded({objectId, frameId, rect}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
@@ -3104,7 +3127,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {x: x1, y: y1, width: x2 - x1, height: y2 - y1};
 +  }
 +
-+  async getBoundingBox({frameId, objectId}) {
++  async _getBoundingBox({frameId, objectId}) {
 +    const frame = this._frameTree.frame(frameId);
 +    if (!frame)
 +      throw new Error('Failed to find frame with id = ' + frameId);
@@ -3115,7 +3138,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {boundingBox: {x: box.x + frame.domWindow().scrollX, y: box.y + frame.domWindow().scrollY, width: box.width, height: box.height}};
 +  }
 +
-+  async screenshot({mimeType, fullPage, clip}) {
++  async _screenshot({mimeType, fullPage, clip}) {
 +    const content = this._messageManager.content;
 +    if (clip) {
 +      const data = takeScreenshot(content, clip.x, clip.y, clip.width, clip.height, mimeType);
@@ -3132,7 +3155,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {data};
 +  }
 +
-+  async dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
++  async _dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
 +    const frame = this._frameTree.mainFrame();
 +    const tip = frame.textInputProcessor();
 +    if (key === 'Meta' && Services.appinfo.OS !== 'Darwin')
@@ -3163,7 +3186,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    }
 +  }
 +
-+  async dispatchTouchEvent({type, touchPoints, modifiers}) {
++  async _dispatchTouchEvent({type, touchPoints, modifiers}) {
 +    const frame = this._frameTree.mainFrame();
 +    const defaultPrevented = frame.domWindow().windowUtils.sendTouchEvent(
 +      type.toLowerCase(),
@@ -3179,7 +3202,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    return {defaultPrevented};
 +  }
 +
-+  async dispatchMouseEvent({type, x, y, button, clickCount, modifiers, buttons}) {
++  async _dispatchMouseEvent({type, x, y, button, clickCount, modifiers, buttons}) {
 +    const frame = this._frameTree.mainFrame();
 +    frame.domWindow().windowUtils.sendMouseEvent(
 +      type,
@@ -3211,12 +3234,12 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    }
 +  }
 +
-+  async insertText({text}) {
++  async _insertText({text}) {
 +    const frame = this._frameTree.mainFrame();
 +    frame.textInputProcessor().commitCompositionWith(text);
 +  }
 +
-+  async crash() {
++  async _crash() {
 +    dump(`Crashing intentionally\n`);
 +    // This is to intentionally crash the frame.
 +    // We crash by using js-ctypes and dereferencing
@@ -3229,7 +3252,7 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +    badptr.contents;
 +  }
 +
-+  async getFullAXTree({objectId}) {
++  async _getFullAXTree({objectId}) {
 +    let unsafeObject = null;
 +    if (objectId) {
 +      unsafeObject = this._frameData.get(this._frameTree.mainFrame()).unsafeObject(objectId);
@@ -3383,10 +3406,10 @@ index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f
 +
 diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..a65fe9c34601f1311578c3f84d701d33cf8ab901
+index 0000000000000000000000000000000000000000..8e2a0237c696d95e083fc701738e3caa90e178ad
 --- /dev/null
 +++ b/testing/juggler/content/RuntimeAgent.js
-@@ -0,0 +1,551 @@
+@@ -0,0 +1,556 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
 +// Avoid Components.*, ChromeUtils and global const variables.
@@ -3439,14 +3462,19 @@ index 0000000000000000000000000000000000000000..a65fe9c34601f1311578c3f84d701d33
 +]);
 +
 +class RuntimeAgent {
-+  constructor(channel, channelId, isWorker = false) {
++  constructor(channel, sessionId, isWorker = false) {
 +    this._debugger = new Debugger();
 +    this._pendingPromises = new Map();
 +    this._executionContexts = new Map();
 +    this._windowToExecutionContext = new Map();
-+    this._session = channel.connect(channelId + 'runtime');
++    this._session = channel.connect(sessionId + 'runtime');
 +    this._eventListeners = [
-+      channel.register(channelId + 'runtime', this),
++      channel.register(sessionId + 'runtime', {
++        evaluate: this._evaluate.bind(this),
++        callFunction: this._callFunction.bind(this),
++        getObjectProperties: this._getObjectProperties.bind(this),
++        disposeObject: this._disposeObject.bind(this),
++      }),
 +    ];
 +    this._enabled = false;
 +    this._filteredConsoleMessageHashes = new Set();
@@ -3665,7 +3693,7 @@ index 0000000000000000000000000000000000000000..a65fe9c34601f1311578c3f84d701d33
 +    this._notifyExecutionContextDestroyed(destroyedContext);
 +  }
 +
-+  async evaluate({executionContextId, expression, returnByValue}) {
++  async _evaluate({executionContextId, expression, returnByValue}) {
 +    const executionContext = this._executionContexts.get(executionContextId);
 +    if (!executionContext)
 +      throw new Error('Failed to find execution context with id = ' + executionContextId);
@@ -3678,7 +3706,7 @@ index 0000000000000000000000000000000000000000..a65fe9c34601f1311578c3f84d701d33
 +    return {result};
 +  }
 +
-+  async callFunction({executionContextId, functionDeclaration, args, returnByValue}) {
++  async _callFunction({executionContextId, functionDeclaration, args, returnByValue}) {
 +    const executionContext = this._executionContexts.get(executionContextId);
 +    if (!executionContext)
 +      throw new Error('Failed to find execution context with id = ' + executionContextId);
@@ -3691,14 +3719,14 @@ index 0000000000000000000000000000000000000000..a65fe9c34601f1311578c3f84d701d33
 +    return {result};
 +  }
 +
-+  async getObjectProperties({executionContextId, objectId}) {
++  async _getObjectProperties({executionContextId, objectId}) {
 +    const executionContext = this._executionContexts.get(executionContextId);
 +    if (!executionContext)
 +      throw new Error('Failed to find execution context with id = ' + executionContextId);
 +    return {properties: executionContext.getObjectProperties(objectId)};
 +  }
 +
-+  async disposeObject({executionContextId, objectId}) {
++  async _disposeObject({executionContextId, objectId}) {
 +    const executionContext = this._executionContexts.get(executionContextId);
 +    if (!executionContext)
 +      throw new Error('Failed to find execution context with id = ' + executionContextId);
@@ -4031,7 +4059,7 @@ index 0000000000000000000000000000000000000000..caee4df323d0a526ed7e38947c41c643
 +
 diff --git a/testing/juggler/content/WorkerMain.js b/testing/juggler/content/WorkerMain.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6d93903d340a39e5d90654fa6006ade2f980ebb9
+index 0000000000000000000000000000000000000000..b1a33558c60289c24f7f58e253a0a617ce35e469
 --- /dev/null
 +++ b/testing/juggler/content/WorkerMain.js
 @@ -0,0 +1,29 @@
@@ -4050,14 +4078,14 @@ index 0000000000000000000000000000000000000000..6d93903d340a39e5d90654fa6006ade2
 +};
 +
 +channel.register('', {
-+  connect: ({sessionId}) => {
++  attach: ({sessionId}) => {
 +    const runtimeAgent = new RuntimeAgent(channel, sessionId, true /* isWorker */);
 +    runtimeAgents.set(sessionId, runtimeAgent);
 +    runtimeAgent.createExecutionContext(null /* domWindow */, global, {});
 +    runtimeAgent.enable();
 +  },
 +
-+  disconnect: ({sessionId}) => {
++  detach: ({sessionId}) => {
 +    const runtimeAgent = runtimeAgents.get(sessionId);
 +    runtimeAgents.delete(sessionId);
 +    runtimeAgent.dispose();
@@ -4780,10 +4808,10 @@ index 0000000000000000000000000000000000000000..698290fdb37d0b000a40a5009a607a8c
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..ec5d4debb81cbadf6951d0872a2186af675d0679
+index 0000000000000000000000000000000000000000..11f9567d816304906df6b6192b3fb71e6c9d53dc
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,352 @@
+@@ -0,0 +1,348 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -5065,10 +5093,6 @@ index 0000000000000000000000000000000000000000..ec5d4debb81cbadf6951d0872a2186af
 +
 +  async setInterceptFileChooserDialog(options) {
 +    return await this._contentPage.send('setInterceptFileChooserDialog', options);
-+  }
-+
-+  async handleFileChooser(options) {
-+    return await this._contentPage.send('handleFileChooser', options);
 +  }
 +
 +  async sendMessageToWorker({workerId, message}) {
