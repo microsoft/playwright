@@ -797,10 +797,10 @@ index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2
 +
 diff --git a/testing/juggler/NetworkObserver.js b/testing/juggler/NetworkObserver.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc0819bf0fc01
+index 0000000000000000000000000000000000000000..2124033e99dcc872bee87422fee13fef89312d1d
 --- /dev/null
 +++ b/testing/juggler/NetworkObserver.js
-@@ -0,0 +1,689 @@
+@@ -0,0 +1,684 @@
 +"use strict";
 +
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
@@ -875,7 +875,6 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +    this._browserInterceptors = new Map();  // Browser => (requestId => interceptor).
 +    this._extraHTTPHeaders = new Map();
 +    this._browserResponseStorages = new Map();
-+    this._browserAuthCredentials = new Map();
 +
 +    this._eventListeners = [
 +      helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request'),
@@ -934,10 +933,6 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +
 +  abortInterceptedRequest(browser, requestId, errorCode) {
 +    this._takeInterceptor(browser, requestId)._abort(errorCode);
-+  }
-+
-+  setAuthCredentials(browser, username, password) {
-+    this._browserAuthCredentials.set(browser, { username, password });
 +  }
 +
 +  _requestId(httpChannel) {
@@ -1167,7 +1162,6 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +    } else {
 +      this._browserSessionCount.delete(browser);
 +      this._browserResponseStorages.delete(browser);
-+      this._browserAuthCredentials.delete(browser);
 +      this._browserInterceptors.delete(browser);
 +    }
 +  }
@@ -1414,8 +1408,9 @@ index 0000000000000000000000000000000000000000..8fe6a596bda3f58e6f93ba943fbbc081
 +  promptAuth(aChannel, level, authInfo) {
 +    if (authInfo.flags & Ci.nsIAuthInformation.PREVIOUS_FAILED)
 +      return false;
-+    const credentials = this._networkObserver._browserAuthCredentials.get(this._browser);
-+    if (!credentials || credentials.username === null)
++    const browserContext = TargetRegistry.instance().browserContextForBrowser(this._browser);
++    const credentials = browserContext ? browserContext.options.httpCredentials : undefined;
++    if (!credentials)
 +      return false;
 +    authInfo.username = credentials.username;
 +    authInfo.password = credentials.password;
@@ -4388,10 +4383,10 @@ index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..c34d0852b2e5b550d063f93e29429c651ec2501e
+index 0000000000000000000000000000000000000000..677ff969135d9b9e1d094a1e32ba0ed5d5485a54
 --- /dev/null
 +++ b/testing/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,88 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4442,6 +4437,10 @@ index 0000000000000000000000000000000000000000..c34d0852b2e5b550d063f93e29429c65
 +
 +  setExtraHTTPHeaders({browserContextId, headers}) {
 +    this._contextManager.browserContextForId(browserContextId).options.extraHTTPHeaders = headers;
++  }
++
++  setHTTPCredentials({browserContextId, credentials}) {
++    this._contextManager.browserContextForId(browserContextId).options.httpCredentials = credentials;
 +  }
 +
 +  addScriptToEvaluateOnNewDocument({browserContextId, script}) {
@@ -4681,10 +4680,10 @@ index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d
 +
 diff --git a/testing/juggler/protocol/NetworkHandler.js b/testing/juggler/protocol/NetworkHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..698290fdb37d0b000a40a5009a607a8c66683ecc
+index 0000000000000000000000000000000000000000..e1f1e21a20768d707a92ffffc8a7c114d9bb783b
 --- /dev/null
 +++ b/testing/juggler/protocol/NetworkHandler.js
-@@ -0,0 +1,164 @@
+@@ -0,0 +1,160 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4752,10 +4751,6 @@ index 0000000000000000000000000000000000000000..698290fdb37d0b000a40a5009a607a8c
 +
 +  async fulfillInterceptedRequest({requestId, status, statusText, headers, base64body}) {
 +    this._networkObserver.fulfillInterceptedRequest(this._browser, requestId, status, statusText, headers, base64body);
-+  }
-+
-+  async setAuthCredentials({username, password}) {
-+    this._networkObserver.setAuthCredentials(this._browser, username, password);
 +  }
 +
 +  dispose() {
@@ -5354,10 +5349,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..6c0509f116d778839d25991da86532cce5ec4168
+index 0000000000000000000000000000000000000000..dfb92200ddd508ab2dc3738c5b90750f6b1fdfaf
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,767 @@
+@@ -0,0 +1,772 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5526,6 +5521,11 @@ index 0000000000000000000000000000000000000000..6c0509f116d778839d25991da86532cc
 +  value: t.String,
 +};
 +
++networkTypes.HTTPCredentials = {
++  username: t.String,
++  password: t.String,
++};
++
 +networkTypes.SecurityDetails = {
 +  protocol: t.String,
 +  subjectName: t.String,
@@ -5558,6 +5558,12 @@ index 0000000000000000000000000000000000000000..6c0509f116d778839d25991da86532cc
 +      params: {
 +        browserContextId: t.Optional(t.String),
 +        headers: t.Array(networkTypes.HTTPHeader),
++      },
++    },
++    'setHTTPCredentials': {
++      params: {
++        browserContextId: t.Optional(t.String),
++        credentials: t.Nullable(networkTypes.HTTPCredentials),
 +      },
 +    },
 +    'addScriptToEvaluateOnNewDocument': {
@@ -5741,12 +5747,6 @@ index 0000000000000000000000000000000000000000..6c0509f116d778839d25991da86532cc
 +      returns: {
 +        base64body: t.String,
 +        evicted: t.Optional(t.Boolean),
-+      },
-+    },
-+    'setAuthCredentials': {
-+      params: {
-+        username: t.Nullable(t.String),
-+        password: t.Nullable(t.String),
 +      },
 +    },
 +  },
