@@ -800,6 +800,130 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
   });
 
+  describe.fail(FFOX)('Page.automaticWaiting', () => {
+    it('clicking anchor should await navigation', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.end('done');
+      });
+
+      await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
+
+      await Promise.all([
+        page.click('a').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+      ]);
+      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+    });
+    it('clicking anchor should await cross-process navigation', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.end('done');
+      });
+
+      await page.setContent(`<a href="${server.CROSS_PROCESS_PREFIX + '/empty.html'}">empty.html</a>`);
+
+      await Promise.all([
+        page.click('a').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+      ]);
+      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+    });
+    it.fail(CHROMIUM)('should await form-get on click', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html?foo=bar', async (req, res) => {
+        messages.push('route');
+        res.end('done');
+      });
+
+      await page.setContent(`
+        <form action="${server.EMPTY_PAGE}" method="get">
+          <input name="foo" value="bar">
+          <input type="submit" value="Submit">
+        </form>`);
+
+      await Promise.all([
+        page.click('input[type=submit]').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+      ]);
+      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+    });
+    it.fail(CHROMIUM)('should await form-post on click', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.end('done');
+      });
+
+      await page.setContent(`
+        <form action="${server.EMPTY_PAGE}" method="post">
+          <input name="foo" value="bar">
+          <input type="submit" value="Submit">
+        </form>`);
+
+      await Promise.all([
+        page.click('input[type=submit]').then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+      ]);
+      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+    });
+    it('assigning to location should await navigation', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.end('done');
+      });
+      await Promise.all([
+        page.evaluate(`window.location.href = "${server.EMPTY_PAGE}"`).then(() => messages.push('evaluate')),
+        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation')),
+      ]);
+      expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
+    });
+    it('should await navigating specified target', async({page, server, httpsServer}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => {
+        messages.push('route');
+        res.end('done');
+      });
+
+      await page.setContent(`
+        <a href="${server.EMPTY_PAGE}" target=target>empty.html</a>
+        <iframe name=target></iframe>
+      `);
+      const frame = page.frame({ name: 'target' });
+      await Promise.all([
+        page.click('a').then(() => messages.push('click')),
+        frame.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+      ]);
+      expect(frame.url()).toBe(server.EMPTY_PAGE);
+      expect(messages.join('|')).toBe('route|waitForNavigation|click');
+    });
+  });
+
+  describe('Page.automaticWaiting should not hang', () => {
+    it('should not throw when clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
+      await page.click('a');
+    });
+    it('should not throw when clicking on download link', async({page, server, httpsServer}) => {
+      await page.setContent(`<a href="${server.PREFIX}/wasm/table2.wasm" download=true>table2.wasm</a>`);
+      await page.click('a');
+    });
+    it('should not hang on window.stop', async({page, server, httpsServer}) => {
+      server.setRoute('/empty.html', async (req, res) => {});
+      await Promise.all([
+        page.waitForNavigation().catch(e => {}),
+        page.evaluate((url) => {
+          window.location.href = url;
+          setTimeout(() => window.stop(), 100);
+        }, server.EMPTY_PAGE)
+      ]);
+    });
+  });
+
   describe('Page.waitForLoadState', () => {
     it('should pick up ongoing navigation', async({page, server}) => {
       let response = null;
@@ -950,13 +1074,13 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       server.setRoute('/empty.html', () => {});
       let error = null;
-      const navigationPromise = frame.waitForNavigation().catch(e => error = e);
       await Promise.all([
-        server.waitForRequest('/empty.html'),
-        frame.evaluate(() => window.location = '/empty.html')
-      ]);
-      await page.$eval('iframe', frame => frame.remove());
-      await navigationPromise;
+        frame.waitForNavigation().catch(e => error = e),
+        server.waitForRequest('/empty.html').then(() => {
+          page.$eval('iframe', frame => frame.remove());
+        }),
+        frame.evaluate(() => window.location = '/empty.html'),
+      ]).catch(e => error = e);
       expect(error.message).toContain('frame was detached');
     });
   });

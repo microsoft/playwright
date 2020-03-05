@@ -201,6 +201,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
       helper.addEventListener(this._session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
       helper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      helper.addEventListener(this._session, 'Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId)),
       helper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
       helper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
@@ -232,6 +233,10 @@ export class WKPage implements PageDelegate {
     if (this._provisionalPage)
       sessions.push(this._provisionalPage._session);
     await Promise.all(sessions.map(session => callback(session).catch(debugError)));
+  }
+
+  private _onFrameScheduledNavigation(frameId: string) {
+    this._page._frameManager.frameRequestedNavigation(frameId);
   }
 
   private _onFrameStoppedLoading(frameId: string) {

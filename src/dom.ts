@@ -52,7 +52,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
 
     if (!args.some(needsAdoption)) {
       // Only go through asynchronous calls if required.
-      return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
+      return await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
+        return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
+      });
     }
 
     const toDispose: Promise<ElementHandle>[] = [];
@@ -65,7 +67,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
     }));
     let result;
     try {
-      result = await this._delegate.evaluate(this, returnByValue, pageFunction, ...adopted);
+      result = await this.frame._page._frameManager.waitForNavigationsCreatedBy(async () => {
+        return this._delegate.evaluate(this, returnByValue, pageFunction, ...adopted);
+      });
     } finally {
       toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
     }
@@ -248,12 +252,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const point = offset ? await this._offsetPoint(offset) : await this._clickablePoint();
     if (waitFor)
       await this._waitForHitTargetAt(point, options);
-    let restoreModifiers: input.Modifier[] | undefined;
-    if (options && options.modifiers)
-      restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-    await action(point);
-    if (restoreModifiers)
-      await this._page.keyboard._ensureModifiers(restoreModifiers);
+
+    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      let restoreModifiers: input.Modifier[] | undefined;
+      if (options && options.modifiers)
+        restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
+      await action(point);
+      if (restoreModifiers)
+        await this._page.keyboard._ensureModifiers(restoreModifiers);
+    });
   }
 
   hover(options?: PointerActionOptions & types.WaitForOptions): Promise<void> {
@@ -284,18 +291,22 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (option.index !== undefined)
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
-    return this._evaluateInUtility((injected, node, ...optionsToSelect) => injected.selectOptions(node, optionsToSelect), ...options);
+    return await this._page._frameManager.waitForNavigationsCreatedBy<string[]>(async () => {
+      return this._evaluateInUtility((injected, node, ...optionsToSelect) => injected.selectOptions(node, optionsToSelect), ...options);
+    });
   }
 
   async fill(value: string): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
-    const error = await this._evaluateInUtility((injected, node, value) => injected.fill(node, value), value);
-    if (error)
-      throw new Error(error);
-    if (value)
-      await this._page.keyboard.sendCharacters(value);
-    else
-      await this._page.keyboard.press('Delete');
+    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      const error = await this._evaluateInUtility((injected, node, value) => injected.fill(node, value), value);
+      if (error)
+        throw new Error(error);
+      if (value)
+        await this._page.keyboard.sendCharacters(value);
+      else
+        await this._page.keyboard.press('Delete');
+    });
   }
 
   async setInputFiles(...files: (string | types.FilePayload)[]) {
@@ -317,7 +328,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       return item;
     }));
-    await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
+    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
+    });
   }
 
   async focus() {
@@ -332,13 +345,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async type(text: string, options?: { delay?: number }) {
-    await this.focus();
-    await this._page.keyboard.type(text, options);
+    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      await this.focus();
+      await this._page.keyboard.type(text, options);
+    });
   }
 
   async press(key: string, options?: { delay?: number, text?: string }) {
-    await this.focus();
-    await this._page.keyboard.press(key, options);
+    await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
+      await this.focus();
+      await this._page.keyboard.press(key, options);
+    });
   }
 
   async check(options?: types.WaitForOptions) {
