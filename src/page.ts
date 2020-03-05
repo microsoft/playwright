@@ -49,7 +49,6 @@ export interface PageDelegate {
   setViewportSize(viewportSize: types.Size): Promise<void>;
   setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
   setRequestInterception(enabled: boolean): Promise<void>;
-  authenticate(credentials: types.Credentials | null): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
 
   canScreenshotOutsideViewport(): boolean;
@@ -79,7 +78,6 @@ type PageState = {
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
   interceptNetwork: boolean | null;
-  credentials: types.Credentials | null;
   hasTouch: boolean | null;
 };
 
@@ -150,7 +148,6 @@ export class Page extends platform.EventEmitter {
       colorScheme: null,
       extraHTTPHeaders: null,
       interceptNetwork: null,
-      credentials: null,
       hasTouch: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
@@ -410,11 +407,6 @@ export class Page extends platform.EventEmitter {
       }
     }
     request.continue();
-  }
-
-  async authenticate(credentials: types.Credentials | null) {
-    this._state.credentials = credentials;
-    await this._delegate.authenticate(credentials);
   }
 
   async screenshot(options?: types.ScreenshotOptions): Promise<platform.BufferType> {
