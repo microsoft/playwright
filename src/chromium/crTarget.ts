@@ -17,7 +17,6 @@
 
 import { CRBrowser, CRBrowserContext } from './crBrowser';
 import { CRSession, CRSessionEvents } from './crConnection';
-import { Events } from '../events';
 import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
 import { debugError } from '../helper';
@@ -32,9 +31,8 @@ export class CRTarget {
   private readonly _browserContext: CRBrowserContext;
   readonly _targetId: string;
   readonly sessionFactory: () => Promise<CRSession>;
-  private _pagePromiseFulfill: ((page: Page) => void) | null = null;
-  private _pagePromiseReject: ((error: Error) => void) | null = null;
-  private _pagePromise: Promise<Page> | null = null;
+  private _pagePromiseCallback: ((pageOrError: Page | Error) => void) | null = null;
+  private _pagePromise: Promise<Page | Error> | null = null;
   _crPage: CRPage | null = null;
   private _workerPromise: Promise<Worker> | null = null;
 
@@ -56,21 +54,13 @@ export class CRTarget {
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this.sessionFactory = sessionFactory;
-    if (CRTarget.isPageType(targetInfo.type)) {
-      this._pagePromise = new Promise<Page>((fulfill, reject) => {
-        this._pagePromiseFulfill = fulfill;
-        this._pagePromiseReject = reject;
-      });
-    }
+    if (CRTarget.isPageType(targetInfo.type))
+      this._pagePromise = new Promise<Page | Error>(f => this._pagePromiseCallback = f);
   }
 
   _didClose() {
     if (this._crPage)
       this._crPage.didClose();
-  }
-
-  async page(): Promise<Page | null> {
-    return this._pagePromise;
   }
 
   async initializePageSession(session: CRSession) {
@@ -80,20 +70,16 @@ export class CRTarget {
     session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
     try {
       await this._crPage.initialize();
-      this._pagePromiseFulfill!(page);
-    } catch (error) {
-      this._pagePromiseReject!(error);
+      this._pagePromiseCallback!(page);
+    } catch (e) {
+      this._pagePromiseCallback!(e);
     }
+  }
 
-    if (this.type() !== 'page')
-      return;
-    const opener = this.opener();
-    if (!opener)
-      return;
-    const openerPage = await opener.page();
-    if (!openerPage)
-      return;
-    openerPage.emit(Events.Page.Popup, page);
+  async pageOrError(): Promise<Page | Error> {
+    if (this._targetInfo.type !== 'page' && this._targetInfo.type !== 'background_page')
+      throw new Error('Not a page.');
+    return this._pagePromise!;
   }
 
   async serviceWorker(): Promise<Worker | null> {

@@ -18,7 +18,7 @@
 import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned } from '../browserContext';
 import { Events } from '../events';
-import { assert, helper, RegisteredListener, debugError } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import * as types from '../types';
 import { Page, PageEvent, PageBinding } from '../page';
@@ -165,17 +165,16 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     const {targetId} = payload.targetInfo;
     const target = this._targets.get(targetId)!;
     target._initPagePromise(this._connection.getSession(payload.sessionId)!);
-    const page = await target.page();
-    if (!page)
-      return;
-    target.context().emit(Events.BrowserContext.Page, new PageEvent(page));
+
+    const pageEvent = new PageEvent(target.pageOrError());
+    target.context().emit(Events.BrowserContext.Page, pageEvent);
 
     const opener = target.opener();
-    if (opener && opener._pagePromise) {
-      const openerPage = await opener._pagePromise;
-      if (openerPage.listenerCount(Events.Page.Popup))
-        openerPage.emit(Events.Page.Popup, page);
-    }
+    if (!opener)
+      return;
+    const openerPage = await opener.pageOrError();
+    if (openerPage instanceof Page && !openerPage.isClosed())
+      openerPage.emit(Events.Page.Popup, pageEvent);
   }
 
   async close() {
@@ -192,7 +191,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
 }
 
 class Target {
-  _pagePromise?: Promise<Page>;
+  _pagePromise?: Promise<Page | Error>;
   _ffPage: FFPage | null = null;
   private readonly _browser: FFBrowser;
   private readonly _context: FFBrowserContext;
@@ -233,7 +232,7 @@ class Target {
     return this._context;
   }
 
-  async page(): Promise<Page> {
+  async pageOrError(): Promise<Page | Error> {
     if (this._type !== 'page')
       throw new Error(`Cannot create page for "${this._type}" target`);
     if (!this._pagePromise)
@@ -247,12 +246,21 @@ class Target {
         const openerTarget = this.opener();
         if (!openerTarget)
           return null;
-        return await openerTarget.page();
+        const result = await openerTarget.pageOrError();
+        if (result instanceof Page && !result.isClosed())
+          return result;
+        return null;
       });
       const page = this._ffPage._page;
       session.once(FFSessionEvents.Disconnected, () => page._didDisconnect());
-      await this._ffPage._initialize().catch(debugError);
-      f(page);
+      let pageOrError: Page | Error;
+      try {
+        await this._ffPage._initialize();
+        pageOrError = page;
+      } catch (e) {
+        pageOrError = e;
+      }
+      f(pageOrError);
     });
   }
 
@@ -309,8 +317,8 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
 
   async pages(): Promise<Page[]> {
     const targets = this._browser._allTargets().filter(target => target.context() === this && target.type() === 'page');
-    const pages = await Promise.all(targets.map(target => target.page()));
-    return pages.filter(page => !!page);
+    const pages = await Promise.all(targets.map(target => target.pageOrError()));
+    return pages.filter(page => page instanceof Page && !page.isClosed()) as Page[];
   }
 
   async newPage(): Promise<Page> {
@@ -319,7 +327,13 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
       browserContextId: this._browserContextId || undefined
     });
     const target = this._browser._targets.get(targetId)!;
-    return target.page();
+    const result = await target.pageOrError();
+    if (result instanceof Page) {
+      if (result.isClosed())
+        throw new Error('Page has been closed.');
+      return result;
+    }
+    throw result;
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {

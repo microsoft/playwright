@@ -17,7 +17,7 @@
 
 import { Browser, createPageInNewContext } from '../browser';
 import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
-import { assert, helper, RegisteredListener, debugError } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, PageEvent } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
@@ -126,17 +126,14 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       this._firstPageProxyCallback = undefined;
     }
 
-    pageProxy.page().then(async page => {
-      if (!page)
-        return;
-      context!.emit(Events.BrowserContext.Page, new PageEvent(page));
-      if (!opener)
-        return;
-      const openerPage = await opener.page();
-      if (!openerPage || page.isClosed())
-        return;
-      openerPage.emit(Events.Page.Popup, page);
-    }).catch(debugError); // Just not emit the event in case of initialization failure.
+    const pageEvent = new PageEvent(pageProxy.pageOrError());
+    context.emit(Events.BrowserContext.Page, pageEvent);
+    if (!opener)
+      return;
+    opener.pageOrError().then(openerPage => {
+      if (openerPage instanceof Page && !openerPage.isClosed())
+        openerPage.emit(Events.Page.Popup, pageEvent);
+    });
   }
 
   _onPageProxyDestroyed(event: Protocol.Browser.pageProxyDestroyedPayload) {
@@ -233,16 +230,21 @@ export class WKBrowserContext extends platform.EventEmitter implements BrowserCo
 
   async pages(): Promise<Page[]> {
     const pageProxies = Array.from(this._browser._pageProxies.values()).filter(proxy => proxy._browserContext === this);
-    const pages = await Promise.all(pageProxies.map(proxy => proxy.page()));
-    return pages.filter(page => !!page) as Page[];
+    const pages = await Promise.all(pageProxies.map(proxy => proxy.pageOrError()));
+    return pages.filter(page => page instanceof Page && !page.isClosed()) as Page[];
   }
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
     const { pageProxyId } = await this._browser._browserSession.send('Browser.createPage', { browserContextId: this._browserContextId });
     const pageProxy = this._browser._pageProxies.get(pageProxyId)!;
-    const page = await pageProxy.page();
-    return page!;
+    const result = await pageProxy.pageOrError();
+    if (result instanceof Page) {
+      if (result.isClosed())
+        throw new Error('Page has been closed.');
+      return result;
+    }
+    throw result;
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {

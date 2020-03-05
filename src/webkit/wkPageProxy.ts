@@ -27,9 +27,8 @@ export class WKPageProxy {
   private readonly _pageProxySession: WKSession;
   readonly _browserContext: WKBrowserContext;
   private readonly _opener: WKPageProxy | null;
-  private readonly _pagePromise: Promise<Page | null>;
-  private _pagePromiseFulfill: (page: Page | null) => void = () => {};
-  private _pagePromiseReject: (error: Error) => void = () => {};
+  private readonly _pagePromise: Promise<Page | Error>;
+  private _pagePromiseCallback: (page: Page | Error) => void = () => {};
   private readonly _wkPage: WKPage;
   private _initialized = false;
   private readonly _sessions = new Map<string, WKSession>();
@@ -45,10 +44,7 @@ export class WKPageProxy {
       helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
     ];
-    this._pagePromise = new Promise((f, r) => {
-      this._pagePromiseFulfill = f;
-      this._pagePromiseReject = r;
-    });
+    this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
     this._wkPage = new WKPage(this._browserContext, this._pageProxySession, this._opener);
   }
 
@@ -89,7 +85,7 @@ export class WKPageProxy {
     this._wkPage._page._frameManager.provisionalLoadFailed(this._wkPage._page.mainFrame(), event.loaderId, errorText);
   }
 
-  async page(): Promise<Page | null> {
+  async pageOrError(): Promise<Page | Error> {
     return this._pagePromise;
   }
 
@@ -112,21 +108,16 @@ export class WKPageProxy {
     if (!this._initialized) {
       assert(!targetInfo.isProvisional);
       this._initialized = true;
-      let page: Page | null = null;
-      let error: Error | undefined;
+      let pageOrError: Page | Error;
       try {
         await this._wkPage.initialize(session);
-        page = this._wkPage._page;
+        pageOrError = this._wkPage._page;
       } catch (e) {
-        if (!this._pageProxySession.isDisposed())
-          error = e;
+        pageOrError = e;
       }
       if (targetInfo.isPaused)
         this._resumeTarget(targetInfo.targetId);
-      if (error)
-        this._pagePromiseReject(error);
-      else
-        this._pagePromiseFulfill(page);
+      this._pagePromiseCallback(pageOrError);
     } else {
       assert(targetInfo.isProvisional);
       (session as any)[isPovisionalSymbol] = true;
