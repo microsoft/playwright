@@ -67,7 +67,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     try {
       result = await this._delegate.evaluate(this, returnByValue, pageFunction, ...adopted);
     } finally {
-      await Promise.all(toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose())));
+      toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
     }
     return result;
   }
@@ -105,7 +105,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         await this._injected(), selector, scope
     );
     if (!handle.asElement())
-      await handle.dispose();
+      handle.dispose();
     return handle.asElement() as ElementHandle<Element>;
   }
 
@@ -120,14 +120,14 @@ export class FrameExecutionContext extends js.ExecutionContext {
   async _$$(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element>[]> {
     const arrayHandle = await this._$array(selector, scope);
     const properties = await arrayHandle.getProperties();
-    await arrayHandle.dispose();
+    arrayHandle.dispose();
     const result: ElementHandle<Element>[] = [];
     for (const property of properties.values()) {
       const elementHandle = property.asElement() as ElementHandle<Element>;
       if (elementHandle)
         result.push(elementHandle);
       else
-        await property.dispose();
+        property.dispose();
     }
     return result;
   }
@@ -378,14 +378,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await elementHandle.evaluate(pageFunction, ...args as any);
-    await elementHandle.dispose();
+    elementHandle.dispose();
     return result;
   }
 
   $$eval: types.$$Eval = async (selector, pageFunction, ...args) => {
     const arrayHandle = await this._context._$array(selector, this);
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
-    await arrayHandle.dispose();
+    arrayHandle.dispose();
     return result;
   }
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert, debugError } from '../helper';
+import { assert } from '../helper';
 import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
 
@@ -46,10 +46,6 @@ export function valueFromRemoteObject(remoteObject: Protocol.Runtime.RemoteObjec
 export async function releaseObject(client: WKSession, remoteObject: Protocol.Runtime.RemoteObject) {
   if (!remoteObject.objectId)
     return;
-  await client.send('Runtime.releaseObject', {objectId: remoteObject.objectId}).catch(error => {
-    // Exceptions might happen in case of a page been navigated or closed.
-    // Swallow these since they are harmless and we don't leak anything in this case.
-    debugError(error);
-  });
+  await client.send('Runtime.releaseObject', {objectId: remoteObject.objectId}).catch(error => {});
 }
 
