@@ -304,7 +304,15 @@ Emitted when Browser context gets closed. This might happen because of one of th
 - <[PageEvent]>
 
 Emitted when a new Page is created in the BrowserContext. The event will also fire for popup
-pages.
+pages. See also [`Page.on('popup')`](#event-popup) to receive events about popups relevant to a specific page.
+
+```js
+const [event] = await Promise.all([
+  context.waitForEvent('page'),
+  page.click('a[target=_blank]'),
+]);
+const newPage = await event.page();
+```
 
 #### browserContext.addInitScript(script[, ...args])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in all pages in the browser context.
@@ -726,22 +734,24 @@ Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/We
 Emitted when an uncaught exception happens within the page.
 
 #### event: 'popup'
-- <[Page]> Page corresponding to "popup" window
+- <[PageEvent]> Page event corresponding to "popup" window
 
-Emitted when the page opens a new tab or window.
+Emitted when the page opens a new tab or window. This event is emitted in addition to the [`browserContext.on('page')`](#event-page), but only for popups relevant to this page.
 
 ```js
-const [popup] = await Promise.all([
-  new Promise(resolve => page.once('popup', resolve)),
+const [event] = await Promise.all([
+  page.waitForEvent('popup'),
   page.click('a[target=_blank]'),
 ]);
+const popup = await event.page();
 ```
 
 ```js
-const [popup] = await Promise.all([
-  new Promise(resolve => page.once('popup', resolve)),
+const [event] = await Promise.all([
+  page.waitForEvent('popup'),
   page.evaluate(() => window.open('https://example.com')),
 ]);
+const popup = await event.page();
 ```
 
 #### event: 'request'
@@ -1753,8 +1763,7 @@ This method returns all of the dedicated [WebWorkers](https://developer.mozilla.
 
 ### class: PageEvent
 
-Event object passed to the listeners of ['page'](#event-page) on [`BrowserContext`](#class-browsercontext). Provides access
-to the newly created page.
+Event object passed to the listeners of [`browserContext.on('page')`](#event-page) and [`page.on('popup')`](#event-popup) events. Provides access to the newly created page.
 
 #### pageEvent.page()
 - returns: <[Promise]<[Page]>> Promise which resolves to the created page.

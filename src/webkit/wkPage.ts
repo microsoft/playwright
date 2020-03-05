@@ -437,8 +437,12 @@ export class WKPage implements PageDelegate {
   }
 
   async opener(): Promise<Page | null> {
-    const openerPage = this._opener ? await this._opener.page() : null;
-    return openerPage && !openerPage.isClosed() ? openerPage : null;
+    if (!this._opener)
+      return null;
+    const openerPage = await this._opener.pageOrError();
+    if (openerPage instanceof Page && !openerPage.isClosed())
+      return openerPage;
+    return null;
   }
 
   async reload(): Promise<void> {

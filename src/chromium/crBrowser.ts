@@ -71,7 +71,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   constructor(connection: CRConnection) {
     super();
     this._connection = connection;
-    this._client = connection.rootSession;
+    this._client = this._connection.rootSession;
 
     this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({}));
     this._connection.on(ConnectionEvents.Disconnected, () => {
@@ -120,14 +120,18 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     try {
       switch (targetInfo.type) {
         case 'page': {
-          const page = await target.page();
-          const event = new PageEvent(page!);
+          const event = new PageEvent(target.pageOrError());
           context.emit(CommonEvents.BrowserContext.Page, event);
+          const opener = target.opener();
+          if (!opener)
+            break;
+          const openerPage = await opener.pageOrError();
+          if (openerPage instanceof Page && !openerPage.isClosed())
+            openerPage.emit(CommonEvents.Page.Popup, new PageEvent(target.pageOrError()));
           break;
         }
         case 'background_page': {
-          const page = await target.page();
-          const event = new PageEvent(page!);
+          const event = new PageEvent(target.pageOrError());
           context.emit(Events.CRBrowserContext.BackgroundPage, event);
           break;
         }
@@ -268,16 +272,21 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
 
   async pages(): Promise<Page[]> {
     const targets = this._browser._allTargets().filter(target => target.context() === this && target.type() === 'page');
-    const pages = await Promise.all(targets.map(target => target.page()));
-    return pages.filter(page => !!page) as Page[];
+    const pages = await Promise.all(targets.map(target => target.pageOrError()));
+    return pages.filter(page => (page instanceof Page) && !page.isClosed()) as Page[];
   }
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
     const { targetId } = await this._browser._client.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId || undefined });
     const target = this._browser._targets.get(targetId)!;
-    const page = await target.page();
-    return page!;
+    const result = await target.pageOrError();
+    if (result instanceof Page) {
+      if (result.isClosed())
+        throw new Error('Page has been closed.');
+      return result;
+    }
+    throw result;
   }
 
   async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
@@ -382,8 +391,8 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
 
   async backgroundPages(): Promise<Page[]> {
     const targets = this._browser._allTargets().filter(target => target.context() === this && target.type() === 'background_page');
-    const pages = await Promise.all(targets.map(target => target.page()));
-    return pages.filter(page => !!page) as Page[];
+    const pages = await Promise.all(targets.map(target => target.pageOrError()));
+    return pages.filter(page => (page instanceof Page) && !page.isClosed()) as Page[];
   }
 
   async createSession(page: Page): Promise<CRSession> {

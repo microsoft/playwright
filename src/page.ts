@@ -89,14 +89,20 @@ export type FileChooser = {
 };
 
 export class PageEvent {
-  private readonly _page: Page;
+  private readonly _pageOrError: Promise<Page | Error>;
 
-  constructor(page: Page) {
-    this._page = page;
+  constructor(pageOrErrorPromise: Promise<Page | Error>) {
+    this._pageOrError = pageOrErrorPromise;
   }
 
   async page(/* options?: frames.NavigateOptions */): Promise<Page> {
-    return this._page;
+    const result = await this._pageOrError;
+    if (result instanceof Page) {
+      if (result.isClosed())
+        throw new Error('Page has been closed.');
+      return result;
+    }
+    throw result;
   }
 }
 

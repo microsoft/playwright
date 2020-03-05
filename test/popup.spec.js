@@ -139,18 +139,31 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(e => e.page()),
         page.evaluate(() => window.__popup = window.open('about:blank')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
       expect(await popup.evaluate(() => !!window.opener)).toBe(true);
       await context.close();
     });
+    it('should emit for immediately closed popups', async({browser}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const [popupEvent] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate(() => {
+          const win = window.open('about:blank');
+          win.close();
+        }),
+      ]);
+      expect(popupEvent).toBeTruthy();
+      await context.close();
+    });
     it('should work with empty url', async({browser}) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(e => e.page()),
         page.evaluate(() => window.__popup = window.open('')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -161,7 +174,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       const context = await browser.newContext();
       const page = await context.newPage();
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(e => e.page()),
         page.evaluate(() => window.__popup = window.open('about:blank', null, 'noopener')),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -174,7 +187,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
         page.click('a'),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -188,7 +201,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
         page.$eval('a', a => a.click()),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -203,7 +216,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
         page.click('a'),
       ]);
       expect(await page.evaluate(() => !!window.opener)).toBe(false);
@@ -216,7 +229,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.goto(server.EMPTY_PAGE);
       await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
       const [popup] = await Promise.all([
-        page.waitForEvent('popup').then(async popup => { await popup.waitForLoadState(); return popup; }),
+        page.waitForEvent('popup').then(async e => { const popup = await e.page(); await popup.waitForLoadState(); return popup; }),
         page.click('a'),
       ]);
       let badSecondPopup = false;

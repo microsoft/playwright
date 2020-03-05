@@ -132,7 +132,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
   describe('Page.opener', function() {
     it('should provide access to the opener page', async({page}) => {
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(e => e.page()),
         page.evaluate(() => window.open('about:blank')),
       ]);
       const opener = await popup.opener();
@@ -140,7 +140,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
     it('should return null if parent page has been closed', async({page}) => {
       const [popup] = await Promise.all([
-        new Promise(x => page.once('popup', x)),
+        page.waitForEvent('popup').then(e => e.page()),
         page.evaluate(() => window.open('about:blank')),
       ]);
       await page.close();
@@ -1077,7 +1077,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
 
   describe('Page.Events.Close', function() {
     it('should work with window.close', async function({ page, context, server }) {
-      const newPagePromise = new Promise(f => page.once('popup', f));
+      const newPagePromise = page.waitForEvent('popup').then(e => e.page());
       await page.evaluate(() => window['newPage'] = window.open('about:blank'));
       const newPage = await newPagePromise;
       const closedPromise = new Promise(x => newPage.on('close', x));

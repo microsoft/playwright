@@ -388,7 +388,10 @@ export class CRPage implements PageDelegate {
     const openerTarget = CRTarget.fromPage(this._page).opener();
     if (!openerTarget)
       return null;
-    return await openerTarget.page();
+    const openerPage = await openerTarget.pageOrError();
+    if (openerPage instanceof Page && !openerPage.isClosed())
+      return openerPage;
+    return null;
   }
 
   async reload(): Promise<void> {
