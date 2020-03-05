@@ -277,7 +277,9 @@ export function fetchUrl(url: string): Promise<string> {
 
 // See https://joel.tools/microtasks/
 export function makeWaitForNextTask() {
-  assert(isNode, 'Waitng for the next task is only supported in nodejs');
+  if (!isNode)
+    return (func: () => void) => setTimeout(func, 0);
+
   if (parseInt(process.versions.node, 10) >= 11)
     return setImmediate;
 

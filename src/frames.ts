@@ -59,7 +59,7 @@ export class FrameManager {
   private _mainFrame: Frame;
   readonly _lifecycleWatchers = new Set<() => void>();
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
-  private _navigationRequestCollectors = new Set<Set<string>>();
+  private _pendingNavigationBarriers = new Set<PendingNavigationBarrier>();
 
   constructor(page: Page) {
     this._page = page;
@@ -108,34 +108,39 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>): Promise<T> {
-    const frameIds = new Set<string>();
-    this._navigationRequestCollectors.add(frameIds);
+  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: WaitForNavigationOptions): Promise<T> {
+    const barrier = new PendingNavigationBarrier(options);
+    this._pendingNavigationBarriers.add(barrier);
     try {
       const result = await action();
-      if (!frameIds.size)
-        return result;
-      const frames = Array.from(frameIds.values()).map(frameId => this._frames.get(frameId));
-      await Promise.all(frames.map(frame => frame!.waitForNavigation({ waitUntil: []}))).catch(e => {});
+      await barrier.waitFor();
+      // Resolve in the next task, after all waitForNavigations.
       await new Promise(platform.makeWaitForNextTask());
       return result;
     } finally {
-      this._navigationRequestCollectors.delete(frameIds);
+      this._pendingNavigationBarriers.delete(barrier);
     }
   }
 
-  frameRequestedNavigation(frameId: string) {
-    for (const frameIds of this._navigationRequestCollectors)
-      frameIds.add(frameId);
+  frameWillPotentiallyRequestNavigation() {
+    for (const barrier of this._pendingNavigationBarriers)
+      barrier.retain();
   }
 
-  _cancelFrameRequestedNavigation(frameId: string) {
-    for (const frameIds of this._navigationRequestCollectors)
-      frameIds.delete(frameId);
+  frameDidPotentiallyRequestNavigation() {
+    for (const barrier of this._pendingNavigationBarriers)
+      barrier.release();
+  }
+
+  frameRequestedNavigation(frameId: string) {
+    const frame = this._frames.get(frameId);
+    if (!frame)
+      return;
+    for (const barrier of this._pendingNavigationBarriers)
+      barrier.addFrame(frame);
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
-    this._cancelFrameRequestedNavigation(frameId);
     const frame = this._frames.get(frameId)!;
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
@@ -150,7 +155,6 @@ export class FrameManager {
   }
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {
-    this._cancelFrameRequestedNavigation(frameId);
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
@@ -235,7 +239,6 @@ export class FrameManager {
     if (request._documentId && frame) {
       const isCurrentDocument = frame._lastDocumentId === request._documentId;
       if (!isCurrentDocument) {
-        this._cancelFrameRequestedNavigation(frame._id);
         let errorText = request.failure()!.errorText;
         if (canceled)
           errorText += '; maybe frame was detached?';
@@ -248,13 +251,11 @@ export class FrameManager {
   }
 
   provisionalLoadFailed(frame: Frame, documentId: string, error: string) {
-    this._cancelFrameRequestedNavigation(frame._id);
     for (const watcher of frame._documentWatchers)
       watcher(documentId, new Error(error));
   }
 
   private _removeFramesRecursively(frame: Frame) {
-    this._cancelFrameRequestedNavigation(frame._id);
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
     frame._onDetached();
@@ -1104,4 +1105,43 @@ function selectorToString(selector: string, visibility: types.Visibility): strin
       label = ''; break;
   }
   return `${label}${selector}`;
+}
+
+class PendingNavigationBarrier {
+  private _frameIds = new Map<string, number>();
+  private _waitOptions: WaitForNavigationOptions | undefined;
+  private _protectCount = 0;
+  private _promise: Promise<void>;
+  private _promiseCallback = () => {};
+
+  constructor(options?: WaitForNavigationOptions) {
+    this._waitOptions = options;
+    this._promise = new Promise(f => this._promiseCallback = f);
+    this.retain();
+  }
+
+  waitFor(): Promise<void> {
+    this.release();
+    return this._promise;
+  }
+
+  async addFrame(frame: Frame) {
+    this.retain();
+    await frame.waitForNavigation(this._waitOptions).catch(e => {});
+    this.release();
+  }
+
+  retain() {
+    ++this._protectCount;
+  }
+
+  release() {
+    --this._protectCount;
+    this._maybeResolve();
+  }
+
+  private async _maybeResolve() {
+    if (!this._protectCount && !this._frameIds.size)
+      this._promiseCallback();
+  }
 }
