@@ -138,7 +138,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index b30c186c88daa7dd62f69e452dedc9e968511bb5..3a9bda87d5c577fd578bf3a523854d46c2a8db6a 100644
+index b30c186c88daa7dd62f69e452dedc9e968511bb5..0db5fcca1e8dadc4b32bf3ae35404f427f17ca73 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -95,6 +95,7 @@
@@ -221,6 +221,26 @@ index b30c186c88daa7dd62f69e452dedc9e968511bb5..3a9bda87d5c577fd578bf3a523854d46
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
+@@ -12135,6 +12187,9 @@ class OnLinkClickEvent : public Runnable {
+                                 mNoOpenerImplied, nullptr, nullptr,
+                                 mIsUserTriggered, mTriggeringPrincipal, mCsp);
+     }
++    nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
++    observerService->NotifyObservers(ToSupports(mContent), "juggler-link-click-sync", nullptr);
++
+     return NS_OK;
+   }
+ 
+@@ -12224,6 +12279,9 @@ nsresult nsDocShell::OnLinkClick(
+       this, aContent, aURI, target, aFileName, aPostDataStream,
+       aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
+       aTriggeringPrincipal, aCsp);
++
++  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
++  observerService->NotifyObservers(ToSupports(aContent), "juggler-link-click", nullptr);
+   return DispatchToTabGroup(TaskCategory::UI, ev.forget());
+ }
+ 
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
 index e88da0c1e9adcc6f50ca4b3cb4a55d12430736e8..1544de7726143464e204532dae12dd2ad7373a0f 100644
 --- a/docshell/base/nsDocShell.h
@@ -2464,10 +2484,10 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..8c47b147be6fee0a013edd7021b6f8deb640f831
+index 0000000000000000000000000000000000000000..1bf71ec44bca499a7283a57be3cf7b2f9ec07d7c
 --- /dev/null
 +++ b/testing/juggler/content/PageAgent.js
-@@ -0,0 +1,885 @@
+@@ -0,0 +1,893 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const Ci = Components.interfaces;
@@ -2711,6 +2731,8 @@ index 0000000000000000000000000000000000000000..8c47b147be6fee0a013edd7021b6f8de
 +      this._onWorkerCreated(worker);
 +
 +    this._eventListeners.push(...[
++      helper.addObserver(this._linkClicked.bind(this, false), 'juggler-link-click'),
++      helper.addObserver(this._linkClicked.bind(this, true), 'juggler-link-click-sync'),
 +      helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
 +      helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
 +      helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
@@ -2755,6 +2777,12 @@ index 0000000000000000000000000000000000000000..8c47b147be6fee0a013edd7021b6f8de
 +
 +  setInterceptFileChooserDialog({enabled}) {
 +    this._docShell.fileInputInterceptionEnabled = !!enabled;
++  }
++
++  _linkClicked(sync, anchorElement) {
++    if (anchorElement.ownerGlobal.docShell !== this._docShell)
++      return;
++    this._session.emit('pageLinkClicked', { phase: sync ? 'after' : 'before' });
 +  }
 +
 +  _filePickerShown(inputElement) {
@@ -4752,10 +4780,10 @@ index 0000000000000000000000000000000000000000..698290fdb37d0b000a40a5009a607a8c
 +this.NetworkHandler = NetworkHandler;
 diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..cbc64728a5fd21d1f7dde389efb58e89fd209912
+index 0000000000000000000000000000000000000000..ec5d4debb81cbadf6951d0872a2186af675d0679
 --- /dev/null
 +++ b/testing/juggler/protocol/PageHandler.js
-@@ -0,0 +1,351 @@
+@@ -0,0 +1,352 @@
 +"use strict";
 +
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4830,6 +4858,7 @@ index 0000000000000000000000000000000000000000..cbc64728a5fd21d1f7dde389efb58e89
 +        pageFileChooserOpened: emitProtocolEvent('Page.fileChooserOpened'),
 +        pageFrameAttached: emitProtocolEvent('Page.frameAttached'),
 +        pageFrameDetached: emitProtocolEvent('Page.frameDetached'),
++        pageLinkClicked: emitProtocolEvent('Page.linkClicked'),
 +        pageNavigationAborted: emitProtocolEvent('Page.navigationAborted'),
 +        pageNavigationCommitted: emitProtocolEvent('Page.navigationCommitted'),
 +        pageNavigationStarted: emitProtocolEvent('Page.navigationStarted'),
@@ -5258,10 +5287,10 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..838b642eb08efee8a8e6e61421731aa3555e8429
+index 0000000000000000000000000000000000000000..6c0509f116d778839d25991da86532cce5ec4168
 --- /dev/null
 +++ b/testing/juggler/protocol/Protocol.js
-@@ -0,0 +1,764 @@
+@@ -0,0 +1,767 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
@@ -5782,6 +5811,9 @@ index 0000000000000000000000000000000000000000..838b642eb08efee8a8e6e61421731aa3
 +      executionContextId: t.String,
 +      name: t.String,
 +      payload: t.Any,
++    },
++    'linkClicked': {
++      phase: t.Enum(['before', 'after']),
 +    },
 +    'fileChooserOpened': {
 +      executionContextId: t.String,
