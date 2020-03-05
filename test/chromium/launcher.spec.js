@@ -120,4 +120,20 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       await rmAsync(downloadsFolder);
     });
   });
+
+  describe('BrowserContext', function() {
+    it('should not create pages automatically', async function() {
+      const browser = await playwright.launch();
+      const browserSession = await browser.createBrowserSession();
+      const targets = [];
+      browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+        if (targetInfo.type !== 'browser')
+           targets.push(targetInfo);
+      });
+      await browserSession.send('Target.setDiscoverTargets', { discover: true });
+      await browser.newContext();
+      await browser.close();
+      expect(targets.length).toBe(0);
+    });
+  });
 };
