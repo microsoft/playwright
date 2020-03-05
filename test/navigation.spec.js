@@ -1067,7 +1067,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(response.frame()).toBe(frame);
       expect(page.url()).toContain('/frames/one-frame.html');
     });
-    it('should fail when frame detaches', async({page, server}) => {
+    it.fail(CHROMIUM)('should fail when frame detaches', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = page.frames()[1];
 
