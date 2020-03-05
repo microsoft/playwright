@@ -19,6 +19,28 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
+  describe('Link navigation', function() {
+    it.fail(CHROMIUM)('should inherit user agent from browser context', async function({browser, server}) {
+      const context = await browser.newContext({
+        userAgent: 'hey'
+      });
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent('<a target=_blank rel=noopener href="/popup/popup.html">link</a>');
+      const requestPromise = server.waitForRequest('/popup/popup.html');
+      const [popup] = await Promise.all([
+        new Promise(fulfill => context.once('page', async pageEvent => fulfill(await pageEvent.page()))),
+        page.click('a'),
+      ]);
+      await popup.waitForLoadState();
+      const userAgent = await popup.evaluate(() => window.initialUserAgent);
+      const request = await requestPromise;
+      await context.close();
+      expect(userAgent).toBe('hey');
+      expect(request.headers['user-agent']).toBe('hey');
+    });
+  });
+
   describe('window.open', function() {
     it('should inherit user agent from browser context', async function({browser, server}) {
       const context = await browser.newContext({

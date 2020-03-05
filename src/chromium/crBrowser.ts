@@ -47,22 +47,24 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     const connection = new CRConnection(SlowMoTransport.wrap(transport, slowMo));
     const browser = new CRBrowser(connection);
     const session = connection.rootSession;
-    const promises = [session.send('Target.setDiscoverTargets', { discover: true })];
+    const promises = [
+      session.send('Target.setDiscoverTargets', { discover: true }),
+      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
+    ];
+    const existingPageAttachPromises: Promise<any>[] = [];
     if (isPersistent) {
       // First page and background pages in the persistent context are created automatically
       // and may be initialized before we enable auto-attach.
       function attachToExistingPage({targetInfo}: Protocol.Target.targetCreatedPayload) {
         if (!CRTarget.isPageType(targetInfo.type))
           return;
-        promises.push(session.send('Target.attachToTarget', {targetId: targetInfo.targetId, flatten: true}));
+        existingPageAttachPromises.push(session.send('Target.attachToTarget', {targetId: targetInfo.targetId, flatten: true}));
       }
       session.on('Target.targetCreated', attachToExistingPage);
-      promises.push(session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }));
       Promise.all(promises).then(() => session.off('Target.targetCreated', attachToExistingPage)).catch(debugError);
-    } else {
-      promises.push(session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }));
     }
     await Promise.all(promises);
+    await Promise.all(existingPageAttachPromises);
     return browser;
   }
 
