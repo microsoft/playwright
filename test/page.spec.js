@@ -1120,4 +1120,29 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(page.context()).toBe(context);
     });
   });
+
+  describe('Page.frame', function() {
+    it('should respect name', async function({page, server}) {
+      await page.setContent(`
+        <a href="${server.EMPTY_PAGE}" target=target>empty.html</a>
+        <iframe name=target></iframe>
+      `);
+      expect(page.frame({ name: 'bogus' })).toBe(null);
+      const frame = page.frame({ name: 'target' });
+      expect(frame).toBeTruthy();
+      await Promise.all([
+        frame.waitForNavigation(),
+        page.click('a')
+      ]);
+      expect(frame.url()).toBe(server.EMPTY_PAGE);
+    });
+    it('should respect url', async function({page, server}) {
+      await page.setContent(`
+        <a href="${server.EMPTY_PAGE}">empty.html target=target>empty.html</a>
+        <iframe src="${server.EMPTY_PAGE}"></iframe>
+      `);
+      expect(page.frame({ url: /bogus/ })).toBe(null);
+      expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
+    });
+  });
 };
