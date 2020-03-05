@@ -561,7 +561,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
           return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle2' });
         }, true);
       });
-      it.skip(FFOX)('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
+      it.fail(FFOX)('should wait for networkidle0 in setContent with request from previous navigation', async({page, server}) => {
         // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
         // therefore we don't clear inflight requests at the right time.
         await page.goto(server.EMPTY_PAGE);
@@ -571,7 +571,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
           return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle0' });
         }, true);
       });
-      it.skip(FFOX)('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
+      it.fail(FFOX)('should wait for networkidle2 in setContent with request from previous navigation', async({page, server}) => {
         // TODO: in Firefox window.stop() does not cancel outstanding requests, and we also lack 'init' lifecycle,
         // therefore we don't clear inflight requests at the right time.
         await page.goto(server.EMPTY_PAGE);
@@ -800,7 +800,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
   });
 
-  describe.fail(FFOX)('Page.automaticWaiting', () => {
+  describe('Page.automaticWaiting', () => {
     it('clicking anchor should await navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
@@ -869,7 +869,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
-    it('assigning to location should await navigation', async({page, server}) => {
+    it('assigning location should await navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
@@ -881,12 +881,32 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
     });
-    it('should await navigating specified target', async({page, server, httpsServer}) => {
+    it.fail(CHROMIUM)('assigning location twice should await navigation', async({page, server}) => {
       const messages = [];
-      server.setRoute('/empty.html', async (req, res) => {
-        messages.push('route');
-        res.end('done');
-      });
+      server.setRoute('/empty.html?cancel', async (req, res) => { messages.push('routecancel'); res.end('done'); });
+      server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
+      await Promise.all([
+        page.evaluate(`
+          window.location.href = "${server.EMPTY_PAGE}?cancel";
+          window.location.href = "${server.EMPTY_PAGE}?override";
+        `).then(() => messages.push('evaluate')),
+      ]);
+      expect(messages.join('|')).toBe('routeoverride|evaluate');
+    });
+    it('evaluating reload should await navigation', async({page, server}) => {
+      const messages = [];
+      await page.goto(server.EMPTY_PAGE);
+      server.setRoute('/empty.html', async (req, res) => { messages.push('route'); res.end('done'); });
+
+      await Promise.all([
+        page.evaluate(`window.location.reload()`).then(() => messages.push('evaluate')),
+        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation')),
+      ]);
+      expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
+    });
+    it('should await navigating specified target', async({page, server}) => {
+      const messages = [];
+      server.setRoute('/empty.html', async (req, res) => { messages.push('route'); res.end('done'); });
 
       await page.setContent(`
         <a href="${server.EMPTY_PAGE}" target=target>empty.html</a>
@@ -902,25 +922,39 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
   });
 
-  describe('Page.automaticWaiting should not hang', () => {
-    it('should not throw when clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
+  describe('Page.automaticWaiting should not hang when', () => {
+    it('clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
       await page.click('a');
     });
-    it('should not throw when clicking on download link', async({page, server, httpsServer}) => {
+    it('clicking on download link', async({page, server, httpsServer}) => {
       await page.setContent(`<a href="${server.PREFIX}/wasm/table2.wasm" download=true>table2.wasm</a>`);
       await page.click('a');
     });
-    it('should not hang on window.stop', async({page, server, httpsServer}) => {
+    it('window.stop async', async({page, server, httpsServer}) => {
       server.setRoute('/empty.html', async (req, res) => {});
-      await Promise.all([
-        page.waitForNavigation().catch(e => {}),
-        page.evaluate((url) => {
+      await page.evaluate((url) => {
           window.location.href = url;
           setTimeout(() => window.stop(), 100);
-        }, server.EMPTY_PAGE)
-      ]);
+        }, server.EMPTY_PAGE);
+    });
+    it.fail(WEBKIT)('window.stop sync', async({page, server, httpsServer}) => {
+      server.setRoute('/empty.html', async (req, res) => {});
+      await page.evaluate((url) => {
+          window.location.href = url;
+          window.stop();
+        }, server.EMPTY_PAGE);
+    });
+    it('assigning location to about:blank', async({page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(`window.location.href = "about:blank";`);
+    });
+    it('assigning location to about:blank after non-about:blank', async({page, server}) => {
+      server.setRoute('/empty.html', async (req, res) => {});
+      await page.evaluate(`
+          window.location.href = "${server.EMPTY_PAGE}";
+          window.location.href = "about:blank";`);
     });
   });
 

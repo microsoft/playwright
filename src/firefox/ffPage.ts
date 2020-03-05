@@ -60,10 +60,11 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.frameDetached', this._onFrameDetached.bind(this)),
       helper.addEventListener(this._session, 'Page.navigationAborted', this._onNavigationAborted.bind(this)),
       helper.addEventListener(this._session, 'Page.navigationCommitted', this._onNavigationCommitted.bind(this)),
-      helper.addEventListener(this._session, 'Page.navigationStarted', this._onNavigationStarted.bind(this)),
+      helper.addEventListener(this._session, 'Page.navigationStarted', event => this._onNavigationStarted(event.frameId)),
       helper.addEventListener(this._session, 'Page.sameDocumentNavigation', this._onSameDocumentNavigation.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
       helper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
+      helper.addEventListener(this._session, 'Page.linkClicked', event => this._onLinkClicked(event.phase)),
       helper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
       helper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
       helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
@@ -116,7 +117,15 @@ export class FFPage implements PageDelegate {
     }
   }
 
-  _onNavigationStarted() {
+  _onLinkClicked(phase: 'before' | 'after') {
+    if (phase === 'before')
+      this._page._frameManager.frameWillPotentiallyRequestNavigation();
+    else
+      this._page._frameManager.frameDidPotentiallyRequestNavigation();
+  }
+
+  _onNavigationStarted(frameId: string) {
+    this._page._frameManager.frameRequestedNavigation(frameId);
   }
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
