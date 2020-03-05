@@ -75,7 +75,7 @@ export class JSHandle<T = any> {
     }, propertyName);
     const properties = await objectHandle.getProperties();
     const result = properties.get(propertyName) || null;
-    await objectHandle.dispose();
+    objectHandle.dispose();
     return result;
   }
 

@@ -483,7 +483,7 @@ export class CRPage implements PageDelegate {
     });
     const frameId = nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
       nodeInfo.node.frameId : null;
-    await documentElement.dispose();
+    documentElement.dispose();
     return frameId;
   }
 

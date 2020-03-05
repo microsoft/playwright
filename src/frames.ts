@@ -549,7 +549,7 @@ export class Frame {
     const handle = await utilityContext._$(selector);
     if (handle && handle._context !== mainContext) {
       const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
-      await handle.dispose();
+      handle.dispose();
       return adopted;
     }
     return handle;
@@ -561,7 +561,7 @@ export class Frame {
     const mainContext = await this._mainContext();
     if (handle && handle._context !== mainContext) {
       const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
-      await handle.dispose();
+      handle.dispose();
       return adopted;
     }
     return handle;
@@ -577,7 +577,7 @@ export class Frame {
     if (!elementHandle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await elementHandle.evaluate(pageFunction, ...args as any);
-    await elementHandle.dispose();
+    elementHandle.dispose();
     return result;
   }
 
@@ -585,7 +585,7 @@ export class Frame {
     const context = await this._mainContext();
     const arrayHandle = await context._$array(selector);
     const result = await arrayHandle.evaluate(pageFunction, ...args as any);
-    await arrayHandle.dispose();
+    arrayHandle.dispose();
     return result;
   }
 
@@ -782,63 +782,63 @@ export class Frame {
   async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.click(options);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.dblclick(options);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.tripleclick(options);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async fill(selector: string, value: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.fill(value);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async focus(selector: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.focus();
-    await handle.dispose();
+    handle.dispose();
   }
 
   async hover(selector: string, options?: dom.PointerActionOptions & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.hover(options);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions): Promise<string[]> {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     const values = Array.isArray(value) ? value : [value];
     const result = await handle.select(...values);
-    await handle.dispose();
+    handle.dispose();
     return result;
   }
 
   async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.type(text, options);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async check(selector: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.check(options);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async uncheck(selector: string, options?: types.WaitForOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.uncheck(options);
-    await handle.dispose();
+    handle.dispose();
   }
 
   async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & { visibility?: types.Visibility } = {}, ...args: any[]): Promise<js.JSHandle | null> {
@@ -879,7 +879,7 @@ export class Frame {
     const task = dom.waitForSelectorTask(selector, visibility, timeout);
     const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, visibility)}"`);
     if (!result.asElement()) {
-      await result.dispose();
+      result.dispose();
       return null;
     }
     return result.asElement() as dom.ElementHandle<Element>;
@@ -993,7 +993,7 @@ class RerunnableTask {
 
     if (this._terminated || runCount !== this._runCount) {
       if (success)
-        await success.dispose();
+        success.dispose();
       return;
     }
 
@@ -1001,7 +1001,7 @@ class RerunnableTask {
     // If execution context has been already destroyed, `context.evaluate` will
     // throw an error - ignore this predicate run altogether.
     if (!error && await context.evaluate(s => !s, success).catch(e => true)) {
-      await success!.dispose();
+      success!.dispose();
       return;
     }
 

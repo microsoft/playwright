@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {helper, debugError} from '../helper';
+import { helper } from '../helper';
 import * as js from '../javascript';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
@@ -122,11 +122,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
       objectId: handle._remoteObject.objectId,
-    }).catch(error => {
-      // Exceptions might happen in case of a page been navigated or closed.
-      // Swallow these since they are harmless and we don't leak anything in this case.
-      debugError(error);
-    });
+    }).catch(error => {});
   }
 
   async handleJSONValue<T>(handle: js.JSHandle<T>): Promise<T> {

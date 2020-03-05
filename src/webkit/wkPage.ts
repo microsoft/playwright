@@ -630,7 +630,7 @@ export class WKPage implements PageDelegate {
       return { handle, frame };
     }));
     const result = items.find(item => item.frame === frame);
-    await Promise.all(items.map(item => item === result ? Promise.resolve() : item.handle.dispose()));
+    items.map(item => item === result ? Promise.resolve() : item.handle.dispose());
     if (!result)
       throw new Error('Frame has been detached.');
     return result.handle;
