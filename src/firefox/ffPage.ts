@@ -271,10 +271,6 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setCacheEnabled(enabled: boolean): Promise<void> {
-    await this._session.send('Page.setCacheDisabled', {cacheDisabled: !enabled});
-  }
-
   async setRequestInterception(enabled: boolean): Promise<void> {
     await this._networkManager.setRequestInterception(enabled);
   }

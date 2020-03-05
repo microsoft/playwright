@@ -129,8 +129,6 @@ export class WKPage implements PageDelegate {
 
     if (this._page._state.interceptNetwork)
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
-    if (this._page._state.cacheEnabled === false)
-      promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
 
     const contextOptions = this._page.context()._options;
     if (contextOptions.userAgent)
@@ -420,11 +418,6 @@ export class WKPage implements PageDelegate {
     if (updateTouch)
       promises.push(this._updateState('Page.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }));
     await Promise.all(promises);
-  }
-
-  async setCacheEnabled(enabled: boolean): Promise<void> {
-    const disabled = !enabled;
-    await this._updateState('Network.setResourceCachingDisabled', { disabled });
   }
 
   async setRequestInterception(enabled: boolean): Promise<void> {

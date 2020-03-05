@@ -1027,8 +1027,6 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(error.stack).toContain('Frame.goto')
     });
     it('should return matching responses', async({page, server}) => {
-      // Disable cache: otherwise, chromium will cache similar requests.
-      await page.setCacheEnabled(false);
       await page.goto(server.EMPTY_PAGE);
       // Attach three frames.
       const frames = [
@@ -1036,13 +1034,14 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE),
         await utils.attachFrame(page, 'frame3', server.EMPTY_PAGE),
       ];
-      // Navigate all frames to the same URL.
       const serverResponses = [];
-      server.setRoute('/one-style.html', (req, res) => serverResponses.push(res));
+      server.setRoute('/0.html', (req, res) => serverResponses.push(res));
+      server.setRoute('/1.html', (req, res) => serverResponses.push(res));
+      server.setRoute('/2.html', (req, res) => serverResponses.push(res));
       const navigations = [];
       for (let i = 0; i < 3; ++i) {
-        navigations.push(frames[i].goto(server.PREFIX + '/one-style.html'));
-        await server.waitForRequest('/one-style.html');
+        navigations.push(frames[i].goto(server.PREFIX + '/' + i + '.html'));
+        await server.waitForRequest('/' + i + '.html');
       }
       // Respond from server out-of-order.
       const serverResponseTexts = ['AAA', 'BBB', 'CCC'];

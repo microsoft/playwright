@@ -48,7 +48,6 @@ export interface PageDelegate {
   updateExtraHTTPHeaders(): Promise<void>;
   setViewportSize(viewportSize: types.Size): Promise<void>;
   setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
-  setCacheEnabled(enabled: boolean): Promise<void>;
   setRequestInterception(enabled: boolean): Promise<void>;
   authenticate(credentials: types.Credentials | null): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
@@ -79,7 +78,6 @@ type PageState = {
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
-  cacheEnabled: boolean | null;
   interceptNetwork: boolean | null;
   credentials: types.Credentials | null;
   hasTouch: boolean | null;
@@ -145,7 +143,6 @@ export class Page extends platform.EventEmitter {
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,
-      cacheEnabled: null,
       interceptNetwork: null,
       credentials: null,
       hasTouch: null,
@@ -388,13 +385,6 @@ export class Page extends platform.EventEmitter {
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
     await this._delegate.evaluateOnNewDocument(await helper.evaluationScript(script, args));
-  }
-
-  async setCacheEnabled(enabled: boolean = true) {
-    if (this._state.cacheEnabled === enabled)
-      return;
-    this._state.cacheEnabled = enabled;
-    await this._delegate.setCacheEnabled(enabled);
   }
 
   async route(url: types.URLMatch, handler: (request: network.Request)  => void) {
