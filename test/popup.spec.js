@@ -48,6 +48,18 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(request.headers['foo']).toBe('bar');
     });
+    it.fail(FFOX)('should inherit offline from browser context', async function({browser, server}) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await context.setOffline(true);
+      const online = await page.evaluate(url => {
+        const win = window.open(url);
+        return win.navigator.onLine;
+      }, server.PREFIX + '/dummy.html');
+      await context.close();
+      expect(online).toBe(false);
+    });
     it.skip(FFOX).fail(CHROMIUM)('should inherit touch support from browser context', async function({browser, server}) {
       const context = await browser.newContext({
         viewport: { width: 400, height: 500, isMobile: true }

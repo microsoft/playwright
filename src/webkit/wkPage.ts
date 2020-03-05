@@ -129,8 +129,6 @@ export class WKPage implements PageDelegate {
 
     if (this._page._state.interceptNetwork)
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
-    if (this._page._state.offlineMode)
-      promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
     if (this._page._state.cacheEnabled === false)
       promises.push(session.send('Network.setResourceCachingDisabled', { disabled: true }));
 
@@ -145,6 +143,8 @@ export class WKPage implements PageDelegate {
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
+    if (contextOptions.offline)
+      promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
     if (this._page._state.hasTouch)
       promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
     if (contextOptions.timezoneId) {
@@ -426,8 +426,8 @@ export class WKPage implements PageDelegate {
     await this._updateState('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
   }
 
-  async setOfflineMode(offline: boolean) {
-    await this._updateState('Network.setEmulateOfflineState', { offline });
+  async updateOffline() {
+    await this._updateState('Network.setEmulateOfflineState', { offline: !!this._page.context()._options.offline });
   }
 
   async authenticate(credentials: types.Credentials | null) {

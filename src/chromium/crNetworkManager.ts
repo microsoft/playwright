@@ -29,7 +29,6 @@ export class CRNetworkManager {
   private _page: Page;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private _offline = false;
   private _credentials: {username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
@@ -68,10 +67,9 @@ export class CRNetworkManager {
     await this._updateProtocolRequestInterception();
   }
 
-  async setOfflineMode(value: boolean) {
-    this._offline = value;
+  async setOffline(offline: boolean) {
     await this._client.send('Network.emulateNetworkConditions', {
-      offline: this._offline,
+      offline,
       // values of 0 remove any active throttling. crbug.com/456324#c9
       latency: 0,
       downloadThroughput: -1,

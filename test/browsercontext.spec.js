@@ -360,6 +360,30 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
+  describe.fail(FFOX)('BrowserContext.setOffline', function() {
+    it('should work with initial option', async({browser, server}) => {
+      const context = await browser.newContext({offline: true});
+      const page = await context.newPage();
+      let error = null;
+      await page.goto(server.EMPTY_PAGE).catch(e => error = e);
+      expect(error).toBeTruthy();
+      await context.setOffline(false);
+      const response = await page.goto(server.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
+      await context.close();
+    });
+    it('should emulate navigator.onLine', async({browser, server}) => {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
+      await context.setOffline(true);
+      expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
+      await context.setOffline(false);
+      expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
+      await context.close();
+    });
+  });
+
   describe('Events.BrowserContext.Page', function() {
     it('should report when a new page is created and closed', async({browser, server}) => {
       const context = await browser.newContext();

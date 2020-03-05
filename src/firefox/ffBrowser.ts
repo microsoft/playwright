@@ -286,6 +286,8 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
       await this.setGeolocation(this._options.geolocation);
     if (this._options.extraHTTPHeaders)
       await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders);
+    if (this._options.offline)
+      await this.setOffline(this._options.offline);
   }
 
   _existingPages(): Page[] {
@@ -364,6 +366,12 @@ export class FFBrowserContext extends platform.EventEmitter implements BrowserCo
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
     this._options.extraHTTPHeaders = network.verifyHeaders(headers);
     await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: headersArray(this._options.extraHTTPHeaders) });
+  }
+
+  async setOffline(offline: boolean): Promise<void> {
+    if (offline)
+      throw new Error('Offline mode is not implemented in Firefox');
+    this._options.offline = offline;
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {

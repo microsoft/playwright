@@ -524,25 +524,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe.fail(FFOX)('Interception.setOfflineMode', function() {
-    it('should work', async({page, server}) => {
-      await page.setOfflineMode(true);
-      let error = null;
-      await page.goto(server.EMPTY_PAGE).catch(e => error = e);
-      expect(error).toBeTruthy();
-      await page.setOfflineMode(false);
-      const response = await page.goto(server.EMPTY_PAGE);
-      expect(response.status()).toBe(200);
-    });
-    it('should emulate navigator.onLine', async({page, server}) => {
-      expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
-      await page.setOfflineMode(true);
-      expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
-      await page.setOfflineMode(false);
-      expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
-    });
-  });
-
   describe('Interception vs isNavigationRequest', () => {
     it('should work with request interception', async({page, server}) => {
       const requests = new Map();
