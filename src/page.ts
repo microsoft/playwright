@@ -293,8 +293,7 @@ export class Page extends platform.EventEmitter {
   async setContent(html: string, options?: frames.NavigateOptions): Promise<void> {
     return this.mainFrame().setContent(html, options);
   }
-
-  async goto(url: string, options?: frames.GotoOptions): Promise<network.Response | null> {
+  async goto(url: string | URL, options?: frames.GotoOptions): Promise<network.Response | null> {
     return this.mainFrame().goto(url, options);
   }
 
