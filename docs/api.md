@@ -1174,10 +1174,10 @@ Shortcut for [page.mainFrame().focus(selector)](#framefocusselector).
 #### page.frame(options)
 - `options` <[Object]>
   - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
-  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
 - returns: <[Frame]> frame matching the criteria.
 
-Returns frame matching the specified criteria. Either `name` or `url` must to be specified.
+Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 #### page.frames()
 - returns: <[Array]<[Frame]>> An array of all frames attached to the page.
