@@ -121,7 +121,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       });
       await page.goto(server.PREFIX + '/frames/one-frame.html');
     });
-    it.fail(WEBKIT)('should fail when server returns 204', async({page, server}) => {
+    it('should fail when server returns 204', async({page, server}) => {
       // Webkit just loads an empty page.
       server.setRoute('/empty.html', (req, res) => {
         res.statusCode = 204;
@@ -132,6 +132,8 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(error).not.toBe(null);
       if (CHROMIUM)
         expect(error.message).toContain('net::ERR_ABORTED');
+      else if (WEBKIT)
+        expect(error.message).toContain('Aborted: 204 No Content');
       else
         expect(error.message).toContain('NS_BINDING_ABORTED');
     });
