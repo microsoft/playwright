@@ -94,7 +94,7 @@ const iPhone = devices['iPhone 6'];
 - returns: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
 
-Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForElement(selector[, options])](#pagewaitforelementselector-options)
+Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforelementselector-options)
 might fail if the selector doesn't match any nodes during the given timeframe.
 
 For certain types of errors Playwright uses specific error classes.
@@ -103,7 +103,7 @@ These classes are available via [`browserType.errors`](#browsertypeerrors) or [`
 An example of handling a timeout error:
 ```js
 try {
-  await page.waitForElement('.foo');
+  await page.waitForSelector('.foo');
 } catch (e) {
   if (e instanceof playwright.errors.TimeoutError) {
     // Do something if this is a timeout.
@@ -683,13 +683,13 @@ page.removeListener('request', logRequest);
 - [page.url()](#pageurl)
 - [page.viewportSize()](#pageviewportsize)
 - [page.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#pagewaitforselectororfunctionortimeout-options-args)
-- [page.waitForElement(selector[, options])](#pagewaitforelementselector-options)
 - [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
 - [page.waitForFunction(pageFunction[, options[, ...args]])](#pagewaitforfunctionpagefunction-options-args)
 - [page.waitForLoadState([options])](#pagewaitforloadstateoptions)
 - [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 - [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
 - [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
+- [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options)
 - [page.workers()](#pageworkers)
 <!-- GEN:stop -->
 
@@ -1664,7 +1664,7 @@ This is a shortcut for [page.mainFrame().url()](#frameurl)
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
 This method behaves differently with respect to the type of the first parameter:
-- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [page.waitForElement](#pagewaitforelementselector-options)
+- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [page.waitForSelector](#pagewaitforelementselector-options)
 - if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [page.waitForFunction()](#pagewaitforfunctionpagefunction-options-args).
 - if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
 - otherwise, an exception is thrown
@@ -1686,34 +1686,6 @@ await page.waitFor(selector => !!document.querySelector(selector), {}, selector)
 ```
 
 Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforelementorfunctionortimeout-options-args).
-
-#### page.waitForElement(selector[, options])
-- `selector` <[string]> A selector of an element to wait for
-- `options` <[Object]>
-  - `waitFor` <"attached"|"detached"|"visible"|"hidden"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`attached`) or not present in dom (`detached`). Defaults to `attached`.
-  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector satisfies `waitFor` option. Resolves to `null` if waiting for `hidden` or `detached`.
-
-Wait for the `selector` to satisfy `waitFor` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
-
-This method works across navigations:
-```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
-
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  let currentURL;
-  page
-    .waitForElement('img')
-    .then(() => console.log('First URL with image: ' + currentURL));
-  for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
-    await page.goto(currentURL);
-  }
-  await browser.close();
-})();
-```
-Shortcut for [page.mainFrame().waitForElement(selector[, options])](#framewaitforelementselector-options).
 
 #### page.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `page.on(event)`.
@@ -1833,6 +1805,34 @@ const finalResponse = await page.waitForResponse(response => response.url() === 
 return finalResponse.ok();
 ```
 
+#### page.waitForSelector(selector[, options])
+- `selector` <[string]> A selector of an element to wait for
+- `options` <[Object]>
+  - `waitFor` <"attached"|"detached"|"visible"|"hidden"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`attached`) or not present in dom (`detached`). Defaults to `attached`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector satisfies `waitFor` option. Resolves to `null` if waiting for `hidden` or `detached`.
+
+Wait for the `selector` to satisfy `waitFor` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+
+This method works across navigations:
+```js
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  let currentURL;
+  page
+    .waitForSelector('img')
+    .then(() => console.log('First URL with image: ' + currentURL));
+  for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
+    await page.goto(currentURL);
+  }
+  await browser.close();
+})();
+```
+Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitforelementselector-options).
+
 #### page.workers()
 - returns: <[Array]<[Worker]>>
 This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
@@ -1915,10 +1915,10 @@ An example of getting text from an iframe element:
 - [frame.uncheck(selector, [options])](#frameuncheckselector-options)
 - [frame.url()](#frameurl)
 - [frame.waitFor(selectorOrFunctionOrTimeout[, options[, ...args]])](#framewaitforselectororfunctionortimeout-options-args)
-- [frame.waitForElement(selector[, options])](#framewaitforelementselector-options)
 - [frame.waitForFunction(pageFunction[, options[, ...args]])](#framewaitforfunctionpagefunction-options-args)
 - [frame.waitForLoadState([options])](#framewaitforloadstateoptions)
 - [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
+- [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
 <!-- GEN:stop -->
 
 #### frame.$(selector)
@@ -2375,7 +2375,7 @@ Returns frame's url.
 - returns: <[Promise]<[JSHandle]>> Promise which resolves to a JSHandle of the success value
 
 This method behaves differently with respect to the type of the first parameter:
-- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [frame.waitForElement](#framewaitforelementselector-options)
+- if `selectorOrFunctionOrTimeout` is a `string`, then the first argument is treated as a [selector] and the method is a shortcut for [frame.waitForSelector](#framewaitforelementselector-options)
 - if `selectorOrFunctionOrTimeout` is a `function`, then the first argument is treated as a predicate to wait for and the method is a shortcut for [frame.waitForFunction()](#framewaitforfunctionpagefunction-options-args).
 - if `selectorOrFunctionOrTimeout` is a `number`, then the first argument is treated as a timeout in milliseconds and the method returns a promise which resolves after the timeout
 - otherwise, an exception is thrown
@@ -2394,33 +2394,6 @@ To pass arguments from node.js to the predicate of `page.waitFor` function:
 ```js
 const selector = '.foo';
 await page.waitFor(selector => !!document.querySelector(selector), {}, selector);
-```
-
-#### frame.waitForElement(selector[, options])
-- `selector` <[string]> A selector of an element to wait for
-- `options` <[Object]>
-  - `waitFor` <"attached"|"detached"|"visible"|"hidden"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`attached`) or not present in dom (`detached`). Defaults to `attached`.
-  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector satisfies `waitFor` option. Resolves to `null` if waiting for `hidden` or `detached`.
-
-Wait for the `selector` to satisfy `waitFor` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
-
-This method works across navigations:
-```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-
-(async () => {
-  const browser = await webkit.launch();
-  const page = await browser.newPage();
-  let currentURL;
-  page.mainFrame()
-    .waitForElement('img')
-    .then(() => console.log('First URL with image: ' + currentURL));
-  for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
-    await page.goto(currentURL);
-  }
-  await browser.close();
-})();
 ```
 
 #### frame.waitForFunction(pageFunction[, options[, ...args]])
@@ -2497,6 +2470,32 @@ const [response] = await Promise.all([
 
 **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is considered a navigation.
 
+#### frame.waitForSelector(selector[, options])
+- `selector` <[string]> A selector of an element to wait for
+- `options` <[Object]>
+  - `waitFor` <"attached"|"detached"|"visible"|"hidden"> Wait for element to become visible (`visible`), hidden (`hidden`), present in dom (`attached`) or not present in dom (`detached`). Defaults to `attached`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector satisfies `waitFor` option. Resolves to `null` if waiting for `hidden` or `detached`.
+
+Wait for the `selector` to satisfy `waitFor` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+
+This method works across navigations:
+```js
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+
+(async () => {
+  const browser = await webkit.launch();
+  const page = await browser.newPage();
+  let currentURL;
+  page.mainFrame()
+    .waitForSelector('img')
+    .then(() => console.log('First URL with image: ' + currentURL));
+  for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
+    await page.goto(currentURL);
+  }
+  await browser.close();
+})();
+```
 
 ### class: ElementHandle
 * extends: [JSHandle]
@@ -3515,7 +3514,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 
 * extends: [Error]
 
-TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForElement(selector[, options])](#pagewaitforelementselector-options) or [browserType.launch([options])](#browsertypelaunchoptions).
+TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[, options])](#pagewaitforelementselector-options) or [browserType.launch([options])](#browsertypelaunchoptions).
 
 ### class: Accessibility
 
@@ -3743,7 +3742,7 @@ Download browser binary if it is missing.
 - returns: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
 
-Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForElement(selector[, options])](#pagewaitforelementselector-options)
+Playwright methods might throw errors if they are unable to fulfill a request. For example, [page.waitForSelector(selector[, options])](#pagewaitforelementselector-options)
 might fail if the selector doesn't match any nodes during the given timeframe.
 
 For certain types of errors Playwright uses specific error classes.
@@ -3753,7 +3752,7 @@ An example of handling a timeout error:
 ```js
 const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 try {
-  await page.waitForElement('.foo');
+  await page.waitForSelector('.foo');
 } catch (e) {
   if (e instanceof webkit.errors.TimeoutError) {
     // Do something if this is a timeout.

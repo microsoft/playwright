@@ -85,7 +85,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         document.body.appendChild(frame);
         return new Promise(x => frame.onload = x);
       });
-      await page.waitForElement('iframe[src="https://google.com/"]');
+      await page.waitForSelector('iframe[src="https://google.com/"]');
       const urls = page.frames().map(frame => frame.url()).sort();
       expect(urls).toEqual([
         server.EMPTY_PAGE,
