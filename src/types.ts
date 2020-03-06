@@ -39,7 +39,6 @@ export type Rect = Size & Point;
 export type Quad = [ Point, Point, Point, Point ];
 
 export type TimeoutOptions = { timeout?: number };
-export type WaitForOptions = TimeoutOptions & { waitFor?: boolean };
 
 export type WaitForElementOptions = TimeoutOptions & { waitFor?: 'attached' | 'detached' | 'visible' | 'hidden' };
 
@@ -52,7 +51,20 @@ export type NavigateOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,
 };
 
-export type WaitForNavigationOptions = NavigateOptions & { url?: URLMatch };
+export type ActionWaitOptionsNoWaitFor = TimeoutOptions & {
+  waitUntil?: LifecycleEvent | 'nowait',
+};
+
+export type ActionWaitOptionsNoNavigation = TimeoutOptions & {
+  waitFor?: boolean,
+};
+
+export type ActionWaitOptions = ActionWaitOptionsNoWaitFor & ActionWaitOptionsNoNavigation;
+
+export type WaitForNavigationOptions = TimeoutOptions & {
+  waitUntil?: LifecycleEvent,
+  url?: URLMatch
+};
 
 export type ElementScreenshotOptions = {
   type?: 'png' | 'jpeg',

@@ -433,47 +433,47 @@ export class Page extends platform.EventEmitter {
     return this._closed;
   }
 
-  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions & types.NavigateOptions) {
+  async click(selector: string, options?: dom.ClickOptions & types.ActionWaitOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
+  async dblclick(selector: string, options?: dom.MultiClickOptions & types.ActionWaitOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
+  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.ActionWaitOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  async fill(selector: string, value: string, options?: types.WaitForOptions & types.NavigateOptions) {
+  async fill(selector: string, value: string, options?: types.ActionWaitOptions) {
     return this.mainFrame().fill(selector, value, options);
   }
 
-  async focus(selector: string, options?: types.WaitForOptions) {
+  async focus(selector: string, options?: types.ActionWaitOptionsNoNavigation) {
     return this.mainFrame().focus(selector, options);
   }
 
-  async hover(selector: string, options?: dom.PointerActionOptions & types.WaitForOptions) {
+  async hover(selector: string, options?: dom.PointerActionOptions & types.ActionWaitOptionsNoNavigation) {
     return this.mainFrame().hover(selector, options);
   }
 
-  async select(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions & types.NavigateOptions): Promise<string[]> {
+  async select(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.ActionWaitOptions): Promise<string[]> {
     return this.mainFrame().select(selector, values, options);
   }
 
-  async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions & types.NavigateOptions) {
+  async type(selector: string, text: string, options?: { delay?: number } & types.ActionWaitOptions) {
     return this.mainFrame().type(selector, text, options);
   }
 
-  async press(selector: string, key: string, options?: { delay?: number, text?: string } & types.NavigateOptions & types.WaitForOptions & types.NavigateOptions) {
+  async press(selector: string, key: string, options?: { delay?: number, text?: string } & types.ActionWaitOptions) {
     return this.mainFrame().press(selector, key, options);
   }
 
-  async check(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
+  async check(selector: string, options?: types.ActionWaitOptions) {
     return this.mainFrame().check(selector, options);
   }
 
-  async uncheck(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
+  async uncheck(selector: string, options?: types.ActionWaitOptions) {
     return this.mainFrame().uncheck(selector, options);
   }
 
