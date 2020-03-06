@@ -34,22 +34,14 @@ type ContextData = {
   rerunnableTasks: Set<RerunnableTask>;
 };
 
-export type NavigateOptions = {
-  timeout?: number,
-  waitUntil?: LifecycleEvent | LifecycleEvent[],
-};
-
-export type WaitForNavigationOptions = NavigateOptions & { url?: types.URLMatch };
-
-export type GotoOptions = NavigateOptions & {
+export type GotoOptions = types.NavigateOptions & {
   referer?: string,
 };
 export type GotoResult = {
   newDocumentId?: string,
 };
 
-export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
-const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
+const kLifecycleEvents: Set<types.LifecycleEvent> = new Set(['commit', 'load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
 
 type ConsoleTagHandler = () => void;
 
@@ -108,7 +100,7 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: WaitForNavigationOptions): Promise<T> {
+  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: types.WaitForNavigationOptions): Promise<T> {
     const barrier = new PendingNavigationBarrier(options);
     this._pendingNavigationBarriers.add(barrier);
     try {
@@ -176,6 +168,7 @@ export class FrameManager {
       return;
     const hasDOMContentLoaded = frame._firedLifecycleEvents.has('domcontentloaded');
     const hasLoad = frame._firedLifecycleEvents.has('load');
+    frame._firedLifecycleEvents.add('commit');
     frame._firedLifecycleEvents.add('domcontentloaded');
     frame._firedLifecycleEvents.add('load');
     for (const watcher of this._lifecycleWatchers)
@@ -186,7 +179,7 @@ export class FrameManager {
       this._page.emit(Events.Page.Load);
   }
 
-  frameLifecycleEvent(frameId: string, event: LifecycleEvent) {
+  frameLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
@@ -201,6 +194,7 @@ export class FrameManager {
 
   clearFrameLifecycle(frame: Frame) {
     frame._firedLifecycleEvents.clear();
+    frame._firedLifecycleEvents.add('commit');
     // Keep the current navigation request if any.
     frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request._documentId === frame._lastDocumentId));
     this._stopNetworkIdleTimer(frame, 'networkidle0');
@@ -287,7 +281,7 @@ export class FrameManager {
       this._stopNetworkIdleTimer(frame, 'networkidle2');
   }
 
-  private _startNetworkIdleTimer(frame: Frame, event: LifecycleEvent) {
+  private _startNetworkIdleTimer(frame: Frame, event: types.LifecycleEvent) {
     assert(!frame._networkIdleTimers.has(event));
     if (frame._firedLifecycleEvents.has(event))
       return;
@@ -296,7 +290,7 @@ export class FrameManager {
     }, 500));
   }
 
-  private _stopNetworkIdleTimer(frame: Frame, event: LifecycleEvent) {
+  private _stopNetworkIdleTimer(frame: Frame, event: types.LifecycleEvent) {
     const timeoutId = frame._networkIdleTimers.get(event);
     if (timeoutId)
       clearTimeout(timeoutId);
@@ -318,7 +312,7 @@ export class FrameManager {
 
 export class Frame {
   _id: string;
-  readonly _firedLifecycleEvents: Set<LifecycleEvent>;
+  readonly _firedLifecycleEvents: Set<types.LifecycleEvent>;
   _lastDocumentId = '';
   _requestWatchers = new Set<(request: network.Request) => void>();
   _documentWatchers = new Set<(documentId: string, error?: Error) => void>();
@@ -331,7 +325,7 @@ export class Frame {
   private _childFrames = new Set<Frame>();
   _name = '';
   _inflightRequests = new Set<network.Request>();
-  readonly _networkIdleTimers = new Map<LifecycleEvent, NodeJS.Timer>();
+  readonly _networkIdleTimers = new Map<types.LifecycleEvent, NodeJS.Timer>();
   private _setContentCounter = 0;
   private _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
@@ -410,7 +404,7 @@ export class Frame {
     }
   }
 
-  async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
+  async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
     const disposer = new Disposer();
     const requestWatcher = disposer.add(this._trackDocumentRequests());
     const {timeout = this._page._timeoutSettings.navigationTimeout()} = options;
@@ -443,7 +437,7 @@ export class Frame {
     return request ? request._finalRequest._waitForResponse() : null;
   }
 
-  async waitForLoadState(options: NavigateOptions = {}): Promise<void> {
+  async waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
     const {timeout = this._page._timeoutSettings.navigationTimeout()} = options;
     const disposer = new Disposer();
     const error = await Promise.race([
@@ -495,13 +489,10 @@ export class Frame {
     return {value: promise, dispose};
   }
 
-  _waitForLifecycle(waitUntil: LifecycleEvent|LifecycleEvent[] = 'load'): Disposable<Promise<void>> {
+  _waitForLifecycle(waitUntil: types.LifecycleEvent = 'load'): Disposable<Promise<void>> {
     let resolve: () => void;
-    const expectedLifecycle = typeof waitUntil === 'string' ? [waitUntil] : waitUntil;
-    for (const event of expectedLifecycle) {
-      if (!kLifecycleEvents.has(event))
-        throw new Error(`Unsupported waitUntil option ${String(event)}`);
-    }
+    if (!kLifecycleEvents.has(waitUntil))
+      throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
 
     const checkLifecycleComplete = () => {
       if (!checkLifecycleRecursively(this))
@@ -516,10 +507,8 @@ export class Frame {
     return {value: promise, dispose};
 
     function checkLifecycleRecursively(frame: Frame): boolean {
-      for (const event of expectedLifecycle) {
-        if (!frame._firedLifecycleEvents.has(event))
-          return false;
-      }
+      if (!frame._firedLifecycleEvents.has(waitUntil))
+        return false;
       for (const child of frame.childFrames()) {
         if (!checkLifecycleRecursively(child))
           return false;
@@ -640,7 +629,7 @@ export class Frame {
     });
   }
 
-  async setContent(html: string, options?: NavigateOptions): Promise<void> {
+  async setContent(html: string, options?: types.NavigateOptions): Promise<void> {
     const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
     const context = await this._utilityContext();
     const lifecyclePromise = new Promise(resolve => {
@@ -813,27 +802,27 @@ export class Frame {
     return result!;
   }
 
-  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions) {
+  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions & types.NavigateOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.click(options);
     handle.dispose();
   }
 
-  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
+  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.dblclick(options);
     handle.dispose();
   }
 
-  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
+  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.tripleclick(options);
     handle.dispose();
   }
 
-  async fill(selector: string, value: string, options?: types.WaitForOptions) {
+  async fill(selector: string, value: string, options?: types.WaitForOptions & types.NavigateOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    await handle.fill(value);
+    await handle.fill(value, options);
     handle.dispose();
   }
 
@@ -849,27 +838,26 @@ export class Frame {
     handle.dispose();
   }
 
-  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions): Promise<string[]> {
+  async select(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions & types.NavigateOptions): Promise<string[]> {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
-    const values = Array.isArray(value) ? value : [value];
-    const result = await handle.select(...values);
+    const result = await handle.select(values, options);
     handle.dispose();
     return result;
   }
 
-  async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions) {
+  async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions & types.NavigateOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.type(text, options);
     handle.dispose();
   }
 
-  async check(selector: string, options?: types.WaitForOptions) {
+  async check(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.check(options);
     handle.dispose();
   }
 
-  async uncheck(selector: string, options?: types.WaitForOptions) {
+  async uncheck(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.uncheck(options);
     handle.dispose();
@@ -1109,12 +1097,12 @@ function selectorToString(selector: string, visibility: types.Visibility): strin
 
 class PendingNavigationBarrier {
   private _frameIds = new Map<string, number>();
-  private _waitOptions: WaitForNavigationOptions | undefined;
+  private _waitOptions: types.WaitForNavigationOptions | undefined;
   private _protectCount = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
 
-  constructor(options?: WaitForNavigationOptions) {
+  constructor(options?: types.WaitForNavigationOptions) {
     this._waitOptions = options;
     this._promise = new Promise(f => this._promiseCallback = f);
     this.retain();

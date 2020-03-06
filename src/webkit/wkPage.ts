@@ -241,7 +241,7 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.frameStoppedLoading(frameId);
   }
 
-  private _onLifecycleEvent(frameId: string, event: frames.LifecycleEvent) {
+  private _onLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
     this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 

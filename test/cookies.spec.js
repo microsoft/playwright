@@ -121,7 +121,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         name: 'birdo',
         value: 'tweets',
       }]);
-      const cookies = await context.cookies('https://foo.com', 'https://baz.com');
+      const cookies = await context.cookies(['https://foo.com', 'https://baz.com']);
       cookies.sort((a, b) => a.name.localeCompare(b.name));
       expect(cookies).toEqual([{
         name: 'birdo',
