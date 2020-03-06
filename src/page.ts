@@ -206,12 +206,14 @@ export class Page extends platform.EventEmitter {
     return this._frameManager.mainFrame();
   }
 
-  frame(options: { name?: string, url?: types.URLMatch }): frames.Frame | null {
-    assert(options.name || options.url, 'Either name or url matcher should be specified');
+  frame(options: string | { name?: string, url?: types.URLMatch }): frames.Frame | null {
+    const name = helper.isString(options) ? options : options.name;
+    const url = helper.isObject(options) ? options.url : undefined;
+    assert(name || url, 'Either name or url matcher should be specified');
     return this.frames().find(f => {
-      if (options.name)
-        return f.name() === options.name;
-      return platform.urlMatches(f.url(), options.url);
+      if (name)
+        return f.name() === name;
+      return platform.urlMatches(f.url(), url);
     }) || null;
   }
 
@@ -469,6 +471,10 @@ export class Page extends platform.EventEmitter {
 
   async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().type(selector, text, options);
+  }
+
+  async press(selector: string, key: string, options?: { delay?: number, text?: string } & types.NavigateOptions & types.WaitForOptions & types.NavigateOptions) {
+    return this.mainFrame().press(selector, key, options);
   }
 
   async check(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {

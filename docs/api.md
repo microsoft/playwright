@@ -650,6 +650,7 @@ page.removeListener('request', logRequest);
 - [page.mouse](#pagemouse)
 - [page.opener()](#pageopener)
 - [page.pdf([options])](#pagepdfoptions)
+- [page.press(selector, key[, options])](#pagepressselector-key-options)
 - [page.reload([options])](#pagereloadoptions)
 - [page.route(url, handler)](#pagerouteurl-handler)
 - [page.screenshot([options])](#pagescreenshotoptions)
@@ -1193,10 +1194,18 @@ If there's no element matching `selector`, the method throws an error.
 Shortcut for [page.mainFrame().focus(selector)](#framefocusselector).
 
 #### page.frame(options)
-- `options` <[Object]>
+- `options` <[string]|[Object]> Frame name or other frame lookup options.
   - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
 - returns: <[Frame]> frame matching the criteria.
+
+```js
+const frame = page.frame('frame-name');
+```
+
+```js
+const frame = page.frame({ url: /.*domain.*/ });
+```
 
 Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
@@ -1365,6 +1374,28 @@ The `format` options are:
 > **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
 > 1. Script tags inside templates are not evaluated.
 > 2. Page styles are not visible inside templates.
+
+#### page.press(selector, key[, options])
+- `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
+- `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `options` <[Object]>
+  - `text` <[string]> If specified, generates an input event with this text.
+  - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
+  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `commit`. Events can be either:
+    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
+
+Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
+
+If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
+
+> **NOTE** Modifier keys DO affect `page.press`. Holding down `Shift` will type the text in upper case.
 
 #### page.reload([options])
 - `options` <[Object]> Navigation parameters which might have the following properties:
@@ -1860,6 +1891,7 @@ An example of getting text from an iframe element:
 - [frame.isDetached()](#frameisdetached)
 - [frame.name()](#framename)
 - [frame.parentFrame()](#frameparentframe)
+- [frame.press(selector, key[, options])](#framepressselector-key-options)
 - [frame.select(selector, values[, options])](#frameselectselector-values-options)
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
 - [frame.title()](#frametitle)
@@ -2164,6 +2196,28 @@ If the name is empty, returns the id attribute instead.
 
 #### frame.parentFrame()
 - returns: <?[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
+
+#### frame.press(selector, key[, options])
+- `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used.
+- `key` <[string]> Name of key to press, such as `ArrowLeft`. See [USKeyboardLayout] for a list of all key names.
+- `options` <[Object]>
+  - `text` <[string]> If specified, generates an input event with this text.
+  - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+  - `waitFor` <[boolean]> Whether to wait for the element to be present in the dom. Defaults to `true`.
+  - `waitUntil` <"commit"|"load"|"domcontentloaded"|"networkidle0"|"networkidle2"> When to consider navigation succeeded, defaults to `commit`. Events can be either:
+    - `'commit'` - navigation is committed, new url is displayed in the browser address bar.
+    - `'load'` - consider navigation to be finished when the `load` event is fired.
+    - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
+    - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]>
+
+Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey-options) and [`keyboard.up`](#keyboardupkey).
+
+If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
+
+> **NOTE** Modifier keys DO affect `frame.press`. Holding down `Shift` will type the text in upper case.
 
 #### frame.select(selector, values[, options])
 - `selector` <[string]> A selector to query frame for.
@@ -2654,7 +2708,7 @@ Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey-options) a
 
 If `key` is a single character and no modifier keys besides `Shift` are being held down, a `keypress`/`input` event will also be generated. The `text` option can be specified to force an input event to be generated.
 
-> **NOTE** Modifier keys DO effect `elementHandle.press`. Holding down `Shift` will type the text in upper case.
+> **NOTE** Modifier keys DO affect `elementHandle.press`. Holding down `Shift` will type the text in upper case.
 
 #### elementHandle.screenshot([options])
 - `options` <[Object]> Screenshot options.

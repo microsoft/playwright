@@ -1112,4 +1112,18 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
     });
   });
+
+  fdescribe('Page api coverage', function() {
+    it('Page.press should work', async({page, server}) => {
+      await page.goto(server.PREFIX + '/input/textarea.html');
+      await page.press('textarea', 'a');
+      expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
+    });
+    it('Frame.press should work', async({page, server}) => {
+      await page.setContent(`<iframe name=inner src="${server.PREFIX}/input/textarea.html"></iframe>`);
+      const frame = page.frame('inner');
+      await frame.press('textarea', 'a');
+      expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
+    });
+  });
 };
