@@ -905,7 +905,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
     });
-    it('should await navigating specified target', async({page, server}) => {
+    it.fail(CHROMIUM)('should await navigating specified target', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => { messages.push('route'); res.end('done'); });
 
