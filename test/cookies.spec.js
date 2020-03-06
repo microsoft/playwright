@@ -247,7 +247,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         await context.close();
       }
     });
-    it('should isolate cookies between launches', async({server}) => {
+    it.slow()('should isolate cookies between launches', async({server}) => {
       const browser1 = await playwright.launch(defaultBrowserOptions);
       const context1 = await browser1.newContext();
       await context1.setCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() + 1000000000 }]);
