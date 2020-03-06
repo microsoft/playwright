@@ -61,11 +61,13 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
   _closed = false;
-  private _closePromise: Promise<Error> | undefined;
+  private readonly _closePromise: Promise<Error>;
+  private _closePromiseFulfill: ((error: Error) => void) | undefined;
 
   constructor(options: BrowserContextOptions) {
     super();
     this._options = options;
+    this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
   abstract _existingPages(): Page[];
@@ -75,6 +77,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
     for (const page of this._existingPages())
       page._didClose();
     this.emit(Events.BrowserContext.Close);
+    this._closePromiseFulfill!(new Error('Context closed'));
   }
 
   // BrowserContext methods.
@@ -107,17 +110,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
       optionsOrPredicate = { predicate: optionsOrPredicate };
     const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = optionsOrPredicate;
 
-    let abortPromise: Promise<Error>;
-    if (event === Events.BrowserContext.Close) {
-      abortPromise = new Promise<Error>(() => { });
-    } else {
-      if (!this._closePromise) {
-        this._closePromise = new Promise(fulfill => {
-          this.once(Events.BrowserContext.Close, () => fulfill(new Error('Context closed')));
-        });
-      }
-      abortPromise = this._closePromise;
-    }
+    const abortPromise = (event === Events.BrowserContext.Close) ? new Promise<Error>(() => { }) : this._closePromise;
     return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, abortPromise);
   }
 }
