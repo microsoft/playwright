@@ -113,6 +113,13 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       const context = await browser.newContext();
       await context.close();
     });
+    it('close() should abort waitForEvent', async({ browser }) => {
+      const context = await browser.newContext();
+      const promise = context.waitForEvent('page').catch(e => e);
+      await context.close();
+      let error = await promise;
+      expect(error.message).toContain('Context closed');
+    });
   });
 
   describe('BrowserContext({userAgent})', function() {
@@ -389,7 +396,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
-        new Promise(r => context.once('page', async event => r(await event.page()))),
+        context.waitForEvent('page').then(event => event.page()),
         page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html').catch(e => console.log('eee = ' + e)),
       ]);
       await otherPage.waitForLoadState();

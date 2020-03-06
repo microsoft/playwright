@@ -291,6 +291,7 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
+- [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
 #### event: 'close'
@@ -545,6 +546,15 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
     - `'payment-handler'`
 - returns: <[Promise]>
 
+#### browserContext.waitForEvent(event[, optionsOrPredicate])
+- `event` <[string]> Event name, same one would pass into `browserContext.on(event)`.
+- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
+  - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+- returns: <[Promise]<[any]>> Promise which resolves to the event data value.
+
+Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value. Will throw an error if the context closes before the event
+is fired.
 
 ```js
 const context = await browser.newContext();
@@ -1611,13 +1621,11 @@ Shortcut for [page.mainFrame().waitFor(selectorOrFunctionOrTimeout[, options[, .
 - `event` <[string]> Event name, same one would pass into `page.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `polling` <[number]|"raf"|"mutation"> An interval at which the `pageFunction` is executed, defaults to `raf`. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. If `polling` is a string, then it can be one of the following values:
-    - `'raf'` - to constantly execute `pageFunction` in `requestAnimationFrame` callback. This is the tightest polling mode which is suitable to observe styling changes.
-    - `'mutation'` - to execute `pageFunction` on every DOM mutation.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[any]>> Promise which resolves to the event data value.
 
-Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value.
+Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value. Will throw an error if the page is closed before the event
+is fired.
 
 #### page.waitForFunction(pageFunction[, options[, ...args]])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
@@ -3729,6 +3737,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
 - [browserContext.setPermissions(origin, permissions[])](#browsercontextsetpermissionsorigin-permissions)
+- [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
 #### event: 'backgroundpage'

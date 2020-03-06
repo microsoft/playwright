@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-import { Page, PageBinding } from './page';
-import * as network from './network';
-import * as types from './types';
 import { helper } from './helper';
+import * as network from './network';
+import { Page, PageBinding } from './page';
+import * as platform from './platform';
 import { TimeoutSettings } from './timeoutSettings';
+import * as types from './types';
+import { Events } from './events';
 
 export type BrowserContextOptions = {
   viewport?: types.Viewport | null,
@@ -50,15 +52,74 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
+  waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any>;
   close(): Promise<void>;
-
-  _existingPages(): Page[];
-  readonly _timeoutSettings: TimeoutSettings;
-  readonly _options: BrowserContextOptions;
-  readonly _pageBindings: Map<string, PageBinding>;
 }
 
-export function assertBrowserContextIsNotOwned(context: BrowserContext) {
+export abstract class BrowserContextBase extends platform.EventEmitter implements BrowserContext {
+  readonly _timeoutSettings = new TimeoutSettings();
+  readonly _pageBindings = new Map<string, PageBinding>();
+  readonly _options: BrowserContextOptions;
+  _closed = false;
+  private readonly _closePromise: Promise<Error>;
+  private _closePromiseFulfill: ((error: Error) => void) | undefined;
+
+  constructor(options: BrowserContextOptions) {
+    super();
+    this._options = options;
+    this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+  }
+
+  abstract _existingPages(): Page[];
+
+  _browserClosed() {
+    for (const page of this._existingPages())
+      page._didClose();
+    this._didCloseInternal();
+  }
+
+  _didCloseInternal() {
+    this._closed = true;
+    this.emit(Events.BrowserContext.Close);
+    this._closePromiseFulfill!(new Error('Context closed'));
+  }
+
+  // BrowserContext methods.
+  abstract pages(): Promise<Page[]>;
+  abstract newPage(): Promise<Page>;
+  abstract cookies(...urls: string[]): Promise<network.NetworkCookie[]>;
+  abstract setCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
+  abstract clearCookies(): Promise<void>;
+  abstract setPermissions(origin: string, permissions: string[]): Promise<void>;
+  abstract clearPermissions(): Promise<void>;
+  abstract setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
+  abstract setExtraHTTPHeaders(headers: network.Headers): Promise<void>;
+  abstract setOffline(offline: boolean): Promise<void>;
+  abstract addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, ...args: any[]): Promise<void>;
+  abstract exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
+  abstract close(): Promise<void>;
+
+  setDefaultNavigationTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
+  }
+
+  async waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any> {
+    if (!optionsOrPredicate)
+      optionsOrPredicate = {};
+    if (typeof optionsOrPredicate === 'function')
+      optionsOrPredicate = { predicate: optionsOrPredicate };
+    const { timeout = this._timeoutSettings.timeout(), predicate = () => true } = optionsOrPredicate;
+
+    const abortPromise = (event === Events.BrowserContext.Close) ? new Promise<Error>(() => { }) : this._closePromise;
+    return helper.waitForEvent(this, event, (...args: any[]) => !!predicate(...args), timeout, abortPromise);
+  }
+}
+
+export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
   const pages = context._existingPages();
   for (const page of pages) {
     if (page._ownedContext)

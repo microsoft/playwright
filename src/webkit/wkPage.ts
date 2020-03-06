@@ -74,7 +74,7 @@ export class WKPage implements PageDelegate {
       this._pageProxySession.send('Emulation.setActiveAndFocused', { active: true }),
       this.authenticate(this._page._state.credentials)
     ];
-    const contextOptions = this._page.context()._options;
+    const contextOptions = this._browserContext._options;
     if (contextOptions.javaScriptEnabled === false)
       promises.push(this._pageProxySession.send('Emulation.setJavaScriptEnabled', { enabled: false }));
     if (this._page._state.viewportSize || contextOptions.viewport)
@@ -130,7 +130,7 @@ export class WKPage implements PageDelegate {
     if (this._page._state.interceptNetwork)
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
 
-    const contextOptions = this._page.context()._options;
+    const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme)
@@ -384,10 +384,10 @@ export class WKPage implements PageDelegate {
 
   _calculateExtraHTTPHeaders(): network.Headers {
     const headers = network.mergeHeaders([
-      this._page.context()._options.extraHTTPHeaders,
+      this._browserContext._options.extraHTTPHeaders,
       this._page._state.extraHTTPHeaders
     ]);
-    const locale = this._page.context()._options.locale;
+    const locale = this._browserContext._options.locale;
     if (locale)
       headers['Accept-Language'] = locale;
     return headers;
@@ -403,7 +403,7 @@ export class WKPage implements PageDelegate {
   }
 
   async _updateViewport(updateTouch: boolean): Promise<void> {
-    let viewport = this._page.context()._options.viewport || { width: 0, height: 0 };
+    let viewport = this._browserContext._options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
       viewport = { ...viewport, ...viewportSize };
@@ -425,7 +425,7 @@ export class WKPage implements PageDelegate {
   }
 
   async updateOffline() {
-    await this._updateState('Network.setEmulateOfflineState', { offline: !!this._page.context()._options.offline });
+    await this._updateState('Network.setEmulateOfflineState', { offline: !!this._browserContext._options.offline });
   }
 
   async authenticate(credentials: types.Credentials | null) {

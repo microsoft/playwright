@@ -226,6 +226,14 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(message).not.toContain('Timeout');
       }
     });
+    it('should fire close event for all contexts', async() => {
+      const browser = await playwright.launch(defaultBrowserOptions);
+      const context = await browser.newContext();
+      let closed = false;
+      context.on('close', () => closed = true);
+      await browser.close();
+      expect(closed).toBe(true);
+    });
   });
 
   describe('Playwright.launch |webSocket| option', function() {

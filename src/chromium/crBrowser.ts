@@ -15,22 +15,21 @@
  * limitations under the License.
  */
 
-import { Events } from './events';
-import { Events as CommonEvents } from '../events';
-import { assert, helper, debugError } from '../helper';
-import { BrowserContext, BrowserContextOptions, validateBrowserContextOptions, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
-import { CRConnection, ConnectionEvents, CRSession } from './crConnection';
-import { Page, PageEvent, PageBinding } from '../page';
-import { CRTarget } from './crTarget';
-import { Protocol } from './protocol';
-import { CRPage } from './crPage';
 import { Browser, createPageInNewContext } from '../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { Events as CommonEvents } from '../events';
+import { assert, debugError, helper } from '../helper';
 import * as network from '../network';
-import * as types from '../types';
+import { Page, PageBinding, PageEvent } from '../page';
 import * as platform from '../platform';
-import { readProtocolStream } from './crProtocolHelper';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
-import { TimeoutSettings } from '../timeoutSettings';
+import * as types from '../types';
+import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
+import { CRPage } from './crPage';
+import { readProtocolStream } from './crProtocolHelper';
+import { CRTarget } from './crTarget';
+import { Events } from './events';
+import { Protocol } from './protocol';
 
 export class CRBrowser extends platform.EventEmitter implements Browser {
   _connection: CRConnection;
@@ -226,21 +225,15 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   }
 }
 
-export class CRBrowserContext extends platform.EventEmitter implements BrowserContext {
+export class CRBrowserContext extends BrowserContextBase {
   readonly _browser: CRBrowser;
   readonly _browserContextId: string | null;
-  readonly _options: BrowserContextOptions;
-  readonly _timeoutSettings: TimeoutSettings;
   readonly _evaluateOnNewDocumentSources: string[];
-  readonly _pageBindings = new Map<string, PageBinding>();
-  private _closed = false;
 
   constructor(browser: CRBrowser, browserContextId: string | null, options: BrowserContextOptions) {
-    super();
+    super(options);
     this._browser = browser;
     this._browserContextId = browserContextId;
-    this._timeoutSettings = new TimeoutSettings();
-    this._options = options;
     this._evaluateOnNewDocumentSources = [];
   }
 
@@ -260,14 +253,6 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
         pages.push(target._crPage.page());
     }
     return pages;
-  }
-
-  setDefaultNavigationTimeout(timeout: number) {
-    this._timeoutSettings.setDefaultNavigationTimeout(timeout);
-  }
-
-  setDefaultTimeout(timeout: number) {
-    this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
   async pages(): Promise<Page[]> {
@@ -385,8 +370,7 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
     assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
     await this._browser._client.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    this._closed = true;
-    this.emit(CommonEvents.BrowserContext.Close);
+    this._didCloseInternal();
   }
 
   async backgroundPages(): Promise<Page[]> {
@@ -397,12 +381,5 @@ export class CRBrowserContext extends platform.EventEmitter implements BrowserCo
 
   async createSession(page: Page): Promise<CRSession> {
     return CRTarget.fromPage(page).sessionFactory();
-  }
-
-  _browserClosed() {
-    this._closed = true;
-    for (const page of this._existingPages())
-      page._didClose();
-    this.emit(CommonEvents.BrowserContext.Close);
   }
 }
