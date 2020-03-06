@@ -817,7 +817,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
-    it('clicking anchor should await cross-process navigation', async({page, server}) => {
+    it.fail(CHROMIUM)('clicking anchor should await cross-process navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
