@@ -1119,7 +1119,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       await page.press('textarea', 'a');
       expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
     });
-    it('Frame.press should work', async({page, server}) => {
+    it.fail(WEBKIT)('Frame.press should work', async({page, server}) => {
       await page.setContent(`<iframe name=inner src="${server.PREFIX}/input/textarea.html"></iframe>`);
       const frame = page.frame('inner');
       await frame.press('textarea', 'a');
