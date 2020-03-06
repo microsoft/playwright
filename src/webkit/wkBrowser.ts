@@ -312,7 +312,6 @@ export class WKBrowserContext extends BrowserContextBase {
     assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
     await this._browser._browserSession.send('Browser.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    this._closed = true;
-    this.emit(Events.BrowserContext.Close);
+    this._didCloseInternal();
   }
 }

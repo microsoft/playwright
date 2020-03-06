@@ -370,8 +370,7 @@ export class CRBrowserContext extends BrowserContextBase {
     assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
     await this._browser._client.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    this._closed = true;
-    this.emit(CommonEvents.BrowserContext.Close);
+    this._didCloseInternal();
   }
 
   async backgroundPages(): Promise<Page[]> {

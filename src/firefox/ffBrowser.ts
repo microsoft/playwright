@@ -405,7 +405,6 @@ export class FFBrowserContext extends BrowserContextBase {
     assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
     await this._browser._connection.send('Target.removeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
-    this._closed = true;
-    this.emit(Events.BrowserContext.Close);
+    this._didCloseInternal();
   }
 }

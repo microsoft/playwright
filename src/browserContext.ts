@@ -73,9 +73,13 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   abstract _existingPages(): Page[];
 
   _browserClosed() {
-    this._closed = true;
     for (const page of this._existingPages())
       page._didClose();
+    this._didCloseInternal();
+  }
+
+  _didCloseInternal() {
+    this._closed = true;
     this.emit(Events.BrowserContext.Close);
     this._closePromiseFulfill!(new Error('Context closed'));
   }
