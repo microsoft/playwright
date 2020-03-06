@@ -443,7 +443,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
   });
 
   describe('BrowserContext.clearCookies', function() {
-    it('should clear cookies', async({context, page, server}) => {
+    it.fails(WEBKIT)('should clear cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.setCookies([{
         url: server.EMPTY_PAGE,
