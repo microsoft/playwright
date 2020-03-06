@@ -18,7 +18,7 @@ jobs:
     name: "Chromium Linux"
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -42,7 +42,7 @@ jobs:
     name: "Chromium Mac"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -60,7 +60,7 @@ jobs:
     name: "Chromium Win"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -79,7 +79,7 @@ jobs:
     name: "WebKit Linux"
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -104,7 +104,7 @@ jobs:
     name: "WebKit Mac"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -122,7 +122,7 @@ jobs:
     name: "WebKit Win"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -141,7 +141,7 @@ jobs:
     name: "Firefox Linux"
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -165,7 +165,7 @@ jobs:
     name: "Firefox Mac"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
@@ -183,7 +183,7 @@ jobs:
     name: "Firefox Win"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
