@@ -6131,10 +6131,20 @@ index 0000000000000000000000000000000000000000..1bff4e694f19264d1be418198b792178
 +
 +WebKit::WebPageProxy* webkitBrowserInspectorCreateNewPageInContext(WebKitWebContext*);
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp b/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
-index f769407fdc660c6f6fef77af90a43bd5dca9d544..ba010ed593bdedc0d70e4f4d3139e73d3c395463 100644
+index f769407fdc660c6f6fef77af90a43bd5dca9d544..bee8a907fb9a7924d9551d9aa64d98fb8c5746de 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitUIClient.cpp
-@@ -91,6 +91,10 @@ private:
+@@ -64,7 +64,8 @@ private:
+     void createNewPage(WebPageProxy& page, WebCore::WindowFeatures&& windowFeatures, Ref<API::NavigationAction>&& apiNavigationAction, CompletionHandler<void(RefPtr<WebPageProxy>&&)>&& completionHandler) final
+     {
+         WebKitNavigationAction navigationAction(WTFMove(apiNavigationAction));
+-        completionHandler(webkitWebViewCreateNewPage(m_webView, windowFeatures, &navigationAction));
++        WebPageProxy* newPage = webkitWebViewCreateNewPage(m_webView, windowFeatures, &navigationAction);
++        completionHandler(adoptRef(newPage));
+     }
+ 
+     void showPage(WebPageProxy*) final
+@@ -91,6 +92,10 @@ private:
      {
          webkitWebViewRunJavaScriptPrompt(m_webView, message.utf8(), defaultValue.utf8(), WTFMove(completionHandler));
      }
