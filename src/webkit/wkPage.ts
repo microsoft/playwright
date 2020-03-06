@@ -33,11 +33,11 @@ import * as accessibility from '../accessibility';
 import * as platform from '../platform';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
-import { WKPageProxy } from './wkPageProxy';
 import { WKBrowserContext } from './wkBrowser';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
+const isPovisionalSymbol = Symbol('isPovisional');
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -45,17 +45,24 @@ export class WKPage implements PageDelegate {
   _session: WKSession;
   private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;
+  private readonly _pagePromise: Promise<Page | Error>;
+  private _pagePromiseCallback: (page: Page | Error) => void = () => {};
   private readonly _pageProxySession: WKSession;
-  private readonly _opener: WKPageProxy | null;
+  private readonly _opener: WKPage | null;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
   private readonly _workers: WKWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _mainFrameContextId?: number;
   private _sessionListeners: RegisteredListener[] = [];
+  private _eventListeners: RegisteredListener[];
   private readonly _evaluateOnNewDocumentSources: string[] = [];
-  private readonly _browserContext: WKBrowserContext;
+  readonly _browserContext: WKBrowserContext;
+  private _initialized = false;
 
-  constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPageProxy | null) {
+  // TODO: we should be able to just use |this._session| and |this._provisionalPage|.
+  private readonly _sessions = new Map<string, WKSession>();
+
+  constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
     this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
@@ -66,6 +73,17 @@ export class WKPage implements PageDelegate {
     this._session = undefined as any as WKSession;
     this._browserContext = browserContext;
     this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame, false));
+    this._eventListeners = [
+      helper.addEventListener(this._pageProxySession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
+      helper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
+      helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
+      helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+    ];
+    this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
+  }
+
+  _initializedPage(): Page | undefined {
+    return this._initialized ? this._page : undefined;
   }
 
   private async _initializePageProxySession() {
@@ -88,14 +106,6 @@ export class WKPage implements PageDelegate {
     this.rawKeyboard.setSession(session);
     this._addSessionListeners();
     this._workers.setSession(session);
-  }
-
-  async initialize(session: WKSession) {
-    this._setSession(session);
-    await Promise.all([
-      this._initializePageProxySession(),
-      this._initializeSession(this._session, ({frameTree}) => this._handleFrameTree(frameTree)),
-    ]);
   }
 
   // This method is called for provisional targets as well. The session passed as the parameter
@@ -152,22 +162,28 @@ export class WKPage implements PageDelegate {
     await Promise.all(promises);
   }
 
-  initializeProvisionalPage(provisionalSession: WKSession): Promise<void> {
-    assert(!this._provisionalPage);
-    this._provisionalPage = new WKProvisionalPage(provisionalSession, this);
-    return this._provisionalPage.initializationPromise;
-  }
-
-  onProvisionalLoadCommitted(session: WKSession) {
+  private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
+    const { oldTargetId, newTargetId } = event;
+    const newSession = this._sessions.get(newTargetId);
+    assert(newSession, 'Unknown new target: ' + newTargetId);
+    const oldSession = this._sessions.get(oldTargetId);
+    assert(oldSession, 'Unknown old target: ' + oldTargetId);
+    oldSession.errorText = 'Target was swapped out.';
+    (newSession as any)[isPovisionalSymbol] = undefined;
     assert(this._provisionalPage);
-    assert(this._provisionalPage._session === session);
+    assert(this._provisionalPage._session === newSession);
     this._provisionalPage.commit();
     this._provisionalPage.dispose();
     this._provisionalPage = null;
-    this._setSession(session);
+    this._setSession(newSession);
   }
 
-  onSessionDestroyed(session: WKSession, crashed: boolean) {
+  private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
+    const { targetId, crashed } = event;
+    const session = this._sessions.get(targetId);
+    assert(session, 'Unknown target destroyed: ' + targetId);
+    session.dispose();
+    this._sessions.delete(targetId);
     if (this._provisionalPage && this._provisionalPage._session === session) {
       this._provisionalPage.dispose();
       this._provisionalPage = null;
@@ -186,11 +202,82 @@ export class WKPage implements PageDelegate {
   }
 
   dispose() {
+    this._pageProxySession.dispose();
+    helper.removeEventListeners(this._eventListeners);
+    for (const session of this._sessions.values())
+      session.dispose();
+    this._sessions.clear();
     if (this._provisionalPage) {
       this._provisionalPage.dispose();
       this._provisionalPage = null;
     }
     this._page._didDisconnect();
+  }
+
+  dispatchMessageToSession(message: any) {
+    this._pageProxySession.dispatchMessage(message);
+  }
+
+  handleProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
+    if (!this._initialized || !this._provisionalPage)
+      return;
+    let errorText = event.error;
+    if (errorText.includes('cancelled'))
+      errorText += '; maybe frame was detached?';
+    this._page._frameManager.provisionalLoadFailed(this._page.mainFrame(), event.loaderId, errorText);
+  }
+
+  async pageOrError(): Promise<Page | Error> {
+    return this._pagePromise;
+  }
+
+  private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
+    const { targetInfo } = event;
+    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, `The ${targetInfo.type} has been closed.`, (message: any) => {
+      this._pageProxySession.send('Target.sendMessageToTarget', {
+        message: JSON.stringify(message), targetId: targetInfo.targetId
+      }).catch(e => {
+        session.dispatchMessage({ id: message.id, error: { message: e.message } });
+      });
+    });
+    assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
+    this._sessions.set(targetInfo.targetId, session);
+
+    if (!this._initialized) {
+      assert(!targetInfo.isProvisional);
+      let pageOrError: Page | Error;
+      try {
+        this._setSession(session);
+        await Promise.all([
+          this._initializePageProxySession(),
+          this._initializeSession(session, ({frameTree}) => this._handleFrameTree(frameTree)),
+        ]);
+        pageOrError = this._page;
+      } catch (e) {
+        pageOrError = e;
+      }
+      if (targetInfo.isPaused)
+        this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+      this._initialized = true;
+      this._pagePromiseCallback(pageOrError);
+    } else {
+      assert(targetInfo.isProvisional);
+      (session as any)[isPovisionalSymbol] = true;
+      assert(!this._provisionalPage);
+      this._provisionalPage = new WKProvisionalPage(session, this);
+      if (targetInfo.isPaused) {
+        this._provisionalPage.initializationPromise.then(() => {
+          this._pageProxySession.send('Target.resume', { targetId: targetInfo.targetId }).catch(debugError);
+        });
+      }
+    }
+  }
+
+  private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
+    const { targetId, message } = event;
+    const session = this._sessions.get(targetId);
+    assert(session, 'Unknown target: ' + targetId);
+    session.dispatchMessage(JSON.parse(message));
   }
 
   private _addSessionListeners() {
