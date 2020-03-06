@@ -284,13 +284,14 @@ class TestPass {
   }
 }
 
-function specBuilder(action) {
+function specBuilder(defaultTimeout, action) {
   let mode = TestMode.Run;
   let repeat = 1;
+  let timeout = defaultTimeout;
 
   const func = (...args) => {
     for (let i = 0; i < repeat; ++i)
-      action(mode, ...args);
+      action(mode, timeout, ...args);
     mode = TestMode.Run;
     repeat = 1;
   };
@@ -310,6 +311,10 @@ function specBuilder(action) {
       mode = TestMode.Flake;
     return func;
   };
+  func.slow = () => {
+    timeout = 3 * defaultTimeout;
+    return func;
+  }
   func.repeat = count => {
     repeat = count;
     return func;
@@ -344,13 +349,13 @@ class TestRunner extends EventEmitter {
       }
     }
 
-    this.describe = specBuilder((mode, ...args) => this._addSuite(mode, ...args));
-    this.fdescribe = specBuilder((mode, ...args) => this._addSuite(TestMode.Focus, ...args));
-    this.xdescribe = specBuilder((mode, ...args) => this._addSuite(TestMode.Skip, ...args));
-    this.it = specBuilder((mode, name, callback) => this._addTest(name, callback, mode, this._timeout));
-    this.fit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Focus, this._timeout));
-    this.xit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Skip, this._timeout));
-    this.dit = specBuilder((mode, name, callback) => {
+    this.describe = specBuilder(this._timeout, (mode, timeout, ...args) => this._addSuite(mode, ...args));
+    this.fdescribe = specBuilder(this._timeout, (mode, timeout, ...args) => this._addSuite(TestMode.Focus, ...args));
+    this.xdescribe = specBuilder(this._timeout, (mode, timeout, ...args) => this._addSuite(TestMode.Skip, ...args));
+    this.it = specBuilder(this._timeout, (mode, timeout, name, callback) => this._addTest(name, callback, mode, timeout));
+    this.fit = specBuilder(this._timeout, (mode, timeout, name, callback) => this._addTest(name, callback, TestMode.Focus, timeout));
+    this.xit = specBuilder(this._timeout, (mode, timeout, name, callback) => this._addTest(name, callback, TestMode.Skip, timeout));
+    this.dit = specBuilder(this._timeout, (mode, timeout, name, callback) => {
       const test = this._addTest(name, callback, TestMode.Focus, INFINITE_TIMEOUT);
       const N = callback.toString().split('\n').length;
       for (let i = 0; i < N; ++i)
