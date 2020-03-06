@@ -458,10 +458,10 @@ index 9b667d3a4c29e71297dc0bd33bfe30ab670a9f36..0971b5ca7930cfd6d7ac6e21f7187718
    nsCOMPtr<nsIPrincipal> principal =
 diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb99c268ed7
+index 0000000000000000000000000000000000000000..670ffa0bf10b3bdc98a732b740c41c217f0bc720
 --- /dev/null
 +++ b/juggler/BrowserContextManager.js
-@@ -0,0 +1,194 @@
+@@ -0,0 +1,199 @@
 +"use strict";
 +
 +const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
@@ -507,6 +507,10 @@ index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb9
 +    this._defaultContext = new BrowserContext(this, undefined, undefined);
 +  }
 +
++  defaultContext() {
++    return this._defaultContext;
++  }
++
 +  createBrowserContext(options) {
 +    return new BrowserContext(this, helper.generateId(), options);
 +  }
@@ -530,7 +534,8 @@ index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb9
 +
 +    this._manager = manager;
 +    this.browserContextId = browserContextId;
-+    this.userContextId = undefined;
++    // Default context has userContextId === 0, but we pass undefined to many APIs just in case.
++    this.userContextId = 0;
 +    if (browserContextId !== undefined) {
 +      const identity = ContextualIdentityService.create(IDENTITY_NAME + browserContextId);
 +      this.userContextId = identity.userContextId;
@@ -543,7 +548,7 @@ index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb9
 +  }
 +
 +  destroy() {
-+    if (this.userContextId !== undefined) {
++    if (this.userContextId !== 0) {
 +      ContextualIdentityService.remove(this.userContextId);
 +      ContextualIdentityService.closeContainerTabs(this.userContextId);
 +    }
@@ -557,7 +562,7 @@ index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb9
 +  }
 +
 +  grantPermissions(origin, permissions) {
-+    const attrs = {userContextId: this.userContextId};
++    const attrs = { userContextId: this.userContextId || undefined };
 +    const principal = Services.scriptSecurityManager.createContentPrincipal(NetUtil.newURI(origin), attrs);
 +    this._principals.push(principal);
 +    for (const permission of ALL_PERMISSIONS) {
@@ -605,14 +610,14 @@ index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb9
 +        cookie.httpOnly || false,
 +        cookie.expires === undefined || cookie.expires === -1 /* isSession */,
 +        cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires,
-+        { userContextId: this.userContextId } /* originAttributes */,
++        { userContextId: this.userContextId || undefined } /* originAttributes */,
 +        protocolToSameSite[cookie.sameSite],
 +      );
 +    }
 +  }
 +
 +  clearCookies() {
-+    Services.cookies.removeCookiesWithOriginAttributes(JSON.stringify({ userContextId: this.userContextId }));
++    Services.cookies.removeCookiesWithOriginAttributes(JSON.stringify({ userContextId: this.userContextId || undefined }));
 +  }
 +
 +  getCookies() {
@@ -623,7 +628,7 @@ index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb9
 +      [Ci.nsICookie.SAMESITE_STRICT]: 'Strict',
 +    };
 +    for (let cookie of Services.cookies.cookies) {
-+      if (cookie.originAttributes.userContextId !== (this.userContextId || 0))
++      if (cookie.originAttributes.userContextId !== this.userContextId)
 +        continue;
 +      if (cookie.host === 'addons.mozilla.org')
 +        continue;
@@ -1592,10 +1597,10 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +this.SimpleChannel = SimpleChannel;
 diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5962b855d
+index 0000000000000000000000000000000000000000..98071c0e2c5429cfe8f29c390de3944f7f6e52a9
 --- /dev/null
 +++ b/juggler/TargetRegistry.js
-@@ -0,0 +1,264 @@
+@@ -0,0 +1,250 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 +const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
@@ -1648,7 +1653,7 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +      this._targets.delete(target.id());
 +      this._tabToTarget.delete(tab);
 +      target.dispose();
-+      this.emit(TargetRegistry.Events.TargetDestroyed, target.info());
++      this.emit(TargetRegistry.Events.TargetDestroyed, target);
 +    });
 +    Services.obs.addObserver(this, 'oop-frameloader-crashed');
 +  }
@@ -1679,8 +1684,8 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +    });
 +  }
 +
-+  targetInfos() {
-+    return Array.from(this._targets.values()).map(target => target.info());
++  targets() {
++    return Array.from(this._targets.values());
 +  }
 +
 +  targetInfo(targetId) {
@@ -1731,7 +1736,7 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +    const target = new PageTarget(this, tab, this._contextManager.browserContextForUserContextId(tab.userContextId), openerTarget);
 +    this._targets.set(target.id(), target);
 +    this._tabToTarget.set(tab, target);
-+    this.emit(TargetRegistry.Events.TargetCreated, target.info());
++    this.emit(TargetRegistry.Events.TargetCreated, target);
 +    return target;
 +  }
 +
@@ -1756,15 +1761,9 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +    this._tab = tab;
 +    this._browserContext = browserContext;
 +    this._openerId = opener ? opener.id() : undefined;
-+    this._url = tab.linkedBrowser.currentURI.spec;
 +    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, tab.linkedBrowser.messageManager);
 +
-+    const navigationListener = {
-+      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
-+      onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
-+    };
 +    this._eventListeners = [
-+      helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
 +      helper.addMessageListener(tab.linkedBrowser.messageManager, 'juggler:content-ready', {
 +        receiveMessage: () => this._onContentReady()
 +      }),
@@ -1802,7 +1801,7 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +
 +  _onContentReady() {
 +    const sessionIds = [];
-+    const data = { sessionIds, targetInfo: this.info() };
++    const data = { sessionIds, target: this };
 +    this._registry.emit(TargetRegistry.Events.PageTargetReady, data);
 +    this._contentReadyCallback();
 +    return {
@@ -1820,15 +1819,9 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +    return {
 +      targetId: this.id(),
 +      type: 'page',
-+      url: this._url,
 +      browserContextId: this._browserContext ? this._browserContext.browserContextId : undefined,
 +      openerId: this._openerId,
 +    };
-+  }
-+
-+  _onNavigated(aLocation) {
-+    this._url = aLocation.spec;
-+    this._registry.emit(TargetRegistry.Events.TargetChanged, this.info());
 +  }
 +
 +  dispose() {
@@ -1845,7 +1838,6 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +    return {
 +      targetId: this.id(),
 +      type: 'browser',
-+      url: '',
 +    }
 +  }
 +}
@@ -1853,7 +1845,6 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +TargetRegistry.Events = {
 +  TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
 +  TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
-+  TargetChanged: Symbol('TargetRegistry.Events.TargetChanged'),
 +  TargetCrashed: Symbol('TargetRegistry.Events.TargetCrashed'),
 +  PageTargetReady: Symbol('TargetRegistry.Events.PageTargetReady'),
 +};
@@ -4272,10 +4263,10 @@ index 0000000000000000000000000000000000000000..212f1c1a218efebe8685b019e79fb553
 +initialize();
 diff --git a/juggler/jar.mn b/juggler/jar.mn
 new file mode 100644
-index 0000000000000000000000000000000000000000..cf3a7fa162cf22146a23521b8d31b6ac38de839e
+index 0000000000000000000000000000000000000000..e8a057109be8b328aefc3af26715c00689ecd6d8
 --- /dev/null
 +++ b/juggler/jar.mn
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,29 @@
 +# This Source Code Form is subject to the terms of the Mozilla Public
 +# License, v. 2.0. If a copy of the MPL was not distributed with this
 +# file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -4294,7 +4285,6 @@ index 0000000000000000000000000000000000000000..cf3a7fa162cf22146a23521b8d31b6ac
 +  content/protocol/RuntimeHandler.js (protocol/RuntimeHandler.js)
 +  content/protocol/NetworkHandler.js (protocol/NetworkHandler.js)
 +  content/protocol/BrowserHandler.js (protocol/BrowserHandler.js)
-+  content/protocol/TargetHandler.js (protocol/TargetHandler.js)
 +  content/protocol/AccessibilityHandler.js (protocol/AccessibilityHandler.js)
 +  content/content/main.js (content/main.js)
 +  content/content/FrameTree.js (content/FrameTree.js)
@@ -4352,10 +4342,10 @@ index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de
 +this.AccessibilityHandler = AccessibilityHandler;
 diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..677ff969135d9b9e1d094a1e32ba0ed5d5485a54
+index 0000000000000000000000000000000000000000..060174f997f4a607c9e6d7bf4e1e204f07fe86c7
 --- /dev/null
 +++ b/juggler/protocol/BrowserHandler.js
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,163 @@
 +"use strict";
 +
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -4364,15 +4354,92 @@ index 0000000000000000000000000000000000000000..677ff969135d9b9e1d094a1e32ba0ed5
 +);
 +const {BrowserContextManager} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
 +const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
++const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
++
++const helper = new Helper();
 +
 +class BrowserHandler {
 +  /**
 +   * @param {ChromeSession} session
 +   */
-+  constructor() {
-+    this._sweepingOverride = null;
++  constructor(session) {
++    this._session = session;
 +    this._contextManager = BrowserContextManager.instance();
 +    this._targetRegistry = TargetRegistry.instance();
++    this._enabled = false;
++    this._attachToDefaultContext = false;
++    this._eventListeners = [];
++    this._createdBrowserContextIds = new Set();
++  }
++
++  async enable({attachToDefaultContext}) {
++    if (this._enabled)
++      return;
++    this._enabled = true;
++    this._attachToDefaultContext = attachToDefaultContext;
++
++    for (const target of this._targetRegistry.targets()) {
++      if (!this._shouldAttachToTarget(target))
++        continue;
++      const sessionId = this._session.dispatcher().createSession(target.id(), true /* shouldConnect */);
++      this._session.emitEvent('Browser.attachedToTarget', {
++        sessionId,
++        targetInfo: target.info()
++      });
++    }
++
++    this._eventListeners = [
++      helper.on(this._targetRegistry, TargetRegistry.Events.PageTargetReady, this._onPageTargetReady.bind(this)),
++    ];
++  }
++
++  async createBrowserContext(options) {
++    if (!this._enabled)
++      throw new Error('Browser domain is not enabled');
++    const browserContext = this._contextManager.createBrowserContext(options);
++    this._createdBrowserContextIds.add(browserContext.browserContextId);
++    return {browserContextId: browserContext.browserContextId};
++  }
++
++  async removeBrowserContext({browserContextId}) {
++    if (!this._enabled)
++      throw new Error('Browser domain is not enabled');
++    this._createdBrowserContextIds.delete(browserContextId);
++    this._contextManager.browserContextForId(browserContextId).destroy();
++  }
++
++  dispose() {
++    helper.removeListeners(this._eventListeners);
++    for (const browserContextId of this._createdBrowserContextIds) {
++      const browserContext = this._contextManager.browserContextForId(browserContextId);
++      if (browserContext.options.removeOnDetach)
++        browserContext.destroy();
++    }
++    this._createdBrowserContextIds.clear();
++  }
++
++  _shouldAttachToTarget(target) {
++    if (!target._browserContext)
++      return false;
++    if (this._createdBrowserContextIds.has(target._browserContext.browserContextId))
++      return true;
++    return this._attachToDefaultContext && target._browserContext === this._contextManager.defaultContext();
++  }
++
++  _onPageTargetReady({sessionIds, target}) {
++    if (!this._shouldAttachToTarget(target))
++      return;
++    const sessionId = this._session.dispatcher().createSession(target.id(), false /* shouldConnect */);
++    sessionIds.push(sessionId);
++    this._session.emitEvent('Browser.attachedToTarget', {
++      sessionId,
++      targetInfo: target.info()
++    });
++  }
++
++  async newPage({browserContextId}) {
++    const targetId = await this._targetRegistry.newPage({browserContextId});
++    return {targetId};
 +  }
 +
 +  async close() {
@@ -4438,18 +4505,16 @@ index 0000000000000000000000000000000000000000..677ff969135d9b9e1d094a1e32ba0ed5
 +                                .userAgent;
 +    return {version: 'Firefox/' + version, userAgent};
 +  }
-+
-+  dispose() { }
 +}
 +
 +var EXPORTED_SYMBOLS = ['BrowserHandler'];
 +this.BrowserHandler = BrowserHandler;
 diff --git a/juggler/protocol/Dispatcher.js b/juggler/protocol/Dispatcher.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d42da002f
+index 0000000000000000000000000000000000000000..b75f20324cb582b6ad85bfe5e7e530ccb8111742
 --- /dev/null
 +++ b/juggler/protocol/Dispatcher.js
-@@ -0,0 +1,197 @@
+@@ -0,0 +1,194 @@
 +const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 +const {protocol, checkScheme} = ChromeUtils.import("chrome://juggler/content/protocol/Protocol.js");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4460,7 +4525,6 @@ index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d
 +  Page: ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js").PageHandler,
 +  Network: ChromeUtils.import("chrome://juggler/content/protocol/NetworkHandler.js").NetworkHandler,
 +  Browser: ChromeUtils.import("chrome://juggler/content/protocol/BrowserHandler.js").BrowserHandler,
-+  Target: ChromeUtils.import("chrome://juggler/content/protocol/TargetHandler.js").TargetHandler,
 +  Runtime: ChromeUtils.import("chrome://juggler/content/protocol/RuntimeHandler.js").RuntimeHandler,
 +  Accessibility: ChromeUtils.import("chrome://juggler/content/protocol/AccessibilityHandler.js").AccessibilityHandler,
 +};
@@ -4500,10 +4564,6 @@ index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d
 +    const chromeSession = new ChromeSession(this, sessionId, contentChannel, targetInfo);
 +    targetSessions.set(sessionId, chromeSession);
 +    this._sessions.set(sessionId, chromeSession);
-+    this._emitEvent(this._rootSession._sessionId, 'Target.attachedToTarget', {
-+      sessionId: sessionId,
-+      targetInfo
-+    });
 +    return sessionId;
 +  }
 +
@@ -4519,7 +4579,8 @@ index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d
 +    this._targetSessions.clear();
 +  }
 +
-+  _onTargetDestroyed({targetId}) {
++  _onTargetDestroyed(target) {
++    const targetId = target.id();
 +    const sessions = this._targetSessions.get(targetId);
 +    if (!sessions)
 +      return;
@@ -4624,8 +4685,9 @@ index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d
 +    }
 +    // Root session don't have sessionId and don't emit detachedFromTarget.
 +    if (this._sessionId) {
-+      this._dispatcher._emitEvent(this._sessionId, 'Target.detachedFromTarget', {
++      this._dispatcher._emitEvent(this._dispatcher._rootSession._sessionId, 'Browser.detachedFromTarget', {
 +        sessionId: this._sessionId,
++        targetId: this.targetId(),
 +      });
 +    }
 +  }
@@ -5318,24 +5380,22 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
 diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..dfb92200ddd508ab2dc3738c5b90750f6b1fdfaf
+index 0000000000000000000000000000000000000000..9f7f4ce40454257ff83e8d39b278c1dbc1353991
 --- /dev/null
 +++ b/juggler/protocol/Protocol.js
-@@ -0,0 +1,772 @@
+@@ -0,0 +1,747 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
 +// Protocol-specific types.
-+const targetTypes = {};
-+targetTypes.TargetInfo = {
-+  type: t.Enum(['page', 'browser']),
++const browserTypes = {};
++
++browserTypes.TargetInfo = {
++  type: t.Enum(['page']),
 +  targetId: t.String,
 +  browserContextId: t.Optional(t.String),
-+  url: t.String,
 +  // PageId of parent tab, if any.
 +  openerId: t.Optional(t.String),
 +};
-+
-+const browserTypes = {};
 +
 +browserTypes.CookieOptions = {
 +  name: t.String,
@@ -5506,11 +5566,50 @@ index 0000000000000000000000000000000000000000..dfb92200ddd508ab2dc3738c5b90750f
 +const Browser = {
 +  targets: ['browser'],
 +
-+  events: {},
-+
 +  types: browserTypes,
 +
++  events: {
++    'attachedToTarget': {
++      sessionId: t.String,
++      targetInfo: browserTypes.TargetInfo,
++    },
++    'detachedFromTarget': {
++      sessionId: t.String,
++      targetId: t.String,
++    },
++  },
++
 +  methods: {
++    'enable': {
++      params: {
++        attachToDefaultContext: t.Boolean,
++      },
++    },
++    'createBrowserContext': {
++      params: {
++        removeOnDetach: t.Optional(t.Boolean),
++        userAgent: t.Optional(t.String),
++        bypassCSP: t.Optional(t.Boolean),
++        javaScriptDisabled: t.Optional(t.Boolean),
++        viewport: t.Optional(pageTypes.Viewport),
++      },
++      returns: {
++        browserContextId: t.String,
++      },
++    },
++    'removeBrowserContext': {
++      params: {
++        browserContextId: t.String,
++      },
++    },
++    'newPage': {
++      params: {
++        browserContextId: t.Optional(t.String),
++      },
++      returns: {
++        targetId: t.String,
++      }
++    },
 +    'close': {},
 +    'getInfo': {
 +      returns: {
@@ -5572,68 +5671,6 @@ index 0000000000000000000000000000000000000000..dfb92200ddd508ab2dc3738c5b90750f
 +      },
 +      returns: {
 +        cookies: t.Array(browserTypes.Cookie),
-+      },
-+    },
-+  },
-+};
-+
-+const Target = {
-+  targets: ['browser'],
-+
-+  types: targetTypes,
-+
-+  events: {
-+    'attachedToTarget': {
-+      sessionId: t.String,
-+      targetInfo: targetTypes.TargetInfo,
-+    },
-+    'detachedFromTarget': {
-+      sessionId: t.String,
-+    },
-+    'targetCreated': targetTypes.TargetInfo,
-+    'targetDestroyed': targetTypes.TargetInfo,
-+    'targetInfoChanged': targetTypes.TargetInfo,
-+  },
-+
-+  methods: {
-+    // Start emitting tagOpened/tabClosed events
-+    'enable': {},
-+    'attachToTarget': {
-+      params: {
-+        targetId: t.String,
-+      },
-+      returns: {
-+        sessionId: t.String,
-+      },
-+    },
-+    'newPage': {
-+      params: {
-+        browserContextId: t.Optional(t.String),
-+      },
-+      returns: {
-+        targetId: t.String,
-+      }
-+    },
-+    'createBrowserContext': {
-+      params: {
-+        removeOnDetach: t.Optional(t.Boolean),
-+        userAgent: t.Optional(t.String),
-+        bypassCSP: t.Optional(t.Boolean),
-+        javaScriptDisabled: t.Optional(t.Boolean),
-+        viewport: t.Optional(pageTypes.Viewport),
-+      },
-+      returns: {
-+        browserContextId: t.String,
-+      },
-+    },
-+    'removeBrowserContext': {
-+      params: {
-+        browserContextId: t.String,
-+      },
-+    },
-+    'getBrowserContexts': {
-+      returns: {
-+        browserContextIds: t.Array(t.String),
 +      },
 +    },
 +  },
@@ -6090,7 +6127,7 @@ index 0000000000000000000000000000000000000000..dfb92200ddd508ab2dc3738c5b90750f
 +}
 +
 +this.protocol = {
-+  domains: {Browser, Target, Page, Runtime, Network, Accessibility},
++  domains: {Browser, Page, Runtime, Network, Accessibility},
 +};
 +this.checkScheme = checkScheme;
 +this.EXPORTED_SYMBOLS = ['protocol', 'checkScheme'];
@@ -6152,112 +6189,6 @@ index 0000000000000000000000000000000000000000..5cc68241bdb420668fd14b45f1a70228
 +
 +var EXPORTED_SYMBOLS = ['RuntimeHandler'];
 +this.RuntimeHandler = RuntimeHandler;
-diff --git a/juggler/protocol/TargetHandler.js b/juggler/protocol/TargetHandler.js
-new file mode 100644
-index 0000000000000000000000000000000000000000..c0bab449971de13f993ac9825ac13368f8d8e226
---- /dev/null
-+++ b/juggler/protocol/TargetHandler.js
-@@ -0,0 +1,100 @@
-+"use strict";
-+
-+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-+const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
-+const {BrowserContextManager} = ChromeUtils.import("chrome://juggler/content/BrowserContextManager.js");
-+const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
-+const helper = new Helper();
-+
-+class TargetHandler {
-+  /**
-+   * @param {ChromeSession} session
-+   */
-+  constructor(session) {
-+    this._session = session;
-+    this._contextManager = BrowserContextManager.instance();
-+    this._targetRegistry = TargetRegistry.instance();
-+    this._enabled = false;
-+    this._eventListeners = [];
-+    this._createdBrowserContextIds = new Set();
-+  }
-+
-+  async attachToTarget({targetId}) {
-+    if (!this._enabled)
-+      throw new Error('Target domain is not enabled');
-+    const sessionId = this._session.dispatcher().createSession(targetId, true /* shouldConnect */);
-+    return {sessionId};
-+  }
-+
-+  async createBrowserContext(options) {
-+    if (!this._enabled)
-+      throw new Error('Target domain is not enabled');
-+    const browserContext = this._contextManager.createBrowserContext(options);
-+    this._createdBrowserContextIds.add(browserContext.browserContextId);
-+    return {browserContextId: browserContext.browserContextId};
-+  }
-+
-+  async removeBrowserContext({browserContextId}) {
-+    if (!this._enabled)
-+      throw new Error('Target domain is not enabled');
-+    this._createdBrowserContextIds.delete(browserContextId);
-+    this._contextManager.browserContextForId(browserContextId).destroy();
-+  }
-+
-+  async getBrowserContexts() {
-+    const browserContexts = this._contextManager.getBrowserContexts();
-+    return {browserContextIds: browserContexts.map(bc => bc.browserContextId)};
-+  }
-+
-+  async enable() {
-+    if (this._enabled)
-+      return;
-+    this._enabled = true;
-+    for (const targetInfo of this._targetRegistry.targetInfos())
-+      this._onTargetCreated(targetInfo);
-+
-+    this._eventListeners = [
-+      helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
-+      helper.on(this._targetRegistry, TargetRegistry.Events.TargetChanged, this._onTargetChanged.bind(this)),
-+      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
-+      helper.on(this._targetRegistry, TargetRegistry.Events.PageTargetReady, this._onPageTargetReady.bind(this)),
-+    ];
-+  }
-+
-+  dispose() {
-+    helper.removeListeners(this._eventListeners);
-+    for (const browserContextId of this._createdBrowserContextIds) {
-+      const browserContext = this._contextManager.browserContextForId(browserContextId);
-+      if (browserContext.options.removeOnDetach)
-+        browserContext.destroy();
-+    }
-+    this._createdBrowserContextIds.clear();
-+  }
-+
-+  _onTargetCreated(targetInfo) {
-+    this._session.emitEvent('Target.targetCreated', targetInfo);
-+  }
-+
-+  _onTargetChanged(targetInfo) {
-+    this._session.emitEvent('Target.targetInfoChanged', targetInfo);
-+  }
-+
-+  _onTargetDestroyed(targetInfo) {
-+    this._session.emitEvent('Target.targetDestroyed', targetInfo);
-+  }
-+
-+  _onPageTargetReady({sessionIds, targetInfo}) {
-+    if (!this._createdBrowserContextIds.has(targetInfo.browserContextId))
-+      return;
-+    const sessionId = this._session.dispatcher().createSession(targetInfo.targetId, false /* shouldConnect */);
-+    sessionIds.push(sessionId);
-+  }
-+
-+  async newPage({browserContextId}) {
-+    const targetId = await this._targetRegistry.newPage({browserContextId});
-+    return {targetId};
-+  }
-+}
-+
-+var EXPORTED_SYMBOLS = ['TargetHandler'];
-+this.TargetHandler = TargetHandler;
 diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
 index d99e7f91503e84690d711bca2c2d916e34e56214..b63e9d96219420f5e4fb58797e4c3d901cba77cc 100644
 --- a/parser/html/nsHtml5TreeOpExecutor.cpp
