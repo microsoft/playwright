@@ -241,16 +241,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.ActionWaitOptions): Promise<void> {
-    const { waitFor = true } = (options || {});
-    if (!helper.isBoolean(waitFor))
-      throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
-    if (waitFor)
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
+    const { force = false } = (options || {});
+    if (!force)
       await this._waitForDisplayedAtStablePosition(options);
     const offset = options ? options.offset : undefined;
     await this._scrollRectIntoViewIfNeeded(offset ? { x: offset.x, y: offset.y, width: 0, height: 0 } : undefined);
     const point = offset ? await this._offsetPoint(offset) : await this._clickablePoint();
-    if (waitFor)
+    if (!force)
       await this._waitForHitTargetAt(point, options);
 
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
@@ -263,23 +261,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, options);
   }
 
-  hover(options?: PointerActionOptions & types.ActionWaitOptionsNoNavigation): Promise<void> {
+  hover(options?: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: ClickOptions & types.ActionWaitOptions): Promise<void> {
+  click(options?: ClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: MultiClickOptions & types.ActionWaitOptions): Promise<void> {
+  dblclick(options?: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: MultiClickOptions & types.ActionWaitOptions): Promise<void> {
+  tripleclick(options?: MultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
-  async select(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.ActionWaitOptionsNoWaitFor): Promise<string[]> {
+  async select(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigatingActionWaitOptions): Promise<string[]> {
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
@@ -301,7 +299,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, options);
   }
 
-  async fill(value: string, options?: types.ActionWaitOptionsNoWaitFor): Promise<void> {
+  async fill(value: string, options?: types.NavigatingActionWaitOptions): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       const error = await this._evaluateInUtility((injected, node, value) => injected.fill(node, value), value);
@@ -356,29 +354,29 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       throw new Error(errorMessage);
   }
 
-  async type(text: string, options?: { delay?: number } & types.ActionWaitOptionsNoWaitFor) {
+  async type(text: string, options?: { delay?: number } & types.NavigatingActionWaitOptions) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.type(text, options);
     }, options);
   }
 
-  async press(key: string, options?: { delay?: number, text?: string } & types.ActionWaitOptionsNoWaitFor) {
+  async press(key: string, options?: { delay?: number, text?: string } & types.NavigatingActionWaitOptions) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
     }, options);
   }
 
-  async check(options?: types.ActionWaitOptions) {
+  async check(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     await this._setChecked(true, options);
   }
 
-  async uncheck(options?: types.ActionWaitOptions) {
+  async uncheck(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     await this._setChecked(false, options);
   }
 
-  private async _setChecked(state: boolean, options?: types.ActionWaitOptions) {
+  private async _setChecked(state: boolean, options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     if (await this._evaluateInUtility((injected, node) => injected.isCheckboxChecked(node)) === state)
       return;
     await this.click(options);
