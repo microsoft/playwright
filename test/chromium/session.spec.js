@@ -82,6 +82,24 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
         await client.send('ThisCommand.DoesNotExist');
       }
     });
+    it('should not break page.close()', async function({browser, server}) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const session = await page.context().createSession(page);
+      await session.detach();
+      await page.close();
+      await context.close();
+    });
+    it('should detach when page closes', async function({browser, server}) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const session = await context.createSession(page);
+      await page.close();
+      let error;
+      await session.detach().catch(e => error = e);
+      expect(error).toBeTruthy('Calling detach on a closed page\'s session should throw');
+      await context.close();
+    });
   });
   describe('ChromiumBrowser.createBrowserSession', function() {
     it('should work', async function({page, browser, server}) {

@@ -32,8 +32,9 @@ import { Events } from './events';
 import { Protocol } from './protocol';
 
 export class CRBrowser extends platform.EventEmitter implements Browser {
-  _connection: CRConnection;
-  _client: CRSession;
+  readonly _connection: CRConnection;
+  _session: CRSession;
+  private _clientRootSessionPromise: Promise<CRSession> | null = null;
   readonly _defaultContext: CRBrowserContext;
   readonly _contexts = new Map<string, CRBrowserContext>();
   _targets = new Map<string, CRTarget>();
@@ -70,7 +71,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   constructor(connection: CRConnection) {
     super();
     this._connection = connection;
-    this._client = this._connection.rootSession;
+    this._session = this._connection.rootSession;
 
     this._defaultContext = new CRBrowserContext(this, null, validateBrowserContextOptions({}));
     this._connection.on(ConnectionEvents.Disconnected, () => {
@@ -78,15 +79,15 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
         context._browserClosed();
       this.emit(CommonEvents.Browser.Disconnected);
     });
-    this._client.on('Target.targetCreated', this._targetCreated.bind(this));
-    this._client.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
-    this._client.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
-    this._client.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
+    this._session.on('Target.targetCreated', this._targetCreated.bind(this));
+    this._session.on('Target.targetDestroyed', this._targetDestroyed.bind(this));
+    this._session.on('Target.targetInfoChanged', this._targetInfoChanged.bind(this));
+    this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     options = validateBrowserContextOptions(options);
-    const { browserContextId } = await this._client.send('Target.createBrowserContext', { disposeOnDetach: true });
+    const { browserContextId } = await this._session.send('Target.createBrowserContext', { disposeOnDetach: true });
     const context = new CRBrowserContext(this, browserContextId, options);
     await context._initialize();
     this._contexts.set(browserContextId, context);
@@ -159,7 +160,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
   }
 
   async _closePage(page: Page) {
-    await this._client.send('Target.closeTarget', { targetId: CRTarget.fromPage(page)._targetId });
+    await this._session.send('Target.closeTarget', { targetId: CRTarget.fromPage(page)._targetId });
   }
 
   _allTargets(): CRTarget[] {
@@ -179,7 +180,7 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._tracingRecording, 'Cannot start recording trace while already recording trace.');
-    this._tracingClient = page ? (page._delegate as CRPage)._client : this._client;
+    this._tracingClient = page ? (page._delegate as CRPage)._client : this._session;
 
     const defaultCategories = [
       '-*', 'devtools.timeline', 'v8.execute', 'disabled-by-default-devtools.timeline',
@@ -218,6 +219,12 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
 
   isConnected(): boolean {
     return !this._connection._closed;
+  }
+
+  async _clientRootSession(): Promise<CRSession> {
+    if (!this._clientRootSessionPromise)
+      this._clientRootSessionPromise = this._connection.createBrowserSession();
+    return this._clientRootSessionPromise;
   }
 
   _setDebugFunction(debugFunction: (message: string) => void) {
@@ -263,7 +270,7 @@ export class CRBrowserContext extends BrowserContextBase {
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
-    const { targetId } = await this._browser._client.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId || undefined });
+    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId || undefined });
     const target = this._browser._targets.get(targetId)!;
     const result = await target.pageOrError();
     if (result instanceof Page) {
@@ -275,7 +282,7 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
-    const { cookies } = await this._browser._client.send('Storage.getCookies', { browserContextId: this._browserContextId || undefined });
+    const { cookies } = await this._browser._session.send('Storage.getCookies', { browserContextId: this._browserContextId || undefined });
     return network.filterCookies(cookies.map(c => {
       const copy: any = { sameSite: 'None', ...c };
       delete copy.size;
@@ -285,11 +292,11 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async setCookies(cookies: network.SetNetworkCookieParam[]) {
-    await this._browser._client.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId || undefined });
+    await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId || undefined });
   }
 
   async clearCookies() {
-    await this._browser._client.send('Storage.clearCookies', { browserContextId: this._browserContextId || undefined });
+    await this._browser._session.send('Storage.clearCookies', { browserContextId: this._browserContextId || undefined });
   }
 
   async setPermissions(origin: string, permissions: string[]): Promise<void> {
@@ -317,11 +324,11 @@ export class CRBrowserContext extends BrowserContextBase {
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._browser._client.send('Browser.grantPermissions', { origin, browserContextId: this._browserContextId || undefined, permissions: filtered });
+    await this._browser._session.send('Browser.grantPermissions', { origin, browserContextId: this._browserContextId || undefined, permissions: filtered });
   }
 
   async clearPermissions() {
-    await this._browser._client.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
+    await this._browser._session.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
   }
 
   async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
@@ -368,7 +375,7 @@ export class CRBrowserContext extends BrowserContextBase {
     if (this._closed)
       return;
     assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
-    await this._browser._client.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
+    await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     this._didCloseInternal();
   }
@@ -380,6 +387,9 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async createSession(page: Page): Promise<CRSession> {
-    return CRTarget.fromPage(page).sessionFactory();
+    const targetId = CRTarget.fromPage(page)._targetId;
+    const rootSession = await this._browser._clientRootSession();
+    const { sessionId } = await rootSession.send('Target.attachToTarget', { targetId, flatten: true });
+    return this._browser._connection.session(sessionId)!;
   }
 }
