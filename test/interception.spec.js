@@ -486,44 +486,6 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 
-  describe('Page.authenticate', function() {
-    it('should work', async({page, server}) => {
-      server.setAuth('/empty.html', 'user', 'pass');
-      let response = await page.goto(server.EMPTY_PAGE);
-      expect(response.status()).toBe(401);
-      await page.authenticate({
-        username: 'user',
-        password: 'pass'
-      });
-      response = await page.reload();
-      expect(response.status()).toBe(200);
-    });
-    it('should fail if wrong credentials', async({page, server}) => {
-      // Use unique user/password since Chromium caches credentials per origin.
-      server.setAuth('/empty.html', 'user2', 'pass2');
-      await page.authenticate({
-        username: 'foo',
-        password: 'bar'
-      });
-      const response = await page.goto(server.EMPTY_PAGE);
-      expect(response.status()).toBe(401);
-    });
-    it('should allow disable authentication', async({page, server}) => {
-      // Use unique user/password since Chromium caches credentials per origin.
-      server.setAuth('/empty.html', 'user3', 'pass3');
-      await page.authenticate({
-        username: 'user3',
-        password: 'pass3'
-      });
-      let response = await page.goto(server.EMPTY_PAGE);
-      expect(response.status()).toBe(200);
-      await page.authenticate(null);
-      // Navigate to a different origin to bust Chromium's credential caching.
-      response = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-      expect(response.status()).toBe(401);
-    });
-  });
-
   describe('Interception vs isNavigationRequest', () => {
     it('should work with request interception', async({page, server}) => {
       const requests = new Map();

@@ -244,6 +244,8 @@ export class CRBrowserContext extends BrowserContextBase {
       await this.setGeolocation(this._options.geolocation);
     if (this._options.offline)
       await this.setOffline(this._options.offline);
+    if (this._options.httpCredentials)
+      await this.setHTTPCredentials(this._options.httpCredentials);
   }
 
   _existingPages(): Page[] {
@@ -342,6 +344,12 @@ export class CRBrowserContext extends BrowserContextBase {
     this._options.offline = offline;
     for (const page of this._existingPages())
       await (page._delegate as CRPage)._networkManager.setOffline(offline);
+  }
+
+  async setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
+    this._options.httpCredentials = httpCredentials || undefined;
+    for (const page of this._existingPages())
+      await (page._delegate as CRPage)._networkManager.authenticate(httpCredentials);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]) {
