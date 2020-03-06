@@ -27,7 +27,6 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { WKPageProxy } from './wkPageProxy';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15';
 
@@ -37,11 +36,11 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   readonly _browserSession: WKSession;
   readonly _defaultContext: WKBrowserContext;
   readonly _contexts = new Map<string, WKBrowserContext>();
-  readonly _pageProxies = new Map<string, WKPageProxy>();
+  readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
 
-  private _firstPageProxyCallback?: () => void;
-  private readonly _firstPageProxyPromise: Promise<void>;
+  private _firstPageCallback?: () => void;
+  private readonly _firstPagePromise: Promise<void>;
 
   static async connect(transport: ConnectionTransport, slowMo: number = 0, attachToDefaultContext: boolean = false): Promise<WKBrowser> {
     const browser = new WKBrowser(SlowMoTransport.wrap(transport, slowMo), attachToDefaultContext);
@@ -63,15 +62,15 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
 
-    this._firstPageProxyPromise = new Promise<void>(resolve => this._firstPageProxyCallback = resolve);
+    this._firstPagePromise = new Promise<void>(resolve => this._firstPageCallback = resolve);
   }
 
   _onDisconnect() {
     for (const context of this._contexts.values())
       context._browserClosed();
-    for (const pageProxy of this._pageProxies.values())
-      pageProxy.dispose();
-    this._pageProxies.clear();
+    for (const wkPage of this._wkPages.values())
+      wkPage.dispose();
+    this._wkPages.clear();
     this.emit(Events.Browser.Disconnected);
   }
 
@@ -94,8 +93,8 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 
   async _waitForFirstPageTarget(): Promise<void> {
-    assert(!this._pageProxies.size);
-    return this._firstPageProxyPromise;
+    assert(!this._wkPages.size);
+    return this._firstPagePromise;
   }
 
   _onPageProxyCreated(event: Protocol.Browser.pageProxyCreatedPayload) {
@@ -116,16 +115,16 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
-    const opener = pageProxyInfo.openerId ? this._pageProxies.get(pageProxyInfo.openerId) : undefined;
-    const pageProxy = new WKPageProxy(pageProxySession, context, opener || null);
-    this._pageProxies.set(pageProxyId, pageProxy);
+    const opener = pageProxyInfo.openerId ? this._wkPages.get(pageProxyInfo.openerId) : undefined;
+    const wkPage = new WKPage(context, pageProxySession, opener || null);
+    this._wkPages.set(pageProxyId, wkPage);
 
-    if (this._firstPageProxyCallback) {
-      this._firstPageProxyCallback();
-      this._firstPageProxyCallback = undefined;
+    if (this._firstPageCallback) {
+      this._firstPageCallback();
+      this._firstPageCallback = undefined;
     }
 
-    const pageEvent = new PageEvent(pageProxy.pageOrError());
+    const pageEvent = new PageEvent(wkPage.pageOrError());
     context.emit(Events.BrowserContext.Page, pageEvent);
     if (!opener)
       return;
@@ -137,26 +136,26 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   _onPageProxyDestroyed(event: Protocol.Browser.pageProxyDestroyedPayload) {
     const pageProxyId = event.pageProxyId;
-    const pageProxy = this._pageProxies.get(pageProxyId);
-    if (!pageProxy)
+    const wkPage = this._wkPages.get(pageProxyId);
+    if (!wkPage)
       return;
-    pageProxy.didClose();
-    pageProxy.dispose();
-    this._pageProxies.delete(pageProxyId);
+    wkPage.didClose(false);
+    wkPage.dispose();
+    this._wkPages.delete(pageProxyId);
   }
 
   _onPageProxyMessageReceived(event: PageProxyMessageReceivedPayload) {
-    const pageProxy = this._pageProxies.get(event.pageProxyId);
-    if (!pageProxy)
+    const wkPage = this._wkPages.get(event.pageProxyId);
+    if (!wkPage)
       return;
-    pageProxy.dispatchMessageToSession(event.message);
+    wkPage.dispatchMessageToSession(event.message);
   }
 
   _onProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
-    const pageProxy = this._pageProxies.get(event.pageProxyId);
-    if (!pageProxy)
+    const wkPage = this._wkPages.get(event.pageProxyId);
+    if (!wkPage)
       return;
-    pageProxy.handleProvisionalLoadFailed(event);
+    wkPage.handleProvisionalLoadFailed(event);
   }
 
   isConnected(): boolean {
@@ -203,10 +202,10 @@ export class WKBrowserContext extends BrowserContextBase {
 
   _existingPages(): Page[] {
     const pages: Page[] = [];
-    for (const pageProxy of this._browser._pageProxies.values()) {
-      if (pageProxy._browserContext !== this)
+    for (const wkPage of this._browser._wkPages.values()) {
+      if (wkPage._browserContext !== this)
         continue;
-      const page = pageProxy.existingPage();
+      const page = wkPage._initializedPage();
       if (page)
         pages.push(page);
     }
@@ -214,16 +213,16 @@ export class WKBrowserContext extends BrowserContextBase {
   }
 
   async pages(): Promise<Page[]> {
-    const pageProxies = Array.from(this._browser._pageProxies.values()).filter(proxy => proxy._browserContext === this);
-    const pages = await Promise.all(pageProxies.map(proxy => proxy.pageOrError()));
+    const wkPages = Array.from(this._browser._wkPages.values()).filter(wkPage => wkPage._browserContext === this);
+    const pages = await Promise.all(wkPages.map(wkPage => wkPage.pageOrError()));
     return pages.filter(page => page instanceof Page && !page.isClosed()) as Page[];
   }
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
     const { pageProxyId } = await this._browser._browserSession.send('Browser.createPage', { browserContextId: this._browserContextId });
-    const pageProxy = this._browser._pageProxies.get(pageProxyId)!;
-    const result = await pageProxy.pageOrError();
+    const wkPage = this._browser._wkPages.get(pageProxyId)!;
+    const result = await wkPage.pageOrError();
     if (result instanceof Page) {
       if (result.isClosed())
         throw new Error('Page has been closed.');
