@@ -1113,7 +1113,7 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
     });
   });
 
-  fdescribe('Page api coverage', function() {
+  describe('Page api coverage', function() {
     it('Page.press should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/input/textarea.html');
       await page.press('textarea', 'a');
