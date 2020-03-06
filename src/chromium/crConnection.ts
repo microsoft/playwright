@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
+import { assert } from '../helper';
 import * as platform from '../platform';
 import { ConnectionTransport } from '../transport';
-import { assert } from '../helper';
 import { Protocol } from './protocol';
 
 export const ConnectionEvents = {
@@ -30,8 +30,8 @@ export const kBrowserCloseMessageId = -9999;
 
 export class CRConnection extends platform.EventEmitter {
   private _lastId = 0;
-  private _transport: ConnectionTransport;
-  private _sessions = new Map<string, CRSession>();
+  private readonly _transport: ConnectionTransport;
+  private readonly _sessions = new Map<string, CRSession>();
   readonly rootSession: CRSession;
   _closed = false;
   _debugProtocol: (message: string) => void;
@@ -41,7 +41,7 @@ export class CRConnection extends platform.EventEmitter {
     this._transport = transport;
     this._transport.onmessage = this._onMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
-    this.rootSession = new CRSession(this, 'browser', '');
+    this.rootSession = new CRSession(this, '', 'browser', '');
     this._sessions.set('', this.rootSession);
     this._debugProtocol = platform.debug('pw:protocol');
   }
@@ -72,7 +72,8 @@ export class CRConnection extends platform.EventEmitter {
       return;
     if (object.method === 'Target.attachedToTarget') {
       const sessionId = object.params.sessionId;
-      const session = new CRSession(this, object.params.targetInfo.type, sessionId);
+      const rootSessionId = object.sessionId || '';
+      const session = new CRSession(this, rootSessionId, object.params.targetInfo.type, sessionId);
       this._sessions.set(sessionId, session);
     } else if (object.method === 'Target.detachedFromTarget') {
       const session = this._sessions.get(object.params.sessionId);
@@ -118,18 +119,20 @@ export const CRSessionEvents = {
 
 export class CRSession extends platform.EventEmitter {
   _connection: CRConnection | null;
-  private _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
-  private _targetType: string;
-  private _sessionId: string;
+  private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
+  private readonly _targetType: string;
+  private readonly _sessionId: string;
+  private readonly _rootSessionId: string;
   on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(connection: CRConnection, targetType: string, sessionId: string) {
+  constructor(connection: CRConnection, rootSessionId: string, targetType: string, sessionId: string) {
     super();
     this._connection = connection;
+    this._rootSessionId = rootSessionId;
     this._targetType = targetType;
     this._sessionId = sessionId;
 
@@ -169,7 +172,10 @@ export class CRSession extends platform.EventEmitter {
   async detach() {
     if (!this._connection)
       throw new Error(`Session already detached. Most likely the ${this._targetType} has been closed.`);
-    await this._connection.rootSession.send('Target.detachFromTarget', { sessionId: this._sessionId });
+    const rootSession = this._connection.session(this._rootSessionId);
+    if (!rootSession)
+      throw new Error('Root session has been closed');
+    await rootSession.send('Target.detachFromTarget', { sessionId: this._sessionId });
   }
 
   _onClosed() {
