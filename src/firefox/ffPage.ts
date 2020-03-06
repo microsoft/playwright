@@ -455,16 +455,6 @@ export class FFPage implements PageDelegate {
   }
 }
 
-export function normalizeWaitUntil(waitUntil: frames.LifecycleEvent | frames.LifecycleEvent[]): frames.LifecycleEvent[] {
-  if (!Array.isArray(waitUntil))
-    waitUntil = [waitUntil];
-  for (const condition of waitUntil) {
-    if (condition !== 'load' && condition !== 'domcontentloaded')
-      throw new Error('Unknown waitUntil condition: ' + condition);
-  }
-  return waitUntil;
-}
-
 function toRemoteObject(handle: dom.ElementHandle): Protocol.Runtime.RemoteObject {
   return handle._remoteObject;
 }

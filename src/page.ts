@@ -295,7 +295,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().content();
   }
 
-  async setContent(html: string, options?: frames.NavigateOptions): Promise<void> {
+  async setContent(html: string, options?: types.NavigateOptions): Promise<void> {
     return this.mainFrame().setContent(html, options);
   }
 
@@ -303,17 +303,17 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().goto(url, options);
   }
 
-  async reload(options?: frames.NavigateOptions): Promise<network.Response | null> {
+  async reload(options?: types.NavigateOptions): Promise<network.Response | null> {
     const waitPromise = this.waitForNavigation(options);
     await this._delegate.reload();
     return waitPromise;
   }
 
-  async waitForNavigation(options?: frames.WaitForNavigationOptions): Promise<network.Response | null> {
+  async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<network.Response | null> {
     return this.mainFrame().waitForNavigation(options);
   }
 
-  async waitForLoadState(options?: frames.NavigateOptions): Promise<void> {
+  async waitForLoadState(options?: types.NavigateOptions): Promise<void> {
     return this.mainFrame().waitForLoadState(options);
   }
 
@@ -342,7 +342,7 @@ export class Page extends platform.EventEmitter {
     }, timeout, this._disconnectedPromise);
   }
 
-  async goBack(options?: frames.NavigateOptions): Promise<network.Response | null> {
+  async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {
     const waitPromise = this.waitForNavigation(options);
     const result = await this._delegate.goBack();
     if (!result) {
@@ -352,7 +352,7 @@ export class Page extends platform.EventEmitter {
     return waitPromise;
   }
 
-  async goForward(options?: frames.NavigateOptions): Promise<network.Response | null> {
+  async goForward(options?: types.NavigateOptions): Promise<network.Response | null> {
     const waitPromise = this.waitForNavigation(options);
     const result = await this._delegate.goForward();
     if (!result) {
@@ -439,19 +439,19 @@ export class Page extends platform.EventEmitter {
     return this._closed;
   }
 
-  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions) {
+  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().click(selector, options);
   }
 
-  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
+  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions) {
+  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().tripleclick(selector, options);
   }
 
-  async fill(selector: string, value: string, options?: types.WaitForOptions) {
+  async fill(selector: string, value: string, options?: types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().fill(selector, value, options);
   }
 
@@ -463,19 +463,19 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().hover(selector, options);
   }
 
-  async select(selector: string, value: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions): Promise<string[]> {
-    return this.mainFrame().select(selector, value, options);
+  async select(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions & types.NavigateOptions): Promise<string[]> {
+    return this.mainFrame().select(selector, values, options);
   }
 
-  async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions) {
+  async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().type(selector, text, options);
   }
 
-  async check(selector: string, options?: types.WaitForOptions) {
+  async check(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().check(selector, options);
   }
 
-  async uncheck(selector: string, options?: types.WaitForOptions) {
+  async uncheck(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
     return this.mainFrame().uncheck(selector, options);
   }
 

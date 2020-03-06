@@ -42,7 +42,7 @@ export interface BrowserContext {
   setDefaultTimeout(timeout: number): void;
   pages(): Promise<Page[]>;
   newPage(): Promise<Page>;
-  cookies(...urls: string[]): Promise<network.NetworkCookie[]>;
+  cookies(urls?: string | string[]): Promise<network.NetworkCookie[]>;
   setCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
   clearCookies(): Promise<void>;
   setPermissions(origin: string, permissions: string[]): Promise<void>;

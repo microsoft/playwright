@@ -329,7 +329,7 @@ export class FFBrowserContext extends BrowserContextBase {
     throw result;
   }
 
-  async cookies(...urls: string[]): Promise<network.NetworkCookie[]> {
+  async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
     const { cookies } = await this._browser._connection.send('Browser.getCookies', { browserContextId: this._browserContextId || undefined });
     return network.filterCookies(cookies.map(c => {
       const copy: any = { ... c };

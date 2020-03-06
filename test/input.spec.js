@@ -174,7 +174,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         await new Promise(x => picker.oninput = x);
         return picker.files.length;
       })).toBe(1);
-      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles());
+      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles([]));
       expect(await page.$eval('input', async picker => {
         picker.click();
         await new Promise(x => picker.oninput = x);
@@ -188,9 +188,10 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         page.click('input'),
       ]);
       let error = null;
-      await element.setInputFiles(
+      await element.setInputFiles([
         path.relative(process.cwd(), __dirname + '/assets/file-to-upload.txt'),
-        path.relative(process.cwd(), __dirname + '/assets/pptr.png')).catch(e => error = e);
+        path.relative(process.cwd(), __dirname + '/assets/pptr.png')
+      ]).catch(e => error = e);
       expect(error).not.toBe(null);
     });
     it('should emit input and change events', async({page, server}) => {

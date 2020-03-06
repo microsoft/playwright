@@ -241,7 +241,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.WaitForOptions): Promise<void> {
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
     const { waitFor = true } = (options || {});
     if (!helper.isBoolean(waitFor))
       throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
@@ -260,28 +260,33 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await action(point);
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
-    });
+    }, options);
   }
 
   hover(options?: PointerActionOptions & types.WaitForOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: ClickOptions & types.WaitForOptions): Promise<void> {
+  click(options?: ClickOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: MultiClickOptions & types.WaitForOptions): Promise<void> {
+  dblclick(options?: MultiClickOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: MultiClickOptions & types.WaitForOptions): Promise<void> {
+  tripleclick(options?: MultiClickOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
-  async select(...values: (string | ElementHandle | types.SelectOption)[]): Promise<string[]> {
-    const options = values.map(value => typeof value === 'object' ? value : { value });
-    for (const option of options) {
+  async select(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigateOptions): Promise<string[]> {
+    let vals: string[] | ElementHandle[] | types.SelectOption[];
+    if (!Array.isArray(values))
+      vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
+    else
+      vals = values;
+    const selectOptions = (vals as any).map((value: any) => typeof value === 'object' ? value : { value });
+    for (const option of selectOptions) {
       if (option instanceof ElementHandle)
         continue;
       if (option.value !== undefined)
@@ -292,11 +297,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assert(helper.isNumber(option.index), 'Indices must be numbers. Found index "' + option.index + '" of type "' + (typeof option.index) + '"');
     }
     return await this._page._frameManager.waitForNavigationsCreatedBy<string[]>(async () => {
-      return this._evaluateInUtility((injected, node, ...optionsToSelect) => injected.selectOptions(node, optionsToSelect), ...options);
-    });
+      return this._evaluateInUtility((injected, node, ...optionsToSelect) => injected.selectOptions(node, optionsToSelect), ...selectOptions);
+    }, options);
   }
 
-  async fill(value: string): Promise<void> {
+  async fill(value: string, options?: types.NavigateOptions): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       const error = await this._evaluateInUtility((injected, node, value) => injected.fill(node, value), value);
@@ -306,28 +311,35 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await this._page.keyboard.sendCharacters(value);
       else
         await this._page.keyboard.press('Delete');
-    });
+    }, options);
   }
 
-  async setInputFiles(...files: (string | types.FilePayload)[]) {
+  async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[]) {
     const multiple = await this._evaluateInUtility((injected: Injected, node: Node) => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Element).tagName !== 'INPUT')
         throw new Error('Node is not an HTMLInputElement');
       const input = node as HTMLInputElement;
       return input.multiple;
     });
-    assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
-    const filePayloads = await Promise.all(files.map(async item => {
+    let ff: string[] | types.FilePayload[];
+    if (!Array.isArray(files))
+      ff = [ files ] as string[] | types.FilePayload[];
+    else
+      ff = files;
+    assert(multiple || ff.length <= 1, 'Non-multiple file input can only accept single file!');
+    const filePayloads: types.FilePayload[] = [];
+    for (const item of ff) {
       if (typeof item === 'string') {
         const file: types.FilePayload = {
           name: platform.basename(item),
           type: platform.getMimeType(item),
           data: await platform.readFileAsync(item, 'base64')
         };
-        return file;
+        filePayloads.push(file);
+      } else {
+        filePayloads.push(item);
       }
-      return item;
-    }));
+    }
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
     });
@@ -344,29 +356,29 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       throw new Error(errorMessage);
   }
 
-  async type(text: string, options?: { delay?: number }) {
+  async type(text: string, options?: { delay?: number } & types.NavigateOptions) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.type(text, options);
-    });
+    }, options);
   }
 
-  async press(key: string, options?: { delay?: number, text?: string }) {
+  async press(key: string, options?: { delay?: number, text?: string } & types.NavigateOptions) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
-    });
+    }, options);
   }
 
-  async check(options?: types.WaitForOptions) {
+  async check(options?: types.WaitForOptions & types.NavigateOptions) {
     await this._setChecked(true, options);
   }
 
-  async uncheck(options?: types.WaitForOptions) {
+  async uncheck(options?: types.WaitForOptions & types.NavigateOptions) {
     await this._setChecked(false, options);
   }
 
-  private async _setChecked(state: boolean, options?: types.WaitForOptions) {
+  private async _setChecked(state: boolean, options?: types.WaitForOptions & types.NavigateOptions) {
     if (await this._evaluateInUtility((injected, node) => injected.isCheckboxChecked(node)) === state)
       return;
     await this.click(options);

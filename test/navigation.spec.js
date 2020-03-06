@@ -259,7 +259,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       let error = null;
       let loaded = false;
       page.once('load', () => loaded = true);
-      await page.goto(server.PREFIX + '/grid.html', {timeout: 0, waitUntil: ['load']}).catch(e => error = e);
+      await page.goto(server.PREFIX + '/grid.html', {timeout: 0, waitUntil: 'load'}).catch(e => error = e);
       expect(error).toBe(null);
       expect(loaded).toBe(true);
     });
@@ -635,9 +635,10 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       });
 
       let bothFired = false;
-      const bothFiredPromise = page.waitForNavigation({
-        waitUntil: ['load', 'domcontentloaded']
-      }).then(() => bothFired = true);
+      const bothFiredPromise = Promise.all([
+        page.waitForNavigation({ waitUntil: 'load' }),
+        domContentLoadedPromise
+      ]).then(() => bothFired = true);
 
       await server.waitForRequest('/one-style.css');
       await domContentLoadedPromise;
@@ -789,7 +790,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
     it('should work for cross-process navigations', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
-      const waitPromise = page.waitForNavigation({waitUntil: []});
+      const waitPromise = page.waitForNavigation({waitUntil: 'commit'});
       const url = server.CROSS_PROCESS_PREFIX + '/empty.html';
       const gotoPromise = page.goto(url);
       const response = await waitPromise;
@@ -812,7 +813,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       await Promise.all([
         page.click('a').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
@@ -827,7 +828,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       await Promise.all([
         page.click('a').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
@@ -846,7 +847,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       await Promise.all([
         page.click('input[type=submit]').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
@@ -865,7 +866,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       await Promise.all([
         page.click('input[type=submit]').then(() => messages.push('click')),
-        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
@@ -877,7 +878,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       });
       await Promise.all([
         page.evaluate(`window.location.href = "${server.EMPTY_PAGE}"`).then(() => messages.push('evaluate')),
-        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation')),
+        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation')),
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
     });
@@ -900,7 +901,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
 
       await Promise.all([
         page.evaluate(`window.location.reload()`).then(() => messages.push('evaluate')),
-        page.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation')),
+        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation')),
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
     });
@@ -915,7 +916,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       const frame = page.frame({ name: 'target' });
       await Promise.all([
         page.click('a').then(() => messages.push('click')),
-        frame.waitForNavigation({ waitUntil: [] }).then(() => messages.push('waitForNavigation'))
+        frame.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
       ]);
       expect(frame.url()).toBe(server.EMPTY_PAGE);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
@@ -964,7 +965,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       server.setRoute('/one-style.css', (req, res) => response = res);
       await Promise.all([
         server.waitForRequest('/one-style.css'),
-        page.goto(server.PREFIX + '/one-style.html', {waitUntil: []}),
+        page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'}),
       ]);
       const waitPromise = page.waitForLoadState();
       response.statusCode = 404;
@@ -973,7 +974,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
     it('should respect timeout', async({page, server}) => {
       server.setRoute('/one-style.css', (req, res) => response = res);
-      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: []});
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'});
       const error = await page.waitForLoadState({ timeout: 1 }).catch(e => e);
       expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
     });
@@ -984,7 +985,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should resolve immediately if load state matches', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/one-style.css', (req, res) => response = res);
-      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: []});
+      await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'});
       await page.waitForLoadState({ waitUntil: 'domcontentloaded' });
     });
     it('should work with pages that have loaded before being connected to', async({page, context, server}) => {

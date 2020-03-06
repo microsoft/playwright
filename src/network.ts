@@ -42,7 +42,9 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export function filterCookies(cookies: NetworkCookie[], urls: string[]): NetworkCookie[] {
+export function filterCookies(cookies: NetworkCookie[], urls: string | string[] = []): NetworkCookie[] {
+  if (!Array.isArray(urls))
+    urls = [ urls ];
   const parsedURLs = urls.map(s => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
   return cookies.filter(c => {
