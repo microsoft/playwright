@@ -41,7 +41,7 @@ export type Quad = [ Point, Point, Point, Point ];
 export type TimeoutOptions = { timeout?: number };
 export type WaitForOptions = TimeoutOptions & { waitFor?: boolean };
 
-export type Visibility = 'visible' | 'hidden' | 'any';
+export type WaitForElementOptions = TimeoutOptions & { waitFor?: 'attached' | 'detached' | 'visible' | 'hidden' };
 
 export type Polling = 'raf' | 'mutation' | number;
 export type WaitForFunctionOptions = TimeoutOptions & { polling?: Polling };

@@ -82,7 +82,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return super._createHandle(remoteObject);
   }
 
-  _injected(): Promise<js.JSHandle> {
+  _injected(): Promise<js.JSHandle<Injected>> {
     const selectors = Selectors._instance();
     if (this._injectedPromise && selectors._generation !== this._injectedGeneration) {
       this._injectedPromise.then(handle => handle.dispose());
@@ -456,17 +456,22 @@ export function waitForFunctionTask(selector: string | undefined, pageFunction: 
   }, await context._injected(), selector, predicateBody, polling, options.timeout || 0, ...args);
 }
 
-export function waitForSelectorTask(selector: string, visibility: types.Visibility, timeout: number): Task {
-  return async (context: FrameExecutionContext) => context.evaluateHandle((injected: Injected, selector: string, visibility: types.Visibility, timeout: number) => {
-    const polling = visibility === 'any' ? 'mutation' : 'raf';
+export function waitForSelectorTask(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden', timeout: number): Task {
+  return async (context: FrameExecutionContext) => context.evaluateHandle((injected, selector, waitFor, timeout) => {
+    const polling = (waitFor === 'attached' || waitFor === 'detached') ? 'mutation' : 'raf';
     return injected.poll(polling, selector, timeout, (element: Element | undefined): Element | boolean => {
-      if (!element)
-        return visibility === 'hidden';
-      if (visibility === 'any')
-        return element;
-      return injected.isVisible(element) === (visibility === 'visible') ? element : false;
+      switch (waitFor) {
+        case 'attached':
+          return element || false;
+        case 'detached':
+          return !element;
+        case 'visible':
+          return element && injected.isVisible(element) ? element : false;
+        case 'hidden':
+          return !element || !injected.isVisible(element);
+      }
     });
-  }, await context._injected(), selector, visibility, timeout);
+  }, await context._injected(), selector, waitFor, timeout);
 }
 
 export const setFileInputFunction = async (element: HTMLInputElement, payloads: types.FilePayload[]) => {

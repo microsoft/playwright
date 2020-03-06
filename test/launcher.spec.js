@@ -171,15 +171,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       expect(error.message).toContain('Navigation failed because browser has disconnected!');
       await browserServer.close();
     });
-    it('should reject waitForSelector when browser closes', async({server}) => {
+    it('should reject waitForElement when browser closes', async({server}) => {
       server.setRoute('/empty.html', () => {});
       const browserServer = await playwright.launchServer({...defaultBrowserOptions });
       const remote = await playwright.connect({ wsEndpoint: browserServer.wsEndpoint() });
       const page = await remote.newPage();
-      const watchdog = page.waitForSelector('div', { timeout: 60000 }).catch(e => e);
+      const watchdog = page.waitForElement('div', { timeout: 60000 }).catch(e => e);
 
-      // Make sure the previous waitForSelector has time to make it to the browser before we disconnect.
-      await page.waitForSelector('body');
+      // Make sure the previous waitForElement has time to make it to the browser before we disconnect.
+      await page.waitForElement('body');
 
       await remote.close();
       const error = await watchdog;

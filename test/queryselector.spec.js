@@ -211,17 +211,6 @@ module.exports.describe = function({testRunner, expect, selectors, FFOX, CHROMIU
       const element = await page.$('css=section >> css=div');
       expect(element).toBeTruthy();
     });
-    it('should respect waitFor visibility', async({page, server}) => {
-      await page.setContent('<section id="testAttribute">43543</section>');
-      expect(await page.waitForSelector('css=section', { waitFor: 'visible'})).toBeTruthy();
-      expect(await page.waitForSelector('css=section', { waitFor: 'any'})).toBeTruthy();
-      expect(await page.waitForSelector('css=section')).toBeTruthy();
-
-      await page.setContent('<section id="testAttribute" style="display: none">43543</section>');
-      expect(await page.waitForSelector('css=section', { waitFor: 'hidden'})).toBeTruthy();
-      expect(await page.waitForSelector('css=section', { waitFor: 'any'})).toBeTruthy();
-      expect(await page.waitForSelector('css=section')).toBeTruthy();
-    });
   });
 
   describe('Page.$$', function() {

@@ -231,12 +231,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().$(selector);
   }
 
-  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().waitForSelector(selector, options);
-  }
-
-  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().$wait(selector, options);
+  async waitForElement(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
+    return this.mainFrame().waitForElement(selector, options);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
@@ -483,7 +479,7 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().uncheck(selector, options);
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & { visibility?: types.Visibility }, ...args: any[]): Promise<js.JSHandle | null> {
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & types.WaitForElementOptions, ...args: any[]): Promise<js.JSHandle | null> {
     return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
   }
 

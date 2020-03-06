@@ -589,9 +589,10 @@ export class Frame {
     return handle;
   }
 
-  async waitForSelector(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    const { timeout = this._page._timeoutSettings.timeout(), visibility = 'any' } = (options || {});
-    const handle = await this._waitForSelectorInUtilityContext(selector, visibility, timeout);
+  async waitForElement(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
+    if (options && (options as any).visibility)
+      throw new Error('options.visibility is not supported, did you mean options.waitFor?');
+    const handle = await this._waitForSelectorInUtilityContext(selector, options);
     const mainContext = await this._mainContext();
     if (handle && handle._context !== mainContext) {
       const adopted = this._page._delegate.adoptElementHandle(handle, mainContext);
@@ -599,10 +600,6 @@ export class Frame {
       return adopted;
     }
     return handle;
-  }
-
-  async $wait(selector: string, options?: types.TimeoutOptions & { visibility?: types.Visibility }): Promise<dom.ElementHandle<Element> | null> {
-    return this.waitForSelector(selector, options);
   }
 
   $eval: types.$Eval = async (selector, pageFunction, ...args) => {
@@ -875,9 +872,9 @@ export class Frame {
     handle.dispose();
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & { visibility?: types.Visibility } = {}, ...args: any[]): Promise<js.JSHandle | null> {
+  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.waitForSelector(selectorOrFunctionOrTimeout, options) as any;
+      return this.waitForElement(selectorOrFunctionOrTimeout, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
     if (typeof selectorOrFunctionOrTimeout === 'function')
@@ -891,9 +888,9 @@ export class Frame {
       throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
     let handle: dom.ElementHandle<Element>;
     if (waitFor) {
-      const maybeHandle = await this._waitForSelectorInUtilityContext(selector, 'any', timeout);
+      const maybeHandle = await this._waitForSelectorInUtilityContext(selector, { timeout, waitFor: 'attached' });
       if (!maybeHandle)
-        throw new Error('No node found for selector: ' + selectorToString(selector, 'any'));
+        throw new Error('No node found for selector: ' + selectorToString(selector, 'attached'));
       handle = maybeHandle;
     } else {
       const context = await this._context('utility');
@@ -904,14 +901,12 @@ export class Frame {
     return handle;
   }
 
-  private async _waitForSelectorInUtilityContext(selector: string, waitFor: types.Visibility, timeout: number): Promise<dom.ElementHandle<Element> | null> {
-    let visibility: types.Visibility = 'any';
-    if (waitFor === 'visible' || waitFor === 'hidden' || waitFor === 'any')
-      visibility = waitFor;
-    else
-      throw new Error(`Unsupported visibility option "${waitFor}"`);
-    const task = dom.waitForSelectorTask(selector, visibility, timeout);
-    const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, visibility)}"`);
+  private async _waitForSelectorInUtilityContext(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
+    const { timeout = this._page._timeoutSettings.timeout(), waitFor = 'attached' } = (options || {});
+    if (!['attached', 'detached', 'visible', 'hidden'].includes(waitFor))
+      throw new Error(`Unsupported waitFor option "${waitFor}"`);
+    const task = dom.waitForSelectorTask(selector, waitFor, timeout);
+    const result = await this._scheduleRerunnableTask(task, 'utility', timeout, `selector "${selectorToString(selector, waitFor)}"`);
     if (!result.asElement()) {
       result.dispose();
       return null;
@@ -1095,14 +1090,13 @@ function createTimeoutPromise(timeout: number): Disposable<Promise<TimeoutError>
   };
 }
 
-function selectorToString(selector: string, visibility: types.Visibility): string {
+function selectorToString(selector: string, waitFor: 'attached' | 'detached' | 'visible' | 'hidden'): string {
   let label;
-  switch (visibility) {
+  switch (waitFor) {
     case 'visible': label = '[visible] '; break;
     case 'hidden': label = '[hidden] '; break;
-    case 'any':
-    case undefined:
-      label = ''; break;
+    case 'attached': label = ''; break;
+    case 'detached': label = '[detached]'; break;
   }
   return `${label}${selector}`;
 }
