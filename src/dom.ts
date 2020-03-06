@@ -241,7 +241,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return point;
   }
 
-  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
+  async _performPointerAction(action: (point: types.Point) => Promise<void>, options?: PointerActionOptions & types.ActionWaitOptions): Promise<void> {
     const { waitFor = true } = (options || {});
     if (!helper.isBoolean(waitFor))
       throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
@@ -263,23 +263,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, options);
   }
 
-  hover(options?: PointerActionOptions & types.WaitForOptions): Promise<void> {
+  hover(options?: PointerActionOptions & types.ActionWaitOptionsNoNavigation): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options?: ClickOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
+  click(options?: ClickOptions & types.ActionWaitOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  dblclick(options?: MultiClickOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
+  dblclick(options?: MultiClickOptions & types.ActionWaitOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  tripleclick(options?: MultiClickOptions & types.WaitForOptions & types.NavigateOptions): Promise<void> {
+  tripleclick(options?: MultiClickOptions & types.ActionWaitOptions): Promise<void> {
     return this._performPointerAction(point => this._page.mouse.tripleclick(point.x, point.y, options), options);
   }
 
-  async select(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.NavigateOptions): Promise<string[]> {
+  async select(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[], options?: types.ActionWaitOptionsNoWaitFor): Promise<string[]> {
     let vals: string[] | ElementHandle[] | types.SelectOption[];
     if (!Array.isArray(values))
       vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
@@ -301,7 +301,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, options);
   }
 
-  async fill(value: string, options?: types.NavigateOptions): Promise<void> {
+  async fill(value: string, options?: types.ActionWaitOptionsNoWaitFor): Promise<void> {
     assert(helper.isString(value), 'Value must be string. Found value "' + value + '" of type "' + (typeof value) + '"');
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       const error = await this._evaluateInUtility((injected, node, value) => injected.fill(node, value), value);
@@ -356,29 +356,29 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       throw new Error(errorMessage);
   }
 
-  async type(text: string, options?: { delay?: number } & types.NavigateOptions) {
+  async type(text: string, options?: { delay?: number } & types.ActionWaitOptionsNoWaitFor) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.type(text, options);
     }, options);
   }
 
-  async press(key: string, options?: { delay?: number, text?: string } & types.NavigateOptions) {
+  async press(key: string, options?: { delay?: number, text?: string } & types.ActionWaitOptionsNoWaitFor) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
     }, options);
   }
 
-  async check(options?: types.WaitForOptions & types.NavigateOptions) {
+  async check(options?: types.ActionWaitOptions) {
     await this._setChecked(true, options);
   }
 
-  async uncheck(options?: types.WaitForOptions & types.NavigateOptions) {
+  async uncheck(options?: types.ActionWaitOptions) {
     await this._setChecked(false, options);
   }
 
-  private async _setChecked(state: boolean, options?: types.WaitForOptions & types.NavigateOptions) {
+  private async _setChecked(state: boolean, options?: types.ActionWaitOptions) {
     if (await this._evaluateInUtility((injected, node) => injected.isCheckboxChecked(node)) === state)
       return;
     await this.click(options);

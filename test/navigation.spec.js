@@ -921,6 +921,15 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(frame.url()).toBe(server.EMPTY_PAGE);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
+    it('nowait', async({page, server}) => {
+      const messages = [];
+      await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
+      await Promise.all([
+        page.click('a', { waitUntil: 'nowait' }).then(() => messages.push('click')),
+        page.waitForNavigation({ waitUntil: 'commit' }).then(() => messages.push('waitForNavigation'))
+      ]);
+      expect(messages.join('|')).toBe('click|waitForNavigation');
+    });
   });
 
   describe('Page.automaticWaiting should not hang when', () => {

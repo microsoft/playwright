@@ -100,7 +100,9 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: types.WaitForNavigationOptions): Promise<T> {
+  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: types.ActionWaitOptionsNoWaitFor): Promise<T> {
+    if (options && options.waitUntil === 'nowait')
+      return action();
     const barrier = new PendingNavigationBarrier(options);
     this._pendingNavigationBarriers.add(barrier);
     try {
@@ -799,68 +801,68 @@ export class Frame {
     return result!;
   }
 
-  async click(selector: string, options?: dom.ClickOptions & types.WaitForOptions & types.NavigateOptions) {
+  async click(selector: string, options?: dom.ClickOptions & types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.click(options);
     handle.dispose();
   }
 
-  async dblclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
+  async dblclick(selector: string, options?: dom.MultiClickOptions & types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.dblclick(options);
     handle.dispose();
   }
 
-  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.WaitForOptions & types.NavigateOptions) {
+  async tripleclick(selector: string, options?: dom.MultiClickOptions & types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.tripleclick(options);
     handle.dispose();
   }
 
-  async fill(selector: string, value: string, options?: types.WaitForOptions & types.NavigateOptions) {
+  async fill(selector: string, value: string, options?: types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.fill(value, options);
     handle.dispose();
   }
 
-  async focus(selector: string, options?: types.WaitForOptions) {
+  async focus(selector: string, options?: types.ActionWaitOptionsNoNavigation) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.focus();
     handle.dispose();
   }
 
-  async hover(selector: string, options?: dom.PointerActionOptions & types.WaitForOptions) {
+  async hover(selector: string, options?: dom.PointerActionOptions & types.ActionWaitOptionsNoNavigation) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.hover(options);
     handle.dispose();
   }
 
-  async select(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.WaitForOptions & types.NavigateOptions): Promise<string[]> {
+  async select(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[], options?: types.ActionWaitOptions): Promise<string[]> {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     const result = await handle.select(values, options);
     handle.dispose();
     return result;
   }
 
-  async type(selector: string, text: string, options?: { delay?: number } & types.WaitForOptions & types.NavigateOptions) {
+  async type(selector: string, text: string, options?: { delay?: number } & types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.type(text, options);
     handle.dispose();
   }
 
-  async press(selector: string, key: string, options?: { delay?: number, text?: string } & types.NavigateOptions & types.WaitForOptions & types.NavigateOptions) {
+  async press(selector: string, key: string, options?: { delay?: number, text?: string } & types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.press(key, options);
     handle.dispose();
   }
 
-  async check(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
+  async check(selector: string, options?: types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.check(options);
     handle.dispose();
   }
 
-  async uncheck(selector: string, options?: types.WaitForOptions & types.NavigateOptions) {
+  async uncheck(selector: string, options?: types.ActionWaitOptions) {
     const handle = await this._optionallyWaitForSelectorInUtilityContext(selector, options);
     await handle.uncheck(options);
     handle.dispose();
@@ -876,7 +878,7 @@ export class Frame {
     return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
   }
 
-  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: types.WaitForOptions | undefined): Promise<dom.ElementHandle<Element>> {
+  private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: types.ActionWaitOptions | undefined): Promise<dom.ElementHandle<Element>> {
     const { timeout = this._page._timeoutSettings.timeout(), waitFor = true } = (options || {});
     if (!helper.isBoolean(waitFor))
       throw new Error('waitFor option should be a boolean, got "' + (typeof waitFor) + '"');
@@ -1097,13 +1099,13 @@ function selectorToString(selector: string, waitFor: 'attached' | 'detached' | '
 
 class PendingNavigationBarrier {
   private _frameIds = new Map<string, number>();
-  private _waitOptions: types.WaitForNavigationOptions | undefined;
+  private _options: types.ActionWaitOptionsNoWaitFor | undefined;
   private _protectCount = 0;
   private _promise: Promise<void>;
   private _promiseCallback = () => {};
 
-  constructor(options?: types.WaitForNavigationOptions) {
-    this._waitOptions = options;
+  constructor(options: types.ActionWaitOptionsNoWaitFor | undefined) {
+    this._options = options;
     this._promise = new Promise(f => this._promiseCallback = f);
     this.retain();
   }
@@ -1115,7 +1117,7 @@ class PendingNavigationBarrier {
 
   async addFrame(frame: Frame) {
     this.retain();
-    await frame.waitForNavigation(this._waitOptions).catch(e => {});
+    await frame.waitForNavigation(this._options as types.NavigateOptions).catch(e => {});
     this.release();
   }
 
