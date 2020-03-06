@@ -802,7 +802,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
   });
 
   describe('Page.automaticWaiting', () => {
-    it('clicking anchor should await navigation', async({page, server}) => {
+    it.fail(CHROMIUM)('clicking anchor should await navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
