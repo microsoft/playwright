@@ -20,7 +20,7 @@ const { makeUserDataDir, removeUserDataDir } = require('./utils');
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, playwright }) {
+module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions, playwright, WEBKIT }) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -74,7 +74,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         sameSite: 'None',
       }]);
     });
-    it('context.clearCookies() should work', async({page, server}) => {
+    it.fail(WEBKIT)('context.clearCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.context().setCookies([{
         url: server.EMPTY_PAGE,
