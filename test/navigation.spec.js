@@ -802,7 +802,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
   });
 
   describe('Page.automaticWaiting', () => {
-    it.fail(CHROMIUM)('clicking anchor should await navigation', async({page, server}) => {
+    it.flaky(CHROMIUM)('clicking anchor should await navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
@@ -905,7 +905,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
     });
-    it.fail(CHROMIUM)('should await navigating specified target', async({page, server}) => {
+    it.flaky(CHROMIUM)('should await navigating specified target', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => { messages.push('route'); res.end('done'); });
 

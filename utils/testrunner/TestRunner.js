@@ -69,11 +69,10 @@ class UserCallback {
 }
 
 const TestMode = {
-  Run: 'run',
   Skip: 'skip',
   Focus: 'focus',
   MarkAsFailing: 'markAsFailing',
-  Flake: 'flake'
+  MarkAsFlaky: 'markAsFlaky'
 };
 
 const TestResult = {
@@ -87,11 +86,11 @@ const TestResult = {
 };
 
 class Test {
-  constructor(suite, name, callback, declaredMode, timeout) {
+  constructor(suite, name, callback, declaredModes, timeout) {
     this.suite = suite;
     this.name = name;
     this.fullName = (suite.fullName + ' ' + name).trim();
-    this.declaredMode = declaredMode;
+    this.declaredModes = declaredModes;
     this._userCallback = new UserCallback(callback, timeout);
     this.location = this._userCallback.location;
     this.timeout = timeout;
@@ -105,11 +104,11 @@ class Test {
 }
 
 class Suite {
-  constructor(parentSuite, name, declaredMode) {
+  constructor(parentSuite, name, declaredModes) {
     this.parentSuite = parentSuite;
     this.name = name;
     this.fullName = (parentSuite ? parentSuite.fullName + ' ' + name : name).trim();
-    this.declaredMode = declaredMode;
+    this.declaredModes = declaredModes;
     /** @type {!Array<(!Test|!Suite)>} */
     this.children = [];
 
@@ -139,7 +138,7 @@ class TestPass {
       for (let suite = test.suite; suite; suite = suite.parentSuite)
         this._workerDistribution.set(suite, workerId);
       // Do not shard skipped tests across workers.
-      if (test.declaredMode !== TestMode.MarkAsFailing && test.declaredMode !== TestMode.Skip)
+      if (!test.declaredModes.has(TestMode.MarkAsFailing) && !test.declaredModes.has(TestMode.Skip))
         workerId = (workerId + 1) % parallel;
     }
 
@@ -201,12 +200,12 @@ class TestPass {
     if (this._termination)
       return;
     this._runner._willStartTest(test, workerId);
-    if (test.declaredMode === TestMode.MarkAsFailing) {
+    if (test.declaredModes.has(TestMode.MarkAsFailing)) {
       test.result = TestResult.MarkedAsFailing;
       this._runner._didFinishTest(test, workerId);
       return;
     }
-    if (test.declaredMode === TestMode.Skip) {
+    if (test.declaredModes.has(TestMode.Skip)) {
       test.result = TestResult.Skipped;
       this._runner._didFinishTest(test, workerId);
       return;
@@ -285,29 +284,32 @@ class TestPass {
 }
 
 function specBuilder(action) {
-  let mode = TestMode.Run;
+  let declaredModes = new Set([]);
   let repeat = 1;
 
   const func = (...args) => {
     for (let i = 0; i < repeat; ++i)
-      action(mode, ...args);
-    mode = TestMode.Run;
+      action(declaredModes, ...args);
+    declaredModes = new Set([]);
     repeat = 1;
   };
-
+  func.focus = () => {
+    declaredModes.add(TestMode.Focus);
+    return func;
+  };
   func.skip = condition => {
     if (condition)
-      mode = TestMode.Skip;
+      declaredModes.add(TestMode.Skip);
     return func;
   };
   func.fail = condition => {
     if (condition)
-      mode = TestMode.MarkAsFailing;
+      declaredModes.add(TestMode.MarkAsFailing);
     return func;
   };
-  func.flake = condition => {
+  func.flaky = condition => {
     if (condition)
-      mode = TestMode.Flake;
+      declaredModes.add(TestMode.MarkAsFlaky);
     return func;
   };
   func.repeat = count => {
@@ -327,7 +329,7 @@ class TestRunner extends EventEmitter {
       disableTimeoutWhenInspectorIsEnabled = true,
     } = options;
     this._sourceMapSupport = new SourceMapSupport();
-    this._rootSuite = new Suite(null, '', TestMode.Run);
+    this._rootSuite = new Suite(null, '', new Set([]));
     this._currentSuite = this._rootSuite;
     this._tests = [];
     this._timeout = timeout === 0 ? INFINITE_TIMEOUT : timeout;
@@ -344,12 +346,12 @@ class TestRunner extends EventEmitter {
       }
     }
 
-    this.describe = specBuilder((mode, ...args) => this._addSuite(mode, ...args));
-    this.fdescribe = specBuilder((mode, ...args) => this._addSuite(TestMode.Focus, ...args));
-    this.xdescribe = specBuilder((mode, ...args) => this._addSuite(TestMode.Skip, ...args));
-    this.it = specBuilder((mode, name, callback) => this._addTest(name, callback, mode, this._timeout));
-    this.fit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Focus, this._timeout));
-    this.xit = specBuilder((mode, name, callback) => this._addTest(name, callback, TestMode.Skip, this._timeout));
+    this.describe = specBuilder((declaredModes, ...args) => this._addSuite(declaredModes, ...args));
+    this.fdescribe = specBuilder((declaredModes, ...args) => this._addSuite(new Set([TestMode.Focus, ...declaredModes.values()]), ...args));
+    this.xdescribe = specBuilder((declaredModes, ...args) => this._addSuite(new Set([TestMode.Skip, ...declaredModes.values()]), ...args));
+    this.it = specBuilder((declaredModes, name, callback) => this._addTest(name, callback, declaredModes, this._timeout));
+    this.fit = specBuilder((declaredModes, name, callback) => this._addTest(name, callback, new Set([TestMode.Focus, ...declaredModes.values()]), this._timeout));
+    this.xit = specBuilder((declaredModes, name, callback) => this._addTest(name, callback, new Set([TestMode.Skip, ...declaredModes.values()]), this._timeout));
     this.dit = specBuilder((mode, name, callback) => {
       const test = this._addTest(name, callback, TestMode.Focus, INFINITE_TIMEOUT);
       const N = callback.toString().split('\n').length;
@@ -366,43 +368,34 @@ class TestRunner extends EventEmitter {
 
   loadTests(module, ...args) {
     if (typeof module.describe === 'function')
-      this._addSuite(TestMode.Run, '', module.describe, ...args);
+      this._addSuite(new Set([]), '', module.describe, ...args);
     if (typeof module.fdescribe === 'function')
-      this._addSuite(TestMode.Focus, '', module.fdescribe, ...args);
+      this._addSuite(new Set([TestMode.Focus]), '', module.fdescribe, ...args);
     if (typeof module.xdescribe === 'function')
-      this._addSuite(TestMode.Skip, '', module.xdescribe, ...args);
+      this._addSuite(new Set([TestMode.Skip]), '', module.xdescribe, ...args);
   }
 
-  _addTest(name, callback, mode, timeout) {
+  _addTest(name, callback, declaredModes, timeout) {
+    declaredModes = new Set(declaredModes);
     let suite = this._currentSuite;
-    let markedAsFailing = suite.declaredMode === TestMode.MarkAsFailing;
     while ((suite = suite.parentSuite))
-      markedAsFailing |= suite.declaredMode === TestMode.MarkAsFailing;
-    if (markedAsFailing)
-      mode = TestMode.MarkAsFailing;
+      declaredModes = new Set([...declaredModes.values(), ...suite.declaredModes.values()]);
 
-    suite = this._currentSuite;
-    let skip = suite.declaredMode === TestMode.Skip;
-    while ((suite = suite.parentSuite))
-    skip |= suite.declaredMode === TestMode.Skip;
-    if (skip)
-      mode = TestMode.Skip;
-  
-    const test = new Test(this._currentSuite, name, callback, mode, timeout);
+    const test = new Test(this._currentSuite, name, callback, declaredModes, timeout);
     this._currentSuite.children.push(test);
     this._tests.push(test);
-    this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
+    this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || declaredModes.has(TestMode.Focus);
     return test;
   }
 
-  _addSuite(mode, name, callback, ...args) {
+  _addSuite(declaredModes, name, callback, ...args) {
     const oldSuite = this._currentSuite;
-    const suite = new Suite(this._currentSuite, name, mode);
+    const suite = new Suite(this._currentSuite, name, declaredModes);
     this._currentSuite.children.push(suite);
     this._currentSuite = suite;
     callback(...args);
     this._currentSuite = oldSuite;
-    this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || mode === TestMode.Focus;
+    this._hasFocusedTestsOrSuites = this._hasFocusedTestsOrSuites || declaredModes.has(TestMode.Focus);
   }
 
   _addHook(hookName, callback) {
@@ -460,7 +453,7 @@ class TestRunner extends EventEmitter {
     const blacklistSuites = new Set();
     // First pass: pick "fit" and blacklist parent suites
     for (const test of this._tests) {
-      if (test.declaredMode !== TestMode.Focus)
+      if (!test.declaredModes.has(TestMode.Focus))
         continue;
       tests.push(test);
       for (let suite = test.suite; suite; suite = suite.parentSuite)
@@ -470,7 +463,7 @@ class TestRunner extends EventEmitter {
     for (const test of this._tests) {
       let insideFocusedSuite = false;
       for (let suite = test.suite; suite; suite = suite.parentSuite) {
-        if (!blacklistSuites.has(suite) && suite.declaredMode === TestMode.Focus) {
+        if (!blacklistSuites.has(suite) && suite.declaredModes.has(TestMode.Focus)) {
           insideFocusedSuite = true;
           break;
         }
