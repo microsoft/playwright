@@ -50,12 +50,6 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
       await page.waitFor('/html/body/div').catch(e => error = e);
       expect(error).toBeTruthy();
     });
-    it('should timeout', async({page, server}) => {
-      const startTime = Date.now();
-      const timeout = 42;
-      await page.waitFor(timeout);
-      expect(Date.now() - startTime).not.toBeLessThan(timeout / 2);
-    });
     it('should work with multiline body', async({page, server}) => {
       const result = await page.waitForFunction(`
         (() => true)()
@@ -68,7 +62,12 @@ module.exports.describe = function({testRunner, expect, product, playwright, FFO
         page.setViewportSize({width: 10, height: 10}),
       ]);
     });
-    it('should throw when unknown type', async({page, server}) => {
+    it('should throw when called with number', async({page, server}) => {
+      let error = null;
+      await page.waitFor(42).catch(e => error = e);
+      expect(error.message).toContain('Unsupported target type');
+    });
+    it('should throw when called with object', async({page, server}) => {
       let error = null;
       await page.waitFor({foo: 'bar'}).catch(e => error = e);
       expect(error.message).toContain('Unsupported target type');

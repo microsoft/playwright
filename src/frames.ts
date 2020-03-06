@@ -866,14 +866,12 @@ export class Frame {
     handle.dispose();
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, ...args: any[]): Promise<js.JSHandle | null> {
-    if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.waitForElement(selectorOrFunctionOrTimeout, options) as any;
-    if (helper.isNumber(selectorOrFunctionOrTimeout))
-      return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
-    if (typeof selectorOrFunctionOrTimeout === 'function')
-      return this.waitForFunction(selectorOrFunctionOrTimeout, options, ...args);
-    return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunctionOrTimeout)));
+  async waitFor(selectorOrFunction: string | Function, options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, ...args: any[]): Promise<js.JSHandle | null> {
+    if (helper.isString(selectorOrFunction))
+      return this.waitForElement(selectorOrFunction, options) as any;
+    if (typeof selectorOrFunction === 'function')
+      return this.waitForFunction(selectorOrFunction, options, ...args);
+    return Promise.reject(new Error('Unsupported target type: ' + (typeof selectorOrFunction)));
   }
 
   private async _optionallyWaitForSelectorInUtilityContext(selector: string, options: types.WaitForOptions | undefined): Promise<dom.ElementHandle<Element>> {

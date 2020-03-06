@@ -485,8 +485,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().uncheck(selector, options);
   }
 
-  async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options?: types.WaitForFunctionOptions & types.WaitForElementOptions, ...args: any[]): Promise<js.JSHandle | null> {
-    return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, ...args);
+  async waitFor(selectorOrFunction: string | Function, options?: types.WaitForFunctionOptions & types.WaitForElementOptions, ...args: any[]): Promise<js.JSHandle | null> {
+    return this.mainFrame().waitFor(selectorOrFunction, options, ...args);
   }
 
   async waitForFunction(pageFunction: Function | string, options?: types.WaitForFunctionOptions, ...args: any[]): Promise<js.JSHandle> {
