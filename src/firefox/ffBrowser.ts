@@ -29,6 +29,8 @@ import { headersArray } from './ffNetworkManager';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
 
+const kAttachedToTarget = Symbol('kAttachedToTarget');
+
 export class FFBrowser extends platform.EventEmitter implements Browser {
   _connection: FFConnection;
   _targets: Map<string, Target>;
@@ -36,10 +38,10 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
   readonly _contexts: Map<string, FFBrowserContext>;
   private _eventListeners: RegisteredListener[];
 
-  static async connect(transport: ConnectionTransport, slowMo?: number): Promise<FFBrowser> {
+  static async connect(transport: ConnectionTransport, attachToDefaultContext: boolean, slowMo?: number): Promise<FFBrowser> {
     const connection = new FFConnection(SlowMoTransport.wrap(transport, slowMo));
     const browser = new FFBrowser(connection);
-    await connection.send('Target.enable');
+    await connection.send('Browser.enable', { attachToDefaultContext });
     return browser;
   }
 
@@ -56,10 +58,8 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
       this.emit(Events.Browser.Disconnected);
     });
     this._eventListeners = [
-      helper.addEventListener(this._connection, 'Target.targetCreated', this._onTargetCreated.bind(this)),
-      helper.addEventListener(this._connection, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
-      helper.addEventListener(this._connection, 'Target.targetInfoChanged', this._onTargetInfoChanged.bind(this)),
-      helper.addEventListener(this._connection, 'Target.attachedToTarget', this._onAttachedToTarget.bind(this)),
+      helper.addEventListener(this._connection, 'Browser.attachedToTarget', this._onAttachedToTarget.bind(this)),
+      helper.addEventListener(this._connection, 'Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this)),
     ];
   }
 
@@ -88,7 +88,7 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
         hasTouch: false,
       };
     }
-    const { browserContextId } = await this._connection.send('Target.createBrowserContext', {
+    const { browserContextId } = await this._connection.send('Browser.createBrowserContext', {
       userAgent: options.userAgent,
       bypassCSP: options.bypassCSP,
       javaScriptDisabled: options.javaScriptEnabled === false ? true : undefined,
@@ -121,13 +121,13 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
       return existingTarget;
     let resolve: (t: Target) => void;
     const targetPromise = new Promise<Target>(x => resolve = x);
-    this.on('targetchanged', check);
+    this.on(kAttachedToTarget, check);
     try {
       if (!timeout)
         return await targetPromise;
       return await helper.waitWithTimeout(targetPromise, 'target', timeout);
     } finally {
-      this.removeListener('targetchanged', check);
+      this.removeListener(kAttachedToTarget, check);
     }
 
     function check(target: Target) {
@@ -140,33 +140,23 @@ export class FFBrowser extends platform.EventEmitter implements Browser {
     return Array.from(this._targets.values());
   }
 
-  async _onTargetCreated(payload: Protocol.Target.targetCreatedPayload) {
-    const {targetId, url, browserContextId, openerId, type} = payload;
-    const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext;
-    const target = new Target(this._connection, this, context, targetId, type, url, openerId);
-    this._targets.set(targetId, target);
-  }
-
-  _onTargetDestroyed(payload: Protocol.Target.targetDestroyedPayload) {
+  _onDetachedFromTarget(payload: Protocol.Browser.detachedFromTargetPayload) {
     const {targetId} = payload;
     const target = this._targets.get(targetId)!;
     this._targets.delete(targetId);
     target._didClose();
   }
 
-  _onTargetInfoChanged(payload: Protocol.Target.targetInfoChangedPayload) {
-    const {targetId, url} = payload;
-    const target = this._targets.get(targetId)!;
-    target._url = url;
-  }
-
-  async _onAttachedToTarget(payload: Protocol.Target.attachedToTargetPayload) {
-    const {targetId} = payload.targetInfo;
-    const target = this._targets.get(targetId)!;
-    target._initPagePromise(this._connection.getSession(payload.sessionId)!);
+  async _onAttachedToTarget(payload: Protocol.Browser.attachedToTargetPayload) {
+    const {targetId, browserContextId, openerId, type} = payload.targetInfo;
+    const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext;
+    const target = new Target(this, context, type, '', openerId);
+    this._targets.set(targetId, target);
+    target._initPagePromise(this._connection.createSession(payload.sessionId, type));
 
     const pageEvent = new PageEvent(target.pageOrError());
     target.context().emit(Events.BrowserContext.Page, pageEvent);
+    this.emit(kAttachedToTarget, target);
 
     const opener = target.opener();
     if (!opener)
@@ -194,23 +184,22 @@ class Target {
   _ffPage: FFPage | null = null;
   private readonly _browser: FFBrowser;
   private readonly _context: FFBrowserContext;
-  private readonly _connection: FFConnection;
-  private readonly _targetId: string;
   private readonly _type: 'page' | 'browser';
   _url: string;
   private readonly _openerId: string | undefined;
+  private _session?: FFSession;
 
-  constructor(connection: any, browser: FFBrowser, context: FFBrowserContext, targetId: string, type: 'page' | 'browser', url: string, openerId: string | undefined) {
+  constructor(browser: FFBrowser, context: FFBrowserContext, type: 'page' | 'browser', url: string, openerId: string | undefined) {
     this._browser = browser;
     this._context = context;
-    this._connection = connection;
-    this._targetId = targetId;
     this._type = type;
     this._url = url;
     this._openerId = openerId;
   }
 
   _didClose() {
+    if (this._session)
+      this._session.dispose();
     if (this._ffPage)
       this._ffPage.didClose();
   }
@@ -234,12 +223,11 @@ class Target {
   async pageOrError(): Promise<Page | Error> {
     if (this._type !== 'page')
       throw new Error(`Cannot create page for "${this._type}" target`);
-    if (!this._pagePromise)
-      await this._connection.send('Target.attachToTarget', {targetId: this._targetId});
     return this._pagePromise!;
   }
 
   _initPagePromise(session: FFSession) {
+    this._session = session;
     this._pagePromise = new Promise(async f => {
       this._ffPage = new FFPage(session, this._context, async () => {
         const openerTarget = this.opener();
@@ -318,7 +306,7 @@ export class FFBrowserContext extends BrowserContextBase {
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
-    const {targetId} = await this._browser._connection.send('Target.newPage', {
+    const {targetId} = await this._browser._connection.send('Browser.newPage', {
       browserContextId: this._browserContextId || undefined
     });
     const target = this._browser._targets.get(targetId)!;
@@ -410,7 +398,7 @@ export class FFBrowserContext extends BrowserContextBase {
     if (this._closed)
       return;
     assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
-    await this._browser._connection.send('Target.removeBrowserContext', { browserContextId: this._browserContextId });
+    await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     this._didCloseInternal();
   }

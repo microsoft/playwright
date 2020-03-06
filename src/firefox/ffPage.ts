@@ -226,7 +226,7 @@ export class FFPage implements PageDelegate {
     const worker = this._workers.get(workerId);
     if (!worker)
       return;
-    worker.session._onClosed();
+    worker.session.dispose();
     this._workers.delete(workerId);
     this._page._removeWorker(workerId);
   }

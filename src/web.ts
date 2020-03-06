@@ -37,7 +37,7 @@ const connect = {
   firefox: {
     connect: async (url: string) => {
       return await platform.connectToWebsocket(url, transport => {
-        return FirefoxBrowser.connect(transport);
+        return FirefoxBrowser.connect(transport, false);
       });
     }
   }
