@@ -230,8 +230,8 @@ export class Page extends platform.EventEmitter {
     return this.mainFrame().$(selector);
   }
 
-  async waitForElement(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
-    return this.mainFrame().waitForElement(selector, options);
+  async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
+    return this.mainFrame().waitForSelector(selector, options);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {

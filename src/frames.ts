@@ -580,7 +580,7 @@ export class Frame {
     return handle;
   }
 
-  async waitForElement(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
+  async waitForSelector(selector: string, options?: types.WaitForElementOptions): Promise<dom.ElementHandle<Element> | null> {
     if (options && (options as any).visibility)
       throw new Error('options.visibility is not supported, did you mean options.waitFor?');
     const handle = await this._waitForSelectorInUtilityContext(selector, options);
@@ -870,7 +870,7 @@ export class Frame {
 
   async waitFor(selectorOrFunctionOrTimeout: (string | number | Function), options: types.WaitForFunctionOptions & types.WaitForElementOptions = {}, ...args: any[]): Promise<js.JSHandle | null> {
     if (helper.isString(selectorOrFunctionOrTimeout))
-      return this.waitForElement(selectorOrFunctionOrTimeout, options) as any;
+      return this.waitForSelector(selectorOrFunctionOrTimeout, options) as any;
     if (helper.isNumber(selectorOrFunctionOrTimeout))
       return new Promise(fulfill => setTimeout(fulfill, selectorOrFunctionOrTimeout));
     if (typeof selectorOrFunctionOrTimeout === 'function')
