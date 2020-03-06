@@ -60,6 +60,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
+  _closed = false;
   private _closePromise: Promise<Error> | undefined;
 
   constructor(options: BrowserContextOptions) {
@@ -68,6 +69,13 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   }
 
   abstract _existingPages(): Page[];
+
+  _browserClosed() {
+    this._closed = true;
+    for (const page of this._existingPages())
+      page._didClose();
+    this.emit(Events.BrowserContext.Close);
+  }
 
   // BrowserContext methods.
   abstract pages(): Promise<Page[]>;

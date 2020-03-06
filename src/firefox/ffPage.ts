@@ -15,22 +15,22 @@
  * limitations under the License.
  */
 
-import * as frames from '../frames';
-import { helper, RegisteredListener, debugError, assert } from '../helper';
-import * as dom from '../dom';
-import { FFSession } from './ffConnection';
-import { FFExecutionContext } from './ffExecutionContext';
-import { Page, PageDelegate, Worker, PageBinding } from '../page';
-import { FFNetworkManager, headersArray } from './ffNetworkManager';
-import { Events } from '../events';
 import * as dialog from '../dialog';
-import { Protocol } from './protocol';
-import { RawMouseImpl, RawKeyboardImpl } from './ffInput';
-import { BrowserContextBase } from '../browserContext';
-import { getAccessibilityTree } from './ffAccessibility';
-import * as types from '../types';
+import * as dom from '../dom';
+import { Events } from '../events';
+import * as frames from '../frames';
+import { assert, debugError, helper, RegisteredListener } from '../helper';
+import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import * as platform from '../platform';
 import { kScreenshotDuringNavigationError } from '../screenshotter';
+import * as types from '../types';
+import { getAccessibilityTree } from './ffAccessibility';
+import { FFBrowserContext } from './ffBrowser';
+import { FFSession } from './ffConnection';
+import { FFExecutionContext } from './ffExecutionContext';
+import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
+import { FFNetworkManager, headersArray } from './ffNetworkManager';
+import { Protocol } from './protocol';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -45,7 +45,7 @@ export class FFPage implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
 
-  constructor(session: FFSession, browserContext: BrowserContextBase, openerResolver: () => Promise<Page | null>) {
+  constructor(session: FFSession, browserContext: FFBrowserContext, openerResolver: () => Promise<Page | null>) {
     this._session = session;
     this._openerResolver = openerResolver;
     this.rawKeyboard = new RawKeyboardImpl(session);

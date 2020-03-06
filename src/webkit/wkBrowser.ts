@@ -179,7 +179,6 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 export class WKBrowserContext extends BrowserContextBase {
   readonly _browser: WKBrowser;
   readonly _browserContextId: string | undefined;
-  private _closed = false;
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: BrowserContextOptions) {
@@ -314,13 +313,6 @@ export class WKBrowserContext extends BrowserContextBase {
     await this._browser._browserSession.send('Browser.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     this._closed = true;
-    this.emit(Events.BrowserContext.Close);
-  }
-
-  _browserClosed() {
-    this._closed = true;
-    for (const page of this._existingPages())
-      page._didClose();
     this.emit(Events.BrowserContext.Close);
   }
 }

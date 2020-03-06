@@ -271,7 +271,6 @@ class Target {
 export class FFBrowserContext extends BrowserContextBase {
   readonly _browser: FFBrowser;
   readonly _browserContextId: string | null;
-  private _closed = false;
   private readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: FFBrowser, browserContextId: string | null, options: BrowserContextOptions) {
@@ -407,13 +406,6 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Target.removeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     this._closed = true;
-    this.emit(Events.BrowserContext.Close);
-  }
-
-  _browserClosed() {
-    this._closed = true;
-    for (const page of this._existingPages())
-      page._didClose();
     this.emit(Events.BrowserContext.Close);
   }
 }

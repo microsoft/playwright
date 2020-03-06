@@ -83,7 +83,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const backgroundPages = await context.backgroundPages();
       let backgroundPage = backgroundPages.length
           ? backgroundPages[0]
-          : await context.waitForEvent('backgroundpage').then(async event => await event.page());
+          : await context.waitForEvent('backgroundpage').then(event => event.page());
       expect(backgroundPage).toBeTruthy();
       expect(await context.backgroundPages()).toContain(backgroundPage);
       expect(await context.pages()).not.toContain(backgroundPage);

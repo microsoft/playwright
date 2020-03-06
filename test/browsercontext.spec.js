@@ -396,7 +396,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       const context = await browser.newContext();
       const page = await context.newPage();
       const [otherPage] = await Promise.all([
-        context.waitForEvent('page').then(async event => await event.page()),
+        context.waitForEvent('page').then(event => event.page()),
         page.evaluate(url => window.open(url), server.CROSS_PROCESS_PREFIX + '/empty.html').catch(e => console.log('eee = ' + e)),
       ]);
       await otherPage.waitForLoadState();

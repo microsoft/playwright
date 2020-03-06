@@ -229,7 +229,6 @@ export class CRBrowserContext extends BrowserContextBase {
   readonly _browser: CRBrowser;
   readonly _browserContextId: string | null;
   readonly _evaluateOnNewDocumentSources: string[];
-  private _closed = false;
 
   constructor(browser: CRBrowser, browserContextId: string | null, options: BrowserContextOptions) {
     super(options);
@@ -383,12 +382,5 @@ export class CRBrowserContext extends BrowserContextBase {
 
   async createSession(page: Page): Promise<CRSession> {
     return CRTarget.fromPage(page).sessionFactory();
-  }
-
-  _browserClosed() {
-    this._closed = true;
-    for (const page of this._existingPages())
-      page._didClose();
-    this.emit(CommonEvents.BrowserContext.Close);
   }
 }

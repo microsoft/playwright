@@ -29,7 +29,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await page.setContent('<a target=_blank rel=noopener href="/popup/popup.html">link</a>');
       const requestPromise = server.waitForRequest('/popup/popup.html');
       const [popup] = await Promise.all([
-        context.waitForEvent('page').then(async pageEvent => await pageEvent.page()),
+        context.waitForEvent('page').then(pageEvent => pageEvent.page()),
         page.click('a'),
       ]);
       await popup.waitForLoadState();
