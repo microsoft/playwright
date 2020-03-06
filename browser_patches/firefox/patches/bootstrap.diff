@@ -456,42 +456,11 @@ index 9b667d3a4c29e71297dc0bd33bfe30ab670a9f36..0971b5ca7930cfd6d7ac6e21f7187718
    }
  
    nsCOMPtr<nsIPrincipal> principal =
-diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
-index d99e7f91503e84690d711bca2c2d916e34e56214..b63e9d96219420f5e4fb58797e4c3d901cba77cc 100644
---- a/parser/html/nsHtml5TreeOpExecutor.cpp
-+++ b/parser/html/nsHtml5TreeOpExecutor.cpp
-@@ -1065,9 +1065,12 @@ void nsHtml5TreeOpExecutor::AddSpeculationCSP(const nsAString& aCSP) {
-   if (!StaticPrefs::security_csp_enable()) {
-     return;
-   }
--
-   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
- 
-+  if (mDocShell && static_cast<nsDocShell*>(mDocShell.get())->IsBypassCSPEnabled()) {
-+    return;
-+  }
-+
-   nsresult rv = NS_OK;
-   nsCOMPtr<nsIContentSecurityPolicy> preloadCsp = mDocument->GetPreloadCsp();
-   if (!preloadCsp) {
-diff --git a/security/manager/ssl/nsCertOverrideService.cpp b/security/manager/ssl/nsCertOverrideService.cpp
-index 6dca2b78830edc1ddbd66264bd332853729dac71..fbe89c9682834e11b9d9219d9eb056ede084435a 100644
---- a/security/manager/ssl/nsCertOverrideService.cpp
-+++ b/security/manager/ssl/nsCertOverrideService.cpp
-@@ -634,7 +634,7 @@ static bool IsDebugger() {
- NS_IMETHODIMP
- nsCertOverrideService::
-     SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(bool aDisable) {
--  if (!(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
-+  if (false /* juggler hacks */ && !(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
-     return NS_ERROR_NOT_AVAILABLE;
-   }
- 
-diff --git a/testing/juggler/BrowserContextManager.js b/testing/juggler/BrowserContextManager.js
+diff --git a/juggler/BrowserContextManager.js b/juggler/BrowserContextManager.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb99c268ed7
 --- /dev/null
-+++ b/testing/juggler/BrowserContextManager.js
++++ b/juggler/BrowserContextManager.js
 @@ -0,0 +1,194 @@
 +"use strict";
 +
@@ -687,11 +656,11 @@ index 0000000000000000000000000000000000000000..dfb1f50b3a6ad915b99481c987975cb9
 +this.BrowserContextManager = BrowserContextManager;
 +this.BrowserContext = BrowserContext;
 +
-diff --git a/testing/juggler/Helper.js b/testing/juggler/Helper.js
+diff --git a/juggler/Helper.js b/juggler/Helper.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2cd8c9cef
 --- /dev/null
-+++ b/testing/juggler/Helper.js
++++ b/juggler/Helper.js
 @@ -0,0 +1,102 @@
 +const uuidGen = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -795,11 +764,11 @@ index 0000000000000000000000000000000000000000..862c680198bbb503a5f04c19bdb8fdf2
 +var EXPORTED_SYMBOLS = [ "Helper" ];
 +this.Helper = Helper;
 +
-diff --git a/testing/juggler/NetworkObserver.js b/testing/juggler/NetworkObserver.js
+diff --git a/juggler/NetworkObserver.js b/juggler/NetworkObserver.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..2124033e99dcc872bee87422fee13fef89312d1d
 --- /dev/null
-+++ b/testing/juggler/NetworkObserver.js
++++ b/juggler/NetworkObserver.js
 @@ -0,0 +1,684 @@
 +"use strict";
 +
@@ -1485,11 +1454,11 @@ index 0000000000000000000000000000000000000000..2124033e99dcc872bee87422fee13fef
 +
 +var EXPORTED_SYMBOLS = ['NetworkObserver'];
 +this.NetworkObserver = NetworkObserver;
-diff --git a/testing/juggler/SimpleChannel.js b/testing/juggler/SimpleChannel.js
+diff --git a/juggler/SimpleChannel.js b/juggler/SimpleChannel.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b171af40b7
 --- /dev/null
-+++ b/testing/juggler/SimpleChannel.js
++++ b/juggler/SimpleChannel.js
 @@ -0,0 +1,130 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
@@ -1621,11 +1590,11 @@ index 0000000000000000000000000000000000000000..ba34976ad05e7f5f1a99777f76ac08b1
 +
 +var EXPORTED_SYMBOLS = ['SimpleChannel'];
 +this.SimpleChannel = SimpleChannel;
-diff --git a/testing/juggler/TargetRegistry.js b/testing/juggler/TargetRegistry.js
+diff --git a/juggler/TargetRegistry.js b/juggler/TargetRegistry.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5962b855d
 --- /dev/null
-+++ b/testing/juggler/TargetRegistry.js
++++ b/juggler/TargetRegistry.js
 @@ -0,0 +1,264 @@
 +const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -1891,11 +1860,11 @@ index 0000000000000000000000000000000000000000..1bcbafed549090fe533fb1340b2598e5
 +
 +var EXPORTED_SYMBOLS = ['TargetRegistry'];
 +this.TargetRegistry = TargetRegistry;
-diff --git a/testing/juggler/components/juggler.js b/testing/juggler/components/juggler.js
+diff --git a/juggler/components/juggler.js b/juggler/components/juggler.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..055b032beff4b7d66a9f33d600dd8d2926867a34
 --- /dev/null
-+++ b/testing/juggler/components/juggler.js
++++ b/juggler/components/juggler.js
 @@ -0,0 +1,116 @@
 +const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -2013,20 +1982,20 @@ index 0000000000000000000000000000000000000000..055b032beff4b7d66a9f33d600dd8d29
 +    });
 +  }
 +}
-diff --git a/testing/juggler/components/juggler.manifest b/testing/juggler/components/juggler.manifest
+diff --git a/juggler/components/juggler.manifest b/juggler/components/juggler.manifest
 new file mode 100644
 index 0000000000000000000000000000000000000000..50f8930207563e0d6b8a7878fc602dbca54d77fc
 --- /dev/null
-+++ b/testing/juggler/components/juggler.manifest
++++ b/juggler/components/juggler.manifest
 @@ -0,0 +1,3 @@
 +component {f7a74a33-e2ab-422d-b022-4fb213dd2639} juggler.js
 +contract @mozilla.org/remote/juggler;1 {f7a74a33-e2ab-422d-b022-4fb213dd2639}
 +category command-line-handler m-juggler @mozilla.org/remote/juggler;1
-diff --git a/testing/juggler/components/moz.build b/testing/juggler/components/moz.build
+diff --git a/juggler/components/moz.build b/juggler/components/moz.build
 new file mode 100644
 index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853dd7aeb254
 --- /dev/null
-+++ b/testing/juggler/components/moz.build
++++ b/juggler/components/moz.build
 @@ -0,0 +1,9 @@
 +# This Source Code Form is subject to the terms of the Mozilla Public
 +# License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2037,11 +2006,11 @@ index 0000000000000000000000000000000000000000..268fbc361d8053182bb6c27f626e853d
 +    "juggler.manifest",
 +]
 +
-diff --git a/testing/juggler/content/FrameTree.js b/testing/juggler/content/FrameTree.js
+diff --git a/juggler/content/FrameTree.js b/juggler/content/FrameTree.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..1197aec925e07a52c5802e09e9fd797b48091fd3
 --- /dev/null
-+++ b/testing/juggler/content/FrameTree.js
++++ b/juggler/content/FrameTree.js
 @@ -0,0 +1,370 @@
 +"use strict";
 +const Ci = Components.interfaces;
@@ -2413,11 +2382,11 @@ index 0000000000000000000000000000000000000000..1197aec925e07a52c5802e09e9fd797b
 +var EXPORTED_SYMBOLS = ['FrameTree'];
 +this.FrameTree = FrameTree;
 +
-diff --git a/testing/juggler/content/NetworkMonitor.js b/testing/juggler/content/NetworkMonitor.js
+diff --git a/juggler/content/NetworkMonitor.js b/juggler/content/NetworkMonitor.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c32e8c11be
 --- /dev/null
-+++ b/testing/juggler/content/NetworkMonitor.js
++++ b/juggler/content/NetworkMonitor.js
 @@ -0,0 +1,62 @@
 +"use strict";
 +const Ci = Components.interfaces;
@@ -2481,11 +2450,11 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +var EXPORTED_SYMBOLS = ['NetworkMonitor'];
 +this.NetworkMonitor = NetworkMonitor;
 +
-diff --git a/testing/juggler/content/PageAgent.js b/testing/juggler/content/PageAgent.js
+diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..27a99df370a12f3c98f68017106050f4ee4c5675
+index 0000000000000000000000000000000000000000..05c814d2b6a3df8d770acba723051eb52063bd4f
 --- /dev/null
-+++ b/testing/juggler/content/PageAgent.js
++++ b/juggler/content/PageAgent.js
 @@ -0,0 +1,919 @@
 +"use strict";
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -2807,7 +2776,7 @@ index 0000000000000000000000000000000000000000..27a99df370a12f3c98f68017106050f4
 +  _linkClicked(sync, anchorElement) {
 +    if (anchorElement.ownerGlobal.docShell !== this._docShell)
 +      return;
-+    this._session.emit('pageLinkClicked', { phase: sync ? 'after' : 'before' });
++    this._browserPage.emit('pageLinkClicked', { phase: sync ? 'after' : 'before' });
 +  }
 +
 +  _filePickerShown(inputElement) {
@@ -3406,11 +3375,11 @@ index 0000000000000000000000000000000000000000..27a99df370a12f3c98f68017106050f4
 +var EXPORTED_SYMBOLS = ['PageAgent'];
 +this.PageAgent = PageAgent;
 +
-diff --git a/testing/juggler/content/RuntimeAgent.js b/testing/juggler/content/RuntimeAgent.js
+diff --git a/juggler/content/RuntimeAgent.js b/juggler/content/RuntimeAgent.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..8e2a0237c696d95e083fc701738e3caa90e178ad
 --- /dev/null
-+++ b/testing/juggler/content/RuntimeAgent.js
++++ b/juggler/content/RuntimeAgent.js
 @@ -0,0 +1,556 @@
 +"use strict";
 +// Note: this file should be loadabale with eval() into worker environment.
@@ -3968,11 +3937,11 @@ index 0000000000000000000000000000000000000000..8e2a0237c696d95e083fc701738e3caa
 +
 +var EXPORTED_SYMBOLS = ['RuntimeAgent'];
 +this.RuntimeAgent = RuntimeAgent;
-diff --git a/testing/juggler/content/ScrollbarManager.js b/testing/juggler/content/ScrollbarManager.js
+diff --git a/juggler/content/ScrollbarManager.js b/juggler/content/ScrollbarManager.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..caee4df323d0a526ed7e38947c41c6430983568d
 --- /dev/null
-+++ b/testing/juggler/content/ScrollbarManager.js
++++ b/juggler/content/ScrollbarManager.js
 @@ -0,0 +1,85 @@
 +const Ci = Components.interfaces;
 +const Cr = Components.results;
@@ -4059,11 +4028,11 @@ index 0000000000000000000000000000000000000000..caee4df323d0a526ed7e38947c41c643
 +var EXPORTED_SYMBOLS = ['ScrollbarManager'];
 +this.ScrollbarManager = ScrollbarManager;
 +
-diff --git a/testing/juggler/content/WorkerMain.js b/testing/juggler/content/WorkerMain.js
+diff --git a/juggler/content/WorkerMain.js b/juggler/content/WorkerMain.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..b1a33558c60289c24f7f58e253a0a617ce35e469
 --- /dev/null
-+++ b/testing/juggler/content/WorkerMain.js
++++ b/juggler/content/WorkerMain.js
 @@ -0,0 +1,29 @@
 +"use strict";
 +loadSubScript('chrome://juggler/content/content/RuntimeAgent.js');
@@ -4094,11 +4063,11 @@ index 0000000000000000000000000000000000000000..b1a33558c60289c24f7f58e253a0a617
 +  },
 +});
 +
-diff --git a/testing/juggler/content/floating-scrollbars.css b/testing/juggler/content/floating-scrollbars.css
+diff --git a/juggler/content/floating-scrollbars.css b/juggler/content/floating-scrollbars.css
 new file mode 100644
 index 0000000000000000000000000000000000000000..7709bdd34c65062fc63684ef17fc792d3991d965
 --- /dev/null
-+++ b/testing/juggler/content/floating-scrollbars.css
++++ b/juggler/content/floating-scrollbars.css
 @@ -0,0 +1,47 @@
 +@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 +@namespace html url("http://www.w3.org/1999/xhtml");
@@ -4147,11 +4116,11 @@ index 0000000000000000000000000000000000000000..7709bdd34c65062fc63684ef17fc792d
 +*|*:not(html|select) > scrollbar gripper {
 +  display: none;
 +}
-diff --git a/testing/juggler/content/hidden-scrollbars.css b/testing/juggler/content/hidden-scrollbars.css
+diff --git a/juggler/content/hidden-scrollbars.css b/juggler/content/hidden-scrollbars.css
 new file mode 100644
 index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402dfd2ac4f6
 --- /dev/null
-+++ b/testing/juggler/content/hidden-scrollbars.css
++++ b/juggler/content/hidden-scrollbars.css
 @@ -0,0 +1,13 @@
 +@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 +@namespace html url("http://www.w3.org/1999/xhtml");
@@ -4166,11 +4135,11 @@ index 0000000000000000000000000000000000000000..3a386425d3796d0a6786dea193b3402d
 +  display: none;
 +}
 +
-diff --git a/testing/juggler/content/main.js b/testing/juggler/content/main.js
+diff --git a/juggler/content/main.js b/juggler/content/main.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..212f1c1a218efebe8685b019e79fb553db720453
 --- /dev/null
-+++ b/testing/juggler/content/main.js
++++ b/juggler/content/main.js
 @@ -0,0 +1,129 @@
 +const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 +const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -4301,11 +4270,11 @@ index 0000000000000000000000000000000000000000..212f1c1a218efebe8685b019e79fb553
 +}
 +
 +initialize();
-diff --git a/testing/juggler/jar.mn b/testing/juggler/jar.mn
+diff --git a/juggler/jar.mn b/juggler/jar.mn
 new file mode 100644
 index 0000000000000000000000000000000000000000..cf3a7fa162cf22146a23521b8d31b6ac38de839e
 --- /dev/null
-+++ b/testing/juggler/jar.mn
++++ b/juggler/jar.mn
 @@ -0,0 +1,30 @@
 +# This Source Code Form is subject to the terms of the Mozilla Public
 +# License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4337,11 +4306,11 @@ index 0000000000000000000000000000000000000000..cf3a7fa162cf22146a23521b8d31b6ac
 +  content/content/floating-scrollbars.css (content/floating-scrollbars.css)
 +  content/content/hidden-scrollbars.css (content/hidden-scrollbars.css)
 +
-diff --git a/testing/juggler/moz.build b/testing/juggler/moz.build
+diff --git a/juggler/moz.build b/juggler/moz.build
 new file mode 100644
 index 0000000000000000000000000000000000000000..1a0a3130bf9509829744fadc692a79754fddd351
 --- /dev/null
-+++ b/testing/juggler/moz.build
++++ b/juggler/moz.build
 @@ -0,0 +1,15 @@
 +# This Source Code Form is subject to the terms of the Mozilla Public
 +# License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4358,11 +4327,11 @@ index 0000000000000000000000000000000000000000..1a0a3130bf9509829744fadc692a7975
 +with Files("**"):
 +    BUG_COMPONENT = ("Testing", "Juggler")
 +
-diff --git a/testing/juggler/protocol/AccessibilityHandler.js b/testing/juggler/protocol/AccessibilityHandler.js
+diff --git a/juggler/protocol/AccessibilityHandler.js b/juggler/protocol/AccessibilityHandler.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de87598507
 --- /dev/null
-+++ b/testing/juggler/protocol/AccessibilityHandler.js
++++ b/juggler/protocol/AccessibilityHandler.js
 @@ -0,0 +1,17 @@
 +class AccessibilityHandler {
 +  constructor(chromeSession, sessionId, contentChannel) {
@@ -4381,11 +4350,11 @@ index 0000000000000000000000000000000000000000..2f2b7ca247f6b6dff396fb4b644654de
 +
 +var EXPORTED_SYMBOLS = ['AccessibilityHandler'];
 +this.AccessibilityHandler = AccessibilityHandler;
-diff --git a/testing/juggler/protocol/BrowserHandler.js b/testing/juggler/protocol/BrowserHandler.js
+diff --git a/juggler/protocol/BrowserHandler.js b/juggler/protocol/BrowserHandler.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..677ff969135d9b9e1d094a1e32ba0ed5d5485a54
 --- /dev/null
-+++ b/testing/juggler/protocol/BrowserHandler.js
++++ b/juggler/protocol/BrowserHandler.js
 @@ -0,0 +1,88 @@
 +"use strict";
 +
@@ -4475,11 +4444,11 @@ index 0000000000000000000000000000000000000000..677ff969135d9b9e1d094a1e32ba0ed5
 +
 +var EXPORTED_SYMBOLS = ['BrowserHandler'];
 +this.BrowserHandler = BrowserHandler;
-diff --git a/testing/juggler/protocol/Dispatcher.js b/testing/juggler/protocol/Dispatcher.js
+diff --git a/juggler/protocol/Dispatcher.js b/juggler/protocol/Dispatcher.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d42da002f
 --- /dev/null
-+++ b/testing/juggler/protocol/Dispatcher.js
++++ b/juggler/protocol/Dispatcher.js
 @@ -0,0 +1,197 @@
 +const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 +const {protocol, checkScheme} = ChromeUtils.import("chrome://juggler/content/protocol/Protocol.js");
@@ -4678,11 +4647,11 @@ index 0000000000000000000000000000000000000000..42e4622ed51b28ee6a5c48cc59c5400d
 +this.EXPORTED_SYMBOLS = ['Dispatcher'];
 +this.Dispatcher = Dispatcher;
 +
-diff --git a/testing/juggler/protocol/NetworkHandler.js b/testing/juggler/protocol/NetworkHandler.js
+diff --git a/juggler/protocol/NetworkHandler.js b/juggler/protocol/NetworkHandler.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..e1f1e21a20768d707a92ffffc8a7c114d9bb783b
 --- /dev/null
-+++ b/testing/juggler/protocol/NetworkHandler.js
++++ b/juggler/protocol/NetworkHandler.js
 @@ -0,0 +1,160 @@
 +"use strict";
 +
@@ -4844,11 +4813,11 @@ index 0000000000000000000000000000000000000000..e1f1e21a20768d707a92ffffc8a7c114
 +
 +var EXPORTED_SYMBOLS = ['NetworkHandler'];
 +this.NetworkHandler = NetworkHandler;
-diff --git a/testing/juggler/protocol/PageHandler.js b/testing/juggler/protocol/PageHandler.js
+diff --git a/juggler/protocol/PageHandler.js b/juggler/protocol/PageHandler.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..11f9567d816304906df6b6192b3fb71e6c9d53dc
 --- /dev/null
-+++ b/testing/juggler/protocol/PageHandler.js
++++ b/juggler/protocol/PageHandler.js
 @@ -0,0 +1,348 @@
 +"use strict";
 +
@@ -5198,11 +5167,11 @@ index 0000000000000000000000000000000000000000..11f9567d816304906df6b6192b3fb71e
 +
 +var EXPORTED_SYMBOLS = ['PageHandler'];
 +this.PageHandler = PageHandler;
-diff --git a/testing/juggler/protocol/PrimitiveTypes.js b/testing/juggler/protocol/PrimitiveTypes.js
+diff --git a/juggler/protocol/PrimitiveTypes.js b/juggler/protocol/PrimitiveTypes.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07f95a06fa
 --- /dev/null
-+++ b/testing/juggler/protocol/PrimitiveTypes.js
++++ b/juggler/protocol/PrimitiveTypes.js
 @@ -0,0 +1,143 @@
 +const t = {};
 +
@@ -5347,11 +5316,11 @@ index 0000000000000000000000000000000000000000..78b6601b91d0b7fcda61114e6846aa07
 +this.t = t;
 +this.checkScheme = checkScheme;
 +this.EXPORTED_SYMBOLS = ['t', 'checkScheme'];
-diff --git a/testing/juggler/protocol/Protocol.js b/testing/juggler/protocol/Protocol.js
+diff --git a/juggler/protocol/Protocol.js b/juggler/protocol/Protocol.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..dfb92200ddd508ab2dc3738c5b90750f6b1fdfaf
 --- /dev/null
-+++ b/testing/juggler/protocol/Protocol.js
++++ b/juggler/protocol/Protocol.js
 @@ -0,0 +1,772 @@
 +const {t, checkScheme} = ChromeUtils.import('chrome://juggler/content/protocol/PrimitiveTypes.js');
 +
@@ -6125,11 +6094,11 @@ index 0000000000000000000000000000000000000000..dfb92200ddd508ab2dc3738c5b90750f
 +};
 +this.checkScheme = checkScheme;
 +this.EXPORTED_SYMBOLS = ['protocol', 'checkScheme'];
-diff --git a/testing/juggler/protocol/RuntimeHandler.js b/testing/juggler/protocol/RuntimeHandler.js
+diff --git a/juggler/protocol/RuntimeHandler.js b/juggler/protocol/RuntimeHandler.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..5cc68241bdb420668fd14b45f1a702284a43fad7
 --- /dev/null
-+++ b/testing/juggler/protocol/RuntimeHandler.js
++++ b/juggler/protocol/RuntimeHandler.js
 @@ -0,0 +1,52 @@
 +"use strict";
 +
@@ -6183,11 +6152,11 @@ index 0000000000000000000000000000000000000000..5cc68241bdb420668fd14b45f1a70228
 +
 +var EXPORTED_SYMBOLS = ['RuntimeHandler'];
 +this.RuntimeHandler = RuntimeHandler;
-diff --git a/testing/juggler/protocol/TargetHandler.js b/testing/juggler/protocol/TargetHandler.js
+diff --git a/juggler/protocol/TargetHandler.js b/juggler/protocol/TargetHandler.js
 new file mode 100644
 index 0000000000000000000000000000000000000000..c0bab449971de13f993ac9825ac13368f8d8e226
 --- /dev/null
-+++ b/testing/juggler/protocol/TargetHandler.js
++++ b/juggler/protocol/TargetHandler.js
 @@ -0,0 +1,100 @@
 +"use strict";
 +
@@ -6289,6 +6258,37 @@ index 0000000000000000000000000000000000000000..c0bab449971de13f993ac9825ac13368
 +
 +var EXPORTED_SYMBOLS = ['TargetHandler'];
 +this.TargetHandler = TargetHandler;
+diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
+index d99e7f91503e84690d711bca2c2d916e34e56214..b63e9d96219420f5e4fb58797e4c3d901cba77cc 100644
+--- a/parser/html/nsHtml5TreeOpExecutor.cpp
++++ b/parser/html/nsHtml5TreeOpExecutor.cpp
+@@ -1065,9 +1065,12 @@ void nsHtml5TreeOpExecutor::AddSpeculationCSP(const nsAString& aCSP) {
+   if (!StaticPrefs::security_csp_enable()) {
+     return;
+   }
+-
+   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
+ 
++  if (mDocShell && static_cast<nsDocShell*>(mDocShell.get())->IsBypassCSPEnabled()) {
++    return;
++  }
++
+   nsresult rv = NS_OK;
+   nsCOMPtr<nsIContentSecurityPolicy> preloadCsp = mDocument->GetPreloadCsp();
+   if (!preloadCsp) {
+diff --git a/security/manager/ssl/nsCertOverrideService.cpp b/security/manager/ssl/nsCertOverrideService.cpp
+index 6dca2b78830edc1ddbd66264bd332853729dac71..fbe89c9682834e11b9d9219d9eb056ede084435a 100644
+--- a/security/manager/ssl/nsCertOverrideService.cpp
++++ b/security/manager/ssl/nsCertOverrideService.cpp
+@@ -634,7 +634,7 @@ static bool IsDebugger() {
+ NS_IMETHODIMP
+ nsCertOverrideService::
+     SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(bool aDisable) {
+-  if (!(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
++  if (false /* juggler hacks */ && !(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
+     return NS_ERROR_NOT_AVAILABLE;
+   }
+ 
 diff --git a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp b/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
 index 7e10920c900670949c2bef73715bde0eb4f0ea23..8c0f31c01bce59e24fa83faeae69813b3ee60de7 100644
 --- a/toolkit/components/statusfilter/nsBrowserStatusFilter.cpp
@@ -6313,14 +6313,14 @@ index 7e10920c900670949c2bef73715bde0eb4f0ea23..8c0f31c01bce59e24fa83faeae69813b
                                          int32_t aMaxSelfProgress,
                                          int32_t aCurTotalProgress,
 diff --git a/toolkit/toolkit.mozbuild b/toolkit/toolkit.mozbuild
-index 299230cb3bde5ecd111454ed6f59d1f0504b67a1..3edcf62eefcfbee366566beea4c0899a7a4b59fc 100644
+index 299230cb3bde5ecd111454ed6f59d1f0504b67a1..09f4ef69776217e5e9f5cc4ad4de939887d8c871 100644
 --- a/toolkit/toolkit.mozbuild
 +++ b/toolkit/toolkit.mozbuild
 @@ -168,6 +168,7 @@ if CONFIG['ENABLE_MARIONETTE']:
      DIRS += [
          '/testing/firefox-ui',
          '/testing/marionette',
-+        '/testing/juggler',
++        '/juggler',
          '/toolkit/components/telemetry/tests/marionette',
      ]
  
