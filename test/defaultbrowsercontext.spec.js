@@ -50,7 +50,6 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -70,7 +69,6 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
     });

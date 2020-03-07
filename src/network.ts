@@ -26,7 +26,6 @@ export type NetworkCookie = {
   expires: number,
   httpOnly: boolean,
   secure: boolean,
-  session: boolean,
   sameSite: 'Strict' | 'Lax' | 'None'
 };
 

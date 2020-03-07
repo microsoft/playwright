@@ -324,6 +324,7 @@ export class FFBrowserContext extends BrowserContextBase {
     return network.filterCookies(cookies.map(c => {
       const copy: any = { ... c };
       delete copy.size;
+      delete copy.session;
       return copy as network.NetworkCookie;
     }), urls);
   }

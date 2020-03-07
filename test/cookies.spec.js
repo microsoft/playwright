@@ -40,7 +40,25 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
+        sameSite: 'None',
+      }]);
+    });
+    it('should get a non-session cookie', async({context, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      // @see https://en.wikipedia.org/wiki/Year_2038_problem
+      const date = +(new Date('1/1/2038'));
+      await page.evaluate(timestamp => {
+        const date = new Date(timestamp);
+        document.cookie = `username=John Doe;expires=${date.toUTCString()}`;
+      }, date);
+      expect(await context.cookies()).toEqual([{
+        name: 'username',
+        value: 'John Doe',
+        domain: 'localhost',
+        path: '/',
+        expires: date / 1000,
+        httpOnly: false,
+        secure: false,
         sameSite: 'None',
       }]);
     });
@@ -91,7 +109,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
           expires: -1,
           httpOnly: false,
           secure: false,
-          session: true,
           sameSite: 'None',
         },
         {
@@ -102,7 +119,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
           expires: -1,
           httpOnly: false,
           secure: false,
-          session: true,
           sameSite: 'None',
         },
       ]);
@@ -131,7 +147,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: true,
-        session: true,
         sameSite: 'None',
       }, {
         name: 'doggo',
@@ -141,7 +156,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: true,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -156,6 +170,20 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         value: '123456'
       }]);
       expect(await page.evaluate(() => document.cookie)).toEqual('password=123456');
+    });
+    it('should roundtrip cookie', async({context, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      // @see https://en.wikipedia.org/wiki/Year_2038_problem
+      const date = +(new Date('1/1/2038'));
+      await page.evaluate(timestamp => {
+        const date = new Date(timestamp);
+        document.cookie = `username=John Doe;expires=${date.toUTCString()}`;
+      }, date);
+      const cookies = await context.cookies();
+      await context.clearCookies();
+      expect(await context.cookies()).toEqual([]);
+      await context.setCookies(cookies);
+      expect(await context.cookies()).toEqual(cookies);
     });
     it('should send cookie header', async({server, context}) => {
       let cookie = '';
@@ -250,7 +278,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it.slow()('should isolate cookies between launches', async({server}) => {
       const browser1 = await playwright.launch(defaultBrowserOptions);
       const context1 = await browser1.newContext();
-      await context1.setCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() + 1000000000 }]);
+      await context1.setCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
       await browser1.close();
 
       const browser2 = await playwright.launch(defaultBrowserOptions);
@@ -285,7 +313,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         value: '123456'
       }]);
       const cookies = await context.cookies();
-      expect(cookies[0].session).toBe(true);
       expect(cookies[0].expires).toBe(-1);
     });
     it('should set cookie with reasonable defaults', async({context, server}) => {
@@ -303,7 +330,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -323,7 +349,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
       expect(await page.evaluate('document.cookie')).toBe('gridcookie=GRID');
@@ -393,7 +418,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: true,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -424,7 +448,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
 
@@ -436,7 +459,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
     });

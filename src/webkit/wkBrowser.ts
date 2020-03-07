@@ -235,14 +235,20 @@ export class WKBrowserContext extends BrowserContextBase {
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Browser.getAllCookies', { browserContextId: this._browserContextId });
-    return network.filterCookies(cookies.map((c: network.NetworkCookie) => ({
-      ...c,
-      expires: c.expires === 0 ? -1 : c.expires
-    })), urls);
+    return network.filterCookies(cookies.map((c: network.NetworkCookie) => {
+      const copy: any = { ... c };
+      copy.expires = c.expires === 0 ? -1 : c.expires / 1000;
+      delete copy.session;
+      return copy as network.NetworkCookie;
+    }), urls);
   }
 
   async setCookies(cookies: network.SetNetworkCookieParam[]) {
-    const cc = network.rewriteCookies(cookies).map(c => ({ ...c, session: c.expires === -1 || c.expires === undefined })) as Protocol.Browser.SetCookieParam[];
+    const cc = network.rewriteCookies(cookies).map(c => ({
+      ...c,
+      session: c.expires === -1 || c.expires === undefined,
+      expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires
+    })) as Protocol.Browser.SetCookieParam[];
     await this._browser._browserSession.send('Browser.setCookies', { cookies: cc, browserContextId: this._browserContextId });
   }
 

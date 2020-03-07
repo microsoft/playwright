@@ -383,7 +383,6 @@ will be closed.
   - `size` <[number]>
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
-  - `session` <[boolean]>
   - `sameSite` <"Strict"|"Lax"|"None">
 
 If no URLs are specified, this method returns all cookies.
