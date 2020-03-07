@@ -92,7 +92,7 @@ export class CRTarget {
         session.once('Runtime.executionContextCreated', async event => {
           worker._createExecutionContext(new CRExecutionContext(session, event.context));
         });
-        // This might fail if the target is closed before we recieve all execution contexts.
+        // This might fail if the target is closed before we receive all execution contexts.
         session.send('Runtime.enable', {}).catch(debugError);
         return worker;
       });

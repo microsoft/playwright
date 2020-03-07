@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ $(uname) != "Linux" ]]; then
-  echo "ERROR: this script is desgined to be run on Linux. Can't run on $(uname)"
+  echo "ERROR: this script is designed to be run on Linux. Can't run on $(uname)"
   exit 1
 fi
 

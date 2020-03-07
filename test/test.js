@@ -117,7 +117,7 @@ describe(product, () => {
 });
 
 if (process.env.CI && testRunner.hasFocusedTestsOrSuites()) {
-  console.error('ERROR: "focused" tests/suites are prohibitted on bots. Remove any "fit"/"fdescribe" declarations.');
+  console.error('ERROR: "focused" tests/suites are prohibited on bots. Remove any "fit"/"fdescribe" declarations.');
   process.exit(1);
 }
 

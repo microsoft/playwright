@@ -222,7 +222,7 @@ const utils = module.exports = {
     //   from someone who has WRITE ACCESS to the repo.
     //
     // Since we don't want to run flakiness dashboard for PRs on all CIs, we
-    // check existance of FLAKINESS_DASHBOARD_PASSWORD and absense of
+    // check existence of FLAKINESS_DASHBOARD_PASSWORD and absence of
     // CIRRUS_BASE_SHA env variables.
     if (!process.env.FLAKINESS_DASHBOARD_PASSWORD || process.env.CIRRUS_BASE_SHA)
       return;
