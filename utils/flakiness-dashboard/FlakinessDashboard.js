@@ -150,7 +150,7 @@ class Git {
     schemeIndex += '://'.length;
     url = url.substring(0, schemeIndex) + username + ':' + password + '@' + url.substring(schemeIndex);
     const repoPath = await mkdtempAsync(TMP_FOLDER);
-    // Check existance of a remote branch for this bot.
+    // Check existence of a remote branch for this bot.
     const {stdout} = await spawnAsync('git', 'ls-remote', '--heads', url, branch);
     // If there is no remote branch for this bot - create one.
     if (!stdout.includes(branch)) {

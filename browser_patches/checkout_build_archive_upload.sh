@@ -5,7 +5,7 @@ set +x
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
   echo
-  echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploades if build is missing."
+  echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploads if build is missing."
   echo "Script will bail out early if the build for the browser version is already present."
   echo
   echo "Pass -f to upload anyway."
