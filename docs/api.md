@@ -477,6 +477,7 @@ An array of all pages inside the browser context.
   - `expires` <[number]> Unix time in seconds.
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
+  - `session` <[boolean]>
   - `sameSite` <"Strict"|"Lax"|"None">
 - returns: <[Promise]>
 

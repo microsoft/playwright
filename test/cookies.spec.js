@@ -44,6 +44,26 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         sameSite: 'None',
       }]);
     });
+    it('should get a non-session cookie', async({context, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      // @see https://en.wikipedia.org/wiki/Year_2038_problem
+      const date = +(new Date('1/1/2038'));
+      await page.evaluate(timestamp => {
+        const date = new Date(timestamp);
+        document.cookie = `username=John Doe;expires=${date.toUTCString()}`;
+      }, date);
+      expect(await context.cookies()).toEqual([{
+        name: 'username',
+        value: 'John Doe',
+        domain: 'localhost',
+        path: '/',
+        expires: date / 1000,
+        httpOnly: false,
+        secure: false,
+        session: false,
+        sameSite: 'None',
+      }]);
+    });
     it('should properly report httpOnly cookie', async({context, page, server}) => {
       server.setRoute('/empty.html', (req, res) => {
         res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/');
@@ -157,6 +177,20 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       }]);
       expect(await page.evaluate(() => document.cookie)).toEqual('password=123456');
     });
+    it('should roundtrip cookie', async({context, page, server}) => {
+      await page.goto(server.EMPTY_PAGE);
+      // @see https://en.wikipedia.org/wiki/Year_2038_problem
+      const date = +(new Date('1/1/2038'));
+      await page.evaluate(timestamp => {
+        const date = new Date(timestamp);
+        document.cookie = `username=John Doe;expires=${date.toUTCString()}`;
+      }, date);
+      const cookies = await context.cookies();
+      await context.clearCookies();
+      expect(await context.cookies()).toEqual([]);
+      await context.setCookies(cookies);
+      expect(await context.cookies()).toEqual(cookies);
+    });
     it('should send cookie header', async({server, context}) => {
       let cookie = '';
       server.setRoute('/empty.html', (req, res) => {
@@ -250,7 +284,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
     it.slow()('should isolate cookies between launches', async({server}) => {
       const browser1 = await playwright.launch(defaultBrowserOptions);
       const context1 = await browser1.newContext();
-      await context1.setCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() + 1000000000 }]);
+      await context1.setCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
       await browser1.close();
 
       const browser2 = await playwright.launch(defaultBrowserOptions);
