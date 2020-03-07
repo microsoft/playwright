@@ -139,7 +139,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     const wkPage = this._wkPages.get(pageProxyId);
     if (!wkPage)
       return;
-    wkPage.didClose(false);
+    wkPage.didClose();
     wkPage.dispose();
     this._wkPages.delete(pageProxyId);
   }
@@ -202,16 +202,12 @@ export class WKBrowserContext extends BrowserContextBase {
       await this.setHTTPCredentials(this._options.httpCredentials);
   }
 
+  _wkPages(): WKPage[] {
+    return Array.from(this._browser._wkPages.values()).filter(wkPage => wkPage._browserContext === this);
+  }
+
   _existingPages(): Page[] {
-    const pages: Page[] = [];
-    for (const wkPage of this._browser._wkPages.values()) {
-      if (wkPage._browserContext !== this)
-        continue;
-      const page = wkPage._initializedPage();
-      if (page)
-        pages.push(page);
-    }
-    return pages;
+    return this._wkPages().map(wkPage => wkPage._initializedPage()).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
   async pages(): Promise<Page[]> {

@@ -83,7 +83,7 @@ export class Firefox implements BrowserType {
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
       return FFBrowser.connect(transport, true);
     });
-    await helper.waitWithTimeout(browser._waitForTarget(t => t.type() === 'page'), 'first page', timeout);
+    await helper.waitWithTimeout(browser._firstPagePromise, 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     const browserContext = browser._defaultContext;
     browserContext.close = () => browserServer.close();

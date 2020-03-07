@@ -26,7 +26,7 @@ import { kScreenshotDuringNavigationError } from '../screenshotter';
 import * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
 import { FFBrowserContext } from './ffBrowser';
-import { FFSession } from './ffConnection';
+import { FFSession, FFSessionEvents } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager, headersArray } from './ffNetworkManager';
@@ -40,17 +40,22 @@ export class FFPage implements PageDelegate {
   readonly _session: FFSession;
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
-  private readonly _openerResolver: () => Promise<Page | null>;
+  readonly _browserContext: FFBrowserContext;
+  private _pagePromise: Promise<Page | Error>;
+  private _pageCallback: (pageOrError: Page | Error) => void = () => {};
+  private _initialized = false;
+  private readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
 
-  constructor(session: FFSession, browserContext: FFBrowserContext, openerResolver: () => Promise<Page | null>) {
+  constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
-    this._openerResolver = openerResolver;
+    this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(session);
     this.rawMouse = new RawMouseImpl(session);
     this._contextIdToContext = new Map();
+    this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
     this._networkManager = new FFNetworkManager(session, this._page);
     this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame));
@@ -75,16 +80,33 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
       helper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
     ];
+    this._pagePromise = new Promise(f => this._pageCallback = f);
+    session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
+    this._initialize();
   }
 
   async _initialize() {
-    await Promise.all([
-      this._session.send('Page.addScriptToEvaluateOnNewDocument', {
-        script: '',
-        worldName: UTILITY_WORLD_NAME,
-      }),
-      new Promise(f => this._session.once('Page.ready', f)),
-    ]);
+    try {
+      await Promise.all([
+        this._session.send('Page.addScriptToEvaluateOnNewDocument', {
+          script: '',
+          worldName: UTILITY_WORLD_NAME,
+        }),
+        new Promise(f => this._session.once('Page.ready', f)),
+      ]);
+      this._pageCallback(this._page);
+    } catch (e) {
+      this._pageCallback(e);
+    }
+    this._initialized = true;
+  }
+
+  _initializedPage(): Page | null {
+    return this._initialized ? this._page : null;
+  }
+
+  async pageOrError(): Promise<Page | Error> {
+    return this._pagePromise;
   }
 
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
@@ -249,6 +271,7 @@ export class FFPage implements PageDelegate {
   }
 
   didClose() {
+    this._session.dispose();
     helper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
     this._page._didClose();
@@ -289,7 +312,12 @@ export class FFPage implements PageDelegate {
   }
 
   async opener(): Promise<Page | null> {
-    return await this._openerResolver();
+    if (!this._opener)
+      return null;
+    const result = await this._opener.pageOrError();
+    if (result instanceof Page && !result.isClosed())
+      return result;
+    return null;
   }
 
   async reload(): Promise<void> {
