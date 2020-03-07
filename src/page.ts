@@ -70,6 +70,9 @@ export interface PageDelegate {
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options?: types.PDFOptions) => Promise<platform.BufferType>;
   coverage?: () => any;
+
+  // Work around Chrome's non-associated input and protocol.
+  inputActionEpilogue(): Promise<void>;
 }
 
 type PageState = {

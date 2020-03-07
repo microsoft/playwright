@@ -100,13 +100,15 @@ export class FrameManager {
     }
   }
 
-  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: types.NavigatingActionWaitOptions): Promise<T> {
+  async waitForNavigationsCreatedBy<T>(action: () => Promise<T>, options?: types.NavigatingActionWaitOptions, input?: boolean): Promise<T> {
     if (options && options.waitUntil === 'nowait')
       return action();
     const barrier = new PendingNavigationBarrier(options);
     this._pendingNavigationBarriers.add(barrier);
     try {
       const result = await action();
+      if (input)
+        await this._page._delegate.inputActionEpilogue();
       await barrier.waitFor();
       // Resolve in the next task, after all waitForNavigations.
       await new Promise(platform.makeWaitForNextTask());

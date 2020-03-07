@@ -802,7 +802,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
   });
 
   describe('Page.automaticWaiting', () => {
-    it.fail(CHROMIUM)('clicking anchor should await navigation', async({page, server}) => {
+    it('clicking anchor should await navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
@@ -817,7 +817,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
-    it.fail(CHROMIUM)('clicking anchor should await cross-process navigation', async({page, server}) => {
+    it('clicking anchor should await cross-process navigation', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
@@ -832,7 +832,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
-    it.fail(CHROMIUM)('should await form-get on click', async({page, server}) => {
+    it('should await form-get on click', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html?foo=bar', async (req, res) => {
         messages.push('route');
@@ -851,7 +851,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|click');
     });
-    it.fail(CHROMIUM)('should await form-post on click', async({page, server}) => {
+    it('should await form-post on click', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => {
         messages.push('route');
@@ -882,9 +882,9 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
     });
-    it.fail(CHROMIUM)('assigning location twice should await navigation', async({page, server}) => {
+    it.skip(CHROMIUM)('assigning location twice should await navigation', async({page, server}) => {
       const messages = [];
-      server.setRoute('/empty.html?cancel', async (req, res) => { messages.push('routecancel'); res.end('done'); });
+      server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
       server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
       await Promise.all([
         page.evaluate(`
@@ -905,7 +905,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       ]);
       expect(messages.join('|')).toBe('route|waitForNavigation|evaluate');
     });
-    it.fail(CHROMIUM)('should await navigating specified target', async({page, server}) => {
+    it('should await navigating specified target', async({page, server}) => {
       const messages = [];
       server.setRoute('/empty.html', async (req, res) => { messages.push('route'); res.end('done'); });
 
