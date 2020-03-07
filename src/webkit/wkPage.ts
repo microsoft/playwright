@@ -37,7 +37,6 @@ import { WKBrowserContext } from './wkBrowser';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
-const isPovisionalSymbol = Symbol('isPovisional');
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -58,9 +57,6 @@ export class WKPage implements PageDelegate {
   private readonly _evaluateOnNewDocumentSources: string[] = [];
   readonly _browserContext: WKBrowserContext;
   private _initialized = false;
-
-  // TODO: we should be able to just use |this._session| and |this._provisionalPage|.
-  private readonly _sessions = new Map<string, WKSession>();
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -164,14 +160,11 @@ export class WKPage implements PageDelegate {
 
   private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
     const { oldTargetId, newTargetId } = event;
-    const newSession = this._sessions.get(newTargetId);
-    assert(newSession, 'Unknown new target: ' + newTargetId);
-    const oldSession = this._sessions.get(oldTargetId);
-    assert(oldSession, 'Unknown old target: ' + oldTargetId);
-    oldSession.errorText = 'Target was swapped out.';
-    (newSession as any)[isPovisionalSymbol] = undefined;
     assert(this._provisionalPage);
-    assert(this._provisionalPage._session === newSession);
+    assert(this._provisionalPage._session.sessionId === newTargetId, 'Unknown new target: ' + newTargetId);
+    assert(this._session.sessionId === oldTargetId, 'Unknown old target: ' + oldTargetId);
+    this._session.errorText = 'Target was swapped out.';
+    const newSession = this._provisionalPage._session;
     this._provisionalPage.commit();
     this._provisionalPage.dispose();
     this._provisionalPage = null;
@@ -180,17 +173,15 @@ export class WKPage implements PageDelegate {
 
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
     const { targetId, crashed } = event;
-    const session = this._sessions.get(targetId);
-    assert(session, 'Unknown target destroyed: ' + targetId);
-    session.dispose();
-    this._sessions.delete(targetId);
-    if (this._provisionalPage && this._provisionalPage._session === session) {
+    if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
+      this._provisionalPage._session.dispose();
       this._provisionalPage.dispose();
       this._provisionalPage = null;
-      return;
+    } else if (this._session.sessionId === targetId) {
+      this._session.dispose();
+      if (crashed)
+        this.didClose(crashed);
     }
-    if (this._session === session && crashed)
-      this.didClose(crashed);
   }
 
   didClose(crashed: boolean) {
@@ -204,10 +195,10 @@ export class WKPage implements PageDelegate {
   dispose() {
     this._pageProxySession.dispose();
     helper.removeEventListeners(this._eventListeners);
-    for (const session of this._sessions.values())
-      session.dispose();
-    this._sessions.clear();
+    if (this._session)
+      this._session.dispose();
     if (this._provisionalPage) {
+      this._provisionalPage._session.dispose();
       this._provisionalPage.dispose();
       this._provisionalPage = null;
     }
@@ -241,7 +232,6 @@ export class WKPage implements PageDelegate {
       });
     });
     assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
-    this._sessions.set(targetInfo.targetId, session);
 
     if (!this._initialized) {
       assert(!targetInfo.isProvisional);
@@ -262,7 +252,6 @@ export class WKPage implements PageDelegate {
       this._pagePromiseCallback(pageOrError);
     } else {
       assert(targetInfo.isProvisional);
-      (session as any)[isPovisionalSymbol] = true;
       assert(!this._provisionalPage);
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
@@ -275,9 +264,12 @@ export class WKPage implements PageDelegate {
 
   private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
     const { targetId, message } = event;
-    const session = this._sessions.get(targetId);
-    assert(session, 'Unknown target: ' + targetId);
-    session.dispatchMessage(JSON.parse(message));
+    if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId)
+      this._provisionalPage._session.dispatchMessage(JSON.parse(message));
+    else if (this._session.sessionId === targetId)
+      this._session.dispatchMessage(JSON.parse(message));
+    else
+      throw new Error('Unknown target: ' + targetId);
   }
 
   private _addSessionListeners() {
