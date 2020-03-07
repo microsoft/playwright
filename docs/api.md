@@ -383,7 +383,6 @@ will be closed.
   - `size` <[number]>
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
-  - `session` <[boolean]>
   - `sameSite` <"Strict"|"Lax"|"None">
 
 If no URLs are specified, this method returns all cookies.
@@ -477,7 +476,6 @@ An array of all pages inside the browser context.
   - `expires` <[number]> Unix time in seconds.
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
-  - `session` <[boolean]>
   - `sameSite` <"Strict"|"Lax"|"None">
 - returns: <[Promise]>
 

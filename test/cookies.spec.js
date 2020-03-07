@@ -40,7 +40,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -60,7 +59,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: date / 1000,
         httpOnly: false,
         secure: false,
-        session: false,
         sameSite: 'None',
       }]);
     });
@@ -111,7 +109,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
           expires: -1,
           httpOnly: false,
           secure: false,
-          session: true,
           sameSite: 'None',
         },
         {
@@ -122,7 +119,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
           expires: -1,
           httpOnly: false,
           secure: false,
-          session: true,
           sameSite: 'None',
         },
       ]);
@@ -151,7 +147,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: true,
-        session: true,
         sameSite: 'None',
       }, {
         name: 'doggo',
@@ -161,7 +156,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: true,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -319,7 +313,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         value: '123456'
       }]);
       const cookies = await context.cookies();
-      expect(cookies[0].session).toBe(true);
       expect(cookies[0].expires).toBe(-1);
     });
     it('should set cookie with reasonable defaults', async({context, server}) => {
@@ -337,7 +330,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -357,7 +349,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
       expect(await page.evaluate('document.cookie')).toBe('gridcookie=GRID');
@@ -427,7 +418,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: true,
-        session: true,
         sameSite: 'None',
       }]);
     });
@@ -458,7 +448,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
 
@@ -470,7 +459,6 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
         expires: -1,
         httpOnly: false,
         secure: false,
-        session: true,
         sameSite: 'None',
       }]);
     });

@@ -26,7 +26,6 @@ export type NetworkCookie = {
   expires: number,
   httpOnly: boolean,
   secure: boolean,
-  session: boolean,
   sameSite: 'Strict' | 'Lax' | 'None'
 };
 
@@ -39,7 +38,6 @@ export type SetNetworkCookieParam = {
   expires?: number,
   httpOnly?: boolean,
   secure?: boolean,
-  session?: boolean,
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
@@ -67,16 +65,11 @@ export function filterCookies(cookies: NetworkCookie[], urls: string | string[] 
 export function rewriteCookies(cookies: SetNetworkCookieParam[]): SetNetworkCookieParam[] {
   return cookies.map(c => {
     assert(c.name, 'Cookie should have a name');
-    if (c.session === true)
-      assert(!c.expires, 'Session cookie cannot have an expiration date');
-    else if (c.session === false)
-      assert(c.expires && c.expires !== -1, 'Non-session cookie must have an expiration date');
     assert(c.value, 'Cookie should have a value');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
     assert(!(c.url && c.path), 'Cookie should have either url or domain');
     const copy = {...c};
-    delete copy.session;
     if (copy.url) {
       assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
       assert(!copy.url.startsWith('data:'), `Data URL page can not have cookie "${c.name}"`);

@@ -289,6 +289,7 @@ export class CRBrowserContext extends BrowserContextBase {
       const copy: any = { sameSite: 'None', ...c };
       delete copy.size;
       delete copy.priority;
+      delete copy.session;
       return copy as network.NetworkCookie;
     }), urls);
   }
