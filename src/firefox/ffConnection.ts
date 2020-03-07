@@ -32,7 +32,7 @@ export class FFConnection extends platform.EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
-  private _sessions: Map<string, FFSession>;
+  readonly _sessions: Map<string, FFSession>;
   _debugProtocol: (message: string) => void = platform.debug('pw:protocol');
   _closed: boolean;
 
@@ -58,14 +58,6 @@ export class FFConnection extends platform.EventEmitter {
     this.off = super.removeListener;
     this.removeListener = super.removeListener;
     this.once = super.once;
-  }
-
-  static fromSession(session: FFSession): FFConnection {
-    return session._connection;
-  }
-
-  session(sessionId: string): FFSession | null {
-    return this._sessions.get(sessionId) || null;
   }
 
   async send<T extends keyof Protocol.CommandParameters>(
@@ -94,17 +86,6 @@ export class FFConnection extends platform.EventEmitter {
     const object = JSON.parse(message);
     if (object.id === kBrowserCloseMessageId)
       return;
-    if (object.method === 'Target.attachedToTarget') {
-      const sessionId = object.params.sessionId;
-      const session = new FFSession(this, object.params.targetInfo.type, sessionId, message => this._rawSend({...message, sessionId}));
-      this._sessions.set(sessionId, session);
-    } else if (object.method === 'Target.detachedFromTarget') {
-      const session = this._sessions.get(object.params.sessionId);
-      if (session) {
-        session._onClosed();
-        this._sessions.delete(object.params.sessionId);
-      }
-    }
     if (object.sessionId) {
       const session = this._sessions.get(object.sessionId);
       if (session)
@@ -132,7 +113,7 @@ export class FFConnection extends platform.EventEmitter {
       callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
     for (const session of this._sessions.values())
-      session._onClosed();
+      session.dispose();
     this._sessions.clear();
     Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
@@ -142,8 +123,10 @@ export class FFConnection extends platform.EventEmitter {
       this._transport.close();
   }
 
-  getSession(sessionId: string): FFSession | null {
-    return this._sessions.get(sessionId) || null;
+  createSession(sessionId: string, type: string): FFSession {
+    const session = new FFSession(this, type, sessionId, message => this._rawSend({...message, sessionId}));
+    this._sessions.set(sessionId, session);
+    return session;
   }
 }
 
@@ -206,11 +189,12 @@ export class FFSession extends platform.EventEmitter {
     }
   }
 
-  _onClosed() {
+  dispose() {
     for (const callback of this._callbacks.values())
       callback.reject(rewriteError(callback.error, `Protocol error (${callback.method}): Target closed.`));
     this._callbacks.clear();
     this._disposed = true;
+    this._connection._sessions.delete(this._sessionId);
     Promise.resolve().then(() => this.emit(FFSessionEvents.Disconnected));
   }
 }

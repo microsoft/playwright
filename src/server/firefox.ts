@@ -65,7 +65,7 @@ export class Firefox implements BrowserType {
       throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
     const browserServer = await this._launchServer(options, 'local');
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport, options && options.slowMo);
+      return FFBrowser.connect(transport, false, options && options.slowMo);
     });
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
     browser.close = () => browserServer.close();
@@ -81,7 +81,7 @@ export class Firefox implements BrowserType {
     const { timeout = 30000 } = options || {};
     const browserServer = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await platform.connectToWebsocket(browserServer.wsEndpoint()!, transport => {
-      return FFBrowser.connect(transport);
+      return FFBrowser.connect(transport, true);
     });
     await helper.waitWithTimeout(browser._waitForTarget(t => t.type() === 'page'), 'first page', timeout);
     // Hack: for typical launch scenario, ensure that close waits for actual process termination.
@@ -166,7 +166,7 @@ export class Firefox implements BrowserType {
 
   async connect(options: ConnectOptions): Promise<FFBrowser> {
     return await platform.connectToWebsocket(options.wsEndpoint, transport => {
-      return FFBrowser.connect(transport, options.slowMo);
+      return FFBrowser.connect(transport, false, options.slowMo);
     });
   }
 
