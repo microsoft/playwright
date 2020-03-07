@@ -149,7 +149,7 @@ export class WebKit implements BrowserType {
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
     if (launchType === 'server')
       return { browserServer };
-    // For typical launch scenario close will terminate the browser process.
+    // For local launch scenario close will terminate the browser process.
     transport.close = () => browserServer!.close();
     return { browserServer, transport };
   }
