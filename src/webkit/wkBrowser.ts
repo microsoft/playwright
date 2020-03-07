@@ -66,11 +66,11 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
   }
 
   _onDisconnect() {
+    for (const wkPage of this._wkPages.values())
+    wkPage.dispose();
+    this._wkPages.clear();
     for (const context of this._contexts.values())
       context._browserClosed();
-    for (const wkPage of this._wkPages.values())
-      wkPage.dispose();
-    this._wkPages.clear();
     this.emit(Events.Browser.Disconnected);
   }
 

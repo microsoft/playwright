@@ -56,8 +56,6 @@ export class Chromium implements BrowserType {
       throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await CRBrowser.connect(transport!, false, options && options.slowMo);
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => browserServer.close();
     (browser as any)['__server__'] = browserServer;
     return browser;
   }
@@ -68,7 +66,7 @@ export class Chromium implements BrowserType {
 
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
-    const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
+    const { transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await CRBrowser.connect(transport!, true);
     const browserContext = browser._defaultContext;
 
@@ -78,9 +76,6 @@ export class Chromium implements BrowserType {
     const firstTarget = targets().length ? Promise.resolve() : new Promise(f => browserContext.once('page', f));
     const firstPage = firstTarget.then(() => targets()[0].pageOrError());
     await helper.waitWithTimeout(firstPage, 'first page', timeout);
-
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browserContext.close = () => browserServer.close();
     return browserContext;
   }
 
@@ -145,18 +140,21 @@ export class Chromium implements BrowserType {
       },
     });
 
-    let transport: ConnectionTransport | undefined;
-    let browserWSEndpoint: string | null;
+    let transport: PipeTransport | undefined;
+    let browserWSEndpoint: string | undefined;
     if (launchType === 'server') {
       const timeoutError = new TimeoutError(`Timed out after ${timeout} ms while trying to connect to Chromium! The only Chromium revision guaranteed to work is r${this._revision}`);
       const match = await waitForLine(launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/, timeout, timeoutError);
       browserWSEndpoint = match[1];
+      browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
+      return { browserServer };
     } else {
-      transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-      browserWSEndpoint = null;
+      const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+      browserServer = new BrowserServer(launchedProcess, gracefullyClose, null);
+      // For typical launch scenario close will terminate the browser process.
+      transport.close = () => browserServer!.close();
+      return { browserServer, transport };
     }
-    browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
-    return { browserServer, transport };
   }
 
   async connect(options: ConnectOptions): Promise<CRBrowser> {

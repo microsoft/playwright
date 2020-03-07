@@ -30,10 +30,10 @@ export const kPageProxyMessageReceived = 'kPageProxyMessageReceived';
 export type PageProxyMessageReceivedPayload = { pageProxyId: string, message: any };
 
 export class WKConnection {
-  private _lastId = 0;
   private readonly _transport: ConnectionTransport;
+  private readonly _onDisconnect: () => void;
+  private _lastId = 0;
   private _closed = false;
-  private _onDisconnect: () => void;
   _debugFunction: (message: string) => void = platform.debug('pw:protocol');
 
   readonly browserSession: WKSession;

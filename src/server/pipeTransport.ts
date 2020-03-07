@@ -24,6 +24,9 @@ export class PipeTransport implements ConnectionTransport {
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
   private _waitForNextTask = makeWaitForNextTask();
+
+  // This method must be overridden to provide custom close behavior.
+  close: () => void = () => { throw new Error('Pipe transport cannot be closed by default'); };
   onmessage?: (message: string) => void;
   onclose?: () => void;
 
@@ -71,12 +74,5 @@ export class PipeTransport implements ConnectionTransport {
       end = buffer.indexOf('\0', start);
     }
     this._pendingMessage = buffer.toString(undefined, start);
-  }
-
-  close() {
-    this._pipeWrite = null;
-    helper.removeEventListeners(this._eventListeners);
-    if (this.onclose)
-      this.onclose.call(null);
   }
 }
