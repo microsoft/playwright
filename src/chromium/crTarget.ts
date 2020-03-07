@@ -71,9 +71,9 @@ export class CRTarget {
   }
 
   async pageOrError(): Promise<Page | Error> {
-    if (!CRTarget.isPageType(this.type()))
-      throw new Error('Not a page.');
-    return this._pagePromise!;
+    if (CRTarget.isPageType(this.type()))
+      return this._pagePromise!;
+    throw new Error('Not a page.');
   }
 
   async serviceWorker(): Promise<Worker | null> {
