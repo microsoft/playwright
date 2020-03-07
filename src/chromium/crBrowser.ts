@@ -102,21 +102,11 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return createPageInNewContext(this, options);
   }
 
-  async _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
-    if (!CRTarget.isPageType(event.targetInfo.type))
+  async _onAttachedToTarget({targetInfo, sessionId}: Protocol.Target.attachedToTargetPayload) {
+    if (!CRTarget.isPageType(targetInfo.type))
       return;
-    const target = this._targets.get(event.targetInfo.targetId);
-    const session = this._connection.session(event.sessionId)!;
-    await target!.initializePageSession(session).catch(debugError);
-  }
-
-  async _targetCreated({targetInfo}: Protocol.Target.targetCreatedPayload) {
-    const {browserContextId} = targetInfo;
-    const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId)! : this._defaultContext;
-    const target = new CRTarget(this, targetInfo, context, () => this._connection.createSession(targetInfo));
-    assert(!this._targets.has(targetInfo.targetId), 'Target should not exist before targetCreated');
-    this._targets.set(targetInfo.targetId, target);
-
+    const session = this._connection.session(sessionId)!;
+    const { context, target } = this._createTarget(targetInfo, session);
     try {
       switch (targetInfo.type) {
         case 'page': {
@@ -135,11 +125,6 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
           context.emit(Events.CRBrowserContext.BackgroundPage, event);
           break;
         }
-        case 'service_worker': {
-          const serviceWorker = await target.serviceWorker();
-          context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
-          break;
-        }
       }
     } catch (e) {
       // Do not dispatch the event if initialization failed.
@@ -147,15 +132,40 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     }
   }
 
+  async _targetCreated({targetInfo}: Protocol.Target.targetCreatedPayload) {
+    if (targetInfo.type !== 'service_worker')
+      return;
+    const { context, target } = this._createTarget(targetInfo, null);
+    try {
+      const serviceWorker = await target.serviceWorker();
+      context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
+    } catch (e) {
+      // Do not dispatch the event if initialization failed.
+      debugError(e);
+    }
+  }
+
+  private _createTarget(targetInfo: Protocol.Target.TargetInfo, session: CRSession | null) {
+    const {browserContextId} = targetInfo;
+    const context = (browserContextId && this._contexts.has(browserContextId)) ? this._contexts.get(browserContextId)! : this._defaultContext;
+    const target = new CRTarget(this, targetInfo, context, session, () => this._connection.createSession(targetInfo));
+    assert(!this._targets.has(targetInfo.targetId), 'Target should not exist before targetCreated');
+    this._targets.set(targetInfo.targetId, target);
+    return { context, target };
+  }
+
   async _targetDestroyed(event: { targetId: string; }) {
     const target = this._targets.get(event.targetId)!;
+    if (!target)
+      return;
     this._targets.delete(event.targetId);
     target._didClose();
   }
 
   _targetInfoChanged(event: Protocol.Target.targetInfoChangedPayload) {
     const target = this._targets.get(event.targetInfo.targetId)!;
-    assert(target, 'target should exist before targetInfoChanged');
+    if (!target)
+      return;
     target._targetInfoChanged(event.targetInfo);
   }
 
