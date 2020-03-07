@@ -701,6 +701,9 @@ export class WKPage implements PageDelegate {
     return getAccessibilityTree(this._session, needle);
   }
 
+  async inputActionEpilogue(): Promise<void> {
+  }
+
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     const parent = frame.parentFrame();
     if (!parent)

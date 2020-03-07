@@ -560,6 +560,10 @@ export class CRPage implements PageDelegate {
     return getAccessibilityTree(this._client, needle);
   }
 
+  async inputActionEpilogue(): Promise<void> {
+    await this._client.send('Page.enable').catch(e => {});
+  }
+
   async pdf(options?: types.PDFOptions): Promise<platform.BufferType> {
     return this._pdf.generate(options);
   }

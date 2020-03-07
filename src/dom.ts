@@ -258,7 +258,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await action(point);
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
-    }, options);
+    }, options, true);
   }
 
   hover(options?: PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -309,7 +309,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await this._page.keyboard.sendCharacters(value);
       else
         await this._page.keyboard.press('Delete');
-    }, options);
+    }, options, true);
   }
 
   async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[]) {
@@ -358,14 +358,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.type(text, options);
-    }, options);
+    }, options, true);
   }
 
   async press(key: string, options?: { delay?: number, text?: string } & types.NavigatingActionWaitOptions) {
     await this._page._frameManager.waitForNavigationsCreatedBy(async () => {
       await this.focus();
       await this._page.keyboard.press(key, options);
-    }, options);
+    }, options, true);
   }
 
   async check(options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
