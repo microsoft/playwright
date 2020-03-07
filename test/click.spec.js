@@ -149,14 +149,9 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       let error = null;
       await page.goto(server.PREFIX + '/input/button.html');
       await page.$eval('button', b => b.style.display = 'none');
-      await page.click('button', { waitFor: false }).catch(e => error = e);
+      await page.click('button', { force: true }).catch(e => error = e);
       expect(error.message).toBe('Node is either not visible or not an HTMLElement');
       expect(await page.evaluate(() => result)).toBe('Was not clicked');
-    });
-    it('should throw for non-boolean waitFor', async({page, server}) => {
-      await page.goto(server.PREFIX + '/input/button.html');
-      const error = await page.click('button', { waitFor: 'visible' }).catch(e => e);
-      expect(error.message).toBe('waitFor option should be a boolean, got "string"');
     });
     it('should waitFor visible', async({page, server}) => {
       let done = false;
@@ -232,13 +227,6 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
       ]);
       await page.click('label[for="agree"]');
       expect(await page.evaluate(() => result.check)).toBe(false);
-    });
-
-    it('should fail to click a missing button', async({page, server}) => {
-      await page.goto(server.PREFIX + '/input/button.html');
-      let error = null;
-      await page.click('button.does-not-exist', { waitFor: false }).catch(e => error = e);
-      expect(error.message).toBe('No node found for selector: button.does-not-exist');
     });
     it.skip(FFOX)('should not hang with touch-enabled viewports', async({server, browser}) => {
       // @see https://github.com/GoogleChrome/puppeteer/issues/161
@@ -490,7 +478,7 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
         blocker.style.top = '0';
         document.body.appendChild(blocker);
       });
-      await button.click({ waitFor: false });
+      await button.click({ force: true });
       expect(await page.evaluate(() => window.result)).toBe('Was not clicked');
     });
 

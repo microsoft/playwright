@@ -51,15 +51,13 @@ export type NavigateOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,
 };
 
-export type ActionWaitOptionsNoWaitFor = TimeoutOptions & {
+export type NavigatingActionWaitOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent | 'nowait',
 };
 
-export type ActionWaitOptionsNoNavigation = TimeoutOptions & {
-  waitFor?: boolean,
+export type PointerActionWaitOptions = TimeoutOptions & {
+  force?: boolean,
 };
-
-export type ActionWaitOptions = ActionWaitOptionsNoWaitFor & ActionWaitOptionsNoNavigation;
 
 export type WaitForNavigationOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,

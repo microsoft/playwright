@@ -202,6 +202,8 @@ function compareDocumentations(actual, expected) {
     const expectedName = expected.name.replace(/\ /g, '').replace(/ElementHandle\<Node\>/g, 'ElementHandle');
     if (expectedName !== actualName)
       errors.push(`${source} ${actualName} != ${expectedName}`);
+    if (actual.name === 'boolean' || actual.name === 'string')
+      return;
     const actualPropertiesMap = new Map(actual.properties.map(property => [property.name, property.type]));
     const expectedPropertiesMap = new Map(expected.properties.map(property => [property.name, property.type]));
     const propertiesDiff = diff(Array.from(actualPropertiesMap.keys()).sort(), Array.from(expectedPropertiesMap.keys()).sort());
