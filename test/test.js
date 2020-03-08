@@ -118,7 +118,7 @@ for (const browserConfig of BROWSER_CONFIGS) {
           return;
         filteredApi[apiName] = api[apiName];
       });
-      utils.recordAPICoverage(testRunner, filteredApi, events, missingCoverage);
+      utils.recordAPICoverage(testRunner, filteredApi, browserConfig.events, browserConfig.missingCoverage);
     }
   });
 }
