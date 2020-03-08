@@ -83,11 +83,12 @@ function stringFormatter(received, expected) {
   }).join('');
   const output = [
     `Expected: ${expected}`,
-    `Received: ${highlighted}`,
+    `Received: ${received}`,
+    `    Diff: ${highlighted}`,
   ];
   for (let i = 0; i < Math.min(expected.length, received.length); ++i) {
     if (expected[i] !== received[i]) {
-      const padding = ' '.repeat('Expected: '.length);
+      const padding = ' '.repeat('    Diff: '.length);
       const firstDiffCharacter = '~'.repeat(i) + '^';
       output.push(colors.red(padding + firstDiffCharacter));
       break;
