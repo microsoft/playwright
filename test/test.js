@@ -77,44 +77,51 @@ beforeEach(async({server, httpsServer}) => {
   httpsServer.reset();
 });
 
-const products = ['WebKit', 'Firefox', 'Chromium'];
-let product;
-let events;
-let missingCoverage;
-if (process.env.BROWSER === 'firefox') {
-  product = 'Firefox';
-  events = {
-    ...require('../lib/events').Events,
-    ...require('../lib/chromium/events').Events,
-  };
-  missingCoverage = ['browserContext.setGeolocation', 'browserContext.setOffline'];
-} else if (process.env.BROWSER === 'webkit') {
-  product = 'WebKit';
-  events = require('../lib/events').Events;
-  missingCoverage = ['browserContext.clearPermissions'];
-} else {
-  product = 'Chromium';
-  events = require('../lib/events').Events;
-  missingCoverage = [];
-}
+const BROWSER_CONFIGS = [
+  {
+    name: 'Firefox',
+    events: {
+      ...require('../lib/events').Events,
+      ...require('../lib/chromium/events').Events,
+    },
+    missingCoverage: ['browserContext.setGeolocation', 'browserContext.setOffline'],
+  },
+  {
+    name: 'WebKit',
+    events: require('../lib/events').Events,
+    missingCoverage: ['browserContext.clearPermissions'],
+  },
+  {
+    name: 'Chromium',
+    events: require('../lib/events').Events,
+    missingCoverage: [],
+  },
+];
 
-describe(product, () => {
-  testRunner.loadTests(require('./playwright.spec.js'), {
-    product,
-    playwrightPath: utils.projectRoot(),
-    testRunner,
-  });
-  if (process.env.COVERAGE) {
-    const api = require('../lib/api');
-    const filteredApi = {};
-    Object.keys(api).forEach(name => {
-      if (products.some(p => name.startsWith(p)) && !name.startsWith(product))
-        return;
-      filteredApi[name] = api[name];
+const browserNames = BROWSER_CONFIGS.map(config => config.name);
+
+for (const browserConfig of BROWSER_CONFIGS) {
+  if (process.env.BROWSER !== browserConfig.name.toLowerCase() && process.env.BROWSER !== 'all')
+    continue;
+  const product = browserConfig.name;
+  describe(product, () => {
+    testRunner.loadTests(require('./playwright.spec.js'), {
+      product,
+      playwrightPath: utils.projectRoot(),
+      testRunner,
     });
-    utils.recordAPICoverage(testRunner, filteredApi, events, missingCoverage);
-  }
-});
+    if (process.env.COVERAGE) {
+      const api = require('../lib/api');
+      const filteredApi = {};
+      Object.keys(api).forEach(apiName => {
+        if (browserNames.some(browserName => apiName.startsWith(browserName)) && !apiName.startsWith(product))
+          return;
+        filteredApi[apiName] = api[apiName];
+      });
+      utils.recordAPICoverage(testRunner, filteredApi, browserConfig.events, browserConfig.missingCoverage);
+    }
+  });
+}
 
 if (process.env.CI && testRunner.hasFocusedTestsOrSuites()) {
   console.error('ERROR: "focused" tests/suites are prohibited on bots. Remove any "fit"/"fdescribe" declarations.');
