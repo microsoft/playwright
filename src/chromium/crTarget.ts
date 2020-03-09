@@ -19,7 +19,7 @@ import { CRBrowser, CRBrowserContext } from './crBrowser';
 import { CRSession, CRSessionEvents } from './crConnection';
 import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
-import { debugError } from '../helper';
+import { debugError, assert } from '../helper';
 import { CRPage } from './crPage';
 import { CRExecutionContext } from './crExecutionContext';
 
@@ -48,14 +48,21 @@ export class CRTarget {
     browser: CRBrowser,
     targetInfo: Protocol.Target.TargetInfo,
     browserContext: CRBrowserContext,
+    session: CRSession | null,
     sessionFactory: () => Promise<CRSession>) {
     this._targetInfo = targetInfo;
     this._browser = browser;
     this._browserContext = browserContext;
     this._targetId = targetInfo.targetId;
     this.sessionFactory = sessionFactory;
-    if (CRTarget.isPageType(targetInfo.type))
-      this._pagePromise = new Promise<Page | Error>(f => this._pagePromiseCallback = f);
+    if (CRTarget.isPageType(targetInfo.type)) {
+      assert(session, 'Page target must be created with existing session');
+      this._crPage = new CRPage(session, this._browser, this._browserContext);
+      const page = this._crPage.page();
+      (page as any)[targetSymbol] = this;
+      session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
+      this._pagePromise = this._crPage.initialize().then(() => page).catch(e => e);
+    }
   }
 
   _didClose() {
@@ -63,23 +70,10 @@ export class CRTarget {
       this._crPage.didClose();
   }
 
-  async initializePageSession(session: CRSession) {
-    this._crPage = new CRPage(session, this._browser, this._browserContext);
-    const page = this._crPage.page();
-    (page as any)[targetSymbol] = this;
-    session.once(CRSessionEvents.Disconnected, () => page._didDisconnect());
-    try {
-      await this._crPage.initialize();
-      this._pagePromiseCallback!(page);
-    } catch (e) {
-      this._pagePromiseCallback!(e);
-    }
-  }
-
   async pageOrError(): Promise<Page | Error> {
-    if (this._targetInfo.type !== 'page' && this._targetInfo.type !== 'background_page')
-      throw new Error('Not a page.');
-    return this._pagePromise!;
+    if (CRTarget.isPageType(this.type()))
+      return this._pagePromise!;
+    throw new Error('Not a page.');
   }
 
   async serviceWorker(): Promise<Worker | null> {
