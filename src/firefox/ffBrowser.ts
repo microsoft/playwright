@@ -293,7 +293,12 @@ export class FFBrowserContext extends BrowserContextBase {
   async close() {
     if (this._closed)
       return;
-    assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
+    if (!this._browserContextId) {
+      // Default context is only created in 'persistent' mode and closing it should close
+      // the browser.
+      await this._browser.close();
+      return;
+    }
     await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     this._didCloseInternal();

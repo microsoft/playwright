@@ -226,7 +226,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(message).not.toContain('Timeout');
       }
     });
-    it.fail(WEBKIT)('should fire close event for all contexts', async() => {
+    it('should fire close event for all contexts', async(state, test) => {
       const browser = await playwright.launch(defaultBrowserOptions);
       const context = await browser.newContext();
       let closed = false;

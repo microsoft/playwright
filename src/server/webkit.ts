@@ -68,8 +68,6 @@ export class WebKit implements BrowserType {
       throw new Error('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistent` instead');
     const { browserServer, transport } = await this._launchServer(options, 'local');
     const browser = await WKBrowser.connect(transport!, options && options.slowMo);
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    browser.close = () => browserServer.close();
     (browser as any)['__server__'] = browserServer;
     return browser;
   }
@@ -80,13 +78,10 @@ export class WebKit implements BrowserType {
 
   async launchPersistent(userDataDir: string, options?: LaunchOptions): Promise<BrowserContext> {
     const { timeout = 30000 } = options || {};
-    const { browserServer, transport } = await this._launchServer(options, 'persistent', userDataDir);
+    const { transport } = await this._launchServer(options, 'persistent', userDataDir);
     const browser = await WKBrowser.connect(transport!, undefined, true);
     await helper.waitWithTimeout(browser._waitForFirstPageTarget(), 'first page', timeout);
-    // Hack: for typical launch scenario, ensure that close waits for actual process termination.
-    const browserContext = browser._defaultContext;
-    browserContext.close = () => browserServer.close();
-    return browserContext;
+    return browser._defaultContext;
   }
 
   private async _launchServer(options: LaunchOptions = {}, launchType: LaunchType, userDataDir?: string, port?: number): Promise<{ browserServer: BrowserServer, transport?: ConnectionTransport }> {
@@ -150,8 +145,11 @@ export class WebKit implements BrowserType {
       },
     });
 
-    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+    // For local launch scenario close will terminate the browser process.
+    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
+    if (launchType === 'server')
+      return { browserServer };
     return { browserServer, transport };
   }
 
@@ -378,7 +376,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
 
-    socket.on('close', () => {
+    socket.on('close', (socket as any).__closeListener = () => {
       for (const [pageProxyId, s] of pageProxyIds) {
         if (s === socket)
           pageProxyIds.delete(pageProxyId);
@@ -398,8 +396,10 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   });
 
   transport.onclose = () => {
-    for (const socket of sockets)
+    for (const socket of sockets) {
+      socket.removeListener('close', (socket as any).__closeListener);
       socket.close(undefined, 'Browser disconnected');
+    }
     server.close();
     transport.onmessage = undefined;
     transport.onclose = undefined;

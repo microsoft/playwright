@@ -230,7 +230,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.evaluate(e => e.textContent, element).catch(e => error = e);
       expect(error.message).toContain('JSHandle is disposed');
     });
-    it('should simulate a user gesture', async({page, server}) => {
+    it.fail(FFOX)('should simulate a user gesture', async({page, server}) => {
+      // Flaky on Limux: https://github.com/microsoft/playwright/issues/1305
       const result = await page.evaluate(() => {
         document.body.appendChild(document.createTextNode('test'));
         document.execCommand('selectAll');
