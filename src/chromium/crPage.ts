@@ -360,6 +360,8 @@ export class CRPage implements PageDelegate {
         mobile: !!viewport.isMobile,
         width: viewport.width,
         height: viewport.height,
+        screenWidth: viewport.width,
+        screenHeight: viewport.height,
         deviceScaleFactor: viewport.deviceScaleFactor || 1,
         screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
       }),
