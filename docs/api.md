@@ -1011,7 +1011,7 @@ Browser-specific Coverage implementation, only available for Chromium atm. See [
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'networkidle0'` - consider navigation to be finished when there are no more than 0 network connections for at least `500` ms.
-    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.  
+    - `'networkidle2'` - consider navigation to be finished when there are no more than 2 network connections for at least `500` ms.
     - `'nowait'` - do not wait.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
@@ -3377,8 +3377,9 @@ page.on('requestfailed', request => {
 - `response` <[Object]> Response that will fulfill this request
   - `status` <[number]> Response status code, defaults to `200`.
   - `headers` <[Object]> Optional response headers. Header values will be converted to a string.
-  - `contentType` <[string]> If set, equals to setting `Content-Type` response header
-  - `body` <[string]|[Buffer]> Optional response body
+  - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
+  - `body` <[string]|[Buffer]> Optional response body.
+  - `path` <[string]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
 - returns: <[Promise]>
 
 Fulfills request with given response. To use this, request interception should
@@ -3397,8 +3398,11 @@ await page.route('**/*', request => {
 });
 ```
 
-> **NOTE** Mocking responses for dataURL requests is not supported.
-> Calling `request.fulfill` for a dataURL request is a noop.
+An example of serving static file:
+
+```js
+await page.route('**/xhr_endpoint', request => request.fulfill({ path: 'mock_data.json' }));
+```
 
 #### request.headers()
 - returns: <[Object]> An object with HTTP headers associated with the request. All header names are lower-case.
