@@ -102,10 +102,18 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     return createPageInNewContext(this, options);
   }
 
-  async _onAttachedToTarget({targetInfo, sessionId}: Protocol.Target.attachedToTargetPayload) {
-    if (!CRTarget.isPageType(targetInfo.type))
-      return;
+  async _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
     const session = this._connection.session(sessionId)!;
+    if (!CRTarget.isPageType(targetInfo.type)) {
+      assert(targetInfo.type === 'service_worker' || targetInfo.type === 'browser' || targetInfo.type === 'other');
+      if (waitingForDebugger) {
+        // Ideally, detaching should resume any target, but there is a bug in the backend.
+        session.send('Runtime.runIfWaitingForDebugger').catch(debugError).then(() => {
+          this._session.send('Target.detachFromTarget', { sessionId }).catch(debugError);
+        });
+      }
+      return;
+    }
     const { context, target } = this._createTarget(targetInfo, session);
     try {
       switch (targetInfo.type) {
@@ -136,13 +144,8 @@ export class CRBrowser extends platform.EventEmitter implements Browser {
     if (targetInfo.type !== 'service_worker')
       return;
     const { context, target } = this._createTarget(targetInfo, null);
-    try {
-      const serviceWorker = await target.serviceWorker();
-      context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
-    } catch (e) {
-      // Do not dispatch the event if initialization failed.
-      debugError(e);
-    }
+    const serviceWorker = await target.serviceWorker();
+    context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
   }
 
   private _createTarget(targetInfo: Protocol.Target.TargetInfo, session: CRSession | null) {
