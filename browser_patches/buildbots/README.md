@@ -108,6 +108,7 @@ Run `c:\mozilla-build\start-shell.bat` and checkout Playwright repo to `/c/playw
 
 Create a new `c:\WEBKIT_WIN64_LIBS` folder and copy the following libraries from `C:\Windows\System32` into it:
 - `msvcp140.dll`
+- `msvcp140_2.dll`
 - `vcruntime140.dll`
 - `vcruntime140_1.dll`
 

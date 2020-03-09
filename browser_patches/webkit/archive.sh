@@ -103,7 +103,7 @@ createZipForWindows() {
   cp -t $tmpdir MiniBrowser.exe WebKitNetworkProcess.exe WebKitWebProcess.exe
   cd -
   cd /c/WEBKIT_WIN64_LIBS
-  cp -t $tmpdir msvcp140.dll vcruntime140.dll vcruntime140_1.dll
+  cp -t $tmpdir msvcp140.dll vcruntime140.dll vcruntime140_1.dll msvcp140_2.dll
   cd -
 
   # copy protocol
