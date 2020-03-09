@@ -78,8 +78,8 @@ export class WKPage implements PageDelegate {
     this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
   }
 
-  _initializedPage(): Page | undefined {
-    return this._initialized ? this._page : undefined;
+  _initializedPage(): Page | null {
+    return this._initialized ? this._page : null;
   }
 
   private async _initializePageProxySession() {
@@ -179,21 +179,19 @@ export class WKPage implements PageDelegate {
       this._provisionalPage = null;
     } else if (this._session.sessionId === targetId) {
       this._session.dispose();
+      helper.removeEventListeners(this._sessionListeners);
       if (crashed)
-        this.didClose(crashed);
+        this._page._didCrash();
     }
   }
 
-  didClose(crashed: boolean) {
-    helper.removeEventListeners(this._sessionListeners);
-    if (crashed)
-      this._page._didCrash();
-    else
-      this._page._didClose();
+  didClose() {
+    this._page._didClose();
   }
 
   dispose() {
     this._pageProxySession.dispose();
+    helper.removeEventListeners(this._sessionListeners);
     helper.removeEventListeners(this._eventListeners);
     if (this._session)
       this._session.dispose();
