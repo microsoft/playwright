@@ -83,7 +83,6 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(online).toBe(false);
     });
     it('should inherit http credentials from browser context', async function({browser, server}) {
-      // Use unique user/password since Chromium caches credentials per origin.
       server.setAuth('/title.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'user', password: 'pass' }
@@ -123,7 +122,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(size).toEqual({width: 400, height: 500});
     });
-    it.fail(CHROMIUM)('should apply addInitScript from browser context', async function({browser, server}) {
+    it('should apply addInitScript from browser context', async function({browser, server}) {
       const context = await browser.newContext();
       await context.addInitScript(() => window.injected = 123);
       const page = await context.newPage();
@@ -135,7 +134,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       await context.close();
       expect(injected).toBe(123);
     });
-    it.fail(CHROMIUM || FFOX)('should expose function from browser context', async function({browser, server}) {
+    it.fail(FFOX)('should expose function from browser context', async function({browser, server}) {
       const context = await browser.newContext();
       await context.exposeFunction('add', (a, b) => a + b);
       const page = await context.newPage();
