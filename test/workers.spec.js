@@ -27,7 +27,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Workers', function() {
-    it('Page.workers', async function({page, server}) {
+    // Flaky: https://github.com/microsoft/playwright/issues/1300
+    it.fail(FFOX)('Page.workers', async function({page, server}) {
       await Promise.all([
         page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html')]);
@@ -101,7 +102,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(destroyed).toBe(true);
       expect(page.workers().length).toBe(0);
     });
-    it('should report network activity', async function({page, server}) {
+    // Flaky: https://github.com/microsoft/playwright/issues/1300
+    it.fail(FFOX)('should report network activity', async function({page, server}) {
       const [worker] = await Promise.all([
         page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html'),
