@@ -187,6 +187,11 @@ export async function readFileAsync(file: string, encoding: string): Promise<str
   return await promisify(nodeFS.readFile)(file, encoding);
 }
 
+export async function readFileBuffer(file: string): Promise<BufferType> {
+  assertFileAccess();
+  return await promisify(nodeFS.readFile)(file);
+}
+
 export async function writeFileAsync(file: string, data: any) {
   assertFileAccess();
   return await promisify(nodeFS.writeFile)(file, data);

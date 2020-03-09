@@ -267,7 +267,7 @@ class InterceptableRequest implements network.RequestDelegate {
     });
   }
 
-  async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
+  async fulfill(response: network.FulfillResponse) {
     const responseBody = response.body && helper.isString(response.body) ? platform.Buffer.from(response.body) : (response.body || null);
 
     const responseHeaders: { [s: string]: string; } = {};

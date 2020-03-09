@@ -202,10 +202,18 @@ export class Request {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }) {    // Mocking responses for dataURL requests is not currently supported.
+  async fulfill(response: FulfillResponse & { path?: string }) {
     assert(this._delegate, 'Request Interception is not enabled!');
     assert(!this._interceptionHandled, 'Request is already handled!');
     this._interceptionHandled = true;
+    if (response.path) {
+      response = {
+        status: response.status,
+        headers: response.headers,
+        contentType: platform.getMimeType(response.path),
+        body: await platform.readFileBuffer(response.path)
+      };
+    }
     await this._delegate.fulfill(response);
   }
 
@@ -304,9 +312,16 @@ export class Response {
   }
 }
 
+export type FulfillResponse = {
+  status?: number,
+  headers?: Headers,
+  contentType?: string,
+  body?: string | platform.BufferType,
+};
+
 export interface RequestDelegate {
   abort(errorCode: string): Promise<void>;
-  fulfill(response: { status: number; headers: Headers; contentType: string; body: (string | platform.BufferType); }): Promise<void>;
+  fulfill(response: FulfillResponse): Promise<void>;
   continue(overrides: { method?: string; headers?: Headers; postData?: string; }): Promise<void>;
 }
 

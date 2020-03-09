@@ -65,7 +65,7 @@ export class WKInterceptableRequest implements network.RequestDelegate {
     });
   }
 
-  async fulfill(response: { status: number; headers: network.Headers; contentType: string; body: (string | platform.BufferType); }) {
+  async fulfill(response: network.FulfillResponse) {
     await this._interceptedPromise;
 
     const base64Encoded = !!response.body && !helper.isString(response.body);

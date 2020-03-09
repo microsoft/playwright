@@ -468,6 +468,17 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       const img = await page.$('img');
       expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
     });
+    it('should work with file path', async({page, server}) => {
+      await page.route('**/*', request => request.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
+      await page.evaluate(PREFIX => {
+        const img = document.createElement('img');
+        img.src = PREFIX + '/does-not-exist.png';
+        document.body.appendChild(img);
+        return new Promise(fulfill => img.onload = fulfill);
+      }, server.PREFIX);
+      const img = await page.$('img');
+      expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
+    });
     it('should stringify intercepted request response headers', async({page, server}) => {
       await page.route('**/*', request => {
         request.fulfill({
