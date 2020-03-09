@@ -764,6 +764,14 @@ export class WKPage implements PageDelegate {
       return;
     const response = request.createResponse(event.response);
     this._page._frameManager.requestReceivedResponse(response);
+
+    if (response.status() === 204) {
+      this._onLoadingFailed({
+        requestId: event.requestId,
+        errorText: 'Aborted: 204 No Content',
+        timestamp: event.timestamp
+      });
+    }
   }
 
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
