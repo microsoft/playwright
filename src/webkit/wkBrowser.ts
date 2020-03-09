@@ -67,7 +67,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   _onDisconnect() {
     for (const wkPage of this._wkPages.values())
-    wkPage.dispose();
+      wkPage.dispose();
     this._wkPages.clear();
     for (const context of this._contexts.values())
       context._browserClosed();
@@ -318,7 +318,12 @@ export class WKBrowserContext extends BrowserContextBase {
   async close() {
     if (this._closed)
       return;
-    assert(this._browserContextId, 'Non-incognito profiles cannot be closed!');
+    if (!this._browserContextId) {
+      // Default context is only created in 'persistent' mode and closing it should close
+      // the browser.
+      await this._browser.close();
+      return;
+    }
     await this._browser._browserSession.send('Browser.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     this._didCloseInternal();

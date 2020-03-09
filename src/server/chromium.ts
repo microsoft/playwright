@@ -149,10 +149,9 @@ export class Chromium implements BrowserType {
       browserServer = new BrowserServer(launchedProcess, gracefullyClose, browserWSEndpoint);
       return { browserServer };
     } else {
-      const transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
-      browserServer = new BrowserServer(launchedProcess, gracefullyClose, null);
       // For local launch scenario close will terminate the browser process.
-      transport.close = () => browserServer!.close();
+      transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
+      browserServer = new BrowserServer(launchedProcess, gracefullyClose, null);
       return { browserServer, transport };
     }
   }

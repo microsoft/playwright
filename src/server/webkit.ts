@@ -145,12 +145,11 @@ export class WebKit implements BrowserType {
       },
     });
 
-    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream);
+    // For local launch scenario close will terminate the browser process.
+    transport = new PipeTransport(launchedProcess.stdio[3] as NodeJS.WritableStream, launchedProcess.stdio[4] as NodeJS.ReadableStream, () => browserServer!.close());
     browserServer = new BrowserServer(launchedProcess, gracefullyClose, launchType === 'server' ? await wrapTransportWithWebSocket(transport, port || 0) : null);
     if (launchType === 'server')
       return { browserServer };
-    // For local launch scenario close will terminate the browser process.
-    transport.close = () => browserServer!.close();
     return { browserServer, transport };
   }
 
@@ -359,6 +358,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
     }
   };
 
+  let closeListener: () => void;
   server.on('connection', (socket: ws, req) => {
     if (req.url !== '/' + guid) {
       socket.close();
@@ -377,7 +377,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
 
-    socket.on('close', () => {
+    socket.on('close', closeListener = () => {
       for (const [pageProxyId, s] of pageProxyIds) {
         if (s === socket)
           pageProxyIds.delete(pageProxyId);
@@ -397,8 +397,10 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
   });
 
   transport.onclose = () => {
-    for (const socket of sockets)
+    for (const socket of sockets) {
+      socket.removeListener('close', closeListener);
       socket.close(undefined, 'Browser disconnected');
+    }
     server.close();
     transport.onmessage = undefined;
     transport.onclose = undefined;

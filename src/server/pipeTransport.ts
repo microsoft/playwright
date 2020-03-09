@@ -26,15 +26,17 @@ export class PipeTransport implements ConnectionTransport {
   private _waitForNextTask = makeWaitForNextTask();
 
   // This method must be overridden to provide custom close behavior.
-  close: () => void = () => { throw new Error('Pipe transport cannot be closed by default'); };
+  readonly close: () => void;
   onmessage?: (message: string) => void;
   onclose?: () => void;
 
-  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
+  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, closeCallback: () => void) {
     this._pipeWrite = pipeWrite;
+    this.close = closeCallback;
     this._eventListeners = [
       helper.addEventListener(pipeRead, 'data', buffer => this._dispatch(buffer)),
       helper.addEventListener(pipeRead, 'close', () => {
+        helper.removeEventListeners(this._eventListeners);
         if (this.onclose)
           this.onclose.call(null);
       }),
