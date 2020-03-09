@@ -315,6 +315,12 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage).exposeBinding(binding);
   }
 
+  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
+    this._routes.push({ url, handler });
+    for (const page of this._existingPages())
+      await (page._delegate as WKPage).updateRequestInterception();
+  }
+
   async close() {
     if (this._closed)
       return;

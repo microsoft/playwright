@@ -41,6 +41,8 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
+export type RouteHandler = (request: Request) => void;
+
 export function filterCookies(cookies: NetworkCookie[], urls: string | string[] = []): NetworkCookie[] {
   if (!Array.isArray(urls))
     urls = [ urls ];

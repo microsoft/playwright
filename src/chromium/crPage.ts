@@ -119,6 +119,7 @@ export class CRPage implements PageDelegate {
     if (options.geolocation)
       promises.push(this._client.send('Emulation.setGeolocationOverride', options.geolocation));
     promises.push(this.updateExtraHTTPHeaders());
+    promises.push(this.updateRequestInterception());
     if (options.offline)
       promises.push(this._networkManager.setOffline(options.offline));
     if (options.httpCredentials)
@@ -376,8 +377,8 @@ export class CRPage implements PageDelegate {
     await this._client.send('Emulation.setEmulatedMedia', { media: mediaType || '', features });
   }
 
-  async setRequestInterception(enabled: boolean): Promise<void> {
-    await this._networkManager.setRequestInterception(enabled);
+  async updateRequestInterception(): Promise<void> {
+    await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
