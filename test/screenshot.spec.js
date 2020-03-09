@@ -163,14 +163,6 @@ module.exports.describe = function({testRunner, expect, product, FFOX, CHROMIUM,
       });
       expect(screenshot).toBeGolden('screenshot-clip-odd-size.png');
     });
-    it('should return base64', async({page, server}) => {
-      await page.setViewportSize({width: 500, height: 500});
-      await page.goto(server.PREFIX + '/grid.html');
-      const screenshot = await page.screenshot({
-        encoding: 'base64'
-      });
-      expect(Buffer.from(screenshot, 'base64')).toBeGolden('screenshot-sanity.png');
-    });
     it.skip(FFOX)('should work with a mobile viewport', async({browser, server}) => {
       const context = await browser.newContext({viewport: { width: 320, height: 480, isMobile: true }});
       const page = await context.newPage();
