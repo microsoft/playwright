@@ -382,7 +382,8 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       expect(response.status()).toBe(200);
       await context.close();
     });
-    it('should fail if wrong credentials', async({browser, server}) => {
+    // flaky: https://github.com/microsoft/playwright/issues/1303
+    it.fail(FFOX)('should fail if wrong credentials', async({browser, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');
       const context = await browser.newContext({
         httpCredentials: { username: 'foo', password: 'bar' }
