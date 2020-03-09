@@ -358,7 +358,6 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
     }
   };
 
-  let closeListener: () => void;
   server.on('connection', (socket: ws, req) => {
     if (req.url !== '/' + guid) {
       socket.close();
@@ -377,7 +376,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
 
-    socket.on('close', closeListener = () => {
+    socket.on('close', (socket as any).__closeListener = () => {
       for (const [pageProxyId, s] of pageProxyIds) {
         if (s === socket)
           pageProxyIds.delete(pageProxyId);
@@ -398,7 +397,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
 
   transport.onclose = () => {
     for (const socket of sockets) {
-      socket.removeListener('close', closeListener);
+      socket.removeListener('close', (socket as any).__closeListener);
       socket.close(undefined, 'Browser disconnected');
     }
     server.close();

@@ -24,15 +24,14 @@ export class PipeTransport implements ConnectionTransport {
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
   private _waitForNextTask = makeWaitForNextTask();
+  private readonly _closeCallback: () => void;
 
-  // This method must be overridden to provide custom close behavior.
-  readonly close: () => void;
   onmessage?: (message: string) => void;
   onclose?: () => void;
 
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, closeCallback: () => void) {
     this._pipeWrite = pipeWrite;
-    this.close = closeCallback;
+    this._closeCallback = closeCallback;
     this._eventListeners = [
       helper.addEventListener(pipeRead, 'data', buffer => this._dispatch(buffer)),
       helper.addEventListener(pipeRead, 'close', () => {
@@ -50,6 +49,10 @@ export class PipeTransport implements ConnectionTransport {
   send(message: string) {
     this._pipeWrite!.write(message);
     this._pipeWrite!.write('\0');
+  }
+
+  close() {
+    this._closeCallback();
   }
 
   _dispatch(buffer: Buffer) {
