@@ -18,7 +18,7 @@
 import { Browser, createPageInNewContext } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, BrowserContextOptions, validateBrowserContextOptions } from '../browserContext';
 import { Events } from '../events';
-import { helper, RegisteredListener } from '../helper';
+import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, PageEvent } from '../page';
 import * as platform from '../platform';
