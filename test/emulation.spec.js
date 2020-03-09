@@ -38,6 +38,11 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => window.innerWidth)).toBe(123);
       expect(await page.evaluate(() => window.innerHeight)).toBe(456);
     });
+    xit('should emulate *-device-width media queries', async({page, server}) => {
+      expect(page.viewportSize()).toEqual({width: 1280, height: 720});
+      await page.setViewportSize({width: 1800, height: 456});
+      expect(await page.evaluate(() => matchMedia('(min-device-width: 1800px)').matches)).toBe(true);
+    });
     it('should not have touch by default', async({page, server}) => {
       await page.goto(server.PREFIX + '/mobile.html');
       expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
