@@ -18,6 +18,7 @@
 import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
+import { Browser } from './browser';
 import * as platform from './platform';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
@@ -42,6 +43,7 @@ export interface BrowserContext {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
   pages(): Promise<Page[]>;
+  browser(): Browser;
   newPage(): Promise<Page>;
   cookies(urls?: string | string[]): Promise<network.NetworkCookie[]>;
   setCookies(cookies: network.SetNetworkCookieParam[]): Promise<void>;
@@ -67,11 +69,17 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   _closed = false;
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
+  private readonly _owningBrowser: Browser;
 
-  constructor(options: BrowserContextOptions) {
+  constructor(browser: Browser, options: BrowserContextOptions) {
     super();
+    this._owningBrowser = browser;
     this._options = options;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+  }
+
+  browser(): Browser {
+    return this._owningBrowser;
   }
 
   abstract _existingPages(): Page[];

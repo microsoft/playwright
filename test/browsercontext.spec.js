@@ -122,6 +122,14 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
+  describe('BrowserContext.browser()', function() {
+    it('should work', async({browser}) => {
+      const context = await browser.newContext();
+      expect(context.browser()).toBe(browser);
+      await context.close();
+    });
+  });
+
   describe('BrowserContext({userAgent})', function() {
     it('should work', async({browser, server}) => {
       {

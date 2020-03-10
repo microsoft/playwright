@@ -159,7 +159,7 @@ export class FFBrowserContext extends BrowserContextBase {
   private readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: FFBrowser, browserContextId: string | null, options: BrowserContextOptions) {
-    super(options);
+    super(browser, options);
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];

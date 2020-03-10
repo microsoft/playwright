@@ -181,7 +181,7 @@ export class WKBrowserContext extends BrowserContextBase {
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: BrowserContextOptions) {
-    super(options);
+    super(browser, options);
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];

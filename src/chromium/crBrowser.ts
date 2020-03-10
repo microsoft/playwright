@@ -251,7 +251,7 @@ export class CRBrowserContext extends BrowserContextBase {
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: CRBrowser, browserContextId: string | null, options: BrowserContextOptions) {
-    super(options);
+    super(browser, options);
     this._browser = browser;
     this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];

@@ -283,6 +283,7 @@ await context.close();
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
+- [browserContext.browser()](#browsercontextbrowser)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
@@ -348,10 +349,15 @@ await browserContext.addInitScript(preloadFile);
 ```
 
 > **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args) and [page.addInitScript(script[, ...args])](#pageaddinitscriptscript-args) is not defined.
+
+#### browserContext.browser()
+- returns: <[Browser]>
+
 #### browserContext.clearCookies()
 - returns: <[Promise]>
 
 Clears context bookies.
+
 
 #### browserContext.clearPermissions()
 - returns: <[Promise]>
@@ -4014,6 +4020,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
 - [browserContext.addInitScript(script[, ...args])](#browsercontextaddinitscriptscript-args)
+- [browserContext.browser()](#browsercontextbrowser)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
