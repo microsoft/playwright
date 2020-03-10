@@ -22,7 +22,7 @@ const bigint = typeof BigInt !== 'undefined';
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, LINUX}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
@@ -230,8 +230,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       await page.evaluate(e => e.textContent, element).catch(e => error = e);
       expect(error.message).toContain('JSHandle is disposed');
     });
-    it.fail(FFOX)('should simulate a user gesture', async({page, server}) => {
-      // Flaky on Limux: https://github.com/microsoft/playwright/issues/1305
+    // flaky: https://github.com/microsoft/playwright/pull/1277/checks?check_run_id=496501774
+    it.fail(FFOX && LINUX)('should simulate a user gesture', async({page, server}) => {
       const result = await page.evaluate(() => {
         document.body.appendChild(document.createTextNode('test'));
         document.execCommand('selectAll');

@@ -21,14 +21,14 @@ const { waitEvent } = utils;
 /**
  * @type {PageTestSuite}
  */
-module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT}) {
+module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, LINUX}) {
   const {describe, xdescribe, fdescribe} = testRunner;
   const {it, fit, xit, dit} = testRunner;
   const {beforeAll, beforeEach, afterAll, afterEach} = testRunner;
 
   describe('Workers', function() {
-    // Flaky: https://github.com/microsoft/playwright/issues/1300
-    it.fail(FFOX)('Page.workers', async function({page, server}) {
+    // flaky: https://github.com/microsoft/playwright/pull/1297/checks?check_run_id=496348690
+    it.fail(FFOX && LINUX)('Page.workers', async function({page, server}) {
       await Promise.all([
         page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html')]);
@@ -102,8 +102,8 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT})
       expect(destroyed).toBe(true);
       expect(page.workers().length).toBe(0);
     });
-    // Flaky: https://github.com/microsoft/playwright/issues/1300
-    it.fail(FFOX)('should report network activity', async function({page, server}) {
+    // flaky: https://github.com/microsoft/playwright/pull/1277/checks?check_run_id=496461538
+    it.fail(FFOX && LINUX)('should report network activity', async function({page, server}) {
       const [worker] = await Promise.all([
         page.waitForEvent('worker'),
         page.goto(server.PREFIX + '/worker/worker.html'),
