@@ -107,8 +107,10 @@ class MDOutline {
        */
       function parseClass(content) {
         const members = [];
-        const commentWalker = document.createTreeWalker(content, NodeFilter.SHOW_COMMENT, {
+        const commentWalker = document.createTreeWalker(content, NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_ELEMENT, {
           acceptNode(node) {
+            if (node instanceof HTMLElement && node.tagName === 'H4')
+              return NodeFilter.FILTER_ACCEPT;
             if (!(node instanceof Comment))
               return NodeFilter.FILTER_REJECT;
             if (node.data.trim().startsWith('GEN:toc'))
@@ -116,7 +118,7 @@ class MDOutline {
             return NodeFilter.FILTER_REJECT;
           }
         });
-        const tocStart = commentWalker.nextNode();
+        const commentEnd = commentWalker.nextNode();
         const headers = content.querySelectorAll('h4');
         const name = content.firstChild.textContent;
         let extendsName = null;
@@ -126,7 +128,7 @@ class MDOutline {
           commentStart = extendsElement.nextSibling;
           extendsName = extendsElement.querySelector('a').textContent;
         }
-        const comment = parseComment(extractSiblingsIntoFragment(commentStart, tocStart));
+        const comment = parseComment(extractSiblingsIntoFragment(commentStart, commentEnd));
         for (let i = 0; i < headers.length; i++) {
           const fragment = extractSiblingsIntoFragment(headers[i], headers[i + 1]);
           members.push(parseMember(fragment));
@@ -153,7 +155,6 @@ class MDOutline {
       }
 
       /**
-       * @param {string} name
        * @param {DocumentFragment} content
        */
       function parseMember(content) {
