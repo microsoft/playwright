@@ -612,6 +612,8 @@ export class PageBinding {
 
 function addPageBinding(bindingName: string) {
   const binding = (window as any)[bindingName];
+  if (binding.__installed)
+    return;
   (window as any)[bindingName] = (...args: any[]) => {
     const me = (window as any)[bindingName];
     let callbacks = me['callbacks'];
@@ -625,4 +627,5 @@ function addPageBinding(bindingName: string) {
     binding(JSON.stringify({name: bindingName, seq, args}));
     return promise;
   };
+  (window as any)[bindingName].__installed = true;
 }

@@ -92,11 +92,16 @@ export class CRPage implements PageDelegate {
           helper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
           helper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
         ];
-        this._page.frames().map(frame => this._client.send('Page.createIsolatedWorld', {
-          frameId: frame._id,
-          grantUniveralAccess: true,
-          worldName: UTILITY_WORLD_NAME,
-        }).catch(debugError)); // frames might be removed before we send this.
+        for (const frame of this._page.frames()) {
+          // Note: frames might be removed before we send these.
+          this._client.send('Page.createIsolatedWorld', {
+            frameId: frame._id,
+            grantUniveralAccess: true,
+            worldName: UTILITY_WORLD_NAME,
+          }).catch(debugError);
+          for (const binding of this._browserContext._pageBindings.values())
+            frame.evaluate(binding.source).catch(debugError);
+        }
       }),
       this._client.send('Log.enable', {}),
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),

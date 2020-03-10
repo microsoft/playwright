@@ -326,7 +326,7 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
   });
 
   describe('BrowserContext.exposeFunction', () => {
-    it.fail(CHROMIUM || FFOX)('should work', async({browser, server}) => {
+    it.fail(FFOX)('should work', async({browser, server}) => {
       const context = await browser.newContext();
       await context.exposeFunction('add', (a, b) => a + b);
       const page = await context.newPage();
