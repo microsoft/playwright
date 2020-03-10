@@ -88,20 +88,45 @@ export type FileChooser = {
 };
 
 export class PageEvent {
+  private readonly _browserContext: BrowserContextBase;
   private readonly _pageOrError: Promise<Page | Error>;
+  private readonly _lifecyclePromises = new Map<types.LifecycleEvent, Promise<Page | Error>>();
 
-  constructor(pageOrErrorPromise: Promise<Page | Error>) {
+  constructor(browserContext: BrowserContextBase, pageOrErrorPromise: Promise<Page | Error>) {
+    this._browserContext = browserContext;
     this._pageOrError = pageOrErrorPromise;
+    for (const lifecycle of types.kLifecycleEvents)
+      this._lifecyclePromises.set(lifecycle, this._createLifecyclePromise(lifecycle));
   }
 
-  async page(/* options?: frames.NavigateOptions */): Promise<Page> {
-    const result = await this._pageOrError;
-    if (result instanceof Page) {
-      if (result.isClosed())
-        throw new Error('Page has been closed.');
-      return result;
-    }
-    throw result;
+  async _createLifecyclePromise(lifecycle: types.LifecycleEvent): Promise<Page | Error> {
+    const page = await this._pageOrError;
+    if (!(page instanceof Page))
+      return page;
+
+    const { dispose, value: waitForLifecycle } = page.mainFrame()._waitForLifecycle(lifecycle);
+    const error = await Promise.race([
+      page.mainFrame()._createFrameDestroyedPromise(),
+      waitForLifecycle,
+    ]);
+    dispose();
+    if (error)
+      return error;
+    return page;
+  }
+
+  async page(options: types.NavigateOptions = {}): Promise<Page> {
+    const {
+      timeout = this._browserContext._timeoutSettings.navigationTimeout(),
+      waitUntil = 'load',
+    } = options;
+    const lifecyclePromise = this._lifecyclePromises.get(waitUntil);
+    if (!lifecyclePromise)
+      throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
+    const pageOrError = await helper.waitWithTimeout(lifecyclePromise, `"${waitUntil}"`, timeout);
+    if (pageOrError instanceof Page)
+      return pageOrError;
+    throw pageOrError;
   }
 }
 
@@ -309,10 +334,6 @@ export class Page extends platform.EventEmitter {
 
   async waitForNavigation(options?: types.WaitForNavigationOptions): Promise<network.Response | null> {
     return this.mainFrame().waitForNavigation(options);
-  }
-
-  async waitForLoadState(options?: types.NavigateOptions): Promise<void> {
-    return this.mainFrame().waitForLoadState(options);
   }
 
   async waitForEvent(event: string, optionsOrPredicate: Function | (types.TimeoutOptions & { predicate?: Function }) = {}): Promise<any> {

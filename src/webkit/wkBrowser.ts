@@ -124,7 +124,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
       this._firstPageCallback = undefined;
     }
 
-    const pageEvent = new PageEvent(wkPage.pageOrError());
+    const pageEvent = new PageEvent(context, wkPage.pageOrError());
     context.emit(Events.BrowserContext.Page, pageEvent);
     if (!opener)
       return;

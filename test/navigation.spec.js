@@ -969,7 +969,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
   });
 
-  describe('Page.waitForLoadState', () => {
+  describe('Page._waitForLoadState', () => {
     it('should pick up ongoing navigation', async({page, server}) => {
       let response = null;
       server.setRoute('/one-style.css', (req, res) => response = res);
@@ -977,7 +977,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
         server.waitForRequest('/one-style.css'),
         page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'}),
       ]);
-      const waitPromise = page.waitForLoadState();
+      const waitPromise = page.mainFrame()._waitForLoadState();
       response.statusCode = 404;
       response.end('Not found');
       await waitPromise;
@@ -985,18 +985,18 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     it('should respect timeout', async({page, server}) => {
       server.setRoute('/one-style.css', (req, res) => response = res);
       await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'});
-      const error = await page.waitForLoadState({ timeout: 1 }).catch(e => e);
+      const error = await page.mainFrame()._waitForLoadState({ timeout: 1 }).catch(e => e);
       expect(error.message).toBe('Navigation timeout of 1 ms exceeded');
     });
     it('should resolve immediately if loaded', async({page, server}) => {
       await page.goto(server.PREFIX + '/one-style.html');
-      await page.waitForLoadState();
+      await page.mainFrame()._waitForLoadState();
     });
     it('should resolve immediately if load state matches', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       server.setRoute('/one-style.css', (req, res) => response = res);
       await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'commit'});
-      await page.waitForLoadState({ waitUntil: 'domcontentloaded' });
+      await page.mainFrame()._waitForLoadState({ waitUntil: 'domcontentloaded' });
     });
     it('should work with pages that have loaded before being connected to', async({page, context, server}) => {
       await page.goto(server.EMPTY_PAGE);
@@ -1011,7 +1011,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(pages[0].url()).toBe(server.EMPTY_PAGE);
 
       expect(pages[1].url()).toBe(server.EMPTY_PAGE);
-      await pages[1].waitForLoadState();
+      await pages[1].mainFrame()._waitForLoadState();
       expect(pages[1].url()).toBe(server.EMPTY_PAGE);
     });
   });
@@ -1126,7 +1126,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
     });
   });
 
-  describe('Frame.waitForLodState', function() {
+  describe('Frame._waitForLodState', function() {
     it('should work', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = page.frames()[1];
@@ -1135,7 +1135,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       await frame.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
       const request = await requestPromise;
       let resolved = false;
-      const loadPromise = frame.waitForLoadState().then(() => resolved = true);
+      const loadPromise = frame._waitForLoadState().then(() => resolved = true);
       // give the promise a chance to resolve, even though it shouldn't
       await page.evaluate('1');
       expect(resolved).toBe(false);

@@ -41,8 +41,6 @@ export type GotoResult = {
   newDocumentId?: string,
 };
 
-const kLifecycleEvents: Set<types.LifecycleEvent> = new Set(['commit', 'load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
-
 type ConsoleTagHandler = () => void;
 
 export class FrameManager {
@@ -437,7 +435,7 @@ export class Frame {
     return request ? request._finalRequest._waitForResponse() : null;
   }
 
-  async waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
+  async _waitForLoadState(options: types.NavigateOptions = {}): Promise<void> {
     const {timeout = this._page._timeoutSettings.navigationTimeout()} = options;
     const disposer = new Disposer();
     const error = await Promise.race([
@@ -491,7 +489,7 @@ export class Frame {
 
   _waitForLifecycle(waitUntil: types.LifecycleEvent = 'load'): Disposable<Promise<void>> {
     let resolve: () => void;
-    if (!kLifecycleEvents.has(waitUntil))
+    if (!types.kLifecycleEvents.has(waitUntil))
       throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
 
     const checkLifecycleComplete = () => {
@@ -643,7 +641,7 @@ export class Frame {
       this._page._frameManager._consoleMessageTags.set(tag, () => {
         // Clear lifecycle right after document.open() - see 'tag' below.
         this._page._frameManager.clearFrameLifecycle(this);
-        resolve(this.waitForLoadState(options));
+        resolve(this._waitForLoadState(options));
       });
     });
     const contentPromise = context.evaluate((html, tag) => {
