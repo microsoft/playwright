@@ -46,29 +46,21 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
       state.browser = null;
     });
     it.fail(true)('should report oopif frames', async function({browser, page, server, context}) {
-      const browserSession = await browser.createBrowserSession();
-      await browserSession.send('Target.setDiscoverTargets', { discover: true });
-      const oopifs = [];
-      browserSession.on('Target.targetCreated', async ({targetInfo}) => {
-        if (targetInfo.type === 'iframe')
-           oopifs.push(targetInfo);
-      });
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs.length).toBe(1);
+      expect(await countOOPIFs(browser)).toBe(1);
       expect(page.frames().length).toBe(2);
     });
     it('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
       await page.route('**/*', request => request.continue());
-      const browserSession = await browser.createBrowserSession();
-      await browserSession.send('Target.setDiscoverTargets', { discover: true });
-      const oopifs = [];
-      browserSession.on('Target.targetCreated', async ({targetInfo}) => {
-        if (targetInfo.type === 'iframe')
-           oopifs.push(targetInfo);
-      });
       await page.goto(server.PREFIX + '/dynamic-oopif.html');
-      expect(oopifs.length).toBe(1);
-      await browserSession.detach();
+      expect(await countOOPIFs(browser)).toBe(1);
+    });
+    // @see https://github.com/microsoft/playwright/issues/1240
+    xit('should click a button when it overlays oopif', async function({browser, page, server, context}) {
+      await page.goto(server.PREFIX + '/button-overlay-oopif.html');
+      expect(await countOOPIFs(browser)).toBe(1);
+      await page.click('button');
+      expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
     });
     it.fail(true)('should report google.com frame with headful', async({server}) => {
       // TODO: Support OOOPIF. @see https://github.com/GoogleChrome/puppeteer/issues/2548
@@ -95,3 +87,15 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
     });
   });
 };
+
+async function countOOPIFs(browser) {
+  const browserSession = await browser.createBrowserSession();
+  const oopifs = [];
+  browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+    if (targetInfo.type === 'iframe')
+       oopifs.push(targetInfo);
+  });
+  await browserSession.send('Target.setDiscoverTargets', { discover: true });
+  await browserSession.detach();
+  return oopifs.length;
+}

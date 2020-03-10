@@ -1,0 +1,39 @@
+<style>
+* {
+  padding: 0;
+  margin: 0;
+}
+
+iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 500px;
+  height: 500px;
+}
+
+button {
+  position: absolute;
+  top: 150px;
+  left: 150px;
+  width: 200px;
+  height: 200px;
+}
+</style>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const iframe = document.createElement('iframe');
+  const url = new URL(location.href);
+  url.hostname = url.hostname === 'localhost' ? '127.0.0.1' : 'localhost';
+  url.pathname = '/grid.html';
+  iframe.src = url.toString();
+  document.body.append(iframe);
+
+  const button = document.createElement('button');
+  button.textContent = 'CLICK ME';
+  button.addEventListener('click', () => {
+    window.BUTTON_CLICKED = true;
+  }, false);
+  document.body.append(button);
+}, false);
+</script>
