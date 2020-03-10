@@ -1024,7 +1024,7 @@ index 777a54166ed6664561b3f8249a6abb4ac59d0480..e738f34f65fa8137a16bf7b66bc237b8
              "name": "webSocketWillSendHandshakeRequest",
              "description": "Fired when WebSocket is about to initiate handshake.",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index a8fc5332ac92424b00a3dec62152fd3c5f28544e..2fba82d5f991bcfc1315628728771ff167154b7c 100644
+index a8fc5332ac92424b00a3dec62152fd3c5f28544e..6aa07fd2ee4e0dff43b151d1cee7497f4aa0505b 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -110,6 +110,41 @@
@@ -1113,7 +1113,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..2fba82d5f991bcfc1315628728771ff1
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -276,19 +335,70 @@
+@@ -276,19 +335,78 @@
              "returns": [
                  { "name": "data", "type": "string", "description": "Base64-encoded web archive." }
              ]
@@ -1166,6 +1166,14 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..2fba82d5f991bcfc1315628728771ff1
 +        {
 +            "name": "crash",
 +            "description": "Crashes the page process"
++        },
++        {
++            "name": "setScreenSizeOverride",
++            "description": "Overrides screen size with provided values.",
++            "parameters": [
++                { "name": "width", "type": "integer" },
++                { "name": "height", "type": "integer" }
++            ]
          }
      ],
      "events": [
@@ -1186,7 +1194,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..2fba82d5f991bcfc1315628728771ff1
              ]
          },
          {
-@@ -298,6 +408,14 @@
+@@ -298,6 +416,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1201,7 +1209,7 @@ index a8fc5332ac92424b00a3dec62152fd3c5f28544e..2fba82d5f991bcfc1315628728771ff1
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -334,12 +452,36 @@
+@@ -334,12 +460,36 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1680,6 +1688,40 @@ index ddba948c2a08f4a3789773c7ce6c1c1f16d5f11e..c8399e021f1975ada36a7c07de295e1b
  				2D8B92F4203D13E1009C868F /* UnifiedSource519.cpp in Sources */,
  				2D8B92F5203D13E1009C868F /* UnifiedSource520.cpp in Sources */,
  				2D8B92F6203D13E1009C868F /* UnifiedSource521.cpp in Sources */,
+diff --git a/Source/WebCore/css/MediaQueryEvaluator.cpp b/Source/WebCore/css/MediaQueryEvaluator.cpp
+index 2ac163067f2e00a595c425a91fc3a55617baf689..0f492b539ed56f7f963fdf5a72ab75f8f7ea89ab 100644
+--- a/Source/WebCore/css/MediaQueryEvaluator.cpp
++++ b/Source/WebCore/css/MediaQueryEvaluator.cpp
+@@ -387,7 +387,7 @@ static bool deviceAspectRatioEvaluate(CSSValue* value, const CSSToLengthConversi
+     if (!value)
+         return true;
+ 
+-    auto size = screenRect(frame.mainFrame().view()).size();
++    auto size = frame.page()->screenSize();
+     bool result = compareAspectRatioValue(value, size.width(), size.height(), op);
+     LOG_WITH_STREAM(MediaQueries, stream << "  deviceAspectRatioEvaluate: " << op << " " << aspectRatioValueAsString(value) << " actual screen size " << size << ": " << result);
+     return result;
+@@ -505,7 +505,7 @@ static bool deviceHeightEvaluate(CSSValue* value, const CSSToLengthConversionDat
+     if (!value)
+         return true;
+     int length;
+-    auto height = screenRect(frame.mainFrame().view()).height();
++    auto height = frame.page()->screenSize().height();
+     if (!computeLength(value, !frame.document()->inQuirksMode(), conversionData, length))
+         return false;
+ 
+@@ -520,8 +520,10 @@ static bool deviceWidthEvaluate(CSSValue* value, const CSSToLengthConversionData
+     // assume if we have a device, assume non-zero
+     if (!value)
+         return true;
++    if (!frame.mainFrame().view())
++        return false;
+     int length;
+-    auto width = screenRect(frame.mainFrame().view()).width();
++    auto width = frame.page()->screenSize().width();
+     if (!computeLength(value, !frame.document()->inQuirksMode(), conversionData, length))
+         return false;
+ 
 diff --git a/Source/WebCore/dom/UserGestureIndicator.cpp b/Source/WebCore/dom/UserGestureIndicator.cpp
 index dfec93b644f72a51bad0bebf396da61c57f6e428..353833a7614a55566862c196bafc598a475536a1 100644
 --- a/Source/WebCore/dom/UserGestureIndicator.cpp
@@ -2850,7 +2892,7 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..d18dd4c915e239c956cbda56d00c87909d93ae08 100644
+index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..1401a479745c2f90700f80707c1019c91601d986 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -2983,15 +3025,15 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..d18dd4c915e239c956cbda56d00c8790
 +        return;
 +
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
-+
-+    if (!resourceRequest.url().isValid()) {
-+        errorString = "Cannot navigate to invalid URL"_s;
-+        return;
-+    }
  
 -    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
 -    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 -    frame.loader().changeLocation(WTFMove(frameLoadRequest));
++    if (!resourceRequest.url().isValid()) {
++        errorString = "Cannot navigate to invalid URL"_s;
++        return;
++    }
++
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
 +    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), resourceRequest, "_self"_s, LockHistory::No, LockBackForwardList::No, MaybeSendReferrer, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
@@ -3164,7 +3206,7 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..d18dd4c915e239c956cbda56d00c8790
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -983,4 +1094,520 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -983,4 +1094,529 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -3684,9 +3726,18 @@ index d678cddbd20a1a2b410a8ebbb17f5f63f0fc620d..d18dd4c915e239c956cbda56d00c8790
 +    CRASH();
 +}
 +
++void InspectorPageAgent::setScreenSizeOverride(ErrorString&, int width, int height)
++{
++    Optional<FloatSize> size;
++    if (width && height)
++        size = FloatSize(width, height);
++    m_inspectedPage.setOverrideScreenSize(size);
++}
++
++
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..52b89efdac4e2c0b7c1f6cbe69ad0a6e8d4bca7e 100644
+index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..f59486b7e1635ceaa67f3fe5968e8e0e42a023b9 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -40,11 +40,16 @@
@@ -3717,7 +3768,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..52b89efdac4e2c0b7c1f6cbe69ad0a6e
      void overrideUserAgent(ErrorString&, const String* value) override;
      void overrideSetting(ErrorString&, const String& setting, const bool* value) override;
      void getCookies(ErrorString&, RefPtr<JSON::ArrayOf<Inspector::Protocol::Page::Cookie>>& cookies) override;
-@@ -111,20 +118,29 @@ public:
+@@ -111,20 +118,30 @@ public:
      void setShowPaintRects(ErrorString&, bool show) override;
      void setEmulatedMedia(ErrorString&, const String&) override;
      void setForcedAppearance(ErrorString&, const String&) override;
@@ -3734,6 +3785,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..52b89efdac4e2c0b7c1f6cbe69ad0a6e
 +    void createUserWorld(ErrorString&, const String&) override;
 +    void setBypassCSP(ErrorString&, bool) override;
 +    void crash(ErrorString&) override;
++    void setScreenSizeOverride(ErrorString&, int width, int height) override;
  
      // InspectorInstrumentation
 -    void domContentEventFired();
@@ -3751,7 +3803,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..52b89efdac4e2c0b7c1f6cbe69ad0a6e
      void defaultAppearanceDidChange(bool useDarkAppearance);
      void applyUserAgentOverride(String&);
      void applyEmulatedMedia(String&);
-@@ -133,6 +149,9 @@ public:
+@@ -133,6 +150,9 @@ public:
      void didLayout();
      void didScroll();
      void didRecalculateStyle();
@@ -3761,7 +3813,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..52b89efdac4e2c0b7c1f6cbe69ad0a6e
  
      Frame* frameForId(const String& frameId);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -141,6 +160,7 @@ public:
+@@ -141,6 +161,7 @@ public:
  
  private:
      double timestamp();
@@ -3769,7 +3821,7 @@ index 110173dbbfe819226b6c4caa0f65a5dee8c39f2b..52b89efdac4e2c0b7c1f6cbe69ad0a6e
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const char* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -152,18 +172,19 @@ private:
+@@ -152,18 +173,19 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -4275,6 +4327,92 @@ index 9c58b06f4c471130ce4815f11d14cb78f81b49a0..3d624733c36f09518b12095d91e67a2a
  
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
+diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
+index 7c20fec304a4c90e57a3835dd329134b6ec256dc..cf60f6e042659af1d71317f8a8b018486da21db7 100644
+--- a/Source/WebCore/page/Page.cpp
++++ b/Source/WebCore/page/Page.cpp
+@@ -86,6 +86,7 @@
+ #include "PerformanceLoggingClient.h"
+ #include "PerformanceMonitor.h"
+ #include "PlatformMediaSessionManager.h"
++#include "PlatformScreen.h"
+ #include "PlatformStrategies.h"
+ #include "PlugInClient.h"
+ #include "PluginData.h"
+@@ -421,6 +422,21 @@ void Page::setOverrideViewportArguments(const Optional<ViewportArguments>& viewp
+         document->updateViewportArguments();
+ }
+ 
++FloatSize Page::screenSize()
++{
++    return m_overrideScreenSize.valueOr(screenRect(mainFrame().view()).size());
++}
++
++void Page::setOverrideScreenSize(Optional<FloatSize> size)
++{
++    if (size == m_overrideScreenSize)
++        return;
++
++    m_overrideScreenSize = size;
++    if (auto* document = mainFrame().document())
++        document->updateViewportArguments();
++}
++
+ ScrollingCoordinator* Page::scrollingCoordinator()
+ {
+     if (!m_scrollingCoordinator && m_settings->scrollingCoordinatorEnabled()) {
+diff --git a/Source/WebCore/page/Page.h b/Source/WebCore/page/Page.h
+index 37ca2497bb3a6ca8baf1a5fb45eabcf682b9896b..6bc1c51e7a5f02d7e7ad7c1c898066374678f16f 100644
+--- a/Source/WebCore/page/Page.h
++++ b/Source/WebCore/page/Page.h
+@@ -185,6 +185,9 @@ public:
+     const Optional<ViewportArguments>& overrideViewportArguments() const { return m_overrideViewportArguments; }
+     WEBCORE_EXPORT void setOverrideViewportArguments(const Optional<ViewportArguments>&);
+ 
++    WEBCORE_EXPORT FloatSize screenSize();
++    WEBCORE_EXPORT void setOverrideScreenSize(Optional<FloatSize> size);
++
+     static void refreshPlugins(bool reload);
+     WEBCORE_EXPORT PluginData& pluginData();
+     void clearPluginData();
+@@ -993,6 +996,7 @@ private:
+ #endif
+ 
+     Optional<ViewportArguments> m_overrideViewportArguments;
++    Optional<FloatSize> m_overrideScreenSize;
+ 
+ #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
+     RefPtr<DeviceOrientationUpdateProvider> m_deviceOrientationUpdateProvider;
+diff --git a/Source/WebCore/page/Screen.cpp b/Source/WebCore/page/Screen.cpp
+index a9d228ca404918860c40651994db78a1e76db5ca..1fc3c345308dfed8384d1c02334f2030e879383d 100644
+--- a/Source/WebCore/page/Screen.cpp
++++ b/Source/WebCore/page/Screen.cpp
+@@ -32,6 +32,7 @@
+ #include "FloatRect.h"
+ #include "Frame.h"
+ #include "FrameView.h"
++#include "Page.h"
+ #include "PlatformScreen.h"
+ #include "ResourceLoadObserver.h"
+ #include "RuntimeEnabledFeatures.h"
+@@ -53,7 +54,7 @@ unsigned Screen::height() const
+         return 0;
+     if (RuntimeEnabledFeatures::sharedFeatures().webAPIStatisticsEnabled())
+         ResourceLoadObserver::shared().logScreenAPIAccessed(*frame->document(), ResourceLoadStatistics::ScreenAPI::Height);
+-    long height = static_cast<long>(screenRect(frame->view()).height());
++    long height = static_cast<long>(frame->page()->screenSize().height());
+     return static_cast<unsigned>(height);
+ }
+ 
+@@ -64,7 +65,7 @@ unsigned Screen::width() const
+         return 0;
+     if (RuntimeEnabledFeatures::sharedFeatures().webAPIStatisticsEnabled())
+         ResourceLoadObserver::shared().logScreenAPIAccessed(*frame->document(), ResourceLoadStatistics::ScreenAPI::Width);
+-    long width = static_cast<long>(screenRect(frame->view()).width());
++    long width = static_cast<long>(frame->page()->screenSize().width());
+     return static_cast<unsigned>(width);
+ }
+ 
 diff --git a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp b/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
 index ad6f5209c52e0842d93be267f8f5e99551dfe07c..0fcf4fe9877ba8a89a8dfb321e120f7954c6f69b 100644
 --- a/Source/WebCore/page/csp/ContentSecurityPolicy.cpp
