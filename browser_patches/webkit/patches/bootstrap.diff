@@ -9798,7 +9798,7 @@ index 0000000000000000000000000000000000000000..76290475097e756e3d932d22be4d8c79
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index f971f96f4df83ebf505b2ddc4ae27e6ca7d5cc75..7478490cc0a8234569b01ae578a68cff982aa457 100644
+index f971f96f4df83ebf505b2ddc4ae27e6ca7d5cc75..c9b85dd2fdd274efd594938924e3df27347358bd 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -917,6 +917,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -10093,18 +10093,21 @@ index f971f96f4df83ebf505b2ddc4ae27e6ca7d5cc75..7478490cc0a8234569b01ae578a68cff
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
          if (allowed)
-@@ -7871,6 +7971,11 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
-         else
+@@ -7872,6 +7972,14 @@ void WebPageProxy::requestGeolocationPermissionForFrame(uint64_t geolocationID,
              request->deny();
      };
+ 
 +    auto permissions = m_permissionsForAutomation.find(securityOrigin->toString());
++    if (permissions == m_permissionsForAutomation.end())
++      permissions = m_permissionsForAutomation.find("*");
 +    if (permissions != m_permissionsForAutomation.end()) {
 +        completionHandler(permissions->value.contains("geolocation"));
 +        return;
 +    }
- 
++
      // FIXME: Once iOS migrates to the new WKUIDelegate SPI, clean this up
      // and make it one UIClient call that calls the completionHandler with false
+     // if there is no delegate instead of returning the completionHandler
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
 index b3154548a08b588dfb346261bc7de3dbb754f6cf..4fc0e0fb6e7805d04b86bca46d5098fc69fe32e4 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
