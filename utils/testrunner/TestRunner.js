@@ -152,6 +152,7 @@ class TestPass {
       createTermination.call(this, 'SIGHUP', TestResult.Terminated, 'SIGHUP received'),
       createTermination.call(this, 'SIGTERM', TestResult.Terminated, 'SIGTERM received'),
       createTermination.call(this, 'unhandledRejection', TestResult.Crashed, 'UNHANDLED PROMISE REJECTION'),
+      createTermination.call(this, 'uncaughtException', TestResult.Crashed, 'UNHANDLED ERROR'),
     ];
     for (const termination of terminations)
       process.on(termination.event, termination.handler);
