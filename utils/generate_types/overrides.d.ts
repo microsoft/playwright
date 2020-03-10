@@ -19,8 +19,8 @@ import { EventEmitter } from 'events';
 /**
  * Can be converted to JSON
  */
-interface Serializable {}
-interface ConnectionTransport {}
+type Serializable = {}
+type ConnectionTransport = {}
 
 type Boxed<Args extends any[]> = { [Index in keyof Args]: Args[Index] | JSHandle<Args[Index]> };
 type PageFunction<Args extends any[], R = any> = string | ((...args: Args) => R | Promise<R>);
@@ -126,3 +126,5 @@ export interface ChromiumSession {
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]>;
 }
+
+export type Devices = {[name: string]: {viewport: BrowserNewContextOptionsViewport, userAgent: string}};

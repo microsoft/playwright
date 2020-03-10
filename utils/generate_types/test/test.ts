@@ -518,6 +518,7 @@ playwright.chromium.launch().then(async browser => {
 (async () => {
   playwright.chromium.connect;
   playwright.errors.TimeoutError;
+  const iPhone = playwright.devices['iPhone'];
 
   // Must be a function that evaluates to a selector engine instance.
   const createTagNameEngine = () => ({

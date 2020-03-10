@@ -3246,7 +3246,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 <!-- GEN:stop -->
 
 #### response.body()
-- returns: <Promise<[Buffer]>> Promise which resolves to a buffer with response body.
+- returns: <[Promise]<[Buffer]>> Promise which resolves to a buffer with response body.
 
 #### response.finished()
 - returns: <[Promise]<?[Error]>> Waits for this response to finish, returns failure error if request failed.

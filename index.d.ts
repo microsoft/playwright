@@ -22,3 +22,4 @@ export const chromium: types.BrowserType<types.ChromiumBrowser>;
 export const firefox: types.BrowserType<types.FirefoxBrowser>;
 export const errors: types.BrowserTypeErrors;
 export const selectors: types.Selectors;
+export const devices: types.Devices;
