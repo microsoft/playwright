@@ -1680,6 +1680,20 @@ index ddba948c2a08f4a3789773c7ce6c1c1f16d5f11e..c8399e021f1975ada36a7c07de295e1b
  				2D8B92F4203D13E1009C868F /* UnifiedSource519.cpp in Sources */,
  				2D8B92F5203D13E1009C868F /* UnifiedSource520.cpp in Sources */,
  				2D8B92F6203D13E1009C868F /* UnifiedSource521.cpp in Sources */,
+diff --git a/Source/WebCore/dom/UserGestureIndicator.cpp b/Source/WebCore/dom/UserGestureIndicator.cpp
+index dfec93b644f72a51bad0bebf396da61c57f6e428..353833a7614a55566862c196bafc598a475536a1 100644
+--- a/Source/WebCore/dom/UserGestureIndicator.cpp
++++ b/Source/WebCore/dom/UserGestureIndicator.cpp
+@@ -56,8 +56,7 @@ UserGestureIndicator::UserGestureIndicator(Optional<ProcessingUserGestureState>
+ 
+     if (state)
+         currentToken() = UserGestureToken::create(state.value(), gestureType);
+-
+-    if (document && currentToken()->processingUserGesture() && state) {
++    if (document && state && currentToken()->processingUserGesture()) {
+         document->updateLastHandledUserGestureTimestamp(currentToken()->startTime());
+         if (processInteractionStyle == ProcessInteractionStyle::Immediate)
+             ResourceLoadObserver::shared().logUserInteractionWithReducedTimeResolution(document->topDocument());
 diff --git a/Source/WebCore/html/FileInputType.cpp b/Source/WebCore/html/FileInputType.cpp
 index 4e41fd3f807e8f34bfef3f63f0ba6119a619821e..1f7be602cb2134f8867bf95afe0c9337bce57055 100644
 --- a/Source/WebCore/html/FileInputType.cpp
@@ -3794,8 +3808,33 @@ index 5b7d17a424be41789f73e795736defb8fdf4ed1b..ee571acbf3a4c34cd7039ddd04febe36
  }
  
  void InspectorWorkerAgent::disconnectFromWorkerInspectorProxy(WorkerInspectorProxy* proxy)
+diff --git a/Source/WebCore/inspector/agents/page/PageDebuggerAgent.cpp b/Source/WebCore/inspector/agents/page/PageDebuggerAgent.cpp
+index cc0b0526f19f806ce621521d0771cc5f30d43840..6b54fa315ac22af78f2bf1befef204ca48308200 100644
+--- a/Source/WebCore/inspector/agents/page/PageDebuggerAgent.cpp
++++ b/Source/WebCore/inspector/agents/page/PageDebuggerAgent.cpp
+@@ -38,6 +38,7 @@
+ #include "Frame.h"
+ #include "InspectorPageAgent.h"
+ #include "InstrumentingAgents.h"
++#include "JSDOMWindowBase.h"
+ #include "Page.h"
+ #include "PageConsoleClient.h"
+ #include "PageScriptDebugServer.h"
+@@ -70,8 +71,11 @@ bool PageDebuggerAgent::enabled() const
+ 
+ void PageDebuggerAgent::evaluateOnCallFrame(ErrorString& errorString, const String& callFrameId, const String& expression, const String* objectGroup, const bool* includeCommandLineAPI, const bool* doNotPauseOnExceptionsAndMuteConsole, const bool* returnByValue, const bool* generatePreview, const bool* saveResult, const bool* emulateUserGesture, RefPtr<Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown, Optional<int>& savedResultIndex)
+ {
++    InjectedScript injectedScript = injectedScriptManager().injectedScriptForObjectId(callFrameId);
++    JSC::JSGlobalObject* globalObject = injectedScript.globalObject();
++    Document* document = globalObject ? activeDOMWindow(*globalObject).document() : nullptr;
+     auto shouldEmulateUserGesture = emulateUserGesture && *emulateUserGesture;
+-    UserGestureEmulationScope userGestureScope(m_inspectedPage, shouldEmulateUserGesture);
++    UserGestureEmulationScope userGestureScope(m_inspectedPage, shouldEmulateUserGesture, document);
+ 
+     WebDebuggerAgent::evaluateOnCallFrame(errorString, callFrameId, expression, objectGroup, includeCommandLineAPI, doNotPauseOnExceptionsAndMuteConsole, returnByValue, generatePreview, saveResult, emulateUserGesture, result, wasThrown, savedResultIndex);
+ }
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-index 63336051bb0050d6a55eb5543b0349eb964bbb7a..71abd08516e93b087e506f54b8e093ea300dfe71 100644
+index 63336051bb0050d6a55eb5543b0349eb964bbb7a..eecfb5a50196c6d9ca353e9b7aedbd4d6feb690c 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 @@ -35,12 +35,14 @@
@@ -3829,6 +3868,30 @@ index 63336051bb0050d6a55eb5543b0349eb964bbb7a..71abd08516e93b087e506f54b8e093ea
  InjectedScript PageRuntimeAgent::injectedScriptForEval(ErrorString& errorString, const int* executionContextId)
  {
      if (!executionContextId) {
+@@ -194,13 +205,21 @@ void PageRuntimeAgent::notifyContextCreated(const String& frameId, JSC::JSGlobal
+ 
+ void PageRuntimeAgent::evaluate(ErrorString& errorString, const String& expression, const String* objectGroup, const bool* includeCommandLineAPI, const bool* doNotPauseOnExceptionsAndMuteConsole, const int* executionContextId, const bool* returnByValue, const bool* generatePreview, const bool* saveResult, const bool* emulateUserGesture, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown, Optional<int>& savedResultIndex)
+ {
+-    UserGestureEmulationScope userGestureScope(m_inspectedPage, asBool(emulateUserGesture));
++    InjectedScript injectedScript = injectedScriptForEval(errorString, executionContextId);
++    if (!errorString.isEmpty())
++        return;
++    JSC::JSGlobalObject* globalObject = injectedScript.globalObject();
++    Document* document = globalObject ? activeDOMWindow(*globalObject).document() : nullptr;
++    UserGestureEmulationScope userGestureScope(m_inspectedPage, asBool(emulateUserGesture), document);
+     InspectorRuntimeAgent::evaluate(errorString, expression, objectGroup, includeCommandLineAPI, doNotPauseOnExceptionsAndMuteConsole, executionContextId, returnByValue, generatePreview, saveResult, emulateUserGesture, result, wasThrown, savedResultIndex);
+ }
+ 
+ void PageRuntimeAgent::callFunctionOn(ErrorString& errorString, const String& objectId, const String& expression, const JSON::Array* optionalArguments, const bool* doNotPauseOnExceptionsAndMuteConsole, const bool* returnByValue, const bool* generatePreview, const bool* emulateUserGesture, RefPtr<Inspector::Protocol::Runtime::RemoteObject>& result, Optional<bool>& wasThrown)
+ {
+-    UserGestureEmulationScope userGestureScope(m_inspectedPage, asBool(emulateUserGesture));
++    InjectedScript injectedScript = injectedScriptManager().injectedScriptForObjectId(objectId);
++    JSC::JSGlobalObject* globalObject = injectedScript.globalObject();
++    Document* document = globalObject ? activeDOMWindow(*globalObject).document() : nullptr;
++    UserGestureEmulationScope userGestureScope(m_inspectedPage, asBool(emulateUserGesture), document);
+     InspectorRuntimeAgent::callFunctionOn(errorString, objectId, expression, optionalArguments, doNotPauseOnExceptionsAndMuteConsole, returnByValue, generatePreview, emulateUserGesture, result, wasThrown);
+ }
+ 
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
 index 2af3739b7fe7c16faa7d8d2797ce6d010215398d..80bfde6120874e16fb173f707fd0bd8a3e5067a0 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
@@ -3849,6 +3912,40 @@ index 2af3739b7fe7c16faa7d8d2797ce6d010215398d..80bfde6120874e16fb173f707fd0bd8a
      InstrumentingAgents& m_instrumentingAgents;
  
      Page& m_inspectedPage;
+diff --git a/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.cpp b/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.cpp
+index 633bce6e8f3c0785632eb7f26d172f6016b3efd9..14f531504bb2b96646d1a48092a0b132b0510f55 100644
+--- a/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.cpp
++++ b/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.cpp
+@@ -39,9 +39,9 @@
+ 
+ namespace WebCore {
+ 
+-UserGestureEmulationScope::UserGestureEmulationScope(Page& inspectedPage, bool emulateUserGesture)
++UserGestureEmulationScope::UserGestureEmulationScope(Page& inspectedPage, bool emulateUserGesture, Document* document)
+     : m_pageChromeClient(inspectedPage.chrome().client())
+-    , m_gestureIndicator(emulateUserGesture ? Optional<ProcessingUserGestureState>(ProcessingUserGesture) : WTF::nullopt)
++    , m_gestureIndicator(emulateUserGesture ? Optional<ProcessingUserGestureState>(ProcessingUserGesture) : WTF::nullopt, document)
+     , m_emulateUserGesture(emulateUserGesture)
+     , m_userWasInteracting(false)
+ {
+diff --git a/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.h b/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.h
+index b94ed78ad3dbea19543c1fd54653f0481e52fb7c..6341c7ff7ef53577f33c19ecad1b8bfbd674d051 100644
+--- a/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.h
++++ b/Source/WebCore/inspector/agents/page/UserGestureEmulationScope.h
+@@ -38,11 +38,12 @@ namespace WebCore {
+ 
+ class ChromeClient;
+ class Page;
++class Document;
+ 
+ class UserGestureEmulationScope {
+     WTF_MAKE_NONCOPYABLE(UserGestureEmulationScope);
+ public:
+-    UserGestureEmulationScope(Page& inspectedPage, bool emulateUserGesture);
++    UserGestureEmulationScope(Page& inspectedPage, bool emulateUserGesture, Document* document);
+     ~UserGestureEmulationScope();
+ 
+ private:
 diff --git a/Source/WebCore/loader/DocumentLoader.cpp b/Source/WebCore/loader/DocumentLoader.cpp
 index da50315d2160833e02ab19b250ea19ab652246a9..f93887308eba26272449efd1c48afa68d77c4408 100644
 --- a/Source/WebCore/loader/DocumentLoader.cpp
