@@ -225,6 +225,20 @@ module.exports.addTests = function({testRunner, expect}) {
         'afterAll',
       ]);
     });
+    it('should report as terminated even when hook crashes', async() => {
+      const t = new TestRunner({timeout: 10000});
+      t.afterEach(() => { throw new Error('crash!'); });
+      t.it('uno', () => { t.terminate(); });
+      await t.run();
+      expect(t.tests()[0].result).toBe('terminated');
+    });
+    it('should report as terminated when terminated during hook', async() => {
+      const t = new TestRunner({timeout: 10000});
+      t.afterEach(() => { t.terminate(); });
+      t.it('uno', () => { });
+      await t.run();
+      expect(t.tests()[0].result).toBe('terminated');
+    });
     it('should unwind hooks properly when crashed', async() => {
       const log = [];
       const t = new TestRunner({timeout: 10000});
