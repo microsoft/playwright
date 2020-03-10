@@ -145,6 +145,13 @@ export class WKPage implements PageDelegate {
       promises.push(this._evaluateBindingScript(binding));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
+    if (this._page._state.viewportSize) {
+      promises.push(session.send('Page.setScreenSizeOverride', {
+        width: this._page._state.viewportSize.width,
+        height: this._page._state.viewportSize.height,
+      }));
+    }
+
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
     if (contextOptions.offline)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
@@ -488,6 +495,10 @@ export class WKPage implements PageDelegate {
         height: viewport.height,
         fixedLayout: !!viewport.isMobile,
         deviceScaleFactor: viewport.deviceScaleFactor || 1
+      }),
+      this._session.send('Page.setScreenSizeOverride', {
+        width: viewport.width,
+        height: viewport.height,
       }),
     ];
     await Promise.all(promises);

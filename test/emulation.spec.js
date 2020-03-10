@@ -38,7 +38,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => window.innerWidth)).toBe(123);
       expect(await page.evaluate(() => window.innerHeight)).toBe(456);
     });
-    it.fail(WEBKIT || FFOX)('should emulate device-width media queries', async({page, server}) => {
+    it.fail(FFOX)('should emulate device-width media queries', async({page, server}) => {
       expect(page.viewportSize()).toEqual({width: 1280, height: 720});
       await page.setViewportSize({width: 200, height: 200});
       expect(await page.evaluate(() => matchMedia('(min-device-width: 100px)').matches)).toBe(true);
@@ -55,7 +55,7 @@ module.exports.describe = function({testRunner, expect, playwright, headless, FF
       expect(await page.evaluate(() => matchMedia('(device-width: 200px)').matches)).toBe(false);
       expect(await page.evaluate(() => matchMedia('(device-width: 500px)').matches)).toBe(true);
     });
-    it.fail(WEBKIT || FFOX)('should emulate device-height media queries', async({page, server}) => {
+    it.fail(FFOX)('should emulate device-height media queries', async({page, server}) => {
       expect(page.viewportSize()).toEqual({width: 1280, height: 720});
       await page.setViewportSize({width: 200, height: 200});
       expect(await page.evaluate(() => matchMedia('(min-device-height: 100px)').matches)).toBe(true);
