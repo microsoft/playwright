@@ -25,7 +25,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
 
   describe.fail(FFOX)('Overrides.setGeolocation', function() {
     it('should work', async({page, server, context}) => {
-      await context.setPermissions(server.PREFIX, ['geolocation']);
+      await context.grantPermissions(['geolocation']);
       await page.goto(server.EMPTY_PAGE);
       await context.setGeolocation({longitude: 10, latitude: 10});
       const geolocation = await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
@@ -73,8 +73,7 @@ module.exports.describe = function ({ testRunner, expect, FFOX, WEBKIT }) {
       expect(error.message).toContain('Invalid longitude "undefined"');
     });
     it('should use context options', async({browser, server}) => {
-      const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: {} };
-      options.permissions[server.PREFIX] = ['geolocation'];
+      const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: ['geolocation'] };
       const context = await browser.newContext(options);
       const page = await context.newPage();
       await page.goto(server.EMPTY_PAGE);

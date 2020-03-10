@@ -190,8 +190,8 @@ export class WKBrowserContext extends BrowserContextBase {
       await this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId: this._browserContextId, ignore: true });
     if (this._options.locale)
       await this._browser._browserSession.send('Playwright.setLanguages', { browserContextId: this._browserContextId, languages: [this._options.locale] });
-    const entries = Object.entries(this._options.permissions || {});
-    await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
+    if (this._options.permissions)
+      await this.grantPermissions(this._options.permissions);
     if (this._options.geolocation)
       await this.setGeolocation(this._options.geolocation);
     if (this._options.offline)
@@ -244,7 +244,7 @@ export class WKBrowserContext extends BrowserContextBase {
     await this._browser._browserSession.send('Playwright.deleteAllCookies', { browserContextId: this._browserContextId });
   }
 
-  async setPermissions(origin: string, permissions: string[]): Promise<void> {
+  async _doGrantPermissions(origin: string, permissions: string[]) {
     const webPermissionToProtocol = new Map<string, string>([
       ['geolocation', 'geolocation'],
     ]);
@@ -257,7 +257,7 @@ export class WKBrowserContext extends BrowserContextBase {
     await this._browser._browserSession.send('Playwright.grantPermissions', { origin, browserContextId: this._browserContextId, permissions: filtered });
   }
 
-  async clearPermissions() {
+  async _doClearPermissions() {
     await this._browser._browserSession.send('Playwright.resetPermissions', { browserContextId: this._browserContextId });
   }
 
