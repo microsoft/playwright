@@ -204,6 +204,24 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(popupEvent).toBeTruthy();
       await context.close();
     });
+    it.fail(FFOX)('should be able to capture alert', async({browser}) => {
+      // Firefox:
+      // - immediately closes dialog by itself, without protocol call;
+      // - waits for Page.addScriptToEvaluateOnNewDocument before resolving page(), which is too late.
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const evaluatePromise = page.evaluate(() => {
+        const win = window.open('about:blank');
+        win.alert('hello');
+      });
+      const popupEvent = await page.waitForEvent('popup');
+      const popup = await popupEvent.page();
+      const dialog = await popup.waitForEvent('dialog');
+      expect(dialog.message()).toBe('hello');
+      await dialog.dismiss();
+      await evaluatePromise;
+      await context.close();
+    });
     it('should work with empty url', async({browser}) => {
       const context = await browser.newContext();
       const page = await context.newPage();

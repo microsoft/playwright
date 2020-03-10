@@ -46,7 +46,6 @@ export class CRPage implements PageDelegate {
   private readonly _page: Page;
   readonly _networkManager: CRNetworkManager;
   private _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
-  private _isolatedWorlds = new Set<string>();
   private _eventListeners: RegisteredListener[] = [];
   rawMouse: RawMouseImpl;
   rawKeyboard: RawKeyboardImpl;
@@ -93,10 +92,19 @@ export class CRPage implements PageDelegate {
           helper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
           helper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
         ];
+        this._page.frames().map(frame => this._client.send('Page.createIsolatedWorld', {
+          frameId: frame._id,
+          grantUniveralAccess: true,
+          worldName: UTILITY_WORLD_NAME,
+        }).catch(debugError)); // frames might be removed before we send this.
       }),
       this._client.send('Log.enable', {}),
       this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
-      this._client.send('Runtime.enable', {}).then(() => this._ensureIsolatedWorld(UTILITY_WORLD_NAME)),
+      this._client.send('Runtime.enable', {}),
+      this._client.send('Page.addScriptToEvaluateOnNewDocument', {
+        source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`,
+        worldName: UTILITY_WORLD_NAME,
+      }),
       this._networkManager.initialize(),
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
       this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }),
@@ -182,21 +190,6 @@ export class CRPage implements PageDelegate {
     this._page._frameManager.frameRequestedNavigation(payload.frameId);
   }
 
-  async _ensureIsolatedWorld(name: string) {
-    if (this._isolatedWorlds.has(name))
-      return;
-    this._isolatedWorlds.add(name);
-    await this._client.send('Page.addScriptToEvaluateOnNewDocument', {
-      source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`,
-      worldName: name,
-    });
-    await Promise.all(this._page.frames().map(frame => this._client.send('Page.createIsolatedWorld', {
-      frameId: frame._id,
-      grantUniveralAccess: true,
-      worldName: name,
-    }).catch(debugError))); // frames might be removed before we send this
-  }
-
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
     this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
@@ -209,8 +202,6 @@ export class CRPage implements PageDelegate {
     const frame = contextPayload.auxData ? this._page._frameManager.frame(contextPayload.auxData.frameId) : null;
     if (!frame)
       return;
-    if (contextPayload.auxData && contextPayload.auxData.type === 'isolated')
-      this._isolatedWorlds.add(contextPayload.name);
     const delegate = new CRExecutionContext(this._client, contextPayload);
     const context = new dom.FrameExecutionContext(delegate, frame);
     if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
