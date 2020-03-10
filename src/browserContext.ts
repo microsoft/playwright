@@ -54,6 +54,7 @@ export interface BrowserContext {
   setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, ...args: any[]): Promise<void>;
   exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
+  route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any>;
   close(): Promise<void>;
 }
@@ -62,6 +63,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: BrowserContextOptions;
+  readonly _routes: { url: types.URLMatch, handler: (request: network.Request) => any }[] = [];
   _closed = false;
   private readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
@@ -100,6 +102,7 @@ export abstract class BrowserContextBase extends platform.EventEmitter implement
   abstract setOffline(offline: boolean): Promise<void>;
   abstract addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, ...args: any[]): Promise<void>;
   abstract exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
+  abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   abstract close(): Promise<void>;
 
   setDefaultNavigationTimeout(timeout: number) {

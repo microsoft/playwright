@@ -303,8 +303,8 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setRequestInterception(enabled: boolean): Promise<void> {
-    await this._networkManager.setRequestInterception(enabled);
+  async updateRequestInterception(): Promise<void> {
+    await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 
   async setFileChooserIntercepted(enabled: boolean) {

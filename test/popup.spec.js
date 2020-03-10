@@ -39,6 +39,24 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       expect(userAgent).toBe('hey');
       expect(request.headers['user-agent']).toBe('hey');
     });
+    it.fail(CHROMIUM || FFOX)('should respect routes from browser context', async function({browser, server}) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.setContent('<a target=_blank rel=noopener href="empty.html">link</a>');
+      let intercepted = false;
+      await context.route('**/empty.html', request => {
+        request.continue();
+        intercepted = true;
+      });
+      const [popup] = await Promise.all([
+        context.waitForEvent('page').then(pageEvent => pageEvent.page()),
+        page.click('a'),
+      ]);
+      await popup.waitForLoadState();
+      await context.close();
+      expect(intercepted).toBe(true);
+    });
   });
 
   describe('window.open', function() {
@@ -121,6 +139,19 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, WE
       });
       await context.close();
       expect(size).toEqual({width: 400, height: 500});
+    });
+    it.fail(FFOX)('should respect routes from browser context', async function({browser, server}) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      let intercepted = false;
+      await context.route('**/empty.html', request => {
+        request.continue();
+        intercepted = true;
+      });
+      await page.evaluate(url => window.__popup = window.open(url), server.EMPTY_PAGE);
+      await context.close();
+      expect(intercepted).toBe(true);
     });
     it('should apply addInitScript from browser context', async function({browser, server}) {
       const context = await browser.newContext();

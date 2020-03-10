@@ -31,7 +31,8 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('Page.route', function() {
     it('should intercept', async({page, server}) => {
-      await page.route('/empty.html', request => {
+      let intercepted = false;
+      await page.route('**/empty.html', request => {
         expect(request.url()).toContain('empty.html');
         expect(request.headers()['user-agent']).toBeTruthy();
         expect(request.method()).toBe('GET');
@@ -41,9 +42,11 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
         expect(request.frame() === page.mainFrame()).toBe(true);
         expect(request.frame().url()).toBe('about:blank');
         request.continue();
+        intercepted = true;
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.ok()).toBe(true);
+      expect(intercepted).toBe(true);
     });
     it('should work when POST is redirected with 302', async({page, server}) => {
       server.setRedirect('/rredirect', '/empty.html');
@@ -516,7 +519,7 @@ module.exports.describe = function({testRunner, expect, defaultBrowserOptions, p
 
   describe('ignoreHTTPSErrors', function() {
     it('should work with request interception', async({browser, httpsServer}) => {
-      const context = await browser.newContext({ ignoreHTTPSErrors: true, interceptNetwork: true });
+      const context = await browser.newContext({ ignoreHTTPSErrors: true });
       const page = await context.newPage();
 
       await page.route('**/*', request => request.continue());

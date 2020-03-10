@@ -48,7 +48,7 @@ export interface PageDelegate {
   updateExtraHTTPHeaders(): Promise<void>;
   setViewportSize(viewportSize: types.Size): Promise<void>;
   setEmulateMedia(mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null): Promise<void>;
-  setRequestInterception(enabled: boolean): Promise<void>;
+  updateRequestInterception(): Promise<void>;
   setFileChooserIntercepted(enabled: boolean): Promise<void>;
 
   canScreenshotOutsideViewport(): boolean;
@@ -80,8 +80,6 @@ type PageState = {
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   extraHTTPHeaders: network.Headers | null;
-  interceptNetwork: boolean | null;
-  hasTouch: boolean | null;
 };
 
 export type FileChooser = {
@@ -127,7 +125,7 @@ export class Page extends platform.EventEmitter {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<platform.BufferType>) | undefined;
   readonly coverage: any;
-  readonly _requestHandlers: { url: types.URLMatch, handler: (request: network.Request) => void }[] = [];
+  readonly _routes: { url: types.URLMatch, handler: (request: network.Request) => any }[] = [];
   _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
@@ -150,8 +148,6 @@ export class Page extends platform.EventEmitter {
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,
-      interceptNetwork: null,
-      hasTouch: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard);
@@ -391,19 +387,26 @@ export class Page extends platform.EventEmitter {
     await this._delegate.evaluateOnNewDocument(await helper.evaluationScript(script, args));
   }
 
-  async route(url: types.URLMatch, handler: (request: network.Request)  => void) {
-    if (!this._state.interceptNetwork) {
-      this._state.interceptNetwork = true;
-      await this._delegate.setRequestInterception(true);
-    }
-    this._requestHandlers.push({ url, handler });
+  _needsRequestInterception(): boolean {
+    return this._routes.length > 0 || this._browserContext._routes.length > 0;
+  }
+
+  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
+    this._routes.push({ url, handler });
+    await this._delegate.updateRequestInterception();
   }
 
   _requestStarted(request: network.Request) {
     this.emit(Events.Page.Request, request);
     if (!request._isIntercepted())
       return;
-    for (const { url, handler } of this._requestHandlers) {
+    for (const { url, handler } of this._routes) {
+      if (platform.urlMatches(request.url(), url)) {
+        handler(request);
+        return;
+      }
+    }
+    for (const { url, handler } of this._browserContext._routes) {
       if (platform.urlMatches(request.url(), url)) {
         handler(request);
         return;

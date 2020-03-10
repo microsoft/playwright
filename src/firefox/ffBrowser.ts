@@ -290,6 +290,12 @@ export class FFBrowserContext extends BrowserContextBase {
     throw new Error('Not implemented');
   }
 
+  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
+    this._routes.push({ url, handler });
+    throw new Error('Not implemented');
+    // TODO: update interception on the context if this is a first route.
+  }
+
   async close() {
     if (this._closed)
       return;

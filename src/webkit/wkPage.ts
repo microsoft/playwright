@@ -91,7 +91,7 @@ export class WKPage implements PageDelegate {
     if (contextOptions.javaScriptEnabled === false)
       promises.push(this._pageProxySession.send('Emulation.setJavaScriptEnabled', { enabled: false }));
     if (this._page._state.viewportSize || contextOptions.viewport)
-      promises.push(this._updateViewport(true /* updateTouch */));
+      promises.push(this._updateViewport());
     promises.push(this.updateHttpCredentials());
     await Promise.all(promises);
   }
@@ -132,8 +132,7 @@ export class WKPage implements PageDelegate {
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
-
-    if (this._page._state.interceptNetwork)
+    if (this._page._needsRequestInterception())
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true, interceptRequests: true }));
 
     const contextOptions = this._browserContext._options;
@@ -149,8 +148,7 @@ export class WKPage implements PageDelegate {
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
     if (contextOptions.offline)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
-    if (this._page._state.hasTouch)
-      promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: true }));
+    promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: contextOptions.viewport ? !!contextOptions.viewport.isMobile : false }));
     if (contextOptions.timezoneId) {
       promises.push(session.send('Page.setTimeZone', { timeZone: contextOptions.timezoneId }).
           catch(e => { throw new Error(`Invalid timezone ID: ${contextOptions.timezoneId}`); }));
@@ -476,10 +474,10 @@ export class WKPage implements PageDelegate {
 
   async setViewportSize(viewportSize: types.Size): Promise<void> {
     assert(this._page._state.viewportSize === viewportSize);
-    await this._updateViewport(false /* updateTouch */);
+    await this._updateViewport();
   }
 
-  async _updateViewport(updateTouch: boolean): Promise<void> {
+  async _updateViewport(): Promise<void> {
     let viewport = this._browserContext._options.viewport || { width: 0, height: 0 };
     const viewportSize = this._page._state.viewportSize;
     if (viewportSize)
@@ -492,12 +490,11 @@ export class WKPage implements PageDelegate {
         deviceScaleFactor: viewport.deviceScaleFactor || 1
       }),
     ];
-    if (updateTouch)
-      promises.push(this._updateState('Page.setTouchEmulationEnabled', { enabled: !!viewport.isMobile }));
     await Promise.all(promises);
   }
 
-  async setRequestInterception(enabled: boolean): Promise<void> {
+  async updateRequestInterception(): Promise<void> {
+    const enabled = this._page._needsRequestInterception();
     await this._updateState('Network.setInterceptionEnabled', { enabled, interceptRequests: enabled });
   }
 
@@ -735,7 +732,7 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new WKInterceptableRequest(session, !!this._page._state.interceptNetwork, frame, event, redirectChain, documentId);
+    const request = new WKInterceptableRequest(session, this._page._needsRequestInterception(), frame, event, redirectChain, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request);
   }

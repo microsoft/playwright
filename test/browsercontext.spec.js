@@ -367,6 +367,44 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
     });
   });
 
+  describe.fail(FFOX)('BrowserContext.route', () => {
+    it('should intercept', async({browser, server}) => {
+      const context = await browser.newContext();
+      let intercepted = false;
+      await context.route('**/empty.html', request => {
+        intercepted = true;
+        expect(request.url()).toContain('empty.html');
+        expect(request.headers()['user-agent']).toBeTruthy();
+        expect(request.method()).toBe('GET');
+        expect(request.postData()).toBe(undefined);
+        expect(request.isNavigationRequest()).toBe(true);
+        expect(request.resourceType()).toBe('document');
+        expect(request.frame() === page.mainFrame()).toBe(true);
+        expect(request.frame().url()).toBe('about:blank');
+        request.continue();
+      });
+      const page = await context.newPage();
+      const response = await page.goto(server.EMPTY_PAGE);
+      expect(response.ok()).toBe(true);
+      expect(intercepted).toBe(true);
+      await context.close();
+    });
+    it('should yield to page.route', async({browser, server}) => {
+      const context = await browser.newContext();
+      await context.route('**/empty.html', request => {
+        request.fulfill({ status: 200, body: 'context' });
+      });
+      const page = await context.newPage();
+      await page.route('**/empty.html', request => {
+        request.fulfill({ status: 200, body: 'page' });
+      });
+      const response = await page.goto(server.EMPTY_PAGE);
+      expect(response.ok()).toBe(true);
+      expect(await response.text()).toBe('page');
+      await context.close();
+    });
+  });
+
   describe('BrowserContext.setHTTPCredentials', function() {
     it('should work', async({browser, server}) => {
       server.setAuth('/empty.html', 'user', 'pass');

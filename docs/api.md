@@ -290,6 +290,7 @@ await context.close();
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
+- [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
@@ -465,6 +466,38 @@ Creates a new page in the browser context.
 [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
 
 An array of all pages inside the browser context.
+
+#### browserContext.route(url, handler)
+- `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+- `handler` <[function]\([Request]\)> handler function to route the request.
+- returns: <[Promise]>.
+
+Routing activates the request interception  and enables `request.abort`, `request.continue` and `request.fulfill` methods on the request. This provides the capability to modify network requests that are made by any page in the browser context.
+
+Once request interception is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
+An example of a naïve request interceptor that aborts all image requests:
+
+```js
+const context = await browser.newContext();
+await context.route('**/*.{png,jpg,jpeg}', request => request.abort());
+const page = await context.newPage();
+await page.goto('https://example.com');
+await browser.close();
+```
+
+or the same snippet using a regex pattern instead:
+
+```js
+const context = await browser.newContext();
+await context.route(/(\.png$)|(\.jpg$)/, request => request.abort());
+const page = await context.newPage();
+await page.goto('https://example.com');
+await browser.close();
+```
+
+Page routes (set up with [page.route(url, handler)](#pagerouteurl-handler)) take precedence over browser context routes when request matches both handlers.
+
+> **NOTE** Enabling request interception disables http cache.
 
 #### browserContext.setCookies(cookies)
 - `cookies` <[Array]<[Object]>>
@@ -1433,7 +1466,7 @@ If `key` is a single character and no modifier keys besides `Shift` are being he
 
 #### page.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([string]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-- `handler` <[function]\([Request]\)> handler function to router the request.
+- `handler` <[function]\([Request]\)> handler function to route the request.
 - returns: <[Promise]>.
 
 Routing activates the request interception and enables `request.abort`, `request.continue` and
@@ -1445,7 +1478,6 @@ An example of a naïve request interceptor that aborts all image requests:
 ```js
 const page = await browser.newPage();
 await page.route('**/*.{png,jpg,jpeg}', request => request.abort());
-// await page.route(/\.(png|jpeg|jpg)$/, request => request.abort()); // <-- same thing
 await page.goto('https://example.com');
 await browser.close();
 ```
@@ -1459,7 +1491,9 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
-> **NOTE** Enabling request interception disables page caching.
+Page routes take precedence over browser context routes (set up with [browserContext.route(url, handler)](#browsercontextrouteurl-handler)) when request matches both handlers.
+
+> **NOTE** Enabling request interception disables http cache.
 
 #### page.screenshot([options])
 - `options` <[Object]> Options object which might have the following properties:
@@ -3987,6 +4021,7 @@ const backgroundPage = await backroundPageTarget.page();
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
+- [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
 - [browserContext.setCookies(cookies)](#browsercontextsetcookiescookies)
 - [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout)
 - [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout)
