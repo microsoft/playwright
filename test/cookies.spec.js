@@ -465,7 +465,7 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
   });
 
   describe('BrowserContext.clearCookies', function() {
-    it.fail(WEBKIT)('should clear cookies', async({context, page, server}) => {
+    it('should clear cookies', async({context, page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await context.setCookies([{
         url: server.EMPTY_PAGE,
@@ -474,6 +474,8 @@ module.exports.describe = function({testRunner, expect, playwright, defaultBrows
       }]);
       expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
       await context.clearCookies();
+      expect(await context.cookies()).toEqual([]);
+      await page.reload();
       expect(await page.evaluate('document.cookie')).toBe('');
     });
     it('should isolate cookies when clearing', async({context, server, browser}) => {
