@@ -951,8 +951,7 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
           setTimeout(() => window.stop(), 100);
         }, server.EMPTY_PAGE);
     });
-    it.fail(WEBKIT)('window.stop sync', async({page, server, httpsServer}) => {
-      server.setRoute('/empty.html', async (req, res) => {});
+    it('window.stop sync', async({page, server, httpsServer}) => {
       await page.evaluate((url) => {
           window.location.href = url;
           window.stop();
