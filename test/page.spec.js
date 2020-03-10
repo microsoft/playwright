@@ -511,27 +511,6 @@ module.exports.describe = function({testRunner, expect, headless, playwright, FF
       const result = await page.content();
       expect(result).toBe(expectedOutput);
     });
-    it.fail(true)('should not confuse with previous navigation', async({page, server}) => {
-      const imgPath = '/img.png';
-      let imgResponse = null;
-      server.setRoute(imgPath, (req, res) => imgResponse = res);
-      let loaded = false;
-      // get the global object to make sure that the main execution context is alive and well.
-      await page.evaluate(() => this);
-      // Trigger navigation which might resolve next setContent call.
-      const evalPromise = page.evaluate(url => window.location.href = url, server.EMPTY_PAGE);
-      const contentPromise = page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).then(() => loaded = true);
-      await server.waitForRequest(imgPath);
-
-      expect(loaded).toBe(false);
-      for (let i = 0; i < 5; i++)
-        await page.evaluate('1');  // Roundtrips to give setContent a chance to resolve.
-      expect(loaded).toBe(false);
-
-      imgResponse.end();
-      await contentPromise;
-      await evalPromise;
-    });
     it('should work with doctype', async({page, server}) => {
       const doctype = '<!DOCTYPE html>';
       await page.setContent(`${doctype}<div>hello</div>`);
