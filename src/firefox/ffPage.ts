@@ -88,6 +88,7 @@ export class FFPage implements PageDelegate {
   async _initialize() {
     try {
       await Promise.all([
+        // TODO: we should get rid of this call to resolve before any early events arrive, e.g. dialogs.
         this._session.send('Page.addScriptToEvaluateOnNewDocument', {
           script: '',
           worldName: UTILITY_WORLD_NAME,
