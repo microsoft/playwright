@@ -201,6 +201,10 @@ class Reporter {
       console.log(`${prefix} ${colors.yellow('[MARKED AS FAILING]')} ${test.fullName} (${formatLocation(test.location)})`);
     } else if (test.result === 'timedout') {
       console.log(`${prefix} ${colors.red(`[TIMEOUT ${test.timeout}ms]`)} ${test.fullName} (${formatLocation(test.location)})`);
+      if (test.output) {
+        console.log('  Output:');
+        console.log(padLines(test.output, 4));
+      }
     } else if (test.result === 'failed') {
       console.log(`${prefix} ${colors.red('[FAIL]')} ${test.fullName} (${formatLocation(test.location)})`);
       if (test.error instanceof MatchError) {
