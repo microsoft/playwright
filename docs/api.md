@@ -3405,7 +3405,7 @@ page.on('requestfailed', request => {
 ```
 
 #### request.frame()
-- returns: <?[Frame]> A [Frame] that initiated this request, or `null` if navigating to error pages.
+- returns: <[Frame]> A [Frame] that initiated this request.
 
 #### request.fulfill(response)
 - `response` <[Object]> Response that will fulfill this request
@@ -3516,7 +3516,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 - returns: <Promise[?string]> Waits for this response to finish, throws when corresponding request failed.
 
 #### response.frame()
-- returns: <?[Frame]> A [Frame] that initiated this response, or `null` if navigating to error pages.
+- returns: <[Frame]> A [Frame] that initiated this response.
 
 #### response.headers()
 - returns: <[Object]> An object with HTTP headers associated with the response. All header names are lower-case.
