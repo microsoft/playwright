@@ -54,7 +54,8 @@ export class SlowMoTransport {
 
   send(s: string) {
     setTimeout(() => {
-      this._delegate.send(s);
+      if (this._delegate.onmessage)
+        this._delegate.send(s);
     }, this._delay);
   }
 
