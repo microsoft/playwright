@@ -18,6 +18,7 @@
 * [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
 * [Headless Testing](https://headlesstesting.com/support/start/playwright.html): Run Playwright tests on browsers in the cloud
+* [playwright-test](https://github.com/hugomrdias/playwright-test) Run unit tests and benchmarks in browsers with Node's seamless experience.
 
 ## Frameworks
 
