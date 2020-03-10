@@ -65,10 +65,11 @@ beforeAll(async state => {
   state.sourceServer.PREFIX = `http://localhost:${sourcePort}`;
 });
 
-afterAll(async({server, httpsServer}) => {
+afterAll(async({server, sourceServer, httpsServer}) => {
   await Promise.all([
     server.stop(),
     httpsServer.stop(),
+    sourceServer.stop(),
   ]);
 });
 
