@@ -107,14 +107,14 @@ export class Request {
   private _method: string;
   private _postData: string | undefined;
   private _headers: Headers;
-  private _frame: frames.Frame | null;
+  private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response>;
   private _waitForResponsePromiseCallback: (value: Response) => void = () => {};
   private _waitForFinishedPromise: Promise<Response | null>;
   private _waitForFinishedPromiseCallback: (value: Response | null) => void = () => {};
   private _interceptionHandled = false;
 
-  constructor(delegate: RequestDelegate | null, frame: frames.Frame | null, redirectChain: Request[], documentId: string | undefined,
+  constructor(delegate: RequestDelegate | null, frame: frames.Frame, redirectChain: Request[], documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: string | undefined, headers: Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._delegate = delegate;
@@ -177,7 +177,7 @@ export class Request {
     response._finishedPromise.then(() => this._waitForFinishedPromiseCallback(response));
   }
 
-  frame(): frames.Frame | null {
+  frame(): frames.Frame {
     return this._frame;
   }
 
@@ -309,7 +309,7 @@ export class Response {
     return this._request;
   }
 
-  frame(): frames.Frame | null {
+  frame(): frames.Frame {
     return this._request.frame();
   }
 }

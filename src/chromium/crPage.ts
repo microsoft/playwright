@@ -249,7 +249,8 @@ export class CRPage implements PageDelegate {
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Events.Page.PageError, exceptionToError(exception.exceptionDetails)));
-    this._networkManager.instrumentNetworkEvents(session);
+    // TODO: attribute workers to the right frame.
+    this._networkManager.instrumentNetworkEvents(session, this._page.mainFrame());
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {

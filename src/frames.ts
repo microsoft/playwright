@@ -211,11 +211,8 @@ export class FrameManager {
 
   requestStarted(request: network.Request) {
     this._inflightRequestStarted(request);
-    const frame = request.frame();
-    if (frame) {
-      for (const watcher of frame._requestWatchers)
-        watcher(request);
-    }
+    for (const watcher of request.frame()._requestWatchers)
+      watcher(request);
     if (!request._isFavicon)
       this._page._requestStarted(request);
   }
@@ -233,14 +230,13 @@ export class FrameManager {
 
   requestFailed(request: network.Request, canceled: boolean) {
     this._inflightRequestFinished(request);
-    const frame = request.frame();
-    if (request._documentId && frame) {
-      const isCurrentDocument = frame._lastDocumentId === request._documentId;
+    if (request._documentId) {
+      const isCurrentDocument = request.frame()._lastDocumentId === request._documentId;
       if (!isCurrentDocument) {
         let errorText = request.failure()!.errorText;
         if (canceled)
           errorText += '; maybe frame was detached?';
-        for (const watcher of frame._documentWatchers)
+        for (const watcher of request.frame()._documentWatchers)
           watcher(request._documentId, new Error(errorText));
       }
     }
@@ -263,7 +259,7 @@ export class FrameManager {
 
   private _inflightRequestFinished(request: network.Request) {
     const frame = request.frame();
-    if (!frame || request._isFavicon)
+    if (request._isFavicon)
       return;
     if (!frame._inflightRequests.has(request))
       return;
@@ -276,7 +272,7 @@ export class FrameManager {
 
   private _inflightRequestStarted(request: network.Request) {
     const frame = request.frame();
-    if (!frame || request._isFavicon)
+    if (request._isFavicon)
       return;
     frame._inflightRequests.add(request);
     if (frame._inflightRequests.size === 1)

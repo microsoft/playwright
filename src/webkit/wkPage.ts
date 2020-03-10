@@ -728,7 +728,7 @@ export class WKPage implements PageDelegate {
         redirectChain = request.request._redirectChain;
       }
     }
-    const frame = this._page._frameManager.frame(event.frameId);
+    const frame = this._page._frameManager.frame(event.frameId)!;
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
