@@ -1113,18 +1113,15 @@ module.exports.describe = function({testRunner, expect, playwright, MAC, WIN, FF
       expect(response.frame()).toBe(frame);
       expect(page.url()).toContain('/frames/one-frame.html');
     });
-    it.fail(true)('should fail when frame detaches', async({page, server}) => {
+    it('should fail when frame detaches', async({page, server}) => {
       await page.goto(server.PREFIX + '/frames/one-frame.html');
       const frame = page.frames()[1];
-
       server.setRoute('/empty.html', () => {});
       let error = null;
       await Promise.all([
         frame.waitForNavigation().catch(e => error = e),
-        server.waitForRequest('/empty.html').then(() => {
-          page.$eval('iframe', frame => frame.remove());
-        }),
-        frame.evaluate(() => window.location = '/empty.html'),
+        frame.evaluate('window.location = "/empty.html"'),
+        page.evaluate('setTimeout(() => document.querySelector("iframe").remove())'),
       ]).catch(e => error = e);
       expect(error.message).toContain('frame was detached');
     });
