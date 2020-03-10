@@ -25,8 +25,6 @@ export interface ConnectionTransport {
 export class SlowMoTransport {
   private readonly _delay: number;
   private readonly _delegate: ConnectionTransport;
-  private _incomingMessageQueue: string[] = [];
-  private _dispatchTimerId?: NodeJS.Timer;
 
   onmessage?: (message: string) => void;
   onclose?: () => void;
@@ -38,34 +36,13 @@ export class SlowMoTransport {
   constructor(transport: ConnectionTransport, delay: number) {
     this._delay = delay;
     this._delegate = transport;
-    this._delegate.onmessage = this._enqueueMessage.bind(this);
+    this._delegate.onmessage = this._onmessage.bind(this);
     this._delegate.onclose = this._onClose.bind(this);
   }
 
-  private _enqueueMessage(message: string) {
-    this._incomingMessageQueue.push(message);
-    this._scheduleQueueDispatch();
-  }
-
-  private _scheduleQueueDispatch() {
-    if (this._dispatchTimerId)
-      return;
-    if (!this._incomingMessageQueue.length)
-      return;
-    this._dispatchTimerId = setTimeout(() => {
-      this._dispatchTimerId = undefined;
-      this._dispatchOneMessageFromQueue();
-    }, this._delay);
-  }
-
-  private _dispatchOneMessageFromQueue() {
-    const message = this._incomingMessageQueue.shift();
-    try {
-      if (this.onmessage)
-        this.onmessage(message!);
-    } finally {
-      this._scheduleQueueDispatch();
-    }
+  private _onmessage(message: string) {
+    if (this.onmessage)
+      this.onmessage(message);
   }
 
   private _onClose() {
@@ -76,7 +53,10 @@ export class SlowMoTransport {
   }
 
   send(s: string) {
-    this._delegate.send(s);
+    setTimeout(() => {
+      if (this._delegate.onmessage)
+        this._delegate.send(s);
+    }, this._delay);
   }
 
   close() {
