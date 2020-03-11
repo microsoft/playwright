@@ -149,7 +149,7 @@ playwright.chromium.launch().then(async browser => {
 
   let currentURL: string;
   page
-      .waitForSelector('img', { visibility: 'visible' })
+      .waitForSelector('img', { waitFor: 'visible' })
       .then(() => console.log('First URL with image: ' + currentURL));
   for (currentURL of [
     'https://example.com',
@@ -418,8 +418,8 @@ playwright.chromium.launch().then(async browser => {
     const numberAssertion: AssertType<number, typeof x> = true;
   }, 5);
 
-  const something = Math.random()  > .5 ? 'visible' : 'any';
-  const handle = await page.waitForSelector('a', {visibility: something});
+  const something = Math.random()  > .5 ? 'visible' : 'attached';
+  const handle = await page.waitForSelector('a', {waitFor: something});
   await handle.$eval('span', (element, x, y) => {
     const spanAssertion: AssertType<HTMLSpanElement, typeof element> = true;
     const numberAssertion: AssertType<number, typeof x> = true;
@@ -479,10 +479,15 @@ playwright.chromium.launch().then(async browser => {
       const canBeNull: AssertType<null, typeof handle> = false;
     }
     {
-      const visibility = Math.random() > .5 ? 'any' : 'visible';
-      const handle = await frameLike.waitForSelector('body', {visibility});
+      const waitFor = Math.random() > .5 ? 'attached' : 'visible';
+      const handle = await frameLike.waitForSelector('body', {waitFor});
       const bodyAssertion: AssertType<playwright.ElementHandle<HTMLBodyElement>, typeof handle> = true;
       const canBeNull: AssertType<null, typeof handle> = false;
+    }
+    {
+      const handle = await frameLike.waitForSelector('body', {waitFor: 'hidden'});
+      const bodyAssertion: AssertType<playwright.ElementHandle<HTMLBodyElement>, typeof handle> = true;
+      const canBeNull: AssertType<null, typeof handle> = true;
     }
     {
       const waitFor = Math.random() > .5 ? 'hidden' : 'visible';
@@ -497,8 +502,8 @@ playwright.chromium.launch().then(async browser => {
       const canBeNull: AssertType<null, typeof handle> = false;
     }
     {
-      const visibility = Math.random() > .5 ? 'any' : 'visible';
-      const handle = await frameLike.waitForSelector('something-strange', {visibility});
+      const waitFor = Math.random() > .5 ? 'attached' : 'visible';
+      const handle = await frameLike.waitForSelector('something-strange', {waitFor});
       const elementAssertion: AssertType<playwright.ElementHandle<HTMLElement|SVGElement>, typeof handle> = true;
       const canBeNull: AssertType<null, typeof handle> = false;
     }
@@ -518,7 +523,15 @@ playwright.chromium.launch().then(async browser => {
 (async () => {
   playwright.chromium.connect;
   playwright.errors.TimeoutError;
-  const iPhone = playwright.devices['iPhone'];
+  {
+    const iPhone = playwright.devices['iPhone'];
+    const assertion: AssertType<string, typeof iPhone.userAgent> = true;
+    const numberAssertion: AssertType<number, typeof iPhone.viewport.width> = true;
+  }
+  {
+    const agents = playwright.devices.map(x => x.userAgent);
+    const assertion: AssertType<string[], typeof agents> = true;
+  }
 
   // Must be a function that evaluates to a selector engine instance.
   const createTagNameEngine = () => ({

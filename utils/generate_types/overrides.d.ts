@@ -30,7 +30,7 @@ type Handle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
 type ElementHandleForTag<K extends keyof HTMLElementTagNameMap> = ElementHandle<HTMLElementTagNameMap[K]>;
 
 type WaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
-  visibility: 'visible'|'any';
+  waitFor: 'visible'|'attached';
 }
 
 type HTMLOrSVGElement = SVGElement | HTMLElement;
@@ -127,4 +127,5 @@ export interface ChromiumSession {
   ): Promise<Protocol.CommandReturnValues[T]>;
 }
 
-export type Devices = {[name: string]: {viewport: BrowserNewContextOptionsViewport, userAgent: string}};
+type DeviceDescriptor = {viewport: BrowserNewContextOptionsViewport, userAgent: string};
+export type Devices = {[name: string]: DeviceDescriptor} & DeviceDescriptor[];
