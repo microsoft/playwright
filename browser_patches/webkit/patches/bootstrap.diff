@@ -4302,6 +4302,31 @@ index 167f7eb3038e3ddbde757c0adf569073650ed859..a9a4aec0fdc1b4c483967fb332668be3
  }
  
  Ref<Frame> Frame::create(Page* page, HTMLFrameOwnerElement* ownerElement, FrameLoaderClient* client)
+diff --git a/Source/WebCore/page/FrameSnapshotting.cpp b/Source/WebCore/page/FrameSnapshotting.cpp
+index 73587787f88a6ad4e4baffb0beb0b87e7782916f..7e7a984207d6005bdb116784f981b487c8c16846 100644
+--- a/Source/WebCore/page/FrameSnapshotting.cpp
++++ b/Source/WebCore/page/FrameSnapshotting.cpp
+@@ -115,6 +115,8 @@ std::unique_ptr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRe
+     if (!buffer)
+         return nullptr;
+     buffer->context().translate(-imageRect.x(), -imageRect.y());
++    if (coordinateSpace != FrameView::ViewCoordinates)
++      buffer->context().scale(1 / frame.page()->pageScaleFactor());
+ 
+     if (!clipRects.isEmpty()) {
+         Path clipPath;
+@@ -123,7 +125,10 @@ std::unique_ptr<ImageBuffer> snapshotFrameRectWithClip(Frame& frame, const IntRe
+         buffer->context().clipPath(clipPath);
+     }
+ 
+-    frame.view()->paintContentsForSnapshot(buffer->context(), imageRect, shouldIncludeSelection, coordinateSpace);
++    FloatRect fr = imageRect;
++    if (coordinateSpace != FrameView::ViewCoordinates)
++      fr.scale(frame.page()->pageScaleFactor());
++    frame.view()->paintContentsForSnapshot(buffer->context(), enclosingIntRect(fr), shouldIncludeSelection, coordinateSpace);
+     return buffer;
+ }
+ 
 diff --git a/Source/WebCore/page/FrameView.cpp b/Source/WebCore/page/FrameView.cpp
 index 95f5b95b1f472169a87ed09c2af8cf8cacb8b9e2..ca1b0d768a686bd1bdd13f0420a73120b8cf69ae 100644
 --- a/Source/WebCore/page/FrameView.cpp
