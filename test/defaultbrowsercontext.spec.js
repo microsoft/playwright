@@ -72,7 +72,7 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
         sameSite: 'None',
       }]);
     });
-    it.fail(WEBKIT)('context.clearCookies() should work', async({page, server}) => {
+    it('context.clearCookies() should work', async({page, server}) => {
       await page.goto(server.EMPTY_PAGE);
       await page.context().setCookies([{
         url: server.EMPTY_PAGE,
@@ -85,6 +85,8 @@ module.exports.describe = function ({ testRunner, expect, defaultBrowserOptions,
       }]);
       expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
       await page.context().clearCookies();
+      await page.reload();
+      expect(await page.context().cookies([])).toEqual([]);
       expect(await page.evaluate('document.cookie')).toBe('');
     });
   });
