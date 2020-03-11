@@ -303,6 +303,24 @@ module.exports.describe = function({testRunner, expect, playwright, CHROMIUM, FF
       await context.close();
     });
   });
+  describe('BrowserContext({device})', function() {
+    it('should work with a device descriptor', async({browser}) => {
+      const context = await browser.newContext({ device: playwright.devices['iPhone 6'] });
+      const page = await context.newPage();
+      expect(page.viewportSize().width).toBe(375);
+      expect(page.viewportSize().height).toBe(667);
+      expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
+      await context.close();
+    });
+    it('should work with a string', async({browser, server}) => {
+      const context = await browser.newContext({ device: 'iPhone 6' });
+      const page = await context.newPage();
+      expect(page.viewportSize().width).toBe(375);
+      expect(page.viewportSize().height).toBe(667);
+      expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');
+      await context.close();
+    });
+  });
 
   describe('BrowserContext.pages()', function() {
     it('should return all of the pages', async({browser, server}) => {

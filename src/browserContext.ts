@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-import { helper } from './helper';
+import { helper, assert } from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
 import * as platform from './platform';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
+import { DeviceDescriptors } from './deviceDescriptors';
 
 export type BrowserContextOptions = {
   viewport?: types.Viewport | null,
@@ -36,6 +37,7 @@ export type BrowserContextOptions = {
   extraHTTPHeaders?: network.Headers,
   offline?: boolean,
   httpCredentials?: types.Credentials,
+  device?: string | {viewport: types.Viewport, userAgent: string},
 };
 
 export interface BrowserContext {
@@ -133,12 +135,28 @@ export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
   }
 }
 
+function computeDeviceDescriptor(device?: string | {viewport: types.Viewport, userAgent: string}) {
+  if (helper.isString(device)) {
+    assert(device in DeviceDescriptors, `Unknown device name: "${device}"`);
+    return DeviceDescriptors[device];
+  }
+  if (device)
+    return device;
+  return {
+    viewport: { width: 1280, height: 720 },
+    userAgent: null
+  };
+}
+
 export function validateBrowserContextOptions(options: BrowserContextOptions): BrowserContextOptions {
   const result = { ...options };
+  const device = computeDeviceDescriptor(options.device);
   if (!result.viewport && result.viewport !== null)
-    result.viewport = { width: 1280, height: 720 };
+    result.viewport = device.viewport;
   if (result.viewport)
     result.viewport = { ...result.viewport };
+  if (!result.userAgent && device.userAgent)
+    result.userAgent = device.userAgent;
   if (result.geolocation)
     result.geolocation = verifyGeolocation(result.geolocation);
   if (result.extraHTTPHeaders)

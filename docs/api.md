@@ -200,6 +200,13 @@ Indicates that the browser is connected.
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
     - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
   - `userAgent` <?[string]> Specific user agent to use in this context.
+  - `device` <[string]|[Object]> Pass a device name or object from [playwright.devices](#playwrightdevices) to set the viewport and user agent.
+    - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+      - `width` <[number]>
+      - `height` <[number]>
+      - `deviceScaleFactor` <[number]>
+      - `isMobile` <[boolean]>
+    - `userAgent` <[string]>
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
@@ -238,6 +245,13 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `deviceScaleFactor` <[number]> Specify device scale factor (can be thought of as dpr). Defaults to `1`.
     - `isMobile` <[boolean]> Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported in Firefox.
   - `userAgent` <?[string]> Specific user agent to use in this context.
+  - `device` <[string]|[Object]> Pass a device name or object from [playwright.devices](#playwrightdevices) to set the viewport and user agent.
+    - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+      - `width` <[number]>
+      - `height` <[number]>
+      - `deviceScaleFactor` <[number]>
+      - `isMobile` <[boolean]>
+    - `userAgent` <[string]>
   - `javaScriptEnabled` <?[boolean]> Whether or not to enable or disable JavaScript in the context. Defaults to true.
   - `timezoneId` <?[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `geolocation` <[Object]>
@@ -3821,8 +3835,7 @@ const iPhone = webkit.devices['iPhone 6'];
 (async () => {
   const browser = await webkit.launch();
   const context = await browser.newContext({
-    viewport: iPhone.viewport,
-    userAgent: iPhone.userAgent
+    device: iPhone
   });
   const page = await context.newPage();
   await page.goto('https://example.com');
