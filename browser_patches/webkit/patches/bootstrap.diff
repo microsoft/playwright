@@ -2896,7 +2896,7 @@ index b038a1879c043aa17dae97425693f29be42e3258..d60716b837663004675ffd90bceede4c
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef006ad9bdc 100644
+index 44a7da37f588d38e3070e967cdc23a9fd9dad203..bf760c64150ea04e82c979df2fabf73a3fbd7733 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,6 +32,8 @@
@@ -3003,7 +3003,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  
      ErrorString unused;
      setShowPaintRects(unused, false);
-@@ -415,14 +444,36 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
+@@ -415,14 +444,35 @@ void InspectorPageAgent::reload(ErrorString&, const bool* optionalReloadFromOrig
      m_inspectedPage.mainFrame().loader().reload(reloadOptions);
  }
  
@@ -3029,22 +3029,22 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
 +        return;
 +
 +    ResourceRequest resourceRequest { frame->document()->completeURL(url) };
- 
--    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
 +    if (!resourceRequest.url().isValid()) {
 +        errorString = "Cannot navigate to invalid URL"_s;
 +        return;
 +    }
-+
+ 
+-    ResourceRequest resourceRequest { frame.document()->completeURL(url) };
+-    FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, LockHistory::No, LockBackForwardList::No, ReferrerPolicy::EmptyString, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
+-    frame.loader().changeLocation(WTFMove(frameLoadRequest));
 +    if (referrer)
 +        resourceRequest.setInitiatorIdentifier(InspectorNetworkAgent::createInitiatorIdentifierForInspectorNavigation(*referrer));
-     FrameLoadRequest frameLoadRequest { *frame.document(), frame.document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, LockHistory::No, LockBackForwardList::No, ReferrerPolicy::EmptyString, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
--    frame.loader().changeLocation(WTFMove(frameLoadRequest));
++    FrameLoadRequest frameLoadRequest { *frame->document(), frame->document()->securityOrigin(), WTFMove(resourceRequest), "_self"_s, LockHistory::No, LockBackForwardList::No, ReferrerPolicy::EmptyString, AllowNavigationToInvalidURL::No, NewFrameOpenerPolicy::Allow, ShouldOpenExternalURLsPolicy::ShouldNotAllow, InitiatedByMainFrame::Unknown };
 +    frame->loader().changeLocation(WTFMove(frameLoadRequest));
  }
  
  void InspectorPageAgent::overrideUserAgent(ErrorString&, const String* value)
-@@ -683,15 +734,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
+@@ -683,15 +733,16 @@ void InspectorPageAgent::setShowPaintRects(ErrorString&, bool show)
      m_overlay->setShowPaintRects(show);
  }
  
@@ -3066,7 +3066,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  }
  
  void InspectorPageAgent::frameNavigated(Frame& frame)
-@@ -699,13 +751,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
+@@ -699,13 +750,18 @@ void InspectorPageAgent::frameNavigated(Frame& frame)
      m_frontendDispatcher->frameNavigated(buildObjectForFrame(&frame));
  }
  
@@ -3088,7 +3088,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  }
  
  Frame* InspectorPageAgent::frameForId(const String& frameId)
-@@ -717,20 +774,18 @@ String InspectorPageAgent::frameId(Frame* frame)
+@@ -717,20 +773,18 @@ String InspectorPageAgent::frameId(Frame* frame)
  {
      if (!frame)
          return emptyString();
@@ -3115,7 +3115,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  }
  
  Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& frameId)
-@@ -741,11 +796,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
+@@ -741,11 +795,6 @@ Frame* InspectorPageAgent::assertFrame(ErrorString& errorString, const String& f
      return frame;
  }
  
@@ -3127,7 +3127,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  void InspectorPageAgent::frameStartedLoading(Frame& frame)
  {
      m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-@@ -766,6 +816,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
+@@ -766,6 +815,12 @@ void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
      m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
  }
  
@@ -3140,7 +3140,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  void InspectorPageAgent::defaultAppearanceDidChange(bool useDarkAppearance)
  {
      m_frontendDispatcher->defaultAppearanceDidChange(useDarkAppearance ? Inspector::Protocol::Page::Appearance::Dark : Inspector::Protocol::Page::Appearance::Light);
-@@ -823,6 +879,38 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -823,6 +878,38 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -3179,7 +3179,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  Ref<Inspector::Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -966,6 +1054,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
+@@ -966,6 +1053,29 @@ void InspectorPageAgent::snapshotRect(ErrorString& errorString, int x, int y, in
      *outDataURL = snapshot->toDataURL("image/png"_s, WTF::nullopt, PreserveResolution::Yes);
  }
  
@@ -3209,7 +3209,7 @@ index 44a7da37f588d38e3070e967cdc23a9fd9dad203..e241f12768bd34b3f1ae8c934151bef0
  void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  {
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
-@@ -983,4 +1094,529 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
+@@ -983,4 +1093,529 @@ void InspectorPageAgent::archive(ErrorString& errorString, String* data)
  #endif
  }
  
@@ -8159,10 +8159,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..0d27fc544279261a220d54cec9f4d7ac621850f7
+index 0000000000000000000000000000000000000000..aebf8bc2080aa7464a374b322489413bb2d91821
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,588 @@
+@@ -0,0 +1,590 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -8243,7 +8243,7 @@ index 0000000000000000000000000000000000000000..0d27fc544279261a220d54cec9f4d7ac
 +        .setValue(cookie.value)
 +        .setDomain(cookie.domain)
 +        .setPath(cookie.path)
-+        .setExpires(cookie.expires)
++        .setExpires(cookie.expires.valueOr(-1))
 +        .setHttpOnly(cookie.httpOnly)
 +        .setSecure(cookie.secure)
 +        .setSession(cookie.session)
@@ -8582,7 +8582,9 @@ index 0000000000000000000000000000000000000000..0d27fc544279261a220d54cec9f4d7ac
 +            return;
 +        }
 +
-+        obj->getDouble("expires", cookie.expires);
++        double expires;
++        if (obj->getDouble("expires", expires) && expires != -1)
++            cookie.expires = expires;
 +        obj->getBoolean("httpOnly", cookie.httpOnly);
 +        obj->getBoolean("secure", cookie.secure);
 +        obj->getBoolean("session", cookie.session);
@@ -9833,7 +9835,7 @@ index 0000000000000000000000000000000000000000..76290475097e756e3d932d22be4d8c79
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 509faa03b0bf0c76ef0b74e7a503a3e537c42937..a786fe263fa03d8967758e1ee6b53d567137d79e 100644
+index 509faa03b0bf0c76ef0b74e7a503a3e537c42937..3eaa2499a962cc5921618ea35234668633d6ef57 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -930,6 +930,7 @@ void WebPageProxy::finishAttachingToWebProcess(ProcessLaunchReason reason)
@@ -9986,7 +9988,7 @@ index 509faa03b0bf0c76ef0b74e7a503a3e537c42937..a786fe263fa03d8967758e1ee6b53d56
 -    decidePolicyForNavigationActionAsyncShared(m_process.copyRef(), m_webPageID, frameID, WTFMove(frameInfo), identifier, navigationID, WTFMove(navigationActionData), WTFMove(originatingFrameInfo), originatingPageID, originalRequest, WTFMove(request), WTFMove(requestBody), WTFMove(redirectResponse), userData, listenerID);
 +    if (m_inspectorController->shouldPauseLoading()) {
 +        m_inspectorController->setContinueLoadingCallback([this, protectedThis = makeRef(*this), frameID, frameInfo = WTFMove(frameInfo), identifier, navigationID, navigationActionData = WTFMove(navigationActionData),
-+                frameInfoData = WTFMove(frameInfoData), originatingPageID, originalRequest, request = WTFMove(request), requestBody = WTFMove(requestBody), redirectResponse = WTFMove(redirectResponse), userData, listenerID] () mutable {
++                originatingFrameInfo = WTFMove(originatingFrameInfo), originatingPageID, originalRequest, request = WTFMove(request), requestBody = WTFMove(requestBody), redirectResponse = WTFMove(redirectResponse), userData, listenerID] () mutable {
 +            decidePolicyForNavigationActionAsyncShared(m_process.copyRef(), m_webPageID, frameID, WTFMove(frameInfo), identifier, navigationID, WTFMove(navigationActionData), WTFMove(originatingFrameInfo), originatingPageID, originalRequest, WTFMove(request), WTFMove(requestBody), WTFMove(redirectResponse), userData, listenerID);
 +        });
 +    } else {
@@ -10120,7 +10122,7 @@ index 509faa03b0bf0c76ef0b74e7a503a3e537c42937..a786fe263fa03d8967758e1ee6b53d56
  
      // FIXME: Geolocation should probably be using toString() as its string representation instead of databaseIdentifier().
 -    auto origin = API::SecurityOrigin::create(frameInfo.securityOrigin.securityOrigin());
-+    auto securityOrigin = rameInfo.securityOrigin->securityOrigin();
++    auto securityOrigin = frameInfo.securityOrigin.securityOrigin();
 +    auto origin = API::SecurityOrigin::create(securityOrigin);
      auto request = m_geolocationPermissionRequestManager.createRequest(geolocationID);
      Function<void(bool)> completionHandler = [request = WTFMove(request)](bool allowed) {
@@ -13356,7 +13358,7 @@ index 04d3630dc2b0f5e937af173046268001da003753..ba0a60b832cd353776bb50b8198df2d8
  )
  
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index a8cccb6c1d567823fe8e6503f1a137856b0a9975..b67ad997fd86f97758f79ca8fd4e0768c4898eda 100644
+index a8cccb6c1d567823fe8e6503f1a137856b0a9975..00b39f96b6b48dc0bd3df54659850dfc233ea0be 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -25,7 +25,7 @@
@@ -13486,12 +13488,14 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..b67ad997fd86f97758f79ca8fd4e0768
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -210,6 +271,14 @@ int main(int argc, char *argv[])
+@@ -210,6 +271,16 @@ int main(int argc, char *argv[])
      }
  
      auto* loop = g_main_loop_new(nullptr, FALSE);
 +    if (inspectorPipe)
 +        configureBrowserInspector(loop);
++
++    openViews = g_hash_table_new_full(nullptr, nullptr, g_object_unref, nullptr);
 +
 +    if (noStartupWindow) {
 +        g_main_loop_run(loop);
@@ -13501,7 +13505,7 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..b67ad997fd86f97758f79ca8fd4e0768
  
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -219,7 +288,19 @@ int main(int argc, char *argv[])
+@@ -219,7 +290,19 @@ int main(int argc, char *argv[])
          return 1;
      }
  
@@ -13522,6 +13526,15 @@ index a8cccb6c1d567823fe8e6503f1a137856b0a9975..b67ad997fd86f97758f79ca8fd4e0768
  
      if (cookiesPolicy) {
          auto* cookieManager = webkit_web_context_get_cookie_manager(webContext);
+@@ -300,8 +383,6 @@ int main(int argc, char *argv[])
+         backendPtr->setAccessibleChild(ATK_OBJECT(accessible));
+ #endif
+ 
+-    openViews = g_hash_table_new_full(nullptr, nullptr, g_object_unref, nullptr);
+-
+     webkit_web_context_set_automation_allowed(webContext, automationMode);
+     g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
+     g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
 @@ -326,7 +407,7 @@ int main(int argc, char *argv[])
          g_object_unref(file);
          webkit_web_view_load_uri(webView, url);
