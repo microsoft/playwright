@@ -212,7 +212,7 @@ export class WKPage implements PageDelegate {
     this._pageProxySession.dispatchMessage(message);
   }
 
-  handleProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
+  handleProvisionalLoadFailed(event: Protocol.Playwright.provisionalLoadFailedPayload) {
     if (!this._initialized || !this._provisionalPage)
       return;
     let errorText = event.error;
@@ -390,7 +390,7 @@ export class WKPage implements PageDelegate {
     if (this._pageProxySession.isDisposed())
       throw new Error('Target closed');
     const pageProxyId = this._pageProxySession.sessionId;
-    const result = await this._pageProxySession.connection.browserSession.send('Browser.navigate', { url, pageProxyId, frameId: frame._id, referrer });
+    const result = await this._pageProxySession.connection.browserSession.send('Playwright.navigate', { url, pageProxyId, frameId: frame._id, referrer });
     return { newDocumentId: result.loaderId };
   }
 

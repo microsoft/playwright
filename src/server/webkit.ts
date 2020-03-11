@@ -136,7 +136,7 @@ export class WebKit implements BrowserType {
         // We try to gracefully close to prevent crash reporting and core dumps.
         // Note that it's fine to reuse the pipe transport, since
         // our connection ignores kBrowserCloseMessageId.
-        const message = JSON.stringify({method: 'Browser.close', params: {}, id: kBrowserCloseMessageId});
+        const message = JSON.stringify({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
         transport.send(message);
       },
       onkill: (exitCode, signal) => {
@@ -297,7 +297,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         if (pendingBrowserContextCreations.has(id)) {
           transport.send(JSON.stringify({
             id: ++SequenceNumberMixer._lastSequenceNumber,
-            method: 'Browser.deleteContext',
+            method: 'Playwright.deleteContext',
             params: { browserContextId: parsedMessage.result.browserContextId }
           }));
         }
@@ -333,7 +333,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       socket.send(message);
       return;
     }
-    if (method === 'Browser.pageProxyCreated') {
+    if (method === 'Playwright.pageProxyCreated') {
       const socket = browserContextIds.get(params.pageProxyInfo.browserContextId);
       if (!socket || socket.readyState === ws.CLOSING) {
         // Drop unattributed messages on the floor.
@@ -343,14 +343,14 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       socket.send(message);
       return;
     }
-    if (method === 'Browser.pageProxyDestroyed') {
+    if (method === 'Playwright.pageProxyDestroyed') {
       const socket = pageProxyIds.get(params.pageProxyId);
       pageProxyIds.delete(params.pageProxyId);
       if (socket && socket.readyState !== ws.CLOSING)
         socket.send(message);
       return;
     }
-    if (method === 'Browser.provisionalLoadFailed') {
+    if (method === 'Playwright.provisionalLoadFailed') {
       const socket = pageProxyIds.get(params.pageProxyId);
       if (socket && socket.readyState !== ws.CLOSING)
         socket.send(message);
@@ -370,9 +370,9 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
       const { id, method, params } = parsedMessage;
       const seqNum = idMixer.generate({ id, socket });
       transport.send(JSON.stringify({ ...parsedMessage, id: seqNum }));
-      if (method === 'Browser.createContext')
+      if (method === 'Playwright.createContext')
         pendingBrowserContextCreations.add(seqNum);
-      if (method === 'Browser.deleteContext')
+      if (method === 'Playwright.deleteContext')
         pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
     });
 
@@ -385,7 +385,7 @@ function wrapTransportWithWebSocket(transport: ConnectionTransport, port: number
         if (s === socket) {
           transport.send(JSON.stringify({
             id: ++SequenceNumberMixer._lastSequenceNumber,
-            method: 'Browser.deleteContext',
+            method: 'Playwright.deleteContext',
             params: { browserContextId }
           }));
           browserContextIds.delete(browserContextId);

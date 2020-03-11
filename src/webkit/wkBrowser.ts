@@ -56,9 +56,9 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     this._defaultContext = new WKBrowserContext(this, undefined, validateBrowserContextOptions({}));
 
     this._eventListeners = [
-      helper.addEventListener(this._browserSession, 'Browser.pageProxyCreated', this._onPageProxyCreated.bind(this)),
-      helper.addEventListener(this._browserSession, 'Browser.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
-      helper.addEventListener(this._browserSession, 'Browser.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
+      helper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
+      helper.addEventListener(this._browserSession, 'Playwright.pageProxyDestroyed', this._onPageProxyDestroyed.bind(this)),
+      helper.addEventListener(this._browserSession, 'Playwright.provisionalLoadFailed', event => this._onProvisionalLoadFailed(event)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
 
@@ -76,7 +76,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     options = validateBrowserContextOptions(options);
-    const { browserContextId } = await this._browserSession.send('Browser.createContext');
+    const { browserContextId } = await this._browserSession.send('Playwright.createContext');
     options.userAgent = options.userAgent || DEFAULT_USER_AGENT;
     const context = new WKBrowserContext(this, browserContextId, options);
     await context._initialize();
@@ -97,7 +97,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     return this._firstPagePromise;
   }
 
-  _onPageProxyCreated(event: Protocol.Browser.pageProxyCreatedPayload) {
+  _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
     const { pageProxyInfo } = event;
     const pageProxyId = pageProxyInfo.pageProxyId;
     let context: WKBrowserContext | null = null;
@@ -134,7 +134,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     });
   }
 
-  _onPageProxyDestroyed(event: Protocol.Browser.pageProxyDestroyedPayload) {
+  _onPageProxyDestroyed(event: Protocol.Playwright.pageProxyDestroyedPayload) {
     const pageProxyId = event.pageProxyId;
     const wkPage = this._wkPages.get(pageProxyId);
     if (!wkPage)
@@ -151,7 +151,7 @@ export class WKBrowser extends platform.EventEmitter implements Browser {
     wkPage.dispatchMessageToSession(event.message);
   }
 
-  _onProvisionalLoadFailed(event: Protocol.Browser.provisionalLoadFailedPayload) {
+  _onProvisionalLoadFailed(event: Protocol.Playwright.provisionalLoadFailedPayload) {
     const wkPage = this._wkPages.get(event.pageProxyId);
     if (!wkPage)
       return;
@@ -189,9 +189,9 @@ export class WKBrowserContext extends BrowserContextBase {
 
   async _initialize() {
     if (this._options.ignoreHTTPSErrors)
-      await this._browser._browserSession.send('Browser.setIgnoreCertificateErrors', { browserContextId: this._browserContextId, ignore: true });
+      await this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId: this._browserContextId, ignore: true });
     if (this._options.locale)
-      await this._browser._browserSession.send('Browser.setLanguages', { browserContextId: this._browserContextId, languages: [this._options.locale] });
+      await this._browser._browserSession.send('Playwright.setLanguages', { browserContextId: this._browserContextId, languages: [this._options.locale] });
     const entries = Object.entries(this._options.permissions || {});
     await Promise.all(entries.map(entry => this.setPermissions(entry[0], entry[1])));
     if (this._options.geolocation)
@@ -218,7 +218,7 @@ export class WKBrowserContext extends BrowserContextBase {
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
-    const { pageProxyId } = await this._browser._browserSession.send('Browser.createPage', { browserContextId: this._browserContextId });
+    const { pageProxyId } = await this._browser._browserSession.send('Playwright.createPage', { browserContextId: this._browserContextId });
     const wkPage = this._browser._wkPages.get(pageProxyId)!;
     const result = await wkPage.pageOrError();
     if (result instanceof Page) {
@@ -230,10 +230,10 @@ export class WKBrowserContext extends BrowserContextBase {
   }
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
-    const { cookies } = await this._browser._browserSession.send('Browser.getAllCookies', { browserContextId: this._browserContextId });
+    const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map((c: network.NetworkCookie) => {
       const copy: any = { ... c };
-      copy.expires = c.expires === 0 ? -1 : c.expires / 1000;
+      copy.expires = c.expires === -1 ? -1 : c.expires / 1000;
       delete copy.session;
       return copy as network.NetworkCookie;
     }), urls);
@@ -244,12 +244,12 @@ export class WKBrowserContext extends BrowserContextBase {
       ...c,
       session: c.expires === -1 || c.expires === undefined,
       expires: c.expires && c.expires !== -1 ? c.expires * 1000 : c.expires
-    })) as Protocol.Browser.SetCookieParam[];
-    await this._browser._browserSession.send('Browser.setCookies', { cookies: cc, browserContextId: this._browserContextId });
+    })) as Protocol.Playwright.SetCookieParam[];
+    await this._browser._browserSession.send('Playwright.setCookies', { cookies: cc, browserContextId: this._browserContextId });
   }
 
   async clearCookies() {
-    await this._browser._browserSession.send('Browser.deleteAllCookies', { browserContextId: this._browserContextId });
+    await this._browser._browserSession.send('Playwright.deleteAllCookies', { browserContextId: this._browserContextId });
   }
 
   async setPermissions(origin: string, permissions: string[]): Promise<void> {
@@ -262,11 +262,11 @@ export class WKBrowserContext extends BrowserContextBase {
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._browser._browserSession.send('Browser.grantPermissions', { origin, browserContextId: this._browserContextId, permissions: filtered });
+    await this._browser._browserSession.send('Playwright.grantPermissions', { origin, browserContextId: this._browserContextId, permissions: filtered });
   }
 
   async clearPermissions() {
-    await this._browser._browserSession.send('Browser.resetPermissions', { browserContextId: this._browserContextId });
+    await this._browser._browserSession.send('Playwright.resetPermissions', { browserContextId: this._browserContextId });
   }
 
   async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
@@ -274,7 +274,7 @@ export class WKBrowserContext extends BrowserContextBase {
       geolocation = verifyGeolocation(geolocation);
     this._options.geolocation = geolocation || undefined;
     const payload: any = geolocation ? { ...geolocation, timestamp: Date.now() } : undefined;
-    await this._browser._browserSession.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });
+    await this._browser._browserSession.send('Playwright.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });
   }
 
   async setExtraHTTPHeaders(headers: network.Headers): Promise<void> {
@@ -330,7 +330,7 @@ export class WKBrowserContext extends BrowserContextBase {
       await this._browser.close();
       return;
     }
-    await this._browser._browserSession.send('Browser.deleteContext', { browserContextId: this._browserContextId });
+    await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     this._didCloseInternal();
   }
