@@ -23,9 +23,9 @@ document
 ```
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
-- selector starting with `//` is assumed to be `xpath=selector`;
-- selector starting with `"` is assumed to be `text=selector`;
-- otherwise selector is assumed to be `css=selector`.
+- Selector starting with `//` is assumed to be `xpath=selector`. Example: `page.click('//html')` is converted to `page.click('xpath=//html')`.
+- Selector starting with `"` is assumed to be `text=selector`. Example: `page.click('"foo"')` is converted to `page.click('text="foo"')`.
+- Otherwise, selector is assumed to be `css=selector`. Example: `page.click('div')` is converted to `page.click('css=div')`.
 
 ## Examples
 
