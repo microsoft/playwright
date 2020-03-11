@@ -32,16 +32,16 @@ export class ExecutionContext {
     this._delegate = delegate;
   }
 
-  _evaluate(returnByValue: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
+  _evaluate(returnByValue: boolean, waitForNavigations: boolean, pageFunction: string | Function, ...args: any[]): Promise<any> {
     return this._delegate.evaluate(this, returnByValue, pageFunction, ...args);
   }
 
   evaluate: types.Evaluate = async (pageFunction, ...args) => {
-    return this._evaluate(true /* returnByValue */, pageFunction, ...args);
+    return this._evaluate(true /* returnByValue */, true /* waitForNavigations */, pageFunction, ...args);
   }
 
   evaluateHandle: types.EvaluateHandle = async (pageFunction, ...args) => {
-    return this._evaluate(false /* returnByValue */, pageFunction, ...args);
+    return this._evaluate(false /* returnByValue */, true /* waitForNavigations */, pageFunction, ...args);
   }
 
   _createHandle(remoteObject: any): JSHandle {

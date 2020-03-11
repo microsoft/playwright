@@ -230,8 +230,9 @@ module.exports.describe = function({testRunner, expect, FFOX, CHROMIUM, WEBKIT, 
       await page.evaluate(e => e.textContent, element).catch(e => error = e);
       expect(error.message).toContain('JSHandle is disposed');
     });
-    // flaky: https://github.com/microsoft/playwright/pull/1277/checks?check_run_id=496501774
-    it.fail(FFOX && LINUX)('should simulate a user gesture', async({page, server}) => {
+    it.fail(FFOX)('should simulate a user gesture', async({page, server}) => {
+      // flaky linux: https://github.com/microsoft/playwright/pull/1277/checks?check_run_id=496501774
+      // flaky win: https://github.com/microsoft/playwright/pull/1323/checks?check_run_id=501701278
       const result = await page.evaluate(() => {
         document.body.appendChild(document.createTextNode('test'));
         document.execCommand('selectAll');
