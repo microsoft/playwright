@@ -156,30 +156,39 @@ module.exports.describe = function({testRunner, expect, playwright, FFOX, CHROMI
     });
     it('should be able to read selected file', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
-      expect(await page.$eval('input', async picker => {
-        picker.click();
-        await new Promise(x => picker.oninput = x);
-        const reader = new FileReader();
-        const promise = new Promise(fulfill => reader.onload = fulfill);
-        reader.readAsText(picker.files[0]);
-        return promise.then(() => reader.result);
-      })).toBe('contents of the file');
+      const [, content] = await Promise.all([
+        page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD)),
+        page.$eval('input', async picker => {
+          picker.click();
+          await new Promise(x => picker.oninput = x);
+          const reader = new FileReader();
+          const promise = new Promise(fulfill => reader.onload = fulfill);
+          reader.readAsText(picker.files[0]);
+          return promise.then(() => reader.result);
+        }),
+      ]);
+      expect(content).toBe('contents of the file');
     });
     it('should be able to reset selected files with empty file list', async({page, server}) => {
       await page.setContent(`<input type=file>`);
-      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD));
-      expect(await page.$eval('input', async picker => {
-        picker.click();
-        await new Promise(x => picker.oninput = x);
-        return picker.files.length;
-      })).toBe(1);
-      page.waitForEvent('filechooser').then(({element}) => element.setInputFiles([]));
-      expect(await page.$eval('input', async picker => {
-        picker.click();
-        await new Promise(x => picker.oninput = x);
-        return picker.files.length;
-      })).toBe(0);
+      const [, fileLength1] = await Promise.all([
+        page.waitForEvent('filechooser').then(({element}) => element.setInputFiles(FILE_TO_UPLOAD)),
+        page.$eval('input', async picker => {
+          picker.click();
+          await new Promise(x => picker.oninput = x);
+          return picker.files.length;
+        }),
+      ]);
+      expect(fileLength1).toBe(1);
+      const [, fileLength2] = await Promise.all([
+        page.waitForEvent('filechooser').then(({element}) => element.setInputFiles([])),
+        page.$eval('input', async picker => {
+          picker.click();
+          await new Promise(x => picker.oninput = x);
+          return picker.files.length;
+        }),
+      ]);
+      expect(fileLength2).toBe(0);
     });
     it('should not accept multiple files for single-file input', async({page, server}) => {
       await page.setContent(`<input type=file>`);
