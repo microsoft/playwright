@@ -2458,7 +2458,7 @@ index 0000000000000000000000000000000000000000..be70ea364f9534bb3b344f64970366c3
 +
 diff --git a/juggler/content/PageAgent.js b/juggler/content/PageAgent.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..05c814d2b6a3df8d770acba723051eb52063bd4f
+index 0000000000000000000000000000000000000000..3cafc06be2262a79e8459eb9afc03d424bc01303
 --- /dev/null
 +++ b/juggler/content/PageAgent.js
 @@ -0,0 +1,919 @@
@@ -2821,7 +2821,7 @@ index 0000000000000000000000000000000000000000..05c814d2b6a3df8d770acba723051eb5
 +    this._browserPage.emit('pageUncaughtError', {
 +      frameId: frame.id(),
 +      message: errorEvent.message,
-+      stack: errorEvent.error.stack
++      stack: errorEvent.error ? errorEvent.error.stack : '',
 +    });
 +  }
 +
