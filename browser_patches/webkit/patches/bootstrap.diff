@@ -7248,6 +7248,19 @@ index 0000000000000000000000000000000000000000..cd66887de171cda7d15a8e4dc6dbff63
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/Cocoa/PageClientImplCocoa.mm b/Source/WebKit/UIProcess/Cocoa/PageClientImplCocoa.mm
+index 40949c2f409cd42dca616c29649852ff222f2af5..b56ff05f55263e00bdccfda75249a767e965fe82 100644
+--- a/Source/WebKit/UIProcess/Cocoa/PageClientImplCocoa.mm
++++ b/Source/WebKit/UIProcess/Cocoa/PageClientImplCocoa.mm
+@@ -40,7 +40,7 @@ namespace WebKit {
+ PageClientImplCocoa::PageClientImplCocoa(WKWebView *webView)
+     : m_webView { webView }
+ #if USE(DICTATION_ALTERNATIVES)
+-    , m_alternativeTextUIController { makeUnique<AlternativeTextUIController>() }
++    , m_alternativeTextUIController { makeUnique<WebCore::AlternativeTextUIController>() }
+ #endif
+ {
+ }
 diff --git a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h
 index 454c61ffdefecc476d1560c7c43f5b5d345f281d..6de7509037b7683ddd403ee247bdf2845ce4e87a 100644
 --- a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h
@@ -9263,6 +9276,18 @@ index 977837517e1708bf2aa551fe64d6a25403cdaaaa..128a241c24cf12bb89af682f93566da2
  #include <WebCore/AuthenticatorAssertionResponse.h>
  #include <WebCore/AuthenticatorTransport.h>
  #include <WebCore/PublicKeyCredentialCreationOptions.h>
+diff --git a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h b/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
+index dee773c3e132e37b72727f3538714017b1d96cf3..c8273246ed7f7de53ec6b4d4132069450952db29 100644
+--- a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
++++ b/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
+@@ -28,6 +28,7 @@
+ #if ENABLE(WEB_AUTHN)
+ 
+ #include "LocalConnection.h"
++#include <WebCore/AuthenticatorAssertionResponse.h>
+ #include <WebCore/MockWebAuthenticationConfiguration.h>
+ 
+ namespace WebKit {
 diff --git a/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp b/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp
 index 04f3227cd55c992a42cd96a3f25d697aed7965a2..f0d36935f47bab03ea2ec50b705092068ecd3efa 100644
 --- a/Source/WebKit/UIProcess/WebGeolocationManagerProxy.cpp
